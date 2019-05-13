@@ -22,7 +22,8 @@
 #' @param f_hisp charcter string. Column(s) denoting the counts of non-hispanic Hispanic females
 #' @param m_other charcter string. Column(s) denoting the counts of non-hispanic Other/2+ race males
 #' @param f_other charcter string. Column(s) denoting the counts of non-hispanic Other/2+ race females
-#' @param fill logical. If TRUE, ensure that each school+grade combination has a row for all sex and race combos
+#' @param fill logical. If TRUE, ensure that each school+grade combination has a row for all sex and race combos.
+#'             Currently unused/ignored.
 #' @return A data.table long on district, school, grade, race, and sex.
 #'
 #' @impot data.table
@@ -75,14 +76,15 @@ format_enrollment_data = function(input, district_code, school_code, grade, m_ai
 
   #add 0s where neccessary
   #should this be a different function?
-  sch_grid = unique(input[, .(district_code, school_code, grade)])
-  race_sex_grid = expand.grid(grade = unique(input[, grade]),
-                              sex = unique(input[, sex]),
-                              race = unique(input[, race]))
-  grid = sch_grid[race_sex_grid, on = "grade", allow.cartesian = T]
-
-  input = merge(grid, input, by = names(grid))
-  input[is.na(n_students), n_students := 0]
+  #This might not even be nesscary assuming the enrollment data format prior to 2018 is used
+  # sch_grid = unique(input[, .(district_code, school_code, grade)])
+  # race_sex_grid = expand.grid(grade = unique(input[, grade]),
+  #                             sex = unique(input[, sex]),
+  #                             race = unique(input[, race]))
+  # grid = sch_grid[race_sex_grid, on = "grade", allow.cartesian = T]
+  #
+  # input = merge(grid, input, by = names(grid))
+  # input[is.na(n_students), n_students := 0]
 
   #Return object
   return(input)
