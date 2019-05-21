@@ -16,5 +16,5 @@ General Steps:
 6) Generate standard QA statistics
 
 Principles for contributing
-1) Functions must follow: What comes out is soley a function of what comes in (e.g. no scoping/environment jumping) rule
+1) Functions must follow: What comes out is only a function of what comes in (e.g. no scoping/environment jumping) UNLESS specified-- and then the default setting is F
 2) Each function/script must be properly documented, contain few hardcoded paths (with big highlights on where they are), and feature unit testing as appropriate
