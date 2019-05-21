@@ -14,6 +14,10 @@ a = format_single_year(input = dat, labels = lab, 'var_name', 'data_value', 'lab
 #expect two failure since both data and label are not valid column in lab (which is passed to labels)
 a = format_single_year(input = dat, labels = lab, 'var_name', 'data', 'label')
 
+#check that the attributes all get assigned
+
+#play around with NAs vs. ""
+
 #should work
 a = format_single_year(input = dat, labels = lab, 'var_name', 'data_value', 'label_col')
 
