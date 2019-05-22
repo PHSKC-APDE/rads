@@ -26,7 +26,7 @@
 #'             Currently unused/ignored.
 #' @return A data.table long on district, school, grade, race, and sex.
 #'
-#' @impot data.table
+#' @import data.table
 #' @export
 #'
 format_enrollment_data = function(input, district_code, school_code, grade, m_ai, f_ai, m_as, f_as, m_b, f_b,

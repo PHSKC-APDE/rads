@@ -1,4 +1,6 @@
-#' Create an instruction set to implement a recode
+#' Instruction set for recoding
+#'
+#' Creates/standardizes the parameters required for recoding a variable in the HYS framework
 #'
 #' @param old_var character. Column in the dataset containing the values to be recoded
 #' @param new_var character. Column where the recoded values will be placed. If `new_var` doesn't exist, than it will be created. Otherwise it will be overwritten.
@@ -11,6 +13,11 @@
 #' @param start_year Integer (or coercible). Year of the data that this recode starts to be relevant (inclusive). If blank, all years before `end_year` are assumed.
 #' @param end_year Integer (or coercible). Year of the data that this recode ends it relevance (inclusive). If blank, it indicates that the recode is valid for
 #'                 all years after `start_year`
+#'
+#' @export
+#'
+#' @return a list of lists to be parsed and applied in \code{apply_recode}
+#'
 #'
 create_recode = function(old_var, new_var, old_value = NULL, new_value = NULL, new_label = NULL, start_year = NULL, end_year = NULL){
 

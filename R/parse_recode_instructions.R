@@ -19,10 +19,12 @@
 #'
 #'new_label: character (or convertable to character): The factor label that `old_value` will be recoded to in conjunction with the position of `new_value`
 #'
-#' @param recode data.frame. In the format described above.
+#' @param recode data.frame. In the format described in "Details"
 #'
 #' @import data.table
 #' @export
+#'
+#' @return list of lists of recode instructions.
 #'
 parse_recode_instructions = function(recode){
 

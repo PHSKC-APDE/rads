@@ -11,5 +11,6 @@ a = data.table(old_var = c("v1", "v1", "v2", "v2", 'v3'),
 
 #test all recoding
 parse_recode_instructions(a)
+
 #test simple renames
 
