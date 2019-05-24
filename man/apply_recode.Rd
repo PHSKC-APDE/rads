@@ -21,7 +21,9 @@ a new column with the recoded values whose class is dependent on the recode inst
 If a recode instruction is passed that is not relevant to the dataset (e.g. year), a column of NAs will be returned.
 }
 \description{
-Given the output from \code{create_recode}, a dataset, and a few additional instructions, this function implements a recode
+Given the output from \code{create_recode}, a dataset, and a few additional instructions, this function implements a recode.
+This function translates factors into their underlying numeric representation when recoding. THe levels (that are not reimplemented) are carried through,
+but recoding with factors will likely break.
 }
 \details{
 

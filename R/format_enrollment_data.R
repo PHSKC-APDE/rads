@@ -50,7 +50,7 @@ format_enrollment_data = function(input, district_code, school_code, grade, m_ai
 
   #confirm that all the column names are in the data.table
   if(any(!unlist(input_list) %in% names(input))){
-    err = paste0('The following columns do not exist in `input`: ', paste(setdiff(input_list, names(input))), collapse = ' | ')
+    err = paste0('The following columns do not exist in `input`: ', paste(setdiff(unlist(input_list), names(input)), collapse = ' | '))
     stop(err)
   }
 
@@ -68,6 +68,9 @@ format_enrollment_data = function(input, district_code, school_code, grade, m_ai
   }
   #step 3: Reduce DT size by dropping unneeded columns
   input = input[, input_list_names, with = F]
+
+  #keep only rows that have good enough bindings
+  input = na.omit(input, c('district_code', 'school_code', 'grade'))
 
   #Reshape long
   input = melt(input, id.vars = c('district_code', 'school_code', 'grade'), variable.factor = F, variable.name = 'sex_race', value.name = 'n_students')

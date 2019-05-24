@@ -22,3 +22,4 @@ d1[, V2:=V1]
 rec = create_recode('V1', 'V2', old_vals, new_vals, new_label = new_vals)
 e1 = apply_recode(d1, 2016, rec)
 
+#what happens when try to recode a factor(e.g. the label) rather than the value?

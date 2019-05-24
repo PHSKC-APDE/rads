@@ -2,7 +2,9 @@
 #'
 #' @description
 #'
-#' Given the output from \code{create_recode}, a dataset, and a few additional instructions, this function implements a recode
+#' Given the output from \code{create_recode}, a dataset, and a few additional instructions, this function implements a recode.
+#' This function translates factors into their underlying numeric representation when recoding. THe levels (that are not reimplemented) are carried through,
+#' but recoding with factors will likely break.
 #'
 #' @param data data.table.
 #' @param year numeric or integer. Identifies the year the dataset represents. Helps sort out whether a recode should be applied
@@ -33,7 +35,6 @@ apply_recode = function(data, year, recode, jump_scope = F){
     return(rep(NA, nrow(data)))
   }
 
-
   simple_rename = F
   #check if its a simple renaming
   if(length(recode$new_value) <= 1 & length(recode$old_value) <=1){
@@ -42,7 +43,9 @@ apply_recode = function(data, year, recode, jump_scope = F){
       ret = data[, get(recode$old_var)]
     }
   }
+
   #otherwise, create the ret object
+  bin_me = F
   if(!simple_rename){
     #check to see if new_var exists in the dataset
     if(any(names(data) %in% recode$new_var)){
@@ -50,6 +53,19 @@ apply_recode = function(data, year, recode, jump_scope = F){
     }else{
       ret = rep(NA, nrow(data))
     }
+
+    #check if its a likely binning operation
+    bin_opt = lapply(recode$old_value, check_bin)
+
+    #if any of those check out, confirm that the the existing variable is numeric. Otherwise throw a warning
+    if(any(unlist(bin_opt))){
+      if(!is.numeric(class(df[, get(recode$old_var)]))){
+        warning('Recode implies a binning type of recode, but old_var is not numeric')
+      }else{
+        bin_me = T
+      }
+    }
+
   }
 
   #if ret is a factor, convert to integer for the time being but save the levels information
@@ -62,7 +78,34 @@ apply_recode = function(data, year, recode, jump_scope = F){
   #construct recoding
   old = data[, get(recode$old_var)]
   for(i in seq(recode$old_value)){
-    ret[which(old %in% recode$old_value[i])] = recode$new_value[i]
+
+    #binning instructions
+    if(bin_me & check_bin(recode$old_value[i])){
+      #parse the instructions for recoding
+      left = substr(recode$old_value[i],1,1)
+      right = substr(recode$old_value[i],nchar(recode$old_value[i]),nchar(recode$old_value[i]))
+      inner = substr(recode$old_value[i], 2, nchar(recode$old_value[i]) - 1)
+
+      minmax = strsplit(inner, ',', fixed = T)
+      minmax = as.numeric(trimws(minmax))
+
+      #check if the coercian created any errors. if so, stop
+      if(any(is.na(minmax))){
+        stop('Binning operation coerced to NA bounds')
+      }
+
+      if(left == '(' & right == ')'){
+        ret[which(old > minmax & old< minmax[2])] = recode$new_value[i]
+      }else if(left == '[' & right == ')'){
+        ret[which(old >= minmax[1] & old< minmax[2])] = recode$new_value[i]
+      }else if(left == '(' & right == ']'){
+        ret[which(old > minmax[1] & old <= minmax[2])] = recode$new_value[i]
+      }else{
+        ret[which(old >= minmax[1] & old<= minmax[2])] = recode$new_value[i]
+      }
+    }else{ #normal recoding
+      ret[which(old %in% recode$old_value[i])] = recode$new_value[i]
+    }
   }
 
   #if there are labels, make a factor
