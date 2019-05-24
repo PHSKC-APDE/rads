@@ -20,13 +20,13 @@
 #'new_label: character (or convertable to character): The factor label that `old_value` will be recoded to in conjunction with the position of `new_value`
 #'
 #' @param recode data.frame. In the format described in "Details"
-#'
+#' @param catch_NAs logical. Should the presence of "NA" be turned into NA_character_
 #' @import data.table
 #' @export
 #'
 #' @return list of lists of recode instructions.
 #'
-parse_recode_instructions = function(recode){
+parse_recode_instructions = function(recode, catch_NAs = T){
 
   #check column names
   vvv = c('old_var', 'old_value', 'new_var', 'new_value', 'start_year', 'end_year')
@@ -37,6 +37,9 @@ parse_recode_instructions = function(recode){
   #setDT for manipulation (and copy just to be safe)
   recode = copy(recode)
   setDT(recode)
+
+  recode[old_value == 'NA', old_value := NA]
+  recode[new_value == 'NA', new_value := NA]
 
   #compute the recode instructions
   rec_instruct = recode[, (list(list(create_recode(old_var, new_var, old_value, new_value, new_label, start_year, end_year)))),

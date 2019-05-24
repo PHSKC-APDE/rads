@@ -33,10 +33,11 @@ create_recode = function(old_var, new_var, old_value = NULL, new_value = NULL, n
     }
   }
 
+  #Note: This check can't occur if we want to be able to use recoding to set values to NA
   #confirm that both old_value and new_value are either missing or both non-missing
-  if(!all(sapply(old_value, check_nan) == sapply(new_value, check_nan))){
-    stop('`old_value` and `new_value` must both either be not blank (e.g. "", NA, NULL) or blank')
-  }
+  # if(!all(sapply(old_value, check_nan) == sapply(new_value, check_nan))){
+  #   stop('`old_value` and `new_value` must both either be not blank (e.g. "", NA, NULL) or blank')
+  # }
 
   #confirm that old value and new value have the same length
   stopifnot(length(new_value) == length(old_value))

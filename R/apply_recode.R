@@ -59,7 +59,8 @@ apply_recode = function(data, year, recode, jump_scope = F){
 
     #if any of those check out, confirm that the the existing variable is numeric. Otherwise throw a warning
     if(any(unlist(bin_opt))){
-      if(!is.numeric(class(df[, get(recode$old_var)]))){
+
+      if(!(is.numeric(data[, get(recode$old_var)]))){
         warning('Recode implies a binning type of recode, but old_var is not numeric')
       }else{
         bin_me = T
@@ -81,13 +82,19 @@ apply_recode = function(data, year, recode, jump_scope = F){
 
     #binning instructions
     if(bin_me & check_bin(recode$old_value[i])){
+
       #parse the instructions for recoding
       left = substr(recode$old_value[i],1,1)
       right = substr(recode$old_value[i],nchar(recode$old_value[i]),nchar(recode$old_value[i]))
       inner = substr(recode$old_value[i], 2, nchar(recode$old_value[i]) - 1)
 
       minmax = strsplit(inner, ',', fixed = T)
-      minmax = as.numeric(trimws(minmax))
+
+      if(length(minmax) != 1){
+        stop(paste0('Expecting one comma `,` in the old_value recode instructions. Found:' ,length(minmax)))
+      }
+
+      minmax = as.numeric(trimws(minmax[[1]]))
 
       #check if the coercian created any errors. if so, stop
       if(any(is.na(minmax))){
@@ -95,7 +102,7 @@ apply_recode = function(data, year, recode, jump_scope = F){
       }
 
       if(left == '(' & right == ')'){
-        ret[which(old > minmax & old< minmax[2])] = recode$new_value[i]
+        ret[which(old > minmax[1] & old< minmax[2])] = recode$new_value[i]
       }else if(left == '[' & right == ')'){
         ret[which(old >= minmax[1] & old< minmax[2])] = recode$new_value[i]
       }else if(left == '(' & right == ']'){
@@ -103,6 +110,7 @@ apply_recode = function(data, year, recode, jump_scope = F){
       }else{
         ret[which(old >= minmax[1] & old<= minmax[2])] = recode$new_value[i]
       }
+
     }else{ #normal recoding
       ret[which(old %in% recode$old_value[i])] = recode$new_value[i]
     }
@@ -110,13 +118,17 @@ apply_recode = function(data, year, recode, jump_scope = F){
 
   #if there are labels, make a factor
   fls = data.table(levels = recode$new_label, int_id = recode$new_value)
-  fls = fls[!is.null(levels),]
+
+  if(!is.null(recode$new_label)) fls = fls[!is.null(levels),]
+
   if(fff){
-    fls = rbind(fls, factor_label[!int_id %in% fls[, int_id]])
+    fls = rbind(fls, factor_label[!int_id %in% fls[, int_id]], fill = T)
   }
+
   fls = fls[int_id %in% ret, ]
 
-  if(nrow(fls)>0){
+  if(nrow(fls)>0 & 'levels' %in% names(fls)){
+    fls[is.na(levels), levels := int_id]
     ret = factor(ret, fls[,int_id], fls[, levels])
   }
 
