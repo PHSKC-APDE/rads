@@ -61,7 +61,7 @@ apply_recode = function(data, year, recode, jump_scope = F){
     if(any(unlist(bin_opt))){
 
       if(!(is.numeric(data[, get(recode$old_var)]))){
-        warning('Recode implies a binning type of recode, but old_var is not numeric')
+        warning('Recode implies a recode of the binning type, but old_var is not numeric. Proceeding as a string recode.')
       }else{
         bin_me = T
       }
