@@ -11,6 +11,9 @@
 #' @param recode list. Output of \code{create_recode} the provides the instructions on how to implement the recode
 #' @param jump_scope Logical. Determines whether or not this function takes advantage of data.table's modify by reference semantics
 #'                   or returns a single column data.table of nrow(data) to be cbinded on (presumably) later.
+#' @param pad Logical. If TRUE, the function will check to see if new values can be cleanly converted to numeric (no new NAs).
+#'                     If that check passes, the resulting factor (given relevant label settings) will be padded such that
+#'                     as.numeric(recode$new_value) == the output from apply_recode. Otherwise, the counting starts at one again.
 #' @details
 #'
 #' @import data.table
@@ -20,7 +23,7 @@
 #' If a recode instruction is passed that is not relevant to the dataset (e.g. year), a column of NAs will be returned.
 #'
 #'
-apply_recode = function(data, year, recode, jump_scope = F){
+apply_recode = function(data, year, recode, jump_scope = F, pad = T){
 
   #Work with data tables only. Prevents the need to copy the object to avoid data,table::setDT
   stopifnot(inherits(data, 'data.table'))
@@ -117,21 +120,42 @@ apply_recode = function(data, year, recode, jump_scope = F){
   }
 
   #if there are labels, make a factor
-  fls = data.table(levels = recode$new_label, int_id = recode$new_value)
+  if(!simple_rename){
+    fls = data.table(levels = recode$new_label, int_id = recode$new_value)
 
-  if(!is.null(recode$new_label)) fls = fls[!is.null(levels),]
+    if(!is.null(recode$new_label)) fls = fls[!is.null(levels),]
 
-  if(fff){
-    fls = rbind(fls, factor_label[!int_id %in% fls[, int_id]], fill = T)
+    if(fff){
+      fls = rbind(fls, factor_label[!int_id %in% fls[, int_id]], fill = T)
+    }
+
+    fls = fls[int_id %in% ret, ]
+
+    if(nrow(fls)>0 & 'levels' %in% names(fls)){
+
+      #numerics can come as both numeric and as string-- particularly if read via spreadsheet
+      #if padding is on, and there is no change in shifting from numeric to integer
+      #add additional rows
+      na1 = sum(is.na(fls[,int_id]))
+      numint = as.numeric(fls[, int_id])
+      na2 = sum(is.na(numint))
+      chg = sum(numint - as.integer(fls[, int_id])) == 0
+      if(pad  & chg){
+        pads = data.table(int_id = seq(min(c(numint,0)), max(numint),1), levels = NA)
+        pads = pads[!int_id %in% numint,]
+
+        if(inherits(fls[, int_id], 'character')){
+          pads[, int_id := as.character(int_id)]
+        }
+        fls = rbind(fls, pads)
+
+      }
+
+      fls[is.na(levels), levels := int_id]
+      setorder(fls, int_id)
+      ret = factor(ret, fls[,int_id], fls[, levels], ordered = T)
+    }
   }
-
-  fls = fls[int_id %in% ret, ]
-
-  if(nrow(fls)>0 & 'levels' %in% names(fls)){
-    fls[is.na(levels), levels := int_id]
-    ret = factor(ret, fls[,int_id], fls[, levels])
-  }
-
   #prepare output
   if(jump_scope){
     data[, (recode$new_var) := ret]
