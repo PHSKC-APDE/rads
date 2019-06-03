@@ -4,7 +4,7 @@
 \alias{apply_recode}
 \title{Apply a recoding instruction}
 \usage{
-apply_recode(data, year, recode, jump_scope = F)
+apply_recode(data, year, recode, jump_scope = F, pad = T)
 }
 \arguments{
 \item{data}{data.table.}
@@ -15,6 +15,10 @@ apply_recode(data, year, recode, jump_scope = F)
 
 \item{jump_scope}{Logical. Determines whether or not this function takes advantage of data.table's modify by reference semantics
 or returns a single column data.table of nrow(data) to be cbinded on (presumably) later.}
+
+\item{pad}{Logical. If TRUE, the function will check to see if new values can be cleanly converted to numeric (no new NAs).
+If that check passes, the resulting factor (given relevant label settings) will be padded such that
+as.numeric(recode$new_value) == the output from apply_recode. Otherwise, the counting starts at one.}
 }
 \value{
 a new column with the recoded values whose class is dependent on the recode instructions.

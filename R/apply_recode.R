@@ -13,7 +13,7 @@
 #'                   or returns a single column data.table of nrow(data) to be cbinded on (presumably) later.
 #' @param pad Logical. If TRUE, the function will check to see if new values can be cleanly converted to numeric (no new NAs).
 #'                     If that check passes, the resulting factor (given relevant label settings) will be padded such that
-#'                     as.numeric(recode$new_value) == the output from apply_recode. Otherwise, the counting starts at one again.
+#'                     as.numeric(recode$new_value) == the output from apply_recode. Otherwise, the counting starts at one.
 #' @details
 #'
 #' @import data.table

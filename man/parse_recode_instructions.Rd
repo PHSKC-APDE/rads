@@ -4,10 +4,12 @@
 \alias{parse_recode_instructions}
 \title{Parse Recode Instructions}
 \usage{
-parse_recode_instructions(recode)
+parse_recode_instructions(recode, catch_NAs = T)
 }
 \arguments{
 \item{recode}{data.frame. In the format described in "Details"}
+
+\item{catch_NAs}{logical. Should the presence of "NA" be turned into NA_character_}
 }
 \value{
 list of lists of recode instructions.
