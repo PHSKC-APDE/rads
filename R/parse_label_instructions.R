@@ -13,7 +13,7 @@
 #'
 #' @return A set of recode instructions (e.g. list of lists)
 #'
-parse_label_instructions = function(crosswalk, variable_name_id = 1, data_value_id = 9, label_id = 10, drop_na = T){
+parse_label_instructions = function(crosswalk, year, variable_name_id = 1, data_value_id = 9, label_id = 10, drop_na = T){
 
   #check basic info
   stopifnot(inherits(crosswalk, 'data.frame'))
@@ -43,7 +43,7 @@ parse_label_instructions = function(crosswalk, variable_name_id = 1, data_value_
   cw[, variable_name := zoo::na.locf(.SD), .SDcols = 'variable_name']
 
   if(drop_na){
-    cw = cw[variable_name != 'n/a',]
+    cw = cw[!variable_name  %in% c("", 'n/a', ' ', 'na'),]
   }
 
   #a quick final check to make sure the recode will be 1:1

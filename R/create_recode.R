@@ -58,12 +58,13 @@ create_recode = function(old_var, new_var, old_value = NULL, new_value = NULL, n
   }
 
 
-  ret = list(new_var = unique(new_var),
+  ret = structure(list(new_var = unique(new_var),
              old_var = unique(old_var),
              old_value = old_value,
              new_value = new_value,
              new_label = new_label,
              year_bounds = c(start_year, end_year),
-             var_label = var_label)
+             var_label = var_label), class =  'recode_instruction')
+
   return(ret)
 }
