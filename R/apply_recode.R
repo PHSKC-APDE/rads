@@ -74,7 +74,7 @@ apply_recode = function(data, year, recode, jump_scope = F){
 
   #construct recoding
   old = data[, get(recode$old_var)]
-  for(i in seq(recode$old_value)){
+  for(i in seq_along(recode$old_value)){
 
     #binning instructions
     if(bin_me & check_bin(recode$old_value[i])){
