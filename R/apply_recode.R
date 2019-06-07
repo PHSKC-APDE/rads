@@ -25,17 +25,21 @@
 #'
 apply_recode = function(data, year, recode, jump_scope = F, pad = T){
 
+  print(recode$old_var)
+
   #Work with data tables only. Prevents the need to copy the object to avoid data,table::setDT
   stopifnot(inherits(data, 'data.table'))
+
 
   #confirm old_var exists within the dataset
   if(!any(names(data) %in% recode$old_var)){
     stop(paste('Column', recode$old_var, 'not found in dataset'))
   }
+
   #check if the recode instructions are even relevant for the year question
-  #if not return all NAs
+  #if not return an error
   if(!data.table::between(year, recode$year_bounds[1], recode$year_bounds[2])){
-    return(rep(NA, nrow(data)))
+    stop(paste('Recode instructions not relevant for the given year', year, 'bounds:', recode$year_bounds[1], '-', recode$year_bounds[2]))
   }
 
   simple_rename = F
