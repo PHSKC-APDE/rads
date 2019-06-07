@@ -11,9 +11,6 @@
 #' @param recode list. Output of \code{create_recode} the provides the instructions on how to implement the recode
 #' @param jump_scope Logical. Determines whether or not this function takes advantage of data.table's modify by reference semantics
 #'                   or returns a single column data.table of nrow(data) to be cbinded on (presumably) later.
-#' @param pad Logical. If TRUE, the function will check to see if new values can be cleanly converted to numeric (no new NAs).
-#'                     If that check passes, the resulting factor (given relevant label settings) will be padded such that
-#'                     as.numeric(recode$new_value) == the output from apply_recode. Otherwise, the counting starts at one.
 #' @details
 #'
 #' @import data.table
@@ -23,13 +20,12 @@
 #' If a recode instruction is passed that is not relevant to the dataset (e.g. year), a column of NAs will be returned.
 #'
 #'
-apply_recode = function(data, year, recode, jump_scope = F, pad = T){
+apply_recode = function(data, year, recode, jump_scope = F){
 
   print(recode$old_var)
 
   #Work with data tables only. Prevents the need to copy the object to avoid data,table::setDT
   stopifnot(inherits(data, 'data.table'))
-
 
   #confirm old_var exists within the dataset
   if(!any(names(data) %in% recode$old_var)){
@@ -76,13 +72,6 @@ apply_recode = function(data, year, recode, jump_scope = F, pad = T){
 
   }
 
-  #if ret is a factor, convert to integer for the time being but save the levels information
-  fff = is.factor(ret)
-  if(fff){
-    factor_label = unique(data.table(levels = ret, int_id = as.numeric(ret)))
-    ret = as.numeric(ret)
-  }
-
   #construct recoding
   old = data[, get(recode$old_var)]
   for(i in seq(recode$old_value)){
@@ -123,43 +112,28 @@ apply_recode = function(data, year, recode, jump_scope = F, pad = T){
     }
   }
 
-  #if there are labels, make a factor
-  if(!simple_rename){
-    fls = data.table(levels = recode$new_label, int_id = recode$new_value)
-
-    if(!is.null(recode$new_label)) fls = fls[!is.null(levels),]
-
-    if(fff){
-      fls = rbind(fls, factor_label[!int_id %in% fls[, int_id]], fill = T)
-    }
-
-    fls = fls[int_id %in% ret, ]
-
-    if(nrow(fls)>0 & 'levels' %in% names(fls)){
-
-      #numerics can come as both numeric and as string-- particularly if read via spreadsheet
-      #if padding is on, and there is no change in shifting from numeric to integer
-      #add additional rows
-      na1 = sum(is.na(fls[,int_id]))
-      numint = as.numeric(fls[, int_id])
-      na2 = sum(is.na(numint))
-      chg = sum(numint - as.integer(fls[, int_id])) == 0
-      if(pad  & chg){
-        pads = data.table(int_id = seq(min(c(numint,0)), max(numint),1), levels = NA)
-        pads = pads[!int_id %in% numint,]
-
-        if(inherits(fls[, int_id], 'character')){
-          pads[, int_id := as.character(int_id)]
-        }
-        fls = rbind(fls, pads)
-
-      }
-
-      fls[is.na(levels), levels := int_id]
-      setorder(fls, int_id)
-      ret = factor(ret, fls[,int_id], fls[, levels], ordered = T)
-    }
+  #iapply labels
+  if(inherits(old, 'haven_labelled')){
+    old_labs = labelled::val_labels(old)
+    lab_names = names(old_labs)
+    old_labs = data.table(value = old_labs)
+    old_labs[, label := lab_names]
+  }else{
+    old_labs = data.table()
   }
+  if(!is.null(recode$new_label)){
+    new_labs = data.table(value = recode$new_value, label = recode$new_label)
+  }else{
+    new_labs = data.table()
+  }
+  labs = unique(rbind(old_labs, new_labs))
+
+  if(nrow(labs)>0){
+    v = labs[, value]
+    names(v) = labs[, label]
+    ret = labelled::labelled(ret, v)
+  }
+
   #prepare output
   if(jump_scope){
     data[, (recode$new_var) := ret]

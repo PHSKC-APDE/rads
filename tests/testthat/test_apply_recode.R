@@ -17,14 +17,6 @@ test_that('Simple recode of a numeric -> numeric',{
   expect_equal(r,data.table(b = 2))
 })
 
-#Simple recode of numeric -> factor
-test_that('Simple recode of a factor -> factor',{
-  a = create_recode('a','b',1, 2, 'b')
-  d = data.table::data.table(a = 1)
-  r = apply_recode(data = d, year = 2018, recode = a, jump_scope = F)
-  expect_equal(r,data.table(b = factor(2, 2, 'b')))
-})
-
 #Simple recode of logical -> logical
 test_that('Simple recode of a Logical -> Logical',{
   a = create_recode('a','b',TRUE, FALSE)
@@ -57,13 +49,13 @@ test_that('Recoding multiple values at once, offset NAs',{
   expect_equal(r,data.table(b = c(NA,'4',NA)))
 })
 
-test_that('Recoding multiple values at once, all non-NA, adding labels with padding',{
-  a = create_recode('a','b', old_value = 1:3, new_value = c('3','4','5'), new_label = c('a','b','c'))
-  d = data.table::data.table(a = 1:3)
-  r = apply_recode(data = d, year = 2018, recode = a, jump_scope = F)
-  expect_equal(as.numeric(r[, b]), 4:6)
-  expect_equal(as.character(r[,b]), c('a','b','c'))
-})
+# test_that('Recoding multiple values at once, all non-NA, adding labels with padding',{
+#   a = create_recode('a','b', old_value = 1:3, new_value = c('3','4','5'), new_label = c('a','b','c'))
+#   d = data.table::data.table(a = 1:3)
+#   r = apply_recode(data = d, year = 2018, recode = a, jump_scope = F)
+#   expect_equal(as.numeric(r[, b]), 4:6)
+#   expect_equal(as.character(r[,b]), c('a','b','c'))
+# })
 
 #Multiple 1 : 1 numeric recodes at once
 
