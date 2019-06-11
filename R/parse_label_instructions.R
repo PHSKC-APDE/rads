@@ -54,6 +54,11 @@ parse_label_instructions = function(crosswalk, year, variable_name_id = 1, data_
          Naughty vars:', naughty_vars))
   }
 
+  #don't calculate recode instructions for rows that are label only
+  droppies = cw[, .(.N == sum(is.na(data_value))), by = 'variable_name'][V1 == TRUE, variable_name]
+
+  cw = cw[!variable_name %in% droppies,]
+
   #convert to a list of recode instructions
   ret = lapply(unique(cw[, variable_name]), function(x) create_recode(old_var = x,
                                                                       new_var = x,

@@ -9,6 +9,14 @@ test_that('Simple recode of a character -> character',{
   expect_equal(r,data.table(b = 'b'))
 })
 
+#Test return as a vector
+test_that('Simple recode of a character -> character; return as vector',{
+  a = create_recode('a','b','a','b')
+  d = data.table::data.table(a = 'a')
+  r = apply_recode(data = d, year = 2018, recode = a, jump_scope = F, return_vector = T)
+  expect_equal(r,'b')
+})
+
 #Simple recode of numeric -> numeric
 test_that('Simple recode of a numeric -> numeric',{
   a = create_recode('a','b',1,2)
@@ -19,19 +27,29 @@ test_that('Simple recode of a numeric -> numeric',{
 
 #Simple recode of logical -> logical
 test_that('Simple recode of a Logical -> Logical',{
-  a = create_recode('a','b',TRUE, FALSE)
+  a = hysdataprep::create_recode('a','b',TRUE, FALSE)
   d = data.table::data.table(a = TRUE)
-  r = apply_recode(data = d, year = 2018, recode = a, jump_scope = F)
+  r = hysdataprep::apply_recode(data = d, year = 2018, recode = a, jump_scope = F)
   expect_equal(r,data.table(b = FALSE))
 })
 
 #Simple recode as a rename
 test_that('Simple recode of as a rename',{
-  a = create_recode('a','b')
+  a = hysdataprep::create_recode('a','b')
   d = data.table::data.table(a = 'canada')
-  r = apply_recode(data = d, year = 2018, recode = a, jump_scope = F)
+  r = hysdataprep::apply_recode(data = d, year = 2018, recode = a, jump_scope = F)
   expect_equal(r,data.table(b = 'canada'))
 })
+
+#NAs rather than null in old_value, new_value, and new_label
+test_that('Simple recode of as a rename-- NA to NA',{
+  a = hysdataprep::create_recode('a','b', NA, NA, NA)
+  d = data.table::data.table(a = 1:10)
+  r = hysdataprep::apply_recode(data = d, year = 2018, recode = a, jump_scope = F)
+  expect_equal(r,data.table(b = 1:10))
+})
+
+
 
 #Multiple character recodes at once
 test_that('Recoding multiple values at once, all non-NA',{
