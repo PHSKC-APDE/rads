@@ -115,12 +115,12 @@ apply_recode = function(data, year, recode, jump_scope = F, return_vector = F){
   if(inherits(old, 'haven_labelled')){
     old_labs = labelled::val_labels(old)
     lab_names = names(old_labs)
-    old_labs = data.table(value = as.character(old_labs), label = lab_names, type = 'old')
+    old_labs = unique(data.table(value = as.character(old_labs), label = lab_names, type = 'old'))
   }else{
     old_labs = data.table()
   }
   if(!is.null(recode$new_label)){
-    new_labs = data.table(value = as.character(recode$new_value), label = recode$new_label, type = 'new')
+    new_labs = unique(data.table(value = as.character(recode$new_value), label = recode$new_label, type = 'new'))
   }else{
     new_labs = data.table()
   }
@@ -137,14 +137,14 @@ apply_recode = function(data, year, recode, jump_scope = F, return_vector = F){
 
     labs = dcast(labs, value ~ type, value.var = 'label')
     labs[, label := new]
-    labs[is.na(label), label:= old]
+    if(nrow(old_labs)>0) labs[is.na(label), label:= old]
 
     #if the labels are all NA, replace with value
     if(nrow(labs) == nrow(labs[is.na(label)])){
       labs[,label:= value]
     }
 
-    v = as(labs[, value], class(ret))
+    v = as(labs[, value], class(ret[[1]]))
     names(v) = labs[, label]
     ret = labelled::labelled(ret, v)
   }

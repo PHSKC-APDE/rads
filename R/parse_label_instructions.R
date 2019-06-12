@@ -4,16 +4,13 @@
 #'
 #' @param crosswalk data.frame/data.table. Ideally unadulterated from a normal import (e.g. openxlsx::read_excel)
 #' @param year numeric. Identifies the year the crosswalk dataset represents
-#' @param variable_name_id numeric/integer. Column number that identifies the variable name in crosswalk
-#' @param data_value_id numeric/integer. Column number identifying the data value
-#' @param label_id numeric/integer. Column number identifying the variable and value labels. Variable labels are the rows without a data value.
 #' @param drop_na logical. Should labeling related to rows with "n/a" in the variable_name column be removed?
 #' @import data.table
 #' @export
 #'
 #' @return A set of recode instructions (e.g. list of lists)
 #'
-parse_label_instructions = function(crosswalk, year, variable_name_id = 1, data_value_id = 9, label_id = 10, drop_na = T){
+parse_label_instructions = function(crosswalk, year, drop_na = T){
 
   #check basic info
   stopifnot(inherits(crosswalk, 'data.frame'))
@@ -22,20 +19,9 @@ parse_label_instructions = function(crosswalk, year, variable_name_id = 1, data_
   cw = copy(crosswalk)
   setDT(cw)
 
-  #ensure that no out of range variables are provided
-  ids = c(variable_name_id, data_value_id, label_id)
-  id_vars = c('variable_name_id', 'data_value_id', 'label_id')
-  for(i in id_vars){
-    if(!is.numeric(get(i))){
-      stop(paste(i, 'is not numeric'))
-    }else if(!data.table::between(get(i), 0, length(names(cw)))){
-      stop(paste(i, 'value implies a column that does not exist'))
-    }
+  if(!all(c('variable_name', 'data_value', 'label') %in% names(cw))){
+    stop('One of `variable_name`, `data_value`, or `label` are missing')
   }
-
-  #condense cw
-  setnames(cw, names(cw)[ids], substr(id_vars, 1, nchar(id_vars)-3))
-  cw = cw[, .(variable_name, data_value, label)]
 
   #convert to format for recoding
   #carry through the variable name
