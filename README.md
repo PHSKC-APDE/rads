@@ -1,1 +1,1 @@
-# rads
+# R Automatic Data System (RADS)
