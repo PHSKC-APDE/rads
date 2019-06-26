@@ -1,0 +1,42 @@
+{
+  "@context": ["https://doi.org/10.5063/schema/codemeta-2.0", "http://schema.org"],
+  "@type": "SoftwareSourceCode",
+  "identifier": "rads",
+  "description": "More about what it does (maybe more than one line)\n    Use four spaces when indenting paragraphs within the Description.",
+  "name": "rads: What the Package Does (Title Case)",
+  "license": "What license is it under?",
+  "version": "0.1.0",
+  "programmingLanguage": {
+    "@type": "ComputerLanguage",
+    "name": "R",
+    "version": "3.6.0",
+    "url": "https://r-project.org"
+  },
+  "runtimePlatform": "R version 3.6.0 (2019-04-26)",
+  "author": [
+    {
+      "@type": "Person",
+      "givenName": ["Who", "wrote"],
+      "familyName": "it"
+    },
+    {
+      "@type": "Organization",
+      "name": {}
+    }
+  ],
+  "contributor": {},
+  "copyrightHolder": {},
+  "funder": {},
+  "maintainer": [
+    {
+      "@type": "Person",
+      "givenName": ["The", "package"],
+      "familyName": "maintainer",
+      "email": "yourself@somewhere.net"
+    }
+  ],
+  "softwareSuggestions": [],
+  "softwareRequirements": [],
+  "codeRepository": "https://github.com/PHSKC-APDE/rads",
+  "fileSize": "0.518KB"
+}
