@@ -13,14 +13,15 @@
 #' @param start_year Integer (or coercible). Year of the data that this recode starts to be relevant (inclusive). If blank, all years before `end_year` are assumed.
 #' @param end_year Integer (or coercible). Year of the data that this recode ends it relevance (inclusive). If blank, it indicates that the recode is valid for
 #'                 all years after `start_year`
-#' @param var_label character. Variable label
+#' @param var_label character. Variable label.
+#' @param simplify2numeric logical.
 #'mr roboto
 #' @export
 #'
 #' @return a list of lists to be parsed and applied in \code{apply_recode}
 #'
 #'
-create_recode = function(old_var, new_var, old_value = NULL, new_value = NULL, new_label = NULL, start_year = NULL, end_year = NULL, var_label = NULL){
+create_recode = function(old_var, new_var, old_value = NULL, new_value = NULL, new_label = NULL, start_year = NULL, end_year = NULL, var_label = NULL, simplify2numeric = TRUE){
 
   #make sure unique(old_var) and unique(new_var) are both length 1
   old_var = unique(old_var)
@@ -42,6 +43,7 @@ create_recode = function(old_var, new_var, old_value = NULL, new_value = NULL, n
 
   #confirm that old value and new value have the same length
   stopifnot(length(new_value) == length(old_value))
+  stopifnot(is.logical(simplify2numeric))
 
   #confirm that new label, if not blank, is the same length as the values
   all_blank = all(sapply(new_label, check_nan))
@@ -57,6 +59,17 @@ create_recode = function(old_var, new_var, old_value = NULL, new_value = NULL, n
     stop(paste('End:', end_year, 'Start:', start_year, '| start>end -- this is naughty'))
   }
 
+  #check to see if inputs can be simplified to be numeric
+  if(simplify2numeric){
+    ov = suppressWarnings(as.numeric(old_value))
+    nv = suppressWarnings(as.numeric(new_value))
+
+    #if no NAs were introduced by coercion, finish conversion
+    if(sum(is.na(ov)) == sum(is.na(old_value)) & sum(is.na(nv)) == sum(is.na(new_value))){
+      new_value = nv
+      old_value = ov
+    }
+  }
 
   ret = structure(list(new_var = unique(new_var),
              old_var = unique(old_var),

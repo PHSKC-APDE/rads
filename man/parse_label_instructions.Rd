@@ -4,19 +4,12 @@
 \alias{parse_label_instructions}
 \title{Parse Label Instructions}
 \usage{
-parse_label_instructions(crosswalk, year, variable_name_id = 1,
-  data_value_id = 9, label_id = 10, drop_na = T)
+parse_label_instructions(crosswalk, year, drop_na = T)
 }
 \arguments{
 \item{crosswalk}{data.frame/data.table. Ideally unadulterated from a normal import (e.g. openxlsx::read_excel)}
 
 \item{year}{numeric. Identifies the year the crosswalk dataset represents}
-
-\item{variable_name_id}{numeric/integer. Column number that identifies the variable name in crosswalk}
-
-\item{data_value_id}{numeric/integer. Column number identifying the data value}
-
-\item{label_id}{numeric/integer. Column number identifying the variable and value labels. Variable labels are the rows without a data value.}
 
 \item{drop_na}{logical. Should labeling related to rows with "n/a" in the variable_name column be removed?}
 }

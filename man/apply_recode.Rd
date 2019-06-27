@@ -4,7 +4,7 @@
 \alias{apply_recode}
 \title{Apply a recoding instruction}
 \usage{
-apply_recode(data, year, recode, jump_scope = F)
+apply_recode(data, year, recode, jump_scope = F, return_vector = F)
 }
 \arguments{
 \item{data}{data.table.}
@@ -15,6 +15,8 @@ apply_recode(data, year, recode, jump_scope = F)
 
 \item{jump_scope}{Logical. Determines whether or not this function takes advantage of data.table's modify by reference semantics
 or returns a single column data.table of nrow(data) to be cbinded on (presumably) later.}
+
+\item{return_vector}{Logical. Only matters if jump_scope is FALSE. Determines the return type (vector if T, data.table if F)}
 }
 \value{
 a new column with the recoded values whose class is dependent on the recode instructions.

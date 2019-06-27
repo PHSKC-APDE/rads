@@ -38,9 +38,10 @@ parse_recode_instructions = function(recode, catch_NAs = T){
   recode = copy(recode)
   setDT(recode)
 
-  recode[old_value == 'NA', old_value := NA]
-  recode[new_value == 'NA', new_value := NA]
-
+  if(catch_NAs){
+    recode[old_value == 'NA', old_value := NA]
+    recode[new_value == 'NA', new_value := NA]
+  }
   #compute the recode instructions
   rec_instruct = recode[, (list(list(create_recode(old_var, new_var, old_value, new_value, new_label, start_year, end_year)))),
                         by = c('old_var', 'new_var', 'start_year', 'end_year')][, V1]

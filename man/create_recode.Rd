@@ -6,7 +6,7 @@
 \usage{
 create_recode(old_var, new_var, old_value = NULL, new_value = NULL,
   new_label = NULL, start_year = NULL, end_year = NULL,
-  var_label = NULL)
+  var_label = NULL, simplify2numeric = TRUE)
 }
 \arguments{
 \item{old_var}{character. Column in the dataset containing the values to be recoded}
@@ -27,7 +27,9 @@ If blank, it helps identify a simpler rename operation.}
 \item{end_year}{Integer (or coercible). Year of the data that this recode ends it relevance (inclusive). If blank, it indicates that the recode is valid for
 all years after `start_year`}
 
-\item{var_label}{character. Variable label
+\item{var_label}{character. Variable label.}
+
+\item{simplify2numeric}{logical.
 mr roboto}
 }
 \value{

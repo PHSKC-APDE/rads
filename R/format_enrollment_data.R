@@ -72,6 +72,9 @@ format_enrollment_data = function(input, district_code, school_code, grade, m_ai
   #keep only rows that have good enough bindings
   input = na.omit(input, c('district_code', 'school_code', 'grade'))
 
+  #remove naughty grade designations
+  input = input[!grade %in% c('DID NOT REPORT', 'Open/NoOct1Enrl', 'Open/NoP105Enrl')]
+
   #Reshape long
   input = melt(input, id.vars = c('district_code', 'school_code', 'grade'), variable.factor = F, variable.name = 'sex_race', value.name = 'n_students')
   input[, c('sex', 'race') := tstrsplit(sex_race, split = '_')]

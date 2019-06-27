@@ -109,46 +109,46 @@ apply_recode = function(data, year, recode, jump_scope = F, return_vector = F){
     }else{ #normal recoding
       ret[which(old %in% recode$old_value[i])] = recode$new_value[i]
     }
-  }
 
-  #apply labels
-  if(inherits(old, 'haven_labelled')){
-    old_labs = labelled::val_labels(old)
-    lab_names = names(old_labs)
-    old_labs = unique(data.table(value = as.character(old_labs), label = lab_names, type = 'old'))
-  }else{
-    old_labs = data.table()
-  }
-  if(!is.null(recode$new_label)){
-    new_labs = unique(data.table(value = as.character(recode$new_value), label = recode$new_label, type = 'new'))
-  }else{
-    new_labs = data.table()
-  }
 
-  #identify duplicates in labeling. Use new unless its NA and old is not
-  labs = unique(rbind(old_labs, new_labs))
-
-  if(nrow(labs)>0 & !simple_rename){
-
-    badlabs = labs[type == 'new', .N, by = 'value'][N>1, value]
-    if(length(badlabs) > 0 ){
-      stop(paste('The following values are mapped to more than new label:', paste0(badlabs, collapse = ' | ')))
+    #apply labels
+    if(inherits(old, 'haven_labelled')){
+      old_labs = labelled::val_labels(old)
+      lab_names = names(old_labs)
+      old_labs = unique(data.table(value = as.character(old_labs), label = lab_names, type = 'old'))
+    }else{
+      old_labs = data.table()
+    }
+    if(!is.null(recode$new_label)){
+      new_labs = unique(data.table(value = as.character(recode$new_value), label = recode$new_label, type = 'new'))
+    }else{
+      new_labs = data.table()
     }
 
-    labs = dcast(labs, value ~ type, value.var = 'label')
-    labs[, label := new]
-    if(nrow(old_labs)>0) labs[is.na(label), label:= old]
+    #identify duplicates in labeling. Use new unless its NA and old is not
+    labs = unique(rbind(old_labs, new_labs))
 
-    #if the labels are all NA, replace with value
-    if(nrow(labs) == nrow(labs[is.na(label)])){
-      labs[,label:= value]
+    if(nrow(labs)>0 & !simple_rename){
+
+      badlabs = labs[type == 'new', .N, by = 'value'][N>1, value]
+      if(length(badlabs) > 0 ){
+        stop(paste('The following values are mapped to more than new label:', paste0(badlabs, collapse = ' | ')))
+      }
+
+      labs = dcast(labs, value ~ type, value.var = 'label')
+      labs[, label := new]
+      if(nrow(old_labs)>0) labs[is.na(label), label:= old]
+
+      #if the labels are all NA, replace with value
+      if(nrow(labs) == nrow(labs[is.na(label)])){
+        labs[,label:= value]
+      }
+
+      v = as(labs[, value], class(ret[[1]]))
+      names(v) = labs[, label]
+      ret = labelled::labelled(ret, v)
     }
-
-    v = as(labs[, value], class(ret[[1]]))
-    names(v) = labs[, label]
-    ret = labelled::labelled(ret, v)
   }
-
   #prepare output
   if(jump_scope){
     data[, (recode$new_var) := ret]
