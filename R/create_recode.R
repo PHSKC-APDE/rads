@@ -14,7 +14,7 @@
 #' @param end_year Integer (or coercible). Year of the data that this recode ends it relevance (inclusive). If blank, it indicates that the recode is valid for
 #'                 all years after `start_year`
 #' @param var_label character. Variable label.
-#' @param simplify2numeric logical.
+#' @param simplify2numeric logical. Should the values in old_value and new_value be simplified to numeric if possible (e.g. no introduced NAs)?
 #'mr roboto
 #' @export
 #'

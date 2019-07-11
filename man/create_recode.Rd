@@ -29,7 +29,7 @@ all years after `start_year`}
 
 \item{var_label}{character. Variable label.}
 
-\item{simplify2numeric}{logical.
+\item{simplify2numeric}{logical. Should the values in old_value and new_value be simplified to numeric if possible (e.g. no introduced NAs)?
 mr roboto}
 }
 \value{

@@ -73,6 +73,25 @@ apply_recode = function(data, year, recode, jump_scope = F, return_vector = F){
 
   #construct recoding
   old = data[, get(recode$old_var)]
+
+  #coerce old to be the class of the specified old values
+  #assuming no new NAs
+  if(class(old) != class(recode$old_value)){
+    old_class = class(old)
+
+    start_na = sum(is.na(old))
+    old = as(old, class(recode$old_value))
+    end_na = sum(is.na(old))
+
+    if(end_na > start_na){
+      stop(paste('Could not cleanly coerce column --', recode$old_var, '-- to', class(recode$old_value), 'for recoding. Check mismatch between old_var and class(old_value) in recode'))
+    }
+
+    #coerce ret as well
+    ret = as(ret, class(recode$old_value))
+
+  }
+
   for(i in seq_along(recode$old_value)){
 
     #binning instructions
@@ -109,46 +128,58 @@ apply_recode = function(data, year, recode, jump_scope = F, return_vector = F){
     }else{ #normal recoding
       ret[which(old %in% recode$old_value[i])] = recode$new_value[i]
     }
-
-
-    #apply labels
-    if(inherits(old, 'haven_labelled')){
-      old_labs = labelled::val_labels(old)
-      lab_names = names(old_labs)
-      old_labs = unique(data.table(value = as.character(old_labs), label = lab_names, type = 'old'))
-    }else{
-      old_labs = data.table()
-    }
-    if(!is.null(recode$new_label)){
-      new_labs = unique(data.table(value = as.character(recode$new_value), label = recode$new_label, type = 'new'))
-    }else{
-      new_labs = data.table()
-    }
-
-    #identify duplicates in labeling. Use new unless its NA and old is not
-    labs = unique(rbind(old_labs, new_labs))
-
-    if(nrow(labs)>0 & !simple_rename){
-
-      badlabs = labs[type == 'new', .N, by = 'value'][N>1, value]
-      if(length(badlabs) > 0 ){
-        stop(paste('The following values are mapped to more than new label:', paste0(badlabs, collapse = ' | ')))
-      }
-
-      labs = dcast(labs, value ~ type, value.var = 'label')
-      labs[, label := new]
-      if(nrow(old_labs)>0) labs[is.na(label), label:= old]
-
-      #if the labels are all NA, replace with value
-      if(nrow(labs) == nrow(labs[is.na(label)])){
-        labs[,label:= value]
-      }
-
-      v = as(labs[, value], class(ret[[1]]))
-      names(v) = labs[, label]
-      ret = labelled::labelled(ret, v)
-    }
   }
+
+  #apply labels if needed
+  if(!is.null(recode$new_label)){
+    new_labs = unique(data.table(value = recode$new_value, label = as.character(recode$new_label), type = 'new'))
+    valclass = class(recode$new_value)
+  }else{
+    new_labs = data.table()
+    valclass = 'numeric'
+  }
+  if(inherits(data[, get(recode$old_var)], 'factor')){
+    ov = recode$old_var
+    old_labs = unique(data[, .(value = as(get(ov), valclass), label = as.character(get(ov)), type = 'old')])
+  }else{
+    old_labs = data.table()
+  }
+  #identify duplicates in labeling. Use new unless its NA and old is not
+  labs = unique(rbind(old_labs, new_labs))
+
+  if(nrow(labs)>0 & !simple_rename){
+
+    badlabs = labs[type == 'new', .N, by = 'value'][N>1, value]
+    if(length(badlabs) > 0 ){
+      stop(paste('The following values are mapped to more than new label:', paste0(badlabs, collapse = ' | ')))
+    }
+    doublabs = labs[value %in% ret, .N, by = 'label'][N>1,label]
+    if(length(doublabs) > 0){
+      stop(paste('The following pairs of values:labels indicate duplicate mappings.',
+                 'This is likely caused by a partial overwrite of a variable (e.g. old_var == new_var).',
+                 paste(labs[label %in% doublabs, paste0(value, ':', label)], collapse = ", ")))
+    }
+
+
+    labs = dcast(labs, value ~ type, value.var = 'label')
+    labs[, label := new]
+    if(nrow(old_labs)>0) labs[is.na(label), label:= old]
+
+    #if the labels are all NA, replace with value
+    if(nrow(labs) == nrow(labs[is.na(label)])){
+      labs[,label:= value]
+    }
+
+    #keep only labels that are represented in the data
+    labs = labs[value %in% unique(ret), ]
+    setorder(labs, value)
+    #throw an error if the labels are mapping two numbers to the same value
+    #if(any())
+
+    ret = lfactors::lfactor(ret, labs[,value], labs[, label])
+
+  }
+
   #prepare output
   if(jump_scope){
     data[, (recode$new_var) := ret]
