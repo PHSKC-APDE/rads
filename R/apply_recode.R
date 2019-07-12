@@ -76,7 +76,7 @@ apply_recode = function(data, year, recode, jump_scope = F, return_vector = F){
 
   #coerce old to be the class of the specified old values
   #assuming no new NAs
-  if(class(old) != class(recode$old_value)){
+  if(!inherits(old, class(recode$old_value))){
     old_class = class(old)
 
     start_na = sum(is.na(old))
@@ -153,17 +153,12 @@ apply_recode = function(data, year, recode, jump_scope = F, return_vector = F){
     if(length(badlabs) > 0 ){
       stop(paste('The following values are mapped to more than new label:', paste0(badlabs, collapse = ' | ')))
     }
-    doublabs = labs[value %in% ret, .N, by = 'label'][N>1,label]
-    if(length(doublabs) > 0){
-      stop(paste('The following pairs of values:labels indicate duplicate mappings.',
-                 'This is likely caused by a partial overwrite of a variable (e.g. old_var == new_var).',
-                 paste(labs[label %in% doublabs, paste0(value, ':', label)], collapse = ", ")))
-    }
-
 
     labs = dcast(labs, value ~ type, value.var = 'label')
     labs[, label := new]
-    if(nrow(old_labs)>0) labs[is.na(label), label:= old]
+
+    #only attempt to carry over old labels if replacing an existing variable
+    if(nrow(old_labs)>0 & (recode$new_var == recode$old_var)) labs[is.na(label), label:= old]
 
     #if the labels are all NA, replace with value
     if(nrow(labs) == nrow(labs[is.na(label)])){
@@ -176,8 +171,20 @@ apply_recode = function(data, year, recode, jump_scope = F, return_vector = F){
     #throw an error if the labels are mapping two numbers to the same value
     #if(any())
 
-    ret = lfactors::lfactor(ret, labs[,value], labs[, label])
+    #drop value:label pair of NA:NA
+    labs = labs[!(is.na(value) & is.na(label)),]
 
+    doublabs = labs[, .N, by = 'label'][N>1,label]
+    if(length(doublabs) > 0){
+      stop(paste('The following pairs of values:labels indicate duplicate mappings.',
+                 'This is likely caused by a partial overwrite of a variable (e.g. old_var == new_var).',
+                 paste(labs[label %in% doublabs, paste0(value, ':', label)], collapse = ", ")))
+    }
+
+    #if a numeric with labels, transfer to numeric. Otherwise leave it as numeric, character or whatever.
+    if(is.numeric(ret)){
+      ret = lfactors::lfactor(ret, labs[,value], labs[, label])
+    }
   }
 
   #prepare output
