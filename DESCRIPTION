@@ -1,17 +1,16 @@
 Package: hysdataprep
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Recodes and HYS Prep
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Author: Daniel Casey
+Maintainer: Daniel Casey <dcasey@kingcounty.gov>
+Description: A series of functions to help process the HYS dataset and manage recoding
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
 Imports:
     data.table,
-	labelled
+    labelled
 Suggests: 
     testthat
 RoxygenNote: 6.1.1

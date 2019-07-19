@@ -18,7 +18,7 @@
 #' @export
 #'
 #' @return a new column with the recoded values whose class is dependent on the recode instructions.
-#' If a recode instruction is passed that is not relevant to the dataset (e.g. year), a column of NAs will be returned.
+#'
 #'
 #'
 apply_recode = function(data, year, recode, jump_scope = F, return_vector = F){
@@ -69,66 +69,100 @@ apply_recode = function(data, year, recode, jump_scope = F, return_vector = F){
       }
     }
 
-  }
 
-  #construct recoding
-  old = data[, get(recode$old_var)]
-  for(i in seq_along(recode$old_value)){
 
-    #binning instructions
-    if(bin_me & check_bin(recode$old_value[i])){
+    #construct recoding
+    old = data[, get(recode$old_var)]
 
-      #parse the instructions for recoding
-      left = substr(recode$old_value[i],1,1)
-      right = substr(recode$old_value[i],nchar(recode$old_value[i]),nchar(recode$old_value[i]))
-      inner = substr(recode$old_value[i], 2, nchar(recode$old_value[i]) - 1)
+    #coerce old to be the class of the specified old values
+    #assuming no new NAs
+    if(!inherits(old[[1]], class(recode$old_value))){
+      old_class = class(old)
 
-      minmax = strsplit(inner, ',', fixed = T)
+      start_na = sum(is.na(old))
+      old = as(old, class(recode$old_value))
+      end_na = sum(is.na(old))
 
-      if(length(minmax) != 1){
-        stop(paste0('Expecting one comma `,` in the old_value recode instructions. Found:' ,length(minmax)))
+      if(end_na > start_na){
+        stop(paste('Could not cleanly coerce column --', recode$old_var, '-- to', class(recode$old_value), 'for recoding. Check mismatch between old_var and class(old_value) in recode'))
       }
 
-      minmax = as.numeric(trimws(minmax[[1]]))
+      #coerce ret as well
+      ret = as(ret, class(recode$old_value))
 
-      #check if the coercian created any errors. if so, stop
-      if(any(is.na(minmax))){
-        stop('Binning operation coerced to NA bounds')
+      #strip lingering labels
+      if(any(old_class %in% 'factor')){
+        attr(ret, 'levels') <- NULL
       }
 
-      if(left == '(' & right == ')'){
-        ret[which(old > minmax[1] & old< minmax[2])] = recode$new_value[i]
-      }else if(left == '[' & right == ')'){
-        ret[which(old >= minmax[1] & old< minmax[2])] = recode$new_value[i]
-      }else if(left == '(' & right == ']'){
-        ret[which(old > minmax[1] & old <= minmax[2])] = recode$new_value[i]
-      }else{
-        ret[which(old >= minmax[1] & old<= minmax[2])] = recode$new_value[i]
-      }
-
-    }else{ #normal recoding
-      ret[which(old %in% recode$old_value[i])] = recode$new_value[i]
     }
 
+    for(i in seq_along(recode$old_value)){
 
-    #apply labels
-    if(inherits(old, 'haven_labelled')){
-      old_labs = labelled::val_labels(old)
-      lab_names = names(old_labs)
-      old_labs = unique(data.table(value = as.character(old_labs), label = lab_names, type = 'old'))
+      #binning instructions
+      if(bin_me & check_bin(recode$old_value[i])){
+
+        #parse the instructions for recoding
+        left = substr(recode$old_value[i],1,1)
+        right = substr(recode$old_value[i],nchar(recode$old_value[i]),nchar(recode$old_value[i]))
+        inner = substr(recode$old_value[i], 2, nchar(recode$old_value[i]) - 1)
+
+        minmax = strsplit(inner, ',', fixed = T)
+
+        if(length(minmax) != 1){
+          stop(paste0('Expecting one comma `,` in the old_value recode instructions. Found:' ,length(minmax)))
+        }
+
+        minmax = as.numeric(trimws(minmax[[1]]))
+
+        #check if the coercian created any errors. if so, stop
+        if(any(is.na(minmax))){
+          stop('Binning operation coerced to NA bounds')
+        }
+
+        if(left == '(' & right == ')'){
+          ret[which(old > minmax[1] & old< minmax[2])] = recode$new_value[i]
+        }else if(left == '[' & right == ')'){
+          ret[which(old >= minmax[1] & old< minmax[2])] = recode$new_value[i]
+        }else if(left == '(' & right == ']'){
+          ret[which(old > minmax[1] & old <= minmax[2])] = recode$new_value[i]
+        }else{
+          ret[which(old >= minmax[1] & old<= minmax[2])] = recode$new_value[i]
+        }
+
+      }else{ #normal recoding
+        ret[which(old %in% recode$old_value[i])] = recode$new_value[i]
+      }
+    }
+
+    #apply labels if needed
+    if(!is.null(recode$new_label)){
+      new_labs = unique(data.table(value = recode$new_value, label = as.character(recode$new_label), type = 'new'))
+      valclass = class(recode$new_value)
+    }else{
+      new_labs = data.table()
+      valclass = 'numeric'
+    }
+    if(is.labelled(data[1, get(recode$old_var)]) | is.factor(data[1, get(recode$old_var)])){
+      ov = recode$old_var
+      ifact = is.factor(data[1, get(recode$old_var)])
+      #Extract values and labels pair
+      if(ifact){
+        old_labs = unique(data[, .(value = as(get(ov), valclass),
+                                 label = as.character(get(ov)),
+                                                type = 'old')])
+      }else{
+        old_labs = data.table(value = val_labels(data[1, get(recode$old_var)]),
+                              label = names(val_labels(data[1, get(recode$old_var)])),
+                              type = 'old')
+      }
     }else{
       old_labs = data.table()
     }
-    if(!is.null(recode$new_label)){
-      new_labs = unique(data.table(value = as.character(recode$new_value), label = recode$new_label, type = 'new'))
-    }else{
-      new_labs = data.table()
-    }
-
     #identify duplicates in labeling. Use new unless its NA and old is not
     labs = unique(rbind(old_labs, new_labs))
 
-    if(nrow(labs)>0 & !simple_rename){
+    if(nrow(labs)>0){
 
       badlabs = labs[type == 'new', .N, by = 'value'][N>1, value]
       if(length(badlabs) > 0 ){
@@ -137,16 +171,37 @@ apply_recode = function(data, year, recode, jump_scope = F, return_vector = F){
 
       labs = dcast(labs, value ~ type, value.var = 'label')
       labs[, label := new]
-      if(nrow(old_labs)>0) labs[is.na(label), label:= old]
+
+      #only attempt to carry over old labels if replacing an existing variable
+      if(nrow(old_labs)>0 & (recode$new_var == recode$old_var)) labs[is.na(label), label:= old]
 
       #if the labels are all NA, replace with value
       if(nrow(labs) == nrow(labs[is.na(label)])){
         labs[,label:= value]
       }
 
-      v = as(labs[, value], class(ret[[1]]))
-      names(v) = labs[, label]
-      ret = labelled::labelled(ret, v)
+      #keep only labels that are represented in the data
+      labs = labs[value %in% unique(ret), ]
+      setorder(labs, value)
+      #throw an error if the labels are mapping two numbers to the same value
+      #if(any())
+
+      #drop value:label pair of NA:NA
+      labs = labs[!(is.na(value) & is.na(label)),]
+
+      doublabs = labs[, .N, by = 'label'][N>1,label]
+      if(length(doublabs) > 0){
+        stop(paste('The following pairs of values:labels indicate duplicate mappings.',
+                   'This is likely caused by a partial overwrite of a variable (e.g. old_var == new_var).',
+                   paste(labs[label %in% doublabs, paste0(value, ':', label)], collapse = ", ")))
+      }
+
+      #if a numeric with labels, transfer to numeric. Otherwise leave it as numeric, character or whatever.
+      if(is.numeric(ret)){
+        new_labs = labs[,value]
+        names(new_labs) = labs[, label]
+        ret = labelled::labelled(ret, new_labs)
+      }
     }
   }
   #prepare output
