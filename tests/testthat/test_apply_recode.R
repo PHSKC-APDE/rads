@@ -1,5 +1,6 @@
 library('testthat')
 library('data.table')
+library('labelled')
 
 #Simple recode of character -> character
 test_that('Simple recode of a character -> character',{
