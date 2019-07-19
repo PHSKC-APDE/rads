@@ -77,7 +77,7 @@ apply_recode = function(data, year, recode, jump_scope = F, return_vector = F){
 
     #coerce old to be the class of the specified old values
     #assuming no new NAs
-    if(!inherits(old[[1]], class(recode$old_value))){
+    if(!inherits(old[[1]], class(recode$old_value)) & !bin_me){
       old_class = class(old)
 
       start_na = sum(is.na(old))
