@@ -20,7 +20,6 @@ or returns a single column data.table of nrow(data) to be cbinded on (presumably
 }
 \value{
 a new column with the recoded values whose class is dependent on the recode instructions.
-If a recode instruction is passed that is not relevant to the dataset (e.g. year), a column of NAs will be returned.
 }
 \description{
 Given the output from \code{create_recode}, a dataset, and a few additional instructions, this function implements a recode.
