@@ -28,25 +28,25 @@ test_that('Simple recode of a numeric -> numeric',{
 
 #Simple recode of logical -> logical
 test_that('Simple recode of a Logical -> Logical',{
-  a = hysdataprep::create_recode('a','b',TRUE, FALSE, simplify2numeric = F)
+  a = create_recode('a','b',TRUE, FALSE, simplify2numeric = F)
   d = data.table::data.table(a = TRUE)
-  r = hysdataprep::apply_recode(data = d, year = 2018, recode = a, jump_scope = F)
+  r = apply_recode(data = d, year = 2018, recode = a, jump_scope = F)
   expect_equal(r,data.table(b = FALSE))
 })
 
 #Simple recode as a rename
 test_that('Simple recode of as a rename',{
-  a = hysdataprep::create_recode('a','b')
+  a = create_recode('a','b')
   d = data.table::data.table(a = 'canada')
-  r = hysdataprep::apply_recode(data = d, year = 2018, recode = a, jump_scope = F)
+  r = apply_recode(data = d, year = 2018, recode = a, jump_scope = F)
   expect_equal(r,data.table(b = 'canada'))
 })
 
 #NAs rather than null in old_value, new_value, and new_label
 test_that('Simple recode of as a rename-- NA to NA',{
-  a = hysdataprep::create_recode('a','b', NA, NA, NA)
+  a = create_recode('a','b', NA, NA, NA)
   d = data.table::data.table(a = 1:10)
-  r = hysdataprep::apply_recode(data = d, year = 2018, recode = a, jump_scope = F)
+  r = apply_recode(data = d, year = 2018, recode = a, jump_scope = F)
   expect_equal(r,data.table(b = 1:10))
 })
 
@@ -113,5 +113,20 @@ test_that('Labelled in Labelled out with shifting values',{
   r = apply_recode(data = d, year = 2018, recode = a, jump_scope = F, return_vector = T)
   expect_equal(labelled(4:6, c(d = 4, e = 5, f = 6)), r)
 })
+
+test_that('binned recodes',{
+  a = create_recode('a', 'a', old_value = c('(0,1]', '[2 , 5]', '[6 ,8)', 8, '(8, 10]'), new_value = c(1,2,3,4,5))
+  d = data.table(a = 1:10)
+  r = apply_recode(data = d, year = 2018, recode = a, jump_scope = F, return_vector = T)
+  expect_equal(c(1,2,2,2,2,3,3,4,5,5), r)
+})
+
+test_that('improperly specified binned recodes are warned recodes',{
+  a = create_recode('a', 'a', old_value = c('[0-1]'), new_value = 2)
+  d = data.table(a = 1)
+  expect_warning(apply_recode(data = d, year = 2018, recode = a, jump_scope = F, return_vector = T),
+               'Did you mean')
+})
+
 
 

@@ -1,16 +1,17 @@
-Package: hysdataprep
+Package: apdeRecodes
 Type: Package
 Title: Recodes and HYS Prep
 Version: 0.1.0
 Author: Daniel Casey
 Maintainer: Daniel Casey <dcasey@kingcounty.gov>
-Description: A series of functions to help process the HYS dataset and manage recoding
+Description: A series of functions to help recoding survey data.
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
 Imports:
     data.table,
-    labelled
+    labelled,
+    methods
 Suggests: 
     testthat
 RoxygenNote: 6.1.1
