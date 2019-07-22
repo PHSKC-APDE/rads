@@ -1,4 +1,4 @@
 library(testthat)
-library(hysdataprep)
+library(apdeRecodes)
 
-test_check("hysdataprep")
+test_check("apdeRecodes")
