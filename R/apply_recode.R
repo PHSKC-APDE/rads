@@ -145,7 +145,7 @@ apply_recode = function(data, year, recode, jump_scope = F, return_vector = F){
       new_labs = data.table()
       valclass = 'numeric'
     }
-    if(labelled::is.labelled(data[1, get(recode$old_var)]) | is.factor(data[1, get(recode$old_var)])){
+    if(length(labelled::val_labels(data[1, get(recode$old_var)]))>0 | is.factor(data[1, get(recode$old_var)])){
       ov = recode$old_var
       ifact = is.factor(data[1, get(recode$old_var)])
       #Extract values and labels pair
@@ -153,7 +153,7 @@ apply_recode = function(data, year, recode, jump_scope = F, return_vector = F){
         old_labs = unique(data[, .(value = methods::as(get(ov), valclass),
                                  label = as.character(get(ov)),
                                                 type = 'old')])
-      }else{
+      }else {
         old_labs = data.table(value = labelled::val_labels(data[1, get(recode$old_var)]),
                               label = names(labelled::val_labels(data[1, get(recode$old_var)])),
                               type = 'old')
