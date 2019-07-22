@@ -128,5 +128,14 @@ test_that('improperly specified binned recodes are warned recodes',{
                'Did you mean')
 })
 
+test_that('Recode starting data without labels and then recode on top of that',{
+  d = data.table(a = 1:3)
+  r1 = create_recode('a', 'a', old_value = 1, new_value = NA, new_label = NA)
+  r2 = create_recode('a', 'b', old_value = c(2:3), new_value = 0:1, new_label = c('No','Yes'))
+  apply_recode(data = d, year = 2018, recode = r1, jump_scope = T, return_vector = T)
+  res = apply_recode(data = d, year = 2018, recode = r2, jump_scope = F, return_vector = T)
+  expect_equal(res, labelled::labelled(c(NA, 0, 1), setNames(c(0, 1), c('No', 'Yes'))))
+})
+
 
 
