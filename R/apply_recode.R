@@ -7,7 +7,6 @@
 #' but recoding with factors will likely break.
 #'
 #' @param data data.table.
-#' @param year numeric or integer. Identifies the year the dataset represents. Helps sort out whether a recode should be applied
 #' @param recode list. Output of \code{create_recode} the provides the instructions on how to implement the recode
 #' @param jump_scope Logical. Determines whether or not this function takes advantage of data.table's modify by reference semantics
 #'                   or returns a single column data.table of nrow(data) to be cbinded on (presumably) later.
@@ -22,7 +21,7 @@
 #'
 #'
 #'
-apply_recode = function(data, year, recode, jump_scope = F, return_vector = F){
+apply_recode = function(data, recode, jump_scope = F, return_vector = F){
 
   #Work with data tables only. Prevents the need to copy the object to avoid data,table::setDT
   stopifnot(inherits(data, 'data.table'))
@@ -30,12 +29,6 @@ apply_recode = function(data, year, recode, jump_scope = F, return_vector = F){
   #confirm old_var exists within the dataset
   if(!any(names(data) %in% recode$old_var)){
     stop(paste('Column', recode$old_var, 'not found in dataset'))
-  }
-
-  #check if the recode instructions are even relevant for the year question
-  #if not return an error
-  if(!data.table::between(year, recode$year_bounds[1], recode$year_bounds[2])){
-    stop(paste('Recode instructions not relevant for the given year', year, 'bounds:', recode$year_bounds[1], '-', recode$year_bounds[2]))
   }
 
   simple_rename = F
