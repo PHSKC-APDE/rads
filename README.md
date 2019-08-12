@@ -1,7 +1,5 @@
 # R Automatic Data System (RADS)
 
-## RAD(s)ical goals
-
 ## Design Principles
 1. In general, follow the guidelines described by [ROpenSci](https://devguide.ropensci.org/building.html)
 2. Primary data frame manipulation is through `data.table` and its associated syntax.
@@ -28,6 +26,13 @@ exception is using `data.table`'s modify on reference semantics as described in 
 10. Use [checkmate](https://cran.r-project.org/web/packages/checkmate/checkmate.pdf) (or similar) to do argument parsing/checking
 
 11. Use [validate](https://cran.r-project.org/web/packages/validate/vignettes/introduction.html) to help with dataset validity/stability.
+
+## Work Plan
+1. Define Scope
+2. Identify modules
+3. Create and test modules
+4. Conduct "all-up" testing
+5. ...
 
 ## Relevant resources for package construction
 1. https://devguide.ropensci.org/building.html
