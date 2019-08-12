@@ -23,6 +23,12 @@ exception is using `data.table`'s modify on reference semantics as described in 
 
 8. User-written functions should `package::function` notation when calling functions from other packages. Or in short, we should be as R-check friendly as possible. One purposeful exception can be related to `data.table`'s (and presumably `dplyr`) non-standard evaluation (NSE) framework (e.g. selecting a column like `dt[, mycolumn]` instead of `df[, 'mycolumn']`). Because this package is unlikely to be used outside of APDE, converting the NSE to be R-check friendly seems like more trouble than its worth. See ['Dealing with “undefined global functions or variables”'](https://cran.r-project.org/web/packages/data.table/vignettes/datatable-importing.html)
 
+9. All non-trivial functions should be accompanied by tests using the `testthat` package to ensure functionality stability.
+
+10. Use [checkmate](https://cran.r-project.org/web/packages/checkmate/checkmate.pdf) (or similar) to do argument parsing/checking
+
+11. Use [validate](https://cran.r-project.org/web/packages/validate/vignettes/introduction.html) to help with dataset validity/stability.
+
 ## Relevant resources for package construction
 1. https://devguide.ropensci.org/building.html
 2. http://r-pkgs.had.co.nz/
