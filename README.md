@@ -21,7 +21,7 @@ exception is using `data.table`'s modify on reference semantics as described in 
 
 7. Each function should be in its own `.R` file. Small groups of utility functions can be combined within the same `.R` file where relevant.
 
-8. User-written functions should `package::function` notation when calling functions from other packages. Or in short, we should be as R-check friendly as possible. `data.table`'s (and presumably `dplyr`) non-standard evaluation framework (e.g. selecting a column like `dt[, mycolumn]` instead of `df[, 'mycolumn']` sometimes causes issue with R check. For more information, see ['Dealing with “undefined global functions or variables”'](https://cran.r-project.org/web/packages/data.table/vignettes/datatable-importing.html)
+8. User-written functions should `package::function` notation when calling functions from other packages. Or in short, we should be as R-check friendly as possible. One purposeful exception can be related to `data.table`'s (and presumably `dplyr`) non-standard evaluation (NSE) framework (e.g. selecting a column like `dt[, mycolumn]` instead of `df[, 'mycolumn']`). Because this package is unlikely to be used outside of APDE, converting the NSE to be R-check friendly seems like more trouble than its worth. See ['Dealing with “undefined global functions or variables”'](https://cran.r-project.org/web/packages/data.table/vignettes/datatable-importing.html)
 
 ## Relevant resources for package construction
 1. https://devguide.ropensci.org/building.html
