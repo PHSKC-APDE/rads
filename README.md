@@ -1,7 +1,5 @@
 # R Automatic Data System (RADS)
 
-<img src="https://raw.githubusercontent.com/PHSKC-APDE/rads/master/Radiation_warning_symbol.png?token=AL2FPANBBXJ5MVJDGGTGDH25LXFFK" alt="drawing" width="200"/>
-
 ## Design Principles
 1. In general, follow the guidelines described by [ROpenSci](https://devguide.ropensci.org/building.html)
 2. Primary data frame manipulation is through `data.table` and its associated syntax.
