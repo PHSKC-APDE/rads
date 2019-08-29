@@ -54,7 +54,7 @@ get_data <- function(dataset, cols = NA, year = 2018, ...){
 #' \dontrun{
 #'  get_data_hys(dataset = 'hys', cols = NA, year = c(2016, 2018), weight_variable = 'kcfinalwt')
 #' }
-get_data.hys <- function(dataset, cols = NA, year = 2018, weight_variable = 'kcfinalwt'){
+get_data_hys <- function(dataset, cols = NA, year = 2018, weight_variable = 'kcfinalwt'){
 
 }
 
