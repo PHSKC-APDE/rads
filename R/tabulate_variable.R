@@ -25,21 +25,21 @@
 
 #' Title
 #'
-#' @param data
+#' @param .data
 #' @param ...
 #'
 #' @return
 #' @export
 #'
 #' @examples
-tabulate_variable <- function(data, ...){
-  UseMethod('tabulate_dataset', data)
+tabulate_variable <- function(.data, ...){
+  UseMethod('tabulate_dataset', .data)
 }
 
 
 #' Tabulate data from HYS
 #'
-#' @param data tab_svy. HYS dataset
+#' @param .data tab_svy. HYS dataset
 #' @param variable Character vector. Variable(s) to be tabulated according to the subsetting/grouping instructions implied by the other variables
 #' @param metrics Character vector. Metrics to be returned. Options include, mean, lower, upper, median, numerator, and denominator. Default is all.
 #' @param sex  character vector. One of 'sep' or 'combo'. 'sep' returns results for each sex (at birth-- meaning male or female) while 'both' will provide a both sex estimate
@@ -68,7 +68,7 @@ tabulate_variable <- function(data, ...){
 #' @examples
 #'
 #'
-tabulate_variable.apde_hys <- function(data, variable,
+tabulate_variable.apde_hys <- function(.data, variable,
                                        metrics = c('mean', 'lower', 'upper', 'median', 'numerator', 'denominator'),
                                        sex = 'both',
                                        grade = list(6,8,10,12),
@@ -78,3 +78,7 @@ tabulate_variable.apde_hys <- function(data, variable,
                                        sexual_orientation = 'all'){
 
 }
+
+
+
+
