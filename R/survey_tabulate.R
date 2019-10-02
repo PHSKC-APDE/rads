@@ -1,4 +1,4 @@
-#' Tabulate data from a survey
+#' Compute metrics from a survey
 #'
 #' @param svy tab_svy object
 #' @param what character vector. Variable to tabulate "over". Must match a column name in svy.
@@ -12,12 +12,17 @@
 #' @details
 #' This function calculates `metrics` for each variable in `what` from rows meeting the conditions specified by `where` for each grouping implied by `by`.
 #'
-#' @importFrom srvyr select summarize group_by `%>%`
+#' @importFrom srvyr select summarize group_by %>%
 #' @import data.table
-#' @example
 #'
+#' @examples
+#' library(srvyr)
+#' data(api)
 #' svy <- apisrs %>% as_survey_design(ids = 1, fpc = fpc)
-#' svy_res <- survey_tabulate(svy, 'api00', cname == 'Los Angeles', by = 'stype', metric = 'mean proportion = F)
+#' svy_res <- survey_tabulate(svy, 'api00',
+#'                            cname == 'Los Angeles',
+#'                            by = 'stype', metric = 'mean',
+#'                            proportion = F)
 #'
 #'
 survey_tabulate = function(svy, what, ..., by = NULL, metric = c('mean', 'median', 'se', 'lower', 'upper', 'numerator', 'denominator', 'total', 'total_se'), proportion = F){
