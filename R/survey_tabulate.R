@@ -20,8 +20,8 @@
 #' svy_res <- survey_tabulate(svy, 'api00', cname == 'Los Angeles', by = 'stype', metric = 'mean proportion = F)
 #'
 #'
-survey_tabulate = function(svy, what, ..., by = NULL, metric = c('mean', 'median', 'se', 'lower', 'upper', 'numerator', 'denominator', 'total'), proportion = T){
-
+survey_tabulate = function(svy, what, ..., by = NULL, metric = c('mean', 'median', 'se', 'lower', 'upper', 'numerator', 'denominator', 'total', 'total_se'), proportion = F){
+  opts = c('mean', 'median', 'se', 'lower', 'upper', 'numerator', 'denominator', 'total', 'total_se')
   #confirm that svy is a tab_svy
   stopifnot(inherits(svy, 'tbl_svy'))
 
@@ -51,7 +51,7 @@ survey_tabulate = function(svy, what, ..., by = NULL, metric = c('mean', 'median
   }
 
   #confirm that metrics are properly specified
-  metric <- match.arg(metric, c('mean', 'median', 'se', 'lower', 'upper', 'numerator', 'denominator', 'total'), several.ok = T)
+  metric <- match.arg(metric, opts, several.ok = T)
 
   #subset svy to only the columns needed (and rows)
   if(!is.null(where)){
@@ -64,7 +64,8 @@ survey_tabulate = function(svy, what, ..., by = NULL, metric = c('mean', 'median
   what = sym(what)
 
   if(!is.null(by)){
-    svy <- svy %>% group_by(.data[[by]])
+    by = syms(by)
+    svy <- svy %>% group_by(!!!by)
   }
 
   res <- svy %>% summarize(
@@ -80,6 +81,8 @@ survey_tabulate = function(svy, what, ..., by = NULL, metric = c('mean', 'median
   res[, ci := NULL]
   data.table::setnames(res, c('mean_se', 'ci_low', 'ci_upp'), c('se', 'lower', 'upper'))
   res[, variable := as.character(what)]
+
+  res[, opts[!opts %in% metric] := NULL]
 
 
   return(res)

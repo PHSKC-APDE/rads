@@ -1,0 +1,63 @@
+library('srvyr')
+data(api) #from the survey package
+sur = apisrs %>% as_survey_design(ids = 1, fpc = fpc)
+
+test_that('Defaults work: svy',
+          expect_equal(
+            survey_tabulate(sur, what = 'api00')$mean,
+            sur %>% summarize(mean = survey_mean(api00, na.rm = T)) %>% .$mean
+          ))
+
+test_that('Grouping without filtering',
+          expect_equal(
+            survey_tabulate(sur, 'api00', by = c('stype'), metric = 'denominator')[, .(stype, denominator)],
+            sur %>% group_by(stype) %>% summarize(denominator = unweighted(n())) %>% setDT
+          ))
+
+test_that('Multi Grouping with filtering',{
+          st = survey_tabulate(sur, 'api00', cname == 'Los Angeles', by = c('stype', 'cname'), metric = 'denominator')[, .(stype, cname, denominator)]
+          man = sur %>% filter(cname == 'Los Angeles') %>% group_by(stype, cname) %>% summarize(denominator = unweighted(n())) %>% setDT
+          expect_equal(st, man)
+})
+
+test_that('Proportion toggle- on',{
+  sur = sur %>% mutate(schwide = as.numeric(sch.wide == 'Yes'))
+  st = survey_tabulate(sur, 'schwide', metric = 'lower', proportion = T)
+  man = sur %>% summarize(blah = survey_mean(schwide, vartype = 'ci', proportion = T)) %>% setDT
+
+  #without proportion
+  expect_equal(st[, lower], man[, blah_low])
+
+})
+
+test_that('Proportion toggle changes result',{
+  sur = sur %>% mutate(schwide = as.numeric(sch.wide == 'Yes'))
+  a = survey_tabulate(sur, 'schwide', metric = 'lower', proportion = T)[, lower]
+  b = survey_tabulate(sur, 'schwide', metric = 'lower', proportion = F)[, lower]
+
+  expect_true(a != b)
+
+})
+
+test_that('Invalid input for svy',{
+  expect_error(survey_tabulate('a', 'api00'), 'inherits.')
+})
+
+test_that('Invalid input for what',{
+  expect_error(survey_tabulate(sur, 'thisvarnoexists'), 'thisvarnoexists')
+})
+
+test_that('Invalid input for ... filters',{
+  expect_error(survey_tabulate(sur, 'api00', bananas>100, api00 < 50), 'bananas')
+})
+
+test_that('Invalid input for by',{
+  expect_error(survey_tabulate(sur, 'api00', by = 'turtles'), 'turtles')
+})
+
+test_that('Invalid input for metric',{
+  expect_error(survey_tabulate(sur, 'api00', metric = 'turtles'), 'should be one of')
+})
+
+
+
