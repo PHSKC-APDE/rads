@@ -25,7 +25,7 @@ exception is using `data.table`'s modify on reference semantics as described in 
 
 5. Functions that are talkative should have a `verbose` argument. To "talk" to the console, use `message` and `warning`. DO NOT USE `cat` or `print`. See the ROpenSci site for further information.
 
-6. Functions should not use `%>%` internally. Writing functions to be pipeable is fine as long as its `data.table` friendly.
+6. Functions should not use `%>%` internally if there is the expectation that they will be run multiple times (e.g. in a loop). Each %>% incurs a small overhead that can compound. For larger functions (e.g. ones only run once or twice in a session) pipes are fine. Writing functions to be pipeable is fine as long as its `data.table` friendly.
 
 7. Each function should be in its own `.R` file. Small groups of utility functions can be combined within the same `.R` file where relevant.
 
