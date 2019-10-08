@@ -137,5 +137,10 @@ test_that('Recode starting data without labels and then recode on top of that',{
   expect_equal(res, labelled::labelled(c(NA, 0, 1), setNames(c(0, 1), c('No', 'Yes'))))
 })
 
-
+test_that('NUll new labels, but old labels exist', {
+  d = data.table(kc4reg = as.factor(c('East', 'Seattle', 'North', 'South')))
+  r = create_recode('kc4reg', '.Region', old_value = as.character(d[, kc4reg]), new_value = c('NS', 'S', 'NS', 'NS'))
+  res = apply_recode(d, r, F, T)
+  expect_equal(res, c('NS', 'S', 'NS', 'NS'))
+})
 

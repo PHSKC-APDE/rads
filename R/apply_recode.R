@@ -165,7 +165,12 @@ apply_recode = function(data, recode, jump_scope = F, return_vector = F){
       }
 
       labs = dcast(labs, value ~ type, value.var = 'label')
-      labs[, label := new]
+
+      if('new' %in% names(labs)){
+        labs[, label := new]
+      } else{
+        labs[, label := old]
+      }
 
       #only attempt to carry over old labels if replacing an existing variable
       if(nrow(old_labs)>0 & (recode$new_var == recode$old_var)) labs[is.na(label), label:= old]
