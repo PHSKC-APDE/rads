@@ -4,7 +4,7 @@
 #' @param what character vector. Variable to tabulate "over". Must match a column name in svy.
 #' @param ... expressions to be passed to \code{\link{filter}}
 #' @param by character vector. Must refer to variables within svy. The variables within svy to compute `what` by
-#' @param metric character. One or more of mean, median, se, lower, upper, numerator, denominator, or total. All metrics are calculated-- this argument just specifies which one gets returned
+#' @param metric character. See \code{\link{survey_metrics}} for the available options. Note, all metrics are calculated-- this argument just specifies which one gets returned
 #' @param proportion logical. Toggles whether or not se/lower/upper are calculated for proportions.
 #'
 #'
@@ -25,8 +25,8 @@
 #'                            proportion = F)
 #'
 #'
-survey_tabulate = function(svy, what, ..., by = NULL, metric = c('mean', 'median', 'se', 'lower', 'upper', 'numerator', 'denominator', 'total', 'total_se'), proportion = F){
-  opts = c('mean', 'median', 'se', 'lower', 'upper', 'numerator', 'denominator', 'total', 'total_se')
+survey_tabulate = function(svy, what, ..., by = NULL, metric = c('mean', 'lower', 'upper'), proportion = F){
+  opts = survey_metrics()
   #confirm that svy is a tab_svy
   stopifnot(inherits(svy, 'tbl_svy'))
 
