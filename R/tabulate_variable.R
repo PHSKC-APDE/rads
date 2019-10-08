@@ -25,28 +25,31 @@
 
 #' Title
 #'
-#' @param .data
+#' @param svy
 #' @param ...
 #'
 #' @return
 #' @export
 #'
 #' @examples
-tabulate_variable <- function(.data, ...){
-  UseMethod('tabulate_dataset', .data)
+tabulate_variable <- function(svy, ...){
+  UseMethod('tabulate_dataset', svy)
 }
-
 
 #' Tabulate data from HYS
 #'
 #' @param .data tab_svy. HYS dataset
 #' @param variable Character vector. Variable(s) to be tabulated according to the subsetting/grouping instructions implied by the other variables
 #' @param metrics Character vector. Metrics to be returned. Options include, mean, lower, upper, median, numerator, and denominator. Default is all.
-#' @param sex  character vector. One of 'sep' or 'combo'. 'sep' returns results for each sex (at birth-- meaning male or female) while 'both' will provide a both sex estimate
+#' @param sex  character vector. One of 'both' or 'seperate'. 'seperate' returns results for each sex (at birth-- meaning male or female) while 'both' will provide a both sex estimate
 #' @param grade numeric vector or a list of numeric vectors. Determines how grades will be grouped. See details for how to structure the input. Default is all grades.
 #' @param region Character vector or a list of character vectors. Determines how regions will be grouped. See details for how to structure the input. Default is all regions (e.g. King County).
-#' @param race character vector or a list of character vectors. See details for how to structure the input. Special conditions apply for "alone or in combination" (aic) inputs.
-#'             aic inputs cannot be combined with inputs that imply mutually exclusive race categories. Computing metrics for aic races should occur seperately from mutually exclusive race calculations.
+#' @param race character vector or a list of character vectors. Three standard options exist: 'all', 'all-NH' and 'aic'.
+#'             With 'all', each race is computed seperately, with the caveat that the multiple race category includes hispanic
+#'             'All-NH' is like 'all', but the multiple race category is also non-hispanic/
+#'             'aic' indicates that the rest of the instructions will be looped over, once per aic race class.
+#'             Instructions passed in the list format (or as character vectors length > 1) described below will be checked to ensure no mismatch between aic and non-aic designations.
+#'             The variable underpinning 'all' will be used when non-aic values are present.
 #' @param year numeric vector or a list of numeric vectors. See details for how to structure the input.
 #' @param sexual_orientation character vector or a list of character vectors. See details for how to structure the input.
 #'
@@ -59,7 +62,7 @@ tabulate_variable <- function(.data, ...){
 #' results (e.g. seperate rows) for 8th graders and then 10th & 12th graders combined. There should also be no duplicate values or grouping.
 #' For example, passing \code{list(8, c(8,10,12))} as a response to the `grade` argument will throw an error because the value 8 appears more than once.
 #' If the input is named (e.g. \code{list(`Middle Schoolers` = c(8,10), `High Schoolers` = c(10, 12))}), the resulting tabulation will inherit that naming.
-#' Otherwise, a name will be inferred from the column name and values.
+#' Otherwise, a name will be inferred from the column name and values. Passing \code{NULL} will default to grouping by all NA values in the underlying variable.
 #'
 #'
 #' @return a data.table containing the results of the tabulation.
@@ -68,14 +71,69 @@ tabulate_variable <- function(.data, ...){
 #' @examples
 #'
 #'
-tabulate_variable.apde_hys <- function(.data, variable,
-                                       metrics = c('mean', 'lower', 'upper', 'median', 'numerator', 'denominator'),
+tabulate_variable.apde_hys <- function(svy, variable,
+                                       metrics = c('mean', 'lower', 'upper', 'numerator', 'denominator'),
                                        sex = 'both',
                                        grade = list(6,8,10,12),
                                        region = list(`King County` = c('North', 'South', "East", 'Seattle')),
                                        race = "all",
                                        year = 2018,
-                                       sexual_orientation = 'all'){
+                                       sexual_orientation = list(`Heterosexual (Straight)` = 'Heterosexual (Straight)',
+                                                                 `LBG+` = c('Gay or Lesbian', 'Bisexual', 'Something else fits better'),
+                                                                 `Not Sure` = 'Questioning/Not Sure')){
+
+  #confirm that variable is in the dataset
+  var_check <- check_names('variable',  'svy', names(svy$variables), variable)
+  if(var_check != "") stop(var_check)
+
+  #confirm metrics are valid
+  if(!all(metrics %in% survey_metrics())){
+    stop(paste0(paste(metrics[!metrics %in% survey_metrics()], collapse = ', '), 'are not valid metrics'))
+  }
+
+  #confirm sex is valid option
+  sex = match.arg(sex, c('both', 'seperate'))
+  if(sex == 'seperate'){
+    sex = list(Male = 'Male', Female = "Female")
+  }else{
+    sex = list(Both = c("Male", "Female"))
+  }
+  sex = validate_list_input(sex, values = svy$variables[['a_sex']], variable_name = 'sex')
+
+  #validate grade
+  grade = validate_list_input(grade, values = svy$variables[['a_grade']], variable_name = 'grade', prefix = 'Grade')
+
+  #validate region
+  region = validate_list_input(region, values = svy$variables[['kc4reg']], variable_name = 'region', prefix = 'Region')
+
+  #validate year
+  year = validate_list_input(year, values = svy$variables[['year']], variable_name = 'year', prefix = 'Year Group')
+
+  #validate sexual_orientation
+  sexual_orientation = validate_list_input(sexual_orientation, values = svy$variables[['sexual_orientation']], variable_name = 'sexual_orientation', prefix = 'Sexual Orientation')
+
+  #validate race
+  if(is.character(race)){
+    if(length(race) == 1){
+      race = match.arg(race, c('all', 'all-NH', 'aic'))
+      race = switch(race,
+                    all = unique(svy$variables$a_race8),
+                    `all-NH` = unique(svy$variables$raceeth),
+                    aic = grep('_aic', names(svy$variables), value = T))
+      race_var = ifelse(race == 'all', 'a_race8', 'raceeth')
+    }
+
+    #check for the number of aics in the character
+    aics = grepl('_aic', race, fixed = T)
+    sum_aics = sum(aics)
+    if(!(sum_aics > 0 & sum_aic < length(aics))){
+      stop('aic race instructions have been mixed with non-aic instructions. Please fix this.')
+    }
+  }
+  #This should catch "aic" race variables mixed with other classifications
+  race = validate_list_input(race, values = svy$variables[[race_var]], variable_name = 'race', prefix = 'Race')
+
+  #apply the recodes
 
 }
 

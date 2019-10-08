@@ -4,7 +4,7 @@
 \alias{tabulate_variable}
 \title{Title}
 \usage{
-tabulate_variable(.data, ...)
+tabulate_variable(svy, ...)
 }
 \arguments{
 \item{...}{}

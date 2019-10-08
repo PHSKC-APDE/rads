@@ -4,31 +4,32 @@
 \alias{tabulate_variable.apde_hys}
 \title{Tabulate data from HYS}
 \usage{
-\method{tabulate_variable}{apde_hys}(.data, variable, metrics = c("mean",
-  "lower", "upper", "median", "numerator", "denominator"), sex = "both",
+\method{tabulate_variable}{apde_hys}(svy, variable, metrics = c("mean",
+  "lower", "upper", "numerator", "denominator"), sex = "both",
   grade = list(6, 8, 10, 12), region = list(`King County` = c("North",
   "South", "East", "Seattle")), race = "all", year = 2018,
   sexual_orientation = "all")
 }
 \arguments{
-\item{.data}{tab_svy. HYS dataset}
-
 \item{variable}{Character vector. Variable(s) to be tabulated according to the subsetting/grouping instructions implied by the other variables}
 
 \item{metrics}{Character vector. Metrics to be returned. Options include, mean, lower, upper, median, numerator, and denominator. Default is all.}
 
-\item{sex}{character vector. One of 'sep' or 'combo'. 'sep' returns results for each sex (at birth-- meaning male or female) while 'both' will provide a both sex estimate}
+\item{sex}{character vector. One of 'both' or 'seperate'. 'seperate' returns results for each sex (at birth-- meaning male or female) while 'both' will provide a both sex estimate}
 
 \item{grade}{numeric vector or a list of numeric vectors. Determines how grades will be grouped. See details for how to structure the input. Default is all grades.}
 
 \item{region}{Character vector or a list of character vectors. Determines how regions will be grouped. See details for how to structure the input. Default is all regions (e.g. King County).}
 
 \item{race}{character vector or a list of character vectors. See details for how to structure the input. Special conditions apply for "alone or in combination" (aic) inputs.
-aic inputs cannot be combined with inputs that imply mutually exclusive race categories. Computing metrics for aic races should occur seperately from mutually exclusive race calculations.}
+aic inputs cannot be combined with inputs that imply mutually exclusive race categories.
+Computing metrics for aic races should occur seperately from mutually exclusive race calculations.}
 
 \item{year}{numeric vector or a list of numeric vectors. See details for how to structure the input.}
 
 \item{sexual_orientation}{character vector or a list of character vectors. See details for how to structure the input.}
+
+\item{.data}{tab_svy. HYS dataset}
 }
 \value{
 a data.table containing the results of the tabulation.

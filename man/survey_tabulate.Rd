@@ -4,9 +4,8 @@
 \alias{survey_tabulate}
 \title{Compute metrics from a survey}
 \usage{
-survey_tabulate(svy, what, ..., by = NULL, metric = c("mean", "median",
-  "se", "lower", "upper", "numerator", "denominator", "total", "total_se"),
-  proportion = F)
+survey_tabulate(svy, what, ..., by = NULL, metric = c("mean", "lower",
+  "upper"), proportion = F)
 }
 \arguments{
 \item{svy}{tab_svy object}
@@ -17,7 +16,7 @@ survey_tabulate(svy, what, ..., by = NULL, metric = c("mean", "median",
 
 \item{by}{character vector. Must refer to variables within svy. The variables within svy to compute `what` by}
 
-\item{metric}{character. One or more of mean, median, se, lower, upper, numerator, denominator, or total. All metrics are calculated-- this argument just specifies which one gets returned}
+\item{metric}{character. See \code{\link{survey_metrics}} for the available options. Note, all metrics are calculated-- this argument just specifies which one gets returned}
 
 \item{proportion}{logical. Toggles whether or not se/lower/upper are calculated for proportions.}
 }

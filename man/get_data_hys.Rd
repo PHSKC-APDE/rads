@@ -4,18 +4,18 @@
 \alias{get_data_hys}
 \title{Get HYS microdata from storage.}
 \usage{
-get_data_hys(dataset, cols = NA, year = 2018,
-  weight_variable = "kcfinalwt")
+get_data_hys(cols = NA, year = c(2016, 2018),
+  weight_variable = "kcfinalwt", kingco = T)
 }
 \arguments{
-\item{cols}{Character vector of length >-1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
+\item{cols}{Character vector of length >=1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
 See \code{\link{list_analytic_columns}} for more information on which columns are considered default by dataset.}
 
 \item{year}{Numeric vector. Identifies which years of data should be pulled}
 
 \item{weight_variable}{Character vector of length 1. Identifies which weight column}
 
-\item{dataset.}{Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options}
+\item{kingco}{logical. Return dataset for analyses in King County only.}
 }
 \value{
 dataset either in data.table (adminstrative data) or svy_tbl (survey data) for further analysis/tabulation
@@ -26,6 +26,6 @@ dataset either in data.table (adminstrative data) or svy_tbl (survey data) for f
 \examples{
 
 \dontrun{
- get_data_hys(dataset = 'hys', cols = NA, year = c(2016, 2018), weight_variable = 'kcfinalwt')
+ get_data_hys(cols = NA, year = c(2016, 2018), weight_variable = 'kcfinalwt')
 }
 }

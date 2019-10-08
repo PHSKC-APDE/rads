@@ -31,3 +31,7 @@ list_dataset_columns <- function(dataset, analytic_only = F){
 
 }
 
+#' List of available metrics for calculation
+survey_metrics = function(){
+  c('mean', 'median', 'se', 'lower', 'upper', 'numerator', 'denominator', 'total', 'total_se')
+}
