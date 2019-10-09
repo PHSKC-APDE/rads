@@ -61,7 +61,7 @@ validate_list_input = function(x, values, variable_name, prefix = 'Value', make_
   #create names if non exist
   if(make_names){
     if(is.null(names(x))){
-      names(x) = unlist(lapply(x, function(y) paste0(prefix, ': ', paste(y, sep = ', '))))
+      names(x) = unlist(lapply(x, function(y) paste0(prefix, ': ', paste(y, collapse = ', '))))
     }
     if(any(is.na(names(x)))){
       names(x)[is.na(names(x))] = unlist(lapply(x[is.na(names(x))], function(y) paste0(prefix, ': ', paste(y, sep = ', '))))
@@ -83,16 +83,14 @@ list_to_dt = function(x, new_col, old_col){
   return(res)
 }
 
-apply_instructions = function(svy, old_var, new_var, instruction){
+apply_instructions = function(values, old_var, new_var, instruction){
   instruction = list_to_dt(instruction, new_var, old_var)
+  rec = apdeRecodes::create_recode(old_var = old_var, new_var = new_var, old_value = as.character(instruction[[old_var]]), new_value = instruction[[new_var]])
+  dat = data.table::data.table(old= values)
+  data.table::setnames(dat, 'old', old_var)
+  res = apdeRecodes::apply_recode(data = dat,recode = rec, jump_scope = F, return_vector = T)
+  return(res)
 
-  rec = apdeRecodes::create_recode(old_var = old_var, new_var = new_var, old_value = instruction[[old_var]], new_value = instruction[[new_var]])
-
-  setDT(svy$variables)
-
-  res = apdeRecodes::apply_recode(data = svy$variables,recode = rec, jump_scope = F, return_vector = T)
-
-  setDF(svy$variables)
 }
 
 

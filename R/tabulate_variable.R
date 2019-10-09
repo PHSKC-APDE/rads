@@ -68,6 +68,8 @@ tabulate_variable <- function(svy, ...){
 #' @return a data.table containing the results of the tabulation.
 #' @export
 #'
+#' @importFrom rlang !!
+#' @importFrom srvyr mutate
 #' @examples
 #'
 #'
@@ -116,24 +118,72 @@ tabulate_variable.apde_hys <- function(svy, variable,
   if(is.character(race)){
     if(length(race) == 1){
       race = match.arg(race, c('all', 'all-NH', 'aic'))
+      race_var = ifelse(race == 'all', 'a_race8', 'raceeth')
       race = switch(race,
                     all = unique(svy$variables$a_race8),
                     `all-NH` = unique(svy$variables$raceeth),
                     aic = grep('_aic', names(svy$variables), value = T))
-      race_var = ifelse(race == 'all', 'a_race8', 'raceeth')
+
     }
 
     #check for the number of aics in the character
     aics = grepl('_aic', race, fixed = T)
     sum_aics = sum(aics)
-    if(!(sum_aics > 0 & sum_aic < length(aics))){
+    if((sum_aics > 0 & sum_aics < length(aics))){
       stop('aic race instructions have been mixed with non-aic instructions. Please fix this.')
     }
+
+    aic_check <- sum_aics == length(aics)
+  }else{
+    aic_check <- FALSE
   }
-  #This should catch "aic" race variables mixed with other classifications
-  race = validate_list_input(race, values = svy$variables[[race_var]], variable_name = 'race', prefix = 'Race')
+
+  if(!aic_check){
+    #This should catch "aic" race variables mixed with other classifications
+    race = validate_list_input(race, values = svy$variables[[race_var]], variable_name = 'race', prefix = 'Race')
+    new_col = apply_instructions(values = svy$variables[[race_var]], race_var, '.Race', race)
+    svy <- svy %>% dplyr::mutate(.Race = new_col)
+  }
 
   #apply the recodes
+  svy <- svy %>% dplyr::mutate(.Sex = apply_instructions(a_sex, 'sex', '.Sex', !!sex),
+                               .Grade = apply_instructions(a_grade, 'a_grade', '.Grade', !!grade),
+                               .Region = apply_instructions(kc4reg, 'kc4reg', '.Region', !!region),
+                               .Year = apply_instructions(year, 'year', '.Year', !!year),
+                               .Sexual_Orientation = apply_instructions(sexual_orientation, 'sexual_orientation', '.Sexual_Orientation', !!sexual_orientation))
+
+  #convert to symbol
+  sss = sym(variable)
+
+  #Tabulate the variable
+  if(aic_check){
+    res <- rbindlist(race, function(x){
+      svy <- svy %>% mutate(.Race = !!x) %>%
+        survey_tabulate(
+                      what = variable,
+                      kingco == 1, !is.na(!!sss), kcfinalwt > 0,
+                      by = c('.Sex', '.Grade', '.Region', '.Year', '.Sexual_Orientation', '.Race'),
+                      metric = metrics,
+                      proportion = T)
+
+
+    })
+
+    res = rbindlist(res)
+
+  }else{
+    res = survey_tabulate(svy,
+                          what = variable,
+                          kingco == 1, !is.na(!!sss), kcfinalwt > 0,
+                          by = c('.Sex', '.Grade', '.Region', '.Year', '.Sexual_Orientation', '.Race'),
+                          metric = metrics,
+                          proportion = T)
+  }
+
+  return(res)
+
+
+
 
 }
 

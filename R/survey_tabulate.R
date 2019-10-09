@@ -14,6 +14,7 @@
 #'
 #' @importFrom srvyr select summarize group_by %>%
 #' @import data.table
+#' @export
 #'
 #' @examples
 #' library(srvyr)
