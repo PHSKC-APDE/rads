@@ -2,12 +2,15 @@
 % Please edit documentation in R/validation_utils.R
 \name{depth}
 \alias{depth}
-\title{Check the depth of a list
-borrowed from: https://stackoverflow.com/questions/13432863/determine-level-of-nesting-in-r}
+\title{Check the depth of a list}
 \usage{
 depth(this, thisdepth = 0)
 }
+\arguments{
+\item{this}{a list.}
+
+\item{thisdepth}{numeric. Starting depth.}
+}
 \description{
 Check the depth of a list
-borrowed from: https://stackoverflow.com/questions/13432863/determine-level-of-nesting-in-r
 }

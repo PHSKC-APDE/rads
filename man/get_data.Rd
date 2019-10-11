@@ -7,14 +7,14 @@
 get_data(dataset, cols = NA, year = 2018, ...)
 }
 \arguments{
+\item{dataset}{Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options}
+
 \item{cols}{Character vector of length >-1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
-See \code{\link{list_analytic_columns}} for more information on which columns are considered default by dataset.}
+See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.}
 
 \item{year}{Numeric vector. Identifies which years of data should be pulled}
 
 \item{...}{Additional named arguments based on the specific dataset. To see what these options should be, do \code{help(get_data_`dataset`)}}
-
-\item{dataset.}{Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options}
 }
 \value{
 dataset either in data.table (adminstrative data) or svy_tbl (survey data) for further analysis/tabulation

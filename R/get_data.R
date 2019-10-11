@@ -3,9 +3,9 @@
 #'
 #' @description
 #'
-#' @param dataset. Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options
+#' @param dataset Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options
 #' @param cols Character vector of length >-1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
-#'     See \code{\link{list_analytic_columns}} for more information on which columns are considered default by dataset.
+#'     See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.
 #' @param year Numeric vector. Identifies which years of data should be pulled
 #' @param ... Additional named arguments based on the specific dataset. To see what these options should be, do \code{help(get_data_`dataset`)}
 #'
@@ -18,6 +18,9 @@
 #'  get_data(dataset = 'hys', cols = NA, year = c(2016, 2018)
 #' }
 get_data <- function(dataset, cols = NA, year = 2018, ...){
+
+  f <- match.fun(paste0('get_data_', dataset))
+  f(cols = cols, year = year, ...)
 
   #ensure that the requested dataset exists
 
@@ -41,10 +44,12 @@ get_data <- function(dataset, cols = NA, year = 2018, ...){
 #' @description
 #'
 #' @param cols Character vector of length >=1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
-#'     See \code{\link{list_analytic_columns}} for more information on which columns are considered default by dataset.
+#'     See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.
 #' @param year Numeric vector. Identifies which years of data should be pulled
 #' @param weight_variable Character vector of length 1. Identifies which weight column
 #' @param kingco logical. Return dataset for analyses in King County only.
+#'
+#'
 #'
 #' @return dataset either in data.table (adminstrative data) or svy_tbl (survey data) for further analysis/tabulation
 #'

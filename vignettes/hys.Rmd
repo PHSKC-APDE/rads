@@ -1,0 +1,50 @@
+---
+title: "Analyzing HYS data in rads"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Analyzing HYS data in rads}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+The Healthy Youth Survey (HYS) is adminstered to WA state public school 6th, 8th, and 12th (and somethings 9th and 11th) grade students. It asks questions about sex, drugs, mental health, demographics and a series of other fun things. This vignette is designed to provid and overview of how to analyze HYS data using the `rads` package.
+
+To begin, we load the rads package. Because it is dangerous to go at it alone, the rads package relies on a number of other packages to work its barely functional magic. For survey analysis, rads relies on the `srvyr`, `data.table`, and `dplyr` packages for survey statistics, data munging, and horrific quasiquotation programming respectively.  
+
+```{r setup}
+library(rads)
+library('srvyr') #analyzing surveys
+library('dplyr') #data manipulation and stress
+```
+
+Generally speaking, having a dataset is a necessary component of doing data analysis. `rads` regularly adds new datasets, and so provides a helper function to help users figure out which datasets are available. Note, the `rads::` is just there to highlight that we are executing a function from the `rads` package.
+
+```{r listdatasets}
+rads::list_apde_data()
+```
+
+Hark! The HYS dataset is available to load and analyze! What happy times! However, before we load the dataset, it might be worth checking what variables it contains. This can be useful if you only want to load a subset of the dataset for SPEED and MEMORY SAVING. You can do this like so:
+
+```{r listvariables}
+rads::list_dataset_columns(dataset = 'hys', analytic_only = F)
+```
+
+So the results are a bit disappointing, but this function will work better when the HYS dataset migrates to SQL. Anyways, we can imagine examining the list of columns to select which ones are best and are the most flattering. For now, we'll just load the whole analytical dataset.
+
+```{r loaddata}
+hys <- get_data('hys', year = c(2016, 2018))
+```
+
+It might behoove us to examine what exactly we have loaded. A good place to start is by checking the `class`. We also might want to check the dimensions (`dim(hys)`) and 
+
+```{r checkclass}
+class(hys)
+```
+

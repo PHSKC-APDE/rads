@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities.R
 \name{list_dataset_columns}
 \alias{list_dataset_columns}
-\title{List columns available for analysis}
+\title{List columns available for analysis for a particular dataset in RADS}
 \usage{
 list_dataset_columns(dataset, analytic_only = F)
 }
@@ -15,7 +15,7 @@ list_dataset_columns(dataset, analytic_only = F)
 Data.frame with two columns. First column is the variable name, while the second identifies whether or not it is in the analytic ready dataset
 }
 \description{
-List columns available for analysis
+List columns available for analysis for a particular dataset in RADS
 }
 \examples{
 \dontrun{

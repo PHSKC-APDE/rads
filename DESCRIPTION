@@ -10,7 +10,9 @@ License: What license is it under?
 Encoding: UTF-8
 LazyData: true
 Suggests: 
-    testthat
+    testthat,
+    knitr,
+    rmarkdown
 RoxygenNote: 6.1.1
 Imports: 
     survey,
@@ -19,4 +21,6 @@ Imports:
     rlang,
     labelled,
     haven,
-    dplyr
+    dplyr,
+    apdeRecodes
+VignetteBuilder: knitr

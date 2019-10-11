@@ -6,6 +6,9 @@
 \usage{
 survey_metrics()
 }
+\value{
+character vector. A vector of the available metrics for calculation.
+}
 \description{
 List of available metrics for calculation
 }

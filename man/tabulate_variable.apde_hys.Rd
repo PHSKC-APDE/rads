@@ -4,15 +4,18 @@
 \alias{tabulate_variable.apde_hys}
 \title{Tabulate data from HYS}
 \usage{
-\method{tabulate_variable}{apde_hys}(svy, variable, metrics = c("mean",
-  "lower", "upper", "numerator", "denominator"), sex = "both",
-  grade = list(6, 8, 10, 12), region = list(`King County` = c("North",
-  "South", "East", "Seattle")), race = "all", year = 2018,
+tabulate_variable.apde_hys(svy, variable, metrics = c("mean", "lower",
+  "upper", "numerator", "denominator"), sex = "both", grade = list(6,
+  8, 10, 12), region = list(`King County` = c("North", "South", "East",
+  "Seattle")), race = "all", year = 2018,
   sexual_orientation = list(`Heterosexual (Straight)` =
   "Heterosexual (Straight)", `LBG+` = c("Gay or Lesbian", "Bisexual",
-  "Something else fits better"), `Not Sure` = "Questioning/Not Sure"))
+  "Something else fits better"), `Not Sure` = "Questioning/Not Sure"),
+  na.rm = T, ...)
 }
 \arguments{
+\item{svy}{tab_svy. HYS dataset}
+
 \item{variable}{Character vector. Variable(s) to be tabulated according to the subsetting/grouping instructions implied by the other variables}
 
 \item{metrics}{Character vector. Metrics to be returned. Options include, mean, lower, upper, median, numerator, and denominator. Default is all.}
@@ -34,7 +37,9 @@ The variable underpinning 'all' will be used when non-aic values are present.}
 
 \item{sexual_orientation}{character vector or a list of character vectors. See details for how to structure the input.}
 
-\item{.data}{tab_svy. HYS dataset}
+\item{na.rm}{logical. Removes rows with NA by variables from the results.}
+
+\item{...}{unused}
 }
 \value{
 a data.table containing the results of the tabulation.
@@ -43,17 +48,11 @@ a data.table containing the results of the tabulation.
 Tabulate data from HYS
 }
 \details{
-\code{\link{apde_hys_options}} provides an overview of the available valid options/arguments for each function argument.
-
 Function arguments, `grade`, `region`, `race`, `year`, and `sexual_orientation`, largely exist to standardize `by` type of operations.
 Unless otherwise noted in the parameter-specific descriptions, a vector of a certain type or a (named) list of those vectors are expected-- and vectors will be converted into a list of length 1.
 Each item of the list will be grouped together. For example, passing \code{list(8, c(10,12))} as the response to the `grade` argument indicates that the tabulation will return
 results (e.g. seperate rows) for 8th graders and then 10th & 12th graders combined. There should also be no duplicate values or grouping.
 For example, passing \code{list(8, c(8,10,12))} as a response to the `grade` argument will throw an error because the value 8 appears more than once.
 If the input is named (e.g. \code{list(`Middle Schoolers` = c(8,10), `High Schoolers` = c(10, 12))}), the resulting tabulation will inherit that naming.
-Otherwise, a name will be inferred from the column name and values. Passing \code{NULL} will default to grouping by all NA values in the underlying variable.
-}
-\examples{
-
-
+Otherwise, a name will be inferred from the column name and values. Passing \code{NULL} will default to grouping by all non-NA values in the underlying variable.
 }

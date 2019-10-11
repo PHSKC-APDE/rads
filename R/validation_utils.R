@@ -19,7 +19,8 @@ check_names = function(arg_name, dataset_name, var_names, vars_to_check){
 }
 
 #' Check the depth of a list
-#' borrowed from: https://stackoverflow.com/questions/13432863/determine-level-of-nesting-in-r
+#' @param this a list.
+#' @param thisdepth numeric. Starting depth.
 depth <- function(this,thisdepth=0){
   if(is.list(this) && length(this) == 0){return(0)}
   if(!is.list(this)){
@@ -34,6 +35,9 @@ depth <- function(this,thisdepth=0){
 #' @param variable_name character. T
 #' @param prefix character of length 1. Prefix to be added to the automatic naming process.
 #' @param make_names logical. Should names be added to x if they don't exist already.
+#'
+#' @return A validated list input, optionally with names.
+#'
 validate_list_input = function(x, values, variable_name, prefix = 'Value', make_names = T){
 
   if(is.null(x)){
@@ -72,6 +76,13 @@ validate_list_input = function(x, values, variable_name, prefix = 'Value', make_
   return(x)
 }
 #' convert validated list instructions into data frames to be merged on
+#'
+#' @param x list. The expectation is that the list has previously been formatted/validated via \code{\link{validate_list_input}}
+#' @param new_col character. The name of the new column to be created given the reclassifications implied by x
+#' @param old_col character. The name of the old column implied from the reclassifications of x
+#'
+#' @return data.frame. For a given pair of old column and new column, return the recode mapping.
+#'
 list_to_dt = function(x, new_col, old_col){
   len = length(x)
 
@@ -83,8 +94,17 @@ list_to_dt = function(x, new_col, old_col){
   return(res)
 }
 
-apply_instructions = function(values, old_var, new_var, instruction){
-  instruction = list_to_dt(instruction, new_var, old_var)
+#' Apply the recoding on a variable, given an instruction set.
+#' @param values vector. Values to be recoded
+#' @param instruction list. Validate instruction set from \code{\link{validate_list_input}}
+#'
+#' @importFrom apdeRecodes create_recode apply_recode
+#' @importFrom data.table data.table setnames
+#'
+#' @return a vector of length of values that have been recoded/altered to meet the specifications of instruction
+apply_instructions = function(values, instruction){
+  old_var <- new_var <- NULL #rcheck warning
+  instruction = list_to_dt(instruction, 'a1', 'a2')
   rec = apdeRecodes::create_recode(old_var = old_var, new_var = new_var, old_value = as.character(instruction[[old_var]]), new_value = instruction[[new_var]])
   dat = data.table::data.table(old= values)
   data.table::setnames(dat, 'old', old_var)

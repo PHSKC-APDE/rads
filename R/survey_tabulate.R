@@ -19,12 +19,13 @@
 #'
 #' @examples
 #' library(srvyr)
+#' library('survey')
 #' data(api)
 #' svy <- apisrs %>% as_survey_design(ids = 1, fpc = fpc)
 #' svy_res <- survey_tabulate(svy, 'api00',
 #'                            cname == 'Los Angeles',
 #'                            by = 'stype', metric = 'mean',
-#'                            proportion = F)
+#'                            proportion = FALSE)
 #'
 #'
 survey_tabulate = function(svy, what, ..., by = NULL, metric = c('mean', 'lower', 'upper'), proportion = F){

@@ -39,13 +39,13 @@
 #' }
 #'
 #'
-tabulate_variable <- function(svy, ...){
+tabulate_variable.default <- function(svy, ...){
   UseMethod('tabulate_variable', svy)
 }
 
 #' Tabulate data from HYS
 #'
-#' @param .data tab_svy. HYS dataset
+#' @param svy tab_svy. HYS dataset
 #' @param variable Character vector. Variable(s) to be tabulated according to the subsetting/grouping instructions implied by the other variables
 #' @param metrics Character vector. Metrics to be returned. Options include, mean, lower, upper, median, numerator, and denominator. Default is all.
 #' @param sex  character vector. One of 'both' or 'seperate'. 'seperate' returns results for each sex (at birth-- meaning male or female) while 'both' will provide a both sex estimate
@@ -60,9 +60,8 @@ tabulate_variable <- function(svy, ...){
 #' @param year numeric vector or a list of numeric vectors. See details for how to structure the input.
 #' @param sexual_orientation character vector or a list of character vectors. See details for how to structure the input.
 #' @param na.rm logical. Removes rows with NA by variables from the results.
-#'
+#' @param ... unused
 #' @details
-#' \code{\link{apde_hys_options}} provides an overview of the available valid options/arguments for each function argument.
 #'
 #' Function arguments, `grade`, `region`, `race`, `year`, and `sexual_orientation`, largely exist to standardize `by` type of operations.
 #' Unless otherwise noted in the parameter-specific descriptions, a vector of a certain type or a (named) list of those vectors are expected-- and vectors will be converted into a list of length 1.
@@ -70,7 +69,7 @@ tabulate_variable <- function(svy, ...){
 #' results (e.g. seperate rows) for 8th graders and then 10th & 12th graders combined. There should also be no duplicate values or grouping.
 #' For example, passing \code{list(8, c(8,10,12))} as a response to the `grade` argument will throw an error because the value 8 appears more than once.
 #' If the input is named (e.g. \code{list(`Middle Schoolers` = c(8,10), `High Schoolers` = c(10, 12))}), the resulting tabulation will inherit that naming.
-#' Otherwise, a name will be inferred from the column name and values. Passing \code{NULL} will default to grouping by all NA values in the underlying variable.
+#' Otherwise, a name will be inferred from the column name and values. Passing \code{NULL} will default to grouping by all non-NA values in the underlying variable.
 #'
 #'
 #' @return a data.table containing the results of the tabulation.
@@ -78,8 +77,7 @@ tabulate_variable <- function(svy, ...){
 #'
 #' @importFrom rlang !!
 #' @importFrom srvyr mutate
-#' @examples
-#'
+#' @importFrom stats na.omit
 #'
 tabulate_variable.apde_hys <- function(svy, variable,
                                        metrics = c('mean', 'lower', 'upper', 'numerator', 'denominator'),
@@ -91,7 +89,8 @@ tabulate_variable.apde_hys <- function(svy, variable,
                                        sexual_orientation = list(`Heterosexual (Straight)` = 'Heterosexual (Straight)',
                                                                  `LBG+` = c('Gay or Lesbian', 'Bisexual', 'Something else fits better'),
                                                                  `Not Sure` = 'Questioning/Not Sure'),
-                                       na.rm = T){
+                                       na.rm = T,
+                                       ...){
 
   #confirm that variable is in the dataset
   var_check <- check_names('variable',  'svy', names(svy$variables), variable)
@@ -150,16 +149,16 @@ tabulate_variable.apde_hys <- function(svy, variable,
   if(!aic_check){
     #This should catch "aic" race variables mixed with other classifications
     race = validate_list_input(race, values = svy$variables[[race_var]], variable_name = 'race', prefix = 'Race')
-    new_col = apply_instructions(values = svy$variables[[race_var]], race_var, '.Race', race)
+    new_col = apply_instructions(values = svy$variables[[race_var]], race)
     svy <- svy %>% dplyr::mutate(.Race = new_col)
   }
 
   #apply the recodes
-  svy <- svy %>% dplyr::mutate(.Sex = apply_instructions(a_sex, 'sex', '.Sex', !!sex),
-                               .Grade = apply_instructions(a_grade, 'a_grade', '.Grade', !!grade),
-                               .Region = apply_instructions(kc4reg, 'kc4reg', '.Region', !!region),
-                               .Year = apply_instructions(year, 'year', '.Year', !!year),
-                               .Sexual_Orientation = apply_instructions(sexual_orientation, 'sexual_orientation', '.Sexual_Orientation', !!sexual_orientation))
+  svy <- svy %>% dplyr::mutate(.Sex = apply_instructions(a_sex, !!sex),
+                               .Grade = apply_instructions(a_grade, !!grade),
+                               .Region = apply_instructions(kc4reg, !!region),
+                               .Year = apply_instructions(year, !!year),
+                               .Sexual_Orientation = apply_instructions(sexual_orientation, !!sexual_orientation))
 
   #convert to symbol
   sss = rlang::sym(variable)

@@ -31,12 +31,13 @@ This function calculates `metrics` for each variable in `what` from rows meeting
 }
 \examples{
 library(srvyr)
+library('survey')
 data(api)
 svy <- apisrs \%>\% as_survey_design(ids = 1, fpc = fpc)
 svy_res <- survey_tabulate(svy, 'api00',
                            cname == 'Los Angeles',
                            by = 'stype', metric = 'mean',
-                           proportion = F)
+                           proportion = FALSE)
 
 
 }

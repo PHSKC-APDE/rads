@@ -6,6 +6,16 @@
 \usage{
 list_to_dt(x, new_col, old_col)
 }
+\arguments{
+\item{x}{list. The expectation is that the list has previously been formatted/validated via \code{\link{validate_list_input}}}
+
+\item{new_col}{character. The name of the new column to be created given the reclassifications implied by x}
+
+\item{old_col}{character. The name of the old column implied from the reclassifications of x}
+}
+\value{
+data.frame. For a given pair of old column and new column, return the recode mapping.
+}
 \description{
 convert validated list instructions into data frames to be merged on
 }

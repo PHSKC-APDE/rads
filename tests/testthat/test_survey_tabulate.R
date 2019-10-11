@@ -1,4 +1,7 @@
 library('srvyr')
+library('survey')
+library('dplyr')
+
 data(api) #from the survey package
 sur = apisrs %>% as_survey_design(ids = 1, fpc = fpc)
 

@@ -18,6 +18,9 @@ validate_list_input(x, values, variable_name, prefix = "Value",
 
 \item{make_names}{logical. Should names be added to x if they don't exist already.}
 }
+\value{
+A validated list input, optionally with names.
+}
 \description{
 Validate list inputs into the tabulate functions
 }
