@@ -7,8 +7,22 @@
 tabulate_variable(svy, ...)
 }
 \arguments{
-\item{...}{}
+\item{svy}{tbl_svy object}
+
+\item{...}{additional arguments passed to methods}
+}
+\value{
+data.table with the results of the tabulation
 }
 \description{
 Title
+}
+\examples{
+
+\dontrun{
+ d <- load_hys_data()
+ res <- tabulate_variable(d, variable = 'ecig_vape')
+}
+
+
 }

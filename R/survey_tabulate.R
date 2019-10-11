@@ -13,6 +13,7 @@
 #' This function calculates `metrics` for each variable in `what` from rows meeting the conditions specified by `where` for each grouping implied by `by`.
 #'
 #' @importFrom srvyr select summarize group_by %>%
+#' @importFrom rlang quos
 #' @import data.table
 #' @export
 #'
@@ -41,7 +42,7 @@ survey_tabulate = function(svy, what, ..., by = NULL, metric = c('mean', 'lower'
 
   #validate where
   if(!missing(...)){
-    where <- quos(...)
+    where <- rlang::quos(...)
   }else{
     where = NULL
   }
@@ -67,10 +68,10 @@ survey_tabulate = function(svy, what, ..., by = NULL, metric = c('mean', 'lower'
   svy <- svy %>% select(what, by)
 
 
-  what = sym(what)
+  what = rlang::sym(what)
 
   if(!is.null(by)){
-    by = syms(by)
+    by = rlang::syms(by)
     svy <- svy %>% group_by(!!!by)
   }
 

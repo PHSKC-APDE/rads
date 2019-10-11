@@ -25,15 +25,22 @@
 
 #' Title
 #'
-#' @param svy
-#' @param ...
+#' @param svy tbl_svy object
+#' @param ... additional arguments passed to methods
 #'
-#' @return
+#' @return data.table with the results of the tabulation
 #' @export
 #'
 #' @examples
+#'
+#' \dontrun{
+#'  d <- get_data_hys()
+#'  res <- tabulate_variable(d, variable = 'ecig_vape')
+#' }
+#'
+#'
 tabulate_variable <- function(svy, ...){
-  UseMethod('tabulate_dataset', svy)
+  UseMethod('tabulate_variable', svy)
 }
 
 #' Tabulate data from HYS
@@ -52,6 +59,7 @@ tabulate_variable <- function(svy, ...){
 #'             The variable underpinning 'all' will be used when non-aic values are present.
 #' @param year numeric vector or a list of numeric vectors. See details for how to structure the input.
 #' @param sexual_orientation character vector or a list of character vectors. See details for how to structure the input.
+#' @param na.rm logical. Removes rows with NA by variables from the results.
 #'
 #' @details
 #' \code{\link{apde_hys_options}} provides an overview of the available valid options/arguments for each function argument.
@@ -82,7 +90,8 @@ tabulate_variable.apde_hys <- function(svy, variable,
                                        year = 2018,
                                        sexual_orientation = list(`Heterosexual (Straight)` = 'Heterosexual (Straight)',
                                                                  `LBG+` = c('Gay or Lesbian', 'Bisexual', 'Something else fits better'),
-                                                                 `Not Sure` = 'Questioning/Not Sure')){
+                                                                 `Not Sure` = 'Questioning/Not Sure'),
+                                       na.rm = T){
 
   #confirm that variable is in the dataset
   var_check <- check_names('variable',  'svy', names(svy$variables), variable)
@@ -153,7 +162,7 @@ tabulate_variable.apde_hys <- function(svy, variable,
                                .Sexual_Orientation = apply_instructions(sexual_orientation, 'sexual_orientation', '.Sexual_Orientation', !!sexual_orientation))
 
   #convert to symbol
-  sss = sym(variable)
+  sss = rlang::sym(variable)
 
   #Tabulate the variable
   if(aic_check){
@@ -178,6 +187,10 @@ tabulate_variable.apde_hys <- function(svy, variable,
                           by = c('.Sex', '.Grade', '.Region', '.Year', '.Sexual_Orientation', '.Race'),
                           metric = metrics,
                           proportion = T)
+  }
+
+  if(na.omit){
+    res = na.omit(res, c('.Sex', '.Grade', '.Region', '.Year', '.Sexual_Orientation', '.Race'))
   }
 
   return(res)

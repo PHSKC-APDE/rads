@@ -8,7 +8,9 @@
   "lower", "upper", "numerator", "denominator"), sex = "both",
   grade = list(6, 8, 10, 12), region = list(`King County` = c("North",
   "South", "East", "Seattle")), race = "all", year = 2018,
-  sexual_orientation = "all")
+  sexual_orientation = list(`Heterosexual (Straight)` =
+  "Heterosexual (Straight)", `LBG+` = c("Gay or Lesbian", "Bisexual",
+  "Something else fits better"), `Not Sure` = "Questioning/Not Sure"))
 }
 \arguments{
 \item{variable}{Character vector. Variable(s) to be tabulated according to the subsetting/grouping instructions implied by the other variables}
@@ -21,9 +23,12 @@
 
 \item{region}{Character vector or a list of character vectors. Determines how regions will be grouped. See details for how to structure the input. Default is all regions (e.g. King County).}
 
-\item{race}{character vector or a list of character vectors. See details for how to structure the input. Special conditions apply for "alone or in combination" (aic) inputs.
-aic inputs cannot be combined with inputs that imply mutually exclusive race categories.
-Computing metrics for aic races should occur seperately from mutually exclusive race calculations.}
+\item{race}{character vector or a list of character vectors. Three standard options exist: 'all', 'all-NH' and 'aic'.
+With 'all', each race is computed seperately, with the caveat that the multiple race category includes hispanic
+'All-NH' is like 'all', but the multiple race category is also non-hispanic/
+'aic' indicates that the rest of the instructions will be looped over, once per aic race class.
+Instructions passed in the list format (or as character vectors length > 1) described below will be checked to ensure no mismatch between aic and non-aic designations.
+The variable underpinning 'all' will be used when non-aic values are present.}
 
 \item{year}{numeric vector or a list of numeric vectors. See details for how to structure the input.}
 
@@ -46,7 +51,7 @@ Each item of the list will be grouped together. For example, passing \code{list(
 results (e.g. seperate rows) for 8th graders and then 10th & 12th graders combined. There should also be no duplicate values or grouping.
 For example, passing \code{list(8, c(8,10,12))} as a response to the `grade` argument will throw an error because the value 8 appears more than once.
 If the input is named (e.g. \code{list(`Middle Schoolers` = c(8,10), `High Schoolers` = c(10, 12))}), the resulting tabulation will inherit that naming.
-Otherwise, a name will be inferred from the column name and values.
+Otherwise, a name will be inferred from the column name and values. Passing \code{NULL} will default to grouping by all NA values in the underlying variable.
 }
 \examples{
 
