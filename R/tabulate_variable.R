@@ -39,7 +39,7 @@
 #' }
 #'
 #'
-tabulate_variable.default <- function(svy, ...){
+tabulate_variable<- function(svy, ...){
   UseMethod('tabulate_variable', svy)
 }
 

@@ -56,6 +56,9 @@ survey_tabulate = function(svy, what, ..., by = NULL, metric = c('mean', 'lower'
     by_check <- check_names('by', 'svy', svy_names, by)
     if(by_check != '') stop(by_check)
 
+    #and if its not missing, filter such that no by variable has NAs
+
+
   }
 
   #confirm that metrics are properly specified

@@ -103,11 +103,9 @@ list_to_dt = function(x, new_col, old_col){
 #'
 #' @return a vector of length of values that have been recoded/altered to meet the specifications of instruction
 apply_instructions = function(values, instruction){
-  old_var <- new_var <- NULL #rcheck warning
-  instruction = list_to_dt(instruction, 'a1', 'a2')
-  rec = apdeRecodes::create_recode(old_var = old_var, new_var = new_var, old_value = as.character(instruction[[old_var]]), new_value = instruction[[new_var]])
-  dat = data.table::data.table(old= values)
-  data.table::setnames(dat, 'old', old_var)
+  instruction = list_to_dt(instruction, 'a2', 'a1')
+  rec = apdeRecodes::create_recode(old_var = 'a1', new_var = 'a2', old_value = as.character(instruction[['a1']]), new_value = instruction[['a2']])
+  dat = data.table::data.table(a1 = values)
   res = apdeRecodes::apply_recode(data = dat,recode = rec, jump_scope = F, return_vector = T)
   return(res)
 

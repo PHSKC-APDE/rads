@@ -4,10 +4,10 @@
 \alias{tabulate_variable.apde_hys}
 \title{Tabulate data from HYS}
 \usage{
-tabulate_variable.apde_hys(svy, variable, metrics = c("mean", "lower",
-  "upper", "numerator", "denominator"), sex = "both", grade = list(6,
-  8, 10, 12), region = list(`King County` = c("North", "South", "East",
-  "Seattle")), race = "all", year = 2018,
+\method{tabulate_variable}{apde_hys}(svy, variable, metrics = c("mean",
+  "lower", "upper", "numerator", "denominator"), sex = "both",
+  grade = list(6, 8, 10, 12), region = list(`King County` = c("North",
+  "South", "East", "Seattle")), race = "all", year = 2018,
   sexual_orientation = list(`Heterosexual (Straight)` =
   "Heterosexual (Straight)", `LBG+` = c("Gay or Lesbian", "Bisexual",
   "Something else fits better"), `Not Sure` = "Questioning/Not Sure"),
