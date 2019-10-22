@@ -37,7 +37,7 @@ survey_tabulate = function(svy, what, ..., by = NULL, metrics = c('mean', 'lower
 
   #confirm that what is in the dataset
   stopifnot(is.character(what))
-  stopifnot(length(what) == 1)
+
   what_check <- check_names('what', 'svy', svy_names, what)
   if(what_check != '') stop(what_check)
 
@@ -64,8 +64,6 @@ survey_tabulate = function(svy, what, ..., by = NULL, metrics = c('mean', 'lower
     #remove missing by vars
     svy <- svy %>% filter(!!mis_vars==0)
 
-
-
   }
 
   #confirm that metrics are properly specified
@@ -79,10 +77,10 @@ survey_tabulate = function(svy, what, ..., by = NULL, metrics = c('mean', 'lower
   svy <- svy %>% select(what, by)
 
 
-  what = rlang::sym(what)
+  whats = rlang::syms(what)
 
   #make sure there is not NAs in the what variable
-  svy <- svy %>% filter(!is.na(!!what))
+  #svy <- svy %>% filter(!is.na(!!what))
 
   if(!is.null(by)){
     by = rlang::syms(by)
@@ -90,19 +88,28 @@ survey_tabulate = function(svy, what, ..., by = NULL, metrics = c('mean', 'lower
   }
 
 
-  res <- svy %>% summarize(
-    mean = srvyr::survey_mean(!!what, na.rm = T, vartype = 'se', proportion = proportion),
-    ci = srvyr::survey_mean(!!what, na.rm = T, vartype = 'ci', proportion = proportion),
-    #median = srvyr::survey_median(!!what, na.rm = T, vartype = NULL), This isn't working at the moment. Figure it out later
-    total = srvyr::survey_total(!!what, na.rm = T),
-    numerator = srvyr::unweighted(sum(!!what == 1, na.rm = T)),
-    denominator = srvyr::unweighted(n())
-  )
+  res <- lapply(whats, function(what){
+    svydata = suppressMessages(filter(svy, !is.na(!!what)))
+    whatvar = as.character(what)
+    svydata <- svydata %>% summarize(
+      mean = srvyr::survey_mean(!!what, na.rm = T, vartype = 'se', proportion = proportion),
+      ci = srvyr::survey_mean(!!what, na.rm = T, vartype = 'ci', proportion = proportion),
+      #median = srvyr::survey_median(!!what, na.rm = T, vartype = NULL), This isn't working at the moment. Figure it out later
+      total = srvyr::survey_total(!!what, na.rm = T),
+      numerator = srvyr::unweighted(sum(!!what == 1, na.rm = T)),
+      denominator = srvyr::unweighted(n())
+    ) %>% setDT
 
-  data.table::setDT(res)
+    svydata[, variable := whatvar]
+
+    return(svydata)
+
+  })
+
+  res = rbindlist(res)
+
   res[, ci := NULL]
   data.table::setnames(res, c('mean_se', 'ci_low', 'ci_upp'), c('se', 'lower', 'upper'))
-  res[, variable := as.character(what)]
 
   if(length(opts[!opts %in% metrics]) >0){
     res[, opts[!opts %in% metrics] := NULL]

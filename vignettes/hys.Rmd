@@ -57,7 +57,7 @@ print(paste('The dataset has', d[1], 'respondents and', d[2], 'columns loaded'))
  
 1. The `hys` object is 4 classes-- `tbl_svy` from the `srvyr` package, `survey.design2` and `survey.design1` from the underlying `survey` package, and `apde_hys` which the `rads` package appends to make some of the helper functions work. Classes are important because they help R figure out which functions and operations are proper to execute on a given object.
 
-2. A `tbl_svy` is basically like a `tibble` from the `dplyr` package that is svyset (to borrow from stata vernacular). This means things like `filter`, `mutate`, `greoup_by` and other `dplyr` verbs will work on `tbl_svy` objects. The verb that is likely to be of the most interest is the `summarize` one. To properly compute survey weighted metrics, one must use functions in the form of `survey_mean` and what not. The `?summarize` page has a full listing.
+2. A `tbl_svy` is basically like a `tibble` from the `dplyr` package that is svyset (to borrow from stata vernacular). This means things like `filter`, `mutate`, `group_by` and other `dplyr` verbs will work on `tbl_svy` objects. The verb that is likely to be of the most interest is the `summarize` one. To properly compute survey weighted metrics, one must use functions in the form of `survey_mean` and what not. The `?summarize` page has a full listing.
 
 3. While `dplyr` verbs will (sort of) work on the `hys` object, other mechanisms of data manipulation (e.g. base R or `data.table`) will not work without some modification. The way `tbl_svy` objects are structured means the underlying `data.frame`/`tibble` is stored in `hys$variables`. While you can alter this item outside the `dplyr` verb environment, it is not recommended because screwing with the variables that inform the survey design (e.g. psu, strata, and pweight) can make things go haywire. At some point the `rads` package might include the functionality to return just the raw data.frame so folks can svyset it themselves-- but at the moment, I'm lazy.
  
@@ -83,7 +83,7 @@ res[, .Sexual_Orientation := 'All']
 res[, .Race := 'All']
 res[, .Region := 'King County']
 res[, .Grade := 'All']
-res[, .Year := '2016 - 2018']
+res[, .Year := '2016, 2018']
 
 #Print the results
 res[]
@@ -103,7 +103,7 @@ res <- hys %>%
                     grade = list(Tiny = c(6,8), Big = c(10,12)), #two grade groups
                     region = NULL, #all regions
                     race = 'all', #a_race8,
-                    year = c(2016, 2018), #each year seperately
+                    year = c(2016, 2018), #each year combined
                     sexual_orientation = NULL,
                     na.rm = TRUE
                    )
@@ -126,7 +126,7 @@ res <- hys %>%
                     grade = NULL, #two grade groups
                     region = NULL, #all regions
                     race = 'aic', #all alone or in combination groups,
-                    year = c(2016, 2018), #each year seperately
+                    year = c(2016, 2018), #each year combined
                     sexual_orientation = NULL,
                     na.rm = TRUE
                    )
@@ -147,7 +147,7 @@ res <- hys %>%
                     grade = NULL, #two grade groups
                     region = NULL, #all regions
                     race = c('a_black_aic', 'a_asian_aic'), #all alone or in combination groups,
-                    year = c(2016, 2018), #each year seperately
+                    year = c(2016, 2018), #each year combined
                     sexual_orientation = NULL,
                     na.rm = TRUE
                    )
@@ -168,7 +168,7 @@ res <- hys %>%
                     region = NULL, #all regions
                     race = list(A = c('Asian', 'AIAN'), H = 'Hispanic'), #custom grouping!
                     race_var = 'a_race8', # this will probably be renamed at some point
-                    year = c(2016, 2018), #each year seperately
+                    year = c(2016, 2018), #each year combined
                     sexual_orientation = NULL,
                     na.rm = TRUE
                    )
@@ -188,7 +188,7 @@ res <- hys %>%
                     grade = NULL, #two grade groups
                     region = NULL, #all regions
                     race = NULL, #custom grouping! Everything else goes to NA and is dropped
-                    year = c(2016, 2018), #each year seperately
+                    year = c(2016, 2018), #each year combined
                     sexual_orientation = NULL,
                     na.rm = TRUE
                    )

@@ -23,6 +23,17 @@ test_that('Multi Grouping with filtering',{
           expect_equal(st, man)
 })
 
+test_that('Multi Grouping with filtering and multiple what variables',{
+  st = survey_tabulate(sur, what = c('api00', 'api99'),
+                       cname == 'Los Angeles',
+                       by = c('stype', 'cname'),
+                       metrics = 'mean')
+  man1 = sur %>% filter(cname == 'Los Angeles') %>% group_by(stype, cname) %>% summarize(mean = survey_mean(api00)) %>% setDT
+  man2 = sur %>% filter(cname == 'Los Angeles') %>% group_by(stype, cname) %>% summarize(mean = survey_mean(api99)) %>% setDT
+  man = rbind(man1, man2)[, .(stype, cname, mean, variable = c(rep('api00', 3), rep('api99', 3)))]
+  expect_equal(st, man)
+})
+
 test_that('Proportion toggle- on',{
   sur = sur %>% mutate(schwide = as.numeric(sch.wide == 'Yes'))
   st = survey_tabulate(sur, 'schwide', metrics = 'lower', proportion = T)

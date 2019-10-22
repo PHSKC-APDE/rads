@@ -105,11 +105,13 @@ tabulate_variable.apde_hys <- function(svy, variable,
   }
 
   #confirm sex is valid option
-  sex = match.arg(sex, c('both', 'seperate'))
-  if(sex == 'seperate'){
-    sex = list(Male = 'Male', Female = "Female")
-  }else{
-    sex = list(Both = c("Male", "Female"))
+  if(!is.list(sex)){
+    sex = match.arg(sex, c('both', 'separate'))
+    if(sex == 'seperate'){
+      sex = list(Male = 'Male', Female = "Female")
+    }else{
+      sex = list(Both = c("Male", "Female"))
+    }
   }
   sex = validate_list_input(sex, values = svy$variables[['a_sex']], variable_name = 'sex')
 
@@ -126,29 +128,27 @@ tabulate_variable.apde_hys <- function(svy, variable,
   sexual_orientation = validate_list_input(sexual_orientation, values = svy$variables[['sexual_orientation']], variable_name = 'sexual_orientation', prefix = 'Sexual Orientation')
 
   #validate race
-  if(is.character(race)){
-    if(length(race) == 1){
-      race = match.arg(race, c('all', 'all-NH', 'aic'))
-      race_var = ifelse(race == 'all', 'a_race8', 'raceeth')
-      race = switch(race,
-                    all = unique(svy$variables$a_race8),
-                    `all-NH` = unique(svy$variables$raceeth),
-                    aic = grep('_aic', names(svy$variables), value = T))
-      race = stats::setNames(lapply(race, function(x) as.character(x)), race)
 
-    }
+  if(length(race) == 1){
+    race = match.arg(race, c('all', 'all-NH', 'aic'))
+    race_var = ifelse(race == 'all', 'a_race8', 'raceeth')
+    race = switch(race,
+                  all = unique(svy$variables$a_race8),
+                  `all-NH` = unique(svy$variables$raceeth),
+                  aic = grep('_aic', names(svy$variables), value = T))
+    race = stats::setNames(lapply(race, function(x) as.character(x)), race)
 
-    #check for the number of aics in the character
-    aics = grepl('_aic', race, fixed = T)
-    sum_aics = sum(aics)
-    if((sum_aics > 0 & sum_aics < length(aics))){
-      stop('aic race instructions have been mixed with non-aic instructions. Please fix this.')
-    }
-
-    aic_check <- sum_aics == length(aics)
-  }else{
-    aic_check <- FALSE
   }
+
+  #check for the number of aics in the character
+  aics = grepl('_aic', race, fixed = T)
+  sum_aics = sum(aics)
+  if((sum_aics > 0 & sum_aics < length(aics))){
+    stop('aic race instructions have been mixed with non-aic instructions. Please fix this.')
+  }
+
+  aic_check <- sum_aics == length(aics)
+
 
   if(!aic_check){
     #This should catch "aic" race variables mixed with other classifications
@@ -174,7 +174,7 @@ tabulate_variable.apde_hys <- function(svy, variable,
       tabs <- svy %>% mutate(.Race = !!x) %>%
         survey_tabulate(
                       what = variable,
-                      kingco == 1, !is.na(!!sss), kcfinalwt > 0,
+                      !is.na(!!sss), kcfinalwt > 0,
                       by = c('.Sex', '.Grade', '.Region', '.Year', '.Sexual_Orientation', '.Race'),
                       metrics = metrics,
                       proportion = proportion)
@@ -189,7 +189,7 @@ tabulate_variable.apde_hys <- function(svy, variable,
   }else{
     res = survey_tabulate(svy,
                           what = variable,
-                          kingco == 1, !is.na(!!sss), kcfinalwt > 0, #TOFIX: kcfinalwt>0 will have to be changed after the switch to the HYS R version
+                          !is.na(!!sss), kcfinalwt > 0, #TOFIX: kcfinalwt>0 will have to be changed after the switch to the HYS R version
                           by = c('.Sex', '.Grade', '.Region', '.Year', '.Sexual_Orientation', '.Race'),
                           metrics = metrics,
                           proportion = proportion)
