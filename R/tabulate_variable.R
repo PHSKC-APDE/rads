@@ -56,10 +56,11 @@ tabulate_variable<- function(svy, ...){
 #'             'All-NH' is like 'all', but the multiple race category is also non-hispanic/
 #'             'aic' indicates that the rest of the instructions will be looped over, once per aic race class.
 #'             Instructions passed in the list format (or as character vectors length > 1) described below will be checked to ensure no mismatch between aic and non-aic designations.
-#'             The variable underpinning 'all' will be used when non-aic values are present.
+#' @param race_var Character vector of length 1. Only used when the `race` argument is passed a list as described in details
 #' @param year numeric vector or a list of numeric vectors. See details for how to structure the input.
 #' @param sexual_orientation character vector or a list of character vectors. See details for how to structure the input.
 #' @param na.rm logical. Removes rows with NA by variables from the results.
+#' @param proportion logical. Is the metric being computed a proportion or a percentage?
 #' @param ... unused
 #' @details
 #'
@@ -77,7 +78,7 @@ tabulate_variable<- function(svy, ...){
 #'
 #' @importFrom rlang !!
 #' @importFrom srvyr mutate
-#' @importFrom stats na.omit
+#' @importFrom stats na.omit setNames
 #'
 tabulate_variable.apde_hys <- function(svy, variable,
                                        metrics = c('mean', 'lower', 'upper', 'numerator', 'denominator'),
@@ -85,11 +86,13 @@ tabulate_variable.apde_hys <- function(svy, variable,
                                        grade = list(6,8,10,12),
                                        region = list(`King County` = c('North', 'South', "East", 'Seattle')),
                                        race = "all",
+                                       race_var = 'a_race8',
                                        year = 2018,
                                        sexual_orientation = list(`Heterosexual (Straight)` = 'Heterosexual (Straight)',
                                                                  `LBG+` = c('Gay or Lesbian', 'Bisexual', 'Something else fits better'),
                                                                  `Not Sure` = 'Questioning/Not Sure'),
                                        na.rm = T,
+                                       proportion = TRUE,
                                        ...){
 
   #confirm that variable is in the dataset
@@ -131,6 +134,7 @@ tabulate_variable.apde_hys <- function(svy, variable,
                     all = unique(svy$variables$a_race8),
                     `all-NH` = unique(svy$variables$raceeth),
                     aic = grep('_aic', names(svy$variables), value = T))
+      race = stats::setNames(lapply(race, function(x) as.character(x)), race)
 
     }
 
@@ -165,27 +169,30 @@ tabulate_variable.apde_hys <- function(svy, variable,
 
   #Tabulate the variable
   if(aic_check){
-    res <- rbindlist(race, function(x){
-      svy <- svy %>% mutate(.Race = !!x) %>%
+    race = rlang::syms(race)
+    res <- lapply(race, function(x){
+      tabs <- svy %>% mutate(.Race = !!x) %>%
         survey_tabulate(
                       what = variable,
                       kingco == 1, !is.na(!!sss), kcfinalwt > 0,
                       by = c('.Sex', '.Grade', '.Region', '.Year', '.Sexual_Orientation', '.Race'),
-                      metric = metrics,
-                      proportion = T)
+                      metrics = metrics,
+                      proportion = proportion)
+
+      return(tabs)
 
 
     })
 
-    res = rbindlist(res)
+    res = data.table::rbindlist(res)
 
   }else{
     res = survey_tabulate(svy,
                           what = variable,
                           kingco == 1, !is.na(!!sss), kcfinalwt > 0, #TOFIX: kcfinalwt>0 will have to be changed after the switch to the HYS R version
                           by = c('.Sex', '.Grade', '.Region', '.Year', '.Sexual_Orientation', '.Race'),
-                          metric = metrics,
-                          proportion = T)
+                          metrics = metrics,
+                          proportion = proportion)
   }
 
   if(na.rm){

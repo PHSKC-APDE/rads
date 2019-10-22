@@ -41,15 +41,11 @@ get_data <- function(dataset, cols = NA, year = 2018, ...){
 
 #' Get HYS microdata from storage.
 #'
-#' @description
-#'
 #' @param cols Character vector of length >=1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
 #'     See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.
 #' @param year Numeric vector. Identifies which years of data should be pulled
 #' @param weight_variable Character vector of length 1. Identifies which weight column
 #' @param kingco logical. Return dataset for analyses in King County only.
-#'
-#'
 #'
 #' @return dataset either in data.table (adminstrative data) or svy_tbl (survey data) for further analysis/tabulation
 #'

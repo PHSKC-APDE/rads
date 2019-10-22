@@ -4,7 +4,7 @@
 #' @param what character vector. Variable to tabulate "over". Must match a column name in svy.
 #' @param ... expressions to be passed to \code{\link{filter}}
 #' @param by character vector. Must refer to variables within svy. The variables within svy to compute `what` by
-#' @param metric character. See \code{\link{survey_metrics}} for the available options. Note, all metrics are calculated-- this argument just specifies which one gets returned
+#' @param metrics character. See \code{\link{survey_metrics}} for the available options. Note, all metrics are calculated-- this argument just specifies which one gets returned
 #' @param proportion logical. Toggles whether or not se/lower/upper are calculated for proportions.
 #'
 #'
@@ -24,11 +24,11 @@
 #' svy <- apisrs %>% as_survey_design(ids = 1, fpc = fpc)
 #' svy_res <- survey_tabulate(svy, 'api00',
 #'                            cname == 'Los Angeles',
-#'                            by = 'stype', metric = 'mean',
+#'                            by = 'stype', metrics = 'mean',
 #'                            proportion = FALSE)
 #'
 #'
-survey_tabulate = function(svy, what, ..., by = NULL, metric = c('mean', 'lower', 'upper'), proportion = F){
+survey_tabulate = function(svy, what, ..., by = NULL, metrics = c('mean', 'lower', 'upper'), proportion = F){
   opts = survey_metrics()
   #confirm that svy is a tab_svy
   stopifnot(inherits(svy, 'tbl_svy'))
@@ -69,7 +69,7 @@ survey_tabulate = function(svy, what, ..., by = NULL, metric = c('mean', 'lower'
   }
 
   #confirm that metrics are properly specified
-  metric <- match.arg(metric, opts, several.ok = T)
+  metrics <- match.arg(metrics, opts, several.ok = T)
 
   #subset svy to only the columns needed (and rows)
   if(!is.null(where)){
@@ -81,10 +81,14 @@ survey_tabulate = function(svy, what, ..., by = NULL, metric = c('mean', 'lower'
 
   what = rlang::sym(what)
 
+  #make sure there is not NAs in the what variable
+  svy <- svy %>% filter(!is.na(!!what))
+
   if(!is.null(by)){
     by = rlang::syms(by)
     svy <- svy %>% group_by(!!!by)
   }
+
 
   res <- svy %>% summarize(
     mean = srvyr::survey_mean(!!what, na.rm = T, vartype = 'se', proportion = proportion),
@@ -100,8 +104,9 @@ survey_tabulate = function(svy, what, ..., by = NULL, metric = c('mean', 'lower'
   data.table::setnames(res, c('mean_se', 'ci_low', 'ci_upp'), c('se', 'lower', 'upper'))
   res[, variable := as.character(what)]
 
-  res[, opts[!opts %in% metric] := NULL]
-
+  if(length(opts[!opts %in% metrics]) >0){
+    res[, opts[!opts %in% metrics] := NULL]
+  }
 
   return(res)
 

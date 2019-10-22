@@ -7,11 +7,11 @@
 \method{tabulate_variable}{apde_hys}(svy, variable, metrics = c("mean",
   "lower", "upper", "numerator", "denominator"), sex = "both",
   grade = list(6, 8, 10, 12), region = list(`King County` = c("North",
-  "South", "East", "Seattle")), race = "all", year = 2018,
-  sexual_orientation = list(`Heterosexual (Straight)` =
+  "South", "East", "Seattle")), race = "all", race_var = "a_race8",
+  year = 2018, sexual_orientation = list(`Heterosexual (Straight)` =
   "Heterosexual (Straight)", `LBG+` = c("Gay or Lesbian", "Bisexual",
   "Something else fits better"), `Not Sure` = "Questioning/Not Sure"),
-  na.rm = T, ...)
+  na.rm = T, proportion = TRUE, ...)
 }
 \arguments{
 \item{svy}{tab_svy. HYS dataset}
@@ -30,14 +30,17 @@
 With 'all', each race is computed seperately, with the caveat that the multiple race category includes hispanic
 'All-NH' is like 'all', but the multiple race category is also non-hispanic/
 'aic' indicates that the rest of the instructions will be looped over, once per aic race class.
-Instructions passed in the list format (or as character vectors length > 1) described below will be checked to ensure no mismatch between aic and non-aic designations.
-The variable underpinning 'all' will be used when non-aic values are present.}
+Instructions passed in the list format (or as character vectors length > 1) described below will be checked to ensure no mismatch between aic and non-aic designations.}
+
+\item{race_var}{Character vector of length 1. Only used when the `race` argument is passed a list as described in details}
 
 \item{year}{numeric vector or a list of numeric vectors. See details for how to structure the input.}
 
 \item{sexual_orientation}{character vector or a list of character vectors. See details for how to structure the input.}
 
 \item{na.rm}{logical. Removes rows with NA by variables from the results.}
+
+\item{proportion}{logical. Is the metric being computed a proportion or a percentage?}
 
 \item{...}{unused}
 }

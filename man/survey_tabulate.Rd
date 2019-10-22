@@ -4,7 +4,7 @@
 \alias{survey_tabulate}
 \title{Compute metrics from a survey}
 \usage{
-survey_tabulate(svy, what, ..., by = NULL, metric = c("mean", "lower",
+survey_tabulate(svy, what, ..., by = NULL, metrics = c("mean", "lower",
   "upper"), proportion = F)
 }
 \arguments{
@@ -16,7 +16,7 @@ survey_tabulate(svy, what, ..., by = NULL, metric = c("mean", "lower",
 
 \item{by}{character vector. Must refer to variables within svy. The variables within svy to compute `what` by}
 
-\item{metric}{character. See \code{\link{survey_metrics}} for the available options. Note, all metrics are calculated-- this argument just specifies which one gets returned}
+\item{metrics}{character. See \code{\link{survey_metrics}} for the available options. Note, all metrics are calculated-- this argument just specifies which one gets returned}
 
 \item{proportion}{logical. Toggles whether or not se/lower/upper are calculated for proportions.}
 }
@@ -36,7 +36,7 @@ data(api)
 svy <- apisrs \%>\% as_survey_design(ids = 1, fpc = fpc)
 svy_res <- survey_tabulate(svy, 'api00',
                            cname == 'Los Angeles',
-                           by = 'stype', metric = 'mean',
+                           by = 'stype', metrics = 'mean',
                            proportion = FALSE)
 
 

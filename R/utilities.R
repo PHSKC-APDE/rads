@@ -41,5 +41,5 @@ list_dataset_columns <- function(dataset, analytic_only = F){
 #' @export
 #' @return character vector. A vector of the available metrics for calculation.
 survey_metrics = function(){
-  c('mean', 'median', 'se', 'lower', 'upper', 'numerator', 'denominator', 'total', 'total_se')
+  c('mean', 'se', 'lower', 'upper', 'numerator', 'denominator', 'total', 'total_se')
 }
