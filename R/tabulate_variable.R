@@ -182,13 +182,13 @@ tabulate_variable.apde_hys <- function(svy, variable,
   }else{
     res = survey_tabulate(svy,
                           what = variable,
-                          kingco == 1, !is.na(!!sss), kcfinalwt > 0,
+                          kingco == 1, !is.na(!!sss), kcfinalwt > 0, #TOFIX: kcfinalwt>0 will have to be changed after the switch to the HYS R version
                           by = c('.Sex', '.Grade', '.Region', '.Year', '.Sexual_Orientation', '.Race'),
                           metric = metrics,
                           proportion = T)
   }
 
-  if(na.omit){
+  if(na.rm){
     res = na.omit(res, c('.Sex', '.Grade', '.Region', '.Year', '.Sexual_Orientation', '.Race'))
   }
 

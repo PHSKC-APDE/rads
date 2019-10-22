@@ -69,7 +69,7 @@ res <- hys %>% tabulate_variable(variable = 'ecig_vape',
                                  race = 'all', #a_race8,
                                  year = c(2016, 2018), #each year seperately
                                  sexual_orientation = NULL,
-                                 na.rm = T
+                                 na.rm = TRUE
                                  )
 
 ```

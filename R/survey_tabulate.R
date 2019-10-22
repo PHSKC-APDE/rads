@@ -57,6 +57,13 @@ survey_tabulate = function(svy, what, ..., by = NULL, metric = c('mean', 'lower'
     if(by_check != '') stop(by_check)
 
     #and if its not missing, filter such that no by variable has NAs
+    #svy <- svy %>% filter_at(by, ~ !is.na(.))
+
+    mis_vars = apply(svy$variables[, by], 1, function(x) sum(is.na(x)))
+
+    #remove missing by vars
+    svy <- svy %>% filter(!!mis_vars==0)
+
 
 
   }
@@ -82,7 +89,7 @@ survey_tabulate = function(svy, what, ..., by = NULL, metric = c('mean', 'lower'
   res <- svy %>% summarize(
     mean = srvyr::survey_mean(!!what, na.rm = T, vartype = 'se', proportion = proportion),
     ci = srvyr::survey_mean(!!what, na.rm = T, vartype = 'ci', proportion = proportion),
-    median = srvyr::survey_median(!!what, na.rm = T, vartype = NULL),
+    #median = srvyr::survey_median(!!what, na.rm = T, vartype = NULL), This isn't working at the moment. Figure it out later
     total = srvyr::survey_total(!!what, na.rm = T),
     numerator = srvyr::unweighted(sum(!!what == 1, na.rm = T)),
     denominator = srvyr::unweighted(n())
