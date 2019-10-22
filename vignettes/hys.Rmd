@@ -3,8 +3,8 @@ title: "Analyzing HYS data in rads"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Analyzing HYS data in rads}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
 ---
 
 ```{r, include = FALSE}
@@ -20,7 +20,7 @@ To begin, we load the rads package. Because it is dangerous to go at it alone, t
 
 ```{r setup, warning = FALSE, message = FALSE}
 library('data.table')
-library(rads)
+library('rads')
 library('srvyr') #analyzing surveys
 library('dplyr') #data manipulation and stress
 ```
@@ -40,7 +40,7 @@ rads::list_dataset_columns(dataset = 'hys', analytic_only = F)
 So the results are a bit disappointing, but this function will work better when the HYS dataset migrates to SQL. Anyways, we can imagine examining the list of columns to select which ones are best and are the most flattering. For now, we'll just load the whole analytical dataset for 2016 and 2018.
 
 ```{r loaddata}
-hys <- get_data('hys', year = c(2016, 2018))
+hys <- rads::get_data('hys', year = c(2016, 2018))
 ```
 
 It behooves us to examine what exactly we have loaded. A good place to start is by checking the `class`. We also check the dimensions (`dim(hys)`) for giggles.
@@ -92,7 +92,7 @@ res[]
 
 With this command, we calculated the proportion of all valid HYS respondents in King County who vaped for the years 2016 and 2018. As the print out hopefully shows, this proportion of students is `r round(res[,mean],2)`. Wooo! Go us!
 
-But what if we want to see the vaping proportions by race and stratified by 6th and 8th graders versus 10th and 12th graders? Well, funny you should ask...
+But what if we want to see the vaping percentages by race and stratified by 6th and 8th graders versus 10th and 12th graders? Well, funny you should ask...
 
 ```{r babyssecondcomputation, warning = F}
 
@@ -113,7 +113,7 @@ res[]
 
 ```
 
-Note how the `grade` argument is specified and how it relates to the output. We pass a named list of the rough format `list(output_name = c(vector, of, inputs), name2= input2)` to do on the fly recoding. For this to work properly, you need to know the values in the grade column-- in this case, a_grade8. Probably in the future, some of this interface will change as we standardize the names for common demographic categories. Another change from above is that the argument `race` is now set to `"all"` rather than `NULL`. For `tabulate_variable`, `NULL` generally works out to mean "skip this column for the purposes for selection and grouping". Now that `race` is set to `"all"` the function works internally to compute metrics by each race, as specified in the `a_race8` column. Other options include `"all-NH"` or `"aic"`. The former seperates all the races into their non-hispanic version while the latter loops over the alone and in combination options specified.
+Note how the `grade` argument is specified and how it relates to the output. We pass a named list of the rough format `list(output_name = c(vector, of, inputs), name2= input2)` to do on the fly recoding. For this to work properly, you need to know the values in the grade column-- in this case, `a_grade8`. Probably in the future, some of this interface will change as we standardize the names for common demographic categories. Another change from above is that the argument `race` is now set to `"all"` rather than `NULL`. For `tabulate_variable`, `NULL` generally works out to mean "skip this column for the purposes for selection and grouping". Now that `race` is set to `"all"` the function works internally to compute metrics by each race, as specified in the `a_race8` column. Other options include `"all-NH"` or `"aic"`. The former seperates all the races into their non-hispanic version while the latter loops over the alone and in combination options specified.
 
 We can compute alone or in combination metrics as follows:
 
