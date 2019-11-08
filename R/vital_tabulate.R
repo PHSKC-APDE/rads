@@ -1,0 +1,125 @@
+#' Compute metrics from vital stats or other count data
+#'
+#' @param my.dt data.table with count data
+#' @param what character vector. Variable to tabulate "over". Must match a column name in my.dt
+#' @param ... expressions to be passed to \code{\link{filter}}
+#' @param by character vector. Must refer to variables within my.dt. The variables within my.dt to compute `what` by
+#' @param metrics character. See \code{\link{vital_metrics}} for the available options. Note, all metrics are calculated-- this argument just specifies which one gets returned
+#'
+#'
+#' @return a data.table containing the results
+#' @details
+#' This function calculates `metrics` for each variable in `what` from rows meeting the conditions specified by `where` for each grouping implied by `by`.
+#'
+#' @importFrom rlang quos
+#' @import 
+#' @import data.table
+#' @export
+#'
+#' @examples
+#' test.data <- get_data_birth(year = 2015:2017)
+#' 
+#' test.results <- vital_tabulate(test.data, 
+#'                                what = c("kotelchuck", "fetal_pres"), 
+#'                                "chi_year == 2016 & chi_sex %in% c('Male', 'Female')", 
+#'                                by = c("chi_year", "chi_sex"), 
+#'                                metrics = c("mean", "numerator", "denominator", "missing", "total", "se"))
+#'
+#'
+vital_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "numerator", "denominator", "missing", "total")){
+  # copy data.table to prevent changing the underlying data
+  temp.dt <- copy(my.dt)
+  
+  opts = vital_metrics()
+  
+  #validate 'what'
+  if(!is.character(what))
+    stop(paste0("The `what` argument must be submitted as a character (i.e., in quotes)"))
+  
+  what_check <- check_names('what', 'temp.dt', names(temp.dt), what)
+  if(what_check != '') stop(what_check)
+  
+  #if 'what' is not binary (0,1), convert it to a series of binary columns
+    # identify the factor columns
+      binary.columns <- sapply(temp.dt,function(x) { all(na.omit(x) %in% 0:1) }) # logical vector 
+      binary.columns <- names(temp.dt[, ..binary.columns]) # character vector 
+      what.factors <- setdiff(what, binary.columns)
+      names.before <- names(copy(temp.dt))
+      
+    # convert factors to series of binary columns (xxx_prefix is to identify the expanded data below)
+      for(i in 1:length(what.factors)){
+        temp.dt[is.na(get(what.factors[i])), what.factors[i] := "missing" ]
+        temp.dt[, paste0(what.factors[i], "_SPLIT_HERE_", levels(temp.dt[[what.factors[i]]]) ) := 
+             lapply(levels( get(what.factors[i]) ), function(x) as.integer(x == get(what.factors[i]) ))]
+      }
+      
+    # update 'what' to reflect all binaries
+      what <- c(setdiff(what, what.factors), setdiff(names(temp.dt), names.before) )
+      
+  
+  #validate '...' (i.e., where)
+  where <- NULL
+  if(!missing(...)){
+    where <- parse(text = paste0(list(...)))  # convert 'where' into an expression
+  }
+
+  #validate 'by'
+  if(!missing(by)){
+    if(!is.character(by))
+      stop(paste0("The `by` argument must be submitted as a character (i.e., in quotes)"))
+    
+    by_check <- check_names('by', 'svy', names(temp.dt), by)
+    if(by_check != '') stop(by_check)
+  }
+
+  #limits metrics to those that have been pre-specified, i.e., non-starndard metrics are dropped
+  metrics <- match.arg(metrics, opts, several.ok = T)
+
+  #subset temp.dt to only the rows needed
+  if(!is.null(where)){
+    temp.dt <- temp.dt[eval(where), ]
+  }
+
+  # function to calculate metrics
+  res <- data.table() # create empty data.table for appending results
+  for(i in 1:length(what)){
+    res <- rbind(res, 
+            temp.dt[, .(
+              variable = as.character(what[i]), 
+              mean = mean(get(what[i]), na.rm = T),
+              numerator = sum(get(what[i]), na.rm = T),
+              denominator = sum(!is.na( get(what[i]) )),
+              total = .N, 
+              missing = sum(is.na( get(what[i]) )),
+              missing.prop = sum(is.na( get(what[i]) ) / .N), 
+              se = 1, 
+              lower = 1, 
+              upper = 1
+              ), 
+            by = by
+            ], 
+            fill = TRUE
+          )
+  }
+  
+  # clean up results
+  res[, c("variable", "level") := tstrsplit(variable, "_SPLIT_HERE_", fixed=TRUE)] 
+  setcolorder(res, c("variable", "level", by))
+
+
+  if(length(opts[!opts %in% metrics]) >0){
+    res[, opts[!opts %in% metrics] := NULL]
+  }
+
+  return(res)
+
+}
+
+# test functon
+test.data <- get_data_birth(year = 2015:2017)
+
+test.results <- vital_tabulate(test.data, 
+                               what = c("kotelchuck", "fetal_pres"), 
+                               "chi_year == 2016 & chi_sex %in% c('Male', 'Female')", 
+                               by = c("chi_year", "chi_sex"), 
+                               metrics = c("mean", "numerator", "denominator", "missing", "total", "se"))
