@@ -43,3 +43,7 @@ list_dataset_columns <- function(dataset, analytic_only = F){
 survey_metrics = function(){
   c('mean', 'se', 'lower', 'upper', 'numerator', 'denominator', 'total', 'total_se')
 }
+
+vital_metrics = function(){
+  c('mean', 'se', 'lower', 'upper', 'numerator', 'denominator', 'missing', 'missing.prop', 'total')
+}

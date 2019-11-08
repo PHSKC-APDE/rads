@@ -62,7 +62,7 @@ validate_list_input = function(x, values, variable_name, prefix = 'Value', make_
 
   if(!all(g_chck)) stop(paste0('Invalid values found in ',  variable_name, ': ', paste(g_ul_uniq[!g_chck], collapse = ', ')))
 
-  #create names if non exist
+  #create names if none exist
   if(make_names){
     if(is.null(names(x))){
       names(x) = unlist(lapply(x, function(y) paste0(prefix, ': ', paste(y, collapse = ', '))))
