@@ -23,7 +23,7 @@
 #'                                what = c("kotelchuck", "fetal_pres"), 
 #'                                "chi_year == 2016 & chi_sex %in% c('Male', 'Female')", 
 #'                                by = c("chi_year", "chi_sex"), 
-#'                                metrics = c("mean", "numerator", "denominator", "missing", "total", "se"))
+#'                                metrics = c("mean", "numerator", "denominator", "missing", "total", "lower", "upper", "se", "mising.prop"))
 #'
 #'
 vital_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "numerator", "denominator", "missing", "total")){
@@ -48,7 +48,6 @@ vital_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "nume
       
     # convert factors to series of binary columns (xxx_prefix is to identify the expanded data below)
       for(i in 1:length(what.factors)){
-        temp.dt[is.na(get(what.factors[i])), what.factors[i] := "missing" ]
         temp.dt[, paste0(what.factors[i], "_SPLIT_HERE_", levels(temp.dt[[what.factors[i]]]) ) := 
              lapply(levels( get(what.factors[i]) ), function(x) as.integer(x == get(what.factors[i]) ))]
       }
@@ -60,7 +59,7 @@ vital_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "nume
   #validate '...' (i.e., where)
   where <- NULL
   if(!missing(...)){
-    where <- parse(text = paste0(list(...)))  # convert 'where' into an expression
+    tryCatch(parse(text = paste0(list(...))),  error = function (e) parse(text = paste0(list(bquote(...))))) # convert 'where' into an expression
   }
 
   #validate 'by'
@@ -91,16 +90,29 @@ vital_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "nume
               denominator = sum(!is.na( get(what[i]) )),
               total = .N, 
               missing = sum(is.na( get(what[i]) )),
-              missing.prop = sum(is.na( get(what[i]) ) / .N), 
-              se = 1, 
-              lower = 1, 
-              upper = 1
+              missing.prop = sum(is.na( get(what[i]) ) / .N) 
               ), 
             by = by
             ], 
             fill = TRUE
           )
   }
+  
+  # Calculate lower, upper, & se
+  # ci <- Map(prop.test, res$numerator, res$denominator)
+  # res[c("lower","upper")] <- sapply(res,"[[","conf.int")
+  numerator <- res$numerator
+  denominator <- res$denominator
+  lower <- rep(NA, nrow(res)) # create empty vector to hold results
+  upper <- rep(NA, nrow(res)) # create empty vector to hold results
+  for(i in 1:nrow(res)){
+    lower[i] <- prop.test(numerator[i], denominator[i], conf.level = 0.95, correct = F)[[6]][1] # the score method ... suggested by DOH & others
+    upper[i] <- prop.test(numerator[i], denominator[i], conf.level = 0.95, correct = F)[[6]][2]
+  }
+  res[, lower := lower]
+  res[, upper := upper]
+  res[, se := sqrt((mean*(1-mean))/denominator) ]
+  #res[, se.alt := (((upper-mean) + (mean-lower)) / 2) / qnorm(0.975) ] # splitting difference of non-symetrical MOE ... same to 5 decimal places
   
   # clean up results
   res[, c("variable", "level") := tstrsplit(variable, "_SPLIT_HERE_", fixed=TRUE)] 
@@ -114,12 +126,3 @@ vital_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "nume
   return(res)
 
 }
-
-# test functon
-test.data <- get_data_birth(year = 2015:2017)
-
-test.results <- vital_tabulate(test.data, 
-                               what = c("kotelchuck", "fetal_pres"), 
-                               "chi_year == 2016 & chi_sex %in% c('Male', 'Female')", 
-                               by = c("chi_year", "chi_sex"), 
-                               metrics = c("mean", "numerator", "denominator", "missing", "total", "se"))
