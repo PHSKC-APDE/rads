@@ -2,7 +2,7 @@ cat1,cat1_group,cat1_varname,encoding,notes
 ,,data_source,character,Data source
 ,,year,character,Year(s)
 ,,version,character,"If there are different versions, which one?"
-,,row_id,integer,IS THIS NEEDED? A unique identifier for each row of the data. This would allow for joining tables that are too wide for SQL.
+,,obs_id,integer,IS THIS NEEDED? A unique identifier for each row of the data. This would allow for joining tables that are too wide for SQL.
 ,,survey,binary (0|1),"If it is a survey, survey==1, else survey==0"
 ,,weight,,Survey weight variable name
 ,,weight_type,,"Weight type. Default == pweight. If you think it is anything other than a pweight, read the documentation again."
