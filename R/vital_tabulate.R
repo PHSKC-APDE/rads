@@ -59,7 +59,7 @@ vital_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "nume
   #validate '...' (i.e., where)
   where <- NULL
   if(!missing(...)){
-    tryCatch(parse(text = paste0(list(...))),  error = function (e) parse(text = paste0(list(bquote(...))))) # convert 'where' into an expression
+    where <- tryCatch(parse(text = paste0(list(...))),  error = function (e) parse(text = paste0(list(bquote(...))))) # convert 'where' into an expression
   }
 
   #validate 'by'
