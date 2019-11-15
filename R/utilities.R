@@ -45,5 +45,5 @@ survey_metrics = function(){
 }
 
 vital_metrics = function(){
-  c('mean', 'se', 'lower', 'upper', 'numerator', 'denominator', 'missing', 'missing.prop', 'total')
+  c('mean', 'rate', 'se', 'lower', 'upper', 'numerator', 'denominator', 'missing', 'missing.prop', 'total')
 }

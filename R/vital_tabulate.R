@@ -5,6 +5,7 @@
 #' @param ... expressions to be passed to \code{\link{filter}}
 #' @param by character vector. Must refer to variables within my.dt. The variables within my.dt to compute `what` by
 #' @param metrics character. See \code{\link{vital_metrics}} for the available options. Note, all metrics are calculated-- this argument just specifies which one gets returned
+#' @param per integer. The denominator when "rate" or "adjusted-rate" are selected as the metric.
 #'
 #'
 #' @return a data.table containing the results
@@ -26,7 +27,7 @@
 #'                                metrics = c("mean", "numerator", "denominator", "missing", "total", "lower", "upper", "se", "mising.prop"))
 #'
 #'
-vital_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "numerator", "denominator", "missing", "total")){
+vital_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "numerator", "denominator", "missing", "total"), per = NULL){
   # copy data.table to prevent changing the underlying data
   temp.dt <- copy(my.dt)
   
@@ -71,6 +72,14 @@ vital_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "nume
     if(by_check != '') stop(by_check)
   }
 
+  #validate 'per'
+  if("rate" %in% metrics & is.null(per)){
+    per <- 1000 # default denominator of 1000
+  }
+  if("rate" %in% metrics & !is.null(per) & all.equal(per, as.integer(per))!=T ){
+    stop("The 'per' argument must be an integer")
+  }
+
   #limits metrics to those that have been pre-specified, i.e., non-starndard metrics are dropped
   metrics <- match.arg(metrics, opts, several.ok = T)
 
@@ -99,8 +108,6 @@ vital_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "nume
   }
   
   # Calculate lower, upper, & se
-  # ci <- Map(prop.test, res$numerator, res$denominator)
-  # res[c("lower","upper")] <- sapply(res,"[[","conf.int")
   numerator <- res$numerator
   denominator <- res$denominator
   lower <- rep(NA, nrow(res)) # create empty vector to hold results
@@ -113,6 +120,15 @@ vital_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "nume
   res[, upper := upper]
   res[, se := sqrt((mean*(1-mean))/denominator) ]
   #res[, se.alt := (((upper-mean) + (mean-lower)) / 2) / qnorm(0.975) ] # splitting difference of non-symetrical MOE ... same to 5 decimal places
+  
+  # apply the 'per' if rate was specified in metric
+  if("rate" %in% metrics){
+    res[, rate := mean * per]
+    res[, rate_per := per]
+    res[, c("se", "lower", "upper") := lapply(.SD, function(x){x*per}), .SDcols = c("se", "lower", "upper")] 
+    metrics <- c(metrics, "rate_per")
+  } else{res[, rate := NA]}
+  
   
   # clean up results
   res[, c("variable", "level") := tstrsplit(variable, "_SPLIT_HERE_", fixed=TRUE)] 
