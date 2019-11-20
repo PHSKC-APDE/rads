@@ -27,7 +27,7 @@
 #'                                metrics = c("mean", "numerator", "denominator", "missing", "total", "lower", "upper", "se", "mising.prop"))
 #'
 #'
-vital_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "numerator", "denominator", "missing", "total"), per = NULL){
+record_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "numerator", "denominator", "missing", "total"), per = NULL){
   # copy data.table to prevent changing the underlying data
   temp.dt <- copy(my.dt)
   
@@ -98,6 +98,7 @@ vital_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "nume
               numerator = sum(get(what[i]), na.rm = T),
               denominator = sum(!is.na( get(what[i]) )),
               total = .N, 
+              years = format.years(list(sort(unique(chi_year)))),
               missing = sum(is.na( get(what[i]) )),
               missing.prop = sum(is.na( get(what[i]) ) / .N) 
               ), 
@@ -132,9 +133,10 @@ vital_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "nume
   
   # clean up results
   res[, c("variable", "level") := tstrsplit(variable, "_SPLIT_HERE_", fixed=TRUE)] 
-  setcolorder(res, c("variable", "level", by))
+  setcolorder(res, c("variable", "level", "years", by))
 
-
+  # drop columns no longer needed
+  metrics <- c(metrics, "years")
   if(length(opts[!opts %in% metrics]) >0){
     res[, opts[!opts %in% metrics] := NULL]
   }
