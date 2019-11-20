@@ -6,6 +6,7 @@
 #' @param by character vector. Must refer to variables within my.dt. The variables within my.dt to compute `what` by
 #' @param metrics character. See \code{\link{vital_metrics}} for the available options. Note, all metrics are calculated-- this argument just specifies which one gets returned
 #' @param per integer. The denominator when "rate" or "adjusted-rate" are selected as the metric.
+#' @param digits integer. The number of places to which the data should be rounded
 #'
 #'
 #' @return a data.table containing the results
@@ -27,7 +28,7 @@
 #'                                metrics = c("mean", "numerator", "denominator", "missing", "total", "lower", "upper", "se", "mising.prop"))
 #'
 #'
-record_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "numerator", "denominator", "missing", "total"), per = NULL){
+record_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "numerator", "denominator", "missing", "total"), per = NULL, digits = NULL){
   # copy data.table to prevent changing the underlying data
   temp.dt <- copy(my.dt)
   
@@ -80,6 +81,11 @@ record_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "num
     stop("The 'per' argument must be an integer")
   }
 
+  #validate 'digits'
+  if(!is.null(digits) & all.equal(digits, as.integer(digits))!=T){
+    stop("The 'digits' argument must be an integer")
+  }
+
   #limits metrics to those that have been pre-specified, i.e., non-starndard metrics are dropped
   metrics <- match.arg(metrics, opts, several.ok = T)
 
@@ -130,6 +136,13 @@ record_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "num
     metrics <- c(metrics, "rate_per")
   } else{res[, rate := NA]}
   
+  # apply rounding using 'digits' (if specified)
+  if(is.null(digits)){
+    res[, c("mean", "lower", "upper") := lapply(.SD, round2, 3), .SDcols = c("mean", "lower", "upper")]
+    res[, se := round2(se, 4)]
+  } else {
+    res[, c("mean", "lower", "upper", "se") := lapply(.SD, round2, digits), .SDcols = c("mean", "lower", "upper", "se")]
+  }
   
   # clean up results
   res[, c("variable", "level") := tstrsplit(variable, "_SPLIT_HERE_", fixed=TRUE)] 
