@@ -47,3 +47,56 @@ survey_metrics = function(){
 vital_metrics = function(){
   c('mean', 'rate', 'se', 'lower', 'upper', 'numerator', 'denominator', 'missing', 'missing.prop', 'total')
 }
+
+
+#' Improved rounding function
+#' @export
+#' @return numeric
+round2 = function(x, n = 0) {
+  posneg = sign(x)
+  z = abs(x)*10^n
+  z = z + 0.5
+  z = trunc(z)
+  z = z/10^n
+  z*posneg
+}
+
+
+#' Substring selection from the right to complement base R substr
+#' @export
+#' @return character vector
+#' 
+#' @examples 
+#' \dontrun{
+#' substrRight("Good morning!", 2, 8)
+#' }
+substrRight <- function(x, x.start, x.stop){
+  substr(x, nchar(x)-x.stop+1, nchar(x)-x.start+1)
+}
+
+
+#' format list of years into a well formatted string
+#' @export
+#' @return character vector 
+#' 
+#' @examples
+#' \dontrun{
+#' x <- data.table(var = c(rep("one", 6), rep("two", 6)), chi_year = rep(c(2010, 2011, 2012, 2015, 2016, 2017), 2))
+#' x[, years := format.years(list(sort(unique(chi_year))))]
+#' } 
+#' 
+format.years <- function(temp){
+  for(i in 1:(length(temp[[1]])) ){
+    if(i == 1){
+      new <- c(as.character(temp[[1]][i]))
+    }
+    if(i > 1){
+      if(temp[[1]][i] - as.integer(substrRight(new, 1, 4)) == 1){
+        if(substrRight(new, 5, 5) == "-"){
+          new <- paste0(gsub(substrRight(new, 1, 4), "", new), temp[[1]][i])
+        }else{ new <- paste0(new, "-", temp[[1]][i])}
+      } else{new <- paste0(new, ", ", temp[[1]][i])}
+    }
+  }
+  return(new)
+}
