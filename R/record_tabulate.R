@@ -4,7 +4,7 @@
 #' @param what character vector. Variable to tabulate "over". Must match a column name in my.dt
 #' @param ... expressions to be passed to \code{\link{filter}}
 #' @param by character vector. Must refer to variables within my.dt. The variables within my.dt to compute `what` by
-#' @param metrics character. See \code{\link{vital_metrics}} for the available options. Note, all metrics are calculated-- this argument just specifies which one gets returned
+#' @param metrics character. See \code{\link{record_metrics}} for the available options. Note, all metrics are calculated-- this argument just specifies which one gets returned
 #' @param per integer. The denominator when "rate" or "adjusted-rate" are selected as the metric.
 #' @param digits integer. The number of places to which the data should be rounded
 #'
@@ -21,7 +21,7 @@
 #' @examples
 #' test.data <- get_data_birth(year = 2015:2017)
 #' 
-#' test.results <- vital_tabulate(test.data, 
+#' test.results <- record_tabulate(test.data, 
 #'                                what = c("kotelchuck", "fetal_pres"), 
 #'                                "chi_year == 2016 & chi_sex %in% c('Male', 'Female')", 
 #'                                by = c("chi_year", "chi_sex"), 
@@ -32,7 +32,7 @@ record_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "num
   # copy data.table to prevent changing the underlying data
   temp.dt <- copy(my.dt)
   
-  opts = vital_metrics()
+  opts = record_metrics()
   
   #validate 'what'
   if(!is.character(what))
@@ -62,6 +62,9 @@ record_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "num
   where <- NULL
   if(!missing(...)){
     where <- tryCatch(parse(text = paste0(list(...))),  error = function (e) parse(text = paste0(list(bquote(...))))) # convert 'where' into an expression
+      if(nrow(temp.dt[eval(where), ]) <1 ){
+        stop(paste0("Your '...' (i.e., ", where, ") filters out all rows of data. Please revise and submit again"))
+      }
   }
 
   #validate 'by'
@@ -114,19 +117,21 @@ record_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "num
           )
   }
   
-  # Calculate lower, upper, & se
+  # Calculate lower, upper, se, rse
   numerator <- res$numerator
   denominator <- res$denominator
   lower <- rep(NA, nrow(res)) # create empty vector to hold results
   upper <- rep(NA, nrow(res)) # create empty vector to hold results
   for(i in 1:nrow(res)){
-    lower[i] <- prop.test(numerator[i], denominator[i], conf.level = 0.95, correct = F)[[6]][1] # the score method ... suggested by DOH & others
-    upper[i] <- prop.test(numerator[i], denominator[i], conf.level = 0.95, correct = F)[[6]][2]
+    lower[i] <- prop.test(numerator[i], denominator[i], conf.level = 0.95, correct = F)$conf.int[1] # the score method ... suggested by DOH & others
+    upper[i] <- prop.test(numerator[i], denominator[i], conf.level = 0.95, correct = F)$conf.int[2]
   }
   res[, lower := lower]
   res[, upper := upper]
   res[, se := sqrt((mean*(1-mean))/denominator) ]
   #res[, se.alt := (((upper-mean) + (mean-lower)) / 2) / qnorm(0.975) ] # splitting difference of non-symetrical MOE ... same to 5 decimal places
+  res[, rse := se / mean]
+  res[rse >0.3, caution := "!"]
   
   # apply the 'per' if rate was specified in metric
   if("rate" %in% metrics){
@@ -138,10 +143,10 @@ record_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "num
   
   # apply rounding using 'digits' (if specified)
   if(is.null(digits)){
-    res[, c("mean", "lower", "upper") := lapply(.SD, round2, 3), .SDcols = c("mean", "lower", "upper")]
+    res[, c("mean", "lower", "upper", "rse", "missing.prop") := lapply(.SD, round2, 3), .SDcols = c("mean", "lower", "upper", "rse", "missing.prop")]
     res[, se := round2(se, 4)]
   } else {
-    res[, c("mean", "lower", "upper", "se") := lapply(.SD, round2, digits), .SDcols = c("mean", "lower", "upper", "se")]
+    res[, c("mean", "lower", "upper", "se", "rse", "missing.prop") := lapply(.SD, round2, digits), .SDcols = c("mean", "lower", "upper", "se", "rse", "missing.prop")]
   }
   
   # clean up results
@@ -149,7 +154,7 @@ record_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "num
   setcolorder(res, c("variable", "level", "years", by))
 
   # drop columns no longer needed
-  metrics <- c(metrics, "years")
+  metrics <- c(metrics, "years", "caution")
   if(length(opts[!opts %in% metrics]) >0){
     res[, opts[!opts %in% metrics] := NULL]
   }
