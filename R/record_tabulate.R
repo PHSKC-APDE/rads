@@ -41,21 +41,29 @@ record_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "num
   what_check <- check_names('what', 'temp.dt', names(temp.dt), what)
   if(what_check != '') stop(what_check)
   
-  #if 'what' is not binary (0,1), convert it to a series of binary columns
-    # identify the factor columns
-      binary.columns <- sapply(temp.dt,function(x) { all(na.omit(x) %in% 0:1) }) # logical vector 
-      binary.columns <- names(temp.dt[, ..binary.columns]) # character vector 
-      what.factors <- setdiff(what, binary.columns)
+  #identify when 'what' is binary (0, 1), other numerics, or a factor. When a factor, convert it to a series of binary columns
+    # binary columns
+      binary.col <- sapply(temp.dt[, ..what],function(x) { all(na.omit(x) %in% 0:1) }) # logical vector 
+      binary.col <- what[binary.col]  # character vector 
+      
+    # numeric columns
+      numeric.col <- sapply(temp.dt[, ..what], is.numeric) # logical vector
+      numeric.col <- setdiff(what[numeric.col], binary.col)
+      
+    # factor columns
+      factor.col <- sapply(temp.dt[, ..what], is.factor) # logical vector
+      factor.col <- what[factor.col]
+
       names.before <- names(copy(temp.dt))
       
     # convert factors to series of binary columns (xxx_prefix is to identify the expanded data below)
-      for(i in 1:length(what.factors)){
-        temp.dt[, paste0(what.factors[i], "_SPLIT_HERE_", levels(temp.dt[[what.factors[i]]]) ) := 
-             lapply(levels( get(what.factors[i]) ), function(x) as.integer(x == get(what.factors[i]) ))]
+      for(i in 1:length(factor.col)){
+        temp.dt[, paste0(factor.col[i], "_SPLIT_HERE_", levels(temp.dt[[factor.col[i]]]) ) := 
+             lapply(levels( get(factor.col[i]) ), function(x) as.integer(x == get(factor.col[i]) ))]
       }
       
     # update 'what' to reflect all binaries
-      what <- c(setdiff(what, what.factors), setdiff(names(temp.dt), names.before) )
+      what <- c(setdiff(what, factor.col), setdiff(names(temp.dt), names.before) )
       
   
   #validate '...' (i.e., where)
@@ -102,12 +110,15 @@ record_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "num
   for(i in 1:length(what)){
     res <- rbind(res, 
             temp.dt[, .(
+              years = format.years(list(sort(unique(chi_year)))),
               variable = as.character(what[i]), 
               mean = mean(get(what[i]), na.rm = T),
+              median = as.numeric(median(get(what[i]), na.rm = T)),
+              sum = sum(get(what[i]), na.rm = T),
               numerator = sum(get(what[i]), na.rm = T),
               denominator = sum(!is.na( get(what[i]) )),
+              se = sqrt(var(get(what[i]), na.rm = T)/sum(!is.na( get(what[i]) )) ), 
               total = .N, 
-              years = format.years(list(sort(unique(chi_year)))),
               missing = sum(is.na( get(what[i]) )),
               missing.prop = sum(is.na( get(what[i]) ) / .N) 
               ), 
@@ -117,42 +128,60 @@ record_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "num
           )
   }
   
-  # Calculate lower, upper, se, rse
-  numerator <- res$numerator
-  denominator <- res$denominator
-  lower <- rep(NA, nrow(res)) # create empty vector to hold results
-  upper <- rep(NA, nrow(res)) # create empty vector to hold results
-  for(i in 1:nrow(res)){
-    lower[i] <- prop.test(numerator[i], denominator[i], conf.level = 0.95, correct = F)$conf.int[1] # the score method ... suggested by DOH & others
-    upper[i] <- prop.test(numerator[i], denominator[i], conf.level = 0.95, correct = F)$conf.int[2]
-  }
-  res[, lower := lower]
-  res[, upper := upper]
-  res[, se := sqrt((mean*(1-mean))/denominator) ]
-  #res[, se.alt := (((upper-mean) + (mean-lower)) / 2) / qnorm(0.975) ] # splitting difference of non-symetrical MOE ... same to 5 decimal places
-  res[, rse := se / mean]
-  res[rse >0.3, caution := "!"]
+  # split names for factor columns  
+  res[, c("variable", "level") := tstrsplit(variable, "_SPLIT_HERE_", fixed=TRUE)] 
   
-  # apply the 'per' if rate was specified in metric
+  # Calculate lower, upper, se, rse
+    # PROPORTIONS : Binary (& factor) variables will use prop.test function for CI. This uses the score method ... suggested by DOH & literature
+        res.prop <- res[variable %in% c(binary.col, factor.col)] # split off just binary/factor data
+        numerator <- res.prop$numerator
+        denominator <- res.prop$denominator
+        lower <- rep(NA, nrow(res.prop)) # create empty vector to hold results
+        upper <- rep(NA, nrow(res.prop)) # create empty vector to hold results
+        for(i in 1:nrow(res.prop)){
+          lower[i] <- suppressWarnings(prop.test(numerator[i], denominator[i], conf.level = 0.95, correct = F)$conf.int[1]) # the score method ... suggested by DOH & others
+          upper[i] <- suppressWarnings(prop.test(numerator[i], denominator[i], conf.level = 0.95, correct = F)$conf.int[2])
+        }  
+        res.prop[, lower := lower]
+        res.prop[, upper := upper]
+        # res.prop[, se := sqrt((mean*(1-mean))/denominator) ] # calculated the SE empirically above. Confirmed that results are ~same as from this formula
+        # the calculation based on variance differened from this forumla when samples were tiny. In those cases, the empirical ones were larger and therefore more conservative
+        
+    # MEANS: Numeric/non-binary need to have their CI calculated separately
+        res.mean <- res[variable %in% c(numeric.col)]
+        res.mean[denominator>30, lower := mean - qnorm(0.975)*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores 
+        res.mean[denominator>30, upper := mean + qnorm(0.975)*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores 
+        res.mean[denominator<=30, lower := mean - qt(0.975,df=denominator-1)*se] # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed) 
+        res.mean[denominator<=30, upper := mean + qt(0.975,df=denominator-1)*se] # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed)
+        res.mean[lower < 0, lower := 0] # prevent negative values for confidence interval
+        
+    # Append data for proportions and means
+        res <- rbind(res.prop, res.mean)
+  
+    # Calculate RSE
+        res[, rse := se / mean]
+        res[rse >0.3, caution := "!"]
+  
+  # apply the 'per' if rate was specified in metric (rates are only applicable to proportions)
   if("rate" %in% metrics){
-    res[, rate := mean * per]
-    res[, rate_per := per]
-    res[, c("se", "lower", "upper") := lapply(.SD, function(x){x*per}), .SDcols = c("se", "lower", "upper")] 
+    res[variable %in% unique(res.prop$variable), rate := mean * per] 
+    res[variable %in% unique(res.prop$variable), rate_per := per]
+    res[variable %in% unique(res.prop$variable), c("se", "lower", "upper") := lapply(.SD, function(x){x*per}), .SDcols = c("se", "lower", "upper")] 
     metrics <- c(metrics, "rate_per")
   } else{res[, rate := NA]}
   
   # apply rounding using 'digits' (if specified)
   if(is.null(digits)){
-    res[, c("mean", "lower", "upper", "rse", "missing.prop") := lapply(.SD, round2, 3), .SDcols = c("mean", "lower", "upper", "rse", "missing.prop")]
+    res[, c("rate", "mean", "lower", "upper", "rse", "missing.prop") := lapply(.SD, round2, 3), .SDcols = c("rate", "mean", "lower", "upper", "rse", "missing.prop")]
     res[, se := round2(se, 4)]
   } else {
-    res[, c("mean", "lower", "upper", "se", "rse", "missing.prop") := lapply(.SD, round2, digits), .SDcols = c("mean", "lower", "upper", "se", "rse", "missing.prop")]
+    res[, c("rate", "mean", "lower", "upper", "se", "rse", "missing.prop") := lapply(.SD, round2, digits), .SDcols = c("rate", "mean", "lower", "upper", "se", "rse", "missing.prop")]
   }
   
   # clean up results
-  res[, c("variable", "level") := tstrsplit(variable, "_SPLIT_HERE_", fixed=TRUE)] 
-  setcolorder(res, c("variable", "level", "years", by))
-
+  setorder(res, variable, level, years)
+  setcolorder(res, c("variable", "level", "years", by, "median", "mean", "rate", "lower", "upper", "se", "rse", "caution", "sum", "numerator", "denominator", "missing", "total", "missing.prop"))
+  
   # drop columns no longer needed
   metrics <- c(metrics, "years", "caution")
   if(length(opts[!opts %in% metrics]) >0){

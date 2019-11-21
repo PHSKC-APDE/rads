@@ -45,7 +45,7 @@ survey_metrics = function(){
 }
 
 record_metrics = function(){
-  c('mean', 'rate', 'se', 'lower', 'upper', 'rse', 'numerator', 'denominator', 'missing', 'missing.prop', 'total')
+  c('mean', 'median', 'sum', 'rate', 'se', 'lower', 'upper', 'rse', 'numerator', 'denominator', 'missing', 'missing.prop', 'total')
 }
 
 
