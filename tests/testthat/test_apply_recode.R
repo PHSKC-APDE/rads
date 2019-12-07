@@ -1,6 +1,5 @@
 library('testthat')
 library('data.table')
-library('labelled')
 
 #Simple recode of character -> character
 test_that('Simple recode of a character -> character',{
@@ -71,7 +70,7 @@ test_that('Recoding numeric to have labels',{
   a = create_recode('a','b', old_value = 1:5, new_value = 1:5, new_label = letters[1:5])
   d = data.table(a = 1:5)
   r = apply_recode(data = d,recode = a, jump_scope = F, return_vector = T)
-  expect_equal(labelled::labelled(1:5, c(a = 1, b = 2, c = 3, d = 4, e = 5)), r)
+  expect_equal(factor(1:5, 1:5, c('a','b','c','d','e')), r)
 })
 
 #recoding over an existing factor, complete replacement
@@ -79,15 +78,16 @@ test_that('Recoding over factor variable-- specifing numeric representation',{
   a = create_recode('a','a', old_value = 1:3, new_value = 1:3, new_label = c('d','e','f'))
   d = data.table(a = factor(1:3, 1:3, c('a','b','c')))
   r = apply_recode(data = d, recode = a, jump_scope = F, return_vector = T)
-  expect_equal(labelled::labelled(as.numeric(1:3), c(d = 1, e = 2, f = 3)), r)
+  expect_equal(factor(1:3, 1:3, c('d','e','f')), r)
 })
 
+#This test is less useful for when factors are the main output
 test_that('Recoding over factor variable-- specifing numeric representation and changing the underlying numeric',{
   a = create_recode('a','a', old_value = 1:3, new_value = 4:6, new_label = c('d','e','f'))
   d = data.table(a = factor(1:3, 1:3, c('a','b','c')))
   r = apply_recode(data = d, recode = a, jump_scope = F, return_vector = T)
-  expect_equal(labelled(4:6, c(d = 4, e = 5, f = 6)), r)
-  expect_equal(as.numeric(r), 4:6)
+  expect_equal(factor(4:6, 4:6, c('d','e','f')), r)
+  expect_equal(as.numeric(r), 1:3)
 })
 
 test_that('Recoding over factor variable-- reassign a label but lose 1:1 value:label mapping',{
@@ -103,7 +103,7 @@ test_that('Recoding over factor variable-- partial update',{
   a = create_recode('a','a', old_value = 1:2, new_value = c(9,10), new_label = c('a','b'))
   d = data.table(a = factor(1:3, 1:3, c('a','b','c')))
   r = apply_recode(data = d,recode = a, jump_scope = F, return_vector = T)
-  expect_equal(labelled(c(9, 10, 3), c(c = 3, a = 9,b = 10)), r)
+  expect_equal(factor(c(3,9,10), c(3,9,10), c('c', 'a','b')), r)
 })
 
 

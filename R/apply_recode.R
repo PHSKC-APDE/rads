@@ -138,19 +138,13 @@ apply_recode = function(data, recode, jump_scope = F, return_vector = F){
       new_labs = data.table()
       valclass = 'numeric'
     }
-    if(length(labelled::val_labels(data[1, get(recode$old_var)]))>0 | is.factor(data[1, get(recode$old_var)])){
+    if(is.factor(data[1, get(recode$old_var)])){
       ov = recode$old_var
-      ifact = is.factor(data[1, get(recode$old_var)])
-      #Extract values and labels pair
-      if(ifact){
-        old_labs = unique(data[, .(value = methods::as(get(ov), valclass),
-                                 label = as.character(get(ov)),
-                                                type = 'old')])
-      }else {
-        old_labs = data.table(value = labelled::val_labels(data[1, get(recode$old_var)]),
-                              label = names(labelled::val_labels(data[1, get(recode$old_var)])),
-                              type = 'old')
-      }
+
+      old_labs = unique(data[, .(value = methods::as(get(ov), valclass),
+                               label = as.character(get(ov)),
+                                              type = 'old')])
+
     }else{
       old_labs = data.table()
     }
@@ -197,12 +191,7 @@ apply_recode = function(data, recode, jump_scope = F, return_vector = F){
       }
 
       #if a numeric with labels, transfer to numeric. Otherwise leave it as numeric, character or whatever.
-      if(is.numeric(ret)){
-        new_labs = labs[,value]
-        attr(new_labs, 'levels') = NULL #not sure why its sneaking through but whatever R
-        names(new_labs) = labs[, label]
-        ret = labelled::labelled(ret, new_labs)
-      }
+      ret = factor(ret, levels = labs[, value], labels = labs[, label])
     }
   }
   #prepare output
