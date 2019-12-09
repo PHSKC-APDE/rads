@@ -103,15 +103,15 @@ test_that('Recoding over factor variable-- partial update',{
   a = create_recode('a','a', old_value = 1:2, new_value = c(9,10), new_label = c('a','b'))
   d = data.table(a = factor(1:3, 1:3, c('a','b','c')))
   r = apply_recode(data = d,recode = a, jump_scope = F, return_vector = T)
-  expect_equal(factor(c(3,9,10), c(3,9,10), c('c', 'a','b')), r)
+  expect_equal(factor(c(9,10, 3), c(3,9,10), c('c', 'a','b')), r)
 })
 
 
-test_that('Labelled in Labelled out with shifting values',{
+test_that('Factor in factor out with shifting values',{
   a = create_recode('a', 'a', old_value = 1:3, new_value = 4:6, new_label = c('d','e','f'))
-  d = data.table(a = labelled(1:3, c(a = 1, b = 2, c = 3)))
+  d = data.table(a = factor(1:3,1:3, c('a','b','c')))
   r = apply_recode(data = d, recode = a, jump_scope = F, return_vector = T)
-  expect_equal(labelled(4:6, c(d = 4, e = 5, f = 6)), r)
+  expect_equal(factor(1:3,1:3, c('d','e','f')), r)
 })
 
 test_that('binned recodes',{
@@ -134,11 +134,11 @@ test_that('Recode starting data without labels and then recode on top of that',{
   r2 = create_recode('a', 'b', old_value = c(2:3), new_value = 0:1, new_label = c('No','Yes'))
   apply_recode(data = d, recode = r1, jump_scope = T, return_vector = T)
   res = apply_recode(data = d,  recode = r2, jump_scope = F, return_vector = T)
-  expect_equal(res, labelled::labelled(c(NA, 0, 1), setNames(c(0, 1), c('No', 'Yes'))))
+  expect_equal(res, factor(c(NA, 0, 1), c(0,1), c('No', "Yes")))
 })
 
 test_that('NUll new labels, but old labels exist', {
-  d = data.table(kc4reg = as.factor(c('East', 'Seattle', 'North', 'South')))
+  d = data.table(kc4reg = factor(c('East', 'Seattle', 'North', 'South')))
   r = create_recode('kc4reg', '.Region', old_value = as.character(d[, kc4reg]), new_value = c('NS', 'S', 'NS', 'NS'))
   res = apply_recode(d, r, F, T)
   expect_equal(res, c('NS', 'S', 'NS', 'NS'))

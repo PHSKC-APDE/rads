@@ -136,7 +136,7 @@ apply_recode = function(data, recode, jump_scope = F, return_vector = F){
       valclass = class(recode$new_value)
     }else{
       new_labs = data.table()
-      valclass = 'numeric'
+      valclass = class(recode$old_value)
     }
     if(is.factor(data[1, get(recode$old_var)])){
       ov = recode$old_var
@@ -151,6 +151,7 @@ apply_recode = function(data, recode, jump_scope = F, return_vector = F){
     #identify duplicates in labeling. Use new unless its NA and old is not
     labs = unique(rbind(old_labs, new_labs))
 
+    #if there are labels and they are not all NA
     if(nrow(labs)>0){
 
       badlabs = labs[type == 'new', .N, by = 'value'][N>1, value]
@@ -191,7 +192,10 @@ apply_recode = function(data, recode, jump_scope = F, return_vector = F){
       }
 
       #if a numeric with labels, transfer to numeric. Otherwise leave it as numeric, character or whatever.
-      ret = factor(ret, levels = labs[, value], labels = labs[, label])
+      #if there are labels to apply, do it now!
+      if(nrow(labs)>0){
+        ret = factor(ret, levels = labs[, value], labels = labs[, label])
+      }
     }
   }
   #prepare output
