@@ -1,17 +1,58 @@
-# set up data ----
-rm(list=setdiff(ls(), "round2"))
-library(dplyr)
-library(glue)
-library(data.table)
-
-dt <- data.table(
-  indic = c(rep("my.indicator", 14)), 
-  group1 = c(rep("group1", 14)), 
-  group2 = c(rep("group2.A", 7), rep("group2.B", 7)),
-  time = c(rep(1:7, 2)), 
-  est = c(.11, .12, .13, .14, .15, .16, .17, .29, .48, .67, .32, .12, .17, .55),
-  se = c(runif(14, .01, .02))
-  )
+#' JoinPoint execution using R.
+#' 
+#' @description
+#' JoinPoint is statistical software used for analyzing trends using JointPoint software.
+#' Information and downloads are available here: https://surveillance.cancer.gov/joinpoint/
+#' 
+#' @details 
+#' This functions facilitates running the JoinPoint executable using R to create standardized
+#' output. It also saves essential JointPoint input and output data so that results can be 
+#' viewed in JointPoint Desktop.
+#' 
+#' @param jp_data Name of a data.table or data.frame containing the trend data to be asssessed
+#' @param jp_indicator character vector of length 1. Identifies the column name for the indicator of interest
+#' @param jp_period character vector of length 1. Idenitifies the column name with the time element 
+#' over which the trend will be assessed.
+#' @param jp_result character vector of length 1. Idenitifies the column with the point estimate for the given time
+#' @param jp_se character vector of length 1. Identifies the column with the standard error corresponding to jp_result 
+#' @param jp_byvar1 character vector of length 1. Identifies the column with the the "by-variables", e.g., age strata
+#' @param jp_byvar2 character vector of length 1. In the event of a cross-tabulation, identifies the column with the 
+#' second set of "by-variables". E.g., Male|Female
+#' @param jp_dir character vector of length 1. Specifies the complete file path where JoinPoint data 
+#' input and output data should be saved
+#' @param jp_path character vector of length 1. Specifies the filepath to the JoinPoint executable.
+#' 
+#' @return a data.table with four columns: 1) <tab>, which specifies it is for displaying trend data, 2) jp_byvar1, 
+#' 3) jp_byvar2, and 4) <time_trends>, which has summarized trend results
+#'
+#' @export
+#' 
+#' @keywords JoinPoint, trends
+#' 
+#' @import data.table
+#' @import dplyr
+#' @import glue
+#' 
+#' @example 
+#' # create sample data
+#' dt <- data.table(
+#'   indic = c(rep("my.indicator", 14)), 
+#'   group1 = c(rep("Female", 14)), 
+#'   group2 = c(rep("Child", 7), rep("Adult", 7)),
+#'   time = c(rep(1:7, 2)), 
+#'   est = c(.11, .12, .13, .14, .15, .16, .17, .29, .48, .67, .32, .12, .17, .55),
+#'   se = c(runif(14, .01, .02))
+#' )
+#' # run function
+#' jp_f(jp_data = copy(dt),
+#'      jp_indicator = "indic",
+#'      jp_period = "time",
+#'      jp_result = "est",
+#'      jp_se = "se",
+#'      jp_byvar1 = "group1",
+#'      jp_byvar2 = "group2",
+#'      jp_dir = "C:/temp/jp_test_data/"
+#' ) 
 
 # JoinPoint function ----
 jp_f <- function(jp_data = NULL,
@@ -39,37 +80,37 @@ jp_f <- function(jp_data = NULL,
   
   # confirm that jp_indicator exists
     if(!jp_indicator %in% names(jp_data)){
-      stop(glue("<{jp_indicator}> does not exist in your specified dataset. 
+      stop(glue::glue("<{jp_indicator}> does not exist in your specified dataset. 
                   'jp_indicator' must refer to a column containing your indicator of interest."))
     }
 
   # confirm that jp_period exists
     if(!jp_period %in% names(jp_data)){
-      stop(glue("<{jp_period}> does not exist in your specified dataset. 
+      stop(glue::glue("<{jp_period}> does not exist in your specified dataset. 
                 'jp_period' must refer to a column measuring time in your dataset."))
     }
   
   # confirm that jp_result exists
     if(!jp_result %in% names(jp_data)){
-      stop(glue("<{jp_result}> does not exist in your specified dataset. 
+      stop(glue::glue("<{jp_result}> does not exist in your specified dataset. 
                   'jp_result' must refer to a column containing your estimtates/results."))
     }
   
   # confirm that jp_se exists
     if(!jp_se %in% names(jp_data)){
-      stop(glue("<{jp_se}> does not exist in your specified dataset. 
+      stop(glue::glue("<{jp_se}> does not exist in your specified dataset. 
                   'jp_se' must refer to a column containing your standard error."))
     }
   
   # confirm that jp_byvar1 exists
     if(!jp_byvar1 %in% names(jp_data)){
-      stop(glue("<{jp_byvar1}> does not exist in your specified dataset. 
+      stop(glue::glue("<{jp_byvar1}> does not exist in your specified dataset. 
                 'jp_byvar1' must refer to a column containing your first grouping / by variable."))
     }
   
   # confirm that jp_byvar2 exists
     if(!jp_byvar2 %in% names(jp_data)){
-      stop(glue("<{jp_byvar2}> does not exist in your specified dataset. 
+      stop(glue::glue("<{jp_byvar2}> does not exist in your specified dataset. 
                   'jp_byvar2' must refer to a column containing your second grouping / by variable."))
     }
   
@@ -80,7 +121,7 @@ jp_f <- function(jp_data = NULL,
   
   # confirm jp_path exists
     if(!file.exists(jp_path)){
-      stop(glue("The file path to the JoinPoint executable specified by 'jp_path' does not exist.
+      stop(glue::glue("The file path to the JoinPoint executable specified by 'jp_path' does not exist.
                 I.e., {jp_path} does not exist. 
                 If you have installed joinpoint, please specify the proper filepath, 
                 otherwise please install the program before continuing."))
@@ -98,13 +139,13 @@ jp_f <- function(jp_data = NULL,
   
     # Create jp_dir folder (if needed) ----
         if(!dir.exists(jp_dir)){
-          message(glue("'{jp_dir}' does not exist and is being created on your behalf"))
+          message(glue::glue("'{jp_dir}' does not exist and is being created on your behalf"))
           dir.create(jp_dir)
           }
   
     # Create input & output folder in jp_dir (if needed) ----
-        if(!dir.exists(glue("{jp_dir}/input"))){dir.create(glue("{jp_dir}/input"))}
-        if(!dir.exists(glue("{jp_dir}/output"))){dir.create(glue("{jp_dir}/output"))}
+        if(!dir.exists(glue::glue("{jp_dir}/input"))){dir.create(glue::glue("{jp_dir}/input"))}
+        if(!dir.exists(glue::glue("{jp_dir}/output"))){dir.create(glue::glue("{jp_dir}/output"))}
         
 
     # Write tab seperated input data file for use by JoinPoint ----
@@ -123,7 +164,7 @@ jp_f <- function(jp_data = NULL,
         input <- input[, .(jp_period, jp_byvar1, jp_byvar2, jp_result, jp_se)] # limit to columns needed for JoinPoint
         setorder(input, jp_byvar1, jp_byvar2, jp_period)
         
-        write.table(input, file = glue(jp_dir, "/input/JP_{unlist(indicator)}.txt"),
+        write.table(input, file = glue::glue(jp_dir, "/input/JP_{unlist(indicator)}.txt"),
                     row.names = F, col.names = F, sep = "\t")
         
         
@@ -140,7 +181,7 @@ jp_f <- function(jp_data = NULL,
   
     # Create an Run.ini file for Joinpoint ----
         cat(file = file.path(jp_dir, "Run.ini"),
-            glue("
+            glue::glue("
                      [Joinpoint Input Files]
                      Session File={jp_dir}/Session.ini
                      Run Options File={jp_dir}/Options.ini
@@ -150,7 +191,7 @@ jp_f <- function(jp_data = NULL,
   
     # Create a Session.ini file ----
         cat(file = file.path(jp_dir, "Session.ini"),
-            glue("
+            glue::glue("
                  [Datafile options]
                  Datafile name={jp_dir}/input/JP_{unlist(indicator)}.txt
                  File format=DOS/Windows
@@ -175,9 +216,9 @@ jp_f <- function(jp_data = NULL,
             append = F)
         
     # Create an Options.ini file if needed ----
-        if(file.exists(glue("{jp_dir}/Options.ini")) != TRUE){
+        if(file.exists(glue::glue("{jp_dir}/Options.ini")) != TRUE){
           cat(file = file.path(jp_dir, "Options.ini"),
-              glue("          
+              glue::glue("          
                     [Session Options]
                     Model=ln
                     Model selection method=permutation test
@@ -215,7 +256,7 @@ jp_f <- function(jp_data = NULL,
   ##          Run         ####
   ############################
     # Set file path for Run.ini created above ----
-      argument <- glue('"{jp_dir}/Run.ini"') 
+      argument <- glue::glue('"{jp_dir}/Run.ini"') 
 
     # Submit data and analysis details to JoinPoint ----
       system2(eval(jp_path), args = argument, stdout=TRUE, stderr=TRUE)
@@ -226,7 +267,7 @@ jp_f <- function(jp_data = NULL,
         while(
           i <= 10 &
           (file.exists(paste0(jp_dir, "Run.ErrorFile.txt")) == T |
-           file.exists(glue(jp_dir, "/output/{unlist(indicator)}.aapcexport.txt")) == F)
+           file.exists(glue::glue(jp_dir, "/output/{unlist(indicator)}.aapcexport.txt")) == F)
           ){
           unlink(paste0(jp_dir, "Run.ErrorFile.txt"))
           system2(eval(jp_path), args = argument, stdout=TRUE, stderr=TRUE) # run again if have error
@@ -236,13 +277,13 @@ jp_f <- function(jp_data = NULL,
         
     # Process JoinPoint Results or errors ----
         if(i > 10){
-          stop(glue("JoinPoint run failed ... please run the entire JoinPoint function again.
+          stop(glue::glue("JoinPoint run failed ... please run the entire JoinPoint function again.
                     Ten failed attempts were made to calculate the trend for {indicator}.
                     Please double check your input data in {jp_dir}/input/JP_{unlist(indicator)}.txt"))
         } else {
           # Bring in the annual percent change
           # (assumes output was tab deliminated, set this in options.ini file )
-          temp_trend <- fread(glue("{jp_dir}/output/{unlist(indicator)}.apcexport.txt")) # apc = annual percent change
+          temp_trend <- fread(glue::glue("{jp_dir}/output/{unlist(indicator)}.apcexport.txt")) # apc = annual percent change
           setnames(temp_trend, names(temp_trend), gsub(" ", ".", names(temp_trend)))
           
           # save trend data for each time period
@@ -298,14 +339,14 @@ jp_f <- function(jp_data = NULL,
           
           
           ### Remove unwanted files made by JoinPoint ----???
-          toss.results <- list(c(glue('{jp_dir}/Run.jps'),
-                                 glue('{jp_dir}/Run.ErrorFile.txt'),
-                                 glue('{jp_dir}/output/{unlist(indicator)}.aapcexport.txt'),
-                                 glue('{jp_dir}/output/{unlist(indicator)}.apcexport.txt'),
-                                 glue('{jp_dir}/output/{unlist(indicator)}.dataexport.txt'),
-                                 glue('{jp_dir}/output/{unlist(indicator)}.permtestexport.txt'),
-                                 glue('{jp_dir}/output/{unlist(indicator)}.report.txt'),
-                                 glue('{jp_dir}/output/{unlist(indicator)}.RunSummary.txt')))
+          toss.results <- list(c(glue::glue('{jp_dir}/Run.jps'),
+                                 glue::glue('{jp_dir}/Run.ErrorFile.txt'),
+                                 glue::glue('{jp_dir}/output/{unlist(indicator)}.aapcexport.txt'),
+                                 glue::glue('{jp_dir}/output/{unlist(indicator)}.apcexport.txt'),
+                                 glue::glue('{jp_dir}/output/{unlist(indicator)}.dataexport.txt'),
+                                 glue::glue('{jp_dir}/output/{unlist(indicator)}.permtestexport.txt'),
+                                 glue::glue('{jp_dir}/output/{unlist(indicator)}.report.txt'),
+                                 glue::glue('{jp_dir}/output/{unlist(indicator)}.RunSummary.txt')))
           
           do.call(unlink, toss.results)
           
