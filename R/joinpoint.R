@@ -288,12 +288,12 @@ jp_f <- function(jp_data = NULL,
           Sys.sleep(.5)
         }
         
-    # Process JoinPoint Results or errors ----
         if(i > 10){
           stop(glue::glue("JoinPoint run failed ... please run the entire JoinPoint function again.
                     Ten failed attempts were made to calculate the trend for {indicator}.
-                    Please double check your input data in {jp_dir}/input/JP_{unlist(indicator)}.txt"))
-        } else {
+                    Please double check your input data in {jp_dir}/input/JP_{unlist(indicator)}.txt"))}    
+        
+    # Process JoinPoint Results----
           # Bring in the annual percent change
           # (assumes output was tab deliminated, set this in options.ini file )
           temp_trend <- fread(glue::glue("{jp_dir}/output/{unlist(indicator)}.apcexport.txt")) # apc = annual percent change
@@ -310,7 +310,7 @@ jp_f <- function(jp_data = NULL,
           temp_trend[, trend.prev := shift(trend, 1, 0, "lag"), by = .(jp_byvar1, jp_byvar2)]
           temp_trend[trend == trend.next | trend == trend.prev, contiguous := TRUE][, c("trend.next", "trend.prev") := NULL] # identify contiguous
           
-          temp_trend <- rbind(temp_trend[contiguous==TRUE, .(Segment.Start = min(Segment.Start), Segment.End = max(Segment.End)), 
+          temp_trend <- rbind(temp_trend[contiguous==TRUE, .(Segment.Start = suppressWarnings(min(Segment.Start)), Segment.End = suppressWarnings(max(Segment.End))), 
                                          by = .(jp_byvar1, jp_byvar2, trend, contiguous)], 
                               temp_trend[is.na(contiguous), ]
           ) # collapse if congtiguous and append to non-contiguous
@@ -371,7 +371,6 @@ jp_f <- function(jp_data = NULL,
           
           do.call(unlink, toss.results)
           
-        } # close the else condition (when data passes error check)
       } # close loop that cycles through each indicator
     return(trends.dt)
 } # close entire function
