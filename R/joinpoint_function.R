@@ -337,6 +337,8 @@ jp_f <- function(jp_data = NULL,
             mutate(tab = "trends") %>%
             distinct(tab, jp_byvar1, jp_byvar2, time_trends)# Only need to keep one row per jp_byvar2 since they're all the same
           
+          ### rename jp_byvar1/2 back to their original names
+          setnames(output, c("jp_byvar1", "jp_byvar2"), c(jp_byvar1, jp_byvar2)) 
           
           ### Remove unwanted files made by JoinPoint ----???
           toss.results <- list(c(glue::glue('{jp_dir}/Run.jps'),
