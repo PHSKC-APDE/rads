@@ -9,6 +9,9 @@
 #' output. It also saves essential JointPoint input and output data so that results can be 
 #' viewed in JointPoint Desktop.
 #' 
+#' The dataset should have only one row per unique combination of jp_indicator, jp_byvar1, 
+#' jp_byvar2, & jp_period
+#' 
 #' @param jp_data Name of a data.table or data.frame containing the trend data to be asssessed
 #' @param jp_indicator character vector of length 1. Identifies the column name for the indicator of interest
 #' @param jp_period character vector of length 1. Idenitifies the column name with the time element 
@@ -125,6 +128,13 @@ jp_f <- function(jp_data = NULL,
                 I.e., {jp_path} does not exist. 
                 If you have installed joinpoint, please specify the proper filepath, 
                 otherwise please install the program before continuing."))
+    }
+  
+  # confirm there is only 1 row per unique combo of jp_indicator, jp_byvar1, jp_byvar2, & jp_period
+    jp_data[, dup := .N, by=c(jp_indicator, jp_byvar1, jp_byvar2, jp_period)]
+    if(max(jp_data$dup) > 1){
+      stop(paste("JoinPoint needs unique combinations of 'jp_indicator', 'jp_byvar1', 'jp_byvar2', & 'jp_period'.
+           There are at least", nrow(jp_data[dup>1]) ,"rows where the combination of these columns is not unique"))
     }
   
   ############################
