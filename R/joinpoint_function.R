@@ -5,27 +5,16 @@ library(glue)
 library(data.table)
 
 dt <- data.table(
-  indic = c(rep("indic.1", 7), rep("indic.2", 14)), 
-  time = c(rep(1:7, 3)), 
-  est = c(.1, .2, .3, .4, .5, .6, .7, .11, .12, .13, .14, .15, .16, .17, .29, .48, .67, .32, .12, .17, .55),
-  se = c(runif(21, .01, .02)), 
-  group1 = c(rep("group1.1", 7), rep("group1.2", 14)), 
-  group2 = c(rep(NA, 7), rep("group2.2", 7), rep("group2.3", 7))
+  indic = c(rep("my.indicator", 14)), 
+  group1 = c(rep("group1", 14)), 
+  group2 = c(rep("group2.A", 7), rep("group2.B", 7)),
+  time = c(rep(1:7, 2)), 
+  est = c(.11, .12, .13, .14, .15, .16, .17, .29, .48, .67, .32, .12, .17, .55),
+  se = c(runif(14, .01, .02))
   )
 
-# temp function arguments ---- 
-trend.dt <- copy(dt[indic=="indic.1"])
-jp_indicator <- "indic"
-jp_period <- "time"
-jp_result <- "est"
-jp_se <- "se"
-jp_byvar1 <- "group1"
-jp_byvar2 <- "group2"
-jp_dir = "C:/temp/jp_test_data/"
-jp_path = "C:/Program Files (x86)/Joinpoint Command/jpCommand.exe"
-
 # JoinPoint function ----
-jp_f <- function(trend.dt,
+jp_f <- function(jp_data = NULL,
                  jp_indicator = NULL,
                  jp_period = "chi_year",
                  jp_result = "result",
@@ -35,11 +24,74 @@ jp_f <- function(trend.dt,
                  jp_dir = NULL,
                  jp_path = "C:/Program Files (x86)/Joinpoint Command/jpCommand.exe") {
   
+  ##############################################
+  ## Confirm function arguments are logical ####
+  ##############################################
+    # confirm provision of jp_data
+      if(is.null(jp_data)){
+        stop("You must specify a dataset (i.e., 'jp_data' must be defined)")
+      }
+  
+   # confirm provision of jp_indicator
+    if(is.null(jp_indicator)){
+      stop("You must specify an indicator column (i.e., 'jp_indicator' must be defined)")
+    }
+  
+  # confirm that jp_indicator exists
+    if(!jp_indicator %in% names(jp_data)){
+      stop(glue("<{jp_indicator}> does not exist in your specified dataset. 
+                  'jp_indicator' must refer to a column containing your indicator of interest."))
+    }
+
+  # confirm that jp_period exists
+    if(!jp_period %in% names(jp_data)){
+      stop(glue("<{jp_period}> does not exist in your specified dataset. 
+                'jp_period' must refer to a column measuring time in your dataset."))
+    }
+  
+  # confirm that jp_result exists
+    if(!jp_result %in% names(jp_data)){
+      stop(glue("<{jp_result}> does not exist in your specified dataset. 
+                  'jp_result' must refer to a column containing your estimtates/results."))
+    }
+  
+  # confirm that jp_se exists
+    if(!jp_se %in% names(jp_data)){
+      stop(glue("<{jp_se}> does not exist in your specified dataset. 
+                  'jp_se' must refer to a column containing your standard error."))
+    }
+  
+  # confirm that jp_byvar1 exists
+    if(!jp_byvar1 %in% names(jp_data)){
+      stop(glue("<{jp_byvar1}> does not exist in your specified dataset. 
+                'jp_byvar1' must refer to a column containing your first grouping / by variable."))
+    }
+  
+  # confirm that jp_byvar2 exists
+    if(!jp_byvar2 %in% names(jp_data)){
+      stop(glue("<{jp_byvar2}> does not exist in your specified dataset. 
+                  'jp_byvar2' must refer to a column containing your second grouping / by variable."))
+    }
+  
+  # confirm provision of jp_dir
+    if(is.null(jp_dir)){
+      stop("You must specify a directory for JoinPoint results to be saved (i.e., 'jp_dir' must be defined)")
+    }
+  
+  # confirm jp_path exists
+    if(!file.exists(jp_path)){
+      stop(glue("The file path to the JoinPoint executable specified by 'jp_path' does not exist.
+                I.e., {jp_path} does not exist. 
+                If you have installed joinpoint, please specify the proper filepath, 
+                otherwise please install the program before continuing."))
+    }
+  
   ############################
   ##          Set up      ####
-  ############################
+  ############################  
+  
     # Set up varname ----
-        indicator <- unique(trend.dt[, get(jp_indicator)])
+        indicator <- unique(jp_data[, get(jp_indicator)])
         if (length(indicator) != 1) {
           stop ("You must specify one and only one 'jp_indicator'")
         }
@@ -55,34 +107,35 @@ jp_f <- function(trend.dt,
         if(!dir.exists(glue("{jp_dir}/output"))){dir.create(glue("{jp_dir}/output"))}
         
 
-    # Write Output JP file ----
-        # Note: outputting an integer seems to cause JP to fail. Check for integers
-        # then subtract/add a tiny extra amount.
-        output <- copy(trend.dt)
+    # Write tab seperated input data file for use by JoinPoint ----
+        # Note: outputting an integer seems to cause JP to fail. 
+        # Check for integers then subtract/add a tiny extra amount to avoid errors
+        input <- copy(jp_data)
         for(i in c("indicator", "period", "result", "se", "byvar1", "byvar2")){
-          output[, paste0("jp_", i) := get(get(paste0("jp_", i)))] # ascribe standard names for simplicity
-          output[, get(paste0("jp_", i)) := NULL]
+          input[, paste0("jp_", i) := get(get(paste0("jp_", i)))] # ascribe standard names for simplicity
+          input[, get(paste0("jp_", i)) := NULL]
         }
-        output[, jp_result := as.numeric(jp_result)]
-        output[jp_result == round2(jp_result) & jp_result==1, jp_result := jp_result - 0.0001] # if integer & == 1, then subtract tiny num to keep %in% [0,1]
-        output[jp_result == round2(jp_result) & jp_result!=1, jp_result := jp_result + 0.0001] # if integer & !=1, then add tiny number
-        output[jp_se == 0, jp_se := NA_real_][, jp_se2 := mean(jp_se, na.rm = T), by = c("jp_byvar2")][is.na(jp_se), jp_se := jp_se2][, jp_se2 := NULL]# when se is zero, replace with mean of when it is not zero
-        output[jp_se == round2(jp_se), jp_se2 := mean(output[jp_se != 0]$jp_se, na.rm = T), by = c("jp_byvar1", "jp_byvar2")] # when se is any integer, replace with mean of when it is not zero
-        output <- output[, .(jp_period, jp_byvar1, jp_byvar2, jp_result, jp_se)] # limit to columns needed for JoinPoint
-        setorder(output, jp_byvar1, jp_byvar2, jp_period)
+        input[, jp_result := as.numeric(jp_result)]
+        input[jp_result == round2(jp_result) & jp_result==1, jp_result := jp_result - 0.0001] # if integer & == 1, then subtract tiny num to keep %in% [0,1]
+        input[jp_result == round2(jp_result) & jp_result!=1, jp_result := jp_result + 0.0001] # if integer & !=1, then add tiny number
+        input[jp_se == 0, jp_se := NA_real_][, jp_se2 := mean(jp_se, na.rm = T), by = c("jp_byvar2")][is.na(jp_se), jp_se := jp_se2][, jp_se2 := NULL]# when se is zero, replace with mean of when it is not zero
+        input[jp_se == round2(jp_se), jp_se2 := mean(input[jp_se != 0]$jp_se, na.rm = T), by = c("jp_byvar1", "jp_byvar2")] # when se is any integer, replace with mean of when it is not zero
+        input <- input[, .(jp_period, jp_byvar1, jp_byvar2, jp_result, jp_se)] # limit to columns needed for JoinPoint
+        setorder(input, jp_byvar1, jp_byvar2, jp_period)
         
-        write.table(output, file = glue(jp_dir, "/input/JP_{unlist(indicator)}.txt"),
+        write.table(input, file = glue(jp_dir, "/input/JP_{unlist(indicator)}.txt"),
                     row.names = F, col.names = F, sep = "\t")
         
-    # Track what JP converts the category names to ----
-        output_names_cat1 <- output %>% distinct(jp_byvar1) %>%
-          mutate(cat1_num = seq(0, n_distinct(output$jp_byvar1) - 1))
         
-        output_names_jp_byvar2 <- output %>% distinct(jp_byvar2) %>%
-          mutate(jp_byvar2_num = seq(0, n_distinct(output$jp_byvar2) - 1))
+    # Track the integers that JoinPoint creates corresponding to category names ----
+        input_names_jp_byvar1 <- input %>% distinct(jp_byvar1) %>%
+          mutate(jp_byvar1_num = seq(0, n_distinct(input$jp_byvar1) - 1))
         
-        output <- left_join(output, output_names_cat1, by = "jp_byvar1") %>%
-          left_join(., output_names_jp_byvar2, by = "jp_byvar2")
+        input_names_jp_byvar2 <- input %>% distinct(jp_byvar2) %>%
+          mutate(jp_byvar2_num = seq(0, n_distinct(input$jp_byvar2) - 1))
+        
+        input <- left_join(input, input_names_jp_byvar1, by = "jp_byvar1") %>%
+          left_join(., input_names_jp_byvar2, by = "jp_byvar2")
     
   
     # Create an Run.ini file for Joinpoint ----
@@ -214,7 +267,7 @@ jp_f <- function(trend.dt,
           
           # create formatted trend summary
           if(min(nchar(temp_trend$Segment.Start), na.rm = T) == 4 & max(nchar(temp_trend$Segment.End), na.rm = T) == 4){
-            temp_trend[, trend := paste0(Segment.Start, "-", substr(Segment.End, 3, 4), ": ", trend)] # use for 4 digit years
+            temp_trend[, trend := paste0(Segment.Start, "-", substr(Segment.End, 3, 4), ": ", trend)] # use for 4 digit years (i.e., 2007-11:)
           } else {
             temp_trend[, trend := paste0(Segment.Start, "-", Segment.End, ": ", trend)]
           }
@@ -238,12 +291,10 @@ jp_f <- function(trend.dt,
           
           
           ### Join back to data and make trends tab for joining
-          output <- left_join(output, temp_trend,
-                              by = c("cat1_num" = "jp_byvar1",
-                                     "jp_byvar2_num" = "jp_byvar2")) %>%
+          output <- left_join(input, temp_trend,
+                              by = c("jp_byvar1_num" = "jp_byvar1", "jp_byvar2_num"= "jp_byvar2")) %>%
             mutate(tab = "trends") %>%
-            # Only need to keep one row per jp_byvar2 since they're all the same
-            distinct(tab, jp_byvar1, jp_byvar2, time_trends)
+            distinct(tab, jp_byvar1, jp_byvar2, time_trends)# Only need to keep one row per jp_byvar2 since they're all the same
           
           
           ### Remove unwanted files made by JoinPoint ----???
@@ -261,4 +312,5 @@ jp_f <- function(trend.dt,
           return(output)
         }
 }
+
 
