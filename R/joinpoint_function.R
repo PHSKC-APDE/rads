@@ -1,8 +1,8 @@
 #' JoinPoint execution using R.
 #' 
 #' @description
-#' JoinPoint is statistical software used for analyzing trends using JointPoint software.
-#' Information and downloads are available here: https://surveillance.cancer.gov/joinpoint/
+#' JoinPoint is statistical software used for analyzing trends. Information and downloads 
+#' are available here: https://surveillance.cancer.gov/joinpoint/
 #' 
 #' @details 
 #' This functions facilitates running the JoinPoint executable using R to create standardized
@@ -13,17 +13,17 @@
 #' @param jp_indicator character vector of length 1. Identifies the column name for the indicator of interest
 #' @param jp_period character vector of length 1. Idenitifies the column name with the time element 
 #' over which the trend will be assessed.
-#' @param jp_result character vector of length 1. Idenitifies the column with the point estimate for the given time
+#' @param jp_result character vector of length 1. Idenitifies the column with the point estimate for the given period
 #' @param jp_se character vector of length 1. Identifies the column with the standard error corresponding to jp_result 
-#' @param jp_byvar1 character vector of length 1. Identifies the column with the the "by-variables", e.g., age strata
+#' @param jp_byvar1 character vector of length 1. Identifies the column with the "by-variables", e.g., sex
 #' @param jp_byvar2 character vector of length 1. In the event of a cross-tabulation, identifies the column with the 
-#' second set of "by-variables". E.g., Male|Female
+#' second set of "by-variables". E.g., age strata
 #' @param jp_dir character vector of length 1. Specifies the complete file path where JoinPoint data 
 #' input and output data should be saved
 #' @param jp_path character vector of length 1. Specifies the filepath to the JoinPoint executable.
 #' 
-#' @return a data.table with four columns: 1) <tab>, which specifies it is for displaying trend data, 2) jp_byvar1, 
-#' 3) jp_byvar2, and 4) <time_trends>, which has summarized trend results
+#' @return a data.table with five columns: 1) <tab>, which specifies it is for displaying trend data, 2) jp_indicator, 
+#' 3) jp_byvar1, 4) jp_byvar2, and 5) <time_trends>, which has summarized trend results
 #'
 #' @export
 #' 
@@ -128,30 +128,33 @@ jp_f <- function(jp_data = NULL,
     }
   
   ############################
-  ##          Set up      ####
+  ##    Set up folders    ####
   ############################  
-  
-    # Set up varname ----
-        indicator <- unique(jp_data[, get(jp_indicator)])
-        if (length(indicator) != 1) {
-          stop ("You must specify one and only one 'jp_indicator'")
-        }
-  
-    # Create jp_dir folder (if needed) ----
+    # Create jp_dir folder (if needed)
         if(!dir.exists(jp_dir)){
           message(glue::glue("'{jp_dir}' does not exist and is being created on your behalf"))
           dir.create(jp_dir)
           }
   
-    # Create input & output folder in jp_dir (if needed) ----
+    # Create input & output folder in jp_dir (if needed)
         if(!dir.exists(glue::glue("{jp_dir}/input"))){dir.create(glue::glue("{jp_dir}/input"))}
         if(!dir.exists(glue::glue("{jp_dir}/output"))){dir.create(glue::glue("{jp_dir}/output"))}
         
-
+    
+  ###############################
+  ## Loop through indicators ####
+  ###############################  
+  trends.dt <- data.table() # empty table for appending the results for each indicator
+  
+  for(indicator in unique(jp_data[, get(jp_indicator)])){
+    
+    #######################
+    ##--- DATA PREP ---####
+    #######################
     # Write tab seperated input data file for use by JoinPoint ----
         # Note: outputting an integer seems to cause JP to fail. 
         # Check for integers then subtract/add a tiny extra amount to avoid errors
-        input <- copy(jp_data)
+        input <- copy(jp_data[get(jp_indicator)== indicator])
         for(i in c("indicator", "period", "result", "se", "byvar1", "byvar2")){
           input[, paste0("jp_", i) := get(get(paste0("jp_", i)))] # ascribe standard names for simplicity
           input[, get(paste0("jp_", i)) := NULL]
@@ -252,9 +255,9 @@ jp_f <- function(jp_data = NULL,
           append = F)
         }
 
-  ############################
-  ##          Run         ####
-  ############################
+    ##########################
+    ##--- RUN JoinPoin ---####
+    ##########################
     # Set file path for Run.ini created above ----
       argument <- glue::glue('"{jp_dir}/Run.ini"') 
 
@@ -337,8 +340,14 @@ jp_f <- function(jp_data = NULL,
             mutate(tab = "trends") %>%
             distinct(tab, jp_byvar1, jp_byvar2, time_trends)# Only need to keep one row per jp_byvar2 since they're all the same
           
-          ### rename jp_byvar1/2 back to their original names
+          ### Format for combining and saving
+          setDT(output)
           setnames(output, c("jp_byvar1", "jp_byvar2"), c(jp_byvar1, jp_byvar2)) 
+          output[, paste0(jp_indicator) := indicator]
+          setcolorder(output, c("tab", jp_indicator, jp_byvar1, jp_byvar2, "time_trends"))
+          
+          ### Append data that will be exported
+          trends.dt <- rbind(trends.dt, output)
           
           ### Remove unwanted files made by JoinPoint ----???
           toss.results <- list(c(glue::glue('{jp_dir}/Run.jps'),
@@ -352,8 +361,9 @@ jp_f <- function(jp_data = NULL,
           
           do.call(unlink, toss.results)
           
-          return(output)
-        }
-}
+        } # close the else condition (when data passes error check)
+      } # close loop that cycles through each indicator
+    return(trends.dt)
+} # close entire function
 
 
