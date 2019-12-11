@@ -174,6 +174,7 @@ jp_f <- function(jp_data = NULL,
         input[jp_result == round2(jp_result) & jp_result!=1, jp_result := jp_result + 0.0001] # if integer & !=1, then add tiny number
         input[jp_se == 0, jp_se := NA_real_][, jp_se2 := mean(jp_se, na.rm = T), by = c("jp_byvar2")][is.na(jp_se), jp_se := jp_se2][, jp_se2 := NULL]# when se is zero, replace with mean of when it is not zero
         input[jp_se == round2(jp_se), jp_se2 := mean(input[jp_se != 0]$jp_se, na.rm = T), by = c("jp_byvar1", "jp_byvar2")] # when se is any integer, replace with mean of when it is not zero
+        input[jp_se < 0.001, jp_se := 0.001] # when SE is <0.001, JoinPoint doesn't calculate a trend
         input <- input[, .(jp_period, jp_byvar1, jp_byvar2, jp_result, jp_se)] # limit to columns needed for JoinPoint
         setorder(input, jp_byvar1, jp_byvar2, jp_period)
         
