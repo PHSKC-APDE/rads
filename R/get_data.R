@@ -128,9 +128,14 @@ get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
   
   if(kingco == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 1")}
   
-  db.apde50 <- odbc::dbConnect(odbc::odbc(), "PH_APDEStore50")
-  dat <- data.table::setDT(DBI::dbGetQuery(db.apde50, query.string))
-  odbc::dbDisconnect(db.apde50)
+  
+  con <- odbc::dbConnect(odbc::odbc(),
+                         Driver = "SQL Server",
+                         Server = "KCITSQLPRPDBM50",
+                         Database = "PH_APDEStore")
+  
+  dat <- data.table::setDT(DBI::dbGetQuery(con, query.string))
+  odbc::dbDisconnect(con)
   
   # Format string variables due to SQL import quirks
   original.order <- names(dat)
