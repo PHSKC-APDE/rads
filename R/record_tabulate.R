@@ -1,17 +1,20 @@
-#' Compute metrics from vital stats or other count data
+#' Compute metrics from record level data (e.g., vital stats)
 #'
 #' @param my.dt data.table with count data
 #' @param what character vector. Variable to tabulate "over". Must match a column name in my.dt
 #' @param ... expressions to be passed to \code{\link{filter}}
 #' @param by character vector. Must refer to variables within my.dt. The variables within my.dt to compute `what` by
-#' @param metrics character. See \code{\link{record_metrics}} for the available options. Note, all metrics are calculated-- this argument just specifies which one gets returned
+#' @param metrics character. See \code{\link{record_metrics}} for the available options. Note, all metrics are calculated
+#' -- this argument just specifies which one gets returned
 #' @param per integer. The denominator when "rate" or "adjusted-rate" are selected as the metric.
 #' @param digits integer. The number of places to which the data should be rounded
-#'
+#' @param win integer. The number of units of time [e.g., years, months, etc.] over which the metrics will be calculated, 
+#' i.e., the 'window' for a rolling average, sum, etc. 
 #'
 #' @return a data.table containing the results
 #' @details
-#' This function calculates `metrics` for each variable in `what` from rows meeting the conditions specified by `where` for each grouping implied by `by`.
+#' This function calculates `metrics` for each variable in `what` from rows meeting the conditions specified 
+#' by `...` (i.e., where), for each grouping implied by `by`.
 #'
 #' @importFrom rlang quos
 #' @import 
@@ -28,7 +31,7 @@
 #'                                metrics = c("mean", "numerator", "denominator", "missing", "total", "lower", "upper", "se", "mising.prop"))
 #'
 #'
-record_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "numerator", "denominator", "missing", "total"), per = NULL, digits = NULL){
+record_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "numerator", "denominator", "missing", "total"), per = NULL, digits = NULL, win = NULL){
   # copy data.table to prevent changing the underlying data
   temp.dt <- copy(my.dt)
   
@@ -89,15 +92,20 @@ record_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "num
     per <- 1000 # default denominator of 1000
   }
   if("rate" %in% metrics & !is.null(per) & all.equal(per, as.integer(per))!=T ){
-    stop("The 'per' argument must be an integer")
+    stop("If specified, the 'per' argument must be an integer")
   }
 
   #validate 'digits'
   if(!is.null(digits) & all.equal(digits, as.integer(digits))!=T){
-    stop("The 'digits' argument must be an integer")
+    stop("If specified, the 'digits' argument must be an integer")
+  }
+  
+  #validate 'win'
+  if(!is.null(win) & all.equal(win, as.integer(win))!=T){
+    stop("If specified, the 'win' argument must be an integer")
   }
 
-  #limits metrics to those that have been pre-specified, i.e., non-starndard metrics are dropped
+  #limits metrics to those that have been pre-specified, i.e., non-standard metrics are dropped
   metrics <- match.arg(metrics, opts, several.ok = T)
 
   #subset temp.dt to only the rows needed
@@ -106,27 +114,48 @@ record_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "num
   }
 
   # function to calculate metrics
-  res <- data.table() # create empty data.table for appending results
-  for(i in 1:length(what)){
-    res <- rbind(res, 
-            temp.dt[, .(
-              years = format.years(list(sort(unique(chi_year)))),
-              variable = as.character(what[i]), 
-              mean = mean(get(what[i]), na.rm = T),
-              median = as.numeric(median(get(what[i]), na.rm = T)),
-              sum = sum(get(what[i]), na.rm = T),
-              numerator = sum(get(what[i]), na.rm = T),
-              denominator = sum(!is.na( get(what[i]) )),
-              se = sqrt(var(get(what[i]), na.rm = T)/sum(!is.na( get(what[i]) )) ), 
-              total = .N, 
-              missing = sum(is.na( get(what[i]) )),
-              missing.prop = sum(is.na( get(what[i]) ) / .N) 
-              ), 
-            by = by
-            ], 
-            fill = TRUE
-          )
+  calc.metrics <- function(raw.dt){
+    results.dt <- data.table() # create empty data.table for appending results
+    for(i in 1:length(what)){
+      results.dt <- rbind(results.dt, 
+                          raw.dt[, .(
+                            years = format.years(list(sort(unique(chi_year)))),
+                            variable = as.character(what[i]), 
+                            mean = mean(get(what[i]), na.rm = T),
+                            median = as.numeric(median(get(what[i]), na.rm = T)),
+                            sum = sum(get(what[i]), na.rm = T),
+                            numerator = sum(get(what[i]), na.rm = T),
+                            denominator = sum(!is.na( get(what[i]) )),
+                            se = sqrt(var(get(what[i]), na.rm = T)/sum(!is.na( get(what[i]) )) ), 
+                            total = .N, 
+                            missing = sum(is.na( get(what[i]) )),
+                            missing.prop = sum(is.na( get(what[i]) ) / .N), 
+                            unique.years = length(unique(chi_year))
+                          ), 
+                          by = by
+                          ], 
+                          fill = TRUE
+      )
+    }
+    results.dt <- unique(results.dt)
+    return(results.dt)
   }
+  
+  # apply the calc.metrics function
+  if(is.null(win)){
+    res <- calc.metrics(temp.dt)
+  } 
+  
+  if(!is.null(win)){
+    res <- data.table() # empty table for appending results
+    for(yr in min(temp.dt$chi_year):(max(temp.dt$chi_year)-win+1) ){
+      sub.temp.dt <- copy(temp.dt[chi_year %in% yr:(yr+win-1)])
+      temp.results <- calc.metrics(sub.temp.dt)
+      res <- rbind(res, temp.results, fill = TRUE)
+    }
+    rm(sub.temp.dt, temp.results)
+  }
+
   
   # split names for factor columns  
   res[, c("variable", "level") := tstrsplit(variable, "_SPLIT_HERE_", fixed=TRUE)] 
@@ -180,7 +209,7 @@ record_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "num
   
   # clean up results
   setorder(res, variable, level, years)
-  setcolorder(res, c("variable", "level", "years", by, "median", "mean", "rate", "lower", "upper", "se", "rse", "caution", "sum", "numerator", "denominator", "missing", "total", "missing.prop"))
+  setcolorder(res, c("variable", "level", "years", by, "median", "mean", "rate", "lower", "upper", "se", "rse", "caution", "sum", "numerator", "denominator", "missing", "total", "missing.prop", "unique.years"))
   
   # drop columns no longer needed
   metrics <- c(metrics, "years", "caution")
