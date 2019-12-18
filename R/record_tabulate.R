@@ -60,15 +60,17 @@ record_tabulate = function(my.dt, what, ..., by = NULL, metrics = c('mean', "num
       names.before <- names(copy(temp.dt))
       
     # convert factors to series of binary columns (xxx_prefix is to identify the expanded data below)
-      for(i in 1:length(factor.col)){
-        temp.dt[, paste0(factor.col[i], "_SPLIT_HERE_", levels(temp.dt[[factor.col[i]]]) ) := 
-             lapply(levels( get(factor.col[i]) ), function(x) as.integer(x == get(factor.col[i]) ))]
+      if(length(factor.col) > 0){ # sometimes there are no factors, so this shoudl be conditional
+        for(i in 1:length(factor.col)){
+          temp.dt[, paste0(factor.col[i], "_SPLIT_HERE_", levels(temp.dt[[factor.col[i]]]) ) := 
+               lapply(levels( get(factor.col[i]) ), function(x) as.integer(x == get(factor.col[i]) ))]
+        }
+
+        # update 'what' to reflect all binaries, including those made from factors
+          what <- c(setdiff(what, factor.col), setdiff(names(temp.dt), names.before) )      
       }
       
-    # update 'what' to reflect all binaries
-      what <- c(setdiff(what, factor.col), setdiff(names(temp.dt), names.before) )
-      
-  
+
   #validate '...' (i.e., where)
   where <- NULL
   if(!missing(...)){
