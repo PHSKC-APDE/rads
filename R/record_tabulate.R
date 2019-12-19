@@ -84,11 +84,12 @@ record_tabulate = function(my.dt,
                    lapply(levels( get(factor.col[i]) ), function(x) as.integer(x == get(factor.col[i]) ))]
             }
     
-            # update 'what' to reflect all binaries, including those made from factors
-              what.distinct <- copy(what)
-              what.metrics <- c(setdiff(what, factor.col), setdiff(names(temp.dt), names.before) )      
           }
-
+    
+        # update 'what' to reflect all binaries, including those made from factors
+          what.distinct <- copy(what)
+          what.metrics <- c(setdiff(what, factor.col), setdiff(names(temp.dt), names.before) )  
+              
     #validate '...' (i.e., where)
       where <- NULL
       if(!missing(...)){
@@ -99,7 +100,7 @@ record_tabulate = function(my.dt,
       }
     
     #validate 'by'
-      if(!missing(by)){
+      if(!missing(by) & !is.null(by)){
         if(!is.character(by))
           stop(paste0("The `by` argument must be submitted as a character (i.e., in quotes)"))
         
