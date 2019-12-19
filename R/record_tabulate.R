@@ -4,14 +4,16 @@
 #' @param what character vector. Variable to tabulate "over". Must match a column name in my.dt
 #' @param ... expressions to be passed to \code{\link{filter}}
 #' @param by character vector. Must refer to variables within my.dt. The variables within my.dt to compute `what` by
-#' @param metrics character. See \code{\link{record_metrics}} for the available options. Note, all metrics are calculated
-#' -- this argument just specifies which one gets returned
+#' @param metrics character. See \code{\link{record_metrics}} for the available options. Note, except when 'distinct' is 
+#' selected, all metrics are calculated -- this argument just specifies which one gets returned
 #' @param per integer. The denominator when "rate" or "adjusted-rate" are selected as the metric.
 #' @param digits integer. The number of places to which the data should be rounded
 #' @param suppress logical. Select whether suppression should [T] or should not [T] be applied.
 #' @param suppress_range integer vector of length 2. They specify the minimum and maximum range for suppression.
 #' @param win integer. The number of units of time [e.g., years, months, etc.] over which the metrics will be calculated, 
 #' i.e., the 'window' for a rolling average, sum, etc. 
+#' @param distinct logical. Select whether function shoulld [T]calculte distinct counts for all combinations of 'what' and 'by'
+#' or not [F]. Note, when distinct==T, no other calculations will be performed. 
 #'
 #' @return a data.table containing the results
 #' @details
@@ -40,13 +42,17 @@ record_tabulate = function(my.dt,
                            metrics = c('mean', "numerator", "denominator", "missing", "total"), 
                            per = NULL, 
                            digits = NULL, 
-                           win = NULL, 
                            suppress = T, 
-                           suppress_range = NULL){
+                           suppress_range = NULL, 
+                           win = NULL, 
+                           distinct = F){
   # copy data.table to prevent changing the underlying data
   temp.dt <- copy(my.dt)
   
-  opts = record_metrics()
+  # Harmonize when metric contains 'distinct' or distinct==T
+  if(distinct==T){metrics <- c("distinct")}
+  if(sum(metrics %in% "distinct")>0){distinct <- T}
+  
   
   #### VALIDATION ####
     #validate 'what'
@@ -55,8 +61,9 @@ record_tabulate = function(my.dt,
       
       what_check <- check_names('what', 'temp.dt', names(temp.dt), what)
       if(what_check != '') stop(what_check)
-      
+    
     #identify when 'what' is binary (0, 1), other numerics, or a factor. When a factor, convert it to a series of binary columns
+      if(distinct==F) {
         # binary columns
           binary.col <- sapply(temp.dt[, ..what],function(x) { all(na.omit(x) %in% 0:1) }) # logical vector 
           binary.col <- what[binary.col]  # character vector 
@@ -81,7 +88,7 @@ record_tabulate = function(my.dt,
             # update 'what' to reflect all binaries, including those made from factors
               what <- c(setdiff(what, factor.col), setdiff(names(temp.dt), names.before) )      
           }
-          
+      } # close condition on distinct == F
     
     #validate '...' (i.e., where)
       where <- NULL
@@ -102,6 +109,9 @@ record_tabulate = function(my.dt,
       }
     
     #validate 'metrics'
+      # pull list of standard available metrics 
+      opts <- record_metrics()
+      
       # limits metrics to those that have been pre-specified, i.e., non-standard metrics are dropped
       metrics <- match.arg(metrics, opts, several.ok = T)
       
@@ -142,8 +152,13 @@ record_tabulate = function(my.dt,
              (e.g., c(0, 10)") 
         } 
 
+    #validate 'distinct'
+      if(!is.logical(distinct)){
+        stop("If specified, the 'distinct' argument must be a logical (i.e., T or F, without quotes)")
+      }
+      
 
-  #### CREATE FUNCTION ####
+  #### CREATE CALC FUNCTIONS ####
     #subset temp.dt to only the rows needed
       if(!is.null(where)){
         temp.dt <- temp.dt[eval(where), ]
@@ -177,25 +192,60 @@ record_tabulate = function(my.dt,
         return(results.dt)
       }
     
-  #### APPLY FUNCTION ####
-    # apply the calc.metrics function
+      # function to calculate distinct combinations of 'what' and 'by' 
+      calc.distinct <- function(raw.dt){
+        results.dt <- data.table() # create empty data.table for appending results
+        for(i in 1:length(what)){
+          results.dt <- rbind(results.dt, 
+                              raw.dt[, .(
+                                variable = as.character(what[i]),
+                                level = get(what[i]), 
+                                years = format.years(list(sort(unique(chi_year)))),
+                                count_distinct = .N
+                                ), 
+                              by = c(what[i], by)], 
+                              fill = TRUE
+          )
+          results.dt[, what[i] := NULL]
+        }
+        return(results.dt)
+      }
+      
+  #### APPLY CALC FUNCTION ####
+    # apply the calc.metrics or calc.distinct functions
       if(is.null(win)){
-        res <- calc.metrics(temp.dt)
+        if(distinct==T){
+          res <- calc.distinct(temp.dt)
+        } else {
+          res <- calc.metrics(temp.dt)
+        }
       } 
       
       if(!is.null(win)){
         res <- data.table() # empty table for appending results
-        for(yr in min(temp.dt$chi_year):(max(temp.dt$chi_year)-win+1) ){
-          sub.temp.dt <- copy(temp.dt[chi_year %in% yr:(yr+win-1)])
-          temp.results <- calc.metrics(sub.temp.dt)
-          res <- rbind(res, temp.results, fill = TRUE)
+        if(distinct == T){
+          for(yr in min(temp.dt$chi_year):(max(temp.dt$chi_year)-win+1) ){
+            sub.temp.dt <- copy(temp.dt[chi_year %in% yr:(yr+win-1)])
+            temp.results <- calc.distinct(sub.temp.dt)
+            res <- rbind(res, temp.results, fill = TRUE)
+          }
+        } else {
+          for(yr in min(temp.dt$chi_year):(max(temp.dt$chi_year)-win+1) ){
+            sub.temp.dt <- copy(temp.dt[chi_year %in% yr:(yr+win-1)])
+            temp.results <- calc.metrics(sub.temp.dt)
+            res <- rbind(res, temp.results, fill = TRUE)
+          }
         }
         rm(sub.temp.dt, temp.results)
       }
+      
 
-  #### ADDITIONAL CALCULATIONS ####
-    # split names for factor columns  
-      res[, c("variable", "level") := tstrsplit(variable, "_SPLIT_HERE_", fixed=TRUE)] 
+  #### ADDITIONAL CALCULATIONS & DATA PREP ####
+    ## ONLY RELEVANT if DISTINCT == FALSE
+    if(distinct == F){  
+    
+    # Split names for factor columns
+        res[, c("variable", "level") := tstrsplit(variable, "_SPLIT_HERE_", fixed=TRUE)] 
       
     # Calculate lower, upper, se, rse
         # PROPORTIONS : Binary (& factor) variables will use prop.test function for CI. This uses the score method ... suggested by DOH & literature
@@ -250,15 +300,25 @@ record_tabulate = function(my.dt,
         res[suppression=="^", c("mean", "median", "rate", "lower", "upper", "se", "rse", "numerator", "denominator") := NA]
       } else{res[, suppression := NA]}
 
+    } # close loop conditional on distinct == F
+            
   #### CLEAN UP ####      
     # clean up results
       setorder(res, variable, level, years)
-      setcolorder(res, c("variable", "level", "years", by, "median", "mean", "rate", "lower", "upper", "se", "rse", "caution", "sum", "numerator", "denominator", "missing", "total", "missing.prop", "unique.years"))
+      if(distinct==T){
+          setcolorder(res, c("variable", "level", "years", by, "count_distinct"))} else{
+          setcolorder(res, c("variable", "level", "years", by, "median", "mean", "rate", "lower", "upper", "se", "rse", "caution", "sum", "numerator", "denominator", "missing", "total", "missing.prop", "unique.years"))
+        }
       
     # drop columns no longer needed
-      metrics <- c(metrics, "years", "caution")
-      if(length(opts[!opts %in% metrics]) >0){
-        res[, opts[!opts %in% metrics] := NULL]
+      if(distinct==T){
+          metrics <- c("variable", "level", "years", by, "count_distinct")
+          res <- res[, ..metrics]
+        } else {
+          metrics <- c(metrics, "years", "caution", "suppression")
+          if(length(opts[!opts %in% metrics]) >0){
+            suppressWarnings(res[, opts[!opts %in% metrics] := NULL])
+        }
       }
 
   #### CLOSE ####
