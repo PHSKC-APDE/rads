@@ -16,7 +16,7 @@ dt <- data.table(
 )
 
 # set temporary folder
-my.dir <- "C:/temp/jp_test_data/"
+my.dir <- tempdir()
 
 # run JoinPoint
 jp.output <- jp_f(jp_data = dt,
