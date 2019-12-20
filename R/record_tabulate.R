@@ -244,29 +244,33 @@ record_tabulate = function(my.dt,
     # Calculate lower, upper, se, rse
         # PROPORTIONS : Binary (& factor) variables will use prop.test function for CI. This uses the score method ... suggested by DOH & literature
             res.metrics.prop <- res.metrics[variable %in% c(binary.col, factor.col)] # split off just binary/factor data
-            numerator <- res.metrics.prop$numerator
-            denominator <- res.metrics.prop$denominator
-            lower <- rep(NA, nrow(res.metrics.prop)) # create empty vector to hold res.metricsults
-            upper <- rep(NA, nrow(res.metrics.prop)) # create empty vector to hold res.metricsults
-            for(i in 1:nrow(res.metrics.prop)){
-              lower[i] <- suppressWarnings(prop.test(numerator[i], denominator[i], conf.level = 0.95, correct = F)$conf.int[1]) # the score method ... suggested by DOH & others
-              upper[i] <- suppressWarnings(prop.test(numerator[i], denominator[i], conf.level = 0.95, correct = F)$conf.int[2])
+            if(length(binary.col) + length(factor.col) > 0){  
+              numerator <- res.metrics.prop$numerator
+              denominator <- res.metrics.prop$denominator
+              lower <- rep(NA, nrow(res.metrics.prop)) # create empty vector to hold res.metricsults
+              upper <- rep(NA, nrow(res.metrics.prop)) # create empty vector to hold res.metricsults
+              for(i in 1:nrow(res.metrics.prop)){
+                lower[i] <- suppressWarnings(prop.test(numerator[i], denominator[i], conf.level = 0.95, correct = F)$conf.int[1]) # the score method ... suggested by DOH & others
+                upper[i] <- suppressWarnings(prop.test(numerator[i], denominator[i], conf.level = 0.95, correct = F)$conf.int[2])
+              }  
+              res.metrics.prop[, lower := lower]
+              res.metrics.prop[, upper := upper]
+              # res.metrics.prop[, se := sqrt((mean*(1-mean))/denominator) ] # calculated the SE empirically above. Confirmed that res.metricsults are ~same as from this formula
+              # the calculation based on variance differened from this forumla when samples were tiny. In those cases, the empirical ones were larger and therefore more conservative
             }  
-            res.metrics.prop[, lower := lower]
-            res.metrics.prop[, upper := upper]
-            # res.metrics.prop[, se := sqrt((mean*(1-mean))/denominator) ] # calculated the SE empirically above. Confirmed that res.metricsults are ~same as from this formula
-            # the calculation based on variance differened from this forumla when samples were tiny. In those cases, the empirical ones were larger and therefore more conservative
             
         # MEANS: Numeric/non-binary need to have their CI calculated separately
             res.metrics.mean <- res.metrics[variable %in% c(numeric.col)]
-            res.metrics.mean[denominator>30, lower := mean - qnorm(0.975)*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics 
-            res.metrics.mean[denominator>30, upper := mean + qnorm(0.975)*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics 
-            suppressWarnings(res.metrics.mean[denominator<=30, lower := mean - qt(0.975,df=denominator-1)*se]) # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed) 
-            suppressWarnings(res.metrics.mean[denominator<=30, upper := mean + qt(0.975,df=denominator-1)*se]) # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed)
-            res.metrics.mean[lower < 0, lower := 0] # prevent negative values for confidence interval
+            if(length(numeric.col) > 0){
+              res.metrics.mean[denominator>30, lower := mean - qnorm(0.975)*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics 
+              res.metrics.mean[denominator>30, upper := mean + qnorm(0.975)*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics 
+              suppressWarnings(res.metrics.mean[denominator<=30, lower := mean - qt(0.975,df=denominator-1)*se]) # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed) 
+              suppressWarnings(res.metrics.mean[denominator<=30, upper := mean + qt(0.975,df=denominator-1)*se]) # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed)
+              res.metrics.mean[lower < 0, lower := 0] # prevent negative values for confidence interval
+            }
             
         # Append data for proportions and means
-            res.metrics <- rbind(res.metrics.prop, res.metrics.mean)
+            res.metrics <- rbind(res.metrics.prop, res.metrics.mean, fill = T)
       
         # Calculate RSE
             res.metrics[, rse := se / mean]
