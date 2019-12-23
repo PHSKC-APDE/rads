@@ -93,6 +93,22 @@ jp_f <- function(jp_data = NULL,
                 'jp_period' must refer to a column measuring time in your dataset."))
     }
   
+  # confirm that jp_period is integer or can be converted to integer without loss of information
+    if(nrow(jp_data[is.na(get(jp_period)), ]) - suppressWarnings(nrow(jp_data[is.na(as.integer(get(jp_period))), ])) == 0 ){ 
+        jp_data[, paste0(jp_period) := suppressWarnings(as.integer(get(jp_period)))]
+    } else {
+      stop(glue::glue("<{jp_period}> is not an integer and cannot be converted to an integer without loss of 
+                        information. Please replace these values with numeric representations of time
+                        e.g., 2007, 2008, 2009 or 5, 6, 7"))
+    }
+  
+  # confirm that jp_period is never missing
+   if(nrow(jp_data[is.na(get(jp_period)), ])){
+     stop(glue::glue("<{jp_period}> contains missing values (i.e., <NA>). 
+                      JoinPoint cannot calculate a trend with missing timepoints. 
+                      Please check your data and subset out the rows with missing <{jp_period}> if necessary."))
+   }
+  
   # confirm that jp_result exists
     if(!jp_result %in% names(jp_data)){
       stop(glue::glue("<{jp_result}> does not exist in your specified dataset. 
@@ -194,7 +210,7 @@ jp_f <- function(jp_data = NULL,
     
   
     # Create an Run.ini file for Joinpoint ----
-        cat(file = file.path(jp_dir, "Run.ini"),
+        cat(file = file.path(jp_dir, "/Run.ini"),
             glue::glue("
                      [Joinpoint Input Files]
                      Session File={jp_dir}/Session.ini
@@ -204,7 +220,7 @@ jp_f <- function(jp_data = NULL,
             append = F)
   
     # Create a Session.ini file ----
-        cat(file = file.path(jp_dir, "Session.ini"),
+        cat(file = file.path(jp_dir, "/Session.ini"),
             glue::glue("
                  [Datafile options]
                  Datafile name={jp_dir}/input/JP_{unlist(indicator)}.txt
@@ -231,7 +247,7 @@ jp_f <- function(jp_data = NULL,
         
     # Create an Options.ini file if needed ----
         if(file.exists(glue::glue("{jp_dir}/Options.ini")) != TRUE){
-          cat(file = file.path(jp_dir, "Options.ini"),
+          cat(file = file.path(jp_dir, "/Options.ini"),
               glue::glue("          
                     [Session Options]
                     Model=ln
@@ -280,10 +296,10 @@ jp_f <- function(jp_data = NULL,
         i<-1
         while(
           i <= 10 &
-          (file.exists(paste0(jp_dir, "Run.ErrorFile.txt")) == T |
+          (file.exists(paste0(jp_dir, "/Run.ErrorFile.txt")) == T |
            file.exists(glue::glue(jp_dir, "/output/{unlist(indicator)}.aapcexport.txt")) == F)
           ){
-          unlink(paste0(jp_dir, "Run.ErrorFile.txt"))
+          unlink(paste0(jp_dir, "/Run.ErrorFile.txt"))
           system2(eval(jp_path), args = argument, stdout=TRUE, stderr=TRUE) # run again if have error
           i <- i + 1
           Sys.sleep(.5)
