@@ -49,6 +49,46 @@ record_metrics = function(){
 }
 
 
+#' Compare tabular results to a reference set of results in the same data
+#' @param orig Character vector of length 1. Identifies the data.table/data.frame to be fetched. Note the table must have the following columns:
+#' 'result', 'lower_bound', & 'upper_bound' and all three must be numeric  
+#' @param merge.by Character vector of indeterminate length. It specifies the unique combination of variables needed to merge the comparator
+#' data onto the main data. Typically, all that is needed is an indicator_key and a time indicator
+#' @param compare.name Character vector of length 1. It is the name of the column containining the comparison results.
+#' 
+#' 
+#' @export
+#' @return data.table comprised of the original data.table and two additional columns ... 'significance' and 'comparison_with_kc' (or alternatively specified name)
+chi_compare <- function(orig, 
+                        merge.by = c("indicator_key", "year"), 
+                        compare.name = "comparison_with_kc"){
+  setDT(orig)
+  
+  #Copy & subset comparator data 
+  comparator <- orig[cat1_varname=="chi_geo_kc", c("indicator_key", "year", "result", "lower_bound", "upper_bound")]
+  setnames(comparator, c("result", "lower_bound", "upper_bound"), c("comp.result", "comp.lower_bound", "comp.upper_bound"))
+  
+  #Merge comparator data onto all other data
+  orig <- merge(orig, comparator, by=merge.by, all.x = TRUE, all.y = TRUE)
+  
+  #Compare estimates with comparator
+  orig[result == comp.result, paste0(compare.name) := "no different"]
+  orig[result > comp.result, paste0(compare.name) := "higher"]
+  orig[result < comp.result, paste0(compare.name) := "lower"]
+  
+  #According to APDE protocol, we check for overlapping CI rather than SE and Z scores    
+  orig[(lower_bound > comp.upper_bound) | (upper_bound < comp.lower_bound), significance := "*"]
+  
+  #Keep comparison only if statistically significant
+  orig[is.na(significance), paste0(compare.name) := "no different"]
+  
+  #Drop KC level estimates that were just used for the comparisons
+  orig[, c(grep("^comp\\.", names(orig), value = TRUE))  := NULL]
+  
+  return(orig)
+}
+
+
 #' Improved rounding function
 #' @export
 #' @return numeric
