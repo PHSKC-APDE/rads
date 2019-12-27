@@ -7,13 +7,10 @@
 #' @param metrics character. See \code{\link{record_metrics}} for the available options. Note, except when 'distinct' is 
 #' selected, all metrics are calculated -- this argument just specifies which one gets returned
 #' @param per integer. The denominator when "rate" or "adjusted-rate" are selected as the metric.
-#' @param digits integer. The number of places to which the data should be rounded
-#' @param suppress logical. Select whether suppression should [T] or should not [F] be applied.
-#' @param suppress_range integer vector of length 2. They specify the minimum and maximum range for suppression.
 #' @param win integer. The number of units of time [e.g., years, months, etc.] over which the metrics will be calculated, 
 #' i.e., the 'window' for a rolling average, sum, etc. 
-#' @param distinct logical. Select whether function shoulld [T]calculte distinct counts for all combinations of 'what' and 'by'
-#' or not [F]. Note, when distinct==T, no other calculations will be performed. 
+#' @param time_var character. The name of the time variable in the dataset. Typically this is the year variable, i.e., "chi_year"
+#' @param proportion logical. Currently does not have functionality for non-survey data. Included for standardization purposes.
 #'
 #' @return a data.table containing the results
 #' @details
@@ -32,7 +29,7 @@
 #'                                what = c("kotelchuck", "fetal_pres"), 
 #'                                "chi_year == 2016 & chi_sex %in% c('Male', 'Female')", 
 #'                                by = c("chi_year", "chi_sex"), 
-#'                                metrics = c("mean", "numerator", "denominator", "missing", "total", "lower", "upper", "se", "mising.prop"))
+#'                                metrics = c("mean", "numerator", "denominator", "total", "lower", "upper", "se"))
 #'
 #'
 record_calc = function(ph.data, 
