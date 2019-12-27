@@ -8,7 +8,7 @@
 #' selected, all metrics are calculated -- this argument just specifies which one gets returned
 #' @param per integer. The denominator when "rate" or "adjusted-rate" are selected as the metric.
 #' @param digits integer. The number of places to which the data should be rounded
-#' @param suppress logical. Select whether suppression should [T] or should not [T] be applied.
+#' @param suppress logical. Select whether suppression should [T] or should not [F] be applied.
 #' @param suppress_range integer vector of length 2. They specify the minimum and maximum range for suppression.
 #' @param win integer. The number of units of time [e.g., years, months, etc.] over which the metrics will be calculated, 
 #' i.e., the 'window' for a rolling average, sum, etc. 
@@ -50,8 +50,8 @@ record_tabulate = function(my.dt,
   temp.dt <- copy(my.dt)
   
   # Harmonize when metric contains 'distinct' or distinct==T
-  if(distinct==T & sum(metrics %in% "distinct")==0){metrics <- c(metrics, "distinct")}
-  if(sum(metrics %in% "distinct")>0){distinct <- T}
+  if(distinct==T & "distinct" %in% metrics == F){metrics <- c(metrics, "distinct")}
+  if("distinct" %in% metrics == T){distinct <- T}
   
   
   #### VALIDATION ####
@@ -64,26 +64,25 @@ record_tabulate = function(my.dt,
     
     #identify when 'what' is binary (0, 1), other numerics, or a factor. When a factor, convert it to a series of binary columns
         # binary columns
-          binary.col <- sapply(temp.dt[, ..what],function(x) { all(na.omit(x) %in% 0:1) }) # logical vector 
+          binary.col <- vapply(temp.dt[, ..what],function(x) { all(na.omit(x) %in% 0:1) }, FUN.VALUE=logical(1)) # logical vector 
           binary.col <- what[binary.col]  # character vector 
           
         # numeric columns
-          numeric.col <- sapply(temp.dt[, ..what], is.numeric) # logical vector
+          numeric.col <- vapply(temp.dt[, ..what], is.numeric, FUN.VALUE=logical(1)) # logical vector
           numeric.col <- setdiff(what[numeric.col], binary.col)
           
         # factor columns
-          factor.col <- sapply(temp.dt[, ..what], is.factor) # logical vector
+          factor.col <- vapply(temp.dt[, ..what], is.factor, FUN.VALUE=logical(1)) # logical vector
           factor.col <- what[factor.col]
     
           names.before <- names(copy(temp.dt))
           
         # convert factors to series of binary columns (xxx_prefix is to identify the expanded data below)
-          if(length(factor.col) > 0){ # sometimes there are no factors, so this shoudl be conditional
+          if(length(factor.col) > 0){ # sometimes there are no factors, so this should be conditional
             for(i in 1:length(factor.col)){
               temp.dt[, paste0(factor.col[i], "_SPLIT_HERE_", levels(temp.dt[[factor.col[i]]]) ) := 
                    lapply(levels( get(factor.col[i]) ), function(x) as.integer(x == get(factor.col[i]) ))]
             }
-    
           }
     
         # update 'what' to reflect all binaries, including those made from factors
@@ -124,13 +123,18 @@ record_tabulate = function(my.dt,
       }
     
     #validate 'digits'
-      if(!is.null(digits) & all.equal(digits, as.integer(digits))!=T){
+      if(!is.null(digits)){
+        if(digits %% 1 != 0){
         stop("If specified, the 'digits' argument must be an integer")
+        }
       }
       
+
     #validate 'win'
-      if(!is.null(win) & all.equal(win, as.integer(win))!=T){
+      if(!is.null(win)){
+        if(win %% 1 != 0){
         stop("If specified, the 'win' argument must be an integer")
+        }
       }
       
     #validate 'suppress'
@@ -165,77 +169,62 @@ record_tabulate = function(my.dt,
       }
   
     # function to calculate metrics
-      calc.metrics <- function(raw.dt){
-        results.dt <- data.table() # create empty data.table for appending results
-        for(i in 1:length(what.metrics)){
-          results.dt <- rbind(results.dt, 
-                              raw.dt[, .(
-                                years = format.years(list(sort(unique(chi_year)))),
-                                variable = as.character(what.metrics[i]), 
-                                mean = mean(get(what.metrics[i]), na.rm = T),
-                                median = as.numeric(median(get(what.metrics[i]), na.rm = T)),
-                                sum = sum(get(what.metrics[i]), na.rm = T),
-                                numerator = sum(get(what.metrics[i]), na.rm = T),
-                                denominator = sum(!is.na( get(what.metrics[i]) )),
-                                se = sqrt(var(get(what.metrics[i]), na.rm = T)/sum(!is.na( get(what.metrics[i]) )) ), 
-                                total = .N, 
-                                missing = sum(is.na( get(what.metrics[i]) )),
-                                missing.prop = sum(is.na( get(what.metrics[i]) ) / .N), 
-                                unique.years = length(unique(chi_year))
-                              ), 
-                              by = by
-                              ], 
-                              fill = TRUE
-          )
-        }
-        results.dt <- unique(results.dt)
-        return(results.dt)
+      calc.metrics <- function(X, DT){
+        DT[, .(
+          years = format.years(list(sort(unique(chi_year)))),
+          variable = as.character(X), 
+          mean = mean(get(X), na.rm = T),
+          median = as.numeric(median(get(X), na.rm = T)),
+          sum = sum(get(X), na.rm = T),
+          numerator = sum(get(X), na.rm = T),
+          denominator = sum(!is.na( get(X) )),
+          se = sqrt(var(get(X), na.rm = T)/sum(!is.na( get(X) )) ), 
+          total = .N, 
+          missing = sum(is.na( get(X) )),
+          missing.prop = sum(is.na( get(X) ) / .N), 
+          unique.years = length(unique(chi_year))
+        ), 
+        by = by] 
       }
-    
+      
       # function to calculate distinct combinations of 'what' and 'by' 
-      calc.distinct <- function(raw.dt){
-        results.dt <- data.table() # create empty data.table for appending results
-        for(i in 1:length(what.distinct)){
-          results.dt <- rbind(results.dt, 
-                              raw.dt[, .(
-                                variable = as.character(what.distinct[i]),
-                                level = get(what.distinct[i]), 
-                                years = format.years(list(sort(unique(chi_year)))),
-                                distinct = .N
-                                ), 
-                              by = c(what.distinct[i], by)], 
-                              fill = TRUE
-          )
-          results.dt[, what.distinct[i] := NULL]
+        calc.distinct <- function(X, DT){
+          DT[, .(
+            variable = as.character(X),
+            level = get(X), 
+            years = format.years(list(sort(unique(chi_year)))),
+            distinct = .N
+          ), 
+          by = c(X, by)]
         }
-        return(results.dt)
-      }
       
   #### APPLY CALC FUNCTION ####
     # apply the calc.metrics or calc.distinct functions
       if(is.null(win)){
-          res.distinct <- calc.distinct(temp.dt)
-          res.metrics <- calc.metrics(temp.dt)
+          res.distinct <- lapply(X = as.list(what.distinct), FUN = calc.distinct, DT = temp.dt)
+          res.distinct <- rbindlist(res.distinct, use.names = T, fill = T)
+          res.distinct[, c(what.distinct) := NULL]
+          
+          res.metrics <- lapply(X = as.list(what.metrics), FUN = calc.metrics, DT = temp.dt)
+          res.metrics <- rbindlist(res.metrics, use.names = T)
       } 
       
       if(!is.null(win)){
         res.distinct <- data.table() # empty table for appending results
-            for(yr in min(temp.dt$chi_year):(max(temp.dt$chi_year)-win+1) ){
-            sub.temp.dt <- copy(temp.dt[chi_year %in% yr:(yr+win-1)])
-            temp.results <- calc.distinct(sub.temp.dt)
-            res.distinct <- rbind(res.distinct, temp.results, fill = TRUE)
-
         res.metrics <- data.table() # empty table for appending results
-          for(yr in min(temp.dt$chi_year):(max(temp.dt$chi_year)-win+1) ){
-            sub.temp.dt <- copy(temp.dt[chi_year %in% yr:(yr+win-1)])
-            temp.results <- calc.metrics(sub.temp.dt)
+        for(yr in seq(min(temp.dt$chi_year), (max(temp.dt$chi_year)-win+1) ) ){
+          
+            temp.results <- lapply(X = as.list(what.distinct), FUN = calc.distinct, DT = temp.dt[chi_year %in% seq(yr, (yr+win-1) )])
+            temp.results <- rbindlist(temp.results, use.names = T, fill = T)
+            res.distinct <- rbind(res.distinct, temp.results, fill = TRUE)
+            res.distinct[, c(what.distinct) := NULL]
+            
+            temp.results <- lapply(X = as.list(what.metrics), FUN = calc.metrics, DT = temp.dt[chi_year %in% seq(yr, (yr+win-1) )])
+            temp.results <- rbindlist(temp.results, use.names = T)
             res.metrics <- rbind(res.metrics, temp.results, fill = TRUE)
-          }
         }
-        rm(sub.temp.dt, temp.results)
       }
-      
-
+          
   #### ADDITIONAL CALCULATIONS & DATA PREP ####
 
     # Split names for factor columns
