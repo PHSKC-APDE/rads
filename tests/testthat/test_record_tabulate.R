@@ -1,14 +1,26 @@
 library('data.table')
 library('testthat')
 
-# load data
-dt <- get_data_birth(year = c(2008:2018), cols = c("chi_year", "chi_sex", "chi_age","fetal_pres", "chi_geo_regions_4", "kotelchuck", "birth_weight_grams"))
+# create test data
+set.seed(98104)
+dt <- data.table(
+  chi_year = rep(2008:2018, 2000), 
+  chi_sex = factor(sample(c("Male", "Female"), 22000, rep = TRUE, prob = c(0.5, 0.5))), 
+  chi_age = round(rnorm(22000, 23, 2.5), 0),
+  fetal_pres = factor(sample(c("Breech", "Cephalic", "Other", NA), 22000, rep = TRUE, prob = c(0.04, 0.945, 0.01, 0.005))), 
+  kotelchuck = sample(c(0, 1, NA), 22000, rep = TRUE, prob = c(0.26, 0.64, 0.10)), 
+  birth_weight_grams = round(rnorm(22000, 3343, 576), 0)
+)
+dt[rbinom(22000, 1, 0.01) == 1, chi_age := NA] # add missing for age
+dt[rbinom(22000, 1, 0.01) == 1, birth_weight_grams := NA] # add missing for birth weight
 
+
+## run tests
 test_that('Check <what>: class(what) == factor',{
           expect_equal( nrow(record_tabulate(dt, chi_year==2008, what = c("fetal_pres"))),
                         length(unique(dt[chi_year==2008 & !is.na(fetal_pres)]$fetal_pres)))
           expect_equal( record_tabulate(dt, chi_year==2008, what = c("fetal_pres"))[level == "Cephalic"]$mean, 
-                        round2(23996/nrow(dt[chi_year==2008 & !is.na(fetal_pres)]), 3))
+                        round2(nrow(dt[chi_year==2008 & fetal_pres=="Cephalic"]) / nrow(dt[chi_year==2008 & !is.na(fetal_pres)]), 3))
           expect_equal( unique(record_tabulate(dt, chi_year==2008, what = c("fetal_pres"))[level == "Cephalic"]$year), 
                         "2008")
 })
@@ -26,7 +38,7 @@ test_that('Check <what>: class(what) == continuous',{
           expect_equal( nrow(record_tabulate(dt, chi_year==2008, what = c("birth_weight_grams"))), 
                         1)
           expect_equal( record_tabulate(dt, chi_year==2008, what = c("birth_weight_grams"))$mean, 
-                        round2(mean(dt[chi_year==2008]$birth_weight_grams, na.rm = T), 2))
+                        round2(mean(dt[chi_year==2008]$birth_weight_grams, na.rm = T), 3))
           expect_equal( unique(record_tabulate(dt, chi_year==2008, what = c("birth_weight_grams"))$year), 
                         "2008")
 })
@@ -35,11 +47,11 @@ test_that('Check <what>: multiple classes',{
           expect_equal( nrow(record_tabulate(dt, chi_year==2008, what = c("kotelchuck", "fetal_pres", "birth_weight_grams"))), 
                         length(unique(dt[chi_year==2008 & !is.na(fetal_pres)]$fetal_pres)) + 2)
           expect_equal( record_tabulate(dt, chi_year==2008, what = c("kotelchuck", "fetal_pres", "birth_weight_grams"))[level == "Cephalic"]$mean, 
-                        round2(23996/nrow(dt[chi_year==2008 & !is.na(fetal_pres)]), 3))
+                        round2(nrow(dt[chi_year==2008 & fetal_pres=="Cephalic"])/nrow(dt[chi_year==2008 & !is.na(fetal_pres)]), 3))
           expect_equal( record_tabulate(dt, chi_year==2008, what = c("kotelchuck", "fetal_pres", "birth_weight_grams"))[variable=="kotelchuck"]$mean, 
                         round2(mean(dt[chi_year==2008]$kotelchuck, na.rm = T), 3))
           expect_equal( record_tabulate(dt, chi_year==2008, what = c("kotelchuck", "fetal_pres", "birth_weight_grams"))[variable=="birth_weight_grams"]$mean, 
-                        round2(mean(dt[chi_year==2008]$birth_weight_grams, na.rm = T), 2))
+                        round2(mean(dt[chi_year==2008]$birth_weight_grams, na.rm = T), 3))
 })
 
 test_that('Check ... (where)',{
@@ -132,31 +144,32 @@ test_that('Check digits',{
 })
 
 test_that('Check suppress',{
-        expect_equal( record_tabulate(test.data, what = c("fetal_pres"), chi_age <17, suppress = T)[level=="Other"]$suppression,  
+        expect_equal( record_tabulate(dt, what = c("fetal_pres"), chi_age <17, suppress = T)[level=="Other"]$suppression,  
                       ifelse(nrow(dt[chi_age<17 & fetal_pres=="Other"])<=10, "^", as.character(NA)))
-        expect_equal( record_tabulate(test.data, what = c("fetal_pres"), chi_age <18, suppress = T)[level=="Other"]$suppression,  
+        expect_equal( record_tabulate(dt, what = c("fetal_pres"), chi_age <18, suppress = T)[level=="Other"]$suppression,  
                       ifelse(nrow(dt[chi_age<18 & fetal_pres=="Other"])<=10, "^", as.character(NA)))
-        expect_equal( record_tabulate(test.data, what = c("fetal_pres"), chi_age <17, suppress = F)[level=="Other"]$suppression,  
+        expect_equal( record_tabulate(dt, what = c("fetal_pres"), chi_age <17, suppress = F)[level=="Other"]$suppression,  
                       NA)
 })
 
 test_that('Check suppress_range',{
-        expect_equal( record_tabulate(test.data, what = c("fetal_pres"), chi_age <18, suppress = T, suppress_range = c(0, 10))[level=="Other"]$suppression,  
+        expect_equal( record_tabulate(dt, what = c("fetal_pres"), chi_age <18, suppress = T, suppress_range = c(0, 10))[level=="Other"]$suppression,  
                       ifelse(nrow(dt[chi_age<18 & fetal_pres=="Other"])<=10, "^", as.character(NA)))
-        expect_equal( record_tabulate(test.data, what = c("fetal_pres"), chi_age <18, suppress = T, suppress_range = c(0, 11))[level=="Other"]$suppression,  
+        expect_equal( record_tabulate(dt, what = c("fetal_pres"), chi_age <18, suppress = T, suppress_range = c(0, 11))[level=="Other"]$suppression,  
                       ifelse(nrow(dt[chi_age<18 & fetal_pres=="Other"])<=11, "^", as.character(NA)))
-        expect_equal( record_tabulate(test.data, what = c("fetal_pres"), chi_age <18, suppress = T, suppress_range = c(12, 12))[level=="Other"]$suppression,  
+        expect_equal( record_tabulate(dt, what = c("fetal_pres"), chi_age <18, suppress = T, suppress_range = c(12, 12))[level=="Other"]$suppression,  
                       ifelse(nrow(dt[chi_age<18 & fetal_pres=="Other"])==12, "^", as.character(NA)))
 })
 
 test_that('Check win: rolling averages, sums, etc.',{
-  expect_equal( record_tabulate(test.data, what = c("birth_weight_grams"), win=3)[years == "2008-2010"]$mean,  
+  expect_equal( record_tabulate(dt, what = c("birth_weight_grams"), win=3)[years == "2008-2010"]$mean,  
                 round2(mean(dt[chi_year %in% c(2008:2010)]$birth_weight_grams, na.rm = T), 3))
-  expect_equal( record_tabulate(test.data, what = c("birth_weight_grams"), win=3)[years == "2013-2015"]$mean,  
+  expect_equal( record_tabulate(dt, what = c("birth_weight_grams"), win=3)[years == "2013-2015"]$mean,  
                 round2(mean(dt[chi_year %in% c(2013:2015)]$birth_weight_grams, na.rm = T), 3))
 })
 
 test_that('Check distinct',{
-        expect_equal( record_tabulate(test.data, what = c("fetal_pres"), chi_age <18, by = "chi_sex", distinct = T)[chi_sex=="Female" & level == "Breech"]$distinct,  
+        expect_equal( record_tabulate(dt, what = c("fetal_pres"), chi_age <18, by = "chi_sex", distinct = T)[chi_sex=="Female" & level == "Breech"]$distinct,  
                       nrow(dt[chi_age<18 & fetal_pres=="Breech" & chi_sex == "Female"]))
 })
+
