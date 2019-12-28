@@ -8,12 +8,12 @@
 #'  list_apde_data()
 #' }
 list_apde_data <- function(){
-
+  
   ret <- c('hys', 'birth', 'bsk')
-
+  
   return(ret)
-
-
+  
+  
 }
 
 #' List columns available for analysis
@@ -28,8 +28,26 @@ list_apde_data <- function(){
 #'  list_dataset_columns('hys', T)
 #' }
 list_dataset_columns <- function(dataset, analytic_only = F){
-
+  dat = match.arg(dataset, list_apde_data())
+  
+  warning('list_dataset_columns not currently available/implemented')
+  return(data.frame(variable_name = '', analytic_ready = 'Sure. Why not?'))
+  
 }
+
+
+
+#' List of available metrics for calculation
+#' @export
+#' @return character vector. A vector of the available metrics for calculation.
+survey_metrics = function(){
+  c('mean', 'se', 'lower', 'upper', 'numerator', 'denominator', 'total', 'total_se')
+}
+
+record_metrics = function(){
+  c('mean', 'median', 'sum', 'rate', 'se', 'lower', 'upper', 'rse', 'numerator', 'denominator', 'missing', 'missing.prop', 'total', 'distinct')
+}
+
 
 
 #' Improved rounding function
@@ -56,6 +74,9 @@ round2 = function(x, n = 0) {
 substrRight <- function(x, x.start, x.stop){
   substr(x, nchar(x)-x.stop+1, nchar(x)-x.start+1)
 }
+
+
+
 
 #' Compare tabular results to a reference set of results in the same data
 #' @param orig Character vector of length 1. Identifies the data.table/data.frame to be fetched. Note the table must have the following columns:
@@ -95,3 +116,33 @@ chi_compare <- function(orig,
   
   return(orig)
 }
+
+
+
+#' format list of years into a well formatted string
+#' @export
+#' @return character vector 
+#' 
+#' @examples
+#' \dontrun{
+#' x <- data.table(var = c(rep("one", 6), rep("two", 6)), chi_year = rep(c(2010, 2011, 2012, 2015, 2016, 2017), 2))
+#' x[, years := format.years(list(sort(unique(chi_year))))]
+#' } 
+#' 
+format.years <- function(temp){
+  for(i in 1:(length(temp[[1]])) ){
+    if(i == 1){
+      new <- c(as.character(temp[[1]][i]))
+    }
+    if(i > 1){
+      if(temp[[1]][i] - as.integer(substrRight(new, 1, 4)) == 1){
+        if(substrRight(new, 5, 5) == "-"){
+          new <- paste0(gsub(substrRight(new, 1, 4), "", new), temp[[1]][i])
+        }else{ new <- paste0(new, "-", temp[[1]][i])}
+      } else{new <- paste0(new, ", ", temp[[1]][i])}
+    }
+  }
+  return(new)
+}
+
+
