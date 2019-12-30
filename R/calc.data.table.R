@@ -1,35 +1,5 @@
-#' Compute metrics from record level data (e.g., vital stats)
-#'
-#' @param ph.data data.table with count data
-#' @param what character vector. Variable to tabulate "over". Must match a column name in ph.data
-#' @param ... expressions to be passed to \code{\link{filter}}
-#' @param by character vector. Must refer to variables within ph.data. The variables within ph.data to compute `what` by
-#' @param metrics character. See \code{\link{record_metrics}} for the available options. Note, except when 'distinct' is
-#' selected, all metrics are calculated -- this argument just specifies which one gets returned
-#' @param per integer. The denominator when "rate" or "adjusted-rate" are selected as the metric.
-#' @param win integer. The number of units of time [e.g., years, months, etc.] over which the metrics will be calculated,
-#' i.e., the 'window' for a rolling average, sum, etc.
-#' @param time_var character. The name of the time variable in the dataset. Typically this is the year variable, i.e., "chi_year"
-#' @param proportion logical. Currently does not have functionality for non-survey data. Included for standardization purposes.
-#'
-#' @return a data.table containing the results
-#' @details
-#' This function calculates `metrics` for each variable in `what` from rows meeting the conditions specified
-#' by `...` (i.e., where), for each grouping implied by `by`.
-#'
-#' @importFrom rlang quos
-#' @import data.table
+#' @name calc
 #' @export
-#'
-#' @examples
-#' test.data <- get_data_birth(year = 2015:2017)
-#'
-#' test.results <- record_tabulate(test.data,
-#'                                what = c("kotelchuck", "fetal_pres"),
-#'                                "chi_year == 2016 & chi_sex %in% c('Male', 'Female')",
-#'                                by = c("chi_year", "chi_sex"),
-#'                                metrics = c("mean", "numerator", "denominator", "total", "lower", "upper", "se"))
-#'
 calc.data.table = function(ph.data,
                            what,
                            ...,
@@ -38,7 +8,7 @@ calc.data.table = function(ph.data,
                            per = NULL,
                            win = NULL,
                            time_var = "chi_year",
-                           proportion = F){
+                           proportion = FALSE){
   # copy data.table to prevent changing the underlying data
   temp.dt <- copy(ph.data)
 
