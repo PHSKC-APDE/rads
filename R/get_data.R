@@ -70,7 +70,9 @@ get_data_hys <- function(dataset, cols = NA, year = 2018, weight_variable = 'kcf
 #'
 #' @return dataset either data.table (adminstrative data) for further analysis/tabulation
 #'
-#' @import data.table
+#' @importFrom data.table ':=' .SD setcolorder
+#' @importFrom odbc dbConnect odbc dbDisconnect
+#' @importFrom glue glue_sql
 #' @importFrom labelled to_factor
 #' @export
 #'
@@ -82,30 +84,30 @@ get_data_hys <- function(dataset, cols = NA, year = 2018, weight_variable = 'kcf
 get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
   # pull columns and years from sQL
   ifelse(is.na(cols), cols <- "*", cols <- paste(cols, collapse=", "))
-  
-  query.string <- glue:: glue_sql ("SELECT ",  cols, " FROM [PH_APDEStore].[final].[bir_wa] 
-                                   WHERE chi_year IN (",  paste(year, collapse=", "), ")")  
-  
+
+  query.string <- glue::glue_sql ("SELECT ",  cols, " FROM [PH_APDEStore].[final].[bir_wa]
+                                   WHERE chi_year IN (",  paste(year, collapse=", "), ")")
+
   if(kingco == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 1")}
-  
-  
+
+
   con <- odbc::dbConnect(odbc::odbc(),
                          Driver = "SQL Server",
                          Server = "KCITSQLPRPDBM50",
                          Database = "PH_APDEStore")
-  
+
   dat <- data.table::setDT(DBI::dbGetQuery(con, query.string))
   odbc::dbDisconnect(con)
-  
+
   # Format string variables due to SQL import quirks
   original.order <- names(dat)
   string.columns <- sapply(dat,is.character) # identify string columns as a logical vector
   string.columns <- names(dat[, ..string.columns]) # identify string columns as a character vector
   dat <- dat[, (string.columns) := lapply(.SD, trimws,which="r"), .SDcols = string.columns] # trim white space to right
   dat <- dat[, (string.columns) := lapply(.SD, factor), .SDcols = string.columns] # convert strings to factors
-  
+
   # reorder table
-  setcolorder(dat, original.order)
-  
+  data.table::setcolorder(dat, original.order)
+
   return(dat)
 }

@@ -18,7 +18,7 @@
 #'
 #' @keywords suppression
 #'
-#' @import data.table
+#' @importFrom data.table ':='
 #'
 #' @examples
 #'
