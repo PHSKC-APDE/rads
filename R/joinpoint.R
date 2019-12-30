@@ -32,9 +32,10 @@
 #'
 #' @keywords JoinPoint, trends
 #'
-#' @importFrom data.table is.data.table ':=' setDT setDF data.table setorder copy setnames setorder dcast setcolorder
+#' @importFrom data.table is.data.table ':=' setDT setDF data.table setorder copy setnames setorder dcast setcolorder fread shift
 #' @importFrom dplyr '%>%' distinct mutate n_distinct left_join
 #' @importFrom glue glue
+#' @importFrom utils write.table
 #'
 #' @examples
 #' # create sample data
@@ -67,6 +68,10 @@ jp_f <- function(jp_data = NULL,
                  jp_byvar2 = "cat2_group",
                  jp_dir = NULL,
                  jp_path = "C:/Program Files (x86)/Joinpoint Command/jpCommand.exe") {
+
+  #Visible bindings for global variables for data.table
+  dup <- jp_se2 <- . <- trend <- APC.significant <- APC <- Segment.Start <- Segment.End <- NULL
+  trend.next <- trend.prev <- contiguous <- count <- time_trends <- tab <- NULL
 
   ##############################################
   ## Confirm function arguments are logical ####
@@ -320,7 +325,7 @@ jp_f <- function(jp_data = NULL,
     # Process JoinPoint Results----
           # Bring in the annual percent change
           # (assumes output was tab deliminated, set this in options.ini file )
-          temp_trend <- fread(glue::glue("{jp_dir}/output/{unlist(indicator)}.apcexport.txt")) # apc = annual percent change
+          temp_trend <- data.table::fread(glue::glue("{jp_dir}/output/{unlist(indicator)}.apcexport.txt")) # apc = annual percent change
           data.table::setnames(temp_trend, names(temp_trend), gsub(" ", ".", names(temp_trend)))
 
           # save trend data for each time period
@@ -330,8 +335,8 @@ jp_f <- function(jp_data = NULL,
           temp_trend <- temp_trend[, .(jp_byvar1, jp_byvar2, Segment.Start, Segment.End, trend)] # keeping only essential vars, helpful for clarity while coding/troubleshooting
 
           # collapse data when two contiguous time periods have the same trend (i.e., 2005-2009 and 2009-2013 both flat, so 2005-2013 is flat)
-          temp_trend[, trend.next := shift(trend, 1, 0, "lead"), by = .(jp_byvar1, jp_byvar2)]
-          temp_trend[, trend.prev := shift(trend, 1, 0, "lag"), by = .(jp_byvar1, jp_byvar2)]
+          temp_trend[, trend.next := data.table::shift(trend, 1, 0, "lead"), by = .(jp_byvar1, jp_byvar2)]
+          temp_trend[, trend.prev := data.table::shift(trend, 1, 0, "lag"), by = .(jp_byvar1, jp_byvar2)]
           temp_trend[trend == trend.next | trend == trend.prev, contiguous := TRUE][, c("trend.next", "trend.prev") := NULL] # identify contiguous
 
           temp_trend <- rbind(temp_trend[contiguous==TRUE, .(Segment.Start = suppressWarnings(min(Segment.Start)), Segment.End = suppressWarnings(max(Segment.End))),

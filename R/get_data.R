@@ -1,11 +1,10 @@
 
 #' Get (micro)data from APDE storage.
 #'
-#' @description
 #'
-#' @param dataset. Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options
+#' @param dataset Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options
 #' @param cols Character vector of length >-1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
-#'     See \code{\link{list_analytic_columns}} for more information on which columns are considered default by dataset.
+#'     See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.
 #' @param year Numeric vector. Identifies which years of data should be pulled
 #' @param ... Additional named arguments based on the specific dataset. To see what these options should be, do \code{help(get_data_`dataset`)}
 #'
@@ -38,9 +37,8 @@ get_data <- function(dataset, cols = NA, year = 2018, ...){
 
 #' Get HYS microdata from storage.
 #'
-#' @description
 #'
-#' @param dataset. Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options
+#' @param dataset Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options
 #' @param cols Character vector of length >-1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
 #'     See \code{\link{list_analytic_columns}} for more information on which columns are considered default by dataset.
 #' @param year Numeric vector. Identifies which years of data should be pulled
@@ -58,9 +56,6 @@ get_data_hys <- function(dataset, cols = NA, year = 2018, weight_variable = 'kcf
 
 }
 
-
-
-
 #' Get Birth microdata from storage.
 #'
 #' @param cols Character vector of length >=1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
@@ -73,7 +68,7 @@ get_data_hys <- function(dataset, cols = NA, year = 2018, weight_variable = 'kcf
 #' @importFrom data.table ':=' .SD setcolorder
 #' @importFrom odbc dbConnect odbc dbDisconnect
 #' @importFrom glue glue_sql
-#' @importFrom labelled to_factor
+#' @importFrom DBI dbGetQuery
 #' @export
 #'
 #' @examples
@@ -82,6 +77,10 @@ get_data_hys <- function(dataset, cols = NA, year = 2018, weight_variable = 'kcf
 #'  get_data_birth(cols = NA, year = c(2015, 2016, 2017), kingco = F)
 #' }
 get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
+
+  #data.table bindings
+  ..string.columns <- NULL
+
   # pull columns and years from sQL
   ifelse(is.na(cols), cols <- "*", cols <- paste(cols, collapse=", "))
 

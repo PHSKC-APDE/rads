@@ -2,7 +2,7 @@
 #'
 #' @return Character vector of available datasets.
 #' @export
-#'
+#' @name list_apde_data
 #' @examples
 #' \dontrun{
 #'  list_apde_data()
@@ -22,7 +22,7 @@ list_apde_data <- function(){
 #' @param analytic_only logical. Controls whether columns outside the analytic dataset should be returned.
 #' @return Data.frame with two columns. First column is the variable name, while the second identifies whether or not it is in the analytic ready dataset
 #' @export
-#'
+#' @name list_dataset_columns
 #' @examples
 #' \dontrun{
 #'  list_dataset_columns('hys', T)
@@ -36,19 +36,23 @@ list_dataset_columns <- function(dataset, analytic_only = F){
 }
 
 
-
-#' List of available metrics for calculation
-#' @export
+#' List available metrics depending on type of dataset
 #' @return character vector. A vector of the available metrics for calculation.
+#' @name metrics
+NULL
+
+#' @rdname metrics
+#' @export
 survey_metrics = function(){
   c('mean', 'se', 'lower', 'upper', 'numerator', 'denominator', 'total', 'total_se')
 }
 
+#' List of available metrics for calculation
+#' @rdname metrics
+#' @export
 record_metrics = function(){
   c('mean', 'median', 'sum', 'rate', 'se', 'lower', 'upper', 'rse', 'numerator', 'denominator', 'missing', 'missing.prop', 'total', 'distinct')
 }
-
-
 
 #' Improved rounding function
 #' @param x values to be rounded
@@ -88,14 +92,18 @@ substrRight <- function(x, x.start, x.stop){
 #' data onto the main data. Typically, all that is needed is an indicator_key and a time indicator
 #' @param compare.name Character vector of length 1. It is the name of the column containining the comparison results.
 #'
-#' @importFrom data.table setnames ":="
+#' @importFrom data.table setnames ":=" setDT
 #'
 #' @export
 #' @return data.table comprised of the original data.table and two additional columns ... 'significance' and 'comparison_with_kc' (or alternatively specified name)
 chi_compare <- function(orig,
                         merge.by = c("indicator_key", "year"),
                         compare.name = "comparison_with_kc"){
-  setDT(orig)
+
+  #Bindings for data.table/check global variables
+  cat1_varname <- result <- comp.result <- lower_bound <- comp.upper_bound <- upper_bound <- comp.lower_bound <- significance <- NULL
+
+  data.table::setDT(orig)
 
   #Copy & subset comparator data
   comparator <- orig[cat1_varname=="chi_geo_kc", c("indicator_key", "year", "result", "lower_bound", "upper_bound")]
@@ -124,17 +132,20 @@ chi_compare <- function(orig,
 
 
 #' format list of years into a well formatted string
+#' @param temp character.
 #' @export
 #' @return character vector
 #'
 #' @examples
 #' \dontrun{
-#' x <- data.table(var = c(rep("one", 6), rep("two", 6)), chi_year = rep(c(2010, 2011, 2012, 2015, 2016, 2017), 2))
-#' x[, years := format.years(list(sort(unique(chi_year))))]
+#' x <- data.table(var = c(rep("one", 6), rep("two", 6)),
+#'                 chi_year = rep(c(2010, 2011, 2012, 2015, 2016, 2017), 2))
+#' x[, years := format_years(list(sort(unique(chi_year))))]
 #' }
 #'
-format.years <- function(temp){
-  for(i in 1:(length(temp[[1]])) ){
+format_years <- function(temp){
+
+  for(i in seq(1, length(temp))){
     if(i == 1){
       new <- c(as.character(temp[[1]][i]))
     }
@@ -142,10 +153,15 @@ format.years <- function(temp){
       if(temp[[1]][i] - as.integer(substrRight(new, 1, 4)) == 1){
         if(substrRight(new, 5, 5) == "-"){
           new <- paste0(gsub(substrRight(new, 1, 4), "", new), temp[[1]][i])
-        }else{ new <- paste0(new, "-", temp[[1]][i])}
-      } else{new <- paste0(new, ", ", temp[[1]][i])}
+        }else{
+          new <- paste0(new, "-", temp[[1]][i])
+        }
+      }else{
+        new <- paste0(new, ", ", temp[[1]][i])
+      }
     }
   }
+
   return(new)
 }
 

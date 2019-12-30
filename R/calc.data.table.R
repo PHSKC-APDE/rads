@@ -1,4 +1,6 @@
-#' @name calc
+#' @rdname calc
+#' @importFrom data.table copy data.table rbindlist tstrsplit .N
+#' @importFrom stats median na.omit prop.test qnorm qt var na.omit
 #' @export
 calc.data.table = function(ph.data,
                            what,
@@ -9,8 +11,12 @@ calc.data.table = function(ph.data,
                            win = NULL,
                            time_var = "chi_year",
                            proportion = FALSE){
+
+  #global variables used by data.table declared as NULL here to play nice with devtools::check()
+  se <- rse <- caution <- rate <- rate_per <- level <- years <- variable <- NULL
+
   # copy data.table to prevent changing the underlying data
-  temp.dt <- copy(ph.data)
+  temp.dt <- data.table::copy(ph.data)
 
   #### VALIDATION ####
     #validate 'what'
@@ -22,7 +28,7 @@ calc.data.table = function(ph.data,
 
     #identify when 'what' is binary (0, 1), other numerics, or a factor. When a factor, convert it to a series of binary columns
         # binary columns
-          binary.col <- vapply(temp.dt[, ..what],function(x) { all(na.omit(x) %in% 0:1) }, FUN.VALUE=logical(1)) # logical vector
+          binary.col <- vapply(temp.dt[, ..what],function(x) { all(stats::na.omit(x) %in% 0:1) }, FUN.VALUE=logical(1)) # logical vector
           binary.col <- what[binary.col]  # character vector
 
         # numeric columns
@@ -44,7 +50,7 @@ calc.data.table = function(ph.data,
           }
 
         # update 'what' to reflect all binaries, including those made from factors
-          what.distinct <- copy(what)
+          what.distinct <- data.table::copy(what)
           what.metrics <- c(setdiff(what, factor.col), setdiff(names(temp.dt), names.before) )
 
     #validate '...' (i.e., where)
@@ -94,16 +100,16 @@ calc.data.table = function(ph.data,
       }
 
     # function to calculate metrics
-      calc.metrics <- function(X, DT){
+      calc_metrics <- function(X, DT){
         DT[, .(
-          years = format.years(list(sort(unique( get(time_var) )))),
+          years = format_years(list(sort(unique( get(time_var) )))),
           variable = as.character(X),
           mean = mean(get(X), na.rm = T),
-          median = as.numeric(median(get(X), na.rm = T)),
+          median = as.numeric(stats::median(get(X), na.rm = T)),
           sum = sum(get(X), na.rm = T),
           numerator = sum(get(X), na.rm = T),
           denominator = sum(!is.na( get(X) )),
-          se = sqrt(var(get(X), na.rm = T)/sum(!is.na( get(X) )) ),
+          se = sqrt(stats::var(get(X), na.rm = T)/sum(!is.na( get(X) )) ),
           total = .N,
           missing = sum(is.na( get(X) )),
           missing.prop = sum(is.na( get(X) ) / .N),
@@ -113,39 +119,39 @@ calc.data.table = function(ph.data,
       }
 
       # function to calculate distinct combinations of 'what' and 'by'
-        calc.distinct <- function(X, DT){
+        calc_distinct <- function(X, DT){
           DT[, .(
             variable = as.character(X),
             level = get(X),
-            years = format.years(list(sort(unique( get(time_var) )))),
+            years = format_years(list(sort(unique( get(time_var) )))),
             distinct = .N
           ),
           by = c(X, by)]
         }
 
   #### APPLY CALC FUNCTION ####
-    # apply the calc.metrics or calc.distinct functions
+    # apply the calc_metrics or calc_distinct functions
       if(is.null(win)){
-          res.distinct <- lapply(X = as.list(what.distinct), FUN = calc.distinct, DT = temp.dt)
+          res.distinct <- lapply(X = as.list(what.distinct), FUN = calc_distinct, DT = temp.dt)
           res.distinct <- rbindlist(res.distinct, use.names = T, fill = T)
           res.distinct[, c(what.distinct) := NULL]
 
-          res.metrics <- lapply(X = as.list(what.metrics), FUN = calc.metrics, DT = temp.dt)
-          res.metrics <- rbindlist(res.metrics, use.names = T)
+          res.metrics <- lapply(X = as.list(what.metrics), FUN = calc_metrics, DT = temp.dt)
+          res.metrics <- data.table::rbindlist(res.metrics, use.names = T)
       }
 
       if(!is.null(win)){
-        res.distinct <- data.table() # empty table for appending results
-        res.metrics <- data.table() # empty table for appending results
+        res.distinct <- data.table::data.table() # empty table for appending results
+        res.metrics <- data.table::data.table() # empty table for appending results
         for(yr in seq(min(temp.dt[, c(get(time_var))]), (max(temp.dt[, c(get(time_var))])-win+1) ) ){
 
-            temp.results <- lapply(X = as.list(what.distinct), FUN = calc.distinct, DT = temp.dt[get(time_var) %in% seq(yr, (yr+win-1) )])
-            temp.results <- rbindlist(temp.results, use.names = T, fill = T)
+            temp.results <- lapply(X = as.list(what.distinct), FUN = calc_distinct, DT = temp.dt[get(time_var) %in% seq(yr, (yr+win-1) )])
+            temp.results <- data.table::rbindlist(temp.results, use.names = T, fill = T)
             res.distinct <- rbind(res.distinct, temp.results, fill = TRUE)
             res.distinct[, c(what.distinct) := NULL]
 
-            temp.results <- lapply(X = as.list(what.metrics), FUN = calc.metrics, DT = temp.dt[get(time_var) %in% seq(yr, (yr+win-1) )])
-            temp.results <- rbindlist(temp.results, use.names = T)
+            temp.results <- lapply(X = as.list(what.metrics), FUN = calc_metrics, DT = temp.dt[get(time_var) %in% seq(yr, (yr+win-1) )])
+            temp.results <- data.table::rbindlist(temp.results, use.names = T)
             res.metrics <- rbind(res.metrics, temp.results, fill = TRUE)
         }
       }
@@ -153,7 +159,7 @@ calc.data.table = function(ph.data,
   #### ADDITIONAL CALCULATIONS & DATA PREP ####
 
     # Split names for factor columns
-        res.metrics[, c("variable", "level") := tstrsplit(variable, "_SPLIT_HERE_", fixed=TRUE)]
+        res.metrics[, c("variable", "level") := data.table::tstrsplit(variable, "_SPLIT_HERE_", fixed=TRUE)]
 
     # Calculate lower, upper, se, rse
         # PROPORTIONS : Binary (& factor) variables will use prop.test function for CI. This uses the score method ... suggested by DOH & literature
@@ -164,8 +170,8 @@ calc.data.table = function(ph.data,
               lower <- rep(NA, nrow(res.metrics.prop)) # create empty vector to hold res.metricsults
               upper <- rep(NA, nrow(res.metrics.prop)) # create empty vector to hold res.metricsults
               for(i in 1:nrow(res.metrics.prop)){
-                lower[i] <- suppressWarnings(prop.test(numerator[i], denominator[i], conf.level = 0.95, correct = F)$conf.int[1]) # the score method ... suggested by DOH & others
-                upper[i] <- suppressWarnings(prop.test(numerator[i], denominator[i], conf.level = 0.95, correct = F)$conf.int[2])
+                lower[i] <- suppressWarnings(stats::prop.test(numerator[i], denominator[i], conf.level = 0.95, correct = F)$conf.int[1]) # the score method ... suggested by DOH & others
+                upper[i] <- suppressWarnings(stats::prop.test(numerator[i], denominator[i], conf.level = 0.95, correct = F)$conf.int[2])
               }
               res.metrics.prop[, lower := lower]
               res.metrics.prop[, upper := upper]
@@ -176,8 +182,8 @@ calc.data.table = function(ph.data,
         # MEANS: Numeric/non-binary need to have their CI calculated separately
             res.metrics.mean <- res.metrics[variable %in% c(numeric.col)]
             if(length(numeric.col) > 0){
-              res.metrics.mean[denominator>30, lower := mean - qnorm(0.975)*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics
-              res.metrics.mean[denominator>30, upper := mean + qnorm(0.975)*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics
+              res.metrics.mean[denominator>30, lower := mean - stats::qnorm(0.975)*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics
+              res.metrics.mean[denominator>30, upper := mean + stats::qnorm(0.975)*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics
               suppressWarnings(res.metrics.mean[denominator<=30, lower := mean - qt(0.975,df=denominator-1)*se]) # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed)
               suppressWarnings(res.metrics.mean[denominator<=30, upper := mean + qt(0.975,df=denominator-1)*se]) # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed)
               res.metrics.mean[lower < 0, lower := 0] # prevent negative values for confidence interval
@@ -203,22 +209,22 @@ calc.data.table = function(ph.data,
     # select proper results to submit based on whether 'distinct' was requested
       if("distinct" %in% metrics == T & length(metrics)==1){ # this means distinct is the only metric
         res <- res.distinct
-        setcolorder(res, c("variable", "level", "years", setdiff(by, "chi_year"), "distinct"))
+        data.table::setcolorder(res, c("variable", "level", "years", setdiff(by, "chi_year"), "distinct"))
       }
 
       if("distinct" %in% metrics == F){ # this means distinct was not requested
         res <- res.metrics
-        setcolorder(res, c("variable", "level", "years", setdiff(by, "chi_year"), "median", "mean", "rate", "lower", "upper", "se", "rse", "caution", "sum", "numerator", "denominator", "missing", "total", "missing.prop", "unique.years"))
+        data.table::setcolorder(res, c("variable", "level", "years", setdiff(by, "chi_year"), "median", "mean", "rate", "lower", "upper", "se", "rse", "caution", "sum", "numerator", "denominator", "missing", "total", "missing.prop", "unique.years"))
       }
 
       if("distinct" %in% metrics == T & length(metrics)>1){ # 'distinct' + other metrics selected, so have to merge
         res <- merge(res.metrics, res.distinct, by = c("variable", "level", "years", setdiff(by, "chi_year")), all.x = T, all.y = T)
-        setcolorder(res, c("variable", "level", "years", setdiff(by, "chi_year"), "distinct", "median", "mean", "rate", "lower", "upper", "se", "rse", "caution", "sum", "numerator", "denominator", "missing", "total", "missing.prop", "unique.years"))
+        data.table::setcolorder(res, c("variable", "level", "years", setdiff(by, "chi_year"), "distinct", "median", "mean", "rate", "lower", "upper", "se", "rse", "caution", "sum", "numerator", "denominator", "missing", "total", "missing.prop", "unique.years"))
         res <- res[!(is.na(numerator) & is.na(distinct) ), ] # these rows are NA because they unique combinations do not exist, so dropping.
       }
 
     # Sort / order results
-      setorder(res, variable, level, years)
+      data.table::setorder(res, variable, level, years)
 
     # drop columns no longer needed
         metrics <- c(metrics, "years", "caution", "suppression")

@@ -8,7 +8,7 @@
 #' This function expects data that has already been formatted for CHI
 #'
 #'
-#' @param ph.data a data.table or data.frame. Must contain the data to be suppressed with standard metric names,
+#' @param sup_data a data.table or data.frame. Must contain the data to be suppressed with standard metric names,
 #' i.e., mean, median, sum, rate, lower, upper, se, rse, numerator, denominator, proportion
 #' @param suppress_range integer vector of length 2. They specify the minimum and maximum range for suppression.
 #'
@@ -36,7 +36,10 @@
 suppress <- function(sup_data = NULL,
                      suppress_range = c(0, 10) ){
 
-  #validate 'ph.data'
+  #visible bindings for data.table
+  numerator <- suppression <- NULL
+
+  #validate 'sup_data'
       if(is.null(sup_data)){
         stop("You must specify a dataset (i.e., 'sup_data' must be defined)")
       }

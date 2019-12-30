@@ -1,4 +1,4 @@
-#' @name calc
+#' @rdname calc
 #' @export
 calc.tbl_svy <- function(ph.data,
                          what,

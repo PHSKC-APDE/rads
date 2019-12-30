@@ -1,5 +1,5 @@
 #' Compute metrics from record (e.g. vital stats) or survey data
-#'
+#' @name calc
 #' @param ph.data data.table or tbl_svy. Dataset.
 #' @param what character vector. Variable to calculate metrics for.
 #' @param ... expressions to be passed to \code{\link{filter}} (or equivalent)
@@ -22,7 +22,6 @@
 #' methods. That is, when you want to find the fraction of ____, toggle \code{proportion} to \code{TRUE}.
 #'
 #' @importFrom rlang quos
-#' @import data.table
 #' @export
 #'
 #' @examples
@@ -34,7 +33,8 @@
 #'                      what = c("kotelchuck", "fetal_pres"),
 #'                      "chi_year == 2016 & chi_sex %in% c('Male', 'Female')",
 #'                       by = c("chi_year", "chi_sex"),
-#'                       metrics = c("mean", "numerator", "denominator", "total", "lower", "upper", "se"))
+#'                       metrics = c("mean", "numerator", "denominator",
+#'                                   "total", "lower", "upper", "se"))
 #'
 calc <- function(ph.data, ...) {
   UseMethod("calc")
