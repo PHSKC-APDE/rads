@@ -17,4 +17,13 @@ Imports:
     rlang,
     testthat,
     DBI,
-    apdeRecodes
+    apdeRecodes,
+    survey,
+    srvyr,
+    haven
+Suggests: 
+    testthat,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+

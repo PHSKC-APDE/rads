@@ -1,4 +1,4 @@
-#' Returns the list of datasets currently available for RADS
+#' Returns the list of datasets currently available for analysis in RADS
 #'
 #' @return Character vector of available datasets.
 #' @export
@@ -16,10 +16,12 @@ list_apde_data <- function(){
 
 }
 
-#' List columns available for analysis
+#' List columns available for analysis for a particular dataset in RADS
 #'
 #' @param dataset Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options
 #' @param analytic_only logical. Controls whether columns outside the analytic dataset should be returned.
+#'
+#'
 #' @return Data.frame with two columns. First column is the variable name, while the second identifies whether or not it is in the analytic ready dataset
 #' @export
 #' @name list_dataset_columns
@@ -32,7 +34,6 @@ list_dataset_columns <- function(dataset, analytic_only = F){
 
   warning('list_dataset_columns not currently available/implemented')
   return(data.frame(variable_name = '', analytic_ready = 'Sure. Why not?'))
-
 }
 
 
@@ -84,7 +85,6 @@ substrRight <- function(x, x.start, x.stop){
   substr(x, nchar(x)-x.stop+1, nchar(x)-x.start+1)
 }
 
-
 #' Compare tabular results to a reference set of results in the same data
 #' @param orig Character vector of length 1. Identifies the data.table/data.frame to be fetched. Note the table must have the following columns:
 #' 'result', 'lower_bound', & 'upper_bound' and all three must be numeric
@@ -129,8 +129,6 @@ chi_compare <- function(orig,
   return(orig)
 }
 
-
-
 #' format list of years into a well formatted string
 #' @param temp character.
 #' @export
@@ -164,5 +162,3 @@ format_years <- function(temp){
 
   return(new)
 }
-
-
