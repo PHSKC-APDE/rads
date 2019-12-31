@@ -24,8 +24,9 @@
 #' 
 #' @keywords rounding, 
 #' 
-#' @importFrom  data.table
+#' @importFrom(data.table, setDT, ":=", .SD)
 #' 
+#'  
 #' @example 
 #' 
 #'  set.seed(98104)
@@ -56,7 +57,7 @@ digits <- function(digit_data = NULL,
           }
           
           if(is.data.frame(digit_data)){
-            setDT(digit_data)
+            data.table::setDT(digit_data)
           } else { 
             stop("<digit_data> must be the name of a data.frame or data.table.")}
 
