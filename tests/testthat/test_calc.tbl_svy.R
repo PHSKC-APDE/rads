@@ -1,15 +1,15 @@
-# library('srvyr')
-# library('survey')
-# library('dplyr')
-#
-# data(api) #from the survey package
-# sur = apisrs %>% as_survey_design(ids = 1, fpc = fpc)
-#
-# test_that('Defaults work: svy',
-#           expect_equal(
-#             survey_tabulate(sur, what = 'api00')$mean,
-#             sur %>% summarize(mean = survey_mean(api00, na.rm = T)) %>% .$mean
-#           ))
+library('srvyr')
+library('survey')
+library('dplyr')
+
+data(api) #from the survey package
+sur = apisrs %>% as_survey_design(ids = 1, fpc = fpc)
+
+test_that('Defaults work: svy',
+          expect_equal(
+            calc(sur, what = 'api00', time_var = NULL)$mean,
+            sur %>% summarize(mean = survey_mean(api00, na.rm = T)) %>% .$mean
+          ))
 #
 # test_that('Grouping without filtering',
 #           expect_equal(
