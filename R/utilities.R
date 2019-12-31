@@ -143,7 +143,7 @@ chi_compare <- function(orig,
 #'
 format_years <- function(temp){
 
-  for(i in seq(1, length(temp))){
+  for(i in seq(1, length(temp[[1]])) ){
     if(i == 1){
       new <- c(as.character(temp[[1]][i]))
     }
