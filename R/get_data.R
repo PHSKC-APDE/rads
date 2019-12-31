@@ -63,8 +63,8 @@ get_data <- function(dataset, cols = NA, year = 2018, ...){
 #' }
 get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcfinalwt', kingco = T){
 
-  #visible bindings for data.table kcfinalwt
-  sur_pus <- schgnoid <
+  #visible bindings for data.table
+  schgnoid <- sur_psu <- kcfinalwt <- NULL
 
   dat <- haven::read_dta("J:/HYSdata/hys/Data/hys0418_final_8.dta")
   data.table::setDT(dat)

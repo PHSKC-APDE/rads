@@ -13,7 +13,7 @@ get_data_hys(
 }
 \arguments{
 \item{cols}{Character vector of length >-1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
-See \code{\link{list_analytic_columns}} for more information on which columns are considered default by dataset.}
+See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.}
 
 \item{year}{Numeric vector. Identifies which years of data should be pulled}
 
