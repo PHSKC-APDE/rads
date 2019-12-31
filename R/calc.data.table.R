@@ -101,6 +101,7 @@ calc.data.table = function(ph.data,
 
     # function to calculate metrics
       calc_metrics <- function(X, DT){
+        . <- NULL
         DT[, .(
           years = format_years(list(sort(unique( get(time_var) )))),
           variable = as.character(X),

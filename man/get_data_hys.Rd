@@ -20,8 +20,6 @@ See \code{\link{list_analytic_columns}} for more information on which columns ar
 \item{weight_variable}{Character vector of length 1. Identifies which weight column}
 
 \item{kingco}{logical. Return dataset for analyses in King County only.}
-
-\item{dataset}{Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options}
 }
 \value{
 dataset either in data.table (adminstrative data) or svy_tbl (survey data) for further analysis/tabulation

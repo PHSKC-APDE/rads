@@ -41,9 +41,8 @@ get_data <- function(dataset, cols = NA, year = 2018, ...){
 #' Get HYS microdata from storage.
 #'
 #'
-#' @param dataset Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options
 #' @param cols Character vector of length >-1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
-#'     See \code{\link{list_analytic_columns}} for more information on which columns are considered default by dataset.
+#'     See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.
 #' @param year Numeric vector. Identifies which years of data should be pulled
 #' @param weight_variable Character vector of length 1. Identifies which weight column
 #' @param kingco logical. Return dataset for analyses in King County only.
@@ -51,8 +50,10 @@ get_data <- function(dataset, cols = NA, year = 2018, ...){
 #' @return dataset either in data.table (adminstrative data) or svy_tbl (survey data) for further analysis/tabulation
 #'
 #' @importFrom srvyr %>% as_survey_design filter select
-#' @import data.table
-#' @importFrom labelled to_factor
+#' @importFrom data.table ":=" .I
+#' @importFrom haven read_dta
+#' @importFrom srvyr as_survey_design filter select
+#' @importFrom rlang sym
 #' @export
 #'
 #' @examples
@@ -61,6 +62,10 @@ get_data <- function(dataset, cols = NA, year = 2018, ...){
 #'  get_data_hys(cols = NA, year = c(2016, 2018), weight_variable = 'kcfinalwt')
 #' }
 get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcfinalwt', kingco = T){
+
+  #visible bindings for data.table kcfinalwt
+  sur_pus <- schgnoid <
+
   dat <- haven::read_dta("J:/HYSdata/hys/Data/hys0418_final_8.dta")
   data.table::setDT(dat)
 
@@ -73,29 +78,15 @@ get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcf
   yvar = year
   dat = dat[year %in% yvar, ]
 
-  #convert some variables from haven_labelled to factor
-  converts = c('kc4reg', 'a_race8', grep('_aic', names(dat), value = T), 'a_sex', 'sexual_orientation')
-
-  dat[, (converts) := lapply(.SD, function(x){
-    if(labelled::is.labelled(x)){
-      labelled::to_factor(x)
-    }else{
-      x
-    }
-  }), .SDcols = converts]
-
-
   #create the survey object
   svy <- srvyr::as_survey_design(dat, ids = sur_psu, strata = year, weights = kcfinalwt, nest = T)
   wt  <- rlang::sym(weight_variable)
-  svy <- svy %>% filter(!!wt != 0)
+  svy <- svy %>% srvyr::filter(!!wt != 0)
 
-  if(kingco == T) svy <- svy %>% filter(kingco == 1)
+  if(kingco == T) svy <- svy %>% srvyr::filter(kingco == 1)
 
-  if(!is.na(cols)) svy <- svy %>% select({{cols}})
+  if(!is.na(cols)) svy <- svy %>% srvyr::select({{cols}})
   class(svy) <- c(class(svy), 'apde_hys')
-
-
 
   return(svy)
 }
@@ -121,9 +112,6 @@ get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcf
 #'  get_data_birth(cols = NA, year = c(2015, 2016, 2017), kingco = F)
 #' }
 get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
-
-  #data.table bindings
-  ..string.columns <- NULL
 
   # pull columns and years from sQL
   ifelse(is.na(cols), cols <- "*", cols <- paste(cols, collapse=", "))

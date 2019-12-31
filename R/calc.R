@@ -21,7 +21,6 @@
 #' For survey data, use the \code{proportion} argument where relevant to ensure metrics are calculated using special proportion (e.g \code{svyciprop})
 #' methods. That is, when you want to find the fraction of ____, toggle \code{proportion} to \code{TRUE}.
 #'
-#' @importFrom rlang quos
 #' @export
 #'
 #' @examples

@@ -1,4 +1,8 @@
 #' @rdname calc
+#' @importFrom srvyr filter group_by %>% select summarize
+#' @importFrom dplyr n
+#' @importFrom data.table ":="
+#' @importFrom rlang quos !! !!! syms
 #' @export
 calc.tbl_svy <- function(ph.data,
                          what,
@@ -9,6 +13,9 @@ calc.tbl_svy <- function(ph.data,
                          win = NULL,
                          time_var = "chi_year",
                          proportion = FALSE){
+
+  #data.table visible bindings
+  variable <- ci <- NULL
 
   opts = survey_metrics()
   #confirm that svy is a tab_svy
@@ -43,7 +50,7 @@ calc.tbl_svy <- function(ph.data,
     mis_vars = apply(ph.data$variables[, by], 1, function(x) sum(is.na(x)))
 
     #remove missing by vars
-    ph.data <- ph.data %>% filter(!!mis_vars==0)
+    ph.data <- ph.data %>% srvyr::filter(!!mis_vars==0)
 
   }
 
@@ -52,10 +59,10 @@ calc.tbl_svy <- function(ph.data,
 
   #subset ph.data to only the columns needed (and rows)
   if(!is.null(where)){
-    ph.data <- ph.data %>% filter(!!!where)
+    ph.data <- ph.data %>% srvyr::filter(!!!where)
   }
 
-  ph.data <- ph.data %>% select(what, by)
+  ph.data <- ph.data %>% srvyr::select(what, by)
 
 
   whats = rlang::syms(what)
@@ -71,13 +78,13 @@ calc.tbl_svy <- function(ph.data,
   res <- lapply(whats, function(what){
     svydata = suppressMessages(filter(ph.data, !is.na(!!what)))
     whatvar = as.character(what)
-    out <- svydata %>% group_by(!!!by) %>% summarize(
+    out <- svydata %>% srvyr::group_by(!!!by) %>% srvyr::summarize(
       mean = srvyr::survey_mean(!!what, na.rm = T, vartype = 'se', proportion = proportion),
       ci = srvyr::survey_mean(!!what, na.rm = T, vartype = 'ci', proportion = proportion),
       #median = srvyr::survey_median(!!what, na.rm = T, vartype = NULL), This isn't working at the moment. Figure it out later
       total = srvyr::survey_total(!!what, na.rm = T),
       numerator = srvyr::unweighted(sum(!!what == 1, na.rm = T)),
-      denominator = srvyr::unweighted(n())
+      denominator = srvyr::unweighted(dplyr::n())
     ) %>% setDT
 
     out[, variable := whatvar]

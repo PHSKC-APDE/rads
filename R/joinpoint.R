@@ -70,7 +70,7 @@ jp_f <- function(jp_data = NULL,
                  jp_path = "C:/Program Files (x86)/Joinpoint Command/jpCommand.exe") {
 
   #Visible bindings for global variables for data.table
-  dup <- jp_se2 <- . <- trend <- APC.significant <- APC <- Segment.Start <- Segment.End <- NULL
+  dup <- jp_se2 <- . <- trend <- APC.Significant <- APC <- Segment.Start <- Segment.End <- NULL
   trend.next <- trend.prev <- contiguous <- count <- time_trends <- tab <- NULL
 
   ##############################################
