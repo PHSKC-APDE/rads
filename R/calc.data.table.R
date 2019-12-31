@@ -164,15 +164,15 @@ calc.data.table = function(ph.data,
 
     # Calculate lower, upper, se, rse
         # PROPORTIONS : Binary (& factor) variables will use prop.test function for CI. This uses the score method ... suggested by DOH & literature
-            res.metrics.prop <- res.metrics[variable %in% c(binary.col, factor.col)] # split off just binary/factor data
+            res.metrics.prop <- res.metrics[variable %in% c(binary.col, factor.col) & denominator!=0] # split off just binary/factor data. Undefined when denominator == 0, so drop
             if(length(binary.col) + length(factor.col) > 0){
               numerator <- res.metrics.prop$numerator
               denominator <- res.metrics.prop$denominator
               lower <- rep(NA, nrow(res.metrics.prop)) # create empty vector to hold res.metricsults
               upper <- rep(NA, nrow(res.metrics.prop)) # create empty vector to hold res.metricsults
               for(i in 1:nrow(res.metrics.prop)){
-                lower[i] <- suppressWarnings(stats::prop.test(numerator[i], denominator[i], conf.level = 0.95, correct = F)$conf.int[1]) # the score method ... suggested by DOH & others
-                upper[i] <- suppressWarnings(stats::prop.test(numerator[i], denominator[i], conf.level = 0.95, correct = F)$conf.int[2])
+                lower[i] <- suppressWarnings(stats::prop.test(x = numerator[i], n = denominator[i], conf.level = 0.95, correct = F)$conf.int[1]) # the score method ... suggested by DOH & others
+                upper[i] <- suppressWarnings(stats::prop.test(x = numerator[i], n = denominator[i], conf.level = 0.95, correct = F)$conf.int[2])
               }
               res.metrics.prop[, lower := lower]
               res.metrics.prop[, upper := upper]
