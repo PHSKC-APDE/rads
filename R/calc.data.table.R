@@ -10,7 +10,8 @@ calc.data.table = function(ph.data,
                            per = NULL,
                            win = NULL,
                            time_var = "chi_year",
-                           proportion = FALSE){
+                           proportion = FALSE,
+                           verbose = FALSE){
 
   #global variables used by data.table declared as NULL here to play nice with devtools::check()
   se <- rse <- caution <- rate <- rate_per <- level <- years <- variable <- NULL
