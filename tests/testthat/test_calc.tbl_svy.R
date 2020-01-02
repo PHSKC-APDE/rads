@@ -77,11 +77,9 @@ test_that('win(dow) without time var',{
 
 #time var without window
 test_that('Time var without window',{
-
+  sur <- sur %>% mutate(yyy = sample(1:4, nrow(sur), replace = T))
   a = calc(sur, 'api00', metrics = 'mean', proportion = F, time_var = 'yyy', win = NULL)
-
   b = sur %>% summarize(variable = survey_mean(api00))
-
   expect_equal(a$mean, b$variable)
 
 })

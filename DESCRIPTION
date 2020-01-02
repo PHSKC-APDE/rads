@@ -15,7 +15,6 @@ Imports:
     glue,
     odbc,
     rlang,
-    testthat,
     DBI,
     apdeRecodes,
     survey,

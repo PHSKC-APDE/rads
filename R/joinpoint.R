@@ -38,8 +38,11 @@
 #' @importFrom utils write.table
 #'
 #' @examples
+#'
+#' \dontrun{
 #' # create sample data
-#' dt <- data.table(
+#'
+#' dt <- data.table::data.table(
 #'   indic = c(rep("my.indicator", 14)),
 #'   group1 = c(rep("Female", 14)),
 #'   group2 = c(rep("Child", 7), rep("Adult", 7)),
@@ -57,6 +60,7 @@
 #'      jp_byvar2 = "group2",
 #'      jp_dir = "C:/temp/jp_test_data/"
 #' )
+#' }
 
 # JoinPoint function ----
 jp_f <- function(jp_data = NULL,
