@@ -132,11 +132,12 @@ get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
 
   # Format string variables due to SQL import quirks
   original.order <- names(dat)
-  string.columns <- sapply(dat,is.character) # identify string columns as a logical vector
+  string.columns <- vapply(dat,is.character, FUN.VALUE=logical(1) ) # identify string columns as a logical vector
   string.columns <- names(dat[, ..string.columns]) # identify string columns as a character vector
-  dat <- dat[, (string.columns) := lapply(.SD, trimws,which="r"), .SDcols = string.columns] # trim white space to right
-  dat <- dat[, (string.columns) := lapply(.SD, factor), .SDcols = string.columns] # convert strings to factors
-
+  if(length(string.columns)>0) {
+    dat <- dat[, (string.columns) := lapply(.SD, trimws,which="r"), .SDcols = string.columns] # trim white space to right
+    dat <- dat[, (string.columns) := lapply(.SD, factor), .SDcols = string.columns] # convert strings to factors
+  }
   # reorder table
   data.table::setcolorder(dat, original.order)
 
