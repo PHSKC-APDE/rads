@@ -57,10 +57,10 @@ calc.tbl_svy <- function(ph.data,
     #and if its not missing, filter such that no by variable has NAs
     #svy <- svy %>% filter_at(by, ~ !is.na(.))
 
-    mis_vars = apply(ph.data$variables[, by], 1, function(x) sum(is.na(x)))
-
-    #remove missing by vars
-    ph.data <- ph.data %>% srvyr::filter(!!mis_vars==0)
+    # mis_vars = apply(ph.data$variables[, by], 1, function(x) sum(is.na(x)))
+    #
+    # #remove missing by vars
+    # ph.data <- ph.data %>% srvyr::filter(!!mis_vars==0)
 
   }
 

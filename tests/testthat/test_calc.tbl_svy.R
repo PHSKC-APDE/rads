@@ -24,6 +24,27 @@ test_that('Multi Grouping with filtering',{
           man = sur %>% filter(cname == 'Los Angeles') %>% group_by(stype, cname) %>% summarize(denominator = unweighted(n())) %>% setDT
           expect_equal(st, man)
 })
+
+test_that('Grouping with NAs in the group',{
+
+  sur <- sur %>% mutate(g1 = sample(c(0,1,NA), n(), T), g2 = sample(c(0,1,NA), n(), T))
+  expect_equal(
+    calc(sur, 'api00', by = c('g1'), metrics = 'mean', time_var = NULL)[, .(g1, mean)],
+    sur %>% group_by(g1) %>% summarize(mean = survey_mean(api00)) %>% select(g1, mean) %>% setDT
+  )
+  expect_equal(
+    calc(sur, 'api00', by = c('g1', 'g2'), metrics = 'mean', time_var = NULL)[, .(g1,g2, mean)],
+    sur %>% group_by(g1,g2) %>% summarize(mean = survey_mean(api00)) %>% select(g1,g2, mean) %>% setDT
+  )
+
+  expect_equal(
+    calc(sur, 'api00',!is.na(g2), by = c('g1', 'g2'), metrics = 'mean', time_var = NULL)[, .(g1,g2, mean)],
+    sur %>% filter(!is.na(g2)) %>% group_by(g1,g2) %>% summarize(mean = survey_mean(api00)) %>% select(g1,g2, mean) %>% setDT
+  )
+
+
+})
+
 #
 test_that('Multi Grouping with filtering and multiple what variables',{
   st = calc(sur, what = c('api00', 'api99'),
