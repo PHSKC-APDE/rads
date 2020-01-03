@@ -1,10 +1,11 @@
 library('srvyr')
 library('survey')
 library('dplyr')
+library('data.table')
 
 data(api) #from the survey package
 sur = apisrs %>% as_survey_design(ids = 1, fpc = fpc)
-set.seed(10)
+set.seed(98104)
 
 test_that('Defaults (mostly) work: svy',
           expect_equal(
@@ -102,5 +103,31 @@ test_that('Invalid input for metric',{
 })
 #
 
+#test numerator and denominator calculations
+test_that('Numerator and denominator calculations account for NAs',{
 
-#test windowing
+  #make a column with NAs
+  sur <- sur %>% mutate(blah = sample(c(0,1, NA), dplyr::n(), replace = T))
+  dt = data.table::as.data.table(sur$variables)
+
+  a <- calc(sur, 'blah', metrics = c('numerator', 'denominator', 'missing'), proportion = T, time_var = NULL, win = NULL)
+  b = dt[, .N, by = blah]
+
+  expect_equal(a[, numerator], b[blah == 1, N])
+  expect_equal(a[, denominator], b[blah %in% c(0,1), sum(N)])
+  expect_equal(a[, missing], b[is.na(blah), N])
+
+  #now try with groups
+  a <- calc(sur, 'blah', metrics = c('numerator', 'denominator', 'missing'), proportion = T, time_var = NULL, win = NULL, by = 'stype')
+  b = dt[, .N, by = .(blah, stype)]
+
+  setorder(a, stype)
+  setorder(b, stype)
+
+  expect_equal(a[, numerator], b[blah == 1, N])
+  expect_equal(a[, denominator], b[blah %in% c(0,1), list(N = sum(N)), by = stype][, N])
+  expect_equal(a[, missing], b[is.na(blah), N])
+
+})
+
+

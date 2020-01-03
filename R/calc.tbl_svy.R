@@ -94,7 +94,8 @@ calc.tbl_svy <- function(ph.data,
   res <- lapply(whats, function(what){
 
     #Make sure the data does not have NA values in the chosen variable
-    out <- suppressMessages(srvyr::filter(ph.data, !is.na(!!what)))
+    #out <- suppressMessages(srvyr::filter(ph.data, !is.na(!!what)))
+    out <- ph.data
 
     whatvar = as.character(what)
 
@@ -130,12 +131,18 @@ calc.tbl_svy <- function(ph.data,
           ci = srvyr::survey_mean(!!what, na.rm = T, vartype = 'ci', proportion = proportion),
           #median = srvyr::survey_median(!!what, na.rm = T, vartype = NULL), This isn't working at the moment. Figure it out later
           total = srvyr::survey_total(!!what, na.rm = T),
-          numerator = srvyr::unweighted(sum(!!what == 1, na.rm = T)),
+          numerator = srvyr::unweighted(sum(!!what == 1, na.rm = T)), #only relevant for binary variables
           denominator = srvyr::unweighted(dplyr::n()),
-          time = srvyr::unweighted(paste(sort(unique(!!time_var)), collapse = ', '))
+          missing = srvyr::unweighted(sum(is.na(!!what))),
+          time = srvyr::unweighted(paste(sort(unique(!!time_var)), collapse = ', ')),
+          ndistinct = srvyr::unweighted(length(na.omit(unique(!!what))))
       ) %>% setDT
+      ret[, ci := NULL]
+      data.table::setnames(ret, c('mean_se', 'ci_low', 'ci_upp'), c('se', 'lower', 'upper'))
       ret[, variable := whatvar]
-
+      ret[, denominator := denominator - missing]
+      ret[, missing.prop := missing/(missing + numerator + denominator)]
+      ret[, rse := se/mean]
       return(ret)
     })
 
@@ -151,10 +158,7 @@ calc.tbl_svy <- function(ph.data,
 
   #clean up
   #numerators don't make sense when its not a proportion
-  if(!proportion) metrics = metrics[!metrics %in% 'numerator']
-
-  res[, ci := NULL]
-  data.table::setnames(res, c('mean_se', 'ci_low', 'ci_upp'), c('se', 'lower', 'upper'))
+  #if(!proportion) metrics = metrics[!metrics %in% 'numerator']
 
   if(length(opts[!opts %in% metrics]) >0){
     res[, opts[!opts %in% metrics] := NULL]

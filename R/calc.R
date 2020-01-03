@@ -18,6 +18,10 @@
 #' This function calculates `metrics` for each variable in `what` from rows meeting the conditions specified
 #' by `...` (i.e., where), for each grouping implied by `by`.
 #'
+#' Available metrics include:
+#' 1)
+#'
+#'
 #' For survey data, use the \code{proportion} argument where relevant to ensure metrics are calculated using special proportion (e.g \code{svyciprop})
 #' methods. That is, when you want to find the fraction of ____, toggle \code{proportion} to \code{TRUE}.
 #'

@@ -45,7 +45,7 @@ NULL
 #' @rdname metrics
 #' @export
 survey_metrics = function(){
-  c('mean', 'se', 'lower', 'upper', 'numerator', 'denominator', 'total', 'total_se')
+  c('mean', 'se', 'lower', 'upper', 'numerator', 'denominator', 'total', 'total_se', 'missing', 'rse', 'missing.prop', 'ndistinct')
 }
 
 #' List of available metrics for calculation
@@ -171,12 +171,12 @@ format_years <- function(temp){
   sql_clean <- function(dat = NULL){
     data.table::setDT(dat)
     original.order <- names(dat)
-    string.columns <- which(vapply(dat,is.character, FUN.VALUE=logical(1) )) # identify string columns 
+    string.columns <- which(vapply(dat,is.character, FUN.VALUE=logical(1) )) # identify string columns
     if(length(string.columns)>0) {
       dat[, (string.columns) := lapply(.SD, trimws,which="r"), .SDcols = string.columns] # trim white space to right
       dat[, (string.columns) := lapply(.SD, function(x){gsub("^$|^ $", NA, x)}), .SDcols = string.columns] # replace blanks with NA
       dat <- dat[, (string.columns) := lapply(.SD, factor), .SDcols = string.columns] # convert strings to factors
     }
     # reorder table
-    data.table::setcolorder(dat, original.order)  
+    data.table::setcolorder(dat, original.order)
   }
