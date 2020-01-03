@@ -69,8 +69,8 @@ test_that('Check metrics',{
         # check median
           expect_equal( calc(dt, metrics = c("median"), what = c("birth_weight_grams"))$median,
                         median(dt$birth_weight_grams, na.rm = T))
-        # check sum
-          expect_equal( calc(dt, metrics = c("sum"), what = c("birth_weight_grams"))$sum,
+        # check total
+          expect_equal( calc(dt, metrics = c("total"), what = c("birth_weight_grams"))$total,
                         sum(dt$birth_weight_grams, na.rm = T))
         # check rate
           expect_equal( calc(dt, metrics = c("rate"), what = c("birth_weight_grams"))$rate,  # should be NA when not binary
@@ -119,12 +119,12 @@ test_that('Check metrics',{
         # check missing.prop
           expect_equal( round2(calc(dt, metrics = c("missing.prop"), what = c("kotelchuck"))$missing.prop, 3),
                         round2(nrow(dt[is.na(kotelchuck)])/nrow(dt), 3) )
-        # check total
-          expect_equal( calc(dt, metrics = c("total"), "chi_age<20", what = c("kotelchuck"))$total,
+        # check obs
+          expect_equal( calc(dt, metrics = c("obs"), "chi_age<20", what = c("kotelchuck"))$obs,
                         nrow(dt[chi_age<20]))
-        # check distinct
-          expect_equal( calc(dt, metrics = c("distinct"), what = c("kotelchuck"), by = c("chi_sex"))[level == 0 & chi_sex=="Male"]$distinct,
-                        nrow(dt[kotelchuck==0 & chi_sex == "Male", ]))
+        # check ndistinct
+          expect_equal( calc(dt, metrics = c("ndistinct"), what = c("birth_weight_grams"), by = c("chi_sex"))[chi_sex=="Male"]$ndistinct,
+                        length(unique(dt[!is.na(birth_weight_grams) & chi_sex == "Male"]$birth_weight_grams)) )
 })
 
 test_that('Check per',{
@@ -143,8 +143,4 @@ test_that('Check win: rolling averages, sums, etc.',{
                 round2(mean(dt[chi_year %in% c(2013:2015)]$birth_weight_grams, na.rm = T), 3))
 })
 
-test_that('Check distinct',{
-        expect_equal( calc(dt, what = c("fetal_pres"), chi_age <18, by = "chi_sex", metrics = c("distinct"))[chi_sex=="Female" & level == "Breech"]$distinct,
-                      nrow(dt[chi_age<18 & fetal_pres=="Breech" & chi_sex == "Female"]))
-})
 
