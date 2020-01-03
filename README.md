@@ -3,7 +3,7 @@
 ## General workflow idea
 1. Use `list_apde_data` to highlight which datasources are available for analysis
 2. Use `get_data` to fetch the desired dataset into memory. Use `list_dataset_columns` to investigate which columns are available. `get_data`, given a valid dataset option, dispatches a sub-function/method which returns the data to the user.
-3. The user uses `tabulate_variable` which dispatches to a dataset specific method to conduct tabulations. `get_tabulate_options` can help the user identify what are valid grouping variables and their options.
+3. The user uses `calc` which dispatches to a dataset specific method to conduct tabulations.
 4. If required, results from step 3 are passed to `apply_suppression` to make things ready for public release
 5. (something about computing CHI)
 6. ...
