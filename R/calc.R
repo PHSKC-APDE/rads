@@ -9,10 +9,10 @@
 #' @param per integer. The denominator when "rate" or "adjusted-rate" are selected as the metric. Metrics will be multiplied by this value.
 #' @param win integer. The number of consectutive units of time (e.g., years, months, etc.) over which the metrics will be calculated,
 #' i.e., the 'window' for a rolling average, sum, etc.
-#' @param time_var character. The name of the time variable in the dataset. Typically this is the year variable, i.e., "chi_year"
+#' @param time_var character. The name of the time variable in the dataset. Used in combination with the "win" argument to do time windowed calculations.
 #' @param proportion logical. For survey data, should metrics be calculated assuming the output is proportion-like? See details for more.
 #'                   Currently does not have functionality for non-survey data.
-#'
+#' @param verbose logical. Mostly unused, but toggles on/off printed warnings.
 #' @return a data.table containing the results
 #' @details
 #' This function calculates `metrics` for each variable in `what` from rows meeting the conditions specified

@@ -17,7 +17,8 @@ calc(ph.data, ...)
   per = NULL,
   win = NULL,
   time_var = "chi_year",
-  proportion = FALSE
+  proportion = FALSE,
+  verbose = FALSE
 )
 
 \method{calc}{tbl_svy}(
@@ -29,7 +30,8 @@ calc(ph.data, ...)
   per = NULL,
   win = NULL,
   time_var = "chi_year",
-  proportion = FALSE
+  proportion = FALSE,
+  verbose = FALSE
 )
 }
 \arguments{
@@ -49,10 +51,12 @@ selected, all metrics are calculated -- this argument just specifies which one g
 \item{win}{integer. The number of consectutive units of time (e.g., years, months, etc.) over which the metrics will be calculated,
 i.e., the 'window' for a rolling average, sum, etc.}
 
-\item{time_var}{character. The name of the time variable in the dataset. Typically this is the year variable, i.e., "chi_year"}
+\item{time_var}{character. The name of the time variable in the dataset. Used in combination with the "win" argument to do time windowed calculations.}
 
 \item{proportion}{logical. For survey data, should metrics be calculated assuming the output is proportion-like? See details for more.
 Currently does not have functionality for non-survey data.}
+
+\item{verbose}{logical. Mostly unused, but toggles on/off printed warnings.}
 }
 \value{
 a data.table containing the results
