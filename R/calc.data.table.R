@@ -6,7 +6,7 @@ calc.data.table = function(ph.data,
                            what,
                            ...,
                            by = NULL,
-                           metrics = c('mean', "numerator", "denominator", "missing", "total"),
+                           metrics = c('mean', "numerator", "denominator", "missing", "obs"),
                            per = NULL,
                            win = NULL,
                            time_var = "chi_year",
@@ -49,10 +49,10 @@ calc.data.table = function(ph.data,
                    lapply(levels( get(factor.col[i]) ), function(x) as.integer(x == get(factor.col[i]) ))]
             }
           }
-
+          
         # update 'what' to reflect all binaries, including those made from factors
-          what.distinct <- data.table::copy(what)
           what.metrics <- c(setdiff(what, factor.col), setdiff(names(temp.dt), names.before) )
+          
 
     #validate '...' (i.e., where)
       where <- NULL
@@ -108,50 +108,29 @@ calc.data.table = function(ph.data,
           variable = as.character(X),
           mean = mean(get(X), na.rm = T),
           median = as.numeric(stats::median(get(X), na.rm = T)),
-          sum = sum(get(X), na.rm = T),
+          total = sum(get(X), na.rm = T),
           numerator = sum(get(X), na.rm = T),
           denominator = sum(!is.na( get(X) )),
           se = sqrt(stats::var(get(X), na.rm = T)/sum(!is.na( get(X) )) ),
-          total = .N,
+          obs = .N,
           missing = sum(is.na( get(X) )),
           missing.prop = sum(is.na( get(X) ) / .N),
-          unique.years = length(unique( get(time_var) ))
+          unique.years = length(unique( get(time_var) )),
+          ndistinct = length(unique(na.omit(get(X))))
         ),
         by = by]
       }
 
-      # function to calculate distinct combinations of 'what' and 'by'
-        calc_distinct <- function(X, DT){
-          DT[, .(
-            variable = as.character(X),
-            level = get(X),
-            years = format_years(list(sort(unique( get(time_var) )))),
-            distinct = .N
-          ),
-          by = c(X, by)]
-        }
-
   #### APPLY CALC FUNCTION ####
-    # apply the calc_metrics or calc_distinct functions
+    # apply the calc_metrics
       if(is.null(win)){
-          res.distinct <- lapply(X = as.list(what.distinct), FUN = calc_distinct, DT = temp.dt)
-          res.distinct <- rbindlist(res.distinct, use.names = T, fill = T)
-          res.distinct[, c(what.distinct) := NULL]
-
           res.metrics <- lapply(X = as.list(what.metrics), FUN = calc_metrics, DT = temp.dt)
           res.metrics <- data.table::rbindlist(res.metrics, use.names = T)
       }
 
       if(!is.null(win)){
-        res.distinct <- data.table::data.table() # empty table for appending results
         res.metrics <- data.table::data.table() # empty table for appending results
         for(yr in seq(min(temp.dt[, c(get(time_var))]), (max(temp.dt[, c(get(time_var))])-win+1) ) ){
-
-            temp.results <- lapply(X = as.list(what.distinct), FUN = calc_distinct, DT = temp.dt[get(time_var) %in% seq(yr, (yr+win-1) )])
-            temp.results <- data.table::rbindlist(temp.results, use.names = T, fill = T)
-            res.distinct <- rbind(res.distinct, temp.results, fill = TRUE)
-            res.distinct[, c(what.distinct) := NULL]
-
             temp.results <- lapply(X = as.list(what.metrics), FUN = calc_metrics, DT = temp.dt[get(time_var) %in% seq(yr, (yr+win-1) )])
             temp.results <- data.table::rbindlist(temp.results, use.names = T)
             res.metrics <- rbind(res.metrics, temp.results, fill = TRUE)
@@ -207,23 +186,8 @@ calc.data.table = function(ph.data,
       } else{res.metrics[, rate := NA]}
 
   #### CLEAN UP ####
-
-    # select proper results to submit based on whether 'distinct' was requested
-      if("distinct" %in% metrics == T & length(metrics)==1){ # this means distinct is the only metric
-        res <- res.distinct
-        data.table::setcolorder(res, c("variable", "level", "years", setdiff(by, "chi_year"), "distinct"))
-      }
-
-      if("distinct" %in% metrics == F){ # this means distinct was not requested
         res <- res.metrics
-        data.table::setcolorder(res, c("variable", "level", "years", setdiff(by, "chi_year"), "median", "mean", "rate", "lower", "upper", "se", "rse", "caution", "sum", "numerator", "denominator", "missing", "total", "missing.prop", "unique.years"))
-      }
-
-      if("distinct" %in% metrics == T & length(metrics)>1){ # 'distinct' + other metrics selected, so have to merge
-        res <- merge(res.metrics, res.distinct, by = c("variable", "level", "years", setdiff(by, "chi_year")), all.x = T, all.y = T)
-        data.table::setcolorder(res, c("variable", "level", "years", setdiff(by, "chi_year"), "distinct", "median", "mean", "rate", "lower", "upper", "se", "rse", "caution", "sum", "numerator", "denominator", "missing", "total", "missing.prop", "unique.years"))
-        res <- res[!(is.na(numerator) & is.na(distinct) ), ] # these rows are NA because they unique combinations do not exist, so dropping.
-      }
+        data.table::setcolorder(res, c("variable", "level", "years", setdiff(by, "chi_year"), "median", "mean", "rate", "lower", "upper", "se", "rse", "caution", "total", "obs", "numerator", "denominator", "missing", "missing.prop", "unique.years"))
 
     # Sort / order results
       data.table::setorder(res, variable, level, years)

@@ -1,10 +1,11 @@
 library('srvyr')
 library('survey')
 library('dplyr')
+library('data.table')
 
 data(api) #from the survey package
 sur = apisrs %>% as_survey_design(ids = 1, fpc = fpc)
-set.seed(10)
+set.seed(98104)
 
 test_that('Defaults (mostly) work: svy',
           expect_equal(
@@ -23,6 +24,27 @@ test_that('Multi Grouping with filtering',{
           man = sur %>% filter(cname == 'Los Angeles') %>% group_by(stype, cname) %>% summarize(denominator = unweighted(n())) %>% setDT
           expect_equal(st, man)
 })
+
+test_that('Grouping with NAs in the group',{
+
+  sur <- sur %>% mutate(g1 = sample(c(0,1,NA), n(), T), g2 = sample(c(0,1,NA), n(), T))
+  expect_equal(
+    calc(sur, 'api00', by = c('g1'), metrics = 'mean', time_var = NULL)[, .(g1, mean)],
+    sur %>% group_by(g1) %>% summarize(mean = survey_mean(api00)) %>% select(g1, mean) %>% setDT
+  )
+  expect_equal(
+    calc(sur, 'api00', by = c('g1', 'g2'), metrics = 'mean', time_var = NULL)[, .(g1,g2, mean)],
+    sur %>% group_by(g1,g2) %>% summarize(mean = survey_mean(api00)) %>% select(g1,g2, mean) %>% setDT
+  )
+
+  expect_equal(
+    calc(sur, 'api00',!is.na(g2), by = c('g1', 'g2'), metrics = 'mean', time_var = NULL)[, .(g1,g2, mean)],
+    sur %>% filter(!is.na(g2)) %>% group_by(g1,g2) %>% summarize(mean = survey_mean(api00)) %>% select(g1,g2, mean) %>% setDT
+  )
+
+
+})
+
 #
 test_that('Multi Grouping with filtering and multiple what variables',{
   st = calc(sur, what = c('api00', 'api99'),
@@ -102,5 +124,31 @@ test_that('Invalid input for metric',{
 })
 #
 
+#test numerator and denominator calculations
+test_that('Numerator and denominator calculations account for NAs',{
 
-#test windowing
+  #make a column with NAs
+  sur <- sur %>% mutate(blah = sample(c(0,1, NA), dplyr::n(), replace = T))
+  dt = data.table::as.data.table(sur$variables)
+
+  a <- calc(sur, 'blah', metrics = c('numerator', 'denominator', 'missing'), proportion = T, time_var = NULL, win = NULL)
+  b = dt[, .N, by = blah]
+
+  expect_equal(a[, numerator], b[blah == 1, N])
+  expect_equal(a[, denominator], b[blah %in% c(0,1), sum(N)])
+  expect_equal(a[, missing], b[is.na(blah), N])
+
+  #now try with groups
+  a <- calc(sur, 'blah', metrics = c('numerator', 'denominator', 'missing'), proportion = T, time_var = NULL, win = NULL, by = 'stype')
+  b = dt[, .N, by = .(blah, stype)]
+
+  setorder(a, stype)
+  setorder(b, stype)
+
+  expect_equal(a[, numerator], b[blah == 1, N])
+  expect_equal(a[, denominator], b[blah %in% c(0,1), list(N = sum(N)), by = stype][, N])
+  expect_equal(a[, missing], b[is.na(blah), N])
+
+})
+
+
