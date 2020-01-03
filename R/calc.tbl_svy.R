@@ -131,7 +131,7 @@ calc.tbl_svy <- function(ph.data,
           ci = srvyr::survey_mean(!!what, na.rm = T, vartype = 'ci', proportion = proportion),
           #median = srvyr::survey_median(!!what, na.rm = T, vartype = NULL), This isn't working at the moment. Figure it out later
           total = srvyr::survey_total(!!what, na.rm = T),
-          numerator = srvyr::unweighted(sum(!!what == 1, na.rm = T)), #only relevant for binary variables
+          numerator = srvyr::unweighted(sum(!!what, na.rm = T)), #only relevant for binary variables
           denominator = srvyr::unweighted(dplyr::n()),
           missing = srvyr::unweighted(sum(is.na(!!what))),
           time = srvyr::unweighted(paste(sort(unique(!!time_var)), collapse = ', ')),
