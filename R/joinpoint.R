@@ -175,7 +175,7 @@ jp_f <- function(jp_data = NULL,
     # Create jp_dir folder (if needed)
         if(!dir.exists(jp_dir)){
           message(glue::glue("'{jp_dir}' does not exist and is being created on your behalf"))
-          dir.create(jp_dir)
+          dir.create(jp_dir, recursive = T)
           }
 
     # Create input & output folder in jp_dir (if needed)
