@@ -6,8 +6,7 @@ calc_factor <- function(svy, what, by){
   what <- enquo(what)
   by <- enquo(by)
 
-  #check for implicitly reserved words
-  #TODO
+  #TODO: check for implicitly reserved words
 
   #create a formula to tabulate over (what the survey package requires)
   form = as.formula(paste0('~', as.character(what)))
@@ -21,10 +20,16 @@ calc_factor <- function(svy, what, by){
   #have to use svymean here because svyciprop doesn't neatly handle non-binary inputs
   #and I don't really feel like making another split
   #do both total and mean
-  res <- lapply(c('total', 'mean'), function(x){
+  res1 <- lapply(c('total', 'mean'), function(x){
+
+    if(x == 'mean'){
+      f <- survey::svymean
+    }else{
+      f <- survey::svytotal
+    }
 
     #calculate the results
-    imed <- svyby(form, bys, svy, na.rm = T, FUN = match.fun(paste0('svy',x)))
+    imed <- survey::svyby(form, bys, svy, na.rm = T, FUN = f)
     cis = confint(imed)
 
     #format imed
@@ -73,11 +78,21 @@ calc_factor <- function(svy, what, by){
   })
 
   #Combine the results
-  res <- merge(res[[1]], res[[2]], by = c('level', as.character(by)))
+  res1 <- merge(res1[[1]], res1[[2]], by = c('level', as.character(by)))
 
   #compute the other metrics:
   #"numerator"    "denominator"  "missing"      "rse"          "missing.prop" "ndistinct"
+  res2 <- svy %>% group_by(!!what, add = T) %>%
+    srvyr::summarize(
+      numerator = unweighted(dplyr::n()),
+      missing = srvyr::unweighted(sum(is.na(!!what))),
+      time = srvyr::unweighted(paste(sort(unique(!!time_var)), collapse = ', ')),
+      ndistinct = srvyr::unweighted(length(na.omit(unique(!!what))))
+    ) %>% setDT
 
+  #compute denominator
+  by_vars = as.character(by)
+  res2[!is.na(get(as.character(what))), denominator := sum(numerator), by = by_vars]
 
 }
 

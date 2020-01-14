@@ -15,9 +15,6 @@ calc.tbl_svy <- function(ph.data,
                          proportion = FALSE,
                          verbose = FALSE){
 
-  #check for reserved words
-  res_words = c('lower', 'upper', '_header', 'holdby')
-
   #catches
   if(verbose && !missing(per)){
     warning('Argument `per` is not implemented for tbl_svy arguments. It will be ignored')
@@ -86,46 +83,44 @@ calc.tbl_svy <- function(ph.data,
 
   whats = rlang::syms(what)
   time_var = rlang::sym(time_var)
+
   #make sure there is not NAs in the what variable
-  svy <- svy %>% filter(!is.na(!!what))
+  ph.data <- ph.data %>% filter(!is.na(!!what))
 
   if(!is.null(by)){
     by = rlang::syms(by)
+  }
+
+  #Group the dataset if relevant
+  if(!is.null(by)) ph.data <- ph.data %>% srvyr::group_by(!!!by)
+
+  #create the time windows
+  times = na.omit(ph.data$variables[[as.character(time_var)]])
+  if(length(times)>0 && !is.null(win)){
+    wins = seq(min(times), max(times - win + 1))
+    wins = lapply(wins, function(x) seq(x, x + win - 1))
+  }else{
+    wins = list(integer(0))
   }
 
   #For each variable and window, calculate specified metrics
   res <- lapply(whats, function(what){
 
     #Make sure the data does not have NA values in the chosen variable
-    #out <- suppressMessages(srvyr::filter(ph.data, !is.na(!!what)))
-    out <- ph.data
-
     whatvar = as.character(what)
 
-    #Group the dataset if relevant
-    if(!is.null(by)) out <- out %>% srvyr::group_by(!!!by)
-
     #make sure there are some values left
-    if(nrow(out) == 0){
-      stop(paste('When computing metrics for', whatvar, 'there are no non-NA values given the contraints provided via ... and by'))
-    }
-
-    #create the windows
-    times = na.omit(ph.data$variables[[as.character(time_var)]])
-    if(length(times)>0 && !is.null(win)){
-      wins = seq(min(times), max(times - win + 1))
-      wins = lapply(wins, function(x) seq(x, x + win - 1))
-    }else{
-      wins = list(integer(0))
+    if(nrow(ph.data) == 0){
+      stop(paste('When computing metrics for', whatvar, 'there are no non-NA values given the contraints provided via ...'))
     }
 
     #for each window, compute results
-    out <- lapply(wins, function(windo){
+    fin <- lapply(wins, function(windo){
 
       if(length(windo) > 0){
-        ret <- suppressMessages(srvyr::filter(out, !!time_var %in% windo))
+        ret <- suppressMessages(srvyr::filter(ph.data, !!time_var %in% windo))
       }else{
-        ret <- out
+        ret <- ph.data
       }
 
       #if the variable is numeric, compute normally
@@ -158,10 +153,10 @@ calc.tbl_svy <- function(ph.data,
       return(ret)
     })
 
-    out <- rbindlist(out)
-    data.table::setnames(out,'time', as.character(time_var))
+    fin <- rbindlist(fin)
+    data.table::setnames(fin,'time', as.character(time_var))
 
-    return(out)
+    return(fin)
 
   })
 
