@@ -15,6 +15,9 @@ calc.tbl_svy <- function(ph.data,
                          proportion = FALSE,
                          verbose = FALSE){
 
+  #check for reserved words
+  res_words = c('lower', 'upper', '_header', 'holdby')
+
   #catches
   if(verbose && !missing(per)){
     warning('Argument `per` is not implemented for tbl_svy arguments. It will be ignored')
@@ -84,7 +87,7 @@ calc.tbl_svy <- function(ph.data,
   whats = rlang::syms(what)
   time_var = rlang::sym(time_var)
   #make sure there is not NAs in the what variable
-  #svy <- svy %>% filter(!is.na(!!what))
+  svy <- svy %>% filter(!is.na(!!what))
 
   if(!is.null(by)){
     by = rlang::syms(by)
@@ -125,18 +128,27 @@ calc.tbl_svy <- function(ph.data,
         ret <- out
       }
 
-      ret <- ret %>%
-        srvyr::summarize(
-          mean = srvyr::survey_mean(!!what, na.rm = T, vartype = 'se', proportion = proportion),
-          ci = srvyr::survey_mean(!!what, na.rm = T, vartype = 'ci', proportion = proportion),
-          #median = srvyr::survey_median(!!what, na.rm = T, vartype = NULL), This isn't working at the moment. Figure it out later
-          total = srvyr::survey_total(!!what, na.rm = T),
-          numerator = srvyr::unweighted(sum(!!what, na.rm = T)), #only relevant for binary variables
-          denominator = srvyr::unweighted(dplyr::n()),
-          missing = srvyr::unweighted(sum(is.na(!!what))),
-          time = srvyr::unweighted(paste(sort(unique(!!time_var)), collapse = ', ')),
-          ndistinct = srvyr::unweighted(length(na.omit(unique(!!what))))
-      ) %>% setDT
+      #if the variable is numeric, compute normally
+      #if a factor find the relative fractions
+      if(is.numeric(ret$variables[[as.character(what)]])){
+        ret <- ret %>%
+          srvyr::summarize(
+            mean = srvyr::survey_mean(!!what, na.rm = T, vartype = 'se', proportion = proportion),
+            ci = srvyr::survey_mean(!!what, na.rm = T, vartype = 'ci', proportion = proportion),
+            #median = srvyr::survey_median(!!what, na.rm = T, vartype = NULL), This isn't working at the moment. Figure it out later
+            total = srvyr::survey_total(!!what, na.rm = T),
+            numerator = srvyr::unweighted(sum(!!what, na.rm = T)), #only relevant for binary variables
+            denominator = srvyr::unweighted(dplyr::n()),
+            missing = srvyr::unweighted(sum(is.na(!!what))),
+            time = srvyr::unweighted(paste(sort(unique(!!time_var)), collapse = ', ')),
+            ndistinct = srvyr::unweighted(length(na.omit(unique(!!what))))
+        ) %>% setDT
+      }else{
+
+        #move to a different function since its more involved
+
+      }
+
       ret[, ci := NULL]
       data.table::setnames(ret, c('mean_se', 'ci_low', 'ci_upp'), c('se', 'lower', 'upper'))
       ret[, variable := whatvar]
