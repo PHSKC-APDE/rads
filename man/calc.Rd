@@ -13,7 +13,7 @@ calc(ph.data, ...)
   what,
   ...,
   by = NULL,
-  metrics = c("mean", "numerator", "denominator", "missing", "total"),
+  metrics = c("mean", "numerator", "denominator", "missing", "obs"),
   per = NULL,
   win = NULL,
   time_var = "chi_year",
@@ -81,6 +81,8 @@ Available metrics include:
 10) res: relative standard error. mean/se
 11) missing.prop: missing/(missing + denominator)
 12) ndistinct: number of non-na distinct values `what` takes on in a given grouping (after filtering and all that jazz)
+13) obs: number of unique observations
+14) median: the median non NA response
 
 For survey data, use the \code{proportion} argument where relevant to ensure metrics are calculated using special proportion (e.g \code{svyciprop})
 methods. That is, when you want to find the fraction of ____, toggle \code{proportion} to \code{TRUE}.
