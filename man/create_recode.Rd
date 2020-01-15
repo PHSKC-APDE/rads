@@ -4,9 +4,17 @@
 \alias{create_recode}
 \title{Instruction set for recoding}
 \usage{
-create_recode(old_var, new_var, old_value = NULL, new_value = NULL,
-  new_label = NULL, start_year = NULL, end_year = NULL,
-  var_label = NULL, simplify2numeric = TRUE)
+create_recode(
+  old_var,
+  new_var,
+  old_value = NULL,
+  new_value = NULL,
+  new_label = NULL,
+  start_year = NULL,
+  end_year = NULL,
+  var_label = NULL,
+  simplify2numeric = TRUE
+)
 }
 \arguments{
 \item{old_var}{character. Column in the dataset containing the values to be recoded}

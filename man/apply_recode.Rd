@@ -4,12 +4,10 @@
 \alias{apply_recode}
 \title{Apply a recoding instruction}
 \usage{
-apply_recode(data, year, recode, jump_scope = F, return_vector = F)
+apply_recode(data, recode, jump_scope = F, return_vector = F)
 }
 \arguments{
 \item{data}{data.table.}
-
-\item{year}{numeric or integer. Identifies the year the dataset represents. Helps sort out whether a recode should be applied}
 
 \item{recode}{list. Output of \code{create_recode} the provides the instructions on how to implement the recode}
 
