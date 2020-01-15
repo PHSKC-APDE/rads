@@ -130,37 +130,48 @@ chi_compare <- function(orig,
 }
 
 #' format list of years into a well formatted string
-#' @param temp character.
+#' @param x numeric
 #' @export
 #' @return character vector
 #'
 #' @examples
 #' \dontrun{
-#' x <- data.table(var = c(rep("one", 6), rep("two", 6)),
+#' a <- data.table(var = c(rep("one", 6), rep("two", 6)),
 #'                 chi_year = rep(c(2010, 2011, 2012, 2015, 2016, 2017), 2))
-#' x[, years := format_years(list(sort(unique(chi_year))))]
+#' a[, years := format_years(chi_year)]
 #' }
 #'
-format_years <- function(temp){
+format_years <- function(x){
 
-  for(i in seq(1, length(temp[[1]])) ){
-    if(i == 1){
-      new <- c(as.character(temp[[1]][i]))
-    }
-    if(i > 1){
-      if(temp[[1]][i] - as.integer(substrRight(new, 1, 4)) == 1){
-        if(substrRight(new, 5, 5) == "-"){
-          new <- paste0(gsub(substrRight(new, 1, 4), "", new), temp[[1]][i])
-        }else{
-          new <- paste0(new, "-", temp[[1]][i])
-        }
-      }else{
-        new <- paste0(new, ", ", temp[[1]][i])
-      }
-    }
+  #get the unique values
+  x <- sort(unique(x))
+
+  #find breaks in runs
+  breaks = data.table::shift(x, type = 'lead') == (x + 1)
+  bps = which(!breaks)
+
+  #seperate
+  if(length(bps)>0){
+    seper = split(x, cut(x, c(-Inf, x[bps], Inf)))
+  }else{
+    seper = list(x)
   }
 
-  return(new)
+  #format into string
+  seper = lapply(seper, function(y){
+
+    if(length(y)>1){
+      return(paste(min(y), max(y), sep = '-'))
+    }else{
+      return(paste(y))
+    }
+
+  })
+
+  ret = paste(seper, collapse = ', ')
+
+  return(ret)
+
 }
 
 
