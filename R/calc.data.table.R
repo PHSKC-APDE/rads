@@ -49,10 +49,10 @@ calc.data.table = function(ph.data,
                    lapply(levels( get(factor.col[i]) ), function(x) as.integer(x == get(factor.col[i]) ))]
             }
           }
-          
+
         # update 'what' to reflect all binaries, including those made from factors
           what.metrics <- c(setdiff(what, factor.col), setdiff(names(temp.dt), names.before) )
-          
+
 
     #validate '...' (i.e., where)
       where <- NULL
@@ -104,7 +104,7 @@ calc.data.table = function(ph.data,
       calc_metrics <- function(X, DT){
         . <- NULL
         DT[, .(
-          years = format_years(list(sort(unique( get(time_var) )))),
+          years = format_years(get(time_var)),
           variable = as.character(X),
           mean = mean(get(X), na.rm = T),
           median = as.numeric(stats::median(get(X), na.rm = T)),
