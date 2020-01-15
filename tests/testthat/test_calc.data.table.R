@@ -14,7 +14,6 @@ dt <- data.table(
 dt[rbinom(22000, 1, 0.01) == 1, chi_age := NA] # add missing for age
 dt[rbinom(22000, 1, 0.01) == 1, birth_weight_grams := NA] # add missing for birth weight
 
-
 ## run tests
 test_that('Check <what>: class(what) == factor',{
           expect_equal( nrow(calc(dt, chi_year==2008, what = c("fetal_pres"))),
