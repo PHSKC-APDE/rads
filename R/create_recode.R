@@ -45,6 +45,11 @@ create_recode = function(old_var, new_var, old_value = NULL, new_value = NULL, n
   stopifnot(length(new_value) == length(old_value))
   stopifnot(is.logical(simplify2numeric))
 
+  #convert factor to character
+  if(is.factor(old_value)){
+    stop('old_value must be character or numeric. Not factor.')
+  }
+
   #confirm that new label, if not blank, is the same length as the values
   all_blank = all(sapply(new_label, check_nan))
   if(!all_blank) stopifnot(length(new_label) == length(old_value))

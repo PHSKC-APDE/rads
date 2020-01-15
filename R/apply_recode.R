@@ -136,27 +136,22 @@ apply_recode = function(data, recode, jump_scope = F, return_vector = F){
       valclass = class(recode$new_value)
     }else{
       new_labs = data.table()
-      valclass = 'numeric'
+      valclass = class(recode$old_value)
     }
-    if(length(labelled::val_labels(data[1, get(recode$old_var)]))>0 | is.factor(data[1, get(recode$old_var)])){
+    if(is.factor(data[1, get(recode$old_var)])){
       ov = recode$old_var
-      ifact = is.factor(data[1, get(recode$old_var)])
-      #Extract values and labels pair
-      if(ifact){
-        old_labs = unique(data[, .(value = methods::as(get(ov), valclass),
-                                 label = as.character(get(ov)),
-                                                type = 'old')])
-      }else {
-        old_labs = data.table(value = labelled::val_labels(data[1, get(recode$old_var)]),
-                              label = names(labelled::val_labels(data[1, get(recode$old_var)])),
-                              type = 'old')
-      }
+
+      old_labs = unique(data[, .(value = methods::as(get(ov), valclass),
+                               label = as.character(get(ov)),
+                                              type = 'old')])
+
     }else{
       old_labs = data.table()
     }
     #identify duplicates in labeling. Use new unless its NA and old is not
     labs = unique(rbind(old_labs, new_labs))
 
+    #if there are labels and they are not all NA
     if(nrow(labs)>0){
 
       badlabs = labs[type == 'new', .N, by = 'value'][N>1, value]
@@ -165,7 +160,12 @@ apply_recode = function(data, recode, jump_scope = F, return_vector = F){
       }
 
       labs = dcast(labs, value ~ type, value.var = 'label')
-      labs[, label := new]
+
+      if('new' %in% names(labs)){
+        labs[, label := new]
+      } else{
+        labs[, label := old]
+      }
 
       #only attempt to carry over old labels if replacing an existing variable
       if(nrow(old_labs)>0 & (recode$new_var == recode$old_var)) labs[is.na(label), label:= old]
@@ -192,11 +192,9 @@ apply_recode = function(data, recode, jump_scope = F, return_vector = F){
       }
 
       #if a numeric with labels, transfer to numeric. Otherwise leave it as numeric, character or whatever.
-      if(is.numeric(ret)){
-        new_labs = labs[,value]
-        attr(new_labs, 'levels') = NULL #not sure why its sneaking through but whatever R
-        names(new_labs) = labs[, label]
-        ret = labelled::labelled(ret, new_labs)
+      #if there are labels to apply, do it now!
+      if(nrow(labs)>0){
+        ret = factor(ret, levels = labs[, value], labels = labs[, label])
       }
     }
   }
