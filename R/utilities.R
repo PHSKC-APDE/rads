@@ -129,19 +129,15 @@ chi_compare <- function(orig,
   return(orig)
 }
 
-#' format list of years into a well formatted string
+#' Format a vector of time into a series of human readable chunks
 #' @param x numeric
 #' @export
 #' @return character vector
 #'
 #' @examples
-#' \dontrun{
-#' a <- data.table(var = c(rep("one", 6), rep("two", 6)),
-#'                 chi_year = rep(c(2010, 2011, 2012, 2015, 2016, 2017), 2))
-#' a[, years := format_years(chi_year)]
-#' }
+#' format_time(c(1:5, 10, 12, 24, 25))
 #'
-format_years <- function(x){
+format_time <- function(x){
 
   #get the unique values
   x <- sort(unique(x))

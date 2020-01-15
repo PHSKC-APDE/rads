@@ -14,7 +14,7 @@ calc.data.table = function(ph.data,
                            verbose = FALSE){
 
   #global variables used by data.table declared as NULL here to play nice with devtools::check()
-  se <- rse <- caution <- rate <- rate_per <- level <- years <- variable <- NULL
+  se <- rse <- caution <- rate <- rate_per <- level <- time <- variable <- NULL
 
   # copy data.table to prevent changing the underlying data
   temp.dt <- data.table::copy(ph.data)
@@ -104,7 +104,7 @@ calc.data.table = function(ph.data,
       calc_metrics <- function(X, DT){
         . <- NULL
         DT[, .(
-          years = format_years(get(time_var)),
+          time = format_time(get(time_var)),
           variable = as.character(X),
           mean = mean(get(X), na.rm = T),
           median = as.numeric(stats::median(get(X), na.rm = T)),
@@ -115,7 +115,7 @@ calc.data.table = function(ph.data,
           obs = .N,
           missing = sum(is.na( get(X) )),
           missing.prop = sum(is.na( get(X) ) / .N),
-          unique.years = length(unique( get(time_var) )),
+          unique.time = length(unique( get(time_var) )),
           ndistinct = length(unique(na.omit(get(X))))
         ),
         by = by]
@@ -187,13 +187,13 @@ calc.data.table = function(ph.data,
 
   #### CLEAN UP ####
         res <- res.metrics
-        data.table::setcolorder(res, c("variable", "level", "years", setdiff(by, "chi_year"), "median", "mean", "rate", "lower", "upper", "se", "rse", "caution", "total", "obs", "numerator", "denominator", "missing", "missing.prop", "unique.years"))
+        data.table::setcolorder(res, c("variable", "level", "time", setdiff(by, "chi_year"), "median", "mean", "rate", "lower", "upper", "se", "rse", "caution", "total", "obs", "numerator", "denominator", "missing", "missing.prop", "unique.time"))
 
     # Sort / order results
-      data.table::setorder(res, variable, level, years)
+      data.table::setorder(res, variable, level, time)
 
     # drop columns no longer needed
-        metrics <- c(metrics, "years", "caution", "suppression")
+        metrics <- c(metrics, "time", "caution", "suppression")
         if(length(opts[!opts %in% metrics]) >0){
           suppressWarnings(res[, opts[!opts %in% metrics] := NULL])
         }

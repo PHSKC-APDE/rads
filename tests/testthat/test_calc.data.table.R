@@ -21,7 +21,7 @@ test_that('Check <what>: class(what) == factor',{
                         length(unique(dt[chi_year==2008 & !is.na(fetal_pres)]$fetal_pres)))
           expect_equal( round2(calc(dt, chi_year==2008, what = c("fetal_pres"))[level == "Cephalic"]$mean, 3),
                         round2(nrow(dt[chi_year==2008 & fetal_pres=="Cephalic"]) / nrow(dt[chi_year==2008 & !is.na(fetal_pres)]), 3))
-          expect_equal( unique(calc(dt, chi_year==2008, what = c("fetal_pres"))[level == "Cephalic"]$year),
+          expect_equal( unique(calc(dt, chi_year==2008, what = c("fetal_pres"))[level == "Cephalic"]$time),
                         "2008")
 })
 
@@ -30,7 +30,7 @@ test_that('Check <what>: class(what) == binary',{
                         1)
           expect_equal( round2(calc(dt, chi_year==2008, what = c("kotelchuck"))$mean, 3),
                         round2(mean(dt[chi_year==2008]$kotelchuck, na.rm = T), 3))
-          expect_equal( unique(calc(dt, chi_year==2008, what = c("kotelchuck"))$year),
+          expect_equal( unique(calc(dt, chi_year==2008, what = c("kotelchuck"))$time),
                         "2008")
 })
 
@@ -39,7 +39,7 @@ test_that('Check <what>: class(what) == continuous',{
                         1)
           expect_equal( round2(calc(dt, chi_year==2008, what = c("birth_weight_grams"))$mean, 3),
                         round2(mean(dt[chi_year==2008]$birth_weight_grams, na.rm = T), 3))
-          expect_equal( unique(calc(dt, chi_year==2008, what = c("birth_weight_grams"))$year),
+          expect_equal( unique(calc(dt, chi_year==2008, what = c("birth_weight_grams"))$time),
                         "2008")
 })
 
@@ -55,9 +55,9 @@ test_that('Check <what>: multiple classes',{
 })
 
 test_that('Check ... (where)',{
-          expect_equal( unique(calc(dt, chi_year==2008, what = c("fetal_pres"))$year),
+          expect_equal( unique(calc(dt, chi_year==2008, what = c("fetal_pres"))$time),
                         "2008")
-          expect_equal( unique(calc(dt, chi_year%in%c(2008:2012), what = c("fetal_pres"))$year),
+          expect_equal( unique(calc(dt, chi_year%in%c(2008:2012), what = c("fetal_pres"))$time),
                         "2008-2012")
           expect_equal( unique(calc(dt, chi_sex=="Male", what = c("fetal_pres"))$denominator),
                         nrow(dt[chi_sex == "Male" & !is.na(fetal_pres)]))
@@ -137,9 +137,9 @@ test_that('Check per',{
 })
 
 test_that('Check win: rolling averages, sums, etc.',{
-  expect_equal( round2(calc(dt, what = c("birth_weight_grams"), win=3)[years == "2008-2010"]$mean, 3),
+  expect_equal( round2(calc(dt, what = c("birth_weight_grams"), win=3)[time == "2008-2010"]$mean, 3),
                 round2(mean(dt[chi_year %in% c(2008:2010)]$birth_weight_grams, na.rm = T), 3))
-  expect_equal( round2(calc(dt, what = c("birth_weight_grams"), win=3)[years == "2013-2015"]$mean, 3),
+  expect_equal( round2(calc(dt, what = c("birth_weight_grams"), win=3)[time == "2013-2015"]$mean, 3),
                 round2(mean(dt[chi_year %in% c(2013:2015)]$birth_weight_grams, na.rm = T), 3))
 })
 
