@@ -99,33 +99,33 @@ substrRight <- function(x, x.start, x.stop){
 chi_compare <- function(orig,
                         merge.by = c("indicator_key", "year"),
                         compare.name = "comparison_with_kc"){
-
+  
   #Bindings for data.table/check global variables
   cat1_varname <- result <- comp.result <- lower_bound <- comp.upper_bound <- upper_bound <- comp.lower_bound <- significance <- NULL
-
+  
   data.table::setDT(orig)
-
+  
   #Copy & subset comparator data
   comparator <- orig[cat1_varname=="chi_geo_kc", c("indicator_key", "year", "result", "lower_bound", "upper_bound")]
   data.table::setnames(comparator, c("result", "lower_bound", "upper_bound"), c("comp.result", "comp.lower_bound", "comp.upper_bound"))
-
+  
   #Merge comparator data onto all other data
   orig <- merge(orig, comparator, by=merge.by, all.x = TRUE, all.y = TRUE)
-
+  
   #Compare estimates with comparator
-  orig[result == comp.result, compare.name := "no different"]
-  orig[result > comp.result, compare.name := "higher"]
-  orig[result < comp.result, compare.name := "lower"]
-
+  orig[result == comp.result, paste0(compare.name) := "no different"]
+  orig[result > comp.result, paste0(compare.name) := "higher"]
+  orig[result < comp.result, paste0(compare.name) := "lower"]
+  
   #According to APDE protocol, we check for overlapping CI rather than SE and Z scores
   orig[(lower_bound > comp.upper_bound) | (upper_bound < comp.lower_bound), significance := "*"]
-
+  
   #Keep comparison only if statistically significant
-  orig[is.na(significance), compare.name := "no different"]
-
+  orig[is.na(significance), paste0(compare.name) := "no different"]
+  
   #Drop KC level estimates that were just used for the comparisons
   orig[, c("comp.result", "comp.upper_bound", "comp.lower_bound") := NULL]
-
+  
   return(orig)
 }
 
