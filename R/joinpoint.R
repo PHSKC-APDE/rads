@@ -162,12 +162,35 @@ jp_f <- function(jp_data = NULL,
                 otherwise please install the program before continuing."))
     }
 
-  # confirm there is only 1 row per unique combo of jp_indicator, jp_byvar1, jp_byvar2, & jp_period
-    jp_data[, dup := .N, by=c(jp_indicator, jp_byvar1, jp_byvar2, jp_period)]
-    if(max(jp_data$dup) > 1){
-      stop(paste("JoinPoint needs unique combinations of 'jp_indicator', 'jp_byvar1', 'jp_byvar2', & 'jp_period'.
-           There are at least", nrow(jp_data[dup>1]) ,"rows where the combination of these columns is not unique"))
-    }
+
+  ###################################
+  ## Confirm data is adequate    ####
+  ###################################
+    # confirm there is only 1 row per unique combo of jp_indicator, jp_byvar1, jp_byvar2, & jp_period
+      jp_data[, dup := .N, by=c(jp_indicator, jp_byvar1, jp_byvar2, jp_period)]
+      if(max(jp_data$dup) > 1){
+        stop(paste("JoinPoint needs unique combinations of 'jp_indicator', 'jp_byvar1', 'jp_byvar2', & 'jp_period'.
+             There are at least", nrow(jp_data[dup>1]) ,"rows where the combination of these columns is not unique."))
+      }
+
+    # Need at least 7 years of data for JoinPoint trend
+      jp_data[, dup := .N, by=c(jp_indicator, jp_byvar1, jp_byvar2)]
+      if(min(jp_data$dup) < 7){
+        stop(paste("JoinPoint needs at least seven (7) time periods for each unique combination of 'jp_indicator', 'jp_byvar1', & 'jp_byvar2'.
+                   There is at least one set of these three columns that does not have seven time periods.
+                   If you want to perform a trend test with less than seven data points, consider using a binomial model (i.e., glm_trend()."))
+      }
+
+    # Need at least 7 years of data of CONTIUOUS DATA for JoinPoint trend
+      jp_data[, period_min := min(get(jp_period)), by=c(jp_indicator, jp_byvar1, jp_byvar2)] # identify min year per group
+      jp_data[, period_max := max(get(jp_period)), by=c(jp_indicator, jp_byvar1, jp_byvar2)] # identify max year per group
+      jp_data[, projected_max := as.numeric(period_min) + dup - 1 ]
+      
+      if(nrow(jp_data[period_max != projected_max]) ){
+        stop(paste("JoinPoint needs at least seven (7) **contiguous** time periods for each unique combination of 'jp_indicator', 'jp_byvar1', & 'jp_byvar2'.
+                   There is at least one set of these three columns that does not have seven contiguous time periods.
+                   Please examine the underlying data, fix the problem, and try again."))
+      }
 
   ############################
   ##    Set up folders    ####
