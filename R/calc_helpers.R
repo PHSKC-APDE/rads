@@ -1,10 +1,12 @@
 #' A wrapper to compute metrics (specifically relative fraction and totals) from factor/character variables
 #'
 #' @param svy survey.design2 (or tbl_svy). Survey from which metrics will be computed
-#' @param what character or symbol. Variable to be
-calc_factor <- function(svy, what, by){
-  what <- enquo(what)
-  by <- enquo(by)
+#' @param what character or symbol.
+#' @param time_var character or symbol
+calc_factor <- function(svy, what, by, time_var){
+  # what <- enquo(what)
+  # by <- enquo(by)
+  # time_var <- enquo(time_var)
 
   #TODO: check for implicitly reserved words
 
@@ -13,7 +15,7 @@ calc_factor <- function(svy, what, by){
   if(!is.null(by)){
     bys = as.formula(paste0('~', paste(as.character(by),collapse = '+')))
   }else{
-    a %>% mutate(holdby = 1)
+    svy %>% mutate(holdby = 1)
     bys = ~holdby
   }
 
@@ -33,7 +35,7 @@ calc_factor <- function(svy, what, by){
     cis = confint(imed)
 
     #format imed
-    imed = as.data.table(imed)
+    imed = data.table::as.data.table(imed)
     means = grep(what, names(imed), value = T)
     ses = means[substr(means, 1,3) == 'se.']
     means = setdiff(means, ses)
@@ -50,7 +52,7 @@ calc_factor <- function(svy, what, by){
     cis[, as.character(by) := lapply(by, function(x){
 
       #get the unique values
-      vals = unique(ret$variables[[as.character(x)]])
+      vals = unique(svy$variables[[as.character(x)]])
 
       #repeat
       rep(vals, nrow(cis)/length(vals))
@@ -67,10 +69,10 @@ calc_factor <- function(svy, what, by){
 
     #combine and return
     imed = merge(imed, cis, all.x = T, by = c(as.character(by), as.character(what)))
-    setnames(imed, as.character(what), 'level')
+    data.table::setnames(imed, as.character(what), 'level')
 
     if(x == 'total'){
-      setnames(imed, c('mean', 'se', 'lower', 'upper'), c('total', 'total_se', 'total_lower', 'total_upper'))
+      data.table::setnames(imed, c('mean', 'se', 'lower', 'upper'), c('total', 'total_se', 'total_lower', 'total_upper'))
     }
 
     return(imed)
@@ -86,66 +88,20 @@ calc_factor <- function(svy, what, by){
     srvyr::summarize(
       numerator = unweighted(dplyr::n()),
       missing = srvyr::unweighted(sum(is.na(!!what))),
-      time = srvyr::unweighted(paste(sort(unique(!!time_var)), collapse = ', ')),
-      ndistinct = srvyr::unweighted(length(na.omit(unique(!!what))))
+      time = srvyr::unweighted(format_time(!!time_var)),
+      ndistinct = srvyr::unweighted(length(na.omit(unique(!!what)))),
+      unique.time = srvyr::unweighted(length(unique(!!time_var)))
     ) %>% setDT
 
   #compute denominator
   by_vars = as.character(by)
   res2[!is.na(get(as.character(what))), denominator := sum(numerator), by = by_vars]
+  res2[, missing := max(missing), by = by_vars]
+  res2 = res2[!is.na(get(as.character(what)))]
+  data.table::setnames(res2, as.character(what), 'level')
+  res = merge(res1,res2, all.x = T, by = c('level', as.character(by)))
+
+  return(res)
 
 }
 
-
-# #compute the relative fractions using the survey package
-# #at the moment, I'm not sure why svymean * N != svytotal for both the main estimate and the SE
-
-#
-# #extract and format the confidence intervals
-# cis = confint(imed)
-# cis = data.table(lower = cis[,1], upper = cis[,2], label = rownames(cis))
-# cis[, as.character(by) := lapply(by, function(x){
-#
-#   #get the unique values
-#   vals = unique(ret$variables[[as.character(x)]])
-#
-#   #repeat
-#   rep(vals, nrow(cis)/length(vals))
-#
-# }) ]
-#
-# #confirm the by categories have been passed along
-
-
-
-# cis[, `_header` := do.call(paste, c(.SD, sep = '.')), .SDcols = as.character(by)]
-# stopifnot(all(substr(cis[,label], 1, nchar(cis[, `_header`])) == cis[,cis[, `_header`]]))
-#
-# strts = as.numeric(gregexpr(as.character(what), cis[, label]))
-# cis[, as.character(what) := substr(label, strts + nchar(as.character(what)), nchar(label))]
-# cis[, c('label', '_header') := NULL]
-#
-# #reshape
-# imed = as.data.table(imed)
-# means = grep(what, names(imed), value = T)
-# ses = means[substr(means, 1,3) == 'se.']
-# means = setdiff(means, ses)
-# var_vals = substr(means, nchar(as.character(what))+1, nchar(means))
-# imed = melt(imed,
-#             id.vars = as.character(by),
-#             measure.vars = list(means, ses),
-#             value.name = c('mean', 'se'), variable.factor = F)
-# imed[, as.character(what) := var_vals[as.numeric(variable)]]
-# imed[, c('variable') := NULL]
-#
-# imed = merge(imed, cis, all.x = T, by = c(as.character(by), as.character(what)))
-# setnames(imed, as.character(what), 'level')
-#
-# #add the rest of the items
-# srvyr::summarize(
-#   numerator = srvyr::unweighted(sum(!!what, na.rm = T)), #only relevant for binary variables
-#   denominator = srvyr::unweighted(dplyr::n()),
-#   missing = srvyr::unweighted(sum(is.na(!!what))),
-#   time = srvyr::unweighted(paste(sort(unique(!!time_var)), collapse = ', ')),
-#   ndistinct = srvyr::unweighted(length(na.omit(unique(!!what))))
-# ) %>% setDT

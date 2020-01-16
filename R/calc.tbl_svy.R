@@ -131,25 +131,30 @@ calc.tbl_svy <- function(ph.data,
             mean = srvyr::survey_mean(!!what, na.rm = T, vartype = 'se', proportion = proportion),
             ci = srvyr::survey_mean(!!what, na.rm = T, vartype = 'ci', proportion = proportion),
             #median = srvyr::survey_median(!!what, na.rm = T, vartype = NULL), This isn't working at the moment. Figure it out later
-            total = srvyr::survey_total(!!what, na.rm = T),
+            total_ci = srvyr::survey_total(!!what, vartype = 'ci',na.rm = T),
+            total_se = srvyr::survey_total(!!what, vartype = 'se',na.rm = T),
             numerator = srvyr::unweighted(sum(!!what, na.rm = T)), #only relevant for binary variables
             denominator = srvyr::unweighted(dplyr::n()),
             missing = srvyr::unweighted(sum(is.na(!!what))),
-            time = srvyr::unweighted(paste(sort(unique(!!time_var)), collapse = ', ')),
-            ndistinct = srvyr::unweighted(length(na.omit(unique(!!what))))
+            time = srvyr::unweighted(format_time(!!time_var)),
+            ndistinct = srvyr::unweighted(length(na.omit(unique(!!what)))),
+            unique.time = srvyr::unweighted(length(unique(!!time_var)))
         ) %>% setDT
+
+        ret[, denominator := denominator - missing]
+        ret[, c('ci', 'total_se') := NULL]
+        data.table::setnames(ret, c('mean_se', 'ci_low', 'ci_upp') , c('se', 'lower', 'upper'))
+        data.table::setnames(ret, c('mean_se', 'ci_low', 'ci_upp') , c('se', 'lower', 'upper'))
       }else{
 
         #move to a different function since its more involved
-
+        ret <- calc_factor(ret, what, by, time_var)
       }
 
-      ret[, ci := NULL]
-      data.table::setnames(ret, c('mean_se', 'ci_low', 'ci_upp'), c('se', 'lower', 'upper'))
       ret[, variable := whatvar]
-      ret[, denominator := denominator - missing]
       ret[, missing.prop := missing/(missing + numerator + denominator)]
       ret[, rse := se/mean]
+      ret[, obs := (missing + numerator + denominator)]
       return(ret)
     })
 
