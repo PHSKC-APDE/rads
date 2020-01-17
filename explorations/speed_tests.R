@@ -22,7 +22,7 @@ px1 <- profvis::profvis({
 })
 
 
-px2 <- profvis({
+px2 <- profvis::profvis({
   a <- as_survey_design(dat, probs = weight)
 
   svy.results <- calc(a,
