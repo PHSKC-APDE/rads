@@ -84,9 +84,6 @@ calc.tbl_svy <- function(ph.data,
   whats = rlang::syms(what)
   time_var = rlang::sym(time_var)
 
-  #make sure there is not NAs in the what variable
-  ph.data <- ph.data %>% filter(!is.na(!!what))
-
   if(!is.null(by)){
     by = rlang::syms(by)
   }
@@ -105,6 +102,8 @@ calc.tbl_svy <- function(ph.data,
 
   #For each variable and window, calculate specified metrics
   res <- lapply(whats, function(what){
+    #make sure there is not NAs in the what variable
+    ph.data <- suppressMessages(ph.data %>% filter(!is.na(!!what)))
 
     #Make sure the data does not have NA values in the chosen variable
     whatvar = as.character(what)
@@ -130,7 +129,7 @@ calc.tbl_svy <- function(ph.data,
           srvyr::summarize(
             mean = srvyr::survey_mean(!!what, na.rm = T, vartype = 'se', proportion = proportion),
             ci = srvyr::survey_mean(!!what, na.rm = T, vartype = 'ci', proportion = proportion),
-            #median = srvyr::survey_median(!!what, na.rm = T, vartype = NULL), This isn't working at the moment. Figure it out later
+            median = srvyr::survey_median(!!what, na.rm = T, vartype = NULL), #This isn't working at the moment. Figure it out later
             total_ci = srvyr::survey_total(!!what, vartype = 'ci',na.rm = T),
             total_se = srvyr::survey_total(!!what, vartype = 'se',na.rm = T),
             numerator = srvyr::unweighted(sum(!!what, na.rm = T)), #only relevant for binary variables
@@ -140,37 +139,53 @@ calc.tbl_svy <- function(ph.data,
             ndistinct = srvyr::unweighted(length(na.omit(unique(!!what)))),
             unique.time = srvyr::unweighted(length(unique(!!time_var)))
         ) %>% setDT
-
+        ret[, level := NA]
         ret[, denominator := denominator - missing]
         ret[, c('ci', 'total_se') := NULL]
-        data.table::setnames(ret, c('mean_se', 'ci_low', 'ci_upp') , c('se', 'lower', 'upper'))
-        data.table::setnames(ret, c('mean_se', 'ci_low', 'ci_upp') , c('se', 'lower', 'upper'))
+        data.table::setnames(ret, c('mean_se', 'ci_low', 'ci_upp') , c('mean_se', 'mean_lower', 'mean_upper'))
+        data.table::setnames(ret, c('total_ci', 'total_ci_low', 'total_ci_upp', 'total_se_se') ,
+                             c('total', 'total_lower', 'total_upper','total_se'))
+
       }else{
 
         #move to a different function since its more involved
         ret <- calc_factor(ret, what, by, time_var)
+        ret[, median := NA]
       }
 
-      ret[, variable := whatvar]
+      ret[, variable := as.character(what)]
       ret[, missing.prop := missing/(missing + numerator + denominator)]
-      ret[, rse := se/mean]
+      ret[, rse := mean_se/mean]
       ret[, obs := (missing + numerator + denominator)]
       return(ret)
     })
 
-    fin <- rbindlist(fin)
+    fin <- data.table::rbindlist(fin, use.names = T)
     data.table::setnames(fin,'time', as.character(time_var))
+    fin[, rate_per := NA]
+    fin[, rate := NA]
 
     return(fin)
 
   })
 
   #combine
-  res = rbindlist(res)
+  res = data.table::rbindlist(res, use.names = TRUE)
 
   #clean up
   #numerators don't make sense when its not a proportion
   #if(!proportion) metrics = metrics[!metrics %in% 'numerator']
+
+  #compute rate
+  if(!is.null(per)){
+    metrics = unique(metrics, c('rate', paste0('rate', c('_se', '_lower', '_upper'))))
+  }else{
+    per = 1
+  }
+
+  res[, c('rate', paste0('rate', c('_se', '_lower', '_upper'))) := .SD * per, .SDcols = c('mean', paste0('mean_',c('se', 'lower', 'upper')))]
+  res[, rate_per := per]
+
 
   if(length(opts[!opts %in% metrics]) >0){
     res[, opts[!opts %in% metrics] := NULL]

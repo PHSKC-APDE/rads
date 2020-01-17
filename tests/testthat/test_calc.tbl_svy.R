@@ -2,6 +2,7 @@ library('srvyr')
 library('survey')
 library('dplyr')
 library('data.table')
+library('testthat')
 
 data(api) #from the survey package
 sur = apisrs %>% as_survey_design(ids = 1, fpc = fpc)

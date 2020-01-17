@@ -2,6 +2,7 @@
 #'
 #' @param svy survey.design2 (or tbl_svy). Survey from which metrics will be computed
 #' @param what character or symbol.
+#' @param by character or symbol vector
 #' @param time_var character or symbol
 calc_factor <- function(svy, what, by, time_var){
   # what <- enquo(what)
@@ -40,7 +41,7 @@ calc_factor <- function(svy, what, by, time_var){
     ses = means[substr(means, 1,3) == 'se.']
     means = setdiff(means, ses)
     var_vals = substr(means, nchar(as.character(what))+1, nchar(means))
-    imed = melt(imed,
+    imed = data.table::melt(imed,
                 id.vars = as.character(by),
                 measure.vars = list(means, ses),
                 value.name = c('mean', 'se'), variable.factor = F)
@@ -71,9 +72,8 @@ calc_factor <- function(svy, what, by, time_var){
     imed = merge(imed, cis, all.x = T, by = c(as.character(by), as.character(what)))
     data.table::setnames(imed, as.character(what), 'level')
 
-    if(x == 'total'){
-      data.table::setnames(imed, c('mean', 'se', 'lower', 'upper'), c('total', 'total_se', 'total_lower', 'total_upper'))
-    }
+    data.table::setnames(imed, c('mean', 'se', 'lower', 'upper'), c(x, paste0(x, c('_se', '_lower', '_upper'))))
+
 
     return(imed)
 
