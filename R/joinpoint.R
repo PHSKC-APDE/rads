@@ -170,7 +170,9 @@ jp_f <- function(jp_data = NULL,
       jp_data[, dup := .N, by=c(jp_indicator, jp_byvar1, jp_byvar2, jp_period)]
       if(max(jp_data$dup) > 1){
         stop(paste("JoinPoint needs unique combinations of 'jp_indicator', 'jp_byvar1', 'jp_byvar2', & 'jp_period'.
-             There are at least", nrow(jp_data[dup>1]) ,"rows where the combination of these columns is not unique."))
+             There are at least", nrow(jp_data[dup>1]) ,"rows where the combination of these columns is not unique.
+             You can identify duplicate rows by adapting the following line of code:
+             jp_data[duplicated(jp_data, by = c('indicator_key', 'cat1_group_alias', 'cat2_group_alias', 'year')), .(indicator_key, cat1_group_alias, cat2_group_alias, year)]"))
       }
 
     # Need at least 7 years of data for JoinPoint trend
@@ -185,7 +187,7 @@ jp_f <- function(jp_data = NULL,
       jp_data[, period_min := min(get(jp_period)), by=c(jp_indicator, jp_byvar1, jp_byvar2)] # identify min year per group
       jp_data[, period_max := max(get(jp_period)), by=c(jp_indicator, jp_byvar1, jp_byvar2)] # identify max year per group
       jp_data[, projected_max := as.numeric(period_min) + dup - 1 ]
-      
+
       if(nrow(jp_data[period_max != projected_max]) ){
         stop(paste("JoinPoint needs at least seven (7) **contiguous** time periods for each unique combination of 'jp_indicator', 'jp_byvar1', & 'jp_byvar2'.
                    There is at least one set of these three columns that does not have seven contiguous time periods.
