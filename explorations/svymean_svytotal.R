@@ -1,8 +1,15 @@
 
 library('survey', quietly = T)
+library('srvyr')
+
 data(api)
 apiclus1$elem = apiclus1$stype=='E'
 a = svydesign(id=~dnum, weights=~pw, data=apiclus1)
+
+b = a %>% as_survey_design %>% summarize(a = survey_mean(api00, vartype = c('se', 'ci')))
+
+
+
 r1 = svymean(~stype,a)
 r2 = svytotal(~stype, a)
 

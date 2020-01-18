@@ -127,11 +127,9 @@ calc.tbl_svy <- function(ph.data,
       if(is.numeric(ret$variables[[as.character(what)]])){
         ret <- ret %>%
           srvyr::summarize(
-            mean = srvyr::survey_mean(!!what, na.rm = T, vartype = 'se', proportion = proportion),
-            ci = srvyr::survey_mean(!!what, na.rm = T, vartype = 'ci', proportion = proportion),
-            median = srvyr::survey_median(!!what, na.rm = T, vartype = NULL), #This isn't working at the moment. Figure it out later
-            total_ci = srvyr::survey_total(!!what, vartype = 'ci',na.rm = T),
-            total_se = srvyr::survey_total(!!what, vartype = 'se',na.rm = T),
+            mean = srvyr::survey_mean(!!what, na.rm = T, vartype = c('se', 'ci'), proportion = proportion),
+            median = unweighted(median(!!what)), #srvyr::survey_median(!!what, na.rm = T, vartype = NULL), #This isn't working at the moment. Figure it out later
+            total = srvyr::survey_total(!!what, vartype = c('se', 'ci'),na.rm = T),
             numerator = srvyr::unweighted(sum(!!what, na.rm = T)), #only relevant for binary variables
             denominator = srvyr::unweighted(dplyr::n()),
             missing = srvyr::unweighted(sum(is.na(!!what))),
@@ -139,12 +137,13 @@ calc.tbl_svy <- function(ph.data,
             ndistinct = srvyr::unweighted(length(na.omit(unique(!!what)))),
             unique.time = srvyr::unweighted(length(unique(!!time_var)))
         ) %>% setDT
+
+
         ret[, level := NA]
         ret[, denominator := denominator - missing]
         ret[, c('ci', 'total_se') := NULL]
-        data.table::setnames(ret, c('mean_se', 'ci_low', 'ci_upp') , c('mean_se', 'mean_lower', 'mean_upper'))
-        data.table::setnames(ret, c('total_ci', 'total_ci_low', 'total_ci_upp', 'total_se_se') ,
-                             c('total', 'total_lower', 'total_upper','total_se'))
+        data.table::setnames(ret, c('mean_low', 'mean_upp') , c('mean_lower', 'mean_upper'))
+        data.table::setnames(ret, c('total_low', 'total_upp') , c('total_lower', 'total_upper'))
 
       }else{
 

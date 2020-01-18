@@ -10,7 +10,6 @@ dat[, weight := 1]
 dat[, time := 10]
 #format(object.size(dat), 'Mb')
 
-
 px1 <- profvis::profvis({
   test.results <- calc(dat,
                        what = c("v1", "v2"),
