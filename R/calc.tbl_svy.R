@@ -102,8 +102,6 @@ calc.tbl_svy <- function(ph.data,
 
   #For each variable and window, calculate specified metrics
   res <- lapply(whats, function(what){
-    #make sure there is not NAs in the what variable
-    ph.data <- suppressMessages(ph.data %>% filter(!is.na(!!what)))
 
     #Make sure the data does not have NA values in the chosen variable
     whatvar = as.character(what)
@@ -143,9 +141,10 @@ calc.tbl_svy <- function(ph.data,
         ret[, denominator := denominator - missing]
         data.table::setnames(ret, c('mean_low', 'mean_upp') , c('mean_lower', 'mean_upper'))
         data.table::setnames(ret, c('total_low', 'total_upp') , c('total_lower', 'total_upper'))
-
       }else{
 
+        #make sure there is not NAs in the what variable
+        ph.data <- suppressMessages(ph.data %>% filter(!is.na(!!what)))
         #move to a different function since its more involved
         ret <- calc_factor(ret, what, by, time_var)
         ret[, median := NA]
