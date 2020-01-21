@@ -2,6 +2,12 @@
   combo.dt[, c("table", "release_date") := NULL]
   # data.table, httr, yaml, glue
 
+  #changes to old data
+
+  # changes to historic data
+
+
+
 chi_qa <- function(chi.data){
 
     chi.data <- data.table::setDT(chi.data)
@@ -113,7 +119,20 @@ chi_qa <- function(chi.data){
         }
 
 
+    # RSE should always be between 0 and 1 ??? ----
+      # shoudl we add this?
+  ## Compare with previous year's results ----
+      # in function arguments, have user submit most recent and comparison year(s). Submit as character b/c can be 2013-2017, not just 2017
+      # if both are null, skip the comparison
+      # it not submitted, merge newer data on old data and identify rows with > 3% absolute difference
+      # save this dataset for manual review by the user
+  ## Compare with a CSV ----
+      # sometimes want to compare with external data source ---
+      # must identify year of interest as above
+      # instead of submitting a reference year, the user specifies a reference file
+      # reference file will attempt to match on all columns that have the same name, except those with results (i.e., results, lower_bound, se, etc.)
+      # actual comparison code should be the same as when comparing to a previous year, so write a small funcion to do this
+
 } # close function
 
 chi_qa(combo.dt)
-chi.data <- copy()
