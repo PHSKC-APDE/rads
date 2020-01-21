@@ -141,7 +141,6 @@ calc.tbl_svy <- function(ph.data,
 
         ret[, level := NA]
         ret[, denominator := denominator - missing]
-        ret[, c('ci', 'total_se') := NULL]
         data.table::setnames(ret, c('mean_low', 'mean_upp') , c('mean_lower', 'mean_upper'))
         data.table::setnames(ret, c('total_low', 'total_upp') , c('total_lower', 'total_upper'))
 
