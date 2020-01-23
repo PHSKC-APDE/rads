@@ -74,11 +74,105 @@ result.1 <- calc(birth, what = c("chi_geo_kc") )
 head(result.1)
 ```
 
+##Introducing helper functions
+# 
+
+## Example analyses
+### Intersection of Low Birth Weight & Prematurity in KC (last 5 years combined)
+**get data**
+```{r}
+birth <- get_data_birth(year = c(2014:2018), cols = c("chi_year", "preterm", "bw_low"), kingco = T)
+```
+**recode data **
+```{r}
+birth[, preterm_lbw := 0][preterm == 1 & bw_low == 1, preterm_lbw := 1]
+```
+**calc 5 year**
+```{r}
+birth <- calc(birth, what = c("preterm_lbw"), metrics = c("mean", "lower", "upper", "se", "rse", "caution", "numerator",
+                                                          "denominator", "total", "missing", "missing.prop", "unique.years") )
+head(birth)
+```
+
+### Premature by race and foreign born status in KC (singe year and multiple years) 
+**get data**
+```{r}
+birth <- get_data_birth(year = c(2014:2018), cols = c("chi_year", "preterm", "chi_race_eth8", "mother_birthplace_foreign"), kingco = T)
+
+```
+**calc 5 year**
+```{r}
+birth_5y <- calc(birth, what = "preterm", by = c("chi_race_eth8", "mother_birthplace_foreign"), metrics = c("mean", "lower", "upper", "se", "rse", "caution", "numerator"))
+head(birth_5y)
+```
 
 
+**calc 1 year**
+```{r}
+birth_1y <- calc(birth, what = "preterm", by = c("chi_race_eth8", "mother_birthplace_foreign", "chi_year"), metrics = c("mean", "lower", "upper", "se", "rse", "caution", "numerator"))
+head(birth_1y)
+```
+Note that this only shows the earliest years. By using the `tail()` function, we can view the end of the more recent years
+```{r}
+tail(birth_1y)
+```
+
+### Premature by race in a specific area
+**get data** 
+```{r}
+birth <- get_data_birth(year = c(2014:2018), cols = c("chi_year", "preterm", "chi_race_eth8", "chi_geo_big_cities", "chi_geo_hra_short", "chi_geo_zip5"))
+```
+
+**calc by each "big city"**
+```{r}
+birth_big <-  calc(birth, what = "preterm", by = c("chi_race_eth8", "chi_geo_big_cities"), metrics = c("mean", "lower", "upper", "se", "rse"))
+head(birth_big)
+```
+
+**calc within a limited set of zip codes**
+```{r}
+birth_zip <- calc(birth, what = "preterm", chi_geo_zip5 %in% c(98001:98010), by = c("chi_race_eth8"), metrics = c("mean", "lower", "upper", "se", "rse"))
+head(birth_zip)
+```
+**calc by HRAs like "Auburn"**
+```{r}
+# birth_hra <-  calc(birth, what = "preterm", chi_geo_hra_short %like% c("Auburn"), by = c("chi_race_eth8", "chi_geo_hra_short"), metrics = c("mean", "lower", "upper", "se", "rse"))
+# head(birth_hra)      
+```
 
 
+### Custom sub-populations
+**get data**
+```{r}
+birth <- get_data_birth(year = c(2014:2018), cols = c("chi_year", "chi_age", "chi_geo_hra_long", "chi_race_eth8", "dlp_medicaid", "prior_live_births_living", "prior_live_births_deceased"))
+```
+**calc Medicaid births, first time moms, under 23, by HRA and by race**
+```{r}
+birth_custom1 <- calc(birth, what = "dlp_medicaid", (prior_live_births_living + prior_live_births_deceased == 0) & chi_age < 23, by = c("chi_geo_hra_long", "chi_race_eth8"))
+head(birth_custom1)
+```
 
+### Custom geographies      
+**get data**
+```{r}
+birth <- get_data_birth(year = c(2014:2018), cols = c("chi_year", "chi_geo_hra_long"))
+```
+
+**recode data**
+```{r}
+birth[, Duamish := 0][chi_geo_hra_long %in% c("Beacon Hill/Georgetown/South Park", "Delridge"), Duamish := 1]
+```
+**calc % of all births that were in Duamish, by year**
+```{r}
+birth_custom_2 <- calc(birth, what = "Duamish", metrics = c("mean", "lower", "upper", "se", "rse"), by = c("chi_year"))
+head(birth_custom_2)
+```
+
+**calc # of births in Duamish, by year**  
+```{r}
+birth_custom_3 <- calc(birth, Duamish == 1, what = "Duamish", metrics = c("total"), by = c("chi_year"))
+head(birth_custom_3)
+```
 
 
 
