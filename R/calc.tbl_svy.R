@@ -143,7 +143,7 @@ calc.tbl_svy <- function(ph.data,
         data.table::setnames(ret, c('total_low', 'total_upp') , c('total_lower', 'total_upper'))
       }else{
 
-        #make sure there is not NAs in the what variable
+        #make sure there are no NAs in the what variable
         ph.data <- suppressMessages(ph.data %>% filter(!is.na(!!what)))
         #move to a different function since its more involved
         ret <- calc_factor(ret, what, by, time_var)
