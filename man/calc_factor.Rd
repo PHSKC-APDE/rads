@@ -11,6 +11,8 @@ calc_factor(svy, what, by, time_var)
 
 \item{what}{character or symbol.}
 
+\item{by}{character or symbol vector}
+
 \item{time_var}{character or symbol}
 }
 \description{

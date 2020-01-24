@@ -79,7 +79,7 @@ Available metrics include:
 7) rse: relative standard error. mean/se
 8) ndistinct: number of non-na distinct values `what` takes on in a given grouping (after filtering and all that jazz)
 9) obs: number of unique observations
-10) median: the median non NA response. Not populated when `what` is a factor or character
+10) median: the median non NA response. Not populated when `what` is a factor or character. Even for surveys, the median is the unweighted result.
 11) unique.time: Number of unique time points (from `time_var`) included in each tabulation
 
 For survey data, use the \code{proportion} argument where relevant to ensure metrics are calculated using special proportion (e.g \code{svyciprop})

@@ -1,5 +1,5 @@
 #' @rdname calc
-#' @importFrom data.table copy data.table rbindlist tstrsplit .N
+#' @importFrom data.table copy data.table rbindlist tstrsplit .N "%like%"
 #' @importFrom stats median na.omit prop.test qnorm qt var na.omit
 #' @export
 calc.data.table = function(ph.data,
