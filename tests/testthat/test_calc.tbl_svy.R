@@ -2,6 +2,7 @@ library('srvyr')
 library('survey')
 library('dplyr')
 library('data.table')
+library('testthat')
 
 data(api) #from the survey package
 sur = apisrs %>% as_survey_design(ids = 1, fpc = fpc)
@@ -50,7 +51,7 @@ test_that('Multi Grouping with filtering and multiple what variables',{
   st = calc(sur, what = c('api00', 'api99'),
                        cname == 'Los Angeles',
                        by = c('stype', 'cname'),
-                       metrics = 'mean', time_var = NULL)
+                       metrics = 'mean', time_var = NULL)[, level := NULL]
   man1 = sur %>% filter(cname == 'Los Angeles') %>% group_by(stype, cname) %>% summarize(mean = survey_mean(api00)) %>% setDT
   man2 = sur %>% filter(cname == 'Los Angeles') %>% group_by(stype, cname) %>% summarize(mean = survey_mean(api99)) %>% setDT
   man = rbind(man1, man2)[, .(stype, cname, mean, variable = c(rep('api00', 3), rep('api99', 3)))]
@@ -59,18 +60,18 @@ test_that('Multi Grouping with filtering and multiple what variables',{
 #
 test_that('Proportion toggle- on',{
   sur = sur %>% mutate(schwide = as.numeric(sch.wide == 'Yes'))
-  st = calc(sur, 'schwide', metrics = 'lower', proportion = T, time_var = NULL)
+  st = calc(sur, 'schwide', metrics = 'mean_lower', proportion = T, time_var = NULL)
   man = sur %>% summarize(blah = survey_mean(schwide, vartype = 'ci', proportion = T)) %>% setDT
 
   #without proportion
-  expect_equal(st[, lower], man[, blah_low])
+  expect_equal(st[, mean_lower], man[, blah_low])
 
 })
 #
 test_that('Proportion toggle changes result',{
   sur = sur %>% mutate(schwide = as.numeric(sch.wide == 'Yes'))
-  a = calc(sur, 'schwide', metrics = 'lower', proportion = T, time_var = NULL)[, lower]
-  b = calc(sur, 'schwide', metrics = 'lower', proportion = F, time_var = NULL)[, lower]
+  a = calc(sur, 'schwide', metrics = 'mean_lower', proportion = T, time_var = NULL)[, mean_lower]
+  b = calc(sur, 'schwide', metrics = 'mean_lower', proportion = F, time_var = NULL)[, mean_lower]
 
   expect_true(a != b)
 
