@@ -1,0 +1,183 @@
+---
+title: "Exploring Birth Data with RADS"
+output:
+  rmarkdown::html_vignette: default
+  html_document: default
+vignette: >
+  %\VignetteIndexEntry{Exploring Birth Data with RADS}
+---
+
+## Introduction
+This vignette will provide some examples of ways to explore and analyze birth data with `rads`, APDE's 'R Automated Data System'. `rads` is a suite custom tools and utilities that can be used to analyze survey and record level data for [CHI](https://www.kingcounty.gov/chi), [data requests](https://kingcounty.gov/depts/health/data/data-request-service.aspx), and other APDE projects.  
+
+If you're reading this, the assumption is that you already installed [R](https://cran.r-project.org/bin/windows/base/), [Rstudio](https://rstudio.com/products/rstudio/download/#download), and the [`rads`](https://github.com/PHSKC-APDE/rads) package. If needed, install R and Rstudio the way you would install any other software. Afterward, install the devtools package by typing `install.packages("devtools")` and then install RADS by typing devtools::install_github("PHSKC-APDE/rads")`. After doing this, I recommend shutting down R studio and starting it again. You should now be ready to walk through this vignette. 
+
+## Getting data
+Begin by loading the `rads` package/library by typing the following:
+```{r}
+library(rads)
+```
+
+The analytic ready birth data is stored in on KCIT SQL Server 50 (`[PH_APDEStore].[final].[bir_wa]`). The `get_data_birth` function will allow you to pull data from the SQL server with minimal fuss. To see the possible arguments that you can pass, type the following:
+```{r}
+args(get_data_birth)
+```
+You can see that `get_data_birth` takes three possible arguments:
+
+1) `cols` <- a vector of the specific columns that you want to load into memory, e.g., `c("chi_year", "chi_geo_regions_4")`. The default, `NA`, will pull all available columns. 
+    * In the future, standardized documentation, including a data dictionary, will be available to help you identify the birth columns of interest. However, for the time being, I suggest viewing our [birth recodes csv](https://github.com/PHSKC-APDE/DOHdata/blob/master/ETL/birth/ref/ref.bir_recodes_simple.csv) to identify APDE generated variables and the [field name map csv](https://github.com/PHSKC-APDE/DOHdata/blob/master/ETL/birth/ref/ref.bir_field_name_map.csv) to identify the APDE column name ascribed to any given WHALES or Bedrock column name.  
+2) `year` <- a vector of the year or years of data that you want to load, e.g., c(2011, 2015:2018). Note that the default is to load 2017 data only. 
+3) `kingco` <- a logical argument (i.e., `T` or `F` only, without quotes) denoting whether or not the data should be limited to King County. The default is King County only. 
+
+Let's try the function to see how it works by loading the year and King County columns for WA State in 2018:
+```{r}
+birth <- get_data_birth(year = c(2018), cols = c("chi_year", "chi_geo_kc"), kingco = F)
+```
+We can confirm the `birth` object is in our environment by typing `ls()`
+```{r}
+ls() 
+```
+To identify the class of the `birth` object, we can type `class(birth)`
+```{r}
+class(birth) 
+```
+The `dim()` function tells us the dimensions of the `birth` table. In this case, it has `r nrow(birth)` rows and `r ncol(birth)` columns
+```{r}
+dim(birth) 
+```
+Use the `head()` command to take a peak at the first 6 lines of the `birth` table
+```{r}
+head(birth) 
+```
+
+## Introducing the `calc` function
+`calc` is the analytic workhorse of `rads`. It provides a standardized method for obtaining most of what we usually want to calculate: means, medians, counts, confidence intervals, standard error, relative standard error (RSE), numerators, denominators, the number missing, and the proportion missing. In this case, using the args() function will not be very helpful:
+```{r}
+args(calc)
+```
+This is because calc is a front end for two engines: `calc.data.table` for record level data & `calc.tbl_svy` for survey data. The good news is that you can ignore this and use the following standard set of arguments:
+
+1) `ph.data` <- the name of the data.table or survey object that you want to analyze. In our case, `birth`.
+2) `what` <- a character vector of the variables for which you want to calculate the metrics. E.g., `what = c("preterm")`
+3) `...` <- think of this as a "where" statement, i.e., a filter or subsetting of data. E.g., `chi_geo_zip5 %in% c(98001:98010)`. **NOTE** do not type `...`!
+4) `by` <- a character vector of the variables that you want to computer the `what` by, i.e., the cross-tab variable(s). E.g., `by = c("mother_birthplace_foreign")`
+5) `metrics` <- a character vector of the metrics that you want returned. E.g., `metrics = c("mean", "lower", "upper", "se", "rse")`. You can see a complete list of available metrics by typing `record_metrics()`
+6) `per` <- an integer, which is the denominator when `rate` is selected as the metric. Metrics will be multiplied by this value.
+7) `win` <- an intteger, which is the number of consecutive units of time (e.g., years, months, etc.) over which the metrics will be calculated, i.e., the 'window' for a rolling average, sum, etc.
+8) `time_var` <- a character, which is the name of the time variable in the dataset. Used in combination with the `win` argument to generate time windowed calculations.
+9) `proportion` <- a logical (i.e., `T` or `F`). A flag determining whether the metrics should be calculated as a proportion. Currently only relevant for survey data. 
+10) `verbose` <- a logical used to toggle on/off printed warnings
+
+There is no need to specify all of the arguments listed above. As the following example shows, the `calc` function simply needs a specified dataset (i.e., `pha.data`) and at least one `what` variable to return an intelliglbe result.
+```{r}
+result.1 <- calc(birth, what = c("chi_geo_kc") )
+head(result.1)
+```
+
+##Introducing helper functions
+# 
+
+## Example analyses
+### Intersection of Low Birth Weight & Prematurity in KC (last 5 years combined)
+**get data**
+```{r}
+birth <- get_data_birth(year = c(2014:2018), cols = c("chi_year", "preterm", "bw_low"), kingco = T)
+```
+**recode data **
+```{r}
+birth[, preterm_lbw := 0][preterm == 1 & bw_low == 1, preterm_lbw := 1]
+```
+**calc 5 year**
+```{r}
+birth <- calc(birth, what = c("preterm_lbw"), metrics = c("mean", "lower", "upper", "se", "rse", "caution", "numerator",
+                                                          "denominator", "total", "missing", "missing.prop", "unique.years") )
+head(birth)
+```
+
+### Premature by race and foreign born status in KC (singe year and multiple years) 
+**get data**
+```{r}
+birth <- get_data_birth(year = c(2014:2018), cols = c("chi_year", "preterm", "chi_race_eth8", "mother_birthplace_foreign"), kingco = T)
+
+```
+**calc 5 year**
+```{r}
+birth_5y <- calc(birth, what = "preterm", by = c("chi_race_eth8", "mother_birthplace_foreign"), metrics = c("mean", "lower", "upper", "se", "rse", "caution", "numerator"))
+head(birth_5y)
+```
+
+
+**calc 1 year**
+```{r}
+birth_1y <- calc(birth, what = "preterm", by = c("chi_race_eth8", "mother_birthplace_foreign", "chi_year"), metrics = c("mean", "lower", "upper", "se", "rse", "caution", "numerator"))
+head(birth_1y)
+```
+Note that this only shows the earliest years. By using the `tail()` function, we can view the end of the more recent years
+```{r}
+tail(birth_1y)
+```
+
+### Premature by race in a specific area
+**get data** 
+```{r}
+birth <- get_data_birth(year = c(2014:2018), cols = c("chi_year", "preterm", "chi_race_eth8", "chi_geo_big_cities", "chi_geo_hra_short", "chi_geo_zip5"))
+```
+
+**calc by each "big city"**
+```{r}
+birth_big <-  calc(birth, what = "preterm", by = c("chi_race_eth8", "chi_geo_big_cities"), metrics = c("mean", "lower", "upper", "se", "rse"))
+head(birth_big)
+```
+
+**calc within a limited set of zip codes**
+```{r}
+birth_zip <- calc(birth, what = "preterm", chi_geo_zip5 %in% c(98001:98010), by = c("chi_race_eth8"), metrics = c("mean", "lower", "upper", "se", "rse"))
+head(birth_zip)
+```
+**calc by HRAs like "Auburn"**
+```{r}
+# birth_hra <-  calc(birth, what = "preterm", chi_geo_hra_short %like% c("Auburn"), by = c("chi_race_eth8", "chi_geo_hra_short"), metrics = c("mean", "lower", "upper", "se", "rse"))
+# head(birth_hra)      
+```
+
+
+### Custom sub-populations
+**get data**
+```{r}
+birth <- get_data_birth(year = c(2014:2018), cols = c("chi_year", "chi_age", "chi_geo_hra_long", "chi_race_eth8", "dlp_medicaid", "prior_live_births_living", "prior_live_births_deceased"))
+```
+**calc Medicaid births, first time moms, under 23, by HRA and by race**
+```{r}
+birth_custom1 <- calc(birth, what = "dlp_medicaid", (prior_live_births_living + prior_live_births_deceased == 0) & chi_age < 23, by = c("chi_geo_hra_long", "chi_race_eth8"))
+head(birth_custom1)
+```
+
+### Custom geographies      
+**get data**
+```{r}
+birth <- get_data_birth(year = c(2014:2018), cols = c("chi_year", "chi_geo_hra_long"))
+```
+
+**recode data**
+```{r}
+birth[, Duamish := 0][chi_geo_hra_long %in% c("Beacon Hill/Georgetown/South Park", "Delridge"), Duamish := 1]
+```
+**calc % of all births that were in Duamish, by year**
+```{r}
+birth_custom_2 <- calc(birth, what = "Duamish", metrics = c("mean", "lower", "upper", "se", "rse"), by = c("chi_year"))
+head(birth_custom_2)
+```
+
+**calc # of births in Duamish, by year**  
+```{r}
+birth_custom_3 <- calc(birth, Duamish == 1, what = "Duamish", metrics = c("total"), by = c("chi_year"))
+head(birth_custom_3)
+```
+
+
+
+
+
+
+
+
