@@ -58,7 +58,7 @@ survey_metrics = function(){
 #' @rdname metrics
 #' @export
 record_metrics = function(){
-  c('mean', 'median', 'obs', 'rate', 'se', 'lower', 'upper', 'rse', 'numerator', 'denominator', 'missing', 'missing.prop', 'total', 'ndistinct')
+  c('mean', 'median', 'obs', 'rate', 'rse', 'numerator', 'denominator', 'missing', 'missing.prop', 'total', 'ndistinct')
 }
 
 #' Improved rounding function
