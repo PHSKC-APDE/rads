@@ -36,9 +36,16 @@ calc.data.table = function(ph.data,
           numeric.col <- vapply(temp.dt[, ..what], is.numeric, FUN.VALUE=logical(1)) # logical vector
           numeric.col <- setdiff(what[numeric.col], binary.col)
 
+
+        # character columns (convert to factors)
+          character.col <- vapply(temp.dt[, ..what], is.character, FUN.VALUE=logical(1)) # logical vector
+          character.col <- what[character.col]
+          temp.dt[, c(character.col) := lapply(.SD, as.factor), .SDcols = character.col]
+
         # factor columns
           factor.col <- vapply(temp.dt[, ..what], is.factor, FUN.VALUE=logical(1)) # logical vector
           factor.col <- what[factor.col]
+
 
           names.before <- names(copy(temp.dt))
 
@@ -192,7 +199,7 @@ calc.data.table = function(ph.data,
       data.table::setorder(res, variable, level, time)
 
     # drop columns no longer needed
-        metrics <- c(metrics, "time", "suppression")
+        metrics <- c(metrics, "time")
         if(length(opts[!opts %in% metrics]) >0){
           suppressWarnings(res[, opts[!opts %in% metrics] := NULL])
         }
