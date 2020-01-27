@@ -14,7 +14,7 @@ calc.data.table = function(ph.data,
                            verbose = FALSE){
 
   #global variables used by data.table declared as NULL here to play nice with devtools::check()
-  se <- rse <- caution <- rate <- rate_per <- level <- time <- variable <- NULL
+  se <- rse <- rate <- rate_per <- level <- time <- variable <- NULL
 
   # copy data.table to prevent changing the underlying data
   temp.dt <- data.table::copy(ph.data)
@@ -175,7 +175,6 @@ calc.data.table = function(ph.data,
 
         # Calculate RSE
             res.metrics[, rse := se / mean]
-            res.metrics[rse >0.3, caution := "!"]
 
     # apply the 'per' if rate was specified in metric (rates are only applicable to proportions)
       if("rate" %in% metrics){
@@ -187,13 +186,13 @@ calc.data.table = function(ph.data,
 
   #### CLEAN UP ####
         res <- res.metrics
-        data.table::setcolorder(res, c("variable", "level", "time", setdiff(by, "chi_year"), "median", "mean", "rate", "lower", "upper", "se", "rse", "caution", "total", "obs", "numerator", "denominator", "missing", "missing.prop", "unique.time"))
+        data.table::setcolorder(res, c("variable", "level", "time", setdiff(by, "chi_year"), "median", "mean", "rate", "lower", "upper", "se", "rse", "total", "obs", "numerator", "denominator", "missing", "missing.prop", "unique.time"))
 
     # Sort / order results
       data.table::setorder(res, variable, level, time)
 
     # drop columns no longer needed
-        metrics <- c(metrics, "time", "caution", "suppression")
+        metrics <- c(metrics, "time", "suppression")
         if(length(opts[!opts %in% metrics]) >0){
           suppressWarnings(res[, opts[!opts %in% metrics] := NULL])
         }
