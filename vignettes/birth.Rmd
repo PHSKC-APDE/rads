@@ -78,10 +78,60 @@ head(result.1)
 ```
 
 
-##Introducing helper functions
-# 
+## Introducing helper functions
+The many helper functions and utilities that have been created for RADS will be documented in detail in the future. We limit ourselves to the few immediately relevant to post-processing of data analyzed with the `calc` function. 
+
+* `digits` <- This function rounds data following APDE/CHI generic standards or custom requests. By default, this function expects data that has already been formatted for CHI, i.e., it contains `result`, `lower_bound`, `upper_bound`, `se`, `rse` columns. However, the variables and the number of digits to round can be readily specified. Typing `args(digits)` reveals that there are 5 possible arguments:
+    * `digit_data` <- a data.table or data.frame containing the data to be rounded
+    * `vars_1` <- a character vector of indeterminate length. It specifies the variables to be rounded to the number of digits specified by `digits_1`. If not specified it defaults to `c("result", "lower_bound", "upper_bound", "rse")`, which are the relevant columns in CHI Tableau Ready data.
+    * `digits_1` <- an integer representing the number of decimal places to round variables specified in vars_1. The default is digits_1 = 3, i.e., 0.123456 >> 0.123.
+    * `vars_2` <- a character vector of indeterminate length. It specifies the variables to be rounded to the number of digits specified by `digits_2`. If not specified it defaults to `c("se")`
+    * `digits_2` <- an integer representing the number of decimal places to round variables specified in vars_1. The default is digits_1 = 4, i.e., 0.123456 >> 0.1235.
+* `round2` <- R's built-in `round` function doesn't act the way most of us might expect. `round2` rounds the way you were taught in elementary school, i.e., >=5 rounds up. E.g., `round2(0.135, 2)` == `r round2(0.135, 2)` whereas `round2(0.134, 2)` == `r round2(0.134, 2)`. 
+* `suppress` <- This function suppresses data output by the `calc` function according to APDE standards or custom requests and adds a caution flag for large RSEs. When the reference sheet of all suppression guidelines is complete, this code will reference that sheet to apply the relevant suppression algorithm. In the meantime, the default suppression algorithm is as described by the [DOH](https://www.doh.wa.gov/Portals/1/Documents/1500/SmallNumbers.pdf). At present, this functon takes two arguments:
+    * `sup_data` <- a data.table or data.frame containing the data to be suppressed with the standard CHI Tableau metric names (e.g., mean, median, numerator, etc.).
+    * `suppress_range` <- an integer vector of length 2, which specifies the minimum and maximum range for suppression.
+* `joinpoint` <- this function runs NCI's [JoinPoint](https://surveillance.cancer.gov/joinpoint/) from within R. Its inputs, outputs, and arguments are somewhat complex and will be described in full in a future stand-alone vignette. 
+
+We will not use any of the above post-processing helper functions in this vignette. For now, just know that they exist and wait expectantly for future vignettes that demostrate their utility. 
+
+***
 
 ## Example analyses
+### Preterm births in KC 2013-2018
+**get data**
+```{r}
+birth <- get_data_birth(year = c(2013:2018), cols = c("chi_year", "preterm"), kingco = T)
+```
+
+**calc all years**
+```{r}
+birth_all <- calc(birth, what = c("preterm"), metrics = c("mean", "rse", "total", "unique.years") )
+head(birth_all)
+```
+
+**calc single years**
+```{r}
+birth_single <- calc(birth, what = c("preterm"), metrics = c("mean", "rse", "total", "unique.years"), 
+                  by = c("chi_year"))
+head(birth_single)
+```
+
+**calc 3 year window**
+```{r}
+birth_window <- calc(birth, what = c("preterm"), metrics = c("mean", "rse", "total", "unique.years"), 
+                  win = 3)
+head(birth_window)
+```
+
+**calc 3 year window (RATE per 1000)**
+```{r}
+birth_window <- calc(birth, what = c("preterm"), metrics = c("rate", "rse", "total", "unique.years"), 
+                  win = 3, per = 1000)
+head(birth_window)
+```
+
+
 ### Intersection of Low Birth Weight & Prematurity in KC (last 5 years combined)
 **get data**
 ```{r}
@@ -93,27 +143,39 @@ birth[, preterm_lbw := 0][preterm == 1 & bw_low == 1, preterm_lbw := 1]
 ```
 **calc 5 year**
 ```{r}
-birth <- calc(birth, what = c("preterm_lbw"), metrics = c("mean", "lower", "upper", "se", "rse", "caution", "numerator",
-                                                          "denominator", "total", "missing", "missing.prop", "unique.years") )
-head(birth)
+birth_5y <- calc(birth, what = c("preterm_lbw"), 
+                 metrics = c("mean", "rse", "numerator", "denominator", "missing", "unique.years") )
+head(birth_5y)
+```
+
+**calc 5 year rate per 100,000**
+```{r}
+birth_5yrate <- calc(birth, what = c("preterm_lbw"), per = 100000, 
+              metrics = c("rate", "rse", "numerator", "denominator", "missing", "unique.years") )
+head(birth_5yrate)
 ```
 
 ### Premature by race and foreign born status in KC (singe year and multiple years) 
 **get data**
 ```{r}
-birth <- get_data_birth(year = c(2014:2018), cols = c("chi_year", "preterm", "chi_race_eth8", "mother_birthplace_foreign"), kingco = T)
+birth <- get_data_birth(year = c(2014:2018), 
+                        cols = c("chi_year", "preterm", "chi_race_eth8", "mother_birthplace_foreign"), 
+                        kingco = T)
 
 ```
 **calc 5 year**
 ```{r}
-birth_5y <- calc(birth, what = "preterm", by = c("chi_race_eth8", "mother_birthplace_foreign"), metrics = c("mean", "lower", "upper", "se", "rse", "caution", "numerator"))
+birth_5y <- calc(birth, what = "preterm", by = c("chi_race_eth8", "mother_birthplace_foreign"), 
+                 metrics = c("mean", "rse", "numerator"))
 head(birth_5y)
 ```
 
 
 **calc 1 year**
 ```{r}
-birth_1y <- calc(birth, what = "preterm", by = c("chi_race_eth8", "mother_birthplace_foreign", "chi_year"), metrics = c("mean", "lower", "upper", "se", "rse", "caution", "numerator"))
+birth_1y <- calc(birth, what = "preterm", 
+                 by = c("chi_race_eth8", "mother_birthplace_foreign", "chi_year"), 
+                 metrics = c("mean", "rse", "numerator"))
 head(birth_1y)
 ```
 Note that this only shows the earliest years. By using the `tail()` function, we can view the end of the more recent years
@@ -124,35 +186,45 @@ tail(birth_1y)
 ### Premature by race in a specific area
 **get data** 
 ```{r}
-birth <- get_data_birth(year = c(2014:2018), cols = c("chi_year", "preterm", "chi_race_eth8", "chi_geo_big_cities", "chi_geo_hra_short", "chi_geo_zip5"))
+birth <- get_data_birth(year = c(2014:2018), 
+                        cols = c("chi_year", "preterm", "chi_race_eth8", "chi_geo_big_cities", "chi_geo_hra_short", "chi_geo_zip5"))
 ```
 
 **calc by each "big city"**
 ```{r}
-birth_big <-  calc(birth, what = "preterm", by = c("chi_race_eth8", "chi_geo_big_cities"), metrics = c("mean", "lower", "upper", "se", "rse"))
+birth_big <-  calc(birth, what = "preterm", by = c("chi_race_eth8", "chi_geo_big_cities"), 
+                   metrics = c("mean", "rse"))
 head(birth_big)
 ```
 
 **calc within a limited set of zip codes**
 ```{r}
-birth_zip <- calc(birth, what = "preterm", chi_geo_zip5 %in% c(98001:98010), by = c("chi_race_eth8"), metrics = c("mean", "lower", "upper", "se", "rse"))
+birth_zip <- calc(birth, what = "preterm", chi_geo_zip5 %in% c(98001:98010), by = c("chi_race_eth8"), 
+                  metrics = c("mean", "rse"))
 head(birth_zip)
 ```
 **calc by HRAs like "Auburn"**
 ```{r}
-# birth_hra <-  calc(birth, what = "preterm", chi_geo_hra_short %like% c("Auburn"), by = c("chi_race_eth8", "chi_geo_hra_short"), metrics = c("mean", "lower", "upper", "se", "rse"))
-# head(birth_hra)      
+birth_hra <-  calc(birth, 
+                   what = "preterm", 
+                   chi_geo_hra_short %like% c("Auburn"), 
+                   by = c("chi_race_eth8", "chi_geo_hra_short"), 
+                   metrics = c("mean", "rse"))
+head(birth_hra)      
 ```
 
 
 ### Custom sub-populations
 **get data**
 ```{r}
-birth <- get_data_birth(year = c(2014:2018), cols = c("chi_year", "chi_age", "chi_geo_hra_long", "chi_race_eth8", "dlp_medicaid", "prior_live_births_living", "prior_live_births_deceased"))
+birth <- get_data_birth(year = c(2014:2018), 
+                        cols = c("chi_year", "chi_age", "chi_geo_hra_long", "chi_race_eth8", "dlp_medicaid", "prior_live_births_living", "prior_live_births_deceased"))
 ```
 **calc Medicaid births, first time moms, under 23, by HRA and by race**
 ```{r}
-birth_custom1 <- calc(birth, what = "dlp_medicaid", (prior_live_births_living + prior_live_births_deceased == 0) & chi_age < 23, by = c("chi_geo_hra_long", "chi_race_eth8"))
+birth_custom1 <- calc(birth, what = "dlp_medicaid", 
+                      (prior_live_births_living + prior_live_births_deceased == 0) & chi_age < 23, 
+                      by = c("chi_geo_hra_long", "chi_race_eth8"))
 head(birth_custom1)
 ```
 
@@ -164,11 +236,12 @@ birth <- get_data_birth(year = c(2014:2018), cols = c("chi_year", "chi_geo_hra_l
 
 **recode data**
 ```{r}
-birth[, Duamish := 0][chi_geo_hra_long %in% c("Beacon Hill/Georgetown/South Park", "Delridge"), Duamish := 1]
+birth[, Duamish := 0]
+birth[chi_geo_hra_long %in% c("Beacon Hill/Georgetown/South Park", "Delridge"), Duamish := 1]
 ```
 **calc % of all births that were in Duamish, by year**
 ```{r}
-birth_custom_2 <- calc(birth, what = "Duamish", metrics = c("mean", "lower", "upper", "se", "rse"), by = c("chi_year"))
+birth_custom_2 <- calc(birth, what = "Duamish", metrics = c("mean", "rse"), by = c("chi_year"))
 head(birth_custom_2)
 ```
 
