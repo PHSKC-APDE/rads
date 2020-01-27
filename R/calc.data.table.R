@@ -14,7 +14,7 @@ calc.data.table = function(ph.data,
                            verbose = FALSE){
 
   #global variables used by data.table declared as NULL here to play nice with devtools::check()
-  se <- rse <- caution <- rate <- rate_per <- level <- time <- variable <- NULL
+  se <- rse <- rate <- rate_per <- level <- time <- variable <- NULL
 
   # copy data.table to prevent changing the underlying data
   temp.dt <- data.table::copy(ph.data)
@@ -36,9 +36,18 @@ calc.data.table = function(ph.data,
           numeric.col <- vapply(temp.dt[, ..what], is.numeric, FUN.VALUE=logical(1)) # logical vector
           numeric.col <- setdiff(what[numeric.col], binary.col)
 
+
+        # character columns (convert to factors)
+          character.col <- vapply(temp.dt[, ..what], is.character, FUN.VALUE=logical(1)) # logical vector
+          character.col <- what[character.col]
+          if(length(character.col) > 0){
+            temp.dt[, c(character.col) := lapply(.SD, as.factor), .SDcols = character.col]
+          }
+
         # factor columns
           factor.col <- vapply(temp.dt[, ..what], is.factor, FUN.VALUE=logical(1)) # logical vector
           factor.col <- what[factor.col]
+
 
           names.before <- names(copy(temp.dt))
 
@@ -77,11 +86,13 @@ calc.data.table = function(ph.data,
       opts <- record_metrics()
 
       # limits metrics to those that have been pre-specified, i.e., non-standard metrics are dropped
-      metrics <- match.arg(metrics, opts, several.ok = T)
+      if(!is.null(metrics)){
+        metrics <- match.arg(metrics, opts, several.ok = T)
+      }
 
     #validate 'per'
       if("rate" %in% metrics & is.null(per)){
-        per <- 1000 # default denominator of 1000
+        per <- 1 # default denominator of 1
       }
       if("rate" %in% metrics & !is.null(per) & all.equal(per, as.integer(per))!=T ){
         stop("If specified, the 'per' argument must be an integer")
@@ -154,8 +165,8 @@ calc.data.table = function(ph.data,
                 lower[i] <- suppressWarnings(stats::prop.test(x = numerator[i], n = denominator[i], conf.level = 0.95, correct = F)$conf.int[1]) # the score method ... suggested by DOH & others
                 upper[i] <- suppressWarnings(stats::prop.test(x = numerator[i], n = denominator[i], conf.level = 0.95, correct = F)$conf.int[2])
               }
-              res.metrics.prop[, lower := lower]
-              res.metrics.prop[, upper := upper]
+              res.metrics.prop[, mean_lower := lower]
+              res.metrics.prop[, mean_upper := upper]
               # res.metrics.prop[, se := sqrt((mean*(1-mean))/denominator) ] # calculated the SE empirically above. Confirmed that res.metricsults are ~same as from this formula
               # the calculation based on variance differed from this forumla when samples were tiny. In those cases, the empirical ones were larger and therefore more conservative
             }
@@ -163,41 +174,58 @@ calc.data.table = function(ph.data,
         # MEANS: Numeric/non-binary need to have their CI calculated separately
             res.metrics.mean <- res.metrics[variable %in% c(numeric.col)]
             if(length(numeric.col) > 0){
-              res.metrics.mean[denominator>30, lower := mean - stats::qnorm(0.975)*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics
-              res.metrics.mean[denominator>30, upper := mean + stats::qnorm(0.975)*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics
-              suppressWarnings(res.metrics.mean[denominator<=30, lower := mean - qt(0.975,df=denominator-1)*se]) # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed)
-              suppressWarnings(res.metrics.mean[denominator<=30, upper := mean + qt(0.975,df=denominator-1)*se]) # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed)
-              res.metrics.mean[lower < 0, lower := 0] # prevent negative values for confidence interval
+              res.metrics.mean[denominator>30, mean_lower := mean - stats::qnorm(0.975)*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics
+              res.metrics.mean[denominator>30, mean_upper := mean + stats::qnorm(0.975)*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics
+              suppressWarnings(res.metrics.mean[denominator<=30, mean_lower := mean - qt(0.975,df=denominator-1)*se]) # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed)
+              suppressWarnings(res.metrics.mean[denominator<=30, mean_upper := mean + qt(0.975,df=denominator-1)*se]) # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed)
+              res.metrics.mean[mean_lower < 0, mean_lower := 0] # prevent negative values for confidence interval
             }
 
         # Append data for proportions and means
             res.metrics <- rbind(res.metrics.prop, res.metrics.mean, fill = T)
+            setnames(res.metrics, "se", "mean_se")
 
         # Calculate RSE
-            res.metrics[, rse := se / mean]
-            res.metrics[rse >0.3, caution := "!"]
+            res.metrics[, rse := mean_se / mean]
+
+        # Set Median to NA if variable is not a numeric/continuous
+            res.metrics[!variable %in% numeric.col, median := NA]
 
     # apply the 'per' if rate was specified in metric (rates are only applicable to proportions)
       if("rate" %in% metrics){
-        res.metrics[variable %in% unique(res.metrics.prop$variable), rate := mean * per]
+        res.metrics[variable %in% unique(res.metrics.prop$variable), c('rate', paste0('rate', c('_se', '_lower', '_upper'))) := .SD * per, .SDcols = c('mean', paste0('mean_',c('se', 'lower', 'upper')))]
         res.metrics[variable %in% unique(res.metrics.prop$variable), rate_per := per]
-        res.metrics[variable %in% unique(res.metrics.prop$variable), c("se", "lower", "upper") := lapply(.SD, function(x){x*per}), .SDcols = c("se", "lower", "upper")]
-        metrics <- c(metrics, "rate_per")
-      } else{res.metrics[, rate := NA]}
+      } else{res.metrics[, c("rate", paste0('rate', c('_per', '_lower', '_upper', '_se'))) := NA]}
 
   #### CLEAN UP ####
         res <- res.metrics
-        data.table::setcolorder(res, c("variable", "level", "time", setdiff(by, "chi_year"), "median", "mean", "rate", "lower", "upper", "se", "rse", "caution", "total", "obs", "numerator", "denominator", "missing", "missing.prop", "unique.time"))
+        data.table::setcolorder(res, c("variable", "level", "time", setdiff(by, "chi_year"), "median",
+                                       "mean", 'mean_lower', 'mean_upper', 'mean_se', "rse",
+                                       "rate", "rate_per", "rate_lower", "rate_upper", "rate_se",
+                                       "total", "obs", "numerator", "denominator", "missing", "missing.prop", "unique.time"))
 
     # Sort / order results
       data.table::setorder(res, variable, level, time)
 
-    # drop columns no longer needed
-        metrics <- c(metrics, "time", "caution", "suppression")
-        if(length(opts[!opts %in% metrics]) >0){
-          suppressWarnings(res[, opts[!opts %in% metrics] := NULL])
-        }
 
+    # identify vars to be returned
+      return.vars.start <- c("variable", "level", "time", by)
+      return.vars.end <- c("obs", "numerator", "denominator", "missing", "unique.time")
+      return.vars.middle <- c()
+      if("mean" %in% metrics){
+        return.vars.middle <- c(return.vars.middle, "mean", paste0('mean', c('_se', '_lower', '_upper')))
+      }
+      if("rate" %in% metrics){
+        return.vars.middle <- c(return.vars.middle, "rate", paste0('rate', c('_per', '_se', '_lower', '_upper')))
+      }
+      for(i in c("median", "rse", "missing.prop", "ndistinct", "total")){
+        if(i %in% metrics){return.vars.middle <- c(return.vars.middle, i)}
+      }
+
+      return.vars <- c(return.vars.start, return.vars.middle, return.vars.end)
+
+    # drop columns no longer needed
+      res <- res[, ..return.vars]
 
   #### CLOSE ####
   return(res)

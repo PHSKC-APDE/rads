@@ -75,33 +75,13 @@ test_that('Check metrics',{
           expect_equal( calc(dt, metrics = c("rate"), what = c("birth_weight_grams"))$rate,  # should be NA when not binary
                         as.numeric(NA) )
           expect_equal( round2(calc(dt, metrics = c("rate"), what = c("kotelchuck"))$rate, 3),  # should be NA when not binary
-                        round2(1000*mean(dt$kotelchuck, na.rm = T), 3) ) # when select rate, default is per 1000
+                        round2(1*mean(dt$kotelchuck, na.rm = T), 3) ) # when select rate, default is per 1
         # check rate_per
           expect_equal( round2(calc(dt, metrics = c("rate"), per = 10, what = c("kotelchuck"))$rate, 3),
                         round2(10*mean(dt$kotelchuck, na.rm = T), 3) )
           expect_equal( calc(dt, metrics = c("rate"), per = 10, what = c("kotelchuck"))$rate_per,
                         10 )
-        # check se
-          expect_equal( round2(calc(dt, metrics = c("se"), what = c("birth_weight_grams"))$se, 4),
-                        round2(sd(dt$birth_weight_grams, na.rm = T) / sqrt(nrow(dt[!is.na(birth_weight_grams)])), 4) )
-        # check lower
-          expect_equal( round2(calc(dt, metrics = c("lower"), what = c("birth_weight_grams"))$lower, 3),
-                        ifelse(nrow(dt[!is.na(birth_weight_grams)]) > 30,
-                          round2(mean(dt$birth_weight_grams, na.rm = T) -
-                                   qnorm(0.975)*sd(dt$birth_weight_grams, na.rm = T) / sqrt(nrow(dt[!is.na(birth_weight_grams)])), 3),
-                          round2(mean(dt$birth_weight_grams, na.rm = T) -
-                                   qt(0.975,df=nrow(dt[!is.na(birth_weight_grams)])-1)*sd(dt$birth_weight_grams, na.rm = T) / sqrt(nrow(dt[!is.na(birth_weight_grams)])), 3)
-                          )
-                        )
-          # check upper
-          expect_equal( round2(calc(dt, metrics = c("upper"), what = c("birth_weight_grams"))$upper, 3),
-                        ifelse(nrow(dt[!is.na(birth_weight_grams)]) > 30,
-                               round2(mean(dt$birth_weight_grams, na.rm = T) +
-                                        qnorm(0.975)*sd(dt$birth_weight_grams, na.rm = T) / sqrt(nrow(dt[!is.na(birth_weight_grams)])), 3),
-                               round2(mean(dt$birth_weight_grams, na.rm = T) +
-                                        qt(0.975,df=nrow(dt[!is.na(birth_weight_grams)])-1)*sd(dt$birth_weight_grams, na.rm = T) / sqrt(nrow(dt[!is.na(birth_weight_grams)])), 3)
-                        )
-                      )
+
         # check rse
           expect_equal( round2(calc(dt, metrics = c("mean", "se", "rse"), what = c("birth_weight_grams"))$rse, 4),
                         round2( (sd(dt$birth_weight_grams, na.rm = T) / sqrt(nrow(dt[!is.na(birth_weight_grams)]))
@@ -128,7 +108,7 @@ test_that('Check metrics',{
 
 test_that('Check per',{
   expect_equal( round2(calc(dt, metrics = c("rate"), per = 1000, what = c("kotelchuck"))$rate, 3),
-                round2(1000*mean(dt$kotelchuck, na.rm = T), 3) ) # when select rate, default is per 1000
+                round2(1000*mean(dt$kotelchuck, na.rm = T), 3) )
   expect_equal( round2(calc(dt, metrics = c("rate"), per = 10, what = c("kotelchuck"))$rate, 3),
                 round2(10*mean(dt$kotelchuck, na.rm = T), 3) )
   expect_equal( calc(dt, metrics = c("rate"), per = 10, what = c("kotelchuck"))$rate_per,
