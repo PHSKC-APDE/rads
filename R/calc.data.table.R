@@ -227,13 +227,6 @@ calc.data.table = function(ph.data,
     # drop columns no longer needed
       res <- res[, ..return.vars]
 
-    # drop columns no longer needed
-        # metrics <- c(metrics, "time")
-        # if(length(opts[!opts %in% metrics]) >0){
-        #   suppressWarnings(res[, opts[!opts %in% metrics] := NULL])
-        # }
-
-
   #### CLOSE ####
   return(res)
 
