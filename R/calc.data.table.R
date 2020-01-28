@@ -199,7 +199,7 @@ calc.data.table = function(ph.data,
 
   #### CLEAN UP ####
         res <- res.metrics
-        data.table::setcolorder(res, c("variable", "level", "time", setdiff(by, "chi_year"), "median",
+        data.table::setcolorder(res, c("variable", "level", "time", setdiff(by, time_var), "median",
                                        "mean", 'mean_lower', 'mean_upper', 'mean_se', "rse",
                                        "rate", "rate_per", "rate_lower", "rate_upper", "rate_se",
                                        "total", "obs", "numerator", "denominator", "missing", "missing.prop", "unique.time"))
