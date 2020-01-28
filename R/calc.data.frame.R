@@ -2,7 +2,7 @@
 #' @importFrom data.table copy data.table rbindlist tstrsplit .N "%like%"
 #' @importFrom stats median na.omit prop.test qnorm qt var na.omit
 #' @export
-calc.data.table = function(ph.data,
+calc.data.frame = function(ph.data,
                            what,
                            ...,
                            by = NULL,
