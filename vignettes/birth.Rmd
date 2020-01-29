@@ -67,7 +67,7 @@ head(birth)
 ```{r}
 args(calc)
 ```
-This is because calc is a front end for two engines: [`calc.data.table`](https://github.com/PHSKC-APDE/rads/blob/master/R/calc.data.table.R) for record level data & [`calc.tbl_svy`](https://github.com/PHSKC-APDE/rads/blob/master/R/calc.tbl_svy.R) for survey data. The good news is that you can ignore this and use the following standard set of arguments:
+This is because calc is a front end for two engines: [`calc.data.frame`](https://github.com/PHSKC-APDE/rads/blob/master/R/calc.data.frame.R) for record level data & [`calc.tbl_svy`](https://github.com/PHSKC-APDE/rads/blob/master/R/calc.tbl_svy.R) for survey data. The good news is that you can ignore this and use the following standard set of arguments:
 
 1) `ph.data` <- the name of the data.table or survey object that you want to analyze. In our case, `birth`.
 2) `what` <- a character vector of the variables for which you want to calculate the metrics. E.g., `what = c("preterm")`
