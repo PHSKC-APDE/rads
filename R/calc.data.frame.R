@@ -16,8 +16,8 @@ calc.data.frame = function(ph.data,
   #global variables used by data.table declared as NULL here to play nice with devtools::check()
   se <- rse <- rate <- rate_per <- level <- time <- variable <- NULL
 
-  # copy data.table to prevent changing the underlying data
-  temp.dt <- data.table::copy(ph.data)
+  # copy data.table to prevent changing the underlying data, also sets copy as class == data.table
+  temp.dt <- data.table::setDT(copy(ph.data))
 
   #### VALIDATION ####
     #validate 'what'
