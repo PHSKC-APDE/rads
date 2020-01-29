@@ -8,7 +8,7 @@
 \usage{
 calc(ph.data, ...)
 
-\method{calc}{data.table}(
+\method{calc}{data.frame}(
   ph.data,
   what,
   ...,
