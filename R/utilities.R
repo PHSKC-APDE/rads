@@ -102,9 +102,8 @@ substrRight <- function(x, x.start, x.stop){
 #'
 #' @export
 #' @return data.table comprised of the original data.table and two additional columns ... 'significance' and 'comparison_with_kc' (or alternatively specified name)
-chi_compare <- function(orig,
-                        merge.by = c("indicator_key", "year"),
-                        compare.name = "comparison_with_kc"){
+chi_compare_kc <- function(orig,
+                        new.col.name = "comparison_with_kc"){
 
   #Bindings for data.table/check global variables
   cat1_varname <- result <- comp.result <- lower_bound <- comp.upper_bound <- upper_bound <- comp.lower_bound <- significance <- NULL
@@ -112,22 +111,26 @@ chi_compare <- function(orig,
   data.table::setDT(orig)
 
   #Copy & subset comparator data
-  comparator <- orig[cat1_varname=="chi_geo_kc", c("indicator_key", "year", "result", "lower_bound", "upper_bound")]
+  orig <- copy(chi)
+  data.table::setDT(orig)
+
+  #Copy & subset comparator data
+  comparator <- orig[cat1=="King County" & tab!="crosstabs", c("tab", "indicator_key", "year", "result", "lower_bound", "upper_bound")]
   data.table::setnames(comparator, c("result", "lower_bound", "upper_bound"), c("comp.result", "comp.lower_bound", "comp.upper_bound"))
 
   #Merge comparator data onto all other data
   orig <- merge(orig, comparator, by=merge.by, all.x = TRUE, all.y = TRUE)
 
   #Compare estimates with comparator
-  orig[result == comp.result, paste0(compare.name) := "no different"]
-  orig[result > comp.result, paste0(compare.name) := "higher"]
-  orig[result < comp.result, paste0(compare.name) := "lower"]
+  orig[result == comp.result, paste0(new.col.name) := "no different"]
+  orig[result > comp.result, paste0(new.col.name) := "higher"]
+  orig[result < comp.result, paste0(new.col.name) := "lower"]
 
   #According to APDE protocol, we check for overlapping CI rather than SE and Z scores
   orig[(lower_bound > comp.upper_bound) | (upper_bound < comp.lower_bound), significance := "*"]
 
   #Keep comparison only if statistically significant
-  orig[is.na(significance), paste0(compare.name) := "no different"]
+  orig[is.na(significance), paste0(new.col.name) := "no different"]
 
   #Drop KC level estimates that were just used for the comparisons
   orig[, c("comp.result", "comp.upper_bound", "comp.lower_bound") := NULL]
