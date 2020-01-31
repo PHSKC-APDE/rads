@@ -3,7 +3,7 @@
 S3method(calc,data.frame)
 S3method(calc,tbl_svy)
 export(calc)
-export(chi_compare)
+export(chi_compare_kc)
 export(digits)
 export(format_time)
 export(get_data)
