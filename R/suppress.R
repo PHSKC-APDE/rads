@@ -34,7 +34,7 @@
 #'
 
 suppress <- function(sup_data = NULL,
-                     suppress_range = c(0, 10) ){
+                     suppress_range = c(0, 9) ){
 
   #visible bindings for data.table
   numerator <- suppression <- NULL
@@ -44,24 +44,30 @@ suppress <- function(sup_data = NULL,
         stop("You must specify a dataset (i.e., 'sup_data' must be defined)")
       }
 
-      if(is.data.frame(sup_data)){
-        setDT(sup_data)
-      } else {
-        stop(paste0("<{sup_data}> must be the name of a data.frame or data.table."))
+      if(!is.data.table(sup_data)){
+          if(is.data.frame(sup_data)){
+            setDT(sup_data)
+          } else {
+            stop(paste0("<{sup_data}> must be the name of a data.frame or data.table."))
+          }
       }
 
 
   #validate 'suppress_range'
-      if(is.null(suppress_range)){suppress_range <- c(0, 10)}
+      if(is.null(suppress_range)){suppress_range <- c(0, 9)}
 
 
       if(!is.null(suppress_range) &
           (length(suppress_range) != 2 | suppress_range[1] %% 1 != 0 | suppress_range[2] %% 1 != 0 | suppress_range[1] < 0 | suppress_range[2] < 0) ){
-        stop("<suppress_range> must be comprised of two non-negative integers (i.e., 'c(0, 10)'")}
+        stop("<suppress_range> must be comprised of two non-negative integers (i.e., 'c(0, 9)'")}
 
 
   #apply suppression
-      sup_metrics <- intersect(names(sup_data), c("mean", "median", "sum", "rate", "lower", "upper", "se", "rse", "numerator", "denominator", "proportion"))
+      sup_metrics <- intersect(names(sup_data), c("result", "lower_bound", "upper_bound", "se", "rse",
+                                                  "mean", "mean_se", "mean_lower", "mean_upper",
+                                                  "rate", "rate_se", "rate_lower", "rate_upper",
+                                                  "total", "total_se", "total_lower", "total_upper",
+                                                  "median", "numerator", "denominator", "proportion"))
       sup_data[numerator %in% suppress_range[1]:suppress_range[2], suppression := "^"]
       sup_data[suppression=="^", (sup_metrics) := NA]
 

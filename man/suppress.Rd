@@ -4,7 +4,7 @@
 \alias{suppress}
 \title{Suppress data according to APDE standards or custom requests & adding caution flag for high RSE}
 \usage{
-suppress(sup_data = NULL, suppress_range = c(0, 10))
+suppress(sup_data = NULL, suppress_range = c(0, 9))
 }
 \arguments{
 \item{sup_data}{a data.table or data.frame. Must contain the data to be suppressed with standard metric names,
