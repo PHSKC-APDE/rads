@@ -115,11 +115,11 @@ chi_compare_kc <- function(orig,
   data.table::setDT(orig)
 
   #Copy & subset comparator data
-  comparator <- orig[cat1=="King County" & tab!="crosstabs", c("tab", "indicator_key", "year", "result", "lower_bound", "upper_bound")]
+  comparator <- orig[cat1=="King County" & tab!="crosstabs", c("indicator_key", "year", "result", "lower_bound", "upper_bound")]
   data.table::setnames(comparator, c("result", "lower_bound", "upper_bound"), c("comp.result", "comp.lower_bound", "comp.upper_bound"))
 
   #Merge comparator data onto all other data
-  orig <- merge(orig, comparator, by=merge.by, all.x = TRUE, all.y = TRUE)
+  orig <- merge(orig, comparator, by=c("indicator_key", "year"), all.x = TRUE, all.y = TRUE)
 
   #Compare estimates with comparator
   orig[result == comp.result, paste0(new.col.name) := "no different"]
