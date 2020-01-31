@@ -136,6 +136,8 @@ get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
   # ascribe class
   class(dat) <- c(class(dat), 'apde_birth')
 
+  setDT(dat) # set it as a data.table again b/c otherwise, ascribing the new class above makes a copy
+
   return(dat)
 }
 
