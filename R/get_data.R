@@ -134,7 +134,7 @@ get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
   sql_clean(dat)
 
   # ascribe class
-  class(svy) <- c(class(svy), 'apde_birth')
+  class(dat) <- c(class(dat), 'apde_birth')
 
   return(dat)
 }
