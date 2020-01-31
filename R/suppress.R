@@ -1,7 +1,7 @@
-#' Suppress data according to APDE standards or custom requests
+#' Suppress data according to APDE standards or custom requests & adding caution flag for high RSE
 #'
 #' #' @description
-#' Defaul suppression is according to APDE/DOH standards (https://www.doh.wa.gov/Portals/1/Documents/1500/SmallNumbers.pdf)
+#' Default suppression is according to APDE/DOH standards (https://www.doh.wa.gov/Portals/1/Documents/1500/SmallNumbers.pdf)
 #' Each dataset may have it's own more stringent standards. When the reference sheet of all suppression guidelines is
 #' made available, this code should be updated to use that resource.
 #'
@@ -61,10 +61,15 @@ suppress <- function(sup_data = NULL,
 
 
   #apply suppression
-        sup_metrics <- intersect(names(sup_data), c("mean", "median", "sum", "rate", "lower", "upper", "se", "rse", "numerator", "denominator", "proportion"))
-        sup_data[numerator %in% suppress_range[1]:suppress_range[2], suppression := "^"]
-        sup_data[suppression=="^", (sup_metrics) := NA]
+      sup_metrics <- intersect(names(sup_data), c("mean", "median", "sum", "rate", "lower", "upper", "se", "rse", "numerator", "denominator", "proportion"))
+      sup_data[numerator %in% suppress_range[1]:suppress_range[2], suppression := "^"]
+      sup_data[suppression=="^", (sup_metrics) := NA]
 
+
+  #apply caution flag if possible
+      if("rse" %in% names(sup_data)){
+        sup_data[rse >0.3, caution := "!"]
+      }
 
   return(sup_data)
 

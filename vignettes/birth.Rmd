@@ -18,7 +18,10 @@ You will need to install [R](https://cran.r-project.org/bin/windows/base/), [Rst
 1) Install R and Rstudio the way you would install any other software. 
 2) Install the `devtools` package in R by typing `install.packages("devtools")` in the R console. After successfully installing `devtools`...
 3) Install `apdeRecodes` by typing `devtools::install_github("PHSKC-APDE/apdeRecodes")` in the R console. 
+    * If you received a 404 error rather than a successful installation, it is probably because you need to provide authentication to connect to our private GitHub repository. If you have not created and saved a GitHub PAT (Personal Access Token), please follow the detailed instructions in the [`APDE Training/R` wiki](https://teams.microsoft.com/l/channel/19%3A0735c1c38f4e49aa88c9b18b54105914%40thread.skype/tab%3A%3A9153588c-6c86-433d-8b98-0578f27d4cd1?groupId=a338cf08-e066-48cd-9f4c-cb91fcca199f&tenantId=bae5059a-76f0-49d7-9996-72dfe95d69c7)
+    * After following the instructions above, please try typing the following: `devtools::install_github("PHSKC-APDE/apdeRecodes", auth_token = Sys.getenv("GITHUB_PAT"))`
 4) Install `rads` by typing `devtools::install_github("PHSKC-APDE/rads")` in the R conole. 
+    * Again, if you see a 404 error, try again using authentication, `devtools::install_github("PHSKC-APDE/rads", auth_token = Sys.getenv("GITHUB_PAT"))`
 5) Exit R studio and starting it again. You should now be ready to walk through this vignette. 
 
 ## Getting data
@@ -64,7 +67,7 @@ head(birth)
 ```{r}
 args(calc)
 ```
-This is because calc is a front end for two engines: [`calc.data.table`](https://github.com/PHSKC-APDE/rads/blob/master/R/calc.data.table.R) for record level data & [`calc.tbl_svy`](https://github.com/PHSKC-APDE/rads/blob/master/R/calc.tbl_svy.R) for survey data. The good news is that you can ignore this and use the following standard set of arguments:
+This is because calc is a front end for two engines: [`calc.data.frame`](https://github.com/PHSKC-APDE/rads/blob/master/R/calc.data.frame.R) for record level data & [`calc.tbl_svy`](https://github.com/PHSKC-APDE/rads/blob/master/R/calc.tbl_svy.R) for survey data. The good news is that you can ignore this and use the following standard set of arguments:
 
 1) `ph.data` <- the name of the data.table or survey object that you want to analyze. In our case, `birth`.
 2) `what` <- a character vector of the variables for which you want to calculate the metrics. E.g., `what = c("preterm")`

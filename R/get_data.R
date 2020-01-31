@@ -98,7 +98,7 @@ get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcf
 #' @param year Numeric vector. Identifies which years of data should be pulled
 #' @param kingco logical. Return dataset for analyses where mother's residence is in King County only.
 #'
-#' @return dataset either data.table (adminstrative data) for further analysis/tabulation
+#' @return A data.table for further analysis/tabulation
 #'
 #' @importFrom data.table ':=' .SD setcolorder
 #' @importFrom odbc dbConnect odbc dbDisconnect
@@ -131,7 +131,67 @@ get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
   odbc::dbDisconnect(con)
 
   # Format string variables due to SQL import quirks
-  sql_clean(dat) 
+  sql_clean(dat)
+
+  # ascribe class
+  class(dat) <- c(class(dat), 'apde_birth')
 
   return(dat)
 }
+
+
+#' Get BSK microdata from storage.
+#'
+#' @param cols Character vector of length >=1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
+#'     See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.
+#' @param year Numeric vector. Identifies which years of data should be pulled
+#'
+#' @return An R survey object for further analysis/tabulation using survey commands
+#'
+#' @importFrom data.table ':=' .SD setcolorder
+#' @importFrom odbc dbConnect odbc dbDisconnect
+#' @importFrom glue glue_sql
+#' @importFrom DBI dbGetQuery
+#'
+#' @importFrom srvyr %>% as_survey_design filter select
+#' @importFrom haven read_dta
+#' @importFrom srvyr as_survey_design filter select
+#' @importFrom rlang sym
+
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#'  get_data_bsk(cols = NA, year = c(2017))
+#' }
+get_data_bsk <- function(cols = NA, year = c(2017)){
+
+  # pull columns and years from sQL
+  ifelse(is.na(cols), cols <- "*", cols <- paste(c(cols, "w_rwt_scaled", "c_id", "w_region"), collapse=", "))
+
+  query.string <- glue::glue_sql ("SELECT ",  cols, " FROM [PH_APDEStore].[stage].[bskhs_2017_2019]
+                                  WHERE w_rwt_scaled IS NOT NULL AND year IN (",  paste(year, collapse=", "), ")")
+
+
+  con <- odbc::dbConnect(odbc::odbc(),
+                         Driver = "SQL Server",
+                         Server = "KCITSQLPRPDBM50",
+                         Database = "PH_APDEStore")
+
+  dat <- DBI::dbGetQuery(con, query.string)
+  odbc::dbDisconnect(con)
+
+  # format string variables due to SQL import quirks
+  sql_clean(dat)
+
+  # create the survey object
+  svy <- srvyr::as_survey_design(dat, ids = c_id, strata = w_region, weights = w_rwt_scaled, nest = T)
+
+  # ascribe class
+  class(svy) <- c(class(svy), 'apde_bsk')
+
+  return(svy)
+}
+
+
