@@ -11,6 +11,7 @@ calc.data.frame = function(ph.data,
                            win = NULL,
                            time_var = "chi_year",
                            proportion = FALSE,
+                           fancy_time = TRUE,
                            verbose = FALSE){
 
   #global variables used by data.table declared as NULL here to play nice with devtools::check()
@@ -105,17 +106,25 @@ calc.data.frame = function(ph.data,
         }
       }
 
+    # validate 'fancy_time'
+      if(!is.logical(fancy_time)){
+        stop("'fancy_time' must be specified as a logical (i.e., TRUE, T, FALSE, or F)")
+      }
+
   #### CREATE CALC FUNCTIONS ####
     #subset temp.dt to only the rows needed
       if(!is.null(where)){
         temp.dt <- temp.dt[eval(where), ]
       }
 
+    #select type of time formatting
+      ifelse(fancy_time==T, time_format <- format_time, time_format <- format_time_simple)
+
     # function to calculate metrics
       calc_metrics <- function(X, DT){
         . <- NULL
         DT[, .(
-          time = format_time(get(time_var)),
+          time = time_format(get(time_var)),
           variable = as.character(X),
           mean = mean(get(X), na.rm = T),
           median = as.numeric(stats::median(get(X), na.rm = T)),
