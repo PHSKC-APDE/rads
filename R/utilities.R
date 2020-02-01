@@ -177,6 +177,30 @@ format_time <- function(x){
 
 }
 
+#' Format a vector of time into a simple human readable chunk
+#' @param x numeric
+#' @export
+#' @return character vector
+#'
+#' @examples
+#' format_time_simple(c(1:5, 10, 12, 24, 25))
+#'
+format_time_simple <- function(x){
+
+  #get the unique values
+    x <- sort(unique(x))
+
+  # format into string
+    if(max(x, na.rm = T) == min(x, na.rm = T)){
+      ret <- paste0(x)
+    } else{
+      ret <- paste0(min(x, na.rm = T), "-", max(x, na.rm = T))
+    }
+
+  return(ret)
+
+}
+
 
 #' Clean string columns read from SQL
 #' @param dat name of data.table
