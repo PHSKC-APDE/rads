@@ -18,6 +18,7 @@ calc(ph.data, ...)
   win = NULL,
   time_var = "chi_year",
   proportion = FALSE,
+  fancy_time = TRUE,
   verbose = FALSE
 )
 
