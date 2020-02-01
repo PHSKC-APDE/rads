@@ -118,7 +118,7 @@ calc.data.frame = function(ph.data,
       }
 
     #select type of time formatting
-      ifelse(fancy_time==T, time_format <- format_time, time_format <- format_time_simple)
+      if(fancy_time==T){time_format <- format_time}else{time_format <- format_time_simple}
 
     # function to calculate metrics
       calc_metrics <- function(X, DT){

@@ -122,4 +122,11 @@ test_that('Check win: rolling averages, sums, etc.',{
                 round2(mean(dt[chi_year %in% c(2013:2015)]$birth_weight_grams, na.rm = T), 3))
 })
 
-
+test_that('Check fancy_time',{
+  expect_equal( calc(dt, metrics = c("mean"), chi_year = c(2008:2011, 2012, 2013, 2015:2018), what = c("kotelchuck"))$time,
+                "2009-2018" )
+  expect_equal( calc(dt, metrics = c("mean"), chi_year = c(2008:2011, 2012, 2013, 2015:2018), what = c("kotelchuck"), fancy_time = T)$time,
+                "2009-2018" )
+  expect_equal( calc(dt, metrics = c("mean"), chi_year = c(2008:2011, 2012, 2013, 2015:2018), what = c("kotelchuck"), fancy_time = F)$time,
+                "2009-2018" )
+})
