@@ -9,7 +9,7 @@ calc.data.frame = function(ph.data,
                            metrics = c('mean', "numerator", "denominator", "missing", "obs"),
                            per = NULL,
                            win = NULL,
-                           time_var = "chi_year",
+                           time_var = NULL,
                            proportion = FALSE,
                            fancy_time = TRUE,
                            verbose = FALSE){
@@ -36,7 +36,6 @@ calc.data.frame = function(ph.data,
         # numeric columns
           numeric.col <- vapply(temp.dt[, ..what], is.numeric, FUN.VALUE=logical(1)) # logical vector
           numeric.col <- setdiff(what[numeric.col], binary.col)
-
 
         # character columns (convert to factors)
           character.col <- vapply(temp.dt[, ..what], is.character, FUN.VALUE=logical(1)) # logical vector
@@ -104,6 +103,18 @@ calc.data.frame = function(ph.data,
         if(win %% 1 != 0){
         stop("If specified, the 'win' argument must be an integer")
         }
+      }
+
+    #validate 'time_var'
+      if(is.null(time_var)){
+        stop("The 'time_var' must be specified, (e.g., time_var = 'chi_year')")
+      }
+      if(!is.null(time_var) & !time_var %in% names(dt)){
+        stop("You have specified a 'time_var' that does not exist in ph.data.
+             Please check your spelling and try again.")
+      }
+      if(!is.null(time_var) & eval(parse(text = paste0("is.integer(ph.data$", time_var, ")") ))==FALSE ){
+       stop("The specified 'time_var' must be of type integer.")
       }
 
     # validate 'fancy_time'
