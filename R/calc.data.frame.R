@@ -109,11 +109,11 @@ calc.data.frame = function(ph.data,
       if(is.null(time_var)){
         stop("The 'time_var' must be specified, (e.g., time_var = 'chi_year')")
       }
-      if(!is.null(time_var) & !time_var %in% names(dt)){
-        stop("You have specified a 'time_var' that does not exist in ph.data.
+      if(!is.null(time_var) & !time_var %in% names(temp.dt)){
+        stop("You have specified a 'time_var' that does not exist in 'ph.data'.
              Please check your spelling and try again.")
       }
-      if(!is.null(time_var) & eval(parse(text = paste0("is.integer(ph.data$", time_var, ")") ))==FALSE ){
+      if(!is.null(time_var) & eval(parse(text = paste0("is.integer(temp.dt$", time_var, ")") ))==FALSE ){
        stop("The specified 'time_var' must be of type integer.")
       }
 
