@@ -61,6 +61,20 @@ record_metrics = function(){
   c('mean', 'median', 'obs', 'rate', 'rse', 'numerator', 'denominator', 'missing', 'missing.prop', 'total', 'ndistinct')
 }
 
+
+
+#' List of standard CHI / Tableau Ready columns
+#' @rdname metrics
+#' @export
+chi_cols = function(){
+  c("data_source", "indicator_key", "tab", "year", "cat1", "cat1_group", "cat1_group_alias", "cat1_varname","cat2",
+    "cat2_group", "cat2_group_alias", "cat2_varname", "result", "lower_bound", "upper_bound", "se", "rse",
+    "comparison_with_kc", "time_trends", "significance", "caution", "suppression", "numerator", "denominator", "chi",
+    "source_date", "run_date")
+}
+
+
+
 #' Improved rounding function
 #' @param x values to be rounded
 #' @param n number of digits
@@ -74,6 +88,7 @@ round2 = function(x, n = 0) {
   z = z/10^n
   z*posneg
 }
+
 
 
 #' Substring selection from the right to complement base R substr
