@@ -54,13 +54,15 @@ test_that('Multi Grouping with filtering and multiple what variables',{
                        metrics = 'mean', time_var = NULL)[, level := NULL]
   man1 = sur %>% filter(cname == 'Los Angeles') %>% group_by(stype, cname) %>% summarize(mean = survey_mean(api00)) %>% setDT
   man2 = sur %>% filter(cname == 'Los Angeles') %>% group_by(stype, cname) %>% summarize(mean = survey_mean(api99)) %>% setDT
-  man = rbind(man1, man2)[, .(stype, cname, mean, variable = c(rep('api00', 3), rep('api99', 3)))]
+  man = rbind(man1, man2)[, .(stype, cname, mean,mean_se, variable = c(rep('api00', 3), rep('api99', 3)))]
+  st[, c('mean_lower', 'mean_upper') := NULL]
+  setcolorder(man, names(st))
   expect_equal(st, man)
 })
 #
 test_that('Proportion toggle- on',{
   sur = sur %>% mutate(schwide = as.numeric(sch.wide == 'Yes'))
-  st = calc(sur, 'schwide', metrics = 'mean_lower', proportion = T, time_var = NULL)
+  st = calc(sur, 'schwide', metrics = 'mean', proportion = T, time_var = NULL)
   man = sur %>% summarize(blah = survey_mean(schwide, vartype = 'ci', proportion = T)) %>% setDT
 
   #without proportion
@@ -70,8 +72,8 @@ test_that('Proportion toggle- on',{
 #
 test_that('Proportion toggle changes result',{
   sur = sur %>% mutate(schwide = as.numeric(sch.wide == 'Yes'))
-  a = calc(sur, 'schwide', metrics = 'mean_lower', proportion = T, time_var = NULL)[, mean_lower]
-  b = calc(sur, 'schwide', metrics = 'mean_lower', proportion = F, time_var = NULL)[, mean_lower]
+  a = calc(sur, 'schwide', metrics = 'mean', proportion = T, time_var = NULL)[, mean_lower]
+  b = calc(sur, 'schwide', metrics = 'mean', proportion = F, time_var = NULL)[, mean_lower]
 
   expect_true(a != b)
 
@@ -121,7 +123,7 @@ test_that('Invalid input for by',{
 })
 #
 test_that('Invalid input for metric',{
-  expect_error(calc(sur, 'api00', metrics = 'turtles', time_var = NULL), 'should be one of')
+  expect_error(calc(sur, 'api00', metrics = 'turtles', time_var = NULL), 'Invalid metrics detected: turtles')
 })
 #
 
@@ -152,7 +154,7 @@ test_that('Numerator and denominator calculations account for NAs',{
 
 })
 
-test_that('survey design and survey rep design are equal'{
+test_that('survey design and survey rep design are equal',{
 
   s1 <- as_survey_design(svydesign(id=~dnum, weights=~pw, data=apiclus1, fpc=~fpc))
   s2 <- as_survey_rep(as.svrepdesign(s1))
@@ -168,23 +170,47 @@ test_that('survey design and survey rep design are equal'{
 
 test_that('Multiple by conditions',{
 
+  apiclus1$highenroll = apiclus1$enroll>median(apiclus1$enroll)
+  apiclus1$highmeals = apiclus1$meals>median(apiclus1$meals)
+  apiclus1$both_bin = apiclus1$both == 'Yes'
   s1 <- as_survey_design(svydesign(id=~dnum, weights=~pw, data=apiclus1, fpc=~fpc))
   s2 <- as_survey_rep(as.svrepdesign(s1))
 
-  a1 = calc(s1, 'stype', by = c('both', 'dname'), metrics = c('mean', 'numerator', 'denominator'))
-  a2 = calc(s2, 'stype', by = c('both', 'dname'), metrics = c('mean', 'numerator', 'denominator'))
+  a1 = calc(s1, 'both', by = c('highenroll', 'highmeals'), metrics = c('mean', 'numerator', 'denominator'))
+  a2 = calc(s2, 'both', by = c('highenroll', 'highmeals'), metrics = c('mean', 'numerator', 'denominator'))
 
   #confirm survey design and survey rep are the same
-  expect_equal(a1,a2)
+  expect_equal(a1[, .(variable, level, highenroll, highmeals, mean, numerator, denominator)],a2[,.(variable, level, highenroll, highmeals, mean, numerator, denominator)])
 
-  r1 = svyby(~stype, ~both + dname, s1, svymean)
+  r1 = svyby(~both, ~highenroll + highmeals, s1, svymean)
+  ci = confint(r1)
   r1 = setDT(as.data.frame(r1))
   r1[, grep('se.', names(r1), fixed = T) := NULL]
-  r1 = melt(r1, id.vars = c('both', 'dname'), measure.vars = paste0('stype',c('E', 'H', 'M')), variable.factor = F, variable.name = 'level')
-  r1[, level := gsub('stype', '', level)]
-  r1 = merge(r1, a1, by = c('level', 'both', 'dname'), all.x = T)
+  r1 = melt(r1, id.vars = c('highenroll', 'highmeals'), measure.vars = paste0('both',c('No', 'Yes')), variable.factor = F, variable.name = 'level')
+  r1[, level := gsub('both', '', level)]
+  r1 = cbind(r1, ci)
+
+  r1 = merge(r1, a1, by = c('level', 'highenroll', 'highmeals'), all.x = T)
 
   expect_equal(r1[,value], r1[, mean])
+
+})
+
+test_that('Finding the mean uses svyciprop', {
+  s1 <- as_survey_design(svydesign(id=~dnum, weights=~pw, data=apiclus1, fpc=~fpc))
+  s1 <- s1 %>% mutate(level = stype == 'M')
+  s1 <- s1 %>% mutate(blah = as.numeric(level))
+
+  #NOTE: confint(svyciprop(~level, s1)) and confint(svyby(~level, 1, s1, svyciprop)) don't give the same answers.
+  #not sure why
+
+  a1 = calc(s1, what = c('level', 'blah'), metrics = c('mean', 'numerator', 'denominator'), proportion = T)
+  a2 = svyciprop(~as.numeric(level), s1)
+  a3 = svyby(~level, 1, s1, svyciprop)
+
+  #the two different (svyby and normal approaches work)
+  expect_equal(c(as.numeric(a2), confint(a2)), unname(unlist(a1[variable == 'blah', .(mean, mean_lower, mean_upper)])))
+  expect_equal((c(a3[1,'level'], as.numeric(confint(a3)))), unname(unlist(a1[level == TRUE, .(mean, mean_lower, mean_upper)])))
 
 })
 

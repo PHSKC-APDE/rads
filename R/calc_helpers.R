@@ -4,7 +4,6 @@
 #' @param what character or symbol.
 #' @param by character or symbol vector
 #' @param time_var character or symbol
-#'
 #' @importFrom survey svymean svytotal
 #' @importFrom data.table melt setnames
 #' @importFrom srvyr filter group_by %>% select summarize unweighted
@@ -12,6 +11,8 @@
 #' @importFrom data.table ":=" setnames
 #' @importFrom rlang quos !! !!! syms
 #' @importFrom methods as
+#'
+#' Under the hood, \code{\link[survey]{svyciprop}} and \code{\link[survey]{svytotal}} do the heavy lifting.
 #'
 calc_factor <- function(svy, what, by, time_var){
   # what <- enquo(what)
@@ -21,12 +22,14 @@ calc_factor <- function(svy, what, by, time_var){
 
   #create a formula to tabulate over (what the survey package requires)
   form = as.formula(paste0('~', as.character(what)))
+  rmholdby = F
   if(!is.null(by)){
     bys = as.formula(paste0('~', paste(as.character(by),collapse = '+')))
   }else{
     svy = svy %>% mutate(holdby = 1) %>% group_by(holdby)
     bys = ~holdby
     by = 'holdby'
+    rmholdby = T
   }
 
   #have to use svymean here because svyciprop doesn't neatly handle non-binary inputs
@@ -35,54 +38,65 @@ calc_factor <- function(svy, what, by, time_var){
   res1 <- lapply(c('mean', 'total'), function(x){
 
     if(x == 'mean'){
-      f <- survey::svymean
+      #for each value in `what`, calculte the survey ci prop for that group
+      uq_cats = na.omit(unique(svy$variables[[as.character(what)]]))
+
+      imed <- lapply(uq_cats, function(ccc){
+          ccc = as.character(ccc)
+          svy <- srvyr::mutate(svy, `__dv__` = !!what == !!ccc)
+          r = svyby(as.formula(paste0("~`__dv__`")), bys, svy, svyciprop, na.rm = T)
+          r = cbind(r, confint(r))
+          names(r)[(length(names(r))-3):length(names(r))] = c('mean' ,'mean_se', 'mean_lower', 'mean_upper')
+          r$level = ccc
+          return(r)
+      })
+      imed = rbindlist(imed)
+
     }else{
-      f <- survey::svytotal
+      #calculate the results
+      imed <- survey::svyby(form, bys, svy, na.rm = T, FUN = survey::svytotal)
+      cis = confint(imed)
+
+      #format imed
+      imed = data.table::as.data.table(imed)
+      means = grep(what, names(imed), value = T)
+
+      if(inherits(svy, 'svyrep.design')){
+        ses = paste0('se', seq(means))#possible names
+      }else{
+        ses = means[substr(means, 1,3) == 'se.']
+        means = setdiff(means,ses)
+        data.table::setnames(imed, ses, paste0('se', seq(ses)))
+        ses = paste0('se', seq(ses))
+      }
+
+      means = means[substr(means, 1, nchar(what)) == what]
+
+      var_vals = substr(means, nchar(as.character(what))+1, nchar(means))
+
+      imed = data.table::melt(imed,
+                  id.vars = as.character(by),
+                  measure.vars = list(means, ses),
+                  value.name = c('mean', 'se'), variable.factor = F)
+
+      imed[, as.character(what) := var_vals[as.numeric(variable)]]
+      imed[, c('variable') := NULL]
+
+      #create label to merge with the cis
+      imed[, `____label____` := do.call(paste, c(.SD, sep = '.')), .SDcols = as.character(by)]
+      imed[, `____label____` := paste0(`____label____`, ':', as.character(what), get(as.character(what)))]
+
+      #format cis
+      cis = data.table(lower = cis[,1], upper = cis[,2], label = rownames(cis))
+
+      #merge on cis
+      imed = merge(imed, cis, all.x = T, by.x = '____label____', by.y = 'label')
+      imed[, `____label____` := NULL]
+
+      data.table::setnames(imed, as.character(what), 'level')
+
+      data.table::setnames(imed, c('mean', 'se', 'lower', 'upper'), c(x, paste0(x, c('_se', '_lower', '_upper'))))
     }
-    #calculate the results
-    imed <- survey::svyby(form, bys, svy, na.rm = T, FUN = f)
-    cis = confint(imed)
-
-    #format imed
-    imed = data.table::as.data.table(imed)
-    means = grep(what, names(imed), value = T)
-
-    if(inherits(svy, 'svyrep.design')){
-      ses = paste0('se', seq(means))#possible names
-    }else{
-      ses = means[substr(means, 1,3) == 'se.']
-      means = setdiff(means,ses)
-      data.table::setnames(imed, ses, paste0('se', seq(ses)))
-      ses = paste0('se', seq(ses))
-    }
-
-    means = means[substr(means, 1, nchar(what)) == what]
-
-    var_vals = substr(means, nchar(as.character(what))+1, nchar(means))
-
-    imed = data.table::melt(imed,
-                id.vars = as.character(by),
-                measure.vars = list(means, ses),
-                value.name = c('mean', 'se'), variable.factor = F)
-
-    imed[, as.character(what) := var_vals[as.numeric(variable)]]
-    imed[, c('variable') := NULL]
-
-    #create label to merge with the cis
-    imed[, `____label____` := do.call(paste, c(.SD, sep = '.')), .SDcols = as.character(by)]
-    imed[, `____label____` := paste0(`____label____`, ':', as.character(what), get(as.character(what)))]
-
-    #format cis
-    cis = data.table(lower = cis[,1], upper = cis[,2], label = rownames(cis))
-
-    #merge on cis
-    imed = merge(imed, cis, all.x = T, by.x = '____label____', by.y = 'label')
-    imed[, `____label____` := NULL]
-
-    data.table::setnames(imed, as.character(what), 'level')
-
-    data.table::setnames(imed, c('mean', 'se', 'lower', 'upper'), c(x, paste0(x, c('_se', '_lower', '_upper'))))
-
 
     return(imed)
 
@@ -113,6 +127,10 @@ calc_factor <- function(svy, what, by, time_var){
   res2 = res2[!is.na(get(as.character(what)))]
   data.table::setnames(res2, as.character(what), 'level')
   res = merge(res1,res2, all.x = T, by = c('level', as.character(by)))
+
+  if(rmholdby){
+    res[, holdby := NULL]
+  }
 
   return(res)
 
