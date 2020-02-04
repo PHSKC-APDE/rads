@@ -37,7 +37,7 @@ list_dataset_columns <- function(dataset, analytic_only = F){
 }
 
 
-#' List available metrics depending on type of dataset
+#' List ofavailable metrics
 #' @return character vector. A vector of the available metrics for calculation.
 #' @name metrics
 NULL
@@ -46,12 +46,12 @@ NULL
 #' @export
 survey_metrics = function(){
   #c('mean', 'se', 'lower', 'upper', 'numerator', 'denominator', 'total', 'total_se', 'missing', 'rse', 'missing.prop', 'ndistinct')
-  c('total', 'total_se', 'total_lower', 'total_upper',
-    'mean', 'mean_se', 'mean_lower', 'mean_upper', 'rse',
+  c('total', #'total_se', 'total_lower', 'total_upper'
+    'mean', 'rse', #'mean_se', 'mean_lower', 'mean_upper',
     'numerator', 'denominator', 'obs', 'median',
     'unique.time', 'ndistinct',
     'missing', 'missing.prop',
-    'rate', 'rate_per', 'rate_se', 'rate_lower', 'rate_upper')
+    'rate') #, 'rate_per', 'rate_se', 'rate_lower', 'rate_upper')
 }
 
 #' List of available metrics for calculation

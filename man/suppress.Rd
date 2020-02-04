@@ -2,7 +2,7 @@
 % Please edit documentation in R/suppress.R
 \name{suppress}
 \alias{suppress}
-\title{Suppress data according to APDE standards or custom requests}
+\title{Suppress data according to APDE standards or custom requests & adding caution flag for high RSE}
 \usage{
 suppress(sup_data = NULL, suppress_range = c(0, 10))
 }
@@ -17,7 +17,7 @@ a data.table with suppression applied to CHI standard columns.
 }
 \description{
 #' @description
-Defaul suppression is according to APDE/DOH standards (https://www.doh.wa.gov/Portals/1/Documents/1500/SmallNumbers.pdf)
+Default suppression is according to APDE/DOH standards (https://www.doh.wa.gov/Portals/1/Documents/1500/SmallNumbers.pdf)
 Each dataset may have it's own more stringent standards. When the reference sheet of all suppression guidelines is
 made available, this code should be updated to use that resource.
 }

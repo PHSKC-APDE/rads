@@ -152,4 +152,40 @@ test_that('Numerator and denominator calculations account for NAs',{
 
 })
 
+test_that('survey design and survey rep design are equal'{
+
+  s1 <- as_survey_design(svydesign(id=~dnum, weights=~pw, data=apiclus1, fpc=~fpc))
+  s2 <- as_survey_rep(as.svrepdesign(s1))
+
+  a1 = calc(s1, 'stype', by = 'both', metrics = survey_metrics())
+  a2 = calc(s2, 'stype', by = 'both', metrics = survey_metrics())
+
+  #Epect that the means are equal. Se is different depending on method
+  expect_equal(a1[, .(mean, total, rate, numerator, missing, ndistinct, unique.time, denominator, missing.prop, obs)],
+               a2[, .(mean, total, rate, numerator, missing, ndistinct, unique.time, denominator, missing.prop, obs)])
+
+})
+
+test_that('Multiple by conditions',{
+
+  s1 <- as_survey_design(svydesign(id=~dnum, weights=~pw, data=apiclus1, fpc=~fpc))
+  s2 <- as_survey_rep(as.svrepdesign(s1))
+
+  a1 = calc(s1, 'stype', by = c('both', 'dname'), metrics = c('mean', 'numerator', 'denominator'))
+  a2 = calc(s2, 'stype', by = c('both', 'dname'), metrics = c('mean', 'numerator', 'denominator'))
+
+  #confirm survey design and survey rep are the same
+  expect_equal(a1,a2)
+
+  r1 = svyby(~stype, ~both + dname, s1, svymean)
+  r1 = setDT(as.data.frame(r1))
+  r1[, grep('se.', names(r1), fixed = T) := NULL]
+  r1 = melt(r1, id.vars = c('both', 'dname'), measure.vars = paste0('stype',c('E', 'H', 'M')), variable.factor = F, variable.name = 'level')
+  r1[, level := gsub('stype', '', level)]
+  r1 = merge(r1, a1, by = c('level', 'both', 'dname'), all.x = T)
+
+  expect_equal(r1[,value], r1[, mean])
+
+})
+
 

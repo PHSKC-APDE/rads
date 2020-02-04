@@ -8,14 +8,13 @@ calc.tbl_svy <- function(ph.data,
                          what,
                          ...,
                          by = NULL,
-                         metrics = c('mean', "numerator", "denominator", "missing", "total"),
+                         metrics = survey_metrics(),
                          per = NULL,
                          win = NULL,
-                         time_var = "chi_year",
+                         time_var = NULL,
                          proportion = FALSE,
                          verbose = FALSE){
 
-  #catches
   if(verbose && !missing(per)){
     warning('Argument `per` is not implemented for tbl_svy arguments. It will be ignored')
   }
@@ -65,7 +64,10 @@ calc.tbl_svy <- function(ph.data,
   }
 
   #confirm that metrics are properly specified
-  metrics <- match.arg(metrics, opts, several.ok = T)
+  invalid = setdiff(metrics,opts)
+  if(length(invalid)>0){
+    stop(paste0('Invalid metrics detected: ', paste(invalid, collapse = ','), '.', 'Review the list of available metrics by calling `survey_metrics()`'))
+  }
 
   #subset ph.data to only the columns needed (and rows)
   if(!is.null(where)){
@@ -177,16 +179,24 @@ calc.tbl_svy <- function(ph.data,
   if(!is.null(per)){
     metrics = unique(metrics, c('rate', paste0('rate', c('_se', '_lower', '_upper'))))
   }else{
-    per = 1
+    per = 1L
   }
 
-  res[, c('rate', paste0('rate', c('_se', '_lower', '_upper'))) := .SD * per, .SDcols = c('mean', paste0('mean_',c('se', 'lower', 'upper')))]
-  res[, rate_per := per]
-
-
-  if(length(opts[!opts %in% metrics]) >0){
-    res[, opts[!opts %in% metrics] := NULL]
+  if('rate' %in% metrics){
+    res[, c('rate', paste0('rate', c('_se', '_lower', '_upper'))) := .SD * per, .SDcols = c('mean', paste0('mean_',c('se', 'lower', 'upper')))]
+    res[, rate_per := per]
+    metrics = c(metrics, 'rate_per')
   }
+  #if mean, total or rate are requested, add the se, lower, and upper
+  isect = intersect(metrics, c('rate', 'total', 'mean'))
+
+  if(length(isect)>0){
+    new = as.vector(outer(isect, c('_se', '_lower', '_upper'), paste0))
+    metrics = unique(c(metrics, new))
+  }
+
+  #keep requested metrics
+  res <- res[, c('variable', 'level', as.character(time_var), as.character(by), metrics), with = F]
 
   if(delete_time) res[, `_THETIME` := NULL]
 
