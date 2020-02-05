@@ -70,7 +70,7 @@ apply_recode = function(data, recode, jump_scope = F, return_vector = F){
 
     #coerce old to be the class of the specified old values
     #assuming no new NAs
-    if(!inherits(old[[1]], class(recode$old_value)) & !bin_me){
+    if(!inherits(old[[1]], class(recode$old_value)) && !bin_me){
       old_class = class(old)
 
       start_na = sum(is.na(old))
@@ -131,12 +131,12 @@ apply_recode = function(data, recode, jump_scope = F, return_vector = F){
     }
 
     #apply labels if needed
-    if(!is.null(recode$new_label)){
+    if(!is.null(recode$new_label) || all(is.na(recode$new_label))){
       new_labs = unique(data.table(value = recode$new_value, label = as.character(recode$new_label), type = 'new'))
       valclass = class(recode$new_value)
     }else{
       new_labs = data.table()
-      valclass = class(recode$old_value)
+      valclass = class(old)
     }
     if(is.factor(data[1, get(recode$old_var)])){
       ov = recode$old_var
@@ -179,7 +179,6 @@ apply_recode = function(data, recode, jump_scope = F, return_vector = F){
       labs = labs[value %in% unique(ret), ]
       setorder(labs, value)
       #throw an error if the labels are mapping two numbers to the same value
-      #if(any())
 
       #drop value:label pair of NA:NA
       labs = labs[!(is.na(value) & is.na(label)),]
