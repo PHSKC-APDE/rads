@@ -7,13 +7,10 @@
 create_recode(
   old_var,
   new_var,
-  old_value = NULL,
-  new_value = NULL,
+  old = NULL,
+  new = NULL,
   new_label = NULL,
-  start_year = NULL,
-  end_year = NULL,
-  var_label = NULL,
-  simplify2numeric = TRUE
+  simplify_to_numeric = TRUE
 )
 }
 \arguments{
@@ -21,28 +18,24 @@ create_recode(
 
 \item{new_var}{character. Column where the recoded values will be placed. If `new_var` doesn't exist, than it will be created. Otherwise it will be overwritten.}
 
-\item{old_value}{character (or coercible). value in the column `old_var` to be translated into a new value by recoding. If left blank/NA/""/NULL or otherwise missing, the recode operation
+\item{old}{character (or coercible). value in the column `old_var` to be translated into a new value by recoding. If left blank/NA/""/NULL or otherwise missing, the recode operation
 will essentially take the form of a rename of `old_var` -> `new_var`.
 Except for renaming type situations, nothing of old_var is kept (e.g. all relevant values must have a recode row)}
 
-\item{new_value}{character (or coercible). Column indicating where the new values for the recoding process exist. It is positionally (e.g. row) tied to a particular `old_value`.
+\item{new}{character (or coercible). Column indicating where the new values for the recoding process exist. It is positionally (e.g. row) tied to a particular `old`.
 If blank, it helps identify a simpler rename operation.}
 
-\item{new_label}{character (or convertable to character). The factor label that `old_value` will be recoded to in conjunction with the position of `new_value`}
+\item{new_label}{character (or convertable to character). The factor label that `old` will be recoded to in conjunction with the position of `new`}
 
-\item{start_year}{Integer (or coercible). Year of the data that this recode starts to be relevant (inclusive). If blank, all years before `end_year` are assumed.}
-
-\item{end_year}{Integer (or coercible). Year of the data that this recode ends it relevance (inclusive). If blank, it indicates that the recode is valid for
-all years after `start_year`}
-
-\item{var_label}{character. Variable label.}
-
-\item{simplify2numeric}{logical. Should the values in old_value and new_value be simplified to numeric if possible (e.g. no introduced NAs)?
-mr roboto}
+\item{simplify_to_numeric}{logical. Converts old and new into numerics if it can be done loselessly. Otherwise, a warning will be thrown.}
 }
 \value{
-a list of lists to be parsed and applied in \code{apply_recode}
+a list of lists (of class recode_instruction).
 }
 \description{
-Creates/standardizes the parameters required for recoding a variable in the HYS framework
+Creates/standardizes the parameters required for recoding a variable.
+}
+\details{
+This function mostly exists to help translate (via \code{parse_recode_instructions}) data.frame type read-ins of recoding into a standardized form.
+These results can then be passed to \code{enact_recoding} as part of a bulk recoding process.
 }

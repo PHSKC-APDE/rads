@@ -4,20 +4,24 @@
 \alias{parse_recode_instructions}
 \title{Parse Recode Instructions}
 \usage{
-parse_recode_instructions(recode, catch_NAs = T)
+parse_recode_instructions(recode, catch_NAs = TRUE, simplify_to_numeric = TRUE)
 }
 \arguments{
 \item{recode}{data.frame. In the format described in "Details"}
 
 \item{catch_NAs}{logical. Should the presence of "NA" be turned into NA_character_}
+
+\item{simplify_to_numeric}{Converts old and new into numerics if it can be done loselessly. Otherwise, a warning will be thrown.}
 }
 \value{
 list of lists of recode instructions.
 }
 \description{
-Imports a data.frame with at a minimum of the following columns: old_var, old_value, new_var, new_value, new_label, start_year, and end_year.
+Parse Recode Instructions
 }
 \details{
+Imports a data.frame with at a minimum of the following columns: old_var, old_value, new_var, new_value, new_label, start_year, and end_year.
+
 old_var: Column in the dataset containing the values to be recoded
 
 old_value: value in the column `old_var` to be translated into a new value by recoding. If left blank/NA/""/NULL or otherwise missing, the recode operation
@@ -27,11 +31,6 @@ new_var: Column where the recoded values will be placed. If `new_var` doesn't ex
 
 new_value: Column indicating where the new values for the recoding process exist. It is positionally (e.g. row) tied to a particular `old_value`.
 If blank, it helps identify a simpler rename operation.
-
-start_year: Numeric. Year of the data that this recode starts to be relevant (inclusive). If blank, all years before `end_year` are assumed.
-
-end_year: Numeric. Year of the data that this recode ends it relevance (inclusive). If blank, it indicates that the recode is valid for
-all years after `start_year`
 
 new_label: character (or convertable to character): The factor label that `old_value` will be recoded to in conjunction with the position of `new_value`
 }
