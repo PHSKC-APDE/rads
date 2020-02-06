@@ -94,7 +94,7 @@ apply_recode = function(data, recode, jump_scope = F, return_vector = F){
     for(i in seq_along(recode$old_value)){
 
       #binning instructions
-      if(bin_me & check_bin(recode$old_value[i])){
+      if(bin_me && check_bin(recode$old_value[i])){
 
         #parse the instructions for recoding
         left = substr(recode$old_value[i],1,1)
@@ -131,9 +131,10 @@ apply_recode = function(data, recode, jump_scope = F, return_vector = F){
     }
 
     #apply labels if needed
-    if(!is.null(recode$new_label) || all(is.na(recode$new_label))){
+    if(!is.null(recode$new_label)){
       new_labs = unique(data.table(value = recode$new_value, label = as.character(recode$new_label), type = 'new'))
       valclass = class(recode$new_value)
+      new_labs = na.omit(new_labs, 'label')
     }else{
       new_labs = data.table()
       valclass = class(old)
@@ -150,7 +151,6 @@ apply_recode = function(data, recode, jump_scope = F, return_vector = F){
     }
     #identify duplicates in labeling. Use new unless its NA and old is not
     labs = unique(rbind(old_labs, new_labs))
-
     #if there are labels and they are not all NA
     if(nrow(labs)>0){
 

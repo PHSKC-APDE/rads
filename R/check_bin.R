@@ -17,5 +17,5 @@ check_bin = function(x){
     warning('detected a "-". Did you mean to use a ","? Ignore this unless you are expecting a binned recode.')
   }
 
-  return(opt1 & opt2 & opt3)
+  return(opt1 && opt2 && opt3)
 }
