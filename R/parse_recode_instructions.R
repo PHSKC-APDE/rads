@@ -17,12 +17,13 @@
 #'
 #' @param recode data.frame. In the format described in "Details"
 #' @param catch_NAs logical. Should the presence of "NA" be turned into NA_character_
+#' @param simplify_to_numeric Converts old and new into numerics if it can be done loselessly. Otherwise, a warning will be thrown.
 #' @import data.table
 #' @export
 #'
 #' @return list of lists of recode instructions.
 #'
-parse_recode_instructions = function(recode, catch_NAs = T){
+parse_recode_instructions = function(recode, catch_NAs = TRUE, simplify_to_numeric = TRUE){
 
   #check column names
   vvv = c('old_var', 'old_value', 'new_var', 'new_value')
@@ -39,7 +40,7 @@ parse_recode_instructions = function(recode, catch_NAs = T){
     recode[new_value == 'NA', new_value := NA]
   }
   #compute the recode instructions
-  rec_instruct = recode[, (list(list(create_recode(old_var, new_var, old_value, new_value, new_label)))),
+  rec_instruct = recode[, (list(list(create_recode(old_var, new_var, old_value, new_value, new_label, simplify_to_numeric)))),
                         by = c('old_var', 'new_var')][, V1]
 
   return(rec_instruct)

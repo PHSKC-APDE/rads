@@ -10,6 +10,7 @@
 #' @param new character (or coercible). Column indicating where the new values for the recoding process exist. It is positionally (e.g. row) tied to a particular `old`.
 #'                  If blank, it helps identify a simpler rename operation.
 #' @param new_label character (or convertable to character). The factor label that `old` will be recoded to in conjunction with the position of `new`
+#' @param simplify_to_numeric logical. Converts old and new into numerics if it can be done loselessly. Otherwise, a warning will be thrown.
 #' @export
 #'
 #' @return a list of lists (of class recode_instruction).
@@ -18,29 +19,33 @@
 #' These results can then be passed to \code{enact_recoding} as part of a bulk recoding process.
 #'
 #'
-create_recode = function(old_var, new_var, old = NULL, new = NULL, new_label = NULL){
+create_recode = function(old_var, new_var, old = NULL, new = NULL, new_label = NULL, simplify_to_numeric = TRUE){
 
   #make sure unique(old_var) and unique(new_var) are both length 1
   old_var = unique(old_var)
   new_var = unique(new_var)
-  start_year = unique(start_year)
-  end_year = unique(end_year)
 
-  for(iii in c('old_var', 'new_var', 'start_year', 'end_year')){
+  for(iii in c('old_var', 'new_var')){
     if(length(get(iii)) > 1){
       stop(paste(iii, 'has >1 unique values.'))
     }
   }
 
-  #Note: This check can't occur if we want to be able to use recoding to set values to NA
-  #confirm that both old and new are either missing or both non-missing
-  # if(!all(sapply(old, check_nan) == sapply(new, check_nan))){
-  #   stop('`old` and `new` must both either be not blank (e.g. "", NA, NULL) or blank')
-  # }
+  if(simplify_to_numeric){
+    old_num = as.numeric(old)
+    new_num = as.numeric(new)
+
+    if(sum(is.na(old_num)) == sum(is.na(old)) && sum(is.na(new_num)) == sum(is.na(new))){
+      old = old_num
+      new = new_num
+    }else{
+      warning('Could not convert `old` and `new` losslessly')
+    }
+  }
 
   #confirm that old value and new value have the same length
   stopifnot(length(new) == length(old))
-  stopifnot(is.logical(simplify2numeric))
+  stopifnot(is.logical(simplify_to_numeric))
 
   #convert factor to character
   if(is.factor(old)){

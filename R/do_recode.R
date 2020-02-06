@@ -3,7 +3,8 @@
 #' @param old character (or coercible). value in the x to be translated into a new value by recoding.
 #' @param new character (or coercible). Column indicating where the new values for the recoding process exist. It is positionally  tied to a particular `old`.
 #'                  If blank, it helps identify a simpler rename operation.
-#' @param new_label character (or convertable to character). The factor label that `old` will be recoded to in conjunction with the position of `new`
+#' @param new_label character (or convertable to character). The factor label that `old` will be recoded to in conjunction with the position of `new`.
+#' If NULL or all NA indicates no (new) labelling
 #' @param update logical. Governs whether x is modified in place. If `x` is a factor, this will also carry forward any labels unless overwritten by new_label
 #'
 #' @export
@@ -86,13 +87,18 @@ do_recode = function(x, old, new, new_label = NULL, update = FALSE, verbose = FA
     if(!is.null(new_label) && !all(is.na(new_label))){
       ret = factor(ret, new, new_label)
     }
-  }else{
+  }else if(!all(is.na(new_label))){
     new_labs = data.table::data.table(value = new, label = new_label)
-    hold = hold[!value %in% new_labs[,value]]
 
-    if(verbose && any(hold[,label] %in% new_labs[, label])) warning('Possible multi-mapping in creating factor with update == TRUE')
+    if(exists('hold')){
+      hold = hold[!value %in% new_labs[,value]]
+      if(verbose && any(hold[,label] %in% new_labs[, label])) warning('Possible multi-mapping in creating factor with update == TRUE')
+      labs = rbind(new_labs, hold)
 
-    labs = rbind(new_labs, hold)
+    }else{
+      labs = new_labs
+    }
+
     labs = labs[value %in% ret]
 
     stopifnot(nrow(labs)>0)
