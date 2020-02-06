@@ -14,7 +14,8 @@ do_recode(x, old, new, new_label = NULL, update = FALSE, verbose = FALSE)
 \item{new}{character (or coercible). Column indicating where the new values for the recoding process exist. It is positionally  tied to a particular `old`.
 If blank, it helps identify a simpler rename operation.}
 
-\item{new_label}{character (or convertable to character). The factor label that `old` will be recoded to in conjunction with the position of `new`}
+\item{new_label}{character (or convertable to character). The factor label that `old` will be recoded to in conjunction with the position of `new`.
+If NULL or all NA indicates no (new) labelling}
 
 \item{update}{logical. Governs whether x is modified in place. If `x` is a factor, this will also carry forward any labels unless overwritten by new_label}
 }

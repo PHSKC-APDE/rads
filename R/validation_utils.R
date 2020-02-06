@@ -94,24 +94,6 @@ list_to_dt = function(x, new_col, old_col){
   return(res)
 }
 
-#' Apply the recoding on a variable, given an instruction set.
-#' @param values vector. Values to be recoded
-#' @param instruction list. Validate instruction set from \code{\link{validate_list_input}}
-#'
-#' @importFrom apdeRecodes create_recode apply_recode
-#' @importFrom data.table data.table setnames
-#'
-#' @return a vector of length of values that have been recoded/altered to meet the specifications of instruction
-apply_instructions = function(values, instruction){
-  instruction = list_to_dt(instruction, 'a2', 'a1')
-  rec = apdeRecodes::create_recode(old_var = 'a1', new_var = 'a2', old_value = as.character(instruction[['a1']]), new_value = instruction[['a2']])
-  dat = data.table::data.table(a1 = values)
-  res = apdeRecodes::apply_recode(data = dat,recode = rec, jump_scope = F, return_vector = T)
-  return(res)
-
-}
-
-
 
 
 

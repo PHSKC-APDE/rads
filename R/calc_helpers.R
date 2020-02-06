@@ -12,6 +12,7 @@
 #' @importFrom rlang quos !! !!! syms
 #' @importFrom methods as
 #'
+#' @details
 #' Under the hood, \code{\link[survey]{svyciprop}} and \code{\link[survey]{svytotal}} do the heavy lifting.
 #'
 calc_factor <- function(svy, what, by, time_var){

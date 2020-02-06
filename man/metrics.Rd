@@ -4,7 +4,7 @@
 \alias{metrics}
 \alias{survey_metrics}
 \alias{record_metrics}
-\title{List available metrics depending on type of dataset}
+\title{List ofavailable metrics}
 \usage{
 survey_metrics()
 
@@ -14,7 +14,7 @@ record_metrics()
 character vector. A vector of the available metrics for calculation.
 }
 \description{
-List available metrics depending on type of dataset
+List ofavailable metrics
 
 List of available metrics for calculation
 }
