@@ -42,4 +42,3 @@ exception is using `data.table`'s modify on reference semantics as described in 
 3. https://cran.r-project.org/web/packages/data.table/vignettes/datatable-importing.html
 4. [checkmate](https://cran.r-project.org/web/packages/checkmate/checkmate.pdf) (or similar) to do argument parsing/checking
 5. [validate](https://cran.r-project.org/web/packages/validate/vignettes/introduction.html) to help with dataset validity/stability.
-
