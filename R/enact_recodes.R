@@ -1,0 +1,84 @@
+#' Apply a set of recode instructions to a dataset
+#'
+#' @param data
+#' @param ...
+#' @param ignore_case
+#'
+enact_recodes = function(data, ..., ignore_case = T){
+
+  stopifnot(inherits(data, 'data.frame'))
+  
+  isDT = is.data.table(data)
+  
+  #copy data here so the scope is protected, but so that we can also use scope jumping when applying recodes
+  data = as.data.table(data)
+  
+  psuedo_blankblank = 'blankblank' %in% names(data)
+  if(!psuedo_blankblank){
+    data[, blankblank := NA] #for tricksy recodes
+  }
+
+  #create a list of recodes
+  dots = list(...)
+
+  #check the dots
+  classy = vapply(dots, class, 'a')
+  if(any(!classy %in% c('list', 'recode_instruction'))){
+    stop('At least one item passed through ... is not a list or a recode_instruction object')
+  }
+  
+  #Unlist 1 level if necessary
+  if(any(classy %in% 'recode_instruction')){
+    dots = append(dots[classy == 'recode_instruction'], unlist(dots[classy == 'list'], recursive = F))
+  }else{
+    dots = unlist(dots, recursive = F)
+  }
+
+  classy = vapply(dots, class, 'a')
+
+  if(!all(classy %in% c('recode_instruction'))){
+    stop('At least one item passed through ... cannot be converted into a recode_instruction object')
+  }
+
+  #check text case
+  if((length(unique(names(data))) != length(unique(tolower(names(data))))) & ignore_case){
+    stop('Variable names in data are not unique after setting everything to lower case. Fix or run again with ignore_case = FALSE')
+  }
+
+  if(ignore_case){
+    #dots
+    for(i in seq(dots)){
+      dots[[i]][['old_var']] = tolower(dots[[i]][['old_var']])
+      dots[[i]][['new_var']] = tolower(dots[[i]][['new_var']])
+    }
+
+    old_names = names(data)[]
+    new_names = tolower(names(data))
+    setnames(data, new_names)
+  }
+
+  for(dot in dots){
+    val = tryCatch(do_recode(data[, get(dot$old_var)], dot$old, dot$new, dot$new_label, update = dot$old_var == dot$new_var, verbose = FALSE),
+                   error = function(x){
+                     message(paste(dot$old_var, '->', dot$new_var))
+                     stop(x)
+                   },
+                   warning = function(x){
+                     message(paste(paste0(dot$old_var, ' -> ', dot$new_var), '|', x))
+                   })
+
+    set(data, NULL, dot$new_var, val)
+  }
+  
+  #Clean up
+  if(ignore_case){
+    setnames(data, new_names, old_names)
+  }
+  if(psuedo_blankblank){
+    data[, blankblank := NULL]
+  }
+  
+  #return the results
+  return(data)
+
+}

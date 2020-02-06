@@ -7,7 +7,7 @@
 #' @param update logical. Governs whether x is modified in place. If `x` is a factor, this will also carry forward any labels unless overwritten by new_label
 #'
 #' @export
-make_recode = function(x, old, new, new_label = NULL, update = FALSE, verbose = FALSE){
+do_recode = function(x, old, new, new_label = NULL, update = FALSE, verbose = FALSE){
 
   #Initial checks
   stopifnot(length(new) == length(old))
@@ -44,6 +44,7 @@ make_recode = function(x, old, new, new_label = NULL, update = FALSE, verbose = 
     ret = rep(methods::as(NA, class(new)), length(x))
   }
 
+  #change the values
   for(i in seq_along(old)){
     if(check_bin(old[i]) && bin_me){
       left = substr(old[i],1,1)
