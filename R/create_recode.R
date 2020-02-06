@@ -48,21 +48,13 @@ create_recode = function(old_var, new_var, old = NULL, new = NULL, new_label = N
   }
 
   #confirm that new label, if not blank, is the same length as the values
-  all_blank = all(sapply(new_label, check_nan))
+  all_blank = all(vapply(new_label, check_nan, TRUE))
   if(!all_blank) stopifnot(length(new_label) == length(old))
-
-
-  #Make sure the years play nice
-  start_year = ifelse(check_nan(as.integer(start_year)), 2002, as.integer(start_year))
-  end_year = ifelse(check_nan(as.integer(end_year)), 3000, as.integer(end_year))
-
   ret = structure(list(new_var = unique(new_var),
              old_var = unique(old_var),
              old = old,
              new = new,
-             new_label = new_label,
-             year_bounds = c(start_year, end_year),
-             var_label = var_label), class =  'recode_instruction')
+             new_label = new_label), class =  'recode_instruction')
 
   return(ret)
 }

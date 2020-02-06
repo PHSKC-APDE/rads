@@ -25,7 +25,7 @@
 parse_recode_instructions = function(recode, catch_NAs = T){
 
   #check column names
-  vvv = c('old_var', 'old_value', 'new_var', 'new_value', 'start_year', 'end_year')
+  vvv = c('old_var', 'old_value', 'new_var', 'new_value')
   if(!all(vvv %in% names(recode))){
     stop(paste0(paste(setdiff(vvv, names(recode)), collapse = ', '), 'are missing from `recode`'))
   }

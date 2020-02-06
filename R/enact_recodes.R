@@ -1,8 +1,8 @@
 #' Apply a set of recode instructions to a dataset
 #'
-#' @param data
-#' @param ...
-#' @param ignore_case
+#' @param data data.frame (or something that inherits from a data frame)
+#' @param ... objects coercible to a list of `recode_instructions`
+#' @param ignore_case logical. should the case of names(data) be ignored?
 #'
 enact_recodes = function(data, ..., ignore_case = T){
 
@@ -17,32 +17,34 @@ enact_recodes = function(data, ..., ignore_case = T){
   if(!psuedo_blankblank){
     data[, blankblank := NA] #for tricksy recodes
   }
-
+  
+  #check text case
+  if((length(unique(names(data))) != length(unique(tolower(names(data))))) & ignore_case){
+    stop('Variable names in data are not unique after setting everything to lower case. Fix or run again with ignore_case = FALSE')
+  }
+  
   #create a list of recodes
   dots = list(...)
 
   #check the dots
-  classy = vapply(dots, class, 'a')
+  classy = vapply(dots, function(x) inherits(x, 'list') || inherits(x, 'recode_instruction'), TRUE)
   if(any(!classy %in% c('list', 'recode_instruction'))){
     stop('At least one item passed through ... is not a list or a recode_instruction object')
   }
   
   #Unlist 1 level if necessary
+  list_idx = vapply(dots, function(x) inherits(x, 'list'))
+  ri_idx = vapply(dots, function(x) inherits(x, 'recode_instruction'))
   if(any(classy %in% 'recode_instruction')){
-    dots = append(dots[classy == 'recode_instruction'], unlist(dots[classy == 'list'], recursive = F))
+    dots = append(dots[ri_idx], unlist(dots[list_idx & !ri_idx], recursive = F))
   }else{
     dots = unlist(dots, recursive = F)
   }
 
-  classy = vapply(dots, class, 'a')
+  classy = vapply(dots, function(x) inherits(x, 'recode_instruction'), TRUE)
 
-  if(!all(classy %in% c('recode_instruction'))){
+  if(!all(classy)){
     stop('At least one item passed through ... cannot be converted into a recode_instruction object')
-  }
-
-  #check text case
-  if((length(unique(names(data))) != length(unique(tolower(names(data))))) & ignore_case){
-    stop('Variable names in data are not unique after setting everything to lower case. Fix or run again with ignore_case = FALSE')
   }
 
   if(ignore_case){
