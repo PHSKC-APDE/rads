@@ -124,7 +124,7 @@ suppress <- function(sup_data = NULL,
 
   #apply caution flag if possible ----
       if("rse" %in% names(temp.dt)){
-        temp.dt[rse >0.3, caution := "!"]
+        temp.dt[rse >=30, caution := "!"]
       }
 
   return(temp.dt)
