@@ -64,7 +64,6 @@ record_metrics = function(){
 
 
 #' List of standard CHI / Tableau Ready columns
-#' @rdname metrics
 #' @export
 chi_cols = function(){
   c("data_source", "indicator_key", "tab", "year", "cat1", "cat1_group", "cat1_group_alias", "cat1_varname","cat2",
@@ -121,11 +120,8 @@ chi_compare_kc <- function(orig,
   #Bindings for data.table/check global variables
   cat1_varname <- result <- comp.result <- lower_bound <- comp.upper_bound <- upper_bound <- comp.lower_bound <- significance <- NULL
 
-  data.table::setDT(orig)
-
   #Copy & subset comparator data
-  orig <- copy(chi)
-  data.table::setDT(orig)
+  data.table::setDT(copy(orig))
 
   #Copy & subset comparator data
   comparator <- orig[cat1=="King County" & tab!="crosstabs", c("indicator_key", "year", "result", "lower_bound", "upper_bound")]

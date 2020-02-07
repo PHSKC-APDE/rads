@@ -206,7 +206,7 @@ calc.data.frame = function(ph.data,
             setnames(res.metrics, "se", "mean_se")
 
         # Calculate RSE
-            res.metrics[, rse := mean_se / mean]
+            res.metrics[, rse := 100*(mean_se / mean)] # Informed by Abby 2/7/2020 that the proportion should be multiplied by 100
 
         # Set Median to NA if variable is not a numeric/continuous
             res.metrics[!variable %in% numeric.col, median := NA]

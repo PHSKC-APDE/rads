@@ -16,7 +16,7 @@ calc(ph.data, ...)
   metrics = c("mean", "numerator", "denominator", "missing", "obs"),
   per = NULL,
   win = NULL,
-  time_var = "chi_year",
+  time_var = NULL,
   proportion = FALSE,
   fancy_time = TRUE,
   verbose = FALSE
