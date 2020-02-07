@@ -154,7 +154,7 @@ calc.tbl_svy <- function(ph.data,
 
       ret[, variable := as.character(what)]
       ret[, missing.prop := missing/(missing + numerator + denominator)]
-      ret[, rse := mean_se/mean]
+      ret[, rse := 100*(mean_se/mean)]
       ret[, obs := (missing + numerator + denominator)]
       return(ret)
     })
