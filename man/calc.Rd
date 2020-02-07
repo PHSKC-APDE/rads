@@ -27,10 +27,10 @@ calc(ph.data, ...)
   what,
   ...,
   by = NULL,
-  metrics = c("mean", "numerator", "denominator", "missing", "total"),
+  metrics = survey_metrics(),
   per = NULL,
   win = NULL,
-  time_var = "chi_year",
+  time_var = NULL,
   proportion = FALSE,
   verbose = FALSE
 )

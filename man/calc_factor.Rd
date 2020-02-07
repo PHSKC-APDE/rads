@@ -18,3 +18,6 @@ calc_factor(svy, what, by, time_var)
 \description{
 A wrapper to compute metrics (specifically relative fraction and totals) from factor/character variables
 }
+\details{
+Under the hood, \code{\link[survey]{svyciprop}} and \code{\link[survey]{svytotal}} do the heavy lifting.
+}

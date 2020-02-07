@@ -16,7 +16,6 @@ Imports:
     odbc,
     rlang,
     DBI,
-    apdeRecodes,
     survey,
     srvyr,
     haven
