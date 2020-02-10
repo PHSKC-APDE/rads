@@ -236,3 +236,57 @@ format_time_simple <- function(x){
     # reorder table
     data.table::setcolorder(dat, original.order)
   }
+
+
+#' Compare the expected column types in YAML with the actual column types in R
+#' @param DF Character vector of length 1. Identifies the data.table/data.frame that you want to assess vis-à-vis the YAML file
+#'
+#' @param YML Character vector of length 1. It is the name of the YAML object in memory.
+#'
+#' @param vars Character vector of length 1. Is is the name of the object in the list contained by YML
+#'
+#' @importFrom data.table data.table setnames ":=" setDT
+#'
+#' @export
+#' @return A simple printed statement, either identifying incompatible column types or a statement of success
+
+  validate_yaml_data <- function(DF = NULL, YML = NULL, vars = NULL){
+    # Get column types from R data.frame
+
+    # Check that DT is a data.frame/data.table
+    if(is.data.frame(DF) == FALSE){
+      stop("'DF' must be a data.frame or a data.table")
+    }else{DF <- copy(DF)}
+
+    # Create table of R column types ----
+    r.table <- data.table(
+      name = names(DF),
+      r.class = tolower(sapply(DF, class))
+    )
+
+    # Standardize names of column types
+    r.table[, r.class.new := r.class]
+    r.table[r.class.new %in% c("integer", "haven_labelled"), r.class.new := "numeric"]
+    r.table[r.class.new == "factor", r.class.new := "character"]
+
+    # Get data from YAML ----
+    # Create table of SQL column types ----
+    yaml.table <- data.table(
+      name =  c(names(YML$vars)),
+      yaml.class = tolower(c(as.character(table_config$vars)))
+    )
+
+    # Standardize names of column type
+    yaml.table[, yaml.class.new := yaml.class]
+    yaml.table[yaml.class.new %like% "char", yaml.class.new := "character"]
+    yaml.table[yaml.class.new %in% c("integer", "float", "tinyint"), yaml.class.new := "numeric"]
+
+    # Compare column types in R and YAML
+    compare.classes <- merge(r.table, yaml.table, by = "name", all = TRUE)
+
+    if(nrow(compare.classes[r.class.new != yaml.class.new ]) > 0){
+      x<- head(compare.classes[r.class.new != yaml.class.new , .(name, r.class, yaml.class)], 50)
+      message(paste0(capture.output(x), collapse = "\n"))
+      stop("The column classes listed above are not compatible. Please revise your code and try running again ...")
+    } else{print("All column classes in your R dataset are compatible with the YAML reference standard.")}
+  }
