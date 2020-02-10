@@ -73,6 +73,13 @@ chi_cols = function(){
 }
 
 
+#' List of standard CHI / Tableau Ready metadata columns
+#' @export
+chi_metadata_cols = function(){
+  c("data_source", "indicator_key", "result_type", "valence", "latest_year", "latest_year_result", "latest_year_kc_pop",
+    "latest_year_count", "map_type", "unit", "valid_years", "chi", "run_date")
+}
+
 
 #' Improved rounding function
 #' @param x values to be rounded
