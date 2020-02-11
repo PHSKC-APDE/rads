@@ -3,17 +3,18 @@
 #' @param data data.frame (or something that inherits from a data frame)
 #' @param ... objects coercible to a list of `recode_instructions`
 #' @param ignore_case logical. should the case of names(data) be ignored?
+#' @param copy logical. If false and data is a data.table object, the function omits a copy step and will alter the underlying data.table by reference
 #'
 #' @export
 #'
-enact_recodes = function(data, ..., ignore_case = T){
+enact_recodes = function(data, ..., ignore_case = TRUE, copy = TRUE){
 
   stopifnot(inherits(data, 'data.frame'))
 
   isDT = is.data.table(data)
 
-  #copy data here so the scope is protected, but so that we can also use scope jumping when applying recodes
-  data = as.data.table(data)
+  #copy data here so the scope is protected
+  if(copy || !isDT) data = as.data.table(data)
 
   psuedo_blankblank = !('blankblank' %in% names(data))
   if(psuedo_blankblank){
@@ -62,16 +63,32 @@ enact_recodes = function(data, ..., ignore_case = T){
   }
 
   for(dot in dots){
-    val = tryCatch(do_recode(data[, get(dot$old_var)], dot$old, dot$new, dot$new_label, update = dot$old_var == dot$new_var, verbose = FALSE),
-                   error = function(x){
-                     message(paste(dot$old_var, '->', dot$new_var))
-                     stop(x)
-                   },
-                   warning = function(x){
-                     message(paste(paste0(dot$old_var, ' -> ', dot$new_var), '|', x))
-                   })
+
+
+  val = tryCatch({
+          #The code
+          if(isTRUE(all.equal(dot$old,dot$new))){
+              val = data[, get(dot$old_var)]
+            }else{
+              do_recode(data[, get(dot$old_var)], dot$old, dot$new, dot$new_label, update = dot$old_var == dot$new_var, verbose = FALSE)
+            }
+
+          },
+        #if an error
+         error = function(x){
+           message(paste(dot$old_var, '->', dot$new_var))
+           stop(x)
+         },
+        #if a warning
+         warning = function(x){
+           message(paste(paste0(dot$old_var, ' -> ', dot$new_var), '|', x))
+        }
+      ) #close try catch
+
 
     set(data, NULL, dot$new_var, val)
+
+
   }
 
   #Clean up
