@@ -64,18 +64,27 @@ enact_recodes = function(data, ..., ignore_case = TRUE, copy = TRUE){
 
   for(dot in dots){
 
-    if(all(dot$old == dot$new)){
-      val = dat[, get(dot$old_var)]
-    }else{
-      val = tryCatch(do_recode(data[, get(dot$old_var)], dot$old, dot$new, dot$new_label, update = dot$old_var == dot$new_var, verbose = FALSE),
-                     error = function(x){
-                       message(paste(dot$old_var, '->', dot$new_var))
-                       stop(x)
-                     },
-                     warning = function(x){
-                       message(paste(paste0(dot$old_var, ' -> ', dot$new_var), '|', x))
-                     })
-    }
+
+  val = tryCatch({
+          #The code
+          if(isTRUE(all.equal(dot$old,dot$new))){
+              val = data[, get(dot$old_var)]
+            }else{
+              do_recode(data[, get(dot$old_var)], dot$old, dot$new, dot$new_label, update = dot$old_var == dot$new_var, verbose = FALSE)
+            }
+
+          },
+        #if an error
+         error = function(x){
+           message(paste(dot$old_var, '->', dot$new_var))
+           stop(x)
+         },
+        #if a warning
+         warning = function(x){
+           message(paste(paste0(dot$old_var, ' -> ', dot$new_var), '|', x))
+        }
+      ) #close try catch
+
 
     set(data, NULL, dot$new_var, val)
 
