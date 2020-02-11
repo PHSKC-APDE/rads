@@ -4,10 +4,10 @@
 \alias{chi_qa}
 \title{QA for CHI/Tableau ready standards using R.}
 \usage{
-chi_qa(chi_data)
+chi_qa(chi_est = NULL, chi_meta = NULL)
 }
 \arguments{
-\item{chi_data}{Name of a data.table or data.frame containing the prepared data, typically processed by RADS}
+\item{chi_est}{Name of a data.table or data.frame containing the prepared data, typically processed by RADS}
 }
 \value{
 If there are no problems, a printed statement of success. Otherwise, it will stop and provide informative

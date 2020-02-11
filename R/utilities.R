@@ -243,50 +243,62 @@ format_time_simple <- function(x){
 #'
 #' @param YML Character vector of length 1. It is the name of the YAML object in memory.
 #'
-#' @param vars Character vector of length 1. Is is the name of the object in the list contained by YML
+#' @param VARS Character vector of length 1. Is is the name of the object in the list contained by YML
 #'
 #' @importFrom data.table data.table setnames ":=" setDT
 #'
 #' @export
 #' @return A simple printed statement, either identifying incompatible column types or a statement of success
 
-  validate_yaml_data <- function(DF = NULL, YML = NULL, vars = NULL){
-    # Get column types from R data.frame
-
+  validate_yaml_data <- function(DF = NULL, YML = NULL, VARS = NULL){
     # Check that DT is a data.frame/data.table
-    if(is.data.frame(DF) == FALSE){
-      stop("'DF' must be a data.frame or a data.table")
-    }else{DF <- copy(DF)}
+      if(is.data.frame(DF) == FALSE){
+        stop("'DF' must be a data.frame or a data.table")
+      }else{DF <- setDT(copy(DF))}
 
-    # Create table of R column types ----
-    r.table <- data.table(
-      name = names(DF),
-      r.class = tolower(sapply(DF, class))
-    )
+    # identify proper classes from YAML file ----
+      class.compare <- data.table(
+        name =  c(names(YML[[VARS]])),
+        yaml.class = tolower(as.character(YML[[VARS]]))
+      )
 
-    # Standardize names of column types
-    r.table[, r.class.new := r.class]
-    r.table[r.class.new %in% c("integer", "haven_labelled"), r.class.new := "numeric"]
-    r.table[r.class.new == "factor", r.class.new := "character"]
+    # convert names of SQL data types to R classes ----
+      class.compare[grepl("varchar", tolower(yaml.class)), yaml.class := "character"]
+      class.compare[grepl("int", tolower(yaml.class)), yaml.class := "integer"]
+      class.compare[grepl("float", tolower(yaml.class)), yaml.class := "numeric"]
 
-    # Get data from YAML ----
-    # Create table of SQL column types ----
-    yaml.table <- data.table(
-      name =  c(names(YML$vars)),
-      yaml.class = tolower(c(as.character(table_config$vars)))
-    )
+    # identify which VARS should be of which class (assuming YAML is correct) ----
+      make.char <- class.compare[yaml.class == "character"]$name
+      make.num  <- class.compare[yaml.class == "numeric"]$name
+      make.int  <- class.compare[yaml.class == "integer"]$name
 
-    # Standardize names of column type
-    yaml.table[, yaml.class.new := yaml.class]
-    yaml.table[yaml.class.new %like% "char", yaml.class.new := "character"]
-    yaml.table[yaml.class.new %in% c("integer", "float", "tinyint"), yaml.class.new := "numeric"]
+    # create function to convert column classes if it can be done without introducing NA's ----
+      lossless_convert <- function(x, class){
+        if(sum(is.na(x)) == sum(is.na(suppressWarnings(as(x, class)))) ){
+          x <- suppressWarnings(as(x, class))
+        }
+        return(x)
+      }
 
-    # Compare column types in R and YAML
-    compare.classes <- merge(r.table, yaml.table, by = "name", all = TRUE)
+    # use function convert R column types if possible / needed ----
+      DF[, (make.char) := lapply(.SD, lossless_convert, class = 'character'), .SDcols = make.char]
+      DF[, (make.num) := lapply(.SD, lossless_convert, class = 'numeric'), .SDcols = make.num]
+      DF[, (make.int) := lapply(.SD, lossless_convert, class = 'integer'), .SDcols = make.int]
 
-    if(nrow(compare.classes[r.class.new != yaml.class.new ]) > 0){
-      x<- head(compare.classes[r.class.new != yaml.class.new , .(name, r.class, yaml.class)], 50)
-      message(paste0(capture.output(x), collapse = "\n"))
-      stop("The column classes listed above are not compatible. Please revise your code and try running again ...")
-    } else{print("All column classes in your R dataset are compatible with the YAML reference standard.")}
+    # check if there are variables that could not be coerced to proper type ----
+      class.compare <- merge(data.table::data.table(name = names(sapply(DF, class)), DF.class = tolower(sapply(DF, class))),
+                             class.compare, by = "name")
+
+    # allow R to be more strict than YAML with numbers ----
+      class.compare[yaml.class=="numeric" & DF.class == "integer", DF.class := "numeric"]
+
+    # Assess whether there were any problems ----
+      if(nrow(class.compare[DF.class != yaml.class]) > 0){
+        VARS <- class.compare[DF.class != yaml.class]$VARS
+        yaml.class <- class.compare[DF.class != yaml.class]$yaml.class
+        class.problems <- paste(paste0(VARS, " (", yaml.class, ")"), collapse = ", ")
+        stop(glue::glue("The following variables could not be coerced to their proper class (which is specified in parentheses):
+                              {class.problems}"))
+      }else{print("All column classes in your R dataset are compatible with the YAML reference standard.")}
+
   }
