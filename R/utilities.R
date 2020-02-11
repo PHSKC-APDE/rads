@@ -254,7 +254,7 @@ format_time_simple <- function(x){
     # Check that DT is a data.frame/data.table
       if(is.data.frame(DF) == FALSE){
         stop("'DF' must be a data.frame or a data.table")
-      }else{DF <- setDT(copy(DF))}
+      }else{DF <- data.table::setDT(copy(DF))}
 
     # identify proper classes from YAML file ----
       class.compare <- data.table(
@@ -302,3 +302,84 @@ format_time_simple <- function(x){
       }else{print("All column classes in your R dataset are compatible with the YAML reference standard.")}
 
   }
+
+
+#' Compare two data.frames with properly formatted CHI data
+#' @param OLD Character vector of length 1. Identifies the data.table/data.frame that you want to use as a reference
+#'
+#' @param NEW Character vector of length 1. Identifies the data.table/data.frame that you are interested in validating
+#'
+#' @param OLD.year Character vector of length 1. Specifies the exact year that you want to use in the OLD data
+#'
+#' @param NEW.year Character vector of length 1. Specifies the exact year that you want to use in the NEW data
+#'
+#' @param META Character vector of length 1. OPTIONAL ... identifies the data.table/data.frame containing the metadata for
+#' the NEW data.frame
+#'
+#' @importFrom data.table data.table setnames ":=" setDT copy
+#'
+#' @export
+#' @return A simple printed statement, either identifying incompatible column types or a statement of success
+chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = NULL, META = NULL){
+
+    # Check if necessary arguments are present
+  if(is.null(OLD)){stop("You must provide 'OLD', i.e., the name of the table with the OLD data")}
+  if(is.null(NEW)){stop("You must provide 'NEW', i.e., the name of the table with the NEW data")}
+  if(is.null(OLD.year)){stop("You must provide 'OLD.year', i.e., the year of interest in the OLD data")}
+  if(is.null(NEW.year)){stop("You must provide 'NEW.year', i.e., the year of interest in the NEW data")}
+
+    # Check if objects are data.frames & make into data.table if need be
+      if(is.data.frame(OLD) == FALSE){
+        stop("'OLD' must be a data.frame or a data.table")
+      }else{OLD <- data.table::setDT(copy(OLD))}
+
+
+      if(is.data.frame(NEW) == FALSE){
+        stop("'NEW' must be a data.frame or a data.table")
+      }else{NEW <- data.table::setDT(copy(NEW))}
+
+      if(!is.null(META)){
+        if(is.data.frame(META) == FALSE){
+          stop("'META' must be a data.frame or a data.table")
+        }else{META <- data.table::setDT(copy(META))}
+      }
+
+    # If metadata provided, add it to the columns to help interret the output
+      if(!is.null(META)){
+        NEW <- merge(NEW, META[, .(indicator_key, result_type)], by = "indicator_key", all.x = TRUE, all.y = FALSE)
+      } else { NEW[, result_type := "Metadata not provided"]}
+
+    # Merge old and new data based on identifiers
+      comp <- merge(copy(OLD[year == OLD.year]),
+                    copy(NEW[year == NEW.year]),
+                    by = c("indicator_key", "tab", "year",
+                           "cat1", "cat1_group", "cat1_varname",
+                           "cat2", "cat2_group", "cat2_varname"),
+                    all = T)
+
+    # calculate percent differences between old (x) and new(y)
+      comp[, relative.diff := round2(abs((result.x - result.y) / result.x)*100, 1)]
+      comp[, absolute.diff := round2(abs(result.x - result.y)*100, 1)]
+      comp <- comp[!is.na(absolute.diff)]  # drop if absolute difference is NA
+
+    # order variables
+      comp <- comp[, c("absolute.diff", "relative.diff", "result_type",
+                       "indicator_key", "tab", "year",
+                       "cat1", "cat1_group", "cat1_varname",
+                       "cat2", "cat2_group", "cat2_varname",
+                       "result.x", "result.y", "lower_bound.x", "lower_bound.y",
+                       "upper_bound.x", "upper_bound.y",
+                       "numerator.x", "numerator.y", "denominator.x", "denominator.y",
+                       "se.x", "se.y")]
+
+    # rename suffixes
+      setnames(comp, names(comp), gsub("\\.x$", ".OLD", names(comp)))
+      setnames(comp, names(comp), gsub("\\.y$", ".NEW", names(comp)))
+
+    # order based on percent difference
+      setorder(comp, -absolute.diff)
+
+    # return object
+      return(comp)
+
+}
