@@ -221,20 +221,58 @@ format_time_simple <- function(x){
 
 
 #' Clean string columns read from SQL
-#' @param dat name of data.table
+#' @param dat character vector of length one. Name of data.frame or data.table
+#' @param stringsAsFactors logical. Specifies whether to convert strings to factors (TRUE) or not (FALSE)
 #' @export
 #' @return data.table
-  sql_clean <- function(dat = NULL){
-    data.table::setDT(dat)
+  sql_clean <- function(dat = NULL, stringsAsFactors = FALSE){
+
+    # check date.frame
+      if(!is.null(dat)){
+        if(!is.data.frame(dat)){
+          stop("'dat' must be the name of a data.frame or data.table")
+        }
+        if(is.data.frame(dat) && !data.table::is.data.table(dat)){
+          data.table::setDT(dat)
+        }
+      } else {stop("'dat' (the name of a data.frame or data.table) must be specified")}
+
     original.order <- names(dat)
     string.columns <- which(vapply(dat,is.character, FUN.VALUE=logical(1) )) # identify string columns
     if(length(string.columns)>0) {
-      dat[, (string.columns) := lapply(.SD, trimws,which="r"), .SDcols = string.columns] # trim white space to right
+      dat[, (string.columns) := lapply(.SD, trimws, which="both"), .SDcols = string.columns] # trim white space to right or left
       dat[, (string.columns) := lapply(.SD, function(x){gsub("^$|^ $", NA, x)}), .SDcols = string.columns] # replace blanks with NA
-      dat <- dat[, (string.columns) := lapply(.SD, factor), .SDcols = string.columns] # convert strings to factors
+      if(stringsAsFactors==TRUE){
+        dat <- dat[, (string.columns) := lapply(.SD, factor), .SDcols = string.columns] # convert strings to factors
+      }
     }
     # reorder table
     data.table::setcolorder(dat, original.order)
+  }
+
+#' Convert the class of a vector to another class is possible without introducing additional NAs
+#' @param x vector of indeterminate length and type
+#' @param class character vector of length one specifying the preferred new column type (i.e.,
+#' 'character', 'numeric', 'integer', or 'factor')
+#' @export
+#' @return a vector of the same length as x, but of the new class (when possible)
+  lossless_convert <- function(x = NULL, class = NULL){
+    if(is.null(x)){
+      stop("'x', the vector you wish to change, must be specified.")
+    }
+
+    if(is.null(class)){
+      stop("'class' must be specified by choosing one of the following: 'character', 'integer', 'numeric'")
+    }
+
+    if(!class %in% c('character', 'integer', 'numeric') || length(class) != 1 ){
+      stop("'class' is limited to *one* of the following: 'character', 'integer', 'numeric'")
+    }
+
+    if(sum(is.na(x)) == sum(is.na(suppressWarnings(as(x, class)))) ){
+      x <- suppressWarnings(as(x, class))
+    }
+    return(x)
   }
 
 
