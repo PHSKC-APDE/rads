@@ -112,7 +112,7 @@ substrRight <- function(x, x.start, x.stop){
   substr(x, nchar(x)-x.stop+1, nchar(x)-x.start+1)
 }
 
-#' Compare tabular results to a reference set of results in the same data
+#' Compare CHI standard tabular results to the King County average for the same year within a given data set
 #' @param orig Character vector of length 1. Identifies the data.table/data.frame to be fetched. Note the table must have the following columns:
 #' 'result', 'lower_bound', & 'upper_bound' and all three must be numeric
 #' @param new.col.name Character vector of length 1. It is the name of the column containining the comparison results.
@@ -122,6 +122,7 @@ substrRight <- function(x, x.start, x.stop){
 #' @export
 #' @return data.table comprised of the original data.table and two additional columns ... 'significance' and 'comparison_with_kc' (or alternatively specified name)
 chi_compare_kc <- function(orig,
+                        linkage.vars = c("indicator_key"),
                         new.col.name = "comparison_with_kc"){
 
   #Bindings for data.table/check global variables
@@ -131,11 +132,12 @@ chi_compare_kc <- function(orig,
   data.table::setDT(copy(orig))
 
   #Copy & subset comparator data
-  comparator <- orig[cat1=="King County" & tab!="crosstabs", c("indicator_key", "year", "result", "lower_bound", "upper_bound")]
+  comparator.vars <- c(linkage.vars, "year", "result", "lower_bound", "upper_bound")
+  comparator <- unique(orig[cat1=="King County" & tab!="crosstabs", ..comparator.vars])
   data.table::setnames(comparator, c("result", "lower_bound", "upper_bound"), c("comp.result", "comp.lower_bound", "comp.upper_bound"))
 
   #Merge comparator data onto all other data
-  orig <- merge(orig, comparator, by=c("indicator_key", "year"), all.x = TRUE, all.y = TRUE)
+  orig <- merge(orig, comparator, by=c(linkage.vars, "year"), all.x = TRUE, all.y = TRUE)
 
   #Compare estimates with comparator
   orig[result == comp.result, paste0(new.col.name) := "no different"]
