@@ -4,10 +4,14 @@
 \alias{chi_qa}
 \title{QA for CHI/Tableau ready standards using R.}
 \usage{
-chi_qa(chi_est = NULL, chi_meta = NULL)
+chi_qa(chi_est = NULL, chi_meta = NULL, acs = F)
 }
 \arguments{
-\item{chi_est}{Name of a data.table or data.frame containing the prepared data, typically processed by RADS}
+\item{chi_est}{Name of a data.table or data.frame containing the prepared data to be pushed to SQL}
+
+\item{chi_meta}{Name of a data.table or data.frame containing the metadata to be pushed to SQL}
+
+\item{acs}{Logical. Indicates whether it is ACS data (which does not have / need varnames)}
 }
 \value{
 If there are no problems, a printed statement of success. Otherwise, it will stop and provide informative

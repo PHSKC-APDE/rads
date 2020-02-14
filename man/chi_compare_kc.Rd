@@ -2,9 +2,13 @@
 % Please edit documentation in R/utilities.R
 \name{chi_compare_kc}
 \alias{chi_compare_kc}
-\title{Compare tabular results to a reference set of results in the same data}
+\title{Compare CHI standard tabular results to the King County average for the same year within a given data set}
 \usage{
-chi_compare_kc(orig, new.col.name = "comparison_with_kc")
+chi_compare_kc(
+  orig,
+  linkage.vars = c("indicator_key"),
+  new.col.name = "comparison_with_kc"
+)
 }
 \arguments{
 \item{orig}{Character vector of length 1. Identifies the data.table/data.frame to be fetched. Note the table must have the following columns:
@@ -16,5 +20,5 @@ chi_compare_kc(orig, new.col.name = "comparison_with_kc")
 data.table comprised of the original data.table and two additional columns ... 'significance' and 'comparison_with_kc' (or alternatively specified name)
 }
 \description{
-Compare tabular results to a reference set of results in the same data
+Compare CHI standard tabular results to the King County average for the same year within a given data set
 }

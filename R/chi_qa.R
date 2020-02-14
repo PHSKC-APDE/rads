@@ -11,7 +11,9 @@
 #' must be performed seperately
 #'
 #'
-#' @param chi_est Name of a data.table or data.frame containing the prepared data, typically processed by RADS
+#' @param chi_est Name of a data.table or data.frame containing the prepared data to be pushed to SQL
+#' @param chi_meta Name of a data.table or data.frame containing the metadata to be pushed to SQL
+#' @param acs Logical. Indicates whether it is ACS data (which does not have / need varnames)
 #'
 #' @return If there are no problems, a printed statement of success. Otherwise, it will stop and provide informative
 #' feedback everytime there is an error.
@@ -35,7 +37,7 @@
 
 # chi_qa function ----
 
-chi_qa <- function(chi_est = NULL, chi_meta = NULL){
+chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F){
 
   # Check that both the results and the metadata were provided ----
     if(is.null(chi_est)){
@@ -141,9 +143,9 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL){
       # RSE should always be between 0 and 100 ----
           # confirmed with Abby 2/7/2020 that want RSE * 100
           if(nrow(chi_est[!rse %between% c(0, 100)]) > 0 ){
-            stop("There is at least one row where the RSE (relative standard error) is outside the range of (0, 100].
-                 Please fix this error prior to rerunning the chi_qa() function.
-                 You can view the problematic data by typing something like: View(chi_est[lower_bound < 0])")
+            print("There is at least one row where the RSE (relative standard error) is outside the range of (0, 100].
+                 This is not necessarily an error, but you should examine the data to make sure it makes sense.
+                 You can view the problematic data by typing something like: View(chi_est[!rse %between% c(0, 100)])")
           }
 
       # RSE should be on scale of 0-100 (i.e., the proportion should have been multiplied by 100) ----
@@ -187,18 +189,32 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL){
 
   ## Check that core identification variables are all present ----
       for(var in c("indicator_key", "tab", "year", "cat1", "cat1_group",
-                   "cat1_group_alias", "cat1_varname", "source_date", "run_date")){
+                   "cat1_group_alias", "source_date", "run_date")){
         if(nrow(chi_est[is.na(get(var))]) > 0 ){
           stop(glue::glue("There is at least one row where '{var}' is missing.
                           Please fill in the missing value before rerunning chi_qa()"))
         }
       }
 
-  ## Check that craosstab identification variables are all present ----
-      for(var in c("cat2", "cat2_group", "cat2_group_alias", "cat2_varname")){
+      if(acs==F){
+        if(nrow(chi_est[is.na("cat1_varname")]) > 0 ){
+          stop(glue::glue("There is at least one row where 'cat1_varname' is missing.
+                        Please fill in the missing value before rerunning chi_qa()"))
+        }
+      }
+
+  ## Check that crosstab identification variables are all present ----
+      for(var in c("cat2", "cat2_group", "cat2_group_alias")){
         if(nrow(chi_est[tab=="crosstabs" & is.na(get(var))]) > 0 ){
           stop(glue::glue("There is at least one row where tab=='crosstabs' & where '{var}' is missing.
                           Please fill in the missing value before rerunning chi_qa()"))
+        }
+      }
+
+      if(acs==F){
+        if(nrow(chi_est[tab=="crosstabs" & is.na("cat2_varname")]) > 0 ){
+          stop(glue::glue("There is at least one row where 'cat2_varname' is missing.
+                      Please fill in the missing value before rerunning chi_qa()"))
         }
       }
 
@@ -212,7 +228,7 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL){
 
   ## Check that time_trends are always provided when tab=="trends" ----
         if(nrow(chi_est[tab == "trends" & is.na(time_trends)]) > 0 ){
-          stop(glue::glue("There is at least one row where tab=='trends' & where '{var}' is missing.
+          stop(glue::glue("There is at least one row where tab=='trends' & where 'time_trends' is missing.
                           Please fill in the missing value before rerunning chi_qa()"))}
 
 
