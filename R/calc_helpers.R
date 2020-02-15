@@ -16,25 +16,12 @@
 #' Under the hood, \code{\link[survey]{svyciprop}} and \code{\link[survey]{svytotal}} do the heavy lifting.
 #'
 calc_factor <- function(svy, what, by, time_var){
+
   # what <- enquo(what)
   # by <- enquo(by)
   # time_var <- enquo(time_var)
   #TODO: check for implicitly reserved words
 
-  #create a formula to tabulate over (what the survey package requires)
-  form = as.formula(paste0('~', as.character(what)))
-  rmholdby = F
-  if(!is.null(by)){
-    bys = as.formula(paste0('~', paste(as.character(by),collapse = '+')))
-  }else{
-    svy = svy %>% mutate(holdby = 1) %>% group_by(holdby)
-    bys = ~holdby
-    by = 'holdby'
-    rmholdby = T
-  }
-
-  #have to use svymean here because svyciprop doesn't neatly handle non-binary inputs
-  #and I don't really feel like making another split
   #do both total and mean
   res1 <- lapply(c('mean', 'total'), function(x){
 
@@ -45,9 +32,11 @@ calc_factor <- function(svy, what, by, time_var){
       imed <- lapply(uq_cats, function(ccc){
           ccc = as.character(ccc)
           svy <- srvyr::mutate(svy, `__dv__` = !!what == !!ccc)
-          r = svyby(as.formula(paste0("~`__dv__`")), bys, svy, svyciprop, na.rm = T)
-          r = cbind(r, confint(r))
-          names(r)[(length(names(r))-3):length(names(r))] = c('mean' ,'mean_se', 'mean_lower', 'mean_upper')
+
+          r = svy %>% summarize(mean = survey_mean(`__dv__`, proportion = T, vartype = c('se', 'ci'), na.rm = T))
+          r = data.table(r)
+          setnames(r, c('mean_low', 'mean_upp'), c('mean_lower', 'mean_upper'))
+
           r$level = ccc
           return(r)
       })
