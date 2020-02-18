@@ -22,6 +22,18 @@ calc_factor <- function(svy, what, by, time_var){
   # time_var <- enquo(time_var)
   #TODO: check for implicitly reserved words
 
+  #By catchers for the total
+  form = as.formula(paste0('~', as.character(what)))
+  rmholdby = F
+  if(!is.null(by)){
+    bys = as.formula(paste0('~', paste(as.character(by),collapse = '+')))
+  }else{
+    svy = svy %>% mutate(holdby = 1) %>% group_by(holdby)
+    bys = ~holdby
+    by = 'holdby'
+    rmholdby = T
+  }
+
   #do both total and mean
   res1 <- lapply(c('mean', 'total'), function(x){
 
@@ -36,13 +48,13 @@ calc_factor <- function(svy, what, by, time_var){
           r = svy %>% summarize(mean = survey_mean(`__dv__`, proportion = T, vartype = c('se', 'ci'), na.rm = T))
           r = data.table(r)
           setnames(r, c('mean_low', 'mean_upp'), c('mean_lower', 'mean_upper'))
-
           r$level = ccc
           return(r)
       })
       imed = rbindlist(imed)
 
     }else{
+
       #calculate the results
       imed <- survey::svyby(form, bys, svy, na.rm = T, FUN = survey::svytotal)
       cis = confint(imed)
