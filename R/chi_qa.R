@@ -96,8 +96,13 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F){
           }
 
   ## Confirm that variables are of the proper class ----
+          cat("Validating CHI estimates: ")
           validate_yaml_data(DF = chi_est, YML = chi.yaml, VARS = "vars") # check CHI estimate table
+
+          cat(paste("", "Validating CHI metadata: ", sep = "\n"))
           validate_yaml_data(DF = chi_meta, YML = chi.yaml, VARS = "metadata") # check CHI metadata table
+
+          cat(paste("", "", sep = "\n"))
 
 
   ## Set the columns in standard order ----
@@ -105,6 +110,16 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F){
         setcolorder(chi_meta, names(chi.yaml$meta))
 
   ## Basic logic checks for estimates ----
+      # Check for infinite values, which cannot be pushed to SQL ----
+        for(var in c("result", "lower_bound", "upper_bound", "se", "rse",
+                     "numerator", "denominator")){
+          if(nrow(chi_est[is.infinite(get(var))]) > 0 ){
+            stop(glue::glue("There is at least one row where is.infinite({var}) == T.
+                     Please fix this problem before rerunning chi_qa() (e.g., by setting it equal to NA)
+                     You can view the problematic data by typing something like: View(chi_est[is.infinite({var}), ])"))
+          }
+        }
+
       # proportions should always be between zero and one ----
         chi_est <- merge(chi_est, chi_meta[, .(indicator_key, result_type)], by = "indicator_key", all.x = TRUE, all.y = FALSE) # merge on result_type
         if(nrow(chi_est[result_type=="proportion" & !result %between% c(0, 1)]) > 0){
@@ -143,9 +158,9 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F){
       # RSE should always be between 0 and 100 ----
           # confirmed with Abby 2/7/2020 that want RSE * 100
           if(nrow(chi_est[!rse %between% c(0, 100)]) > 0 ){
-            print("There is at least one row where the RSE (relative standard error) is outside the range of (0, 100].
-                 This is not necessarily an error, but you should examine the data to make sure it makes sense.
-                 You can view the problematic data by typing something like: View(chi_est[!rse %between% c(0, 100)])")
+            cat(paste("There is at least one row where the RSE (relative standard error) is outside the range of (0, 100].",
+                 "This is not necessarily an error, but you should examine the data to make sure it makes sense.",
+                 "You can view the data in question by typing something like: View(chi_est[!rse %between% c(0, 100)])", sep = "\n"))
           }
 
       # RSE should be on scale of 0-100 (i.e., the proportion should have been multiplied by 100) ----
@@ -156,9 +171,10 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F){
           }
 
       # Caution flag should be toggled if RSE >= 30% ----
-          if(nrow(chi_est[rse>=30 & (caution != "!" | is.na(caution))]) > 0 ){
-            stop("There is at least one row where a caution flag ('!') is not used and the RSE is >= 30%.
-               Please fix this error prior to rerunning the chi_qa() function.")
+          if(nrow( chi_est[(rse>=30 | is.na(rse)) & (caution != "!" | is.na(caution))]) > 0 ){
+            stop("There is at least one row where a caution flag ('!') is not used and rse >= 30% or is.na(rse) == T.
+                 Please fix this error prior to rerunning the chi_qa() function.
+                 You can view the problematic data by typing something like: View(chi_est[(rse>=30 | is.na(rse)) & (caution != '!' | is.na(caution))])")
           }
 
   ## Ensure proper rounding ----
