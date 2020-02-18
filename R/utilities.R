@@ -291,6 +291,7 @@ format_time_simple <- function(x){
 #' @return A simple printed statement, either identifying incompatible column types or a statement of success
 
   validate_yaml_data <- function(DF = NULL, YML = NULL, VARS = NULL){
+
     # Check that DT is a data.frame/data.table
       if(is.data.frame(DF) == FALSE){
         stop("'DF' must be a data.frame or a data.table")
@@ -339,7 +340,9 @@ format_time_simple <- function(x){
         class.problems <- paste(paste0(VARS, " (", yaml.class, ")"), collapse = ", ")
         stop(glue::glue("The following variables could not be coerced to their proper class (which is specified in parentheses):
                               {class.problems}"))
-      }else{print("All column classes in your R dataset are compatible with the YAML reference standard.")}
+      }else{success <- print(glue::glue("All column classes in your R dataset are compatible with the YAML reference standard."))}
+
+      return(success)
 
   }
 
