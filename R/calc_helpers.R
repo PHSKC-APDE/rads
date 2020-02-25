@@ -10,7 +10,7 @@
 #' @importFrom dplyr n
 #' @importFrom data.table ":=" setnames
 #' @importFrom rlang quos !! !!! syms
-#' @importFrom methods as
+#' @importFrom stats confint as.formula
 #'
 #' @details
 #' Under the hood, \code{\link[survey]{svyciprop}} and \code{\link[survey]{svytotal}} do the heavy lifting.
