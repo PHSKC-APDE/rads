@@ -14,6 +14,7 @@
 #' @param chi_est Name of a data.table or data.frame containing the prepared data to be pushed to SQL
 #' @param chi_meta Name of a data.table or data.frame containing the metadata to be pushed to SQL
 #' @param acs Logical. Indicates whether it is ACS data (which does not have / need varnames)
+#' @param verbose Logical. Should the function be talkative?
 #'
 #' @return If there are no problems, a printed statement of success. Otherwise, it will stop and provide informative
 #' feedback everytime there is an error.
@@ -37,7 +38,7 @@
 
 # chi_qa function ----
 
-chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F){
+chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, verbose = FALSE){
 
   # Check that both the results and the metadata were provided ----
     if(is.null(chi_est)){
@@ -96,13 +97,13 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F){
           }
 
   ## Confirm that variables are of the proper class ----
-          cat("Validating CHI estimates: ")
+          if(verbose) message("Validating CHI estimates: ")
           validate_yaml_data(DF = chi_est, YML = chi.yaml, VARS = "vars") # check CHI estimate table
 
-          cat(paste("", "Validating CHI metadata: ", sep = "\n"))
+          if(verbose) message(paste("", "Validating CHI metadata: ", sep = "\n"))
           validate_yaml_data(DF = chi_meta, YML = chi.yaml, VARS = "metadata") # check CHI metadata table
 
-          cat(paste("", "", sep = "\n"))
+          if(verbose) message(paste("", "", sep = "\n"))
 
 
   ## Set the columns in standard order ----
@@ -158,7 +159,7 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F){
       # RSE should always be between 0 and 100 ----
           # confirmed with Abby 2/7/2020 that want RSE * 100
           if(nrow(chi_est[!rse %between% c(0, 100)]) > 0 ){
-            cat(paste("There is at least one row where the RSE (relative standard error) is outside the range of (0, 100].",
+            if(verbose) message(paste("There is at least one row where the RSE (relative standard error) is outside the range of (0, 100].",
                  "This is not necessarily an error, but you should examine the data to make sure it makes sense.",
                  "You can view the data in question by typing something like: View(chi_est[!rse %between% c(0, 100)])", sep = "\n"))
           }
@@ -261,7 +262,7 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F){
       # actual comparison code should be the same as when comparing to a previous year, so write a small funcion to do this
 
   ## Print success statement!!!!!!!! ####
-    cat(paste("Congratulations!",
+    if(verbose) message(paste("Congratulations!",
           "",
           "Your data has passed all CHI Tableau Ready formatting, style, and logic checks.",
           "",

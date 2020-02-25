@@ -5,13 +5,15 @@
 #' @param ignore_case logical. should the case of names(data) be ignored?
 #' @param copy logical. If false and data is a data.table object, the function omits a copy step and will alter the underlying data.table by reference
 #'
+#' @importFrom data.table is.data.table ":=" set setnames
+#'
 #' @export
 #'
 enact_recodes = function(data, ..., ignore_case = TRUE, copy = TRUE){
 
   stopifnot(inherits(data, 'data.frame'))
 
-  isDT = is.data.table(data)
+  isDT = data.table::is.data.table(data)
 
   #copy data here so the scope is protected
   if(copy || !isDT) data = as.data.table(data)
@@ -86,14 +88,14 @@ enact_recodes = function(data, ..., ignore_case = TRUE, copy = TRUE){
       ) #close try catch
 
 
-    set(data, NULL, dot$new_var, val)
+    data.table::set(data, NULL, dot$new_var, val)
 
 
   }
 
   #Clean up
   if(ignore_case){
-    setnames(data, new_names, old_names)
+    data.table::setnames(data, new_names, old_names)
   }
   if(psuedo_blankblank){
     data[, blankblank := NULL]

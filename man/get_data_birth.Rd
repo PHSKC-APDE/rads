@@ -15,7 +15,7 @@ See \code{\link{list_dataset_columns}} for more information on which columns are
 \item{kingco}{logical. Return dataset for analyses where mother's residence is in King County only.}
 }
 \value{
-A data.table for further analysis/tabulation
+dataset either data.table (adminstrative data) for further analysis/tabulation
 }
 \description{
 Get Birth microdata from storage.

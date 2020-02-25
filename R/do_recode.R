@@ -11,7 +11,6 @@
 #' @importFrom methods as
 #'
 #'
-#'
 #' @export
 do_recode = function(x, old, new, new_label = NULL, update = FALSE, verbose = FALSE){
 

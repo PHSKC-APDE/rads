@@ -1,0 +1,216 @@
+---
+title: "Analyzing HYS data in rads"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Analyzing HYS data in rads}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+The Healthy Youth Survey (HYS) is adminstered to WA state public school 6th, 8th, and 12th (and somethings 9th and 11th) grade students. It asks questions about sex, drugs, mental health, demographics and a series of other fun things. This vignette is designed to provid and overview of how to analyze HYS data using the `rads` package.
+
+To begin, we load the rads package. Because it is dangerous to go at it alone, the rads package relies on a number of other packages to work its barely functional magic. For survey analysis, rads relies on the `srvyr`, `data.table`, and `dplyr` packages for survey statistics, data munging, and horrific quasiquotation programming respectively.  
+
+```{r setup, warning = FALSE, message = FALSE}
+library('data.table')
+library('rads')
+library('srvyr') #analyzing surveys
+library('dplyr') #data manipulation and stress
+```
+
+Generally speaking, having a dataset is a necessary component of doing data analysis. `rads` regularly adds new datasets, and so provides a helper function to help users figure out which datasets are available. Note, the `rads::` is just there to highlight that we are executing a function from the `rads` package.
+
+```{r listdatasets}
+rads::list_apde_data()
+```
+
+Hark! The HYS dataset is available to load and analyze! What happy times! However, before we load the dataset, it might be worth checking what variables it contains. This can be useful if you only want to load a subset of the dataset for SPEED and MEMORY SAVING. You can do this like so:
+
+```{r listvariables, warning = FALSE}
+rads::list_dataset_columns(dataset = 'hys', analytic_only = F)
+```
+
+So the results are a bit disappointing, but this function will work better when the HYS dataset migrates to SQL. Anyways, we can imagine examining the list of columns to select which ones are best and are the most flattering. For now, we'll just load the whole analytical dataset for 2016 and 2018.
+
+```{r loaddata}
+hys <- rads::get_data('hys', year = c(2016, 2018))
+```
+
+It behooves us to examine what exactly we have loaded. A good place to start is by checking the `class`. We also check the dimensions (`dim(hys)`) for giggles.
+
+```{r checkclass}
+print(paste0('The classes are: ', paste(class(hys), collapse = ', ')))
+
+d = dim(hys)
+print(paste('The dataset has', d[1], 'respondents and', d[2], 'columns loaded'))
+
+```
+
+ Some things to note from the results of the last codeblock.
+ 
+1. The `hys` object is 4 classes-- `tbl_svy` from the `srvyr` package, `survey.design2` and `survey.design1` from the underlying `survey` package, and `apde_hys` which the `rads` package appends to make some of the helper functions work. Classes are important because they help R figure out which functions and operations are proper to execute on a given object.
+
+2. A `tbl_svy` is basically like a `tibble` from the `dplyr` package that is svyset (to borrow from stata vernacular). This means things like `filter`, `mutate`, `group_by` and other `dplyr` verbs will work on `tbl_svy` objects. The verb that is likely to be of the most interest is the `summarize` one. To properly compute survey weighted metrics, one must use functions in the form of `survey_mean` and what not. The `?summarize` page has a full listing.
+
+3. While `dplyr` verbs will (sort of) work on the `hys` object, other mechanisms of data manipulation (e.g. base R or `data.table`) will not work without some modification. The way `tbl_svy` objects are structured means the underlying `data.frame`/`tibble` is stored in `hys$variables`. While you can alter this item outside the `dplyr` verb environment, it is not recommended because screwing with the variables that inform the survey design (e.g. psu, strata, and pweight) can make things go haywire. At some point the `rads` package might include the functionality to return just the raw data.frame so folks can svyset it themselves-- but at the moment, I'm lazy.
+ 
+Presumably, if you, dear reader, have made it this far, you are anxious to start computing some health metrics. Hip. Hip. Hooray. Assuming you don't need to do anything super fancy (e.g. you want a King County only number), you can do something like:
+
+```{r babysfirstcomputation, warning=FALSE}
+
+res <- hys %>% 
+  tabulate_variable(variable = 'ecig_vape',
+                    metrics = c('mean', 'se', 'numerator', 'denominator'),
+                    sex = 'both',
+                    grade = NULL, #all grades
+                    region = NULL, #all regions
+                    race = NULL, #a_race8,
+                    year = c(2016, 2018), #2016 and 2018 grouped
+                    sexual_orientation = NULL,
+                    na.rm = TRUE
+                   )
+
+#fix some things for display
+#note, the output of tabulate_variable is a data.table
+res[, .Sexual_Orientation := 'All']
+res[, .Race := 'All']
+res[, .Region := 'King County']
+res[, .Grade := 'All']
+res[, .Year := '2016, 2018']
+
+#Print the results
+res[]
+
+```
+
+With this command, we calculated the proportion of all valid HYS respondents in King County who vaped for the years 2016 and 2018. As the print out hopefully shows, this proportion of students is `r round(res[,mean],2)`. Wooo! Go us!
+
+But what if we want to see the vaping percentages by race and stratified by 6th and 8th graders versus 10th and 12th graders? Well, funny you should ask...
+
+```{r babyssecondcomputation, warning = F}
+
+res <- hys %>% 
+  tabulate_variable(variable = 'ecig_vape',
+                    metrics = 'mean', #only the mean this time
+                    sex = 'both',
+                    grade = list(Tiny = c(6,8), Big = c(10,12)), #two grade groups
+                    region = NULL, #all regions
+                    race = 'all', #a_race8,
+                    year = c(2016, 2018), #each year combined
+                    sexual_orientation = NULL,
+                    na.rm = TRUE
+                   )
+
+res = res[.Race != 'Race: NA', .(.Race, .Grade, Percent = round(mean * 100))]
+res[]
+
+```
+
+Note how the `grade` argument is specified and how it relates to the output. We pass a named list of the rough format `list(output_name = c(vector, of, inputs), name2= input2)` to do on the fly recoding. For this to work properly, you need to know the values in the grade column-- in this case, `a_grade8`. Probably in the future, some of this interface will change as we standardize the names for common demographic categories. Another change from above is that the argument `race` is now set to `"all"` rather than `NULL`. For `tabulate_variable`, `NULL` generally works out to mean "skip this column for the purposes for selection and grouping". Now that `race` is set to `"all"` the function works internally to compute metrics by each race, as specified in the `a_race8` column. Other options include `"all-NH"` or `"aic"`. The former seperates all the races into their non-hispanic version while the latter loops over the alone and in combination options specified.
+
+We can compute alone or in combination metrics as follows:
+
+```{r aic}
+
+res <- hys %>% 
+  tabulate_variable(variable = 'ecig_vape',
+                    metrics = 'mean', #only the mean this time
+                    sex = 'both',
+                    grade = NULL, #two grade groups
+                    region = NULL, #all regions
+                    race = 'aic', #all alone or in combination groups,
+                    year = c(2016, 2018), #each year combined
+                    sexual_orientation = NULL,
+                    na.rm = TRUE
+                   )
+
+res = res[!grepl('Not', .Race, fixed = T), .(.Race, Percent = round(mean * 100))]
+res[]
+
+```
+
+But maybe we only care about a few alone or in combination groups for a particular analysis:
+
+```{r aicsubset}
+
+res <- hys %>% 
+  tabulate_variable(variable = 'ecig_vape',
+                    metrics = 'mean', #only the mean this time
+                    sex = 'both',
+                    grade = NULL, #two grade groups
+                    region = NULL, #all regions
+                    race = c('a_black_aic', 'a_asian_aic'), #all alone or in combination groups,
+                    year = c(2016, 2018), #each year combined
+                    sexual_orientation = NULL,
+                    na.rm = TRUE
+                   )
+
+res = res[!grepl('Not', .Race, fixed = T), .(.Race, Percent = round(mean * 100))]
+res[]
+
+```
+
+Or mayhaps, we want to use a custom grouping (note the inclusion of the `race_var` argument):
+
+```{r racecustomgroup}
+res <- hys %>% 
+  tabulate_variable(variable = 'ecig_vape',
+                    metrics = 'mean', #only the mean this time
+                    sex = 'both',
+                    grade = NULL, #two grade groups
+                    region = NULL, #all regions
+                    race = list(A = c('Asian', 'AIAN'), H = 'Hispanic'), #custom grouping!
+                    race_var = 'a_race8', # this will probably be renamed at some point
+                    year = c(2016, 2018), #each year combined
+                    sexual_orientation = NULL,
+                    na.rm = TRUE
+                   )
+
+res = res[, .(.Race, Percent = round(mean * 100))]
+res[]
+
+```
+
+While most of the arguments to `tabulate_variable` use the named list format demonstrated above, `sex` only has two valid options: `"both"` and "`seperate`". What each option does is hopefully not a surprise:
+```{r seperatesex}
+
+res <- hys %>% 
+  tabulate_variable(variable = 'ecig_vape',
+                    metrics = 'mean', #only the mean this time
+                    sex = 'seperate',
+                    grade = NULL, #two grade groups
+                    region = NULL, #all regions
+                    race = NULL, #custom grouping! Everything else goes to NA and is dropped
+                    year = c(2016, 2018), #each year combined
+                    sexual_orientation = NULL,
+                    na.rm = TRUE
+                   )
+
+res = res[, .(.Sex, Percent = round(mean * 100))]
+res[]
+
+```
+
+`tabulate_variable` is designed to be the interface to most common interface for analyzing HYS data. However, the function is limited in the number of "by" variables it can handle. Another function, `survey_tabulate` provides a slightly lower level interface for analyzing HYS (and other survey) datasets.
+
+For example, if we wanted to compute the percentage of students who vape by whether they've ever had sex, we do something like:
+
+```{r customtab}
+
+res <- hys %>% survey_tabulate(what = 'ecig_vape',
+                               kingco == 1, !is.na(ecig_vape), kcfinalwt>0, year == 2018,
+                               by = 'ever_sex',
+                               metrics = c('mean', 'numerator', 'denominator'),
+                               proportion = T)
+res[]
+
+```
+
+Hooray! Numbers and custom and stuff. Note that internally, rows that are NA for either the `what` argument or the `by` argument are filtered out and that the function use `...` to pass along other filter conditions (e.g. `kcfinalwt>0`). Does that mean the `!is.na(ecig_vape)` bit above is redundant? Yes. Yes it does. Does it matter? No. No it doesn't.

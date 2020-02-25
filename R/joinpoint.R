@@ -32,17 +32,13 @@
 #'
 #' @keywords JoinPoint, trends
 #'
-#' @importFrom data.table is.data.table ':=' setDT setDF data.table setorder copy setnames setorder dcast setcolorder fread shift
-#' @importFrom dplyr '%>%' distinct mutate n_distinct left_join
-#' @importFrom glue glue
-#' @importFrom utils write.table
+#' @import data.table
+#' @importFrom dplyr "%>%" mutate left_join n_distinct distinct
+#' @import glue
 #'
 #' @examples
-#'
-#' \dontrun{
 #' # create sample data
-#'
-#' dt <- data.table::data.table(
+#' dt <- data.table(
 #'   indic = c(rep("my.indicator", 14)),
 #'   group1 = c(rep("Female", 14)),
 #'   group2 = c(rep("Child", 7), rep("Adult", 7)),
@@ -60,7 +56,6 @@
 #'      jp_byvar2 = "group2",
 #'      jp_dir = "C:/temp/jp_test_data/"
 #' )
-#' }
 
 # JoinPoint function ----
 joinpoint <- function(jp_data = NULL,
@@ -73,24 +68,13 @@ joinpoint <- function(jp_data = NULL,
                  jp_dir = NULL,
                  jp_path = "C:/Program Files (x86)/Joinpoint Command/jpCommand.exe") {
 
-  #Visible bindings for global variables for data.table
-  dup <- jp_se2 <- . <- trend <- APC.Significant <- APC <- Segment.Start <- Segment.End <- NULL
-  trend.next <- trend.prev <- contiguous <- count <- time_trends <- tab <- NULL
-
   ##############################################
   ## Confirm function arguments are logical ####
   ##############################################
-
-    #if data.frame, convert to datatable
-    unconvert = F
-    if(is.data.frame(jp_data) && !data.table::is.data.table(jp_data)){
-      data.table::setDT(jp_data)
-    }
-
-   # confirm provision of jp_data
-    if(is.null(jp_data)){
-      stop("You must specify a dataset (i.e., 'jp_data' must be defined)")
-    }
+    # confirm provision of jp_data
+      if(is.null(jp_data)){
+        stop("You must specify a dataset (i.e., 'jp_data' must be defined)")
+      }
 
    # confirm provision of jp_indicator
     if(is.null(jp_indicator)){
@@ -128,7 +112,7 @@ joinpoint <- function(jp_data = NULL,
   # confirm that jp_result exists
     if(!jp_result %in% names(jp_data)){
       stop(glue::glue("<{jp_result}> does not exist in your specified dataset.
-                  'jp_result' must refer to a column containing your estimates/results."))
+                  'jp_result' must refer to a column containing your estimtates/results."))
     }
 
   # confirm that jp_se exists
@@ -162,37 +146,12 @@ joinpoint <- function(jp_data = NULL,
                 otherwise please install the program before continuing."))
     }
 
-
-  ###################################
-  ## Confirm data is adequate    ####
-  ###################################
-    # confirm there is only 1 row per unique combo of jp_indicator, jp_byvar1, jp_byvar2, & jp_period
-      jp_data[, dup := .N, by=c(jp_indicator, jp_byvar1, jp_byvar2, jp_period)]
-      if(max(jp_data$dup) > 1){
-        stop(paste("JoinPoint needs unique combinations of 'jp_indicator', 'jp_byvar1', 'jp_byvar2', & 'jp_period'.
-             There are at least", nrow(jp_data[dup>1]) ,"rows where the combination of these columns is not unique.
-             You can identify duplicate rows by adapting the following line of code:
-             jp_data[duplicated(jp_data, by = c('indicator_key', 'cat1_group_alias', 'cat2_group_alias', 'year')), .(indicator_key, cat1_group_alias, cat2_group_alias, year)]"))
-      }
-
-    # Need at least 7 years of data for JoinPoint trend
-      jp_data[, dup := .N, by=c(jp_indicator, jp_byvar1, jp_byvar2)]
-      if(min(jp_data$dup) < 7){
-        stop(paste("JoinPoint needs at least seven (7) time periods for each unique combination of 'jp_indicator', 'jp_byvar1', & 'jp_byvar2'.
-                   There is at least one set of these three columns that does not have seven time periods.
-                   If you want to perform a trend test with less than seven data points, consider using a binomial model (i.e., glm_trend()."))
-      }
-
-    # Need at least 7 years of data of CONTIUOUS DATA for JoinPoint trend
-      jp_data[, period_min := min(get(jp_period)), by=c(jp_indicator, jp_byvar1, jp_byvar2)] # identify min year per group
-      jp_data[, period_max := max(get(jp_period)), by=c(jp_indicator, jp_byvar1, jp_byvar2)] # identify max year per group
-      jp_data[, projected_max := as.numeric(period_min) + dup - 1 ]
-
-      if(nrow(jp_data[period_max != projected_max]) ){
-        stop(paste("JoinPoint needs at least seven (7) **contiguous** time periods for each unique combination of 'jp_indicator', 'jp_byvar1', & 'jp_byvar2'.
-                   There is at least one set of these three columns that does not have seven contiguous time periods.
-                   Please examine the underlying data, fix the problem, and try again."))
-      }
+  # confirm there is only 1 row per unique combo of jp_indicator, jp_byvar1, jp_byvar2, & jp_period
+    jp_data[, dup := .N, by=c(jp_indicator, jp_byvar1, jp_byvar2, jp_period)]
+    if(max(jp_data$dup) > 1){
+      stop(paste("JoinPoint needs unique combinations of 'jp_indicator', 'jp_byvar1', 'jp_byvar2', & 'jp_period'.
+           There are at least", nrow(jp_data[dup>1]) ,"rows where the combination of these columns is not unique"))
+    }
 
   ############################
   ##    Set up folders    ####
@@ -200,7 +159,7 @@ joinpoint <- function(jp_data = NULL,
     # Create jp_dir folder (if needed)
         if(!dir.exists(jp_dir)){
           message(glue::glue("'{jp_dir}' does not exist and is being created on your behalf"))
-          dir.create(jp_dir, recursive = T)
+          dir.create(jp_dir)
           }
 
     # Create input & output folder in jp_dir (if needed)
@@ -211,7 +170,7 @@ joinpoint <- function(jp_data = NULL,
   ###############################
   ## Loop through indicators ####
   ###############################
-  trends.dt <- data.table::data.table() # empty table for appending the results for each indicator
+  trends.dt <- data.table() # empty table for appending the results for each indicator
 
   for(indicator in unique(jp_data[, get(jp_indicator)])){
 
@@ -221,7 +180,7 @@ joinpoint <- function(jp_data = NULL,
     # Write tab seperated input data file for use by JoinPoint ----
         # Note: outputting an integer seems to cause JP to fail.
         # Check for integers then subtract/add a tiny extra amount to avoid errors
-        input <- data.table::copy(jp_data[get(jp_indicator)== indicator])
+        input <- copy(jp_data[get(jp_indicator)== indicator])
         for(i in c("indicator", "period", "result", "se", "byvar1", "byvar2")){
           input[, paste0("jp_", i) := get(get(paste0("jp_", i)))] # ascribe standard names for simplicity
           input[, get(paste0("jp_", i)) := NULL]
@@ -233,21 +192,21 @@ joinpoint <- function(jp_data = NULL,
         input[jp_se == round2(jp_se), jp_se2 := mean(input[jp_se != 0]$jp_se, na.rm = T), by = c("jp_byvar1", "jp_byvar2")] # when se is any integer, replace with mean of when it is not zero
         input[jp_se < 0.001, jp_se := 0.001] # when SE is <0.001, JoinPoint doesn't calculate a trend
         input <- input[, .(jp_period, jp_byvar1, jp_byvar2, jp_result, jp_se)] # limit to columns needed for JoinPoint
-        data.table::setorder(input, jp_byvar1, jp_byvar2, jp_period)
+        setorder(input, jp_byvar1, jp_byvar2, jp_period)
 
         write.table(input, file = glue::glue(jp_dir, "/input/JP_{unlist(indicator)}.txt"),
                     row.names = F, col.names = F, sep = "\t")
 
 
     # Track the integers that JoinPoint creates corresponding to category names ----
-        input_names_jp_byvar1 <- input %>% dplyr::distinct(jp_byvar1) %>%
-          dplyr::mutate(jp_byvar1_num = seq(0, dplyr::n_distinct(input$jp_byvar1) - 1))
+        input_names_jp_byvar1 <- input %>% distinct(jp_byvar1) %>%
+          mutate(jp_byvar1_num = seq(0, n_distinct(input$jp_byvar1) - 1))
 
-        input_names_jp_byvar2 <- input %>% dplyr::distinct(jp_byvar2) %>%
-          dplyr::mutate(jp_byvar2_num = seq(0, dplyr::n_distinct(input$jp_byvar2) - 1))
+        input_names_jp_byvar2 <- input %>% distinct(jp_byvar2) %>%
+          mutate(jp_byvar2_num = seq(0, n_distinct(input$jp_byvar2) - 1))
 
-        input <- dplyr::left_join(input, input_names_jp_byvar1, by = "jp_byvar1") %>%
-          dplyr::left_join(., input_names_jp_byvar2, by = "jp_byvar2")
+        input <- left_join(input, input_names_jp_byvar1, by = "jp_byvar1") %>%
+          left_join(., input_names_jp_byvar2, by = "jp_byvar2")
 
 
     # Create an Run.ini file for Joinpoint ----
@@ -354,8 +313,8 @@ joinpoint <- function(jp_data = NULL,
     # Process JoinPoint Results----
           # Bring in the annual percent change
           # (assumes output was tab deliminated, set this in options.ini file )
-          temp_trend <- data.table::fread(glue::glue("{jp_dir}/output/{unlist(indicator)}.apcexport.txt")) # apc = annual percent change
-          data.table::setnames(temp_trend, names(temp_trend), gsub(" ", ".", names(temp_trend)))
+          temp_trend <- fread(glue::glue("{jp_dir}/output/{unlist(indicator)}.apcexport.txt")) # apc = annual percent change
+          setnames(temp_trend, names(temp_trend), gsub(" ", ".", names(temp_trend)))
 
           # save trend data for each time period
           temp_trend[, trend := "flat"] # set flat as default, and then specify when rising or falling
@@ -364,8 +323,8 @@ joinpoint <- function(jp_data = NULL,
           temp_trend <- temp_trend[, .(jp_byvar1, jp_byvar2, Segment.Start, Segment.End, trend)] # keeping only essential vars, helpful for clarity while coding/troubleshooting
 
           # collapse data when two contiguous time periods have the same trend (i.e., 2005-2009 and 2009-2013 both flat, so 2005-2013 is flat)
-          temp_trend[, trend.next := data.table::shift(trend, 1, 0, "lead"), by = .(jp_byvar1, jp_byvar2)]
-          temp_trend[, trend.prev := data.table::shift(trend, 1, 0, "lag"), by = .(jp_byvar1, jp_byvar2)]
+          temp_trend[, trend.next := shift(trend, 1, 0, "lead"), by = .(jp_byvar1, jp_byvar2)]
+          temp_trend[, trend.prev := shift(trend, 1, 0, "lag"), by = .(jp_byvar1, jp_byvar2)]
           temp_trend[trend == trend.next | trend == trend.prev, contiguous := TRUE][, c("trend.next", "trend.prev") := NULL] # identify contiguous
 
           temp_trend <- rbind(temp_trend[contiguous==TRUE, .(Segment.Start = suppressWarnings(min(Segment.Start)), Segment.End = suppressWarnings(max(Segment.End))),
@@ -375,7 +334,7 @@ joinpoint <- function(jp_data = NULL,
 
           temp_trend[, contiguous := NULL] # drop contiguous indicator
 
-          data.table::setorder(temp_trend, jp_byvar1, jp_byvar2, Segment.Start)
+          setorder(temp_trend, jp_byvar1, jp_byvar2, Segment.Start)
 
           # create formatted trend summary
           if(min(nchar(temp_trend$Segment.Start), na.rm = T) == 4 & max(nchar(temp_trend$Segment.End), na.rm = T) == 4){
@@ -391,7 +350,7 @@ joinpoint <- function(jp_data = NULL,
           temp_trend[,  count := 1:.N, by = .(jp_byvar1, jp_byvar2)]
 
           # reshape from long to wide
-          temp_trend <- data.table::dcast(temp_trend, jp_byvar1 + jp_byvar2 ~ count, value.var = "trend")
+          temp_trend <- dcast(temp_trend, jp_byvar1 + jp_byvar2 ~ count, value.var = "trend")
 
           # append the trends across each row
           cols <- names(temp_trend)[3:ncol(temp_trend)]
@@ -403,16 +362,16 @@ joinpoint <- function(jp_data = NULL,
 
 
           ### Join back to data and make trends tab for joining
-          output <- dplyr::left_join(input, temp_trend,
+          output <- left_join(input, temp_trend,
                               by = c("jp_byvar1_num" = "jp_byvar1", "jp_byvar2_num"= "jp_byvar2")) %>%
-            dplyr::mutate(tab = "trends") %>%
-            dplyr::distinct(tab, jp_byvar1, jp_byvar2, time_trends)# Only need to keep one row per jp_byvar2 since they're all the same
+            mutate(tab = "trends") %>%
+            distinct(tab, jp_byvar1, jp_byvar2, time_trends)# Only need to keep one row per jp_byvar2 since they're all the same
 
           ### Format for combining and saving
-          data.table::setDT(output)
-          data.table::setnames(output, c("jp_byvar1", "jp_byvar2"), c(jp_byvar1, jp_byvar2))
+          setDT(output)
+          setnames(output, c("jp_byvar1", "jp_byvar2"), c(jp_byvar1, jp_byvar2))
           output[, paste0(jp_indicator) := indicator]
-          data.table::setcolorder(output, c("tab", jp_indicator, jp_byvar1, jp_byvar2, "time_trends"))
+          setcolorder(output, c("tab", jp_indicator, jp_byvar1, jp_byvar2, "time_trends"))
 
           ### Append data that will be exported
           trends.dt <- rbind(trends.dt, output)
@@ -430,11 +389,6 @@ joinpoint <- function(jp_data = NULL,
           do.call(unlink, toss.results)
 
       } # close loop that cycles through each indicator
-
-    if(unconvert){
-      data.table::setDF(jp_data)
-    }
-
     return(trends.dt)
 } # close entire function
 
