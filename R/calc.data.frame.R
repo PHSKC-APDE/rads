@@ -9,8 +9,9 @@ calc.data.frame = function(ph.data,
                            metrics = c('mean', "numerator", "denominator", "missing", "obs"),
                            per = NULL,
                            win = NULL,
-                           time_var = "chi_year",
+                           time_var = NULL,
                            proportion = FALSE,
+                           fancy_time = TRUE,
                            verbose = FALSE){
 
   #global variables used by data.table declared as NULL here to play nice with devtools::check()
@@ -35,7 +36,6 @@ calc.data.frame = function(ph.data,
         # numeric columns
           numeric.col <- vapply(temp.dt[, ..what], is.numeric, FUN.VALUE=logical(1)) # logical vector
           numeric.col <- setdiff(what[numeric.col], binary.col)
-
 
         # character columns (convert to factors)
           character.col <- vapply(temp.dt[, ..what], is.character, FUN.VALUE=logical(1)) # logical vector
@@ -105,17 +105,37 @@ calc.data.frame = function(ph.data,
         }
       }
 
+    #validate 'time_var'
+      if(is.null(time_var)){
+        stop("The 'time_var' must be specified, (e.g., time_var = 'chi_year')")
+      }
+      if(!is.null(time_var) & !time_var %in% names(temp.dt)){
+        stop("You have specified a 'time_var' that does not exist in 'ph.data'.
+             Please check your spelling and try again.")
+      }
+      if(!is.null(time_var) & eval(parse(text = paste0("is.integer(temp.dt$", time_var, ")") ))==FALSE ){
+       stop("The specified 'time_var' must be of type integer.")
+      }
+
+    # validate 'fancy_time'
+      if(!is.logical(fancy_time)){
+        stop("'fancy_time' must be specified as a logical (i.e., TRUE, T, FALSE, or F)")
+      }
+
   #### CREATE CALC FUNCTIONS ####
     #subset temp.dt to only the rows needed
       if(!is.null(where)){
         temp.dt <- temp.dt[eval(where), ]
       }
 
+    #select type of time formatting
+      if(fancy_time==T){time_format <- format_time}else{time_format <- format_time_simple}
+
     # function to calculate metrics
       calc_metrics <- function(X, DT){
         . <- NULL
         DT[, .(
-          time = format_time(get(time_var)),
+          time = time_format(get(time_var)),
           variable = as.character(X),
           mean = mean(get(X), na.rm = T),
           median = as.numeric(stats::median(get(X), na.rm = T)),
@@ -186,7 +206,7 @@ calc.data.frame = function(ph.data,
             setnames(res.metrics, "se", "mean_se")
 
         # Calculate RSE
-            res.metrics[, rse := mean_se / mean]
+            res.metrics[, rse := 100*(mean_se / mean)] # Informed by Abby 2/7/2020 that the proportion should be multiplied by 100
 
         # Set Median to NA if variable is not a numeric/continuous
             res.metrics[!variable %in% numeric.col, median := NA]

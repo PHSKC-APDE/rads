@@ -6,6 +6,13 @@
 \usage{
 substrRight(x, x.start, x.stop)
 }
+\arguments{
+\item{x}{character}
+
+\item{x.start}{digit to start (counting from the right)}
+
+\item{x.stop}{digit to end  (counting from the right)}
+}
 \value{
 character vector
 }
