@@ -18,6 +18,8 @@ If blank, it helps identify a simpler rename operation.}
 If NULL or all NA indicates no (new) labelling}
 
 \item{update}{logical. Governs whether x is modified in place. If `x` is a factor, this will also carry forward any labels unless overwritten by new_label}
+
+\item{verbose}{logical. Should warnings be displayed/provided?}
 }
 \description{
 Recode a vector

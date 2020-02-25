@@ -4,7 +4,7 @@ Title: Assisted computation of King County public health data
 Version: 0.1.0
 Author: PHSKC-APDE
 Maintainer: Daniel Casey <Data.Request@kingcounty.gov>
-Description: Use and analyze data from Public Health- Seattle & King County.
+Description: Fetch and analyze data from Public Health- Seattle & King County.
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
@@ -18,7 +18,9 @@ Imports:
     DBI,
     survey,
     srvyr,
-    haven
+    haven,
+    methods,
+    stats
 Suggests: 
     testthat,
     knitr,
