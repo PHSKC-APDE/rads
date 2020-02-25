@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities.R
 \name{list_apde_data}
 \alias{list_apde_data}
-\title{Returns the list of datasets currently available for analysis in RADS}
+\title{Returns the list of datasets currently available for RADS}
 \usage{
 list_apde_data()
 }
@@ -10,7 +10,7 @@ list_apde_data()
 Character vector of available datasets.
 }
 \description{
-Returns the list of datasets currently available for analysis in RADS
+Returns the list of datasets currently available for RADS
 }
 \examples{
 \dontrun{

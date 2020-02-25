@@ -1,14 +1,14 @@
-#' Suppress data according to APDE standards or custom requests & adding caution flag for high RSE
+#' Suppress data according to APDE standards or custom requests
 #'
 #' #' @description
-#' Default suppression is according to APDE/DOH standards (https://www.doh.wa.gov/Portals/1/Documents/1500/SmallNumbers.pdf)
+#' Defaul suppression is according to APDE/DOH standards (https://www.doh.wa.gov/Portals/1/Documents/1500/SmallNumbers.pdf)
 #' Each dataset may have it's own more stringent standards. When the reference sheet of all suppression guidelines is
 #' made available, this code should be updated to use that resource.
 #'
 #' This function expects data that has already been formatted for CHI
 #'
 #'
-#' @param sup_data a data.table or data.frame. Must contain the data to be suppressed with standard metric names,
+#' @param ph.data a data.table or data.frame. Must contain the data to be suppressed with standard metric names,
 #' i.e., mean, median, sum, rate, lower, upper, se, rse, numerator, denominator, proportion
 #' @param suppress_range integer vector of length 2. They specify the minimum and maximum range for suppression.
 #'
@@ -18,7 +18,8 @@
 #'
 #' @keywords suppression
 #'
-#' @importFrom data.table ':='
+#' @import data.table
+#' @import glue
 #'
 #' @examples
 #'
@@ -36,19 +37,14 @@
 suppress <- function(sup_data = NULL,
                      suppress_range = c(0, 10) ){
 
-  #visible bindings for data.table
-  numerator <- suppression <- NULL
-
-  #validate 'sup_data'
+  #validate 'ph.data'
       if(is.null(sup_data)){
         stop("You must specify a dataset (i.e., 'sup_data' must be defined)")
       }
 
       if(is.data.frame(sup_data)){
         setDT(sup_data)
-      } else {
-        stop(paste0("<{sup_data}> must be the name of a data.frame or data.table."))
-      }
+      } else { stop(glue::glue("<{sup_data}> must be the name of a data.frame or data.table."))}
 
 
   #validate 'suppress_range'
@@ -61,15 +57,10 @@ suppress <- function(sup_data = NULL,
 
 
   #apply suppression
-      sup_metrics <- intersect(names(sup_data), c("mean", "median", "sum", "rate", "lower", "upper", "se", "rse", "numerator", "denominator", "proportion"))
-      sup_data[numerator %in% suppress_range[1]:suppress_range[2], suppression := "^"]
-      sup_data[suppression=="^", (sup_metrics) := NA]
+        sup_metrics <- intersect(names(sup_data), c("mean", "median", "sum", "rate", "lower", "upper", "se", "rse", "numerator", "denominator", "proportion"))
+        sup_data[numerator %in% suppress_range[1]:suppress_range[2], suppression := "^"]
+        sup_data[suppression=="^", (sup_metrics) := NA]
 
-
-  #apply caution flag if possible
-      if("rse" %in% names(sup_data)){
-        sup_data[rse >0.3, caution := "!"]
-      }
 
   return(sup_data)
 

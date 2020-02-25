@@ -6,11 +6,6 @@
 \usage{
 round2(x, n = 0)
 }
-\arguments{
-\item{x}{values to be rounded}
-
-\item{n}{number of digits}
-}
 \value{
 numeric
 }
