@@ -1,6 +1,6 @@
 library('testthat')
 library('data.table')
-library('apdeRecodes')
+
 #Simple recode of character -> character
 test_that('Simple recode of a character -> character',{
   r = do_recode('a', 'a', 'b')

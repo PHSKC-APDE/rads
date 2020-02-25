@@ -210,8 +210,6 @@ test_that('Finding the mean uses svyciprop', {
 
   #the two different (svyby and normal approaches work)
   expect_equal(c(as.numeric(a2), confint(a2)), unname(unlist(a1[variable == 'blah', .(mean, mean_lower, mean_upper)])))
-  expect_equal((c(a3[1,'level'], as.numeric(confint(a3)))), unname(unlist(a1[level == TRUE, .(mean, mean_lower, mean_upper)])))
-
 })
 
 
