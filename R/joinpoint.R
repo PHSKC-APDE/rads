@@ -51,7 +51,7 @@
 #'   se = c(runif(14, .01, .02))
 #' )
 #' # run function
-#' jp_f(jp_data = copy(dt),
+#' joinpoint(jp_data = copy(dt),
 #'      jp_indicator = "indic",
 #'      jp_period = "time",
 #'      jp_result = "est",
@@ -63,7 +63,7 @@
 #' }
 
 # JoinPoint function ----
-jp_f <- function(jp_data = NULL,
+joinpoint <- function(jp_data = NULL,
                  jp_indicator = NULL,
                  jp_period = "chi_year",
                  jp_result = "result",

@@ -119,7 +119,7 @@ get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
   query.string <- glue::glue_sql ("SELECT ",  cols, " FROM [PH_APDEStore].[final].[bir_wa]
                                    WHERE chi_year IN (",  paste(year, collapse=", "), ")")
 
-  if(kingco == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 'Yes'")}
+  if(kingco == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 1")}
 
 
   con <- odbc::dbConnect(odbc::odbc(),
@@ -135,6 +135,8 @@ get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
 
   # ascribe class
   class(dat) <- c(class(dat), 'apde_birth')
+
+  setDT(dat) # set it as a data.table again b/c otherwise, ascribing the new class above makes a copy
 
   return(dat)
 }

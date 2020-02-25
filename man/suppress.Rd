@@ -4,13 +4,26 @@
 \alias{suppress}
 \title{Suppress data according to APDE standards or custom requests & adding caution flag for high RSE}
 \usage{
-suppress(sup_data = NULL, suppress_range = c(0, 10))
+suppress(
+  sup_data = NULL,
+  suppress_range = c(0, 9),
+  secondary = FALSE,
+  secondary_ids = c("tab", "indicator_key", "cat1", "cat2_group", "year"),
+  secondary_where = NULL
+)
 }
 \arguments{
 \item{sup_data}{a data.table or data.frame. Must contain the data to be suppressed with standard metric names,
 i.e., mean, median, sum, rate, lower, upper, se, rse, numerator, denominator, proportion}
 
 \item{suppress_range}{integer vector of length 2. They specify the minimum and maximum range for suppression.}
+
+\item{secondary}{logical (T, TRUE, F, or FALSE) indicating whether secondary suppression should be run}
+
+\item{secondary_ids}{character vector of column names which are used to define groups for secondary suppression}
+
+\item{secondary_where}{an expression identifying the rows to be filtered / excluded from secondary suppression because
+the categories are not mutually exclusive (e.g., race3)}
 }
 \value{
 a data.table with suppression applied to CHI standard columns.
@@ -33,7 +46,7 @@ This function expects data that has already been formatted for CHI
     numerator = round(rnorm(100, 20, 9), 0)
   )
   table(dt$numerator) # before
-  suppress(dt, suppress_range = c(0, 20)) # apply suppression
+  suppress(dt, suppress_range = c(0, 20), secondary = F) # apply suppression
   table(dt$numerator) # after
 
 }
