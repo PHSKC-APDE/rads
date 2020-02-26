@@ -16,6 +16,9 @@ hys <- hys %>%
   mutate(hopescale = case_when(hopescale %in% c(1:3) ~ 0L, hopescale == 4 ~ 1L)) %>%
   mutate_at(vars(s15, s16), list(~ case_when(. %in% c(1, 2) ~ 0L, . %in% c(3, 4) ~ 1L)))
 
+blah = calc(hys, what = "s16", by = c("a_sex"), metrics = c("mean", "rse"), win = 2, time_var = "year")
+
+
 stupid_cw = hys$variables$s15
 stupid_cw[hys$variables$year<=2010] = NA
 hys <- hys %>% mutate(testvar = stupid_cw)

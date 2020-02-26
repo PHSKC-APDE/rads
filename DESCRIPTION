@@ -20,7 +20,8 @@ Imports:
     srvyr,
     haven,
     methods,
-    stats
+    stats,
+    tidyselect
 Suggests: 
     testthat,
     knitr,
