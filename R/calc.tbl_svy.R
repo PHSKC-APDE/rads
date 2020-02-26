@@ -3,6 +3,8 @@
 #' @importFrom dplyr n
 #' @importFrom data.table ":=" setnames
 #' @importFrom rlang quos !! !!! syms
+#' @importFrom tidyselect all_of
+#' @importFrom data.table setnames setDT
 #' @export
 calc.tbl_svy <- function(ph.data,
                          what,
@@ -81,7 +83,7 @@ calc.tbl_svy <- function(ph.data,
     delete_time = T
   }
 
-  ph.data <- ph.data %>% srvyr::select(what, by, time_var)
+  ph.data <- ph.data %>% srvyr::select(tidyselect::all_of(what), tidyselect::all_of(by), tidyselect::all_of(time_var))
 
   whats = rlang::syms(what)
   time_var = rlang::sym(time_var)
@@ -136,7 +138,9 @@ calc.tbl_svy <- function(ph.data,
             time = srvyr::unweighted(format_time(!!time_var)),
             ndistinct = srvyr::unweighted(length(na.omit(unique(!!what)))),
             unique.time = srvyr::unweighted(length(unique(!!time_var)))
-        ) %>% setDT
+        )
+
+        data.table::setDT(ret)
 
 
         ret[, level := NA]

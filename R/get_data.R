@@ -86,7 +86,7 @@ get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcf
 
   if(kingco == T) svy <- svy %>% srvyr::filter(kingco == 1)
 
-  if(!is.na(cols)) svy <- svy %>% srvyr::select({{cols}})
+  if(!all(is.na(cols))) svy <- svy %>% srvyr::select({{cols}})
   class(svy) <- c(class(svy), 'apde_hys')
 
   return(svy)
