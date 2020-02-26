@@ -13,7 +13,7 @@ calc(ph.data, ...)
   what,
   ...,
   by = NULL,
-  metrics = c("mean", "numerator", "denominator", "missing", "obs"),
+  metrics = survey_metrics(),
   per = NULL,
   win = NULL,
   time_var = NULL,

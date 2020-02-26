@@ -395,9 +395,9 @@ chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = 
     # Merge old and new data based on identifiers
       comp <- merge(copy(OLD[year == OLD.year]),
                     copy(NEW[year == NEW.year]),
-                    by = c("indicator_key", "tab", "year",
-                           "cat1", "cat1_group", "cat1_varname",
-                           "cat2", "cat2_group", "cat2_varname"),
+                    by = c("indicator_key", "tab",
+                           "cat1", "cat1_group_alias", "cat1_varname",
+                           "cat2", "cat2_group_alias", "cat2_varname"),
                     all = T)
 
     # calculate percent differences between old (x) and new(y)
@@ -407,9 +407,9 @@ chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = 
 
     # order variables
       comp <- comp[, c("absolute.diff", "relative.diff", "result_type",
-                       "indicator_key", "tab", "year",
-                       "cat1", "cat1_group", "cat1_varname",
-                       "cat2", "cat2_group", "cat2_varname",
+                       "indicator_key", "tab",
+                       "cat1", "cat1_group_alias", "cat1_varname",
+                       "cat2", "cat2_group_alias", "cat2_varname", "year.x", "year.y",
                        "result.x", "result.y", "lower_bound.x", "lower_bound.y",
                        "upper_bound.x", "upper_bound.y",
                        "numerator.x", "numerator.y", "denominator.x", "denominator.y",
