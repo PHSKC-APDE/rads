@@ -67,7 +67,7 @@ get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcf
   #visible bindings for data.table
   schgnoid <- sur_psu <- kcfinalwt <- NULL
 
-  dat <- haven::read_dta("J:/HYSdata/hys/Data/hys0418_final_8.dta")
+  dat <- haven::read_dta("J:/HYSdata/hys/Data/hys0418_final_11.dta")
   data.table::setDT(dat)
 
   #prep the dataset
