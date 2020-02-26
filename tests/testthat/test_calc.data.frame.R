@@ -62,6 +62,8 @@ test_that('Check ... (where)',{
                         nrow(dt[chi_sex == "Male" & !is.na(fetal_pres)]))
           expect_equal( unique(calc(dt, chi_sex=="Male" & chi_year == 2015, what = c("fetal_pres"), time_var = "chi_year")$denominator),
                         nrow(dt[chi_sex == "Male" & chi_year==2015 & !is.na(fetal_pres)]))
+          expect_equal( unique(calc(dt, chi_sex=="Male", chi_year == 2015, what = c("fetal_pres"), time_var = "chi_year")$denominator),
+                        nrow(dt[chi_sex == "Male" & chi_year==2015 & !is.na(fetal_pres)])) # assess implicity "&" in ...
 })
 
 test_that('Check metrics',{
