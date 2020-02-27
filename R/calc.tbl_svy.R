@@ -202,6 +202,9 @@ calc.tbl_svy <- function(ph.data,
   #keep requested metrics
   res <- res[, c('variable', 'level', as.character(time_var), as.character(by), metrics), with = F]
 
+  na_mets = intersect(metrics, c(grep('total', metrics, value = T), grep('mean', metrics, value = T), 'rse'))
+  res[is.na(numerator), (na_mets) := NA]
+
   if(delete_time) res[, `_THETIME` := NULL]
 
   return(res)
