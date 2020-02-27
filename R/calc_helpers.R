@@ -124,11 +124,13 @@ calc_factor <- function(svy, what, by, time_var){
 
   #compute denominator
   by_vars = as.character(by)
-  res2[!is.na(get(as.character(what))), denominator := sum(numerator), by = by_vars]
   res2[, missing := max(missing), by = by_vars]
   res2 = res2[!is.na(get(as.character(what)))]
   data.table::setnames(res2, as.character(what), 'level')
   res = merge(res1,res2, all.x = T, by = c('level', as.character(by)))
+  res[!is.na(level), denominator := sum(numerator,na.rm = T), by = by_vars]
+
+
 
   if(rmholdby){
     res[, holdby := NULL]
