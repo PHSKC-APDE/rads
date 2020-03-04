@@ -4,6 +4,7 @@
 #' @param what character or symbol.
 #' @param by character or symbol vector
 #' @param time_var character or symbol
+#' @param fancy_time logical. If FALSE, a record of all the years going into the data is provided. If true, just a simple range (where certain years within the range might not be represented)
 #' @importFrom survey svymean svytotal
 #' @importFrom data.table melt setnames
 #' @importFrom srvyr filter group_by %>% select summarize unweighted
@@ -15,12 +16,14 @@
 #' @details
 #' Under the hood, \code{\link[survey]{svyciprop}} and \code{\link[survey]{svytotal}} do the heavy lifting.
 #'
-calc_factor <- function(svy, what, by, time_var){
+calc_factor <- function(svy, what, by, time_var, fancy_time = TRUE){
 
   # what <- enquo(what)
   # by <- enquo(by)
   # time_var <- enquo(time_var)
   #TODO: check for implicitly reserved words
+
+  if(fancy_time==TRUE){time_format <- format_time}else{time_format <- format_time_simple}
 
   #By catchers for the total
   form = as.formula(paste0('~', as.character(what)))
@@ -117,7 +120,7 @@ calc_factor <- function(svy, what, by, time_var){
     srvyr::summarize(
       numerator = unweighted(dplyr::n()),
       missing = srvyr::unweighted(sum(is.na(!!what))),
-      time = srvyr::unweighted(format_time(!!time_var)),
+      time = srvyr::unweighted(time_format(!!time_var)),
       ndistinct = srvyr::unweighted(length(na.omit(unique(!!what)))),
       unique.time = srvyr::unweighted(length(unique(!!time_var)))
     ) %>% setDT

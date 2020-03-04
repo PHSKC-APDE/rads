@@ -15,6 +15,7 @@ calc.tbl_svy <- function(ph.data,
                          win = NULL,
                          time_var = NULL,
                          proportion = FALSE,
+                         fancy_time = TRUE,
                          verbose = FALSE){
 
   if(verbose && !missing(per)){
@@ -24,6 +25,12 @@ calc.tbl_svy <- function(ph.data,
   if(!is.null(win)){
     if(is.null(time_var)) stop('win(dow) specified without a time_var')
   }
+
+  # validate 'fancy_time'
+  if(!is.logical(fancy_time)){
+    stop("'fancy_time' must be specified as a logical (i.e., TRUE, T, FALSE, or F)")
+  }
+  if(fancy_time==TRUE){time_format <- format_time}else{time_format <- format_time_simple}
 
   #data.table visible bindings
   variable <- ci <- NULL
@@ -104,6 +111,8 @@ calc.tbl_svy <- function(ph.data,
     wins = list(integer(0))
   }
 
+  browser()
+
   #For each variable and window, calculate specified metrics
   res <- lapply(whats, function(what){
 
@@ -135,7 +144,7 @@ calc.tbl_svy <- function(ph.data,
             numerator = srvyr::unweighted(sum(!!what, na.rm = T)), #only relevant for binary variables
             denominator = srvyr::unweighted(dplyr::n()),
             missing = srvyr::unweighted(sum(is.na(!!what))),
-            time = srvyr::unweighted(format_time(!!time_var)),
+            time = srvyr::unweighted(time_format(!!time_var)),
             ndistinct = srvyr::unweighted(length(na.omit(unique(!!what)))),
             unique.time = srvyr::unweighted(length(unique(!!time_var)))
         )
@@ -152,7 +161,7 @@ calc.tbl_svy <- function(ph.data,
         #make sure there are no NAs in the what variable
         ph.data <- suppressMessages(ph.data %>% filter(!is.na(!!what)))
         #move to a different function since its more involved
-        ret <- calc_factor(ret, what, by, time_var)
+        ret <- calc_factor(ret, what, by, time_var, fancy_time)
         ret[, median := NA]
       }
 

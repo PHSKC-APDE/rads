@@ -212,4 +212,16 @@ test_that('Finding the mean uses svyciprop', {
   expect_equal(c(as.numeric(a2), confint(a2)), unname(unlist(a1[variable == 'blah', .(mean, mean_lower, mean_upper)])))
 })
 
+test_that('time_var and fancy_time options', {
+  s1 <- as_survey_design(svydesign(id=~dnum, weights=~pw, data=apiclus1, fpc=~fpc))
+  s1 <- s1 %>% mutate(time = rep(c(1,3, 5), nrow(apiclus1)/3))
+
+  a1 = calc(s1, what = c('api00'), metrics = c('mean', 'numerator', 'denominator'), time_var = 'time', fancy_time = TRUE, proportion = FALSE)
+  expect_equal(unique(a1[,time]) , '1, 3, 5')
+
+  a2 = calc(s1, what = c('api00'), metrics = c('mean', 'numerator', 'denominator'), time_var = 'time', fancy_time = FALSE, proportion = FALSE)
+  expect_equal(unique(a2[,time]) , '1 - 5')
+
+})
+
 

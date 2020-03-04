@@ -16,6 +16,10 @@ hys <- hys %>%
   mutate(hopescale = case_when(hopescale %in% c(1:3) ~ 0L, hopescale == 4 ~ 1L)) %>%
   mutate_at(vars(s15, s16), list(~ case_when(. %in% c(1, 2) ~ 0L, . %in% c(3, 4) ~ 1L)))
 
+res <- calc(hys, what = "s15", by = c("a_sex"), metrics = c("mean", "rse"), win = 1, time_var = "year", proportion = F)
+
+
+
 blah = calc(hys, what = "s16", by = c("a_sex"), metrics = c("mean", "rse"), win = 2, time_var = "year")
 
 

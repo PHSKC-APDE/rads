@@ -4,7 +4,7 @@
 \alias{calc_factor}
 \title{A wrapper to compute metrics (specifically relative fraction and totals) from factor/character variables}
 \usage{
-calc_factor(svy, what, by, time_var)
+calc_factor(svy, what, by, time_var, fancy_time = TRUE)
 }
 \arguments{
 \item{svy}{survey.design2 (or tbl_svy). Survey from which metrics will be computed}
@@ -14,6 +14,8 @@ calc_factor(svy, what, by, time_var)
 \item{by}{character or symbol vector}
 
 \item{time_var}{character or symbol}
+
+\item{fancy_time}{logical. If FALSE, a record of all the years going into the data is provided. If true, just a simple range (where certain years within the range might not be represented)}
 }
 \description{
 A wrapper to compute metrics (specifically relative fraction and totals) from factor/character variables

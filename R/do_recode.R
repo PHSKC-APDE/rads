@@ -89,7 +89,7 @@ do_recode = function(x, old, new, new_label = NULL, update = FALSE, verbose = FA
   if(!update){
     #if the new label exists and has at least one non-na value
     if(!is.null(new_label) && !all(is.na(new_label))){
-      ret = factor(ret, new, new_label)
+      ret = factor(ret, new[which(!is.na(new_label))], new_label[!is.na(new_label)])
     }
   }else if(!all(is.na(new_label))){
     new_labs = data.table::data.table(value = new, label = new_label)
