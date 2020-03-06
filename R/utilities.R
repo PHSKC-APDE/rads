@@ -122,8 +122,8 @@ substrRight <- function(x, x.start, x.stop){
 #' @export
 #' @return data.table comprised of the original data.table and two additional columns ... 'significance' and 'comparison_with_kc' (or alternatively specified name)
 chi_compare_kc <- function(orig,
-                        linkage.vars = c("indicator_key"),
-                        new.col.name = "comparison_with_kc"){
+                           linkage.vars = c("indicator_key"),
+                           new.col.name = "comparison_with_kc"){
 
   #Bindings for data.table/check global variables
   cat1_varname <- result <- comp.result <- lower_bound <- comp.upper_bound <- upper_bound <- comp.lower_bound <- significance <- NULL
@@ -140,15 +140,18 @@ chi_compare_kc <- function(orig,
   orig <- merge(orig, comparator, by=c(linkage.vars, "year"), all.x = TRUE, all.y = TRUE)
 
   #Compare estimates with comparator
-  orig[result == comp.result, paste0(new.col.name) := "no different"]
-  orig[result > comp.result, paste0(new.col.name) := "higher"]
-  orig[result < comp.result, paste0(new.col.name) := "lower"]
+  if(sum(grepl(new.col.name, names(orig))) > 0){orig[, c(new.col.name) := NULL]}
+  orig[result == comp.result, c(new.col.name) := "no different"]
+  orig[result > comp.result, c(new.col.name) := "higher"]
+  orig[result < comp.result, c(new.col.name) := "lower"]
 
   #According to APDE protocol, we check for overlapping CI rather than SE and Z scores
+  if(sum(grepl("significance", names(orig))) > 0){orig[, significance := NULL]}
+  orig[, significance := NA_character_]
   orig[(lower_bound > comp.upper_bound) | (upper_bound < comp.lower_bound), significance := "*"]
 
   #Keep comparison only if statistically significant
-  orig[is.na(significance), paste0(new.col.name) := "no different"]
+  orig[is.na(significance), c(new.col.name) := "no different"]
 
   #Drop KC level estimates that were just used for the comparisons
   orig[, c("comp.result", "comp.upper_bound", "comp.lower_bound") := NULL]

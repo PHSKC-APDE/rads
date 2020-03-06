@@ -32,12 +32,13 @@ calc.data.frame = function(ph.data,
     where <- NULL
   }
 
-  if(nrow(temp.dt[eval(where), ]) <1 ){
-    stop(paste0("Your '...' (i.e., ", where, ") filters out all rows of data. Please revise and submit again"))
-  }
-
   #subset temp.dt to only the rows needed
   if(!is.null(where)){
+
+    if(nrow(temp.dt[eval(where), ]) <1 ){
+      stop(paste0("Your '...' (i.e., ", where, ") filters out all rows of data. Please revise and submit again"))
+    }
+
     temp.dt <- temp.dt[eval(where), ]
   }
 
