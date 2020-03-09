@@ -172,7 +172,7 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, verbose = FALSE){
           }
 
       # Caution flag should be toggled if RSE >= 30% ----
-          if(nrow( chi_est[(rse>=30 | is.na(rse)) & (caution != "!" | is.na(caution))]) > 0 ){
+          if(nrow(chi_est[rse>=30 & (caution != "!" | is.na(caution)) ]) > 0 ){
             stop("There is at least one row where a caution flag ('!') is not used and rse >= 30% or is.na(rse) == T.
                  Please fix this error prior to rerunning the chi_qa() function.
                  You can view the problematic data by typing something like: View(chi_est[(rse>=30 | is.na(rse)) & (caution != '!' | is.na(caution))])")
