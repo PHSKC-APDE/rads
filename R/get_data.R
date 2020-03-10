@@ -67,7 +67,7 @@ get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcf
   #visible bindings for data.table
   schgnoid <- sur_psu <- kcfinalwt <- NULL
 
-  dat <- haven::read_dta("J:/HYSdata/hys/Data/hys0418_final_8.dta")
+  dat <- haven::read_dta("J:/HYSdata/hys/Data/hys0418_final_11.dta")
   data.table::setDT(dat)
 
   #prep the dataset
@@ -86,7 +86,7 @@ get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcf
 
   if(kingco == T) svy <- svy %>% srvyr::filter(kingco == 1)
 
-  if(!is.na(cols)) svy <- svy %>% srvyr::select({{cols}})
+  if(!all(is.na(cols))) svy <- svy %>% srvyr::select({{cols}})
   class(svy) <- c(class(svy), 'apde_hys')
 
   return(svy)
