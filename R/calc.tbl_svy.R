@@ -16,6 +16,7 @@ calc.tbl_svy <- function(ph.data,
                          time_var = NULL,
                          proportion = FALSE,
                          fancy_time = TRUE,
+                         ci = .95,
                          verbose = FALSE){
 
   if(verbose && !missing(per)){
@@ -33,7 +34,7 @@ calc.tbl_svy <- function(ph.data,
   if(fancy_time==TRUE){time_format <- format_time}else{time_format <- format_time_simple}
 
   #data.table visible bindings
-  variable <- ci <- NULL
+  variable <- NULL
 
   opts = survey_metrics()
   #confirm that svy is a tab_svy
@@ -111,8 +112,6 @@ calc.tbl_svy <- function(ph.data,
     wins = list(integer(0))
   }
 
-  browser()
-
   #For each variable and window, calculate specified metrics
   res <- lapply(whats, function(what){
 
@@ -138,9 +137,9 @@ calc.tbl_svy <- function(ph.data,
       if(is.numeric(ret$variables[[as.character(what)]])){
         ret <- ret %>%
           srvyr::summarize(
-            mean = srvyr::survey_mean(!!what, na.rm = T, vartype = c('se', 'ci'), proportion = proportion),
+            mean = srvyr::survey_mean(!!what, na.rm = T, vartype = c('se', 'ci'), proportion = proportion, level = ci),
             median = unweighted(median(!!what)), #srvyr::survey_median(!!what, na.rm = T, vartype = NULL), #This isn't working at the moment. Figure it out later
-            total = srvyr::survey_total(!!what, vartype = c('se', 'ci'),na.rm = T),
+            total = srvyr::survey_total(!!what, vartype = c('se', 'ci'),level = ci, na.rm = T),
             numerator = srvyr::unweighted(sum(!!what, na.rm = T)), #only relevant for binary variables
             denominator = srvyr::unweighted(dplyr::n()),
             missing = srvyr::unweighted(sum(is.na(!!what))),
@@ -161,7 +160,7 @@ calc.tbl_svy <- function(ph.data,
         #make sure there are no NAs in the what variable
         ph.data <- suppressMessages(ph.data %>% filter(!is.na(!!what)))
         #move to a different function since its more involved
-        ret <- calc_factor(ret, what, by, time_var, fancy_time)
+        ret <- calc_factor(ret, what, by, time_var, fancy_time, ci)
         ret[, median := NA]
       }
 
@@ -209,10 +208,10 @@ calc.tbl_svy <- function(ph.data,
   }
 
   #keep requested metrics
-  res <- res[, c('variable', 'level', as.character(time_var), as.character(by), metrics), with = F]
-
   na_mets = intersect(metrics, c(grep('total', metrics, value = T), grep('mean', metrics, value = T), 'rse'))
   res[is.na(numerator), (na_mets) := NA]
+  res <- res[, c('variable', 'level', as.character(time_var), as.character(by), metrics), with = F]
+
 
   if(delete_time) res[, `_THETIME` := NULL]
 

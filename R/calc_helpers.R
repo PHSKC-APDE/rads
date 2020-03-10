@@ -16,7 +16,7 @@
 #' @details
 #' Under the hood, \code{\link[survey]{svyciprop}} and \code{\link[survey]{svytotal}} do the heavy lifting.
 #'
-calc_factor <- function(svy, what, by, time_var, fancy_time = TRUE){
+calc_factor <- function(svy, what, by, time_var, fancy_time = TRUE, ci = .95){
 
   # what <- enquo(what)
   # by <- enquo(by)
@@ -48,7 +48,7 @@ calc_factor <- function(svy, what, by, time_var, fancy_time = TRUE){
           ccc = as.character(ccc)
           svy <- srvyr::mutate(svy, `__dv__` = !!what == !!ccc)
 
-          r = svy %>% summarize(mean = survey_mean(`__dv__`, proportion = T, vartype = c('se', 'ci'), na.rm = T))
+          r = svy %>% summarize(mean = survey_mean(`__dv__`, proportion = T, vartype = c('se', 'ci'), na.rm = T, level = ci))
           r = data.table(r)
           setnames(r, c('mean_low', 'mean_upp'), c('mean_lower', 'mean_upper'))
           r$level = ccc
@@ -59,7 +59,7 @@ calc_factor <- function(svy, what, by, time_var, fancy_time = TRUE){
     }else{
 
       #calculate the results
-      imed <- survey::svyby(form, bys, svy, na.rm = T, FUN = survey::svytotal)
+      imed <- survey::svyby(form, bys, svy, na.rm = T, FUN = survey::svytotal, level = ci)
       cis = confint(imed)
 
       #format imed

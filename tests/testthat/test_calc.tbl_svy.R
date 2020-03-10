@@ -11,7 +11,7 @@ set.seed(98104)
 test_that('Defaults (mostly) work: svy',
           expect_equal(
             calc(sur, what = 'api00', time_var = NULL)$mean,
-            sur %>% summarize(mean = survey_mean(api00, na.rm = T)) %>% .$mean
+            sur %>% summarize(mean = survey_mean(api00, na.rm = T, level = .95)) %>% .$mean
           ))
 
 test_that('Grouping without filtering',
@@ -220,7 +220,26 @@ test_that('time_var and fancy_time options', {
   expect_equal(unique(a1[,time]) , '1, 3, 5')
 
   a2 = calc(s1, what = c('api00'), metrics = c('mean', 'numerator', 'denominator'), time_var = 'time', fancy_time = FALSE, proportion = FALSE)
-  expect_equal(unique(a2[,time]) , '1 - 5')
+  expect_equal(unique(a2[,time]) , '1-5')
+
+})
+
+test_that('ci option works', {
+  s1 <- as_survey_design(svydesign(id=~dnum, weights=~pw, data=apiclus1, fpc=~fpc))
+
+  #normal vars
+  r1 = calc(s1, what = 'api00', metrics = c('mean'), ci = .95)
+  r2 = calc(s1, what = 'api00', metrics = c('mean'), ci = .99)
+
+  expect_gt(r2[, mean_upper], r1[, mean_upper])
+  expect_lt(r2[, mean_lower], r1[, mean_lower])
+
+  #factor vars
+  r3 = calc(s1, what = 'stype', metrics = c('mean'), ci = .95)
+  r4 = calc(s1, what = 'stype', metrics = c('mean'), ci = .99)
+
+  expect_gt(r4[2, mean_upper], r3[2, mean_upper])
+  expect_lt(r4[2, mean_lower], r3[2, mean_lower])
 
 })
 
