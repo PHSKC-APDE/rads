@@ -1,5 +1,6 @@
 library('data.table')
 library('testthat')
+library('rads')
 
 # create test data
 set.seed(98104)
@@ -124,12 +125,30 @@ test_that('Check win: rolling averages, sums, etc.',{
                 round2(mean(dt[chi_year %in% c(2013:2015)]$birth_weight_grams, na.rm = T), 3))
 })
 
-test_that('Check fancy_time',{
+test_that('Check fancy_time and similar',{
   expect_equal( calc(dt, metrics = c("mean"), chi_year %in% c(2008:2011, 2013, 2015:2018), what = c("kotelchuck"), time_var = "chi_year")$time,
                 "2008-2011, 2013, 2015-2018" )
   expect_equal( calc(dt, metrics = c("mean"), chi_year %in% c(2008:2011, 2012, 2013, 2015:2018), what = c("kotelchuck"), time_var = "chi_year", fancy_time = T)$time,
                 "2008-2013, 2015-2018" )
   expect_equal( calc(dt, metrics = c("mean"), chi_year %in% c(2008:2011, 2012, 2013, 2015:2018), what = c("kotelchuck"), time_var = "chi_year", fancy_time = F)$time,
                 "2008-2018" )
+
+  #factor variable times
+  d = copy(dt)
+  d[, sss := fetal_pres]
+  d[(chi_year == 2017) | (chi_year == 2010 & sss == 'Cephalic'), sss := NA]
+  r1 = calc(d, metrics = 'mean', what = 'sss', time_var = 'chi_year', fancy_time = T)
+
+  #record data assumes absence is a true 0, and therefore Cephalic data is "present" in 2010 (e.g. 0 / denominator)
+  #this is a divergance from calc.tbl_svy
+  expect_equal(r1$time, rep(c('2008-2016, 2018'),3))
+
+  #numeric variable times
+  d[chi_year == 2016, birth_weight_grams := NA]
+  r2 = calc(d, metrics = 'mean', what = 'birth_weight_grams', time_var = 'chi_year', fancy_time = T)
+  expect_equal(r2$time, c('2008-2015, 2017-2018'))
+
+
+
 })
 

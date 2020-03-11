@@ -212,7 +212,7 @@ test_that('Finding the mean uses svyciprop', {
   expect_equal(c(as.numeric(a2), confint(a2)), unname(unlist(a1[variable == 'blah', .(mean, mean_lower, mean_upper)])))
 })
 
-test_that('time_var and fancy_time options', {
+test_that('time_var, fancy_time, and missing years because of NAs options', {
   s1 <- as_survey_design(svydesign(id=~dnum, weights=~pw, data=apiclus1, fpc=~fpc))
   s1 <- s1 %>% mutate(time = rep(c(1,3, 5), nrow(apiclus1)/3))
 
@@ -221,6 +221,28 @@ test_that('time_var and fancy_time options', {
 
   a2 = calc(s1, what = c('api00'), metrics = c('mean', 'numerator', 'denominator'), time_var = 'time', fancy_time = FALSE, proportion = FALSE)
   expect_equal(unique(a2[,time]) , '1-5')
+
+  #when a variable is missing in years
+  s1 <- s1 %>% mutate(out = case_when(time != 3 ~ api00))
+  a3 = calc(s1, what = 'out', time_var = 'time', fancy_time = T)
+  a4 = calc(s1, what = 'out', time_var = 'time', fancy_time = F)
+
+  expect_equal(a3$time, '1, 5')
+  expect_equal(a4$time, '1-5')
+
+  #what happens when its a factor
+  #this tests entire year missingness and additional missingness by type & year
+  d = data.table(s1$variables)
+  d[, sss := as.character(stype)]
+  d[(time ==3) | (time == 5 & sss == 'E'), sss := NA]
+
+  s1 <- as_survey_design(svydesign(id=~dnum, weights=~pw, data=as.data.frame(d), fpc=~fpc))
+
+  a5 = calc(s1, what = 'sss', time_var = 'time', fancy_time = T)
+  a6 = calc(s1, what = 'sss', time_var = 'time', fancy_time = F)
+
+  expect_equal(a5[, .(level, time)], data.table(level = c('E', 'H', 'M'), time = c('1', '1, 5', '1, 5')))
+  expect_equal(a6[, .(level, time)], data.table(level = c('E', 'H', 'M'), time = c('1', '1-5', '1-5')))
 
 })
 
@@ -242,5 +264,7 @@ test_that('ci option works', {
   expect_lt(r4[2, mean_lower], r3[2, mean_lower])
 
 })
+
+
 
 

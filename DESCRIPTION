@@ -10,18 +10,18 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.0.2
 Imports:
-    data.table,
-    dplyr,
-    glue,
-    odbc,
-    rlang,
-    DBI,
-    survey,
-    srvyr,
-    haven,
+    data.table (>= 1.12.8),
+    dplyr (>= 0.8.4),
+    glue (>= 1.3.1),
+    odbc (>= 1.2.2),
+    rlang (>= 0.4.4),
+    DBI (>= 1.1.0),
+    survey (>= 3.37),
+    srvyr (>= 0.3.6),
+    haven (>= 2.2.0),
     methods,
     stats,
-    tidyselect
+    tidyselect (>= 1.0.0)
 Suggests: 
     testthat,
     knitr,

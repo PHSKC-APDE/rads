@@ -143,9 +143,9 @@ calc.tbl_svy <- function(ph.data,
             numerator = srvyr::unweighted(sum(!!what, na.rm = T)), #only relevant for binary variables
             denominator = srvyr::unweighted(dplyr::n()),
             missing = srvyr::unweighted(sum(is.na(!!what))),
-            time = srvyr::unweighted(time_format(!!time_var)),
+            time = srvyr::unweighted(time_format({{time_var}}[!is.na({{what}})])),
             ndistinct = srvyr::unweighted(length(na.omit(unique(!!what)))),
-            unique.time = srvyr::unweighted(length(unique(!!time_var)))
+            unique.time = srvyr::unweighted(length(unique({{time_var}}[!is.na({{what}})])))
         )
 
         data.table::setDT(ret)

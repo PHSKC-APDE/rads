@@ -1,5 +1,5 @@
 #' @rdname calc
-#' @importFrom data.table copy data.table rbindlist tstrsplit .N "%like%" "%between%"
+#' @importFrom data.table copy data.table rbindlist tstrsplit .N "%like%" "%between%" as.data.table
 #' @importFrom stats median na.omit prop.test qnorm qt var na.omit
 #' @importFrom rlang quos
 #' @importFrom stats na.omit median var prop.test qnorm
@@ -20,7 +20,7 @@ calc.data.frame = function(ph.data,
   se <- rse <- rate <- rate_per <- level <- time <- variable <- NULL
 
   # copy data.table to prevent changing the underlying data, also sets copy as class == data.table
-  temp.dt <- data.table::setDT(copy(ph.data))
+  temp.dt <- data.table::as.data.table(ph.data)
 
   #### VALIDATION ####
   #validate '...' (i.e., where)
@@ -34,12 +34,10 @@ calc.data.frame = function(ph.data,
 
   #subset temp.dt to only the rows needed
   if(!is.null(where)){
-
-    if(nrow(temp.dt[eval(where), ]) <1 ){
+    temp.dt <- temp.dt[eval(where), ]
+    if(nrow(temp.dt) <1 ){
       stop(paste0("Your '...' (i.e., ", where, ") filters out all rows of data. Please revise and submit again"))
     }
-
-    temp.dt <- temp.dt[eval(where), ]
   }
 
   #validate 'what'
@@ -62,7 +60,7 @@ calc.data.frame = function(ph.data,
   factor.col <- vapply(temp.dt[, ..what], is.factor, FUN.VALUE=logical(1)) # logical vector
   factor.col <- what[factor.col]
   if(length(factor.col) > 0){
-    temp.dt[, c(factor.col) := lapply(.SD, as.character), .SDcols = factor.col]
+    temp.dt[, c(factor.col) := lapply(.SD, droplevels), .SDcols = factor.col]
   }
 
   # character columns (convert to factors)
@@ -75,7 +73,6 @@ calc.data.frame = function(ph.data,
   # factor columns
   factor.col <- vapply(temp.dt[, ..what], is.factor, FUN.VALUE=logical(1)) # logical vector
   factor.col <- what[factor.col]
-
 
   names.before <- names(copy(temp.dt))
 
@@ -146,9 +143,9 @@ calc.data.frame = function(ph.data,
 
   # function to calculate metrics
   calc_metrics <- function(X, DT){
-    . <- NULL
+
     DT[, .(
-      time = time_format(get(time_var)),
+      time = time_format(get(time_var)[!is.na(get(X))]),
       variable = as.character(X),
       mean = mean(get(X), na.rm = T),
       median = as.numeric(stats::median(get(X), na.rm = T)),
@@ -159,7 +156,7 @@ calc.data.frame = function(ph.data,
       obs = .N,
       missing = sum(is.na( get(X) )),
       missing.prop = sum(is.na( get(X) ) / .N),
-      unique.time = length(unique( get(time_var) )),
+      unique.time = length(unique( get(time_var)[!is.na(get(X))] )),
       ndistinct = length(unique(na.omit(get(X))))
     ),
     by = by]
