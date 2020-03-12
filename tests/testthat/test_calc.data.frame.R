@@ -126,11 +126,26 @@ test_that('Check win: rolling averages, sums, etc.',{
 })
 
 test_that('Check ci:',{
+  #numeric, large denominator
   r1 = calc(dt, what = 'birth_weight_grams', time_var = 'chi_year', metrics = 'mean', ci = .95)
   r2 = calc(dt, what = 'birth_weight_grams', time_var = 'chi_year', metrics = 'mean', ci = .90)
   expect_lte(r1$mean_lower, r2$mean_lower)
   expect_gte(r1$mean_upper, r2$mean_upper)
   expect_equal(r1$mean, r2$mean)
+
+  #numeric, small denominator
+  r3 = calc(dt[1:29,], what = 'birth_weight_grams', time_var = 'chi_year', metrics = 'mean', ci = .95)
+  r4 = calc(dt[1:29,], what = 'birth_weight_grams', time_var = 'chi_year', metrics = 'mean', ci = .90)
+  expect_lte(r3$mean_lower, r4$mean_lower)
+  expect_gte(r3$mean_upper, r4$mean_upper)
+
+  #binary/factor, small denominator
+  r5 = calc(dt, what = 'fetal_pres', time_var = 'chi_year', metrics = 'mean', ci = .95)
+  r6 = calc(dt, what = 'fetal_pres', time_var = 'chi_year', metrics = 'mean', ci = .90)
+  expect_lte(r5$mean_lower[1], r6$mean_lower[1])
+  expect_gte(r5$mean_upper[1], r6$mean_upper[1])
+
+
 })
 
 test_that('Check fancy_time and similar',{
@@ -156,7 +171,16 @@ test_that('Check fancy_time and similar',{
   r2 = calc(d, metrics = 'mean', what = 'birth_weight_grams', time_var = 'chi_year', fancy_time = T)
   expect_equal(r2$time, c('2008-2015, 2017-2018'))
 
+})
 
+test_that('Nonspecified time',{
+  r1 = calc(dt, metrics = 'mean', what = 'birth_weight_grams')
+  dt[, yyy := -10]
+  r2 = calc(dt, metrics = 'mean', time_var = 'yyy', what = 'birth_weight_grams')
+
+  expect_false('time' %in% names(r1))
+  expect_equal(r2$time, '-10')
+  expect_equal(r1$mean, r2$mean)
 
 })
 

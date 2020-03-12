@@ -114,6 +114,21 @@ calc.data.frame = function(ph.data,
     stop("If specified, the 'per' argument must be an integer")
   }
 
+  #validate 'time_var'
+  if(is.null(time_var)){
+    #stop("The 'time_var' must be specified, (e.g., time_var = 'chi_year')")
+    time_var = "___THETIME___"
+    temp.dt[, (time_var) := -1]
+    droptime = TRUE
+  }else{
+    droptime = FALSE
+  }
+
+  if(!is.null(time_var) & !time_var %in% names(temp.dt)){
+    stop("You have specified a 'time_var' that does not exist in 'ph.data'.
+         Please check your spelling and try again.")
+  }
+
   #validate 'win'
   if(!is.null(win)){
     if(win %% 1 != 0){
@@ -121,15 +136,7 @@ calc.data.frame = function(ph.data,
     }
   }
 
-  #validate 'time_var'
-  if(is.null(time_var)){
-    stop("The 'time_var' must be specified, (e.g., time_var = 'chi_year')")
-  }
-  if(!is.null(time_var) & !time_var %in% names(temp.dt)){
-    stop("You have specified a 'time_var' that does not exist in 'ph.data'.
-         Please check your spelling and try again.")
-  }
-  if(!is.null(time_var) & eval(parse(text = paste0("is.numeric(temp.dt$", time_var, ")") ))==FALSE ){
+  if(!is.null(time_var) & !is.numeric(temp.dt[[time_var]])){
     stop("The specified 'time_var' must be of type numeric.")
   }
 
@@ -258,6 +265,8 @@ calc.data.frame = function(ph.data,
 
   # drop columns no longer needed
   res <- res[, ..return.vars]
+
+  if(droptime) res[, time := NULL]
 
   #### CLOSE ####
   return(res)
