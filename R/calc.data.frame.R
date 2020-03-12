@@ -205,6 +205,7 @@ calc.data.frame = function(ph.data,
   # MEANS: Numeric/non-binary need to have their CI calculated separately
   res.metrics.mean <- res.metrics[variable %in% c(numeric.col)]
   if(length(numeric.col) > 0){
+
     res.metrics.mean[denominator>30, mean_lower := mean - stats::qnorm(1 - ((1-ci)/2))*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics
     res.metrics.mean[denominator>30, mean_upper := mean + stats::qnorm(1 - ((1-ci)/2))*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics
     suppressWarnings(res.metrics.mean[denominator<=30, mean_lower := mean - qt(1 - ((1-ci)/2),df=denominator-1)*se]) # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed)

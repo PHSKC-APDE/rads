@@ -126,7 +126,11 @@ test_that('Check win: rolling averages, sums, etc.',{
 })
 
 test_that('Check ci:',{
-
+  r1 = calc(dt, what = 'birth_weight_grams', time_var = 'chi_year', metrics = 'mean', ci = .95)
+  r2 = calc(dt, what = 'birth_weight_grams', time_var = 'chi_year', metrics = 'mean', ci = .90)
+  expect_lte(r1$mean_lower, r2$mean_lower)
+  expect_gte(r1$mean_upper, r2$mean_upper)
+  expect_equal(r1$mean, r2$mean)
 })
 
 test_that('Check fancy_time and similar',{
