@@ -14,6 +14,7 @@ calc.data.frame = function(ph.data,
                            time_var = NULL,
                            proportion = FALSE,
                            fancy_time = TRUE,
+                           ci = .95,
                            verbose = FALSE){
 
   #global variables used by data.table declared as NULL here to play nice with devtools::check()
@@ -192,8 +193,8 @@ calc.data.frame = function(ph.data,
     lower <- rep(NA, nrow(res.metrics.prop)) # create empty vector to hold res.metricsults
     upper <- rep(NA, nrow(res.metrics.prop)) # create empty vector to hold res.metricsults
     for(i in 1:nrow(res.metrics.prop)){
-      lower[i] <- suppressWarnings(stats::prop.test(x = numerator[i], n = denominator[i], conf.level = 0.95, correct = F)$conf.int[1]) # the score method ... suggested by DOH & others
-      upper[i] <- suppressWarnings(stats::prop.test(x = numerator[i], n = denominator[i], conf.level = 0.95, correct = F)$conf.int[2])
+      lower[i] <- suppressWarnings(stats::prop.test(x = numerator[i], n = denominator[i], conf.level = ci, correct = F)$conf.int[1]) # the score method ... suggested by DOH & others
+      upper[i] <- suppressWarnings(stats::prop.test(x = numerator[i], n = denominator[i], conf.level = ci, correct = F)$conf.int[2])
     }
     res.metrics.prop[, mean_lower := lower]
     res.metrics.prop[, mean_upper := upper]
@@ -204,10 +205,10 @@ calc.data.frame = function(ph.data,
   # MEANS: Numeric/non-binary need to have their CI calculated separately
   res.metrics.mean <- res.metrics[variable %in% c(numeric.col)]
   if(length(numeric.col) > 0){
-    res.metrics.mean[denominator>30, mean_lower := mean - stats::qnorm(0.975)*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics
-    res.metrics.mean[denominator>30, mean_upper := mean + stats::qnorm(0.975)*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics
-    suppressWarnings(res.metrics.mean[denominator<=30, mean_lower := mean - qt(0.975,df=denominator-1)*se]) # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed)
-    suppressWarnings(res.metrics.mean[denominator<=30, mean_upper := mean + qt(0.975,df=denominator-1)*se]) # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed)
+    res.metrics.mean[denominator>30, mean_lower := mean - stats::qnorm(1 - ((1-ci)/2))*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics
+    res.metrics.mean[denominator>30, mean_upper := mean + stats::qnorm(1 - ((1-ci)/2))*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics
+    suppressWarnings(res.metrics.mean[denominator<=30, mean_lower := mean - qt(1 - ((1-ci)/2),df=denominator-1)*se]) # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed)
+    suppressWarnings(res.metrics.mean[denominator<=30, mean_upper := mean + qt(1 - ((1-ci)/2),df=denominator-1)*se]) # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed)
     res.metrics.mean[mean_lower < 0, mean_lower := 0] # prevent negative values for confidence interval
   }
 
