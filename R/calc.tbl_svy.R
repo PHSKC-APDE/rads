@@ -135,24 +135,34 @@ calc.tbl_svy <- function(ph.data,
       #if the variable is numeric, compute normally
       #if a factor find the relative fractions
       if(is.numeric(ret$variables[[as.character(what)]])){
-        ret <- ret %>%
-          srvyr::summarize(
-            mean = srvyr::survey_mean(!!what, na.rm = T, vartype = c('se', 'ci'), proportion = proportion, level = ci),
+
+        missin <- ret %>% summarize(missing = srvyr::unweighted(sum(is.na(!!what))))
+        gvs = group_vars(ret)
+        ret <- ret %>% filter(!is.na({{what}})) %>%
+          summarize(
+            mean = srvyr::survey_mean(!!what, vartype = c('se', 'ci'), proportion = proportion, level = ci),
             median = unweighted(median(!!what)), #srvyr::survey_median(!!what, na.rm = T, vartype = NULL), #This isn't working at the moment. Figure it out later
-            total = srvyr::survey_total(!!what, vartype = c('se', 'ci'),level = ci, na.rm = T),
-            numerator = srvyr::unweighted(sum(!!what, na.rm = T)), #only relevant for binary variables
+            total = srvyr::survey_total(!!what, vartype = c('se', 'ci'),level = ci),
+            numerator = srvyr::unweighted(sum(!!what)), #only relevant for binary variables
             denominator = srvyr::unweighted(dplyr::n()),
-            missing = srvyr::unweighted(sum(is.na(!!what))),
-            time = srvyr::unweighted(time_format({{time_var}}[!is.na({{what}})])),
+            time = srvyr::unweighted(time_format({{time_var}})),
             ndistinct = srvyr::unweighted(length(na.omit(unique(!!what)))),
-            unique.time = srvyr::unweighted(length(unique({{time_var}}[!is.na({{what}})])))
+            unique.time = srvyr::unweighted(length(unique({{time_var}})))
         )
 
+        ret = merge(ret, missin, all.x = T, by = gvs)
         data.table::setDT(ret)
+
+        ggg = unique(ret[, .SD, .SDcols = gvs])
+
+        if(verbose && (nrow(missin) != nrow(ggg))){
+          ggg = merge(ggg, missin, by = gvs, all.x = T)
+          warning(paste(capture.output(print(ggg[!is.na(missing),.SD, .SDcols = gvs])), collapse = "\n"))
+        }
+
 
 
         ret[, level := NA]
-        ret[, denominator := denominator - missing]
         data.table::setnames(ret, c('mean_low', 'mean_upp') , c('mean_lower', 'mean_upper'))
         data.table::setnames(ret, c('total_low', 'total_upp') , c('total_lower', 'total_upper'))
       }else{
@@ -165,9 +175,9 @@ calc.tbl_svy <- function(ph.data,
       }
 
       ret[, variable := as.character(what)]
-      ret[, missing.prop := missing/(missing + numerator + denominator)]
+      ret[, missing.prop := missing/(denominator + missing)]
       ret[, rse := 100*(mean_se/mean)]
-      ret[, obs := (missing + numerator + denominator)]
+      ret[, obs := denominator + missing]
       return(ret)
     })
 

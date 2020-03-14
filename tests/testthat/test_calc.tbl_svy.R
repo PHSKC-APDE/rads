@@ -265,6 +265,21 @@ test_that('ci option works', {
 
 })
 
+test_that('invalid/NA combinations of by variables results in no rows generate',{
+
+  sur <- sur %>% mutate(blah = case_when(stype == 'E' ~ NA_integer_,
+                                         TRUE ~ as.integer(api00>600)),
+                        blah2 = as.integer(api00>600))
+
+  r1 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'stype', proportion = FALSE)
+  r2 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'stype', proportion = TRUE)
+  r3 = calc(sur, 'blah2', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'stype', proportion = FALSE)
+  r4 = calc(sur, 'blah2', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'stype', proportion = TRUE)
+  r5 = calc(sur, 'blah2', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = FALSE)
+  r6 = calc(sur, 'blah2', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = TRUE)
+
+})
+
 
 
 
