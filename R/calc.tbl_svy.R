@@ -11,7 +11,7 @@ calc.tbl_svy <- function(ph.data,
                          what,
                          ...,
                          by = NULL,
-                         metrics = survey_metrics(),
+                         metrics = metrics(),
                          per = NULL,
                          win = NULL,
                          time_var = NULL,
@@ -37,7 +37,7 @@ calc.tbl_svy <- function(ph.data,
   #data.table visible bindings
   variable <- NULL
 
-  opts = survey_metrics()
+  opts = metrics()
   #confirm that svy is a tab_svy
   stopifnot(inherits(ph.data, 'tbl_svy'))
 
@@ -68,7 +68,7 @@ calc.tbl_svy <- function(ph.data,
   #confirm that metrics are properly specified
   invalid = setdiff(metrics,opts)
   if(length(invalid)>0){
-    stop(paste0('Invalid metrics detected: ', paste(invalid, collapse = ','), '. ', 'Review the list of available metrics by calling `survey_metrics()`'))
+    stop(paste0('Invalid metrics detected: ', paste(invalid, collapse = ','), '. ', 'Review the list of available metrics by calling `metrics()`'))
   }
 
   #subset ph.data to only the columns needed (and rows)

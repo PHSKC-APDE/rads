@@ -4,7 +4,7 @@
 #' @param what character vector. Variable to calculate metrics for.
 #' @param ... expressions to be passed to \code{\link{filter}} (or equivalent)
 #' @param by character vector. Must refer to variables within ph.data. The variables within ph.data to compute `what` by
-#' @param metrics character. See \code{\link{record_metrics}} for the available options. Note, except when 'distinct' is
+#' @param metrics character. See \code{\link{metrics}} for the available options. Note, except when 'distinct' is
 #' selected, all metrics are calculated -- this argument just specifies which one gets returned
 #' @param per integer. The denominator when "rate" or "adjusted-rate" are selected as the metric. Metrics will be multiplied by this value.
 #' @param win integer. The number of consectutive units of time (e.g., years, months, etc.) over which the metrics will be calculated,

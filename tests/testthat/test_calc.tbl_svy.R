@@ -159,8 +159,8 @@ test_that('survey design and survey rep design are equal',{
   s1 <- as_survey_design(svydesign(id=~dnum, weights=~pw, data=apiclus1, fpc=~fpc))
   s2 <- as_survey_rep(as.svrepdesign(s1))
 
-  a1 = calc(s1, 'stype', by = 'both', metrics = survey_metrics())
-  a2 = calc(s2, 'stype', by = 'both', metrics = survey_metrics())
+  a1 = calc(s1, 'stype', by = 'both', metrics = metrics())
+  a2 = calc(s2, 'stype', by = 'both', metrics = metrics())
 
   #Epect that the means are equal. Se is different depending on method
   expect_equal(a1[, .(mean, total, rate, numerator, missing, ndistinct, unique.time, denominator, missing.prop, obs)],

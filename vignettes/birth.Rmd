@@ -71,7 +71,7 @@ This is because calc is a front end for two engines: [`calc.data.frame`](https:/
 2) `what` <- a character vector of the variables for which you want to calculate the metrics. E.g., `what = c("preterm")`
 3) `...` <- think of this as a "where" statement, i.e., a filter or subsetting of data. E.g., `chi_geo_zip5 %in% c(98001:98010)`. **NOTE** do not type `...` !
 4) `by` <- a character vector of the variables that you want to computer the `what` by, i.e., the cross-tab variable(s). E.g., `by = c("mother_birthplace_foreign")`
-5) `metrics` <- a character vector of the metrics that you want returned. E.g., `metrics = c("mean", "rse")`. You can see a complete list of available metrics by typing `record_metrics()`
+5) `metrics` <- a character vector of the metrics that you want returned. E.g., `metrics = c("mean", "rse")`. You can see a complete list of available metrics by typing `metrics()`
 6) `per` <- an integer, which is the denominator when `rate` is selected as the metric. Metrics will be multiplied by this value. E.g., `per = 1000`
 7) `win` <- an integer, which is the number of consecutive units of time (e.g., years, months, etc.) over which the metrics will be calculated, i.e., the 'window' for a rolling average, sum, etc. E.g. `win = 5` will perform calculations over every 5 time unit window.
 8) `time_var` <- a character, which is the name of the time variable in the dataset. Used in combination with the `win` argument to generate time windowed calculations.

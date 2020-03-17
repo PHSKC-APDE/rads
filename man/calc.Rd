@@ -13,7 +13,7 @@ calc(ph.data, ...)
   what,
   ...,
   by = NULL,
-  metrics = survey_metrics(),
+  metrics = metrics(),
   per = NULL,
   win = NULL,
   time_var = NULL,
@@ -28,7 +28,7 @@ calc(ph.data, ...)
   what,
   ...,
   by = NULL,
-  metrics = survey_metrics(),
+  metrics = metrics(),
   per = NULL,
   win = NULL,
   time_var = NULL,
@@ -47,7 +47,7 @@ calc(ph.data, ...)
 
 \item{by}{character vector. Must refer to variables within ph.data. The variables within ph.data to compute `what` by}
 
-\item{metrics}{character. See \code{\link{record_metrics}} for the available options. Note, except when 'distinct' is
+\item{metrics}{character. See \code{\link{metrics}} for the available options. Note, except when 'distinct' is
 selected, all metrics are calculated -- this argument just specifies which one gets returned}
 
 \item{per}{integer. The denominator when "rate" or "adjusted-rate" are selected as the metric. Metrics will be multiplied by this value.}

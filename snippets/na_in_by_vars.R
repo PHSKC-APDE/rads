@@ -10,8 +10,6 @@ apisrs[stype != 'E', bytest := stype]
 sur = apisrs %>% as_survey_design(ids = 1, fpc = fpc)
 set.seed(98104)
 
-r1 = calc(sur, what = 'api00', by = 'bytest', metrics = c('mean', 'numerator', 'denominator'))
-r2 = calc(apisrs, what = 'api00', by = 'bytest', metrics = c('mean', 'numerator', 'denominator'))
 r3 = sur %>% group_by(bytest) %>% summarize(a = survey_mean(api00))
 r4 = svyby(~api00, ~bytest, sur, svymean)
 r1[]

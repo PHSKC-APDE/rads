@@ -6,7 +6,7 @@ test.results <- calc(test.data,
                      what = c("mother_weight_gain", "fetal_pres"),
                      "chi_year == 2016 & chi_sex %in% c('Male', 'Female')",
                       by = c("chi_year", "chi_sex"),
-                      metrics = record_metrics(),
+                      metrics = metrics(),
                      per = 1)
 test.data[, weight := 1]
 a <- as_survey_design(test.data, probs = weight)
@@ -15,7 +15,7 @@ svy.results <- calc(a,
                     what = c('mother_weight_gain', "fetal_pres"),
                     chi_year == 2016, chi_sex %in% c('Male', 'Female'),
                     by = c("chi_year", "chi_sex"),
-                    metrics = survey_metrics())
+                    metrics = metrics())
 
 blah = merge(svy.results[, .(variable, level, chi_year, chi_sex, sur = mean, sur_se = mean_se)],
              test.results[, .(variable, level, chi_year, chi_sex, dt = mean, dt_se = se)],

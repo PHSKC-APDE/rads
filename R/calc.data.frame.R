@@ -8,7 +8,7 @@ calc.data.frame = function(ph.data,
                            what,
                            ...,
                            by = NULL,
-                           metrics = survey_metrics(),
+                           metrics = metrics(),
                            per = NULL,
                            win = NULL,
                            time_var = NULL,
@@ -99,7 +99,7 @@ calc.data.frame = function(ph.data,
 
   #validate 'metrics'
   # pull list of standard available metrics
-  opts <- record_metrics()
+  opts <- metrics()
 
   # limits metrics to those that have been pre-specified, i.e., non-standard metrics are dropped
   if(!is.null(metrics)){
