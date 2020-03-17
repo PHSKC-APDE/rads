@@ -19,6 +19,7 @@ calc(ph.data, ...)
   time_var = NULL,
   proportion = FALSE,
   fancy_time = TRUE,
+  ci = 0.95,
   verbose = FALSE
 )
 
@@ -33,6 +34,7 @@ calc(ph.data, ...)
   time_var = NULL,
   proportion = FALSE,
   fancy_time = TRUE,
+  ci = 0.95,
   verbose = FALSE
 )
 }
@@ -58,7 +60,7 @@ i.e., the 'window' for a rolling average, sum, etc.}
 \item{proportion}{logical. For survey data, should metrics be calculated assuming the output is proportion-like? See details for more.
 Currently does not have functionality for non-survey data.}
 
-\item{fancy_time}{logical. If FALSE, a record of all the years going into the data is provided. If true, just a simple range (where certain years within the range might not be represented)}
+\item{fancy_time}{logical. If TRUE, a record of all the years going into the data is provided. If FALSE, just a simple range (where certain years within the range might not be represented)}
 
 \item{verbose}{logical. Mostly unused, but toggles on/off printed warnings.}
 }

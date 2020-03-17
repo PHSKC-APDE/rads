@@ -4,7 +4,7 @@
 \alias{calc_factor}
 \title{A wrapper to compute metrics (specifically relative fraction and totals) from factor/character variables}
 \usage{
-calc_factor(svy, what, by, time_var, fancy_time = TRUE)
+calc_factor(svy, what, by, time_var, fancy_time = TRUE, ci = 0.95)
 }
 \arguments{
 \item{svy}{survey.design2 (or tbl_svy). Survey from which metrics will be computed}

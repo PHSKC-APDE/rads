@@ -265,7 +265,7 @@ test_that('ci option works', {
 
 })
 
-test_that('invalid/NA combinations of by variables results in no rows generate',{
+test_that('invalid/NA combinations of by variables results in no rows generated',{
 
   sur <- sur %>% mutate(blah = case_when(stype == 'E' ~ NA_integer_,
                                          TRUE ~ as.integer(api00>600)),
@@ -275,8 +275,20 @@ test_that('invalid/NA combinations of by variables results in no rows generate',
   r2 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'stype', proportion = TRUE)
   r3 = calc(sur, 'blah2', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'stype', proportion = FALSE)
   r4 = calc(sur, 'blah2', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'stype', proportion = TRUE)
-  r5 = calc(sur, 'blah2', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = FALSE)
-  r6 = calc(sur, 'blah2', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = TRUE)
+
+  expect_equal(r1[, .(mean, numerator, denominator, missing)], r3[stype != 'E', .(mean, numerator, denominator, missing)])
+  expect_equal(r2[, .(mean, numerator, denominator, missing)], r4[stype != 'E', .(mean, numerator, denominator, missing)])
+  expect_equal(2, nrow(r1))
+  expect_equal(2, nrow(r2))
+
+  r5 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = FALSE)
+  r6 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = TRUE)
+  r7 = calc(sur, 'blah2', stype != 'E', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = FALSE)
+  r8 = calc(sur, 'blah2', stype != 'E', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = TRUE)
+
+  expect_equal(r5[, .(mean, numerator, denominator, missing)], r6[, .(mean, numerator, denominator, missing)])
+  expect_equal(r7[, .(mean, numerator, denominator, missing)], r8[, .(mean, numerator, denominator, missing)])
+
 
 })
 

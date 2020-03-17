@@ -44,7 +44,7 @@ NULL
 
 #' @rdname metrics
 #' @export
-survey_metrics = function(){
+metrics = function(){
   #c('mean', 'se', 'lower', 'upper', 'numerator', 'denominator', 'total', 'total_se', 'missing', 'rse', 'missing.prop', 'ndistinct')
   c('total', #'total_se', 'total_lower', 'total_upper'
     'mean', 'rse', #'mean_se', 'mean_lower', 'mean_upper',
@@ -53,14 +53,6 @@ survey_metrics = function(){
     'missing', 'missing.prop',
     'rate') #, 'rate_per', 'rate_se', 'rate_lower', 'rate_upper')
 }
-
-#' List of available metrics for calculation
-#' @rdname metrics
-#' @export
-record_metrics = function(){
-  c('mean', 'median', 'obs', 'rate', 'rse', 'numerator', 'denominator', 'missing', 'missing.prop', 'total', 'ndistinct')
-}
-
 
 
 #' List of standard CHI / Tableau Ready columns
@@ -428,4 +420,34 @@ chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = 
     # return object
       return(comp)
 
+}
+
+#' Convert from one type to another type
+#'
+#' @param x factor
+#' @param target character. class of the object to transform the factor into. One of integer, numeric, or character.
+#'
+#'
+dumb_convert <- function(x, target = 'character'){
+
+  stopifnot(length(target) == 1)
+  if(target == 'character'){
+    return(as.character(x))
+  }
+
+  if(target == 'numeric'){
+    return(as.numeric(as.character(x)))
+  }
+
+  if(target == 'integer'){
+    return(as.integer(as.charater(x)))
+  }
+
+  if(target == 'factor'){
+    if(is.factor(x)) return(x)
+
+    return(as.factor(x))
+  }
+
+  stop(paste0('Target class of ', target, ' is invalid'))
 }

@@ -5,6 +5,7 @@
 #' @importFrom rlang quos !! !!! syms
 #' @importFrom tidyselect all_of
 #' @importFrom data.table setnames setDT
+#' @importFrom forcats fct_explicit_na
 #' @export
 calc.tbl_svy <- function(ph.data,
                          what,
@@ -62,15 +63,6 @@ calc.tbl_svy <- function(ph.data,
 
     by_check <- check_names('by', 'ph.data', svy_names, by)
     if(by_check != '') stop(by_check)
-
-    #and if its not missing, filter such that no by variable has NAs
-    #svy <- svy %>% filter_at(by, ~ !is.na(.))
-
-    # mis_vars = apply(ph.data$variables[, by], 1, function(x) sum(is.na(x)))
-    #
-    # #remove missing by vars
-    # ph.data <- ph.data %>% srvyr::filter(!!mis_vars==0)
-
   }
 
   #confirm that metrics are properly specified
@@ -97,7 +89,13 @@ calc.tbl_svy <- function(ph.data,
   time_var = rlang::sym(time_var)
 
   if(!is.null(by)){
+    #capture the by classes so they can be converted back
+    by_class = lapply(by, function(x) class(ph.data$variables[[x]]))
+    convert_by = T
+    ph.data <- ph.data %>% mutate_at(tidyselect::all_of(by), forcats::fct_explicit_na)
     by = rlang::syms(by)
+  }else{
+    convert_by = T
   }
 
   #Group the dataset if relevant
@@ -224,6 +222,12 @@ calc.tbl_svy <- function(ph.data,
 
 
   if(delete_time) res[, `_THETIME` := NULL]
+  if(convert_by){
+    byc = as.character(by)
+    res[, (byc) := lapply(.SD, function(x) ifelse(x == '(Missing)', NA_character_, as.character(x))), .SDcols = byc]
+    res[, (byc) := lapply(seq_len(length(byc)), function(x) dumb_convert(get(byc[x]), by_class[[x]]))]
+
+  }
 
   return(res)
 

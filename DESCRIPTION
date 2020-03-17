@@ -21,7 +21,8 @@ Imports:
     haven (>= 2.2.0),
     methods,
     stats,
-    tidyselect (>= 1.0.0)
+    tidyselect (>= 1.0.0),
+    forcats (>= 0.4.0)
 Suggests: 
     testthat,
     knitr,

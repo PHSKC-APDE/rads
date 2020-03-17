@@ -184,3 +184,27 @@ test_that('Nonspecified time',{
 
 })
 
+test_that('invalid/NA combinations of by variables results in no rows generate',{
+
+  sur <- copy(dt)
+  sur[, blah := kotelchuck]
+  sur[fetal_pres == 'Cephalic', blah := NA]
+  sur[, blah2 := kotelchuck]
+  r1 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'fetal_pres', proportion = FALSE)
+  r2 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'fetal_pres', proportion = TRUE)
+  r3 = calc(sur, 'blah2', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'fetal_pres', proportion = FALSE)
+  r4 = calc(sur, 'blah2', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'fetal_pres', proportion = TRUE)
+
+  expect_equal(r1[, .(mean, numerator, denominator, missing)], r3[fetal_pres != 'Cephalic', .(mean, numerator, denominator, missing)])
+  expect_equal(r2[, .(mean, numerator, denominator, missing)], r4[fetal_pres != 'Cephalic', .(mean, numerator, denominator, missing)])
+
+  r5 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = FALSE)
+  r6 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = TRUE)
+  r7 = calc(sur, 'blah2', stype != 'E', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = FALSE)
+  r8 = calc(sur, 'blah2', stype != 'E', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = TRUE)
+
+  expect_equal(r5[, .(mean, numerator, denominator, missing)], r6[, .(mean, numerator, denominator, missing)])
+  expect_equal(r7[, .(mean, numerator, denominator, missing)], r8[, .(mean, numerator, denominator, missing)])
+
+
+})
