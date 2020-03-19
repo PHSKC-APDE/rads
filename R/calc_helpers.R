@@ -111,8 +111,8 @@ calc_factor <- function(svy, what, by, time_var, fancy_time = TRUE, ci = .95){
   res1 <- merge(res1[[1]], res1[[2]], by = c('level', as.character(by)))
 
   #convert to the proper class
-  convert = match.fun(paste0('as.',class(svy$variables[[as.character(what)]])[1]))
-  res1[, level := convert(level)]
+  # convert = match.fun(paste0('as.',class(svy$variables[[as.character(what)]])[1]))
+  # res1[, level := convert(level)]
 
   #compute the other metrics:
   #"numerator"    "denominator"  "missing"      "rse"          "missing.prop" "ndistinct"

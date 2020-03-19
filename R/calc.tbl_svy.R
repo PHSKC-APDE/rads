@@ -169,7 +169,7 @@ calc.tbl_svy <- function(ph.data,
         ph.data <- suppressMessages(ph.data %>% filter(!is.na(!!what)))
         #move to a different function since its more involved
         ret <- calc_factor(ret, what, by, time_var, fancy_time, ci)
-        ret[, median := NA]
+        ret[, median := NA_real_]
       }
 
       ret[, variable := as.character(what)]
@@ -181,8 +181,8 @@ calc.tbl_svy <- function(ph.data,
 
     fin <- data.table::rbindlist(fin, use.names = T)
     data.table::setnames(fin,'time', as.character(time_var))
-    fin[, rate_per := NA]
-    fin[, rate := NA]
+    fin[, rate_per := NA_real_]
+    fin[, rate := NA_real_]
 
     return(fin)
 

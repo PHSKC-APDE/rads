@@ -187,9 +187,13 @@ calc.data.frame = function(ph.data,
   }
 
   #### ADDITIONAL CALCULATIONS & DATA PREP ####
-
   # Split names for factor columns
-  res.metrics[, c("variable", "level") := data.table::tstrsplit(variable, "_SPLIT_HERE_", fixed=TRUE)]
+  splittys = grepl('_SPLIT_HERE_', res.metrics[,variable], fixed = TRUE)
+  if(any(splittys)){
+    res.metrics[, c("variable", "level") := data.table::tstrsplit(variable, "_SPLIT_HERE_", fixed=TRUE)]
+  }else{
+    res.metrics[, level := NA]
+  }
 
   # Calculate lower, upper, se, rse
   # PROPORTIONS : Binary (& factor) variables will use prop.test function for CI. This uses the score method ... suggested by DOH & literature
@@ -245,28 +249,45 @@ calc.data.frame = function(ph.data,
 
   # Sort / order results
   data.table::setorder(res, variable, level, time)
-
+  data.table::setnames(res, 'time', time_var)
 
   # identify vars to be returned
-  return.vars.start <- c("variable", "level", "time", by)
-  return.vars.end <- c("obs", "numerator", "denominator", "missing", "unique.time")
-  return.vars.middle <- c()
-  if("mean" %in% metrics){
-    return.vars.middle <- c(return.vars.middle, "mean", paste0('mean', c('_se', '_lower', '_upper')))
+  if('rate' %in% metrics){
+    res[, c('rate', paste0('rate', c('_se', '_lower', '_upper'))) := .SD * per, .SDcols = c('mean', paste0('mean_',c('se', 'lower', 'upper')))]
+    res[, rate_per := per]
+    metrics = c(metrics, 'rate_per')
   }
-  if("rate" %in% metrics){
-    return.vars.middle <- c(return.vars.middle, "rate", paste0('rate', c('_per', '_se', '_lower', '_upper')))
-  }
-  for(i in c("median", "rse", "missing.prop", "ndistinct", "total")){
-    if(i %in% metrics){return.vars.middle <- c(return.vars.middle, i)}
+  #if mean, total or rate are requested, add the se, lower, and upper
+  isect = intersect(metrics, c('rate', 'total', 'mean'))
+
+  if(length(isect)>0){
+    new = as.vector(outer(isect, c('_se', '_lower', '_upper'), paste0))
+    metrics = unique(c(metrics, new))
   }
 
-  return.vars <- c(return.vars.start, return.vars.middle, return.vars.end)
+  #keep requested metrics
+  na_mets = intersect(metrics, c(grep('total', metrics, value = T), grep('mean', metrics, value = T), 'rse'))
+  res[is.na(numerator), (na_mets) := NA]
+  res <- res[, c('variable', 'level', as.character(time_var), as.character(by), metrics), with = F]
+  # return.vars.start <- c("variable", "level", "time", by)
+  # #return.vars.end <- c("obs", "numerator", "denominator", "missing", "unique.time")
+  # return.vars.middle <- c()
+  # if("mean" %in% metrics){
+  #   return.vars.middle <- c(return.vars.middle, "mean", paste0('mean', c('_se', '_lower', '_upper')))
+  # }
+  # if("rate" %in% metrics){
+  #   return.vars.middle <- c(return.vars.middle, "rate", paste0('rate', c('_per', '_se', '_lower', '_upper')))
+  # }
+  # for(i in c("median", "rse", "missing.prop", "ndistinct", "total")){
+  #   if(i %in% metrics){return.vars.middle <- c(return.vars.middle, i)}
+  # }
+  #
+  # return.vars <- c(return.vars.start, return.vars.middle)
 
   # drop columns no longer needed
-  res <- res[, ..return.vars]
+  #res <- res[, ..return.vars]
 
-  if(droptime) res[, time := NULL]
+  if(droptime) res[, (time_var) := NULL]
 
   #### CLOSE ####
   return(res)
