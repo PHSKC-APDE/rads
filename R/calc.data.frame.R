@@ -251,12 +251,6 @@ calc.data.frame = function(ph.data,
   data.table::setorder(res, variable, level, time)
   data.table::setnames(res, 'time', time_var)
 
-  # identify vars to be returned
-  if('rate' %in% metrics){
-    res[, c('rate', paste0('rate', c('_se', '_lower', '_upper'))) := .SD * per, .SDcols = c('mean', paste0('mean_',c('se', 'lower', 'upper')))]
-    res[, rate_per := per]
-    metrics = c(metrics, 'rate_per')
-  }
   #if mean, total or rate are requested, add the se, lower, and upper
   isect = intersect(metrics, c('rate', 'total', 'mean'))
 
@@ -264,6 +258,8 @@ calc.data.frame = function(ph.data,
     new = as.vector(outer(isect, c('_se', '_lower', '_upper'), paste0))
     metrics = unique(c(metrics, new))
   }
+
+  if('rate' %in% metrics) metrics <- c(metrics, 'rate_per')
 
   #keep requested metrics
   na_mets = intersect(metrics, c(grep('total', metrics, value = T), grep('mean', metrics, value = T), 'rse'))

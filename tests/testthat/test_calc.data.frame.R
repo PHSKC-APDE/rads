@@ -119,9 +119,9 @@ test_that('Check per',{
 })
 
 test_that('Check win: rolling averages, sums, etc.',{
-  expect_equal( round2(calc(dt, what = c("birth_weight_grams"), win=3, time_var = "chi_year")[time == "2008-2010"]$mean, 3),
+  expect_equal( round2(calc(dt, what = c("birth_weight_grams"), win=3, time_var = "chi_year")[chi_year == "2008-2010"]$mean, 3),
                 round2(mean(dt[chi_year %in% c(2008:2010)]$birth_weight_grams, na.rm = T), 3))
-  expect_equal( round2(calc(dt, what = c("birth_weight_grams"), win=3, time_var = "chi_year")[time == "2013-2015"]$mean, 3),
+  expect_equal( round2(calc(dt, what = c("birth_weight_grams"), win=3, time_var = "chi_year")[chi_year == "2013-2015"]$mean, 3),
                 round2(mean(dt[chi_year %in% c(2013:2015)]$birth_weight_grams, na.rm = T), 3))
 })
 
@@ -149,11 +149,11 @@ test_that('Check ci:',{
 })
 
 test_that('Check fancy_time and similar',{
-  expect_equal( calc(dt, metrics = c("mean"), chi_year %in% c(2008:2011, 2013, 2015:2018), what = c("kotelchuck"), time_var = "chi_year")$time,
+  expect_equal( calc(dt, metrics = c("mean"), chi_year %in% c(2008:2011, 2013, 2015:2018), what = c("kotelchuck"), time_var = "chi_year")$chi_year,
                 "2008-2011, 2013, 2015-2018" )
-  expect_equal( calc(dt, metrics = c("mean"), chi_year %in% c(2008:2011, 2012, 2013, 2015:2018), what = c("kotelchuck"), time_var = "chi_year", fancy_time = T)$time,
+  expect_equal( calc(dt, metrics = c("mean"), chi_year %in% c(2008:2011, 2012, 2013, 2015:2018), what = c("kotelchuck"), time_var = "chi_year", fancy_time = T)$chi_year,
                 "2008-2013, 2015-2018" )
-  expect_equal( calc(dt, metrics = c("mean"), chi_year %in% c(2008:2011, 2012, 2013, 2015:2018), what = c("kotelchuck"), time_var = "chi_year", fancy_time = F)$time,
+  expect_equal( calc(dt, metrics = c("mean"), chi_year %in% c(2008:2011, 2012, 2013, 2015:2018), what = c("kotelchuck"), time_var = "chi_year", fancy_time = F)$chi_year,
                 "2008-2018" )
 
   #factor variable times
@@ -164,12 +164,12 @@ test_that('Check fancy_time and similar',{
 
   #record data assumes absence is a true 0, and therefore Cephalic data is "present" in 2010 (e.g. 0 / denominator)
   #this is a divergance from calc.tbl_svy
-  expect_equal(r1$time, rep(c('2008-2016, 2018'),3))
+  expect_equal(r1$chi_year, rep(c('2008-2016, 2018'),3))
 
   #numeric variable times
   d[chi_year == 2016, birth_weight_grams := NA]
   r2 = calc(d, metrics = 'mean', what = 'birth_weight_grams', time_var = 'chi_year', fancy_time = T)
-  expect_equal(r2$time, c('2008-2015, 2017-2018'))
+  expect_equal(r2$chi_year, c('2008-2015, 2017-2018'))
 
 })
 
@@ -179,12 +179,12 @@ test_that('Nonspecified time',{
   r2 = calc(dt, metrics = 'mean', time_var = 'yyy', what = 'birth_weight_grams')
 
   expect_false('time' %in% names(r1))
-  expect_equal(r2$time, '-10')
+  expect_equal(r2$yyy, '-10')
   expect_equal(r1$mean, r2$mean)
 
 })
 
-test_that('invalid/NA combinations of by variables results in no rows generate',{
+test_that('invalid/NA combinations of by variables results in no rows generated',{
 
   sur <- copy(dt)
   sur[, blah := kotelchuck]
@@ -195,13 +195,13 @@ test_that('invalid/NA combinations of by variables results in no rows generate',
   r3 = calc(sur, 'blah2', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'fetal_pres', proportion = FALSE)
   r4 = calc(sur, 'blah2', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'fetal_pres', proportion = TRUE)
 
-  expect_equal(r1[, .(mean, numerator, denominator, missing)], r3[fetal_pres != 'Cephalic', .(mean, numerator, denominator, missing)])
-  expect_equal(r2[, .(mean, numerator, denominator, missing)], r4[fetal_pres != 'Cephalic', .(mean, numerator, denominator, missing)])
+  expect_equal(r1[, .(mean, numerator, denominator, missing)], r3[!(fetal_pres %in% 'Cephalic'), .(mean, numerator, denominator, missing)])
+  expect_equal(r2[, .(mean, numerator, denominator, missing)], r4[!(fetal_pres %in% 'Cephalic'), .(mean, numerator, denominator, missing)])
 
   r5 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = FALSE)
   r6 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = TRUE)
-  r7 = calc(sur, 'blah2', stype != 'E', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = FALSE)
-  r8 = calc(sur, 'blah2', stype != 'E', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = TRUE)
+  r7 = calc(sur, 'blah2', !(fetal_pres %in% 'Cephalic'), metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = FALSE)
+  r8 = calc(sur, 'blah2', !(fetal_pres %in% 'Cephalic'), metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = TRUE)
 
   expect_equal(r5[, .(mean, numerator, denominator, missing)], r6[, .(mean, numerator, denominator, missing)])
   expect_equal(r7[, .(mean, numerator, denominator, missing)], r8[, .(mean, numerator, denominator, missing)])
