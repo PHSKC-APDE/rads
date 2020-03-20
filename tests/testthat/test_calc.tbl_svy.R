@@ -3,6 +3,7 @@ library('survey')
 library('dplyr')
 library('data.table')
 library('testthat')
+library('rads')
 
 data(api) #from the survey package
 sur = apisrs %>% as_survey_design(ids = 1, fpc = fpc)
@@ -28,21 +29,31 @@ test_that('Multi Grouping with filtering',{
 
 test_that('Grouping with NAs in the group',{
 
-  sur <- sur %>% mutate(g1 = sample(c(0,1,NA), n(), T), g2 = sample(c(0,1,NA), n(), T))
-  expect_equal(
-    calc(sur, 'api00', by = c('g1'), metrics = 'mean', time_var = NULL)[, .(g1, mean)],
-    sur %>% group_by(g1) %>% summarize(mean = survey_mean(api00)) %>% select(g1, mean) %>% setDT
-  )
-  expect_equal(
-    calc(sur, 'api00', by = c('g1', 'g2'), metrics = 'mean', time_var = NULL)[, .(g1,g2, mean)],
-    sur %>% group_by(g1,g2) %>% summarize(mean = survey_mean(api00)) %>% select(g1,g2, mean) %>% setDT
-  )
+  sur <- sur %>% mutate(g1 = sample(c(0,1,NA), n(), T), g2 = sample(c(0,1,NA), n(), T)) %>%
+    mutate(g1 = forcats::fct_explicit_na(as.character(g1)),
+           g2 = forcats::fct_explicit_na(as.character(g2)))
 
-  expect_equal(
-    calc(sur, 'api00',!is.na(g2), by = c('g1', 'g2'), metrics = 'mean', time_var = NULL)[, .(g1,g2, mean)],
-    sur %>% filter(!is.na(g2)) %>% group_by(g1,g2) %>% summarize(mean = survey_mean(api00)) %>% select(g1,g2, mean) %>% setDT
-  )
+  r1 = calc(sur, 'api00', by = c('g1'), metrics = 'mean', time_var = NULL)[, .(g1, mean)]
+  r2 = sur %>% group_by(g1) %>% summarize(mean = survey_mean(api00)) %>% select(g1, mean) %>% setDT
+  r2[g1 == '(Missing)', g1 := NA]
+  setorder(r2, g1)
+  expect_equal(r1,r2)
 
+
+  r3 = calc(sur, 'api00', by = c('g1', 'g2'), metrics = 'mean', time_var = NULL)[, .(g1,g2, mean)]
+  r4 = sur %>% group_by(g1,g2) %>% summarize(mean = survey_mean(api00)) %>% select(g1,g2, mean) %>% setDT
+  r4[g1 == '(Missing)', g1 := NA]
+  r4[g2 == '(Missing)', g2 := NA]
+  setorder(r4, g1, g2)
+  expect_equal(r3,r4)
+
+
+  r5 = calc(sur, 'api00',!is.na(g2), by = c('g1', 'g2'), metrics = 'mean', time_var = NULL)[, .(g1,g2, mean)]
+  r6 =  sur %>% filter(!is.na(g2)) %>% group_by(g1,g2) %>% summarize(mean = survey_mean(api00)) %>% select(g1,g2, mean) %>% setDT
+  r6[g1 == '(Missing)', g1 := NA]
+  r6[g2 == '(Missing)', g2 := NA]
+  setorder(r6, g1, g2)
+  expect_equal(r5,r6)
 
 })
 

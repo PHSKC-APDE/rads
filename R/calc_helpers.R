@@ -97,9 +97,8 @@ calc_factor <- function(svy, what, by, time_var, fancy_time = TRUE, ci = .95){
       #merge on cis
       imed = merge(imed, cis, all.x = T, by.x = '____label____', by.y = 'label')
       imed[, `____label____` := NULL]
-
       data.table::setnames(imed, as.character(what), 'level')
-
+      imed[, level := as.character(level)]
       data.table::setnames(imed, c('mean', 'se', 'lower', 'upper'), c(x, paste0(x, c('_se', '_lower', '_upper'))))
     }
 
@@ -131,6 +130,7 @@ calc_factor <- function(svy, what, by, time_var, fancy_time = TRUE, ci = .95){
   res2[, missing := max(missing), by = by_vars]
   res2 = res2[!is.na(get(as.character(what)))]
   data.table::setnames(res2, as.character(what), 'level')
+  res2[, level := as.character(level)]
   res = merge(res1,res2, all.x = T, by = c('level', as.character(by)))
   res[!is.na(level), denominator := sum(numerator,na.rm = T), by = by_vars]
 

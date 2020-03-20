@@ -11,7 +11,7 @@ calc.tbl_svy <- function(ph.data,
                          what,
                          ...,
                          by = NULL,
-                         metrics = metrics(),
+                         metrics = c('mean', 'numerator', 'denominator'),
                          per = NULL,
                          win = NULL,
                          time_var = NULL,
@@ -19,7 +19,6 @@ calc.tbl_svy <- function(ph.data,
                          fancy_time = TRUE,
                          ci = .95,
                          verbose = FALSE){
-
   if(verbose && !missing(per)){
     warning('Argument `per` is not implemented for tbl_svy arguments. It will be ignored')
   }
@@ -83,23 +82,31 @@ calc.tbl_svy <- function(ph.data,
     delete_time = T
   }
 
-  ph.data <- ph.data %>% srvyr::select(tidyselect::all_of(what), tidyselect::all_of(by), tidyselect::all_of(time_var))
 
   whats = rlang::syms(what)
   time_var = rlang::sym(time_var)
 
-  if(!is.null(by)){
+  if(!missing(by)){
     #capture the by classes so they can be converted back
     by_class = lapply(by, function(x) class(ph.data$variables[[x]]))
-    convert_by = T
-    ph.data <- ph.data %>% mutate_at(tidyselect::all_of(by), forcats::fct_explicit_na)
+    convert_by = TRUE
+
+    #make it so NA is considered a valid option
+    ph.data <- ph.data %>% mutate_at(tidyselect::all_of(by), function(x){
+      if(is.numeric(x) || is.logical(x)){
+        x = as.character(x)
+      }
+      forcats::fct_explicit_na(x)
+    })
     by = rlang::syms(by)
   }else{
-    convert_by = T
+    convert_by = FALSE
   }
 
   #Group the dataset if relevant
-  if(!is.null(by)) ph.data <- ph.data %>% srvyr::group_by(!!!by)
+  if(!missing(by)) ph.data <- ph.data %>% srvyr::group_by(!!!by)
+
+  ph.data <- ph.data %>% srvyr::select(tidyselect::all_of(what), tidyselect::all_of(time_var), tidyselect::all_of(as.character(by)))
 
   #create the time windows
   times = na.omit(ph.data$variables[[as.character(time_var)]])
@@ -220,14 +227,17 @@ calc.tbl_svy <- function(ph.data,
   res[is.na(numerator), (na_mets) := NA]
   res <- res[, c('variable', 'level', as.character(time_var), as.character(by), metrics), with = F]
 
+  data.table::setorderv(res, cols = c('variable', 'level', as.character(time_var)))
 
   if(delete_time) res[, `_THETIME` := NULL]
+
   if(convert_by){
     byc = as.character(by)
     res[, (byc) := lapply(.SD, function(x) ifelse(x == '(Missing)', NA_character_, as.character(x))), .SDcols = byc]
     res[, (byc) := lapply(seq_len(length(byc)), function(x) dumb_convert(get(byc[x]), by_class[[x]]))]
 
   }
+
 
   return(res)
 
