@@ -338,9 +338,9 @@ format_time_simple <- function(x){
 
     # Assess whether there were any problems ----
       if(nrow(class.compare[DF.class != yaml.class]) > 0){
-        VARS <- class.compare[DF.class != yaml.class]$VARS
+        yaml.name <- class.compare[DF.class != yaml.class]$name
         yaml.class <- class.compare[DF.class != yaml.class]$yaml.class
-        class.problems <- paste(paste0(VARS, " (", yaml.class, ")"), collapse = ", ")
+        class.problems <- paste(paste0(yaml.name, " (", yaml.class, ")"), collapse = ", ")
         stop(glue::glue("The following variables could not be coerced to their proper class (which is specified in parentheses):
                               {class.problems}"))
       }else{success <- print(glue::glue("All column classes in your R dataset are compatible with the YAML reference standard."))}
