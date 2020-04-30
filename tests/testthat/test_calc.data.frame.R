@@ -86,7 +86,7 @@ test_that('Check metrics',{
 
         # check rse
           expect_equal( round2(calc(dt, metrics = c("mean", "se", "rse"), what = c("birth_weight_grams"), time_var = "chi_year")$rse, 4),
-                        round2( (sd(dt$birth_weight_grams, na.rm = T) / sqrt(nrow(dt[!is.na(birth_weight_grams)]))
+                        round2( 100*(sd(dt$birth_weight_grams, na.rm = T) / sqrt(nrow(dt[!is.na(birth_weight_grams)]))
                                  / mean(dt$birth_weight_grams, na.rm = T)), 4) )
         # check numerator
           expect_equal( calc(dt, metrics = c("numerator"), what = c("kotelchuck"), time_var = "chi_year")$numerator,
@@ -132,3 +132,4 @@ test_that('Check fancy_time',{
   expect_equal( calc(dt, metrics = c("mean"), chi_year %in% c(2008:2011, 2012, 2013, 2015:2018), what = c("kotelchuck"), time_var = "chi_year", fancy_time = F)$time,
                 "2008-2018" )
 })
+

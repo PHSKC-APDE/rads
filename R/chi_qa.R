@@ -14,6 +14,7 @@
 #' @param chi_est Name of a data.table or data.frame containing the prepared data to be pushed to SQL
 #' @param chi_meta Name of a data.table or data.frame containing the metadata to be pushed to SQL
 #' @param acs Logical. Indicates whether it is ACS data (which does not have / need varnames)
+#' @param ignore_trends Logical. Indicates whether the time_trends column should be ignored when checking for missing data.
 #' @param verbose Logical. Should the function be talkative?
 #'
 #' @return If there are no problems, a printed statement of success. Otherwise, it will stop and provide informative
@@ -38,7 +39,7 @@
 
 # chi_qa function ----
 
-chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, verbose = FALSE){
+chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, ignore_trends = T, verbose = FALSE){
 
   # Check that both the results and the metadata were provided ----
     if(is.null(chi_est)){
@@ -159,7 +160,8 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, verbose = FALSE){
       # RSE should always be between 0 and 100 ----
           # confirmed with Abby 2/7/2020 that want RSE * 100
           if(nrow(chi_est[!rse %between% c(0, 100)]) > 0 ){
-            if(verbose) message(paste("There is at least one row where the RSE (relative standard error) is outside the range of (0, 100].",
+            if(verbose) message(paste("Warning: ",
+                "There is at least one row where the RSE (relative standard error) is outside the range of (0, 100].",
                  "This is not necessarily an error, but you should examine the data to make sure it makes sense.",
                  "You can view the data in question by typing something like: View(chi_est[!rse %between% c(0, 100)])", sep = "\n"))
           }
@@ -172,7 +174,7 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, verbose = FALSE){
           }
 
       # Caution flag should be toggled if RSE >= 30% ----
-          if(nrow( chi_est[(rse>=30 | is.na(rse)) & (caution != "!" | is.na(caution))]) > 0 ){
+          if(nrow(chi_est[rse>=30 & (caution != "!" | is.na(caution)) ]) > 0 ){
             stop("There is at least one row where a caution flag ('!') is not used and rse >= 30% or is.na(rse) == T.
                  Please fix this error prior to rerunning the chi_qa() function.
                  You can view the problematic data by typing something like: View(chi_est[(rse>=30 | is.na(rse)) & (caution != '!' | is.na(caution))])")
@@ -244,10 +246,11 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, verbose = FALSE){
       }
 
   ## Check that time_trends are always provided when tab=="trends" ----
-        if(nrow(chi_est[tab == "trends" & is.na(time_trends)]) > 0 ){
-          stop(glue::glue("There is at least one row where tab=='trends' & where 'time_trends' is missing.
-                          Please fill in the missing value before rerunning chi_qa()"))}
-
+        if(ignore_trends == F){
+          if(nrow(chi_est[tab == "trends" & is.na(time_trends)]) > 0 ){
+            stop(glue::glue("There is at least one row where tab=='trends' & where 'time_trends' is missing.
+                            Please fill in the missing value before rerunning chi_qa()"))}
+        }
 
   ## Compare with previous year's results (FOR FUTURE???)----
       # in function arguments, have user submit most recent and comparison year(s). Submit as character b/c can be 2013-2017, not just 2017
@@ -262,7 +265,8 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, verbose = FALSE){
       # actual comparison code should be the same as when comparing to a previous year, so write a small funcion to do this
 
   ## Print success statement!!!!!!!! ####
-    if(verbose) message(paste("Congratulations!",
+    if(verbose) message(paste("",
+          "Congratulations!",
           "",
           "Your data has passed all CHI Tableau Ready formatting, style, and logic checks.",
           "",
