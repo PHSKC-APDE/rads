@@ -441,7 +441,7 @@ dumb_convert <- function(x, target = 'character'){
   }
 
   if(target == 'integer'){
-    return(as.integer(as.charater(x)))
+    return(as.integer(as.character(x)))
   }
 
   if(target == 'logical') return(as.logical(as.character(x)))
