@@ -23,8 +23,6 @@ calc_factor <- function(svy, what, by, time_var, fancy_time = TRUE, ci = .95){
   # time_var <- enquo(time_var)
   #TODO: check for implicitly reserved words
 
-  if(fancy_time==TRUE){time_format <- format_time}else{time_format <- format_time_simple}
-
   #By catchers for the total
   form = as.formula(paste0('~', as.character(what)))
   rmholdby = F
@@ -120,10 +118,18 @@ calc_factor <- function(svy, what, by, time_var, fancy_time = TRUE, ci = .95){
     srvyr::summarize(
       numerator = unweighted(dplyr::n()),
       missing = srvyr::unweighted(sum(is.na(!!what))),
-      time = srvyr::unweighted(time_format({{time_var}})),
+      time1 = srvyr::unweighted(format_time({{time_var}})),
+      time2 = srvyr::unweighted(format_time_simple({{time_var}})),
       ndistinct = srvyr::unweighted(length(na.omit(unique(!!what)))),
       unique.time = srvyr::unweighted(length(unique(!!time_var)))
     ) %>% setDT
+
+  if(fancy_time){
+    res2[, time := time1]
+  }else{
+    res2[, time := time2]
+  }
+  res2[, c('time1', 'time2') := NULL]
 
   #compute denominator
   by_vars = as.character(by)

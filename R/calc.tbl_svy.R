@@ -31,7 +31,6 @@ calc.tbl_svy <- function(ph.data,
   if(!is.logical(fancy_time)){
     stop("'fancy_time' must be specified as a logical (i.e., TRUE, T, FALSE, or F)")
   }
-  if(fancy_time==TRUE){time_format <- format_time}else{time_format <- format_time_simple}
 
   #data.table visible bindings
   variable <- NULL
@@ -143,6 +142,7 @@ calc.tbl_svy <- function(ph.data,
 
         missin <- ret %>% summarize(missing = srvyr::unweighted(sum(is.na(!!what))))
         gvs = group_vars(ret)
+
         ret <- ret %>% filter(!is.na({{what}})) %>%
           summarize(
             mean = srvyr::survey_mean(!!what, vartype = c('se', 'ci'), proportion = proportion, level = ci),
@@ -150,13 +150,22 @@ calc.tbl_svy <- function(ph.data,
             total = srvyr::survey_total(!!what, vartype = c('se', 'ci'),level = ci),
             numerator = srvyr::unweighted(sum(!!what)), #only relevant for binary variables
             denominator = srvyr::unweighted(dplyr::n()),
-            time = srvyr::unweighted(time_format({{time_var}})),
+            time1 = srvyr::unweighted(format_time({{time_var}})),
+            time2 = srvyr::unweighted(format_time_simple({{time_var}})),
             ndistinct = srvyr::unweighted(length(na.omit(unique(!!what)))),
             unique.time = srvyr::unweighted(length(unique({{time_var}})))
         )
 
         ret = merge(ret, missin, all.x = T, by = gvs)
         data.table::setDT(ret)
+
+        if(fancy_time){
+          ret[, time := time1]
+        }else{
+          ret[, time := time2]
+        }
+
+        ret[, c('time1', 'time2') := NULL]
 
         ggg = unique(ret[, .SD, .SDcols = gvs])
 

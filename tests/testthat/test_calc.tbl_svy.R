@@ -303,6 +303,14 @@ test_that('invalid/NA combinations of by variables results in no rows generated'
 
 })
 
+test_that('Fancy time option', {
+  sur <- sur %>% mutate(yyy = sample(1:4, nrow(sur), replace = T))
+  r1 = calc(sur, 'api00', metrics = 'mean', proportion = F, time_var = 'yyy', fancy_time = TRUE)
+  r2 = calc(sur, 'api00', metrics = 'mean', proportion = F, time_var = 'yyy', fancy_time = FALSE)
+  r3 = calc(sur, 'stype', metrics = 'mean', proportion = F, time_var = 'yyy', fancy_time = TRUE)
+  r4 = calc(sur, 'stype', metrics = 'mean', proportion = F, time_var = 'yyy', fancy_time = FALSE)
+})
+
 
 
 
