@@ -236,6 +236,8 @@ format_time_simple <- function(x){
       } else {stop("'dat' (the name of a data.frame or data.table) must be specified")}
 
     original.order <- names(dat)
+    factor.columns <- which(vapply(dat,is.factor, FUN.VALUE=logical(1) )) # identify factor columns
+    dat[, (factor.columns) := lapply(.SD, as.character), .SDcols = factor.columns] # convert factor to string
     string.columns <- which(vapply(dat,is.character, FUN.VALUE=logical(1) )) # identify string columns
     if(length(string.columns)>0) {
       dat[, (string.columns) := lapply(.SD, trimws, which="both"), .SDcols = string.columns] # trim white space to right or left
