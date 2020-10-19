@@ -20,7 +20,7 @@ See \code{\link{list_dataset_columns}} for more information on which columns are
 dataset either in data.table (adminstrative data) or svy_tbl (survey data) for further analysis/tabulation
 }
 \description{
-
+Simple front-end for pulling in standard APDE data
 }
 \examples{
 \dontrun{

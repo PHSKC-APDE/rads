@@ -1,7 +1,7 @@
 
 #' Get (micro)data from APDE storage.
 #'
-#' @description
+#' @description Simple front-end for pulling in standard APDE data
 #'
 #' @param dataset Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options
 #' @param cols Character vector of length >-1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
