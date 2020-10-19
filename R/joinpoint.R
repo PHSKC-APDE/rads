@@ -68,6 +68,10 @@ joinpoint <- function(jp_data = NULL,
                  jp_dir = NULL,
                  jp_path = "C:/Program Files (x86)/Joinpoint Command/jpCommand.exe") {
 
+
+  ## Global variables used by data.table declared as NULL here to play nice with devtools::check()
+      dup <- jp_se2 <- trend <- APC.Significant <- APC <- Segment.Start <- Segment.End <- trend.next <- trend.prev <- contiguous <- count <- time_trends <- tab <- NULL
+
   ##############################################
   ## Confirm function arguments are logical ####
   ##############################################
@@ -191,7 +195,7 @@ joinpoint <- function(jp_data = NULL,
         input[jp_se == 0, jp_se := NA_real_][, jp_se2 := mean(jp_se, na.rm = T), by = c("jp_byvar2")][is.na(jp_se), jp_se := jp_se2][, jp_se2 := NULL]# when se is zero, replace with mean of when it is not zero
         input[jp_se == round2(jp_se), jp_se2 := mean(input[jp_se != 0]$jp_se, na.rm = T), by = c("jp_byvar1", "jp_byvar2")] # when se is any integer, replace with mean of when it is not zero
         input[jp_se < 0.001, jp_se := 0.001] # when SE is <0.001, JoinPoint doesn't calculate a trend
-        input <- input[, .(jp_period, jp_byvar1, jp_byvar2, jp_result, jp_se)] # limit to columns needed for JoinPoint
+        input <- input[, list(jp_period, jp_byvar1, jp_byvar2, jp_result, jp_se)] # limit to columns needed for JoinPoint
         setorder(input, jp_byvar1, jp_byvar2, jp_period)
 
         write.table(input, file = glue::glue(jp_dir, "/input/JP_{unlist(indicator)}.txt"),
@@ -320,15 +324,15 @@ joinpoint <- function(jp_data = NULL,
           temp_trend[, trend := "flat"] # set flat as default, and then specify when rising or falling
           temp_trend[APC.Significant==1 & APC>0, trend := "rising"]
           temp_trend[APC.Significant==1 & APC<0, trend := "falling"]
-          temp_trend <- temp_trend[, .(jp_byvar1, jp_byvar2, Segment.Start, Segment.End, trend)] # keeping only essential vars, helpful for clarity while coding/troubleshooting
+          temp_trend <- temp_trend[, list(jp_byvar1, jp_byvar2, Segment.Start, Segment.End, trend)] # keeping only essential vars, helpful for clarity while coding/troubleshooting
 
           # collapse data when two contiguous time periods have the same trend (i.e., 2005-2009 and 2009-2013 both flat, so 2005-2013 is flat)
-          temp_trend[, trend.next := shift(trend, 1, 0, "lead"), by = .(jp_byvar1, jp_byvar2)]
-          temp_trend[, trend.prev := shift(trend, 1, 0, "lag"), by = .(jp_byvar1, jp_byvar2)]
+          temp_trend[, trend.next := shift(trend, 1, 0, "lead"), by = list(jp_byvar1, jp_byvar2)]
+          temp_trend[, trend.prev := shift(trend, 1, 0, "lag"), by = list(jp_byvar1, jp_byvar2)]
           temp_trend[trend == trend.next | trend == trend.prev, contiguous := TRUE][, c("trend.next", "trend.prev") := NULL] # identify contiguous
 
-          temp_trend <- rbind(temp_trend[contiguous==TRUE, .(Segment.Start = suppressWarnings(min(Segment.Start)), Segment.End = suppressWarnings(max(Segment.End))),
-                                         by = .(jp_byvar1, jp_byvar2, trend, contiguous)],
+          temp_trend <- rbind(temp_trend[contiguous==TRUE, list(Segment.Start = suppressWarnings(min(Segment.Start)), Segment.End = suppressWarnings(max(Segment.End))),
+                                         by = list(jp_byvar1, jp_byvar2, trend, contiguous)],
                               temp_trend[is.na(contiguous), ]
           ) # collapse if congtiguous and append to non-contiguous
 
@@ -347,7 +351,7 @@ joinpoint <- function(jp_data = NULL,
           temp_trend[, c("Segment.Start", "Segment.End") := NULL]
 
           # create a counter for each group.num
-          temp_trend[,  count := 1:.N, by = .(jp_byvar1, jp_byvar2)]
+          temp_trend[,  count := 1:.N, by = list(jp_byvar1, jp_byvar2)]
 
           # reshape from long to wide
           temp_trend <- dcast(temp_trend, jp_byvar1 + jp_byvar2 ~ count, value.var = "trend")
@@ -358,7 +362,7 @@ joinpoint <- function(jp_data = NULL,
           temp_trend[, time_trends := gsub("; NA", "", time_trends)]
 
           # keep columns of interest
-          temp_trend <- temp_trend[, .(jp_byvar1, jp_byvar2, time_trends)]
+          temp_trend <- temp_trend[, list(jp_byvar1, jp_byvar2, time_trends)]
 
 
           ### Join back to data and make trends tab for joining

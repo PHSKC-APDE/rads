@@ -44,8 +44,8 @@ suppress <- function(sup_data = NULL,
                      secondary_ids = c("tab", "indicator_key", "cat1", "cat2_group", "year"),
                      secondary_where = NULL){
 
-  #visible bindings for data.table
-  numerator <- suppression <- NULL
+  ## Global variables used by data.table declared as NULL here to play nice with devtools::check()
+    numerator <- suppression <- group <- counter <- suppress2 <- rse <- caution <- NULL
 
   #validate 'sup_data' ----
       if(is.null(sup_data)){

@@ -119,7 +119,7 @@ chi_compare_kc <- function(orig,
                            new.col.name = "comparison_with_kc"){
 
   #Bindings for data.table/check global variables
-  cat1_varname <- result <- comp.result <- lower_bound <- comp.upper_bound <- upper_bound <- comp.lower_bound <- significance <- NULL
+  cat1 <- cat1_varname <- result <- comp.result <- lower_bound <- comp.upper_bound <- upper_bound <- comp.lower_bound <- significance <- tab <- ..comparator.vars <- NULL
 
   #Copy & subset comparator data
   data.table::setDT(copy(orig))
@@ -365,6 +365,9 @@ format_time_simple <- function(x){
 #' @return A simple printed statement, either identifying incompatible column types or a statement of success
 chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = NULL, META = NULL){
 
+    #Bindings for data.table/check global variables
+  indicator_key <- result_type <- relative.diff <- result.x <- result.y <- absolute.diff <- cat1 <- tab <- ..comparator.vars <-  NULL
+
     # Check if necessary arguments are present
   if(is.null(OLD)){stop("You must provide 'OLD', i.e., the name of the table with the OLD data")}
   if(is.null(NEW)){stop("You must provide 'NEW', i.e., the name of the table with the NEW data")}
@@ -389,7 +392,7 @@ chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = 
 
     # If metadata provided, add it to the columns to help interret the output
       if(!is.null(META)){
-        NEW <- merge(NEW, META[, .(indicator_key, result_type)], by = "indicator_key", all.x = TRUE, all.y = FALSE)
+        NEW <- merge(NEW, META[, list(indicator_key, result_type)], by = "indicator_key", all.x = TRUE, all.y = FALSE)
       } else { NEW[, result_type := "Metadata not provided"]}
 
     # Merge old and new data based on identifiers

@@ -50,6 +50,10 @@ digits <- function(digit_data = NULL,
                    digits_1 = NULL,
                    vars_2 = NULL,
                    digits_2 = NULL){
+
+  ## Global variables used by data.table declared as NULL here to play nice with devtools::check()
+      ..vars_1 <- ..vars_2 <- NULL
+
   ## VALIDATION ----
       #validate 'digit_data'
           if(is.null(digit_data)){

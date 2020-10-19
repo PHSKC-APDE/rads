@@ -18,7 +18,7 @@ calc.data.frame = function(ph.data,
                            verbose = FALSE){
 
   #global variables used by data.table declared as NULL here to play nice with devtools::check()
-  se <- rse <- rate <- rate_per <- level <- time <- variable <- NULL
+  se <- rse <- rate <- rate_per <- level <- time <- variable <- mean_lower <- mean_upper <- mean_se <- ..what <- NULL
 
   # copy data.table to prevent changing the underlying data, also sets copy as class == data.table
   temp.dt <- data.table::as.data.table(ph.data)
@@ -152,7 +152,7 @@ calc.data.frame = function(ph.data,
   # function to calculate metrics
   calc_metrics <- function(X, DT){
 
-    DT[, .(
+    DT[, list(
       time = time_format(get(time_var)[!is.na(get(X))]),
       variable = as.character(X),
       mean = mean(get(X), na.rm = T),
