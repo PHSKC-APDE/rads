@@ -4,6 +4,7 @@ output:
   html_document: default
   rmarkdown::html_vignette: default
 vignette: >
+  %\VignetteEngine{knitr::knitr}
   %\VignetteIndexEntry{Exploring Birth Data with RADS}
 ---
 
