@@ -109,6 +109,7 @@ substrRight <- function(x, x.start, x.stop){
 #' @param orig Character vector of length 1. Identifies the data.table/data.frame to be fetched. Note the table must have the following columns:
 #' 'result', 'lower_bound', & 'upper_bound' and all three must be numeric
 #' @param new.col.name Character vector of length 1. It is the name of the column containining the comparison results.
+#' @param linkage.vars Character vector of length 1. It is the name of the column that you will use for merging.
 #'
 #' @importFrom data.table setnames ":=" setDT
 #'

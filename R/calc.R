@@ -13,6 +13,7 @@
 #' @param fancy_time logical. If TRUE, a record of all the years going into the data is provided. If FALSE, just a simple range (where certain years within the range might not be represented)
 #' @param proportion logical. For survey data, should metrics be calculated assuming the output is proportion-like? See details for more.
 #'                   Currently does not have functionality for non-survey data.
+#' @param ci numeric. Confidence level, >0 & <1, typically 0.95
 #' @param verbose logical. Mostly unused, but toggles on/off printed warnings.
 #' @return a data.table containing the results
 #' @details

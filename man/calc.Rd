@@ -62,6 +62,8 @@ Currently does not have functionality for non-survey data.}
 
 \item{fancy_time}{logical. If TRUE, a record of all the years going into the data is provided. If FALSE, just a simple range (where certain years within the range might not be represented)}
 
+\item{ci}{numeric. Confidence level, >0 & <1, typically 0.95}
+
 \item{verbose}{logical. Mostly unused, but toggles on/off printed warnings.}
 }
 \value{

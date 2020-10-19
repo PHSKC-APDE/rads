@@ -5,6 +5,7 @@
 #' @param by character or symbol vector
 #' @param time_var character or symbol
 #' @param fancy_time logical. If FALSE, a record of all the years going into the data is provided. If true, just a simple range (where certain years within the range might not be represented)
+#' @param ci numeric. Confidence level, >0 & <1, typically 0.95
 #' @importFrom survey svymean svytotal
 #' @importFrom data.table melt setnames
 #' @importFrom srvyr filter group_by %>% select summarize unweighted
