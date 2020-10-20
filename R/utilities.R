@@ -292,6 +292,8 @@ format_time_simple <- function(x){
 #' @return A simple printed statement, either identifying incompatible column types or a statement of success
 
   validate_yaml_data <- function(DF = NULL, YML = NULL, VARS = NULL){
+    ## Global variables used by data.table declared as NULL here to play nice with devtools::check()
+      DF.class <- NULL
 
     # Check that DT is a data.frame/data.table
       if(is.data.frame(DF) == FALSE){
@@ -299,7 +301,7 @@ format_time_simple <- function(x){
       }else{DF <- data.table::setDT(copy(DF))}
 
     # identify proper classes from YAML file ----
-      class.compare <- data.table(
+      class.compare <- data.table::data.table(
         name =  c(names(YML[[VARS]])),
         yaml.class = tolower(as.character(YML[[VARS]]))
       )

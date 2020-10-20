@@ -18,7 +18,7 @@ calc.data.frame = function(ph.data,
                            verbose = FALSE){
 
   #global variables used by data.table declared as NULL here to play nice with devtools::check()
-  se <- rse <- rate <- rate_per <- level <- time <- variable <- mean_lower <- mean_upper <- mean_se <- ..what <- NULL
+  se <- rse <- rate <- rate_per <- level <- time <- variable <- mean_lower <- mean_upper <- mean_se <- `___THETIME___` <- NULL
 
   # copy data.table to prevent changing the underlying data, also sets copy as class == data.table
   temp.dt <- data.table::as.data.table(ph.data)
@@ -50,29 +50,29 @@ calc.data.frame = function(ph.data,
 
   #identify when 'what' is binary (0, 1), other numerics, or a factor. When a factor, convert it to a series of binary columns
   # binary columns
-  binary.col <- vapply(temp.dt[, ..what],function(x) { all(stats::na.omit(x) %in% 0:1) }, FUN.VALUE=logical(1)) # logical vector
+  binary.col <- vapply(temp.dt[, .SD, .SDcols = what],function(x) { all(stats::na.omit(x) %in% 0:1) }, FUN.VALUE=logical(1)) # logical vector
   binary.col <- what[binary.col]  # character vector
 
   # numeric columns
-  numeric.col <- vapply(temp.dt[, ..what], is.numeric, FUN.VALUE=logical(1)) # logical vector
+  numeric.col <- vapply(temp.dt[, .SD, .SDcols = what], is.numeric, FUN.VALUE=logical(1)) # logical vector
   numeric.col <- setdiff(what[numeric.col], binary.col)
 
   # factor columns (convert to character first to drop off levels that are empty when selected out by ...)
-  factor.col <- vapply(temp.dt[, ..what], is.factor, FUN.VALUE=logical(1)) # logical vector
+  factor.col <- vapply(temp.dt[, .SD, .SDcols = what], is.factor, FUN.VALUE=logical(1)) # logical vector
   factor.col <- what[factor.col]
   if(length(factor.col) > 0){
     temp.dt[, c(factor.col) := lapply(.SD, droplevels), .SDcols = factor.col]
   }
 
   # character columns (convert to factors)
-  character.col <- vapply(temp.dt[, ..what], is.character, FUN.VALUE=logical(1)) # logical vector
+  character.col <- vapply(temp.dt[, .SD, .SDcols = what], is.character, FUN.VALUE=logical(1)) # logical vector
   character.col <- what[character.col]
   if(length(character.col) > 0){
     temp.dt[, c(character.col) := lapply(.SD, as.factor), .SDcols = character.col]
   }
 
   # factor columns
-  factor.col <- vapply(temp.dt[, ..what], is.factor, FUN.VALUE=logical(1)) # logical vector
+  factor.col <- vapply(temp.dt[, .SD, .SDcols = what], is.factor, FUN.VALUE=logical(1)) # logical vector
   factor.col <- what[factor.col]
 
   names.before <- names(copy(temp.dt))

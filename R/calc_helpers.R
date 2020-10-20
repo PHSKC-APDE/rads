@@ -19,6 +19,10 @@
 #'
 calc_factor <- function(svy, what, by, time_var, fancy_time = TRUE, ci = .95){
 
+  # Global variables used by data.table declared as NULL here to play nice with devtools::check()
+    time <- time1 <- time2 <- level <- denominator <- numerator <- variable <- NULL
+    rate_per <- numerator <- holdby <- `____label____` <- `__dv__` <- NULL
+
   # what <- enquo(what)
   # by <- enquo(by)
   # time_var <- enquo(time_var)

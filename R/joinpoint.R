@@ -38,7 +38,7 @@
 #'
 #' @examples
 #' # create sample data
-#' dt <- data.table(
+#' dt <- data.table::data.table(
 #'   indic = c(rep("my.indicator", 14)),
 #'   group1 = c(rep("Female", 14)),
 #'   group2 = c(rep("Child", 7), rep("Adult", 7)),
@@ -47,7 +47,7 @@
 #'   se = c(runif(14, .01, .02))
 #' )
 #' # run function
-#' joinpoint(jp_data = copy(dt),
+#' joinpoint(jp_data = data.table::copy(dt),
 #'      jp_indicator = "indic",
 #'      jp_period = "time",
 #'      jp_result = "est",
@@ -174,7 +174,7 @@ joinpoint <- function(jp_data = NULL,
   ###############################
   ## Loop through indicators ####
   ###############################
-  trends.dt <- data.table() # empty table for appending the results for each indicator
+  trends.dt <- data.table::data.table() # empty table for appending the results for each indicator
 
   for(indicator in unique(jp_data[, get(jp_indicator)])){
 
@@ -184,7 +184,7 @@ joinpoint <- function(jp_data = NULL,
     # Write tab seperated input data file for use by JoinPoint ----
         # Note: outputting an integer seems to cause JP to fail.
         # Check for integers then subtract/add a tiny extra amount to avoid errors
-        input <- copy(jp_data[get(jp_indicator)== indicator])
+        input <- data.table::copy(jp_data[get(jp_indicator)== indicator])
         for(i in c("indicator", "period", "result", "se", "byvar1", "byvar2")){
           input[, paste0("jp_", i) := get(get(paste0("jp_", i)))] # ascribe standard names for simplicity
           input[, get(paste0("jp_", i)) := NULL]

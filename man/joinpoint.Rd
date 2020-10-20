@@ -56,7 +56,7 @@ jp_byvar2, & jp_period
 }
 \examples{
 # create sample data
-dt <- data.table(
+dt <- data.table::data.table(
   indic = c(rep("my.indicator", 14)),
   group1 = c(rep("Female", 14)),
   group2 = c(rep("Child", 7), rep("Adult", 7)),
@@ -65,7 +65,7 @@ dt <- data.table(
   se = c(runif(14, .01, .02))
 )
 # run function
-joinpoint(jp_data = copy(dt),
+joinpoint(jp_data = data.table::copy(dt),
      jp_indicator = "indic",
      jp_period = "time",
      jp_result = "est",

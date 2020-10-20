@@ -24,6 +24,7 @@ test_that('Grouping without filtering',
 test_that('Multi Grouping with filtering',{
           st = calc(sur, 'api00', cname == 'Los Angeles', by = c('stype', 'cname'), metrics = 'denominator', time_var = NULL)[, .(stype, cname, denominator)]
           man = sur %>% filter(cname == 'Los Angeles') %>% group_by(stype, cname) %>% summarize(denominator = unweighted(n())) %>% setDT
+          attributes(man)$groups <- NULL # remove tibble attributes
           expect_equal(st, man)
 })
 
@@ -44,6 +45,7 @@ test_that('Grouping with NAs in the group',{
   r4 = sur %>% group_by(g1,g2) %>% summarize(mean = survey_mean(api00)) %>% select(g1,g2, mean) %>% setDT
   r4[g1 == '(Missing)', g1 := NA]
   r4[g2 == '(Missing)', g2 := NA]
+  attributes(r4)$groups <- NULL # remove tibble attributes
   setorder(r4, g1, g2)
   expect_equal(r3,r4)
 
@@ -52,6 +54,7 @@ test_that('Grouping with NAs in the group',{
   r6 =  sur %>% filter(!is.na(g2)) %>% group_by(g1,g2) %>% summarize(mean = survey_mean(api00)) %>% select(g1,g2, mean) %>% setDT
   r6[g1 == '(Missing)', g1 := NA]
   r6[g2 == '(Missing)', g2 := NA]
+  attributes(r6)$groups <- NULL # remove tibble attributes
   setorder(r6, g1, g2)
   expect_equal(r5,r6)
 

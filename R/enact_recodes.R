@@ -10,6 +10,8 @@
 #' @export
 #'
 enact_recodes = function(data, ..., ignore_case = TRUE, copy = TRUE){
+  # Global variables used by data.table declared as NULL here to play nice with devtools::check()
+    blankblank <- NULL
 
   stopifnot(inherits(data, 'data.frame'))
 

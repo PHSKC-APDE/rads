@@ -14,6 +14,9 @@
 #' @export
 do_recode = function(x, old, new, new_label = NULL, update = FALSE, verbose = FALSE){
 
+  # Global variables used by data.table declared as NULL here to play nice with devtools::check()
+    value <- label <- NULL
+
   #Initial checks
   stopifnot(length(new) == length(old))
   if(is.factor(old)) stop('`old` cannot be of class `factor`')

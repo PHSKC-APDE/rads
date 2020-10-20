@@ -4,7 +4,7 @@ library('rads')
 
 # create test data
 set.seed(98104)
-dt <- data.table(
+dt <- data.table::data.table(
   chi_year = rep(2008:2018, 2000),
   chi_sex = factor(sample(c("Male", "Female"), 22000, rep = TRUE, prob = c(0.5, 0.5))),
   chi_age = round(rnorm(22000, 23, 2.5), 0),

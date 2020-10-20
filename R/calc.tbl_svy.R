@@ -1,11 +1,12 @@
 #' @rdname calc
-#' @importFrom srvyr filter group_by %>% select summarize
-#' @importFrom dplyr n
+#' @importFrom srvyr filter group_by %>% select summarize survey_mean
+#' @importFrom dplyr n mutate_at group_vars
 #' @importFrom data.table ":=" setnames
 #' @importFrom rlang quos !! !!! syms
 #' @importFrom tidyselect all_of
 #' @importFrom data.table setnames setDT
 #' @importFrom forcats fct_explicit_na
+#' @importFrom utils capture.output
 #' @export
 calc.tbl_svy <- function(ph.data,
                          what,
@@ -33,7 +34,8 @@ calc.tbl_svy <- function(ph.data,
   }
 
   #data.table visible bindings
-  variable <- NULL
+  variable <- rate_per <- numerator <- denominator <- rate <- obs <- rse <- mean_se <- NULL
+  time <- time1 <- time2 <- level <- missing.prop <- `___THETIME___` <- NULL
 
   opts = metrics()
   #confirm that svy is a tab_svy
@@ -76,8 +78,8 @@ calc.tbl_svy <- function(ph.data,
 
   delete_time = F
   if(is.null(time_var)){
-    time_var = '_THETIME'
-    ph.data <- ph.data %>% mutate(`_THETIME` = NA)
+    time_var = '___THETIME___'
+    ph.data <- ph.data %>% mutate(`___THETIME___` = NA)
     delete_time = T
   }
 
@@ -238,7 +240,7 @@ calc.tbl_svy <- function(ph.data,
 
   data.table::setorderv(res, cols = c('variable', 'level', as.character(time_var)))
 
-  if(delete_time) res[, `_THETIME` := NULL]
+  if(delete_time) res[, `___THETIME___` := NULL]
 
   if(convert_by){
     byc = as.character(by)

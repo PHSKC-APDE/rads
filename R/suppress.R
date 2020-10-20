@@ -23,18 +23,18 @@
 #'
 #' @keywords suppression
 #'
-#' @importFrom data.table ':='
+#' @importFrom data.table ':=' data.table
 #'
 #' @examples
 #'
 #'   set.seed(98104)
-#'   dt <- data.table(
+#'   dt <- data.table::data.table(
 #'     chi_year = rep(2018, 100),
 #'     mean = rnorm(100, .25, .05),
 #'     numerator = round(rnorm(100, 20, 9), 0)
 #'   )
 #'   table(dt$numerator) # before
-#'   suppress(dt, suppress_range = c(0, 20), secondary = F) # apply suppression
+#'   suppress(dt, suppress_range = c(0, 20), secondary = FALSE) # apply suppression
 #'   table(dt$numerator) # after
 #'
 
@@ -73,7 +73,7 @@ suppress <- function(sup_data = NULL,
       }
 
   #validate 'secondary_ids' ----
-      if(length(setdiff(secondary_ids, names(sup_data))) > 0 ){
+      if(secondary==T & length(setdiff(secondary_ids, names(sup_data))) > 0 ){
         stop("At least one name in 'secondary_ids' is not found among the column names in 'sup_data'")
       }
 

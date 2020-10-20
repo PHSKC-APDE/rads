@@ -31,7 +31,7 @@ test_that('Both versions of calc have approximately the same factor answers',{
   r1 = calc(sur, what = 'stype', by = 'both', metrics = metrics())
   r2 = calc(apisrs, what = 'stype', by = 'both', metrics = metrics())
 
-  expect_equal(names(r1),names(r2))
+  expect_equal(sort(names(r1)),sort(names(r2)))
 
   #remove the SE ones since those are different
   droppies = c(as.vector(outer(c('mean_','total_', 'rate_'), c('se', 'lower', 'upper'), paste0)), 'rse')
