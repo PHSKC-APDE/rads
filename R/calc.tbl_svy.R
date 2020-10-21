@@ -7,6 +7,7 @@
 #' @importFrom data.table setnames setDT
 #' @importFrom forcats fct_explicit_na
 #' @importFrom utils capture.output
+
 #' @export
 calc.tbl_svy <- function(ph.data,
                          what,
@@ -82,7 +83,6 @@ calc.tbl_svy <- function(ph.data,
     ph.data <- ph.data %>% mutate(`___THETIME___` = NA)
     delete_time = T
   }
-
 
   whats = rlang::syms(what)
   time_var = rlang::sym(time_var)
@@ -175,8 +175,6 @@ calc.tbl_svy <- function(ph.data,
           ggg = merge(ggg, missin, by = gvs, all.x = T)
           warning(paste(capture.output(print(ggg[!is.na(missing),.SD, .SDcols = gvs])), collapse = "\n"))
         }
-
-
 
         ret[, level := NA]
         data.table::setnames(ret, c('mean_low', 'mean_upp') , c('mean_lower', 'mean_upper'))
