@@ -29,6 +29,9 @@ calc.data.frame = function(ph.data,
     #where <- tryCatch(parse(text = paste0(list(...))),  error = function (e) parse(text = paste0(list(bquote(...))))) # convert ... to an expression
     where <- tryCatch(parse(text = paste(unlist(list(...)), collapse = " & ")),
                       error = function (e) parse(text = gsub("~", "", paste(rlang::quos(...), collapse = " & "))) ) # convert ... to an expression
+    }else{
+      where <- NULL
+    }
 
   #subset temp.dt to only the rows needed
   if(!is.null(where)){
