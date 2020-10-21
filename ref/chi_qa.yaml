@@ -1,0 +1,31 @@
+schema: 
+table: 
+years:
+vars:
+    data_source: VARCHAR(255)
+    indicator_key: VARCHAR(255)
+    tab: VARCHAR(255)
+    year: VARCHAR(255)
+    cat1: VARCHAR(255)
+    cat1_group: VARCHAR(255)
+    cat1_group_alias: VARCHAR(255)
+    cat1_varname: VARCHAR(255)
+    cat2: VARCHAR(255)
+    cat2_group: VARCHAR(255)
+    cat2_group_alias: VARCHAR(255)
+    cat2_varname: VARCHAR(255)
+    result: FLOAT
+    lower_bound: FLOAT
+    upper_bound: FLOAT
+    se: FLOAT
+    rse: FLOAT
+    comparison_with_kc: VARCHAR(255)
+    time_trends: VARCHAR(255)
+    significance: VARCHAR(1)
+    caution: VARCHAR(1)
+    suppression: VARCHAR(1)
+    numerator: INT
+    denominator: INT
+    chi: TINYINT
+    source_date: VARCHAR(8)
+    run_date: VARCHAR(8)

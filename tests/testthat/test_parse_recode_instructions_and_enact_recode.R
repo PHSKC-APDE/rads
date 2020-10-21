@@ -30,3 +30,21 @@ test_that('Recodes behave as expected',{
   res = enact_recodes(start, pr)
   expect_equal(res[, .(b1, b2, a3, b4, b5)], end )
 })
+
+test_that('Enact recodes can handle different ways of passing instructions',{
+  start = data.table(a1 = 1:3, a2 = 1:3, a3 = 1:3, a4 = 1:3, a5 = 7:9)
+  end = data.table(b1 = 4:6, b2 = factor(4:6, 4:6, c('a','b','c')), a3 = 4:6, b4 = 4:6, b5 = 7:9)
+  res1 = enact_recodes(start, r1)
+
+  expect_equal(res1[, b1], end[,b1])
+
+  res2 = enact_recodes(start, r1, r2)
+  expect_equal(res2[, .(b1, b2)], end[,.(b1,b2)])
+
+  res3 = enact_recodes(start, list(r1, r2))
+  expect_equal(res3[, .(b1, b2)], end[,.(b1,b2)])
+
+  res4 = enact_recodes(start, list(r1, r2), r4)
+  expect_equal(res4[, .(b1, b2, b4)], end[,.(b1,b2, b4)])
+
+})

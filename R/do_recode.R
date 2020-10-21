@@ -6,9 +6,16 @@
 #' @param new_label character (or convertable to character). The factor label that `old` will be recoded to in conjunction with the position of `new`.
 #' If NULL or all NA indicates no (new) labelling
 #' @param update logical. Governs whether x is modified in place. If `x` is a factor, this will also carry forward any labels unless overwritten by new_label
+#' @param verbose logical. Should warnings be displayed/provided?
+#'
+#' @importFrom methods as
+#'
 #'
 #' @export
 do_recode = function(x, old, new, new_label = NULL, update = FALSE, verbose = FALSE){
+
+  # Global variables used by data.table declared as NULL here to play nice with devtools::check()
+    value <- label <- NULL
 
   #Initial checks
   stopifnot(length(new) == length(old))
@@ -85,7 +92,7 @@ do_recode = function(x, old, new, new_label = NULL, update = FALSE, verbose = FA
   if(!update){
     #if the new label exists and has at least one non-na value
     if(!is.null(new_label) && !all(is.na(new_label))){
-      ret = factor(ret, new, new_label)
+      ret = factor(ret, new[which(!is.na(new_label))], new_label[!is.na(new_label)])
     }
   }else if(!all(is.na(new_label))){
     new_labs = data.table::data.table(value = new, label = new_label)

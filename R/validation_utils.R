@@ -93,7 +93,3 @@ list_to_dt = function(x, new_col, old_col){
   setDF(res)
   return(res)
 }
-
-
-
-

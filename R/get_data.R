@@ -1,6 +1,7 @@
 
 #' Get (micro)data from APDE storage.
 #'
+#' @description Simple front-end for pulling in standard APDE data
 #'
 #' @param dataset Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options
 #' @param cols Character vector of length >-1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
@@ -66,7 +67,7 @@ get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcf
   #visible bindings for data.table
   schgnoid <- sur_psu <- kcfinalwt <- NULL
 
-  dat <- haven::read_dta("J:/HYSdata/hys/Data/hys0418_final_8.dta")
+  dat <- haven::read_dta("J:/HYSdata/hys/Data/hys0418_final_11.dta")
   data.table::setDT(dat)
 
   #prep the dataset
@@ -85,7 +86,7 @@ get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcf
 
   if(kingco == T) svy <- svy %>% srvyr::filter(kingco == 1)
 
-  if(!is.na(cols)) svy <- svy %>% srvyr::select({{cols}})
+  if(!all(is.na(cols))) svy <- svy %>% srvyr::select({{cols}})
   class(svy) <- c(class(svy), 'apde_hys')
 
   return(svy)
@@ -98,12 +99,9 @@ get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcf
 #' @param year Numeric vector. Identifies which years of data should be pulled
 #' @param kingco logical. Return dataset for analyses where mother's residence is in King County only.
 #'
-#' @return A data.table for further analysis/tabulation
+#' @return dataset either data.table (adminstrative data) for further analysis/tabulation
 #'
-#' @importFrom data.table ':=' .SD setcolorder
-#' @importFrom odbc dbConnect odbc dbDisconnect
-#' @importFrom glue glue_sql
-#' @importFrom DBI dbGetQuery
+#' @import data.table
 #' @export
 #'
 #' @examples
@@ -112,11 +110,10 @@ get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcf
 #'  get_data_birth(cols = NA, year = c(2015, 2016, 2017), kingco = F)
 #' }
 get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
-
   # pull columns and years from sQL
   ifelse(is.na(cols), cols <- "*", cols <- paste(cols, collapse=", "))
 
-  query.string <- glue::glue_sql ("SELECT ",  cols, " FROM [PH_APDEStore].[final].[bir_wa]
+  query.string <- glue:: glue_sql ("SELECT ",  cols, " FROM [PH_APDEStore].[final].[bir_wa]
                                    WHERE chi_year IN (",  paste(year, collapse=", "), ")")
 
   if(kingco == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 1")}
@@ -131,67 +128,14 @@ get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
   odbc::dbDisconnect(con)
 
   # Format string variables due to SQL import quirks
-  sql_clean(dat)
+  original.order <- names(dat)
+  sql_clean(dat, stringsAsFactors = TRUE) # clean random white spaces and change strings to factors
 
-  # ascribe class
-  class(dat) <- c(class(dat), 'apde_birth')
+
+  # reorder table
+  setcolorder(dat, original.order)
+
+  setDT(dat) # set it as a data.table again b/c otherwise, ascribing the new class above makes a copy
 
   return(dat)
 }
-
-
-#' Get BSK microdata from storage.
-#'
-#' @param cols Character vector of length >=1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
-#'     See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.
-#' @param year Numeric vector. Identifies which years of data should be pulled
-#'
-#' @return An R survey object for further analysis/tabulation using survey commands
-#'
-#' @importFrom data.table ':=' .SD setcolorder
-#' @importFrom odbc dbConnect odbc dbDisconnect
-#' @importFrom glue glue_sql
-#' @importFrom DBI dbGetQuery
-#'
-#' @importFrom srvyr %>% as_survey_design filter select
-#' @importFrom haven read_dta
-#' @importFrom srvyr as_survey_design filter select
-#' @importFrom rlang sym
-
-#' @export
-#'
-#' @examples
-#'
-#' \dontrun{
-#'  get_data_bsk(cols = NA, year = c(2017))
-#' }
-get_data_bsk <- function(cols = NA, year = c(2017)){
-
-  # pull columns and years from sQL
-  ifelse(is.na(cols), cols <- "*", cols <- paste(c(cols, "w_rwt_scaled", "c_id", "w_region"), collapse=", "))
-
-  query.string <- glue::glue_sql ("SELECT ",  cols, " FROM [PH_APDEStore].[stage].[bskhs_2017_2019]
-                                  WHERE w_rwt_scaled IS NOT NULL AND year IN (",  paste(year, collapse=", "), ")")
-
-
-  con <- odbc::dbConnect(odbc::odbc(),
-                         Driver = "SQL Server",
-                         Server = "KCITSQLPRPDBM50",
-                         Database = "PH_APDEStore")
-
-  dat <- DBI::dbGetQuery(con, query.string)
-  odbc::dbDisconnect(con)
-
-  # format string variables due to SQL import quirks
-  sql_clean(dat)
-
-  # create the survey object
-  svy <- srvyr::as_survey_design(dat, ids = c_id, strata = w_region, weights = w_rwt_scaled, nest = T)
-
-  # ascribe class
-  class(svy) <- c(class(svy), 'apde_bsk')
-
-  return(svy)
-}
-
-

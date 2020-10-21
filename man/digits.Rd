@@ -6,10 +6,10 @@
 \usage{
 digits(
   digit_data = NULL,
-  vars_1 = NULL,
-  digits_1 = NULL,
-  vars_2 = NULL,
-  digits_2 = NULL
+  vars_1 = c("result", "lower_bound", "upper_bound", "rse"),
+  digits_1 = 3,
+  vars_2 = c("se"),
+  digits_2 = 4
 )
 }
 \arguments{
@@ -22,7 +22,7 @@ to the number of digits specified by digits_1. If not specified it defaults to c
 The default digits_1 = 3, i.e., 0.123456 >> 0.123.}
 
 \item{vars_2}{character vector of indeterminate length. Specifies the variables to be rounded
-to the number of digits specified by digits_2. If not specified it defaults to c("result", "lower_bound", "upper_bound", "rse")}
+to the number of digits specified by digits_2. If not specified it defaults to c("se")}
 
 \item{digits_2}{integer representing the number of decimal places to round variables specified in vars_2.
 The default digits_2 = 4 i.e., 0.123456 >> 0.1234.}
@@ -32,7 +32,7 @@ a data.table with appropriate rounding.
 }
 \description{
 #' @description
-Defaul rounding is according to APDE/CHI standards
+Default rounding is according to APDE/CHI standards
 }
 \details{
 By default, this function expects data that has already been formatted for CHI,
@@ -42,7 +42,7 @@ and the number of digits to round can be readily specified.
 \examples{
 
  set.seed(98104)
- dt <- data.table(
+ dt <- data.table::data.table(
    chi_year = rep(2000:2019),
    chi_sex = factor(sample(c("Male", "Female"), 20, rep = TRUE, prob = c(0.5, 0.5))),
    result = rnorm(20, .75, 0.025),
