@@ -104,9 +104,12 @@ test_that('Check metrics',{
         # check obs
           expect_equal( calc(dt, metrics = c("obs"), "chi_age<20", what = c("kotelchuck"), time_var = "chi_year")$obs,
                         nrow(dt[chi_age<20]))
-        # check ndistinct
+        # check ndistinct for continuous
           expect_equal( calc(dt, metrics = c("ndistinct"), what = c("birth_weight_grams"), time_var = "chi_year", by = c("chi_sex"))[chi_sex=="Male"]$ndistinct,
                         length(unique(dt[!is.na(birth_weight_grams) & chi_sex == "Male"]$birth_weight_grams)) )
+        # check ndistinct for continuous
+          expect_equal( calc(dt, metrics = c("ndistinct"), what = c("fetal_pres"), time_var = "chi_year", by = c("chi_sex"))[chi_sex=="Male" & level == "Breech"]$ndistinct,
+                        nrow(unique(dt[chi_sex == "Male" & fetal_pres == "Breech",  .(chi_sex, fetal_pres)])) )
 })
 
 test_that('Check per',{

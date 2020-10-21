@@ -152,6 +152,9 @@ calc.data.frame = function(ph.data,
   # function to calculate metrics
   calc_metrics <- function(X, DT){
 
+    ndistinct_adjustement <- 0
+    if(grepl("_SPLIT_HERE_", X)){ndistinct_adjustement <- 1} # these are cases where a factor was made into a series of binaries of 0|1, but shoudl only count the 1.
+
     DT[, list(
       time = time_format(get(time_var)[!is.na(get(X))]),
       variable = as.character(X),
@@ -165,7 +168,7 @@ calc.data.frame = function(ph.data,
       missing = sum(is.na( get(X) )),
       missing.prop = sum(is.na( get(X) ) / .N),
       unique.time = length(unique( get(time_var)[!is.na(get(X))] )),
-      ndistinct = length(unique(na.omit(get(X))))
+      ndistinct = length(unique(na.omit(get(X)))) - ndistinct_adjustement
     ),
     by = by]
   }
