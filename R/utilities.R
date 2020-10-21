@@ -44,7 +44,7 @@ NULL
 
 #' @rdname metrics
 #' @export
-survey_metrics = function(){
+metrics = function(){
   #c('mean', 'se', 'lower', 'upper', 'numerator', 'denominator', 'total', 'total_se', 'missing', 'rse', 'missing.prop', 'ndistinct')
   c('total', #'total_se', 'total_lower', 'total_upper'
     'mean', 'rse', #'mean_se', 'mean_lower', 'mean_upper',
@@ -52,13 +52,6 @@ survey_metrics = function(){
     'unique.time', 'ndistinct',
     'missing', 'missing.prop',
     'rate') #, 'rate_per', 'rate_se', 'rate_lower', 'rate_upper')
-}
-
-#' List of available metrics for calculation
-#' @rdname metrics
-#' @export
-record_metrics = function(){
-  c('mean', 'median', 'obs', 'rate', 'rse', 'numerator', 'denominator', 'missing', 'missing.prop', 'total', 'ndistinct')
 }
 
 
@@ -116,6 +109,7 @@ substrRight <- function(x, x.start, x.stop){
 #' @param orig Character vector of length 1. Identifies the data.table/data.frame to be fetched. Note the table must have the following columns:
 #' 'result', 'lower_bound', & 'upper_bound' and all three must be numeric
 #' @param new.col.name Character vector of length 1. It is the name of the column containining the comparison results.
+#' @param linkage.vars Character vector of length 1. It is the name of the column that you will use for merging.
 #'
 #' @importFrom data.table setnames ":=" setDT
 #'
@@ -126,7 +120,7 @@ chi_compare_kc <- function(orig,
                            new.col.name = "comparison_with_kc"){
 
   #Bindings for data.table/check global variables
-  cat1_varname <- result <- comp.result <- lower_bound <- comp.upper_bound <- upper_bound <- comp.lower_bound <- significance <- NULL
+  cat1 <- cat1_varname <- result <- comp.result <- lower_bound <- comp.upper_bound <- upper_bound <- comp.lower_bound <- significance <- tab <- ..comparator.vars <- NULL
 
   #Copy & subset comparator data
   data.table::setDT(copy(orig))
@@ -243,6 +237,10 @@ format_time_simple <- function(x){
       } else {stop("'dat' (the name of a data.frame or data.table) must be specified")}
 
     original.order <- names(dat)
+    factor.columns <- which(vapply(dat,is.factor, FUN.VALUE=logical(1) )) # identify factor columns
+    if(length(factor.columns)>0) {
+      dat[, (factor.columns) := lapply(.SD, as.character), .SDcols = factor.columns] # convert factor to string
+    }
     string.columns <- which(vapply(dat,is.character, FUN.VALUE=logical(1) )) # identify string columns
     if(length(string.columns)>0) {
       dat[, (string.columns) := lapply(.SD, trimws, which="both"), .SDcols = string.columns] # trim white space to right or left
@@ -294,6 +292,8 @@ format_time_simple <- function(x){
 #' @return A simple printed statement, either identifying incompatible column types or a statement of success
 
   validate_yaml_data <- function(DF = NULL, YML = NULL, VARS = NULL){
+    ## Global variables used by data.table declared as NULL here to play nice with devtools::check()
+      DF.class <- NULL
 
     # Check that DT is a data.frame/data.table
       if(is.data.frame(DF) == FALSE){
@@ -301,7 +301,7 @@ format_time_simple <- function(x){
       }else{DF <- data.table::setDT(copy(DF))}
 
     # identify proper classes from YAML file ----
-      class.compare <- data.table(
+      class.compare <- data.table::data.table(
         name =  c(names(YML[[VARS]])),
         yaml.class = tolower(as.character(YML[[VARS]]))
       )
@@ -368,6 +368,9 @@ format_time_simple <- function(x){
 #' @return A simple printed statement, either identifying incompatible column types or a statement of success
 chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = NULL, META = NULL){
 
+    #Bindings for data.table/check global variables
+  indicator_key <- result_type <- relative.diff <- result.x <- result.y <- absolute.diff <- cat1 <- tab <- ..comparator.vars <-  NULL
+
     # Check if necessary arguments are present
   if(is.null(OLD)){stop("You must provide 'OLD', i.e., the name of the table with the OLD data")}
   if(is.null(NEW)){stop("You must provide 'NEW', i.e., the name of the table with the NEW data")}
@@ -392,7 +395,7 @@ chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = 
 
     # If metadata provided, add it to the columns to help interret the output
       if(!is.null(META)){
-        NEW <- merge(NEW, META[, .(indicator_key, result_type)], by = "indicator_key", all.x = TRUE, all.y = FALSE)
+        NEW <- merge(NEW, META[, list(indicator_key, result_type)], by = "indicator_key", all.x = TRUE, all.y = FALSE)
       } else { NEW[, result_type := "Metadata not provided"]}
 
     # Merge old and new data based on identifiers
@@ -428,4 +431,36 @@ chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = 
     # return object
       return(comp)
 
+}
+
+#' Convert from one type to another type
+#'
+#' @param x factor
+#' @param target character. class of the object to transform the factor into. One of integer, numeric, or character.
+#'
+#'
+dumb_convert <- function(x, target = 'character'){
+
+  stopifnot(length(target) == 1)
+  if(target == 'character'){
+    return(as.character(x))
+  }
+
+  if(target == 'numeric'){
+    return(as.numeric(as.character(x)))
+  }
+
+  if(target == 'integer'){
+    return(as.integer(as.character(x)))
+  }
+
+  if(target == 'logical') return(as.logical(as.character(x)))
+
+  if(target == 'factor'){
+    if(is.factor(x)) return(x)
+
+    return(as.factor(x))
+  }
+
+  stop(paste0('Target class of ', target, ' is invalid'))
 }

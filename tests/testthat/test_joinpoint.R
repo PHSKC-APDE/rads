@@ -5,7 +5,7 @@ library('testthat')
 
 if(file.exists("C:/Program Files (x86)/Joinpoint Command/jpCommand.exe")){
   # load data
-  dt <- data.table(
+  dt <- data.table::data.table(
     indic = rep(c(rep("indicator#1", 7), rep("indicator#2", 7)), 2),
     group1 = c(rep("Female", 14), rep("Male", 14)),
     group2 = rep(c(rep("Child", 7), rep("Adult", 7)), 2),
@@ -21,7 +21,7 @@ if(file.exists("C:/Program Files (x86)/Joinpoint Command/jpCommand.exe")){
   my.dir <- tempdir()
 
   # run JoinPoint
-  jp.output <- jp_f(jp_data = dt,
+  jp.output <- joinpoint(jp_data = dt,
                     jp_indicator = "indic",
                     jp_period = "time",
                     jp_result = "est",
@@ -51,3 +51,4 @@ if(file.exists("C:/Program Files (x86)/Joinpoint Command/jpCommand.exe")){
 }else{
   skip('Joinpoint not found at "C:/Program Files (x86)/Joinpoint Command/jpCommand.exe" -- skipping tests')
 }
+

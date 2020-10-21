@@ -25,6 +25,9 @@
 #'
 parse_recode_instructions = function(recode, catch_NAs = TRUE, simplify_to_numeric = TRUE){
 
+  ## Global variables used by data.table declared as NULL here to play nice with devtools::check()
+  old_value <- new_value <- old_var <- new_var <- new_label <- V1 <- NULL
+
   #check column names
   vvv = c('old_var', 'old_value', 'new_var', 'new_value')
   if(!all(vvv %in% names(recode))){

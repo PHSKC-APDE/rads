@@ -10,6 +10,8 @@
 #' @export
 #'
 enact_recodes = function(data, ..., ignore_case = TRUE, copy = TRUE){
+  # Global variables used by data.table declared as NULL here to play nice with devtools::check()
+    blankblank <- NULL
 
   stopifnot(inherits(data, 'data.frame'))
 
@@ -40,9 +42,13 @@ enact_recodes = function(data, ..., ignore_case = TRUE, copy = TRUE){
   #Unlist 1 level if necessary
   list_idx = vapply(dots, function(x) inherits(x, 'list'), TRUE)
   ri_idx = vapply(dots, function(x) inherits(x, 'recode_instruction'), TRUE)
-  if(any(classy %in% 'recode_instruction')){
+
+  #If there is a mixture of lists and recode instructions, make them to a single depth list
+  #Otherwise, if they are all lists, take off a level\
+  #other otherwise, keep as a list of recode instructions
+  if(!all(ri_idx)){
     dots = append(dots[ri_idx], unlist(dots[list_idx & !ri_idx], recursive = F))
-  }else{
+  }else if(all(list_idx)){
     dots = unlist(dots, recursive = F)
   }
 
@@ -69,13 +75,12 @@ enact_recodes = function(data, ..., ignore_case = TRUE, copy = TRUE){
 
   val = tryCatch({
           #The code
-          if(isTRUE(all.equal(dot$old,dot$new))){
-              val = data[, get(dot$old_var)]
-            }else{
-              do_recode(data[, get(dot$old_var)], dot$old, dot$new, dot$new_label, update = dot$old_var == dot$new_var, verbose = FALSE)
-            }
-
-          },
+          if(isTRUE(all.equal(dot$old,dot$new)) && (length(dot$new_label) <= 1) && (is.na(dot$new_label) || is.null(dot$new_label))){
+            val = data[, get(dot$old_var)]
+          }else{
+            do_recode(data[, get(dot$old_var)], dot$old, dot$new, dot$new_label, update = dot$old_var == dot$new_var, verbose = FALSE)
+          }
+        },
         #if an error
          error = function(x){
            message(paste(dot$old_var, '->', dot$new_var))

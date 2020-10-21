@@ -41,6 +41,9 @@
 
 chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, ignore_trends = T, verbose = FALSE){
 
+  #global variables used by data.table declared as NULL here to play nice with devtools::check()
+    indicator_key <- result_type <- result <- upper_bound <- lower_bound <- rse <- caution <- tab <- suppression <- time_trends <- NULL
+
   # Check that both the results and the metadata were provided ----
     if(is.null(chi_est)){
       stop("You must provide the name of a data.frame or data.table that contains the CHI results (e.g., chi_est = chi_2018")
@@ -123,7 +126,7 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, ignore_trends = T, 
         }
 
       # proportions should always be between zero and one ----
-        chi_est <- merge(chi_est, chi_meta[, .(indicator_key, result_type)], by = "indicator_key", all.x = TRUE, all.y = FALSE) # merge on result_type
+        chi_est <- merge(chi_est, chi_meta[, list(indicator_key, result_type)], by = "indicator_key", all.x = TRUE, all.y = FALSE) # merge on result_type
         if(nrow(chi_est[result_type=="proportion" & !result %between% c(0, 1)]) > 0){
           stop("There is at least one row where where the metadata states that the indicator is a proportion but the result is outside [0,1].
                Please fix either the metadata table or the CHI estimates and try again.")

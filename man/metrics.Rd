@@ -2,19 +2,13 @@
 % Please edit documentation in R/utilities.R
 \name{metrics}
 \alias{metrics}
-\alias{survey_metrics}
-\alias{record_metrics}
 \title{List ofavailable metrics}
 \usage{
-survey_metrics()
-
-record_metrics()
+metrics()
 }
 \value{
 character vector. A vector of the available metrics for calculation.
 }
 \description{
 List ofavailable metrics
-
-List of available metrics for calculation
 }

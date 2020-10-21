@@ -1,9 +1,10 @@
 library('data.table')
 library('testthat')
+library('rads')
 
 # create test data
 set.seed(98104)
-dt <- data.table(
+dt <- data.table::data.table(
   chi_year = rep(2008:2018, 2000),
   chi_sex = factor(sample(c("Male", "Female"), 22000, rep = TRUE, prob = c(0.5, 0.5))),
   chi_age = round(rnorm(22000, 23, 2.5), 0),
@@ -20,7 +21,7 @@ test_that('Check <what>: class(what) == factor',{
                         length(unique(dt[chi_year==2008 & !is.na(fetal_pres)]$fetal_pres)))
           expect_equal( round2(calc(dt, chi_year==2008, what = c("fetal_pres"), time_var = "chi_year")[level == "Cephalic"]$mean, 3),
                         round2(nrow(dt[chi_year==2008 & fetal_pres=="Cephalic"]) / nrow(dt[chi_year==2008 & !is.na(fetal_pres)]), 3))
-          expect_equal( unique(calc(dt, chi_year==2008, what = c("fetal_pres"), time_var = "chi_year")[level == "Cephalic"]$time),
+          expect_equal( unique(calc(dt, chi_year==2008, what = c("fetal_pres"), time_var = "chi_year")[level == "Cephalic"]$chi_year),
                         "2008")
 })
 
@@ -29,7 +30,7 @@ test_that('Check <what>: class(what) == binary',{
                         1)
           expect_equal( round2(calc(dt, chi_year==2008, what = c("kotelchuck"), time_var = "chi_year")$mean, 3),
                         round2(mean(dt[chi_year==2008]$kotelchuck, na.rm = T), 3))
-          expect_equal( unique(calc(dt, chi_year==2008, what = c("kotelchuck"), time_var = "chi_year")$time),
+          expect_equal( unique(calc(dt, chi_year==2008, what = c("kotelchuck"), time_var = "chi_year")$chi_year),
                         "2008")
 })
 
@@ -38,7 +39,7 @@ test_that('Check <what>: class(what) == continuous',{
                         1)
           expect_equal( round2(calc(dt, chi_year==2008, what = c("birth_weight_grams"), time_var = "chi_year")$mean, 3),
                         round2(mean(dt[chi_year==2008]$birth_weight_grams, na.rm = T), 3))
-          expect_equal( unique(calc(dt, chi_year==2008, what = c("birth_weight_grams"), time_var = "chi_year")$time),
+          expect_equal( unique(calc(dt, chi_year==2008, what = c("birth_weight_grams"), time_var = "chi_year")$chi_year),
                         "2008")
 })
 
@@ -54,9 +55,9 @@ test_that('Check <what>: multiple classes',{
 })
 
 test_that('Check ... (where)',{
-          expect_equal( unique(calc(dt, chi_year==2008, what = c("fetal_pres"), time_var = "chi_year")$time),
+          expect_equal( unique(calc(dt, chi_year==2008, what = c("fetal_pres"), time_var = "chi_year")$chi_year),
                         "2008")
-          expect_equal( unique(calc(dt, chi_year%in%c(2008:2012), what = c("fetal_pres"), time_var = "chi_year")$time),
+          expect_equal( unique(calc(dt, chi_year%in%c(2008:2012), what = c("fetal_pres"), time_var = "chi_year")$chi_year),
                         "2008-2012")
           expect_equal( unique(calc(dt, chi_sex=="Male", what = c("fetal_pres"), time_var = "chi_year")$denominator),
                         nrow(dt[chi_sex == "Male" & !is.na(fetal_pres)]))
@@ -103,9 +104,12 @@ test_that('Check metrics',{
         # check obs
           expect_equal( calc(dt, metrics = c("obs"), "chi_age<20", what = c("kotelchuck"), time_var = "chi_year")$obs,
                         nrow(dt[chi_age<20]))
-        # check ndistinct
+        # check ndistinct for continuous
           expect_equal( calc(dt, metrics = c("ndistinct"), what = c("birth_weight_grams"), time_var = "chi_year", by = c("chi_sex"))[chi_sex=="Male"]$ndistinct,
                         length(unique(dt[!is.na(birth_weight_grams) & chi_sex == "Male"]$birth_weight_grams)) )
+        # check ndistinct for continuous
+          expect_equal( calc(dt, metrics = c("ndistinct"), what = c("fetal_pres"), time_var = "chi_year", by = c("chi_sex"))[chi_sex=="Male" & level == "Breech"]$ndistinct,
+                        nrow(unique(dt[chi_sex == "Male" & fetal_pres == "Breech",  .(chi_sex, fetal_pres)])) )
 })
 
 test_that('Check per',{
@@ -118,18 +122,92 @@ test_that('Check per',{
 })
 
 test_that('Check win: rolling averages, sums, etc.',{
-  expect_equal( round2(calc(dt, what = c("birth_weight_grams"), win=3, time_var = "chi_year")[time == "2008-2010"]$mean, 3),
+  expect_equal( round2(calc(dt, what = c("birth_weight_grams"), win=3, time_var = "chi_year")[chi_year == "2008-2010"]$mean, 3),
                 round2(mean(dt[chi_year %in% c(2008:2010)]$birth_weight_grams, na.rm = T), 3))
-  expect_equal( round2(calc(dt, what = c("birth_weight_grams"), win=3, time_var = "chi_year")[time == "2013-2015"]$mean, 3),
+  expect_equal( round2(calc(dt, what = c("birth_weight_grams"), win=3, time_var = "chi_year")[chi_year == "2013-2015"]$mean, 3),
                 round2(mean(dt[chi_year %in% c(2013:2015)]$birth_weight_grams, na.rm = T), 3))
 })
 
-test_that('Check fancy_time',{
-  expect_equal( calc(dt, metrics = c("mean"), chi_year %in% c(2008:2011, 2013, 2015:2018), what = c("kotelchuck"), time_var = "chi_year")$time,
-                "2008-2011, 2013, 2015-2018" )
-  expect_equal( calc(dt, metrics = c("mean"), chi_year %in% c(2008:2011, 2012, 2013, 2015:2018), what = c("kotelchuck"), time_var = "chi_year", fancy_time = T)$time,
-                "2008-2013, 2015-2018" )
-  expect_equal( calc(dt, metrics = c("mean"), chi_year %in% c(2008:2011, 2012, 2013, 2015:2018), what = c("kotelchuck"), time_var = "chi_year", fancy_time = F)$time,
-                "2008-2018" )
+test_that('Check ci:',{
+  #numeric, large denominator
+  r1 = calc(dt, what = 'birth_weight_grams', time_var = 'chi_year', metrics = 'mean', ci = .95)
+  r2 = calc(dt, what = 'birth_weight_grams', time_var = 'chi_year', metrics = 'mean', ci = .90)
+  expect_lte(r1$mean_lower, r2$mean_lower)
+  expect_gte(r1$mean_upper, r2$mean_upper)
+  expect_equal(r1$mean, r2$mean)
+
+  #numeric, small denominator
+  r3 = calc(dt[1:29,], what = 'birth_weight_grams', time_var = 'chi_year', metrics = 'mean', ci = .95)
+  r4 = calc(dt[1:29,], what = 'birth_weight_grams', time_var = 'chi_year', metrics = 'mean', ci = .90)
+  expect_lte(r3$mean_lower, r4$mean_lower)
+  expect_gte(r3$mean_upper, r4$mean_upper)
+
+  #binary/factor, small denominator
+  r5 = calc(dt, what = 'fetal_pres', time_var = 'chi_year', metrics = 'mean', ci = .95)
+  r6 = calc(dt, what = 'fetal_pres', time_var = 'chi_year', metrics = 'mean', ci = .90)
+  expect_lte(r5$mean_lower[1], r6$mean_lower[1])
+  expect_gte(r5$mean_upper[1], r6$mean_upper[1])
+
+
 })
 
+test_that('Check fancy_time and similar',{
+  expect_equal( calc(dt, metrics = c("mean"), chi_year %in% c(2008:2011, 2013, 2015:2018), what = c("kotelchuck"), time_var = "chi_year")$chi_year,
+                "2008-2011, 2013, 2015-2018" )
+  expect_equal( calc(dt, metrics = c("mean"), chi_year %in% c(2008:2011, 2012, 2013, 2015:2018), what = c("kotelchuck"), time_var = "chi_year", fancy_time = T)$chi_year,
+                "2008-2013, 2015-2018" )
+  expect_equal( calc(dt, metrics = c("mean"), chi_year %in% c(2008:2011, 2012, 2013, 2015:2018), what = c("kotelchuck"), time_var = "chi_year", fancy_time = F)$chi_year,
+                "2008-2018" )
+
+  #factor variable times
+  d = copy(dt)
+  d[, sss := fetal_pres]
+  d[(chi_year == 2017) | (chi_year == 2010 & sss == 'Cephalic'), sss := NA]
+  r1 = calc(d, metrics = 'mean', what = 'sss', time_var = 'chi_year', fancy_time = T)
+
+  #record data assumes absence is a true 0, and therefore Cephalic data is "present" in 2010 (e.g. 0 / denominator)
+  #this is a divergance from calc.tbl_svy
+  expect_equal(r1$chi_year, rep(c('2008-2016, 2018'),3))
+
+  #numeric variable times
+  d[chi_year == 2016, birth_weight_grams := NA]
+  r2 = calc(d, metrics = 'mean', what = 'birth_weight_grams', time_var = 'chi_year', fancy_time = T)
+  expect_equal(r2$chi_year, c('2008-2015, 2017-2018'))
+
+})
+
+test_that('Nonspecified time',{
+  r1 = calc(dt, metrics = 'mean', what = 'birth_weight_grams')
+  dt[, yyy := -10]
+  r2 = calc(dt, metrics = 'mean', time_var = 'yyy', what = 'birth_weight_grams')
+
+  expect_false('time' %in% names(r1))
+  expect_equal(r2$yyy, '-10')
+  expect_equal(r1$mean, r2$mean)
+
+})
+
+test_that('invalid/NA combinations of by variables results in no rows generated',{
+
+  sur <- copy(dt)
+  sur[, blah := kotelchuck]
+  sur[fetal_pres == 'Cephalic', blah := NA]
+  sur[, blah2 := kotelchuck]
+  r1 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'fetal_pres', proportion = FALSE)
+  r2 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'fetal_pres', proportion = TRUE)
+  r3 = calc(sur, 'blah2', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'fetal_pres', proportion = FALSE)
+  r4 = calc(sur, 'blah2', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'fetal_pres', proportion = TRUE)
+
+  expect_equal(r1[, .(mean, numerator, denominator, missing)], r3[!(fetal_pres %in% 'Cephalic'), .(mean, numerator, denominator, missing)])
+  expect_equal(r2[, .(mean, numerator, denominator, missing)], r4[!(fetal_pres %in% 'Cephalic'), .(mean, numerator, denominator, missing)])
+
+  r5 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = FALSE)
+  r6 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = TRUE)
+  r7 = calc(sur, 'blah2', !(fetal_pres %in% 'Cephalic'), metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = FALSE)
+  r8 = calc(sur, 'blah2', !(fetal_pres %in% 'Cephalic'), metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = TRUE)
+
+  expect_equal(r5[, .(mean, numerator, denominator, missing)], r6[, .(mean, numerator, denominator, missing)])
+  expect_equal(r7[, .(mean, numerator, denominator, missing)], r8[, .(mean, numerator, denominator, missing)])
+
+
+})

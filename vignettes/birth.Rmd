@@ -4,11 +4,12 @@ output:
   html_document: default
   rmarkdown::html_vignette: default
 vignette: >
+  %\VignetteEngine{knitr::knitr}
   %\VignetteIndexEntry{Exploring Birth Data with RADS}
 ---
 
 ## Introduction
-This vignette will provide some examples of ways to explore and analyze birth data using `rads`, APDE's 'R Automated Data System'. `rads` is a suite custom tools and utilities that can be used to analyze survey and record level data for [CHI](https://www.kingcounty.gov/chi), [data requests](https://kingcounty.gov/depts/health/data/data-request-service.aspx), and other APDE projects. Spending the time getting familiar with `rads` now should save you many hours of coding if you will need to calculate standard metrics such as means and rates in the future.   
+This vignette will provide some examples of ways to explore and analyze birth data using [`rads`](https://github.com/PHSKC-APDE/rads), APDE's 'R Automated Data System'. [`rads`](https://github.com/PHSKC-APDE/rads) is a suite custom tools and utilities that can be used to analyze survey and record level data for [CHI](https://www.kingcounty.gov/chi), [data requests](https://kingcounty.gov/depts/health/data/data-request-service.aspx), and other APDE projects. Spending the time getting familiar with [`rads`](https://github.com/PHSKC-APDE/rads) now should save you many hours of coding if you will need to calculate standard metrics such as means and rates in the future.   
 
 **NOTE!!** To get the most out of this vignette, I highly recommend that you actually type each and every bit of code into R. Doing so will almost definitely help you learn the syntax much faster than just reading the vignette or copying and pasting the code.
 
@@ -16,14 +17,14 @@ This vignette will provide some examples of ways to explore and analyze birth da
 You will need to install [R](https://cran.r-project.org/bin/windows/base/), [Rstudio](https://rstudio.com/products/rstudio/download/#download), and the [`devtools`](https://cran.r-project.org/web/packages/devtools/index.html) and [`rads`](https://github.com/PHSKC-APDE/rads) packages. If needed, 
 
 1) Install R and Rstudio the way you would install any other software. 
-2) Install the `devtools` package in R by typing `install.packages("devtools")` in the R console. After successfully installing `devtools`...
-3) Install `rads` by typing `devtools::install_github("PHSKC-APDE/rads")` in the R console. 
+2) Install the [`devtools`](https://cran.r-project.org/web/packages/devtools/index.html) package in R by typing `install.packages("devtools")` in the R console. After successfully installing `devtools`...
+3) Install [`rads`](https://github.com/PHSKC-APDE/rads) by typing `devtools::install_github("PHSKC-APDE/rads")` in the R console. 
     * If you received a 404 error rather than a successful installation, it is probably because you need to provide authentication to connect to our private GitHub repository. If you have not created and saved a GitHub PAT (Personal Access Token), please follow the detailed instructions in the [`APDE Training/R` wiki](https://teams.microsoft.com/l/channel/19%3A0735c1c38f4e49aa88c9b18b54105914%40thread.skype/tab%3A%3A9153588c-6c86-433d-8b98-0578f27d4cd1?groupId=a338cf08-e066-48cd-9f4c-cb91fcca199f&tenantId=bae5059a-76f0-49d7-9996-72dfe95d69c7)
     * After following the instructions above, please try typing the following: `devtools::install_github("PHSKC-APDE/rads", auth_token = Sys.getenv("GITHUB_PAT"))`
 4) Exit R studio and starting it again. You should now be ready to walk through this vignette. 
 
 ## Getting data
-Begin by loading the `rads` package/library by typing the following in R:
+Begin by loading the [`rads`](https://github.com/PHSKC-APDE/rads) package/library by typing the following in R:
 ```{r}
 library(rads)
 ```
@@ -35,13 +36,13 @@ args(get_data_birth)
 You can see that `get_data_birth` takes three possible arguments:
 
 1) `cols` <- a vector of the specific columns that you want to load into memory, e.g., `c("chi_year", "chi_geo_regions_4")`. If it is not specified, the default is `NA`, which will pull all available columns. 
-    * In the future, standardized documentation, including a data dictionary, will be available to help you identify the birth columns of interest. However, for the time being, I suggest viewing our [birth recodes csv](https://github.com/PHSKC-APDE/DOHdata/blob/master/ETL/birth/ref/ref.bir_recodes_simple.csv) to identify APDE generated variables and the [field name map csv](https://github.com/PHSKC-APDE/DOHdata/blob/master/ETL/birth/ref/ref.bir_field_name_map.csv) to identify the APDE column name ascribed to any given WHALES or Bedrock column name.  
+    * In the future, standardized documentation, including a data dictionary, will be available to help you identify the birth columns of interest. For now, manually [open the data dictionary](https://github.com/PHSKC-APDE/DOHdata/blob/master/ETL/birth/ref/ref_bir_user_dictionary_final.csv) to see what is available.
 2) `year` <- a vector of the year or years of data that you want to load, e.g., c(2011, 2015:2018). Note that the default is to load 2017 data only. 
 3) `kingco` <- a logical argument (i.e., `T` or `F` only, without quotes) denoting whether or not the data should be limited to King County. The default is King County only. 
 
 Let's try the function to see how it works by loading the year and King County columns for WA State in 2018:
 ```{r}
-birth <- get_data_birth(year = c(2018), cols = c("chi_year", "chi_geo_kc"), kingco = F)
+birth <- get_data_birth(cols = c("chi_year", "chi_geo_kc"), year = c(2018), kingco = F)
 ```
 We can confirm the `birth` object is in our environment by typing `ls()`
 ```{r}
@@ -71,7 +72,7 @@ This is because calc is a front end for two engines: [`calc.data.frame`](https:/
 2) `what` <- a character vector of the variables for which you want to calculate the metrics. E.g., `what = c("preterm")`
 3) `...` <- think of this as a "where" statement, i.e., a filter or subsetting of data. E.g., `chi_geo_zip5 %in% c(98001:98010)`. **NOTE** do not type `...` !
 4) `by` <- a character vector of the variables that you want to computer the `what` by, i.e., the cross-tab variable(s). E.g., `by = c("mother_birthplace_foreign")`
-5) `metrics` <- a character vector of the metrics that you want returned. E.g., `metrics = c("mean", "rse")`. You can see a complete list of available metrics by typing `record_metrics()`
+5) `metrics` <- a character vector of the metrics that you want returned. E.g., `metrics = c("mean", "rse")`. You can see a complete list of available metrics by typing `metrics()`
 6) `per` <- an integer, which is the denominator when `rate` is selected as the metric. Metrics will be multiplied by this value. E.g., `per = 1000`
 7) `win` <- an integer, which is the number of consecutive units of time (e.g., years, months, etc.) over which the metrics will be calculated, i.e., the 'window' for a rolling average, sum, etc. E.g. `win = 5` will perform calculations over every 5 time unit window.
 8) `time_var` <- a character, which is the name of the time variable in the dataset. Used in combination with the `win` argument to generate time windowed calculations.
@@ -108,32 +109,32 @@ We will not use any of the above post-processing helper functions in this vignet
 ### Preterm births in KC 2013-2018
 **get data**
 ```{r}
-birth <- get_data_birth(year = c(2013:2018), cols = c("chi_year", "preterm"), kingco = T)
+birth <- get_data_birth(cols = c("chi_year", "preterm"), year = c(2013:2018), kingco = T)
 ```
 
 **calc all years**
 ```{r}
-birth_all <- calc(birth, what = c("preterm"), metrics = c("mean", "rse", "total") )
+birth_all <- calc(birth, what = c("preterm"), metrics = c("mean", "rse", "numerator", "denominator") )
 head(birth_all)
 ```
 
-**calc single years**
+**calc by single years**
 ```{r}
-birth_single <- calc(birth, what = c("preterm"), metrics = c("mean", "rse", "total"), 
+birth_single <- calc(birth, what = c("preterm"), metrics = c("mean", "rse", "numerator", "denominator"), 
                   by = c("chi_year"))
 head(birth_single)
 ```
 
 **calc 3 year window**
 ```{r}
-birth_window <- calc(birth, what = c("preterm"), metrics = c("mean", "rse", "total"), 
+birth_window <- calc(birth, what = c("preterm"), metrics = c("mean", "rse", "numerator", "denominator"), 
                   win = 3)
 head(birth_window)
 ```
 
-**calc 3 year window (RATE per 1000)**
+**calc 3 year window (per 1000)**
 ```{r}
-birth_window <- calc(birth, what = c("preterm"), metrics = c("rate", "rse", "total"), 
+birth_window <- calc(birth, what = c("preterm"), metrics = c("rate", "rse", "numerator", "denominator"), 
                   win = 3, per = 1000)
 head(birth_window)
 ```
@@ -155,7 +156,7 @@ birth_5y <- calc(birth, what = c("preterm_lbw"),
 head(birth_5y)
 ```
 
-**calc 5 year rate per 100,000**
+**calc 5 year (per 100,000)**
 ```{r}
 birth_5yrate <- calc(birth, what = c("preterm_lbw"), per = 100000, 
               metrics = c("rate", "rse", "numerator", "denominator", "missing") )
@@ -173,16 +174,16 @@ birth <- get_data_birth(year = c(2014:2018),
 **calc 5 year**
 ```{r}
 birth_5y <- calc(birth, what = "preterm", by = c("chi_race_eth8", "mother_birthplace_foreign"), 
-                 metrics = c("mean", "rse", "numerator"))
+                 metrics = c("mean", "rse", "numerator", "denominator"))
 head(birth_5y)
 ```
 
 
-**calc 1 year**
+**calc by single year**
 ```{r}
 birth_1y <- calc(birth, what = "preterm", 
                  by = c("chi_race_eth8", "mother_birthplace_foreign", "chi_year"), 
-                 metrics = c("mean", "rse", "numerator"))
+                 metrics = c("mean", "rse", "numerator", "denominator"))
 head(birth_1y)
 ```
 Note that this only shows the earliest years. By using the `tail()` function, we can view the end of the more recent years
@@ -254,7 +255,7 @@ head(birth_custom_2)
 
 **calc # of births in Duamish, by year**  
 ```{r}
-birth_custom_3 <- calc(birth, Duamish == 1, what = "Duamish", metrics = c("total"), by = c("chi_year"))
+birth_custom_3 <- calc(birth, Duamish == 1, what = "Duamish", metrics = c("numerator", "denominator"), by = c("chi_year"))
 head(birth_custom_3)
 ```
 

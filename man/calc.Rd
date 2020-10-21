@@ -13,12 +13,13 @@ calc(ph.data, ...)
   what,
   ...,
   by = NULL,
-  metrics = survey_metrics(),
+  metrics = c("mean", "numerator", "denominator"),
   per = NULL,
   win = NULL,
   time_var = NULL,
   proportion = FALSE,
   fancy_time = TRUE,
+  ci = 0.95,
   verbose = FALSE
 )
 
@@ -27,11 +28,13 @@ calc(ph.data, ...)
   what,
   ...,
   by = NULL,
-  metrics = survey_metrics(),
+  metrics = c("mean", "numerator", "denominator"),
   per = NULL,
   win = NULL,
   time_var = NULL,
   proportion = FALSE,
+  fancy_time = TRUE,
+  ci = 0.95,
   verbose = FALSE
 )
 }
@@ -44,7 +47,7 @@ calc(ph.data, ...)
 
 \item{by}{character vector. Must refer to variables within ph.data. The variables within ph.data to compute `what` by}
 
-\item{metrics}{character. See \code{\link{record_metrics}} for the available options. Note, except when 'distinct' is
+\item{metrics}{character. See \code{\link{metrics}} for the available options. Note, except when 'distinct' is
 selected, all metrics are calculated -- this argument just specifies which one gets returned}
 
 \item{per}{integer. The denominator when "rate" or "adjusted-rate" are selected as the metric. Metrics will be multiplied by this value.}
@@ -56,6 +59,10 @@ i.e., the 'window' for a rolling average, sum, etc.}
 
 \item{proportion}{logical. For survey data, should metrics be calculated assuming the output is proportion-like? See details for more.
 Currently does not have functionality for non-survey data.}
+
+\item{fancy_time}{logical. If TRUE, a record of all the years going into the data is provided. If FALSE, just a simple range (where certain years within the range might not be represented)}
+
+\item{ci}{numeric. Confidence level, >0 & <1, typically 0.95}
 
 \item{verbose}{logical. Mostly unused, but toggles on/off printed warnings.}
 }

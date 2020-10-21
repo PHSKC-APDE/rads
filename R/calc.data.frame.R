@@ -1,5 +1,5 @@
 #' @rdname calc
-#' @importFrom data.table copy data.table rbindlist tstrsplit .N "%like%" "%between%"
+#' @importFrom data.table copy data.table rbindlist tstrsplit .N "%like%" "%between%" as.data.table
 #' @importFrom stats median na.omit prop.test qnorm qt var na.omit
 #' @importFrom rlang quos
 #' @importFrom stats na.omit median var prop.test qnorm
@@ -8,19 +8,20 @@ calc.data.frame = function(ph.data,
                            what,
                            ...,
                            by = NULL,
-                           metrics = survey_metrics(),
+                           metrics = c('mean', 'numerator', 'denominator'),
                            per = NULL,
                            win = NULL,
                            time_var = NULL,
                            proportion = FALSE,
                            fancy_time = TRUE,
+                           ci = .95,
                            verbose = FALSE){
 
   #global variables used by data.table declared as NULL here to play nice with devtools::check()
-  se <- rse <- rate <- rate_per <- level <- time <- variable <- NULL
+  se <- rse <- rate <- rate_per <- level <- time <- variable <- mean_lower <- mean_upper <- mean_se <- `___THETIME___` <- NULL
 
   # copy data.table to prevent changing the underlying data, also sets copy as class == data.table
-  temp.dt <- data.table::setDT(copy(ph.data))
+  temp.dt <- data.table::as.data.table(ph.data)
 
   #### VALIDATION ####
   #validate '...' (i.e., where)
@@ -29,14 +30,11 @@ calc.data.frame = function(ph.data,
     where <- tryCatch(parse(text = paste(unlist(list(...)), collapse = " & ")),
                       error = function (e) parse(text = gsub("~", "", paste(rlang::quos(...), collapse = " & "))) ) # convert ... to an expression
 
-    #subset temp.dt to only the rows needed
-    if(!is.null(where)){
-
-      if(nrow(temp.dt[eval(where), ]) <1 ){
-        stop(paste0("Your '...' (i.e., ", where, ") filters out all rows of data. Please revise and submit again"))
-      }
-
-      temp.dt <- temp.dt[eval(where), ]
+  #subset temp.dt to only the rows needed
+  if(!is.null(where)){
+    temp.dt <- temp.dt[eval(where), ]
+    if(nrow(temp.dt) <1 ){
+      stop(paste0("Your '...' (i.e., ", where, ") filters out all rows of data. Please revise and submit again"))
     }
   }
 
@@ -50,31 +48,30 @@ calc.data.frame = function(ph.data,
 
   #identify when 'what' is binary (0, 1), other numerics, or a factor. When a factor, convert it to a series of binary columns
   # binary columns
-  binary.col <- vapply(temp.dt[, ..what],function(x) { all(stats::na.omit(x) %in% 0:1) }, FUN.VALUE=logical(1)) # logical vector
+  binary.col <- vapply(temp.dt[, .SD, .SDcols = what],function(x) { all(stats::na.omit(x) %in% 0:1) }, FUN.VALUE=logical(1)) # logical vector
   binary.col <- what[binary.col]  # character vector
 
   # numeric columns
-  numeric.col <- vapply(temp.dt[, ..what], is.numeric, FUN.VALUE=logical(1)) # logical vector
+  numeric.col <- vapply(temp.dt[, .SD, .SDcols = what], is.numeric, FUN.VALUE=logical(1)) # logical vector
   numeric.col <- setdiff(what[numeric.col], binary.col)
 
   # factor columns (convert to character first to drop off levels that are empty when selected out by ...)
-  factor.col <- vapply(temp.dt[, ..what], is.factor, FUN.VALUE=logical(1)) # logical vector
+  factor.col <- vapply(temp.dt[, .SD, .SDcols = what], is.factor, FUN.VALUE=logical(1)) # logical vector
   factor.col <- what[factor.col]
   if(length(factor.col) > 0){
-    temp.dt[, c(factor.col) := lapply(.SD, as.character), .SDcols = factor.col]
+    temp.dt[, c(factor.col) := lapply(.SD, droplevels), .SDcols = factor.col]
   }
 
   # character columns (convert to factors)
-  character.col <- vapply(temp.dt[, ..what], is.character, FUN.VALUE=logical(1)) # logical vector
+  character.col <- vapply(temp.dt[, .SD, .SDcols = what], is.character, FUN.VALUE=logical(1)) # logical vector
   character.col <- what[character.col]
   if(length(character.col) > 0){
     temp.dt[, c(character.col) := lapply(.SD, as.factor), .SDcols = character.col]
   }
 
   # factor columns
-  factor.col <- vapply(temp.dt[, ..what], is.factor, FUN.VALUE=logical(1)) # logical vector
+  factor.col <- vapply(temp.dt[, .SD, .SDcols = what], is.factor, FUN.VALUE=logical(1)) # logical vector
   factor.col <- what[factor.col]
-
 
   names.before <- names(copy(temp.dt))
 
@@ -100,7 +97,7 @@ calc.data.frame = function(ph.data,
 
   #validate 'metrics'
   # pull list of standard available metrics
-  opts <- record_metrics()
+  opts <- metrics()
 
   # limits metrics to those that have been pre-specified, i.e., non-standard metrics are dropped
   if(!is.null(metrics)){
@@ -115,6 +112,21 @@ calc.data.frame = function(ph.data,
     stop("If specified, the 'per' argument must be an integer")
   }
 
+  #validate 'time_var'
+  if(is.null(time_var)){
+    #stop("The 'time_var' must be specified, (e.g., time_var = 'chi_year')")
+    time_var = "___THETIME___"
+    temp.dt[, (time_var) := -1]
+    droptime = TRUE
+  }else{
+    droptime = FALSE
+  }
+
+  if(!is.null(time_var) & !time_var %in% names(temp.dt)){
+    stop("You have specified a 'time_var' that does not exist in 'ph.data'.
+         Please check your spelling and try again.")
+  }
+
   #validate 'win'
   if(!is.null(win)){
     if(win %% 1 != 0){
@@ -122,15 +134,7 @@ calc.data.frame = function(ph.data,
     }
   }
 
-  #validate 'time_var'
-  if(is.null(time_var)){
-    stop("The 'time_var' must be specified, (e.g., time_var = 'chi_year')")
-  }
-  if(!is.null(time_var) & !time_var %in% names(temp.dt)){
-    stop("You have specified a 'time_var' that does not exist in 'ph.data'.
-         Please check your spelling and try again.")
-  }
-  if(!is.null(time_var) & eval(parse(text = paste0("is.numeric(temp.dt$", time_var, ")") ))==FALSE ){
+  if(!is.null(time_var) & !is.numeric(temp.dt[[time_var]])){
     stop("The specified 'time_var' must be of type numeric.")
   }
 
@@ -145,9 +149,12 @@ calc.data.frame = function(ph.data,
 
   # function to calculate metrics
   calc_metrics <- function(X, DT){
-    . <- NULL
-    DT[, .(
-      time = time_format(get(time_var)),
+
+    ndistinct_adjustement <- 0
+    if(grepl("_SPLIT_HERE_", X)){ndistinct_adjustement <- 1} # these are cases where a factor was made into a series of binaries of 0|1, but shoudl only count the 1.
+
+    DT[, list(
+      time = time_format(get(time_var)[!is.na(get(X))]),
       variable = as.character(X),
       mean = mean(get(X), na.rm = T),
       median = as.numeric(stats::median(get(X), na.rm = T)),
@@ -158,8 +165,8 @@ calc.data.frame = function(ph.data,
       obs = .N,
       missing = sum(is.na( get(X) )),
       missing.prop = sum(is.na( get(X) ) / .N),
-      unique.time = length(unique( get(time_var) )),
-      ndistinct = length(unique(na.omit(get(X))))
+      unique.time = length(unique( get(time_var)[!is.na(get(X))] )),
+      ndistinct = length(unique(na.omit(get(X)))) - ndistinct_adjustement
     ),
     by = by]
   }
@@ -181,9 +188,13 @@ calc.data.frame = function(ph.data,
   }
 
   #### ADDITIONAL CALCULATIONS & DATA PREP ####
-
   # Split names for factor columns
-  res.metrics[, c("variable", "level") := data.table::tstrsplit(variable, "_SPLIT_HERE_", fixed=TRUE)]
+  splittys = grepl('_SPLIT_HERE_', res.metrics[,variable], fixed = TRUE)
+  if(any(splittys)){
+    res.metrics[, c("variable", "level") := data.table::tstrsplit(variable, "_SPLIT_HERE_", fixed=TRUE)]
+  }else{
+    res.metrics[, level := NA]
+  }
 
   # Calculate lower, upper, se, rse
   # PROPORTIONS : Binary (& factor) variables will use prop.test function for CI. This uses the score method ... suggested by DOH & literature
@@ -194,8 +205,8 @@ calc.data.frame = function(ph.data,
     lower <- rep(NA, nrow(res.metrics.prop)) # create empty vector to hold res.metricsults
     upper <- rep(NA, nrow(res.metrics.prop)) # create empty vector to hold res.metricsults
     for(i in 1:nrow(res.metrics.prop)){
-      lower[i] <- suppressWarnings(stats::prop.test(x = numerator[i], n = denominator[i], conf.level = 0.95, correct = F)$conf.int[1]) # the score method ... suggested by DOH & others
-      upper[i] <- suppressWarnings(stats::prop.test(x = numerator[i], n = denominator[i], conf.level = 0.95, correct = F)$conf.int[2])
+      lower[i] <- suppressWarnings(stats::prop.test(x = numerator[i], n = denominator[i], conf.level = ci, correct = F)$conf.int[1]) # the score method ... suggested by DOH & others
+      upper[i] <- suppressWarnings(stats::prop.test(x = numerator[i], n = denominator[i], conf.level = ci, correct = F)$conf.int[2])
     }
     res.metrics.prop[, mean_lower := lower]
     res.metrics.prop[, mean_upper := upper]
@@ -206,10 +217,11 @@ calc.data.frame = function(ph.data,
   # MEANS: Numeric/non-binary need to have their CI calculated separately
   res.metrics.mean <- res.metrics[variable %in% c(numeric.col)]
   if(length(numeric.col) > 0){
-    res.metrics.mean[denominator>30, mean_lower := mean - stats::qnorm(0.975)*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics
-    res.metrics.mean[denominator>30, mean_upper := mean + stats::qnorm(0.975)*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics
-    suppressWarnings(res.metrics.mean[denominator<=30, mean_lower := mean - qt(0.975,df=denominator-1)*se]) # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed)
-    suppressWarnings(res.metrics.mean[denominator<=30, mean_upper := mean + qt(0.975,df=denominator-1)*se]) # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed)
+
+    res.metrics.mean[denominator>30, mean_lower := mean - stats::qnorm(1 - ((1-ci)/2))*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics
+    res.metrics.mean[denominator>30, mean_upper := mean + stats::qnorm(1 - ((1-ci)/2))*se] # when n>30, central limit theorm states distribution is normal & can use Z-scores.metrics
+    suppressWarnings(res.metrics.mean[denominator<=30, mean_lower := mean - qt(1 - ((1-ci)/2),df=denominator-1)*se]) # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed)
+    suppressWarnings(res.metrics.mean[denominator<=30, mean_upper := mean + qt(1 - ((1-ci)/2),df=denominator-1)*se]) # when n<=30, use t-distribution which accounts for smaller n having greater spread (assumes underlying data is normally distributed)
     res.metrics.mean[mean_lower < 0, mean_lower := 0] # prevent negative values for confidence interval
   }
 
@@ -238,26 +250,41 @@ calc.data.frame = function(ph.data,
 
   # Sort / order results
   data.table::setorder(res, variable, level, time)
+  data.table::setnames(res, 'time', time_var)
 
+  #if mean, total or rate are requested, add the se, lower, and upper
+  isect = intersect(metrics, c('rate', 'total', 'mean'))
 
-  # identify vars to be returned
-  return.vars.start <- c("variable", "level", "time", by)
-  return.vars.end <- c("obs", "numerator", "denominator", "missing", "unique.time")
-  return.vars.middle <- c()
-  if("mean" %in% metrics){
-    return.vars.middle <- c(return.vars.middle, "mean", paste0('mean', c('_se', '_lower', '_upper')))
-  }
-  if("rate" %in% metrics){
-    return.vars.middle <- c(return.vars.middle, "rate", paste0('rate', c('_per', '_se', '_lower', '_upper')))
-  }
-  for(i in c("median", "rse", "missing.prop", "ndistinct", "total")){
-    if(i %in% metrics){return.vars.middle <- c(return.vars.middle, i)}
+  if(length(isect)>0){
+    new = as.vector(outer(isect, c('_se', '_lower', '_upper'), paste0))
+    metrics = unique(c(metrics, new))
   }
 
-  return.vars <- c(return.vars.start, return.vars.middle, return.vars.end)
+  if('rate' %in% metrics) metrics <- c(metrics, 'rate_per')
+
+  #keep requested metrics
+  na_mets = intersect(metrics, c(grep('total', metrics, value = T), grep('mean', metrics, value = T), 'rse'))
+  res[is.na(numerator), (na_mets) := NA]
+  res <- res[, c('variable', 'level', as.character(time_var), as.character(by), metrics), with = F]
+  # return.vars.start <- c("variable", "level", "time", by)
+  # #return.vars.end <- c("obs", "numerator", "denominator", "missing", "unique.time")
+  # return.vars.middle <- c()
+  # if("mean" %in% metrics){
+  #   return.vars.middle <- c(return.vars.middle, "mean", paste0('mean', c('_se', '_lower', '_upper')))
+  # }
+  # if("rate" %in% metrics){
+  #   return.vars.middle <- c(return.vars.middle, "rate", paste0('rate', c('_per', '_se', '_lower', '_upper')))
+  # }
+  # for(i in c("median", "rse", "missing.prop", "ndistinct", "total")){
+  #   if(i %in% metrics){return.vars.middle <- c(return.vars.middle, i)}
+  # }
+  #
+  # return.vars <- c(return.vars.start, return.vars.middle)
 
   # drop columns no longer needed
-  res <- res[, ..return.vars]
+  #res <- res[, ..return.vars]
+
+  if(droptime) res[, (time_var) := NULL]
 
   #### CLOSE ####
   return(res)

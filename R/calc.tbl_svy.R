@@ -1,22 +1,26 @@
 #' @rdname calc
-#' @importFrom srvyr filter group_by %>% select summarize
-#' @importFrom dplyr n
+#' @importFrom srvyr filter group_by %>% select summarize survey_mean
+#' @importFrom dplyr n mutate_at group_vars
 #' @importFrom data.table ":=" setnames
 #' @importFrom rlang quos !! !!! syms
 #' @importFrom tidyselect all_of
 #' @importFrom data.table setnames setDT
+#' @importFrom forcats fct_explicit_na
+#' @importFrom utils capture.output
+
 #' @export
 calc.tbl_svy <- function(ph.data,
                          what,
                          ...,
                          by = NULL,
-                         metrics = survey_metrics(),
+                         metrics = c('mean', 'numerator', 'denominator'),
                          per = NULL,
                          win = NULL,
                          time_var = NULL,
                          proportion = FALSE,
+                         fancy_time = TRUE,
+                         ci = .95,
                          verbose = FALSE){
-
   if(verbose && !missing(per)){
     warning('Argument `per` is not implemented for tbl_svy arguments. It will be ignored')
   }
@@ -25,10 +29,16 @@ calc.tbl_svy <- function(ph.data,
     if(is.null(time_var)) stop('win(dow) specified without a time_var')
   }
 
-  #data.table visible bindings
-  variable <- ci <- NULL
+  # validate 'fancy_time'
+  if(!is.logical(fancy_time)){
+    stop("'fancy_time' must be specified as a logical (i.e., TRUE, T, FALSE, or F)")
+  }
 
-  opts = survey_metrics()
+  #data.table visible bindings
+  variable <- rate_per <- numerator <- denominator <- rate <- obs <- rse <- mean_se <- NULL
+  time <- time1 <- time2 <- level <- missing.prop <- `___THETIME___` <- NULL
+
+  opts = metrics()
   #confirm that svy is a tab_svy
   stopifnot(inherits(ph.data, 'tbl_svy'))
 
@@ -54,21 +64,12 @@ calc.tbl_svy <- function(ph.data,
 
     by_check <- check_names('by', 'ph.data', svy_names, by)
     if(by_check != '') stop(by_check)
-
-    #and if its not missing, filter such that no by variable has NAs
-    #svy <- svy %>% filter_at(by, ~ !is.na(.))
-
-    # mis_vars = apply(ph.data$variables[, by], 1, function(x) sum(is.na(x)))
-    #
-    # #remove missing by vars
-    # ph.data <- ph.data %>% srvyr::filter(!!mis_vars==0)
-
   }
 
   #confirm that metrics are properly specified
   invalid = setdiff(metrics,opts)
   if(length(invalid)>0){
-    stop(paste0('Invalid metrics detected: ', paste(invalid, collapse = ','), '. ', 'Review the list of available metrics by calling `survey_metrics()`'))
+    stop(paste0('Invalid metrics detected: ', paste(invalid, collapse = ','), '. ', 'Review the list of available metrics by calling `metrics()`'))
   }
 
   #subset ph.data to only the columns needed (and rows)
@@ -78,22 +79,35 @@ calc.tbl_svy <- function(ph.data,
 
   delete_time = F
   if(is.null(time_var)){
-    time_var = '_THETIME'
-    ph.data <- ph.data %>% mutate(`_THETIME` = NA)
+    time_var = '___THETIME___'
+    ph.data <- ph.data %>% mutate(`___THETIME___` = NA)
     delete_time = T
   }
-
-  ph.data <- ph.data %>% srvyr::select(tidyselect::all_of(what), tidyselect::all_of(by), tidyselect::all_of(time_var))
 
   whats = rlang::syms(what)
   time_var = rlang::sym(time_var)
 
-  if(!is.null(by)){
+  if(!missing(by)){
+    #capture the by classes so they can be converted back
+    by_class = lapply(by, function(x) class(ph.data$variables[[x]]))
+    convert_by = TRUE
+
+    #make it so NA is considered a valid option
+    ph.data <- ph.data %>% mutate_at(tidyselect::all_of(by), function(x){
+      if(is.numeric(x) || is.logical(x)){
+        x = as.character(x)
+      }
+      forcats::fct_explicit_na(x)
+    })
     by = rlang::syms(by)
+  }else{
+    convert_by = FALSE
   }
 
   #Group the dataset if relevant
-  if(!is.null(by)) ph.data <- ph.data %>% srvyr::group_by(!!!by)
+  if(!missing(by)) ph.data <- ph.data %>% srvyr::group_by(!!!by)
+
+  ph.data <- ph.data %>% srvyr::select(tidyselect::all_of(what), tidyselect::all_of(time_var), tidyselect::all_of(as.character(by)))
 
   #create the time windows
   times = na.omit(ph.data$variables[[as.character(time_var)]])
@@ -127,24 +141,42 @@ calc.tbl_svy <- function(ph.data,
       #if the variable is numeric, compute normally
       #if a factor find the relative fractions
       if(is.numeric(ret$variables[[as.character(what)]])){
-        ret <- ret %>%
-          srvyr::summarize(
-            mean = srvyr::survey_mean(!!what, na.rm = T, vartype = c('se', 'ci'), proportion = proportion),
+
+        missin <- ret %>% summarize(missing = srvyr::unweighted(sum(is.na(!!what))))
+        gvs = group_vars(ret)
+
+        ret <- ret %>% filter(!is.na({{what}})) %>%
+          summarize(
+            mean = srvyr::survey_mean(!!what, vartype = c('se', 'ci'), proportion = proportion, level = ci),
             median = unweighted(median(!!what)), #srvyr::survey_median(!!what, na.rm = T, vartype = NULL), #This isn't working at the moment. Figure it out later
-            total = srvyr::survey_total(!!what, vartype = c('se', 'ci'),na.rm = T),
-            numerator = srvyr::unweighted(sum(!!what, na.rm = T)), #only relevant for binary variables
+            total = srvyr::survey_total(!!what, vartype = c('se', 'ci'),level = ci),
+            numerator = srvyr::unweighted(sum(!!what)), #only relevant for binary variables
             denominator = srvyr::unweighted(dplyr::n()),
-            missing = srvyr::unweighted(sum(is.na(!!what))),
-            time = srvyr::unweighted(format_time(!!time_var)),
+            time1 = srvyr::unweighted(format_time({{time_var}})),
+            time2 = srvyr::unweighted(format_time_simple({{time_var}})),
             ndistinct = srvyr::unweighted(length(na.omit(unique(!!what)))),
-            unique.time = srvyr::unweighted(length(unique(!!time_var)))
+            unique.time = srvyr::unweighted(length(unique({{time_var}})))
         )
 
+        ret = merge(ret, missin, all.x = T, by = gvs)
         data.table::setDT(ret)
 
+        if(fancy_time){
+          ret[, time := time1]
+        }else{
+          ret[, time := time2]
+        }
+
+        ret[, c('time1', 'time2') := NULL]
+
+        ggg = unique(ret[, .SD, .SDcols = gvs])
+
+        if(verbose && (nrow(missin) != nrow(ggg))){
+          ggg = merge(ggg, missin, by = gvs, all.x = T)
+          warning(paste(capture.output(print(ggg[!is.na(missing),.SD, .SDcols = gvs])), collapse = "\n"))
+        }
 
         ret[, level := NA]
-        ret[, denominator := denominator - missing]
         data.table::setnames(ret, c('mean_low', 'mean_upp') , c('mean_lower', 'mean_upper'))
         data.table::setnames(ret, c('total_low', 'total_upp') , c('total_lower', 'total_upper'))
       }else{
@@ -152,21 +184,21 @@ calc.tbl_svy <- function(ph.data,
         #make sure there are no NAs in the what variable
         ph.data <- suppressMessages(ph.data %>% filter(!is.na(!!what)))
         #move to a different function since its more involved
-        ret <- calc_factor(ret, what, by, time_var)
-        ret[, median := NA]
+        ret <- calc_factor(ret, what, by, time_var, fancy_time, ci)
+        ret[, median := NA_real_]
       }
 
       ret[, variable := as.character(what)]
-      ret[, missing.prop := missing/(missing + numerator + denominator)]
+      ret[, missing.prop := missing/(denominator + missing)]
       ret[, rse := 100*(mean_se/mean)]
-      ret[, obs := (missing + numerator + denominator)]
+      ret[, obs := denominator + missing]
       return(ret)
     })
 
     fin <- data.table::rbindlist(fin, use.names = T)
     data.table::setnames(fin,'time', as.character(time_var))
-    fin[, rate_per := NA]
-    fin[, rate := NA]
+    fin[, rate_per := NA_real_]
+    fin[, rate := NA_real_]
 
     return(fin)
 
@@ -200,12 +232,21 @@ calc.tbl_svy <- function(ph.data,
   }
 
   #keep requested metrics
-  res <- res[, c('variable', 'level', as.character(time_var), as.character(by), metrics), with = F]
-
   na_mets = intersect(metrics, c(grep('total', metrics, value = T), grep('mean', metrics, value = T), 'rse'))
   res[is.na(numerator), (na_mets) := NA]
+  res <- res[, c('variable', 'level', as.character(time_var), as.character(by), metrics), with = F]
 
-  if(delete_time) res[, `_THETIME` := NULL]
+  data.table::setorderv(res, cols = c('variable', 'level', as.character(time_var)))
+
+  if(delete_time) res[, `___THETIME___` := NULL]
+
+  if(convert_by){
+    byc = as.character(by)
+    res[, (byc) := lapply(.SD, function(x) ifelse(x == '(Missing)', NA_character_, as.character(x))), .SDcols = byc]
+    res[, (byc) := lapply(seq_len(length(byc)), function(x) dumb_convert(get(byc[x]), by_class[[x]]))]
+
+  }
+
 
   return(res)
 

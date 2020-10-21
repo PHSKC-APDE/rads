@@ -4,6 +4,8 @@
 #' @param what character or symbol.
 #' @param by character or symbol vector
 #' @param time_var character or symbol
+#' @param fancy_time logical. If FALSE, a record of all the years going into the data is provided. If true, just a simple range (where certain years within the range might not be represented)
+#' @param ci numeric. Confidence level, >0 & <1, typically 0.95
 #' @importFrom survey svymean svytotal
 #' @importFrom data.table melt setnames
 #' @importFrom srvyr filter group_by %>% select summarize unweighted
@@ -15,7 +17,11 @@
 #' @details
 #' Under the hood, \code{\link[survey]{svyciprop}} and \code{\link[survey]{svytotal}} do the heavy lifting.
 #'
-calc_factor <- function(svy, what, by, time_var){
+calc_factor <- function(svy, what, by, time_var, fancy_time = TRUE, ci = .95){
+
+  # Global variables used by data.table declared as NULL here to play nice with devtools::check()
+    time <- time1 <- time2 <- level <- denominator <- numerator <- variable <- NULL
+    rate_per <- numerator <- holdby <- `____label____` <- `__dv__` <- NULL
 
   # what <- enquo(what)
   # by <- enquo(by)
@@ -45,7 +51,7 @@ calc_factor <- function(svy, what, by, time_var){
           ccc = as.character(ccc)
           svy <- srvyr::mutate(svy, `__dv__` = !!what == !!ccc)
 
-          r = svy %>% summarize(mean = survey_mean(`__dv__`, proportion = T, vartype = c('se', 'ci'), na.rm = T))
+          r = svy %>% summarize(mean = survey_mean(`__dv__`, proportion = T, vartype = c('se', 'ci'), na.rm = T, level = ci))
           r = data.table(r)
           setnames(r, c('mean_low', 'mean_upp'), c('mean_lower', 'mean_upper'))
           r$level = ccc
@@ -56,7 +62,7 @@ calc_factor <- function(svy, what, by, time_var){
     }else{
 
       #calculate the results
-      imed <- survey::svyby(form, bys, svy, na.rm = T, FUN = survey::svytotal)
+      imed <- survey::svyby(form, bys, svy, na.rm = T, FUN = survey::svytotal, level = ci)
       cis = confint(imed)
 
       #format imed
@@ -94,9 +100,8 @@ calc_factor <- function(svy, what, by, time_var){
       #merge on cis
       imed = merge(imed, cis, all.x = T, by.x = '____label____', by.y = 'label')
       imed[, `____label____` := NULL]
-
       data.table::setnames(imed, as.character(what), 'level')
-
+      imed[, level := as.character(level)]
       data.table::setnames(imed, c('mean', 'se', 'lower', 'upper'), c(x, paste0(x, c('_se', '_lower', '_upper'))))
     }
 
@@ -108,25 +113,35 @@ calc_factor <- function(svy, what, by, time_var){
   res1 <- merge(res1[[1]], res1[[2]], by = c('level', as.character(by)))
 
   #convert to the proper class
-  convert = match.fun(paste0('as.',class(svy$variables[[as.character(what)]])[1]))
-  res1[, level := convert(level)]
+  # convert = match.fun(paste0('as.',class(svy$variables[[as.character(what)]])[1]))
+  # res1[, level := convert(level)]
 
   #compute the other metrics:
   #"numerator"    "denominator"  "missing"      "rse"          "missing.prop" "ndistinct"
+  time_var <- time_var
   res2 <- svy %>% group_by(!!what, add = T) %>%
     srvyr::summarize(
       numerator = unweighted(dplyr::n()),
       missing = srvyr::unweighted(sum(is.na(!!what))),
-      time = srvyr::unweighted(format_time(!!time_var)),
+      time1 = srvyr::unweighted(format_time({{time_var}})),
+      time2 = srvyr::unweighted(format_time_simple({{time_var}})),
       ndistinct = srvyr::unweighted(length(na.omit(unique(!!what)))),
       unique.time = srvyr::unweighted(length(unique(!!time_var)))
     ) %>% setDT
+
+  if(fancy_time){
+    res2[, time := time1]
+  }else{
+    res2[, time := time2]
+  }
+  res2[, c('time1', 'time2') := NULL]
 
   #compute denominator
   by_vars = as.character(by)
   res2[, missing := max(missing), by = by_vars]
   res2 = res2[!is.na(get(as.character(what)))]
   data.table::setnames(res2, as.character(what), 'level')
+  res2[, level := as.character(level)]
   res = merge(res1,res2, all.x = T, by = c('level', as.character(by)))
   res[!is.na(level), denominator := sum(numerator,na.rm = T), by = by_vars]
 
