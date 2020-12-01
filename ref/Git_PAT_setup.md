@@ -24,8 +24,8 @@ The general approach is to set up a permanent token that you will use in R, usin
 1. Hit the windows key and type "edit environment variables" in the search bar. 
 2. Hit enter to open `Environment Variables` window
 3. Click `Edit...` in the top half of the window (i.e., the part that has the title "User variables for xyz")
-4. In the `Variable name`:box, type **GITHUB_TOKEN**
-5. In the `Variable value`: box, **paste your PAT** (40-character string that you copied from github.com)
+4. In the `Variable name:`box, type **GITHUB_TOKEN**
+5. In the `Variable value:` box, **paste your PAT** (40-character string that you copied from github.com)
 6. Click `OK`
 7. While you're here, you might as well save the same PAT with another commonly referenced name. Repeat steps 3 through 6, but change GITHUB_TOKEN to **GITHUB_PAT** when you repeat step 4.
 8. Click `OK` on the bottom right of the to close the `Environment Variables` window.
