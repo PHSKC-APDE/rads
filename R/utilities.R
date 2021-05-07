@@ -477,11 +477,14 @@ dumb_convert <- function(x, target = 'character'){
 #' }
 #' @importFrom data.table fread
 list_ref_pop <- function(){
+  #global variables used by data.table declared as NULL here to play nice with devtools::check()
+  standard <- NULL
+
   ref_single_to_99 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_single_age_to_99.csv", showProgress=FALSE)
   ref_single_to_84 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_single_age_to_84.csv", showProgress=FALSE)
   ref_agecat_18 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_18_age_groups.csv", showProgress=FALSE)
   ref_agecat_19 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_19_age_groups.csv", showProgress=FALSE)
-  ref_pop_table <- unique(rbind(ref_single_to_99[, .(standard)], ref_single_to_84[, .(standard)], ref_agecat_18[, .(standard)], ref_agecat_19[, .(standard)]))
+  ref_pop_table <- unique(rbind(ref_single_to_99[, list(standard)], ref_single_to_84[, list(standard)], ref_agecat_18[, list(standard)], ref_agecat_19[, list(standard)]))
   return(ref_pop_table$standard)
 }
 
@@ -498,12 +501,15 @@ list_ref_pop <- function(){
 #' }
 #' @importFrom data.table fread
 get_ref_pop <- function(ref_name = NULL){
+  #global variables used by data.table declared as NULL here to play nice with devtools::check()
+  standard <- agecat <- age_start <- age_end <- pop <- NULL
+
   ref_single_to_99 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_single_age_to_99.csv", showProgress=FALSE)
   ref_single_to_84 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_single_age_to_84.csv", showProgress=FALSE)
   ref_agecat_18 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_18_age_groups.csv", showProgress=FALSE)
   ref_agecat_19 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_19_age_groups.csv", showProgress=FALSE)
   ref_pop_table <- rbind(ref_single_to_99, ref_single_to_84, ref_agecat_18, ref_agecat_19)
-  ref_pop_table <- ref_pop_table[standard == ref_name, .(agecat, age_start, age_end, pop)]
+  ref_pop_table <- ref_pop_table[standard == ref_name, list(agecat, age_start, age_end, pop)]
   if(nrow(ref_pop_table) == 0){stop(strwrap(paste0("`ref_name` ('", ref_name, "') does not refer to a valid standard reference population.
                                                      Type `list_ref_pop()` to get a list of all valid populations."), prefix = " ", initial = ""))}
   return(ref_pop_table)
@@ -524,7 +530,7 @@ get_ref_pop <- function(ref_name = NULL){
 #' \dontrun{
 #'  adjust_direct(count = c(11, 9), pop = c(500, 500), stdpop = c(640, 720), per = 100, conf.level = 0.95)[]
 #' }
-#'
+#' @importFrom stats qgamma
 adjust_direct <- function (count, pop, stdpop, per = 100000, conf.level = 0.95)
 {
   # adapted from epitools v0.5-10.1 :: ageadjust.direct & survival 3.2-7 :: cipoisson
@@ -587,6 +593,9 @@ adjust_direct <- function (count, pop, stdpop, per = 100000, conf.level = 0.95)
 
 age_standardize <- function (my.dt, ref.popname = NULL, collapse = T, my.count = "count", my.pop = "pop", per = 100000, conf.level = 0.95, group_by = NULL)
 {
+  #global variables used by data.table declared as NULL here to play nice with devtools::check()
+  my.dt.name <- age <- age_start <- age_end <- agecat <- count <- pop <- stdpop <- reference_pop <- NULL
+
   my.dt.name <- deparse(substitute(my.dt))
   my.dt <- copy(my.dt)
   # Logic checks ----
@@ -636,12 +645,12 @@ age_standardize <- function (my.dt, ref.popname = NULL, collapse = T, my.count =
     for(z in seq(1, nrow(my.ref.pop))){
       my.dt[age %in% my.ref.pop[z, age_start]:my.ref.pop[z, age_end], agecat := my.ref.pop[z, agecat]]
     }
-    my.dt <- my.dt[, .(count = sum(count), pop = sum(pop)), by = "agecat"]
+    my.dt <- my.dt[, list(count = sum(count), pop = sum(pop)), by = "agecat"]
   }
 
   # Merge standard pop onto count data ----
   if(ref.popname != "none"){
-    my.dt <- merge(my.dt, get_ref_pop(ref.popname)[, .(agecat, stdpop = pop)], by = "agecat")
+    my.dt <- merge(my.dt, get_ref_pop(ref.popname)[, list(agecat, stdpop = pop)], by = "agecat")
   }
 
   # Calculate crude & adjusted rates with CI ----
