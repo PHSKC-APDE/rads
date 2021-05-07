@@ -37,7 +37,7 @@ list_dataset_columns <- function(dataset, analytic_only = F){
 }
 
 
-#' List ofavailable metrics
+#' List of available metrics
 #' @return character vector. A vector of the available metrics for calculation.
 #' @name metrics
 NULL
@@ -463,4 +463,196 @@ dumb_convert <- function(x, target = 'character'){
   }
 
   stop(paste0('Target class of ', target, ' is invalid'))
+}
+
+
+#' Return vector of all reference populations available in RADS
+#'
+#' @return Character vector of available reference populations
+#' @export
+#' @name list_ref_pop
+#' @examples
+#' \dontrun{
+#'  list_ref_pop()
+#' }
+#' @importFrom data.table fread
+list_ref_pop <- function(){
+  ref_single_to_99 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_single_age_to_99.csv", showProgress=FALSE)
+  ref_single_to_84 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_single_age_to_84.csv", showProgress=FALSE)
+  ref_agecat_18 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_18_age_groups.csv", showProgress=FALSE)
+  ref_agecat_19 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_19_age_groups.csv", showProgress=FALSE)
+  ref_pop_table <- unique(rbind(ref_single_to_99[, .(standard)], ref_single_to_84[, .(standard)], ref_agecat_18[, .(standard)], ref_agecat_19[, .(standard)]))
+  return(ref_pop_table$standard)
+}
+
+#' Load a reference population as a data.table object in memory
+#'
+#' @param ref_name Character vector of length 1. Loads a reference population identified by list_ref_pop()
+#'
+#' @return data.table with complete reference population data
+#' @export
+#' @name get_ref_pop
+#' @examples
+#' \dontrun{
+#'  get_ref_pop("2000 U.S. Std Population (single ages to 84 - Census P25-1130)")
+#' }
+#' @importFrom data.table fread
+get_ref_pop <- function(ref_name = NULL){
+  ref_single_to_99 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_single_age_to_99.csv", showProgress=FALSE)
+  ref_single_to_84 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_single_age_to_84.csv", showProgress=FALSE)
+  ref_agecat_18 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_18_age_groups.csv", showProgress=FALSE)
+  ref_agecat_19 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_19_age_groups.csv", showProgress=FALSE)
+  ref_pop_table <- rbind(ref_single_to_99, ref_single_to_84, ref_agecat_18, ref_agecat_19)
+  ref_pop_table <- ref_pop_table[standard == ref_name, .(agecat, age_start, age_end, pop)]
+  if(nrow(ref_pop_table) == 0){stop(strwrap(paste0("`ref_name` ('", ref_name, "') does not refer to a valid standard reference population.
+                                                     Type `list_ref_pop()` to get a list of all valid populations."), prefix = " ", initial = ""))}
+  return(ref_pop_table)
+}
+
+#' Calculate crude and directly adjusted rates
+#'
+#' @param count Numeric vector of indeterminate length. The # of events of interest (e.g., deaths, births, etc.)
+#' @param pop Numeric vector of indeterminate length. The population denominator for the count.
+#' @param stdpop Numeric vector of indeterminate length. The reference standard population corresponding to the population.
+#' @param per Integer vector of length 1. A multiplier for all rates and CI, e.g., when per = 1000, the rates are per 1000 people
+#' @param conf.level A numeric vector of length 1. The confidence interval used in the calculations.
+#'
+#' @return a labeled numeric vector of the count, rate, and adjusted rate with the CI
+#' @export
+#' @name adjust_direct
+#' @examples
+#' \dontrun{
+#'  adjust_direct(count = c(11, 9), pop = c(500, 500), stdpop = c(640, 720), per = 100, conf.level = 0.95)[]
+#' }
+#'
+adjust_direct <- function (count, pop, stdpop, per = 100000, conf.level = 0.95)
+{
+  # adapted from epitools v0.5-10.1 :: ageadjust.direct & survival 3.2-7 :: cipoisson
+
+  # logic checks ----
+  if((length(count)==length(pop) & length(pop)==length(stdpop)) != T){stop("The length of `count`, `pop`, and `stdpop` must be equal.")}
+  if( !class(per) %in% c("numeric", "integer")){stop(paste0("The `per` argument ('", per, "') you entered is invalid. It must be a positive integer, e.g., 100000."))}
+  if( per%%1 != 0 | (per%%1 == 0 & per <= 0)){stop(paste0("The `per` argument (", per, ") you entered is invalid. It must be a positive integer, e.g., 100000."))}
+  if( !class(conf.level) %in% c("numeric")){stop(paste0("`conf.level` (", conf.level, ") should be a two digit decimal between 0.00 & 0.99"))}
+  if( (100*conf.level)%% 1 != 0 | !(0<=conf.level & conf.level<=0.99)){stop(paste0("`conf.level` (", conf.level, ") should be a two digit decimal between 0.00 & 0.99"))}
+
+  # basic calculations ----
+  rate <- count/pop
+  alpha <- 1 - conf.level
+  cruderate <- sum(count)/sum(pop)
+  stdwt <- stdpop/sum(stdpop)
+
+  # calc exact poisson CI for crude rates ----
+  dummycount <- ifelse(sum(count) == 0, 1, sum(count))
+  crude.lci <- ifelse(sum(count) == 0, 0, qgamma(alpha/2, dummycount)) / sum(pop)
+  crude.uci <- qgamma(1 - alpha/2, sum(count) + 1) / sum(pop)
+
+  # calc exact CI for adjusted rates ----
+  dsr <- sum(stdwt * rate)
+  dsr.var <- sum((stdwt^2) * (count/pop^2))
+  wm <- max(stdwt/pop)
+  gamma.lci <- qgamma(alpha/2, shape = (dsr^2)/dsr.var, scale = dsr.var/dsr)
+  gamma.uci <- qgamma(1 - alpha/2, shape = ((dsr + wm)^2)/(dsr.var +
+                                                             wm^2), scale = (dsr.var + wm^2)/(dsr + wm))
+  # prep output ----
+  adjusted <- per*c(crude.rate = cruderate, crude.lci = crude.lci, crude.uci = crude.uci, adj.rate = dsr, adj.lci = gamma.lci, adj.uci = gamma.uci)
+  adjusted <- c(count = sum(count), adjusted)
+}
+
+#' Calculate age standardized rates from a data.table with age, counts, and population columns. (Built on adjust_direct())
+#' @param my.dt Name of a data.frame or data.table object. Note, if my.dt already has a standard population (ref.popname = "none"),
+#' it must contain a numeric column named 'stdpop'. Otherwise, it must contain a numeric column named 'age'.
+#' @param ref.popname Character vector of length 1. Only valid options are those in list_ref_pop() and
+#' "none" (when standard population already exists in my.dt)
+#' @param collapse Logical vector of length 1. Do you want to collapse my.dt ages to match those in ref.popname?
+#' @param my.count Character vector of length 1. Identifies the column with the count data aggregated by the given demographics.
+#' @param my.pop Character vector of length 1. Identifies the column with the population corresponding to the given demographics.
+#' @param per Integer vector of length 1. A multiplier for all rates and CI, e.g., when per = 1000, the rates are per 1000 people
+#' @param conf.level A numeric vector of length 1. The confidence interval used in the calculations.
+#' @param group_by Character vector of indeterminate length. By which variable(s) do you want to stratify the rate results, if any?
+#'
+#' @return a data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'group_by' variable(s) -- if any
+#' @export
+#' @name age_standardize
+#' @examples
+#' \dontrun{
+#' temp1 <- data.table(age = c(50:60), count = c(25:35), pop = c(seq(1000, 900, -10)) )
+#' age_standardize(my.dt = temp1, ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)", collapse = T, my.count = "count", my.pop = "pop", per = 1000, conf.level = 0.95)[]
+#' age_standardize(my.dt = temp1, ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)", collapse = T, my.count = "count", my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "agecat")[]
+#'
+#' temp2 <- data.table(sex = c(rep("M", 11), rep("F", 11)), age = rep(50:60, 2), count = c(25:35, 26:36), pop = c(seq(1000, 900, -10), seq(1100, 1000, -10)), stdpop = rep(1000, 22))
+#' age_standardize(my.dt = temp2, ref.popname = "none", collapse = F, my.count = "count", my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex")[]
+#' }
+#' @importFrom data.table ":=" setDT
+
+age_standardize <- function (my.dt, ref.popname = NULL, collapse = T, my.count = "count", my.pop = "pop", per = 100000, conf.level = 0.95, group_by = NULL)
+{
+  my.dt.name <- deparse(substitute(my.dt))
+  my.dt <- copy(my.dt)
+  # Logic checks ----
+  # Check that my.dt is a data.frame or data.table ----
+  if( inherits(my.dt, "data.frame") == FALSE){stop("my.dt must be a data.frame or a data.table containing both counts and population data.")}
+  if( inherits(my.dt, "data.table") == FALSE){setDT(my.dt)}
+
+  # Check arguments needed for adjust_direct ----
+  if(! my.count %in% colnames(my.dt)){stop(strwrap(paste0("The column '", my.count, "' does not exist in my.dt.
+                                                                my.dt must have a column indicating the count of events (e.g., deaths, births, etc.) and is typically named 'count'.
+                                                                If such a column exists with a different name, you need to specify it in the `my.count` argument. I.e., my.count = 'count.varname'."), prefix = " ", initial = ""))}
+
+  if(! my.pop %in% colnames(my.dt)){stop(strwrap(paste0("The column '", my.pop, "' does not exist in my.dt.
+                                                                my.dt must have a column for the population denominator correspondnig to the given demographics. It is typically named 'pop'.
+                                                                If such a column exists with a different name, you need to specify it in the `my.pop` argument. I.e., my.pop = 'pop.varname'."), prefix = " ", initial = ""))}
+
+  # Ensure the reference population exists ----
+  if(is.null(ref.popname)){ref.popname <- "2000 U.S. Std Population (18 age groups - Census P25-1130)"}
+  if(! ref.popname %in% c( list_ref_pop(), "none")){
+    stop(strwrap(paste0("ref.popname ('", ref.popname, "') is not a valid reference population name.
+          The names of standardized reference populations can be viewed by typing `list_ref_pop()`.
+          If my.dt is already aggregated/collapsed and has a relevant 'stdpop' column, please set ref.popname = 'none'"), prefix = " ", initial = ""))}
+
+  if(ref.popname == "none" & !"stdpop" %in% colnames(my.dt)){stop("When specifying ref.popname = 'none', my.dt must have a column named 'stdpop' with the reference standard population data.")}
+
+  if(ref.popname == "none" & collapse == T){stop(strwrap("When ref.popname = 'none', collapse should equal F.
+                                                                  Selecting ref.popname = 'none' expects that my.dt has already been collapsed/aggregated and has a 'stdpop' column."), prefix = " ", initial = "")}
+
+  # Standardize column names ----
+  # purposefully did not use setnames() because it is possible that count | pop already exists and are intentionally using different columns for this function
+  my.dt[, "count" := get(my.count)]
+  my.dt[, "pop" := get(my.pop)]
+
+  # Collapse my.dt to match standard population bins ----
+  if(collapse==T){
+    if(! "age" %in% colnames(my.dt)){stop(strwrap("When collapse = T, my.dt must have a column named 'age' where age is an integer.
+                                                        This is necessary to generate age bins that align with the selected standard
+                                                        reference population. If my.dt already has an 'agecat' column that is formatted
+                                                        identically to that in the standard reference population, set collapse = F"), prefix = " ", initial = "")}
+    if(is.numeric(my.dt$age) == F){stop("When collapse = T, the 'age' column must be comprised entirely of integers")}
+    if(sum(as.numeric(my.dt$age) %% 1) != 0){stop("When collapse = T, the 'age' column must be comprised entirely of integers")}
+    if("agecat" %in% colnames(my.dt)){stop(strwrap("When collapse = T, a new column named 'agecat' is created to match that in the standard reference population.
+                                                  my.dt already has a column named 'agecat' and it will not be automatically overwritten.
+                                                  If you are sure you want to create a new column named 'agecat', delete the existing column in my.dt and run again."),
+                                           prefix = " ", initial = "")}
+    my.ref.pop <- get_ref_pop(ref.popname)
+    for(z in seq(1, nrow(my.ref.pop))){
+      my.dt[age %in% my.ref.pop[z, age_start]:my.ref.pop[z, age_end], agecat := my.ref.pop[z, agecat]]
+    }
+    my.dt <- my.dt[, .(count = sum(count), pop = sum(pop)), by = "agecat"]
+  }
+
+  # Merge standard pop onto count data ----
+  if(ref.popname != "none"){
+    my.dt <- merge(my.dt, get_ref_pop(ref.popname)[, .(agecat, stdpop = pop)], by = "agecat")
+  }
+
+  # Calculate crude & adjusted rates with CI ----
+  if(!is.null(group_by)){my.rates <- my.dt[, as.list(adjust_direct(count = count, pop = pop, stdpop = stdpop, conf.level = as.numeric(conf.level), per = per)), by = group_by]}
+  if( is.null(group_by)){my.rates <- my.dt[, as.list(adjust_direct(count = count, pop = pop, stdpop = stdpop, conf.level = as.numeric(conf.level), per = per))]}
+
+  # Tidy results ----
+  rate_estimates <- c("crude.rate", "crude.lci", "crude.uci", "adj.rate", "adj.lci", "adj.uci")
+  my.rates[, c(rate_estimates) := lapply(.SD, rads::round2, 2), .SDcols = rate_estimates]
+  my.rates[, reference_pop := ref.popname]
+  if(ref.popname == "none"){my.rates[, reference_pop := paste0("stdpop column in `", my.dt.name, "`")]}
+
+  return(my.rates)
 }
