@@ -502,7 +502,7 @@ list_ref_pop <- function(){
 #' @importFrom data.table fread
 get_ref_pop <- function(ref_name = NULL){
   #global variables used by data.table declared as NULL here to play nice with devtools::check()
-  standard <- agecat <- age_start <- age_end <- pop <- NULL
+  standard <- agecat <- age_start <- age_end <- pop <- ref_pop_name <- NULL
 
   ref_single_to_99 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_single_age_to_99.csv", showProgress=FALSE)
   ref_single_to_84 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_single_age_to_84.csv", showProgress=FALSE)
@@ -512,6 +512,7 @@ get_ref_pop <- function(ref_name = NULL){
   ref_pop_table <- ref_pop_table[standard == ref_name, list(agecat, age_start, age_end, pop)]
   if(nrow(ref_pop_table) == 0){stop(strwrap(paste0("`ref_name` ('", ref_name, "') does not refer to a valid standard reference population.
                                                      Type `list_ref_pop()` to get a list of all valid populations."), prefix = " ", initial = ""))}
+  ref_pop_table[, ref_pop_name := ref_name]
   return(ref_pop_table)
 }
 
@@ -528,7 +529,8 @@ get_ref_pop <- function(ref_name = NULL){
 #' @name adjust_direct
 #' @examples
 #' \dontrun{
-#'  adjust_direct(count = c(11, 9), pop = c(500, 500), stdpop = c(640, 720), per = 100, conf.level = 0.95)[]
+#'  adjust_direct(count = c(11, 9), pop = c(500, 500), stdpop = c(640, 720),
+#'  per = 100, conf.level = 0.95)[]
 #' }
 #' @importFrom stats qgamma
 adjust_direct <- function (count, pop, stdpop, per = 100000, conf.level = 0.95)
@@ -583,11 +585,15 @@ adjust_direct <- function (count, pop, stdpop, per = 100000, conf.level = 0.95)
 #' @examples
 #' \dontrun{
 #' temp1 <- data.table(age = c(50:60), count = c(25:35), pop = c(seq(1000, 900, -10)) )
-#' age_standardize(my.dt = temp1, ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)", collapse = T, my.count = "count", my.pop = "pop", per = 1000, conf.level = 0.95)[]
-#' age_standardize(my.dt = temp1, ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)", collapse = T, my.count = "count", my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "agecat")[]
+#' age_standardize(my.dt = temp1,
+#' ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)", collapse = T,
+#' my.count = "count", my.pop = "pop", per = 1000, conf.level = 0.95)[]
 #'
-#' temp2 <- data.table(sex = c(rep("M", 11), rep("F", 11)), age = rep(50:60, 2), count = c(25:35, 26:36), pop = c(seq(1000, 900, -10), seq(1100, 1000, -10)), stdpop = rep(1000, 22))
-#' age_standardize(my.dt = temp2, ref.popname = "none", collapse = F, my.count = "count", my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex")[]
+#' temp2 <- data.table(sex = c(rep("M", 11), rep("F", 11)), age = rep(50:60, 2),
+#' count = c(25:35, 26:36), pop = c(seq(1000, 900, -10), seq(1100, 1000, -10)),
+#' stdpop = rep(1000, 22))
+#' age_standardize(my.dt = temp2, ref.popname = "none", collapse = F, my.count = "count",
+#' my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex")[]
 #' }
 #' @importFrom data.table ":=" setDT
 
