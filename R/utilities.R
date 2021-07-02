@@ -1,3 +1,25 @@
+#' Proper calculation of age in years
+#'
+#' @return Character vector of available datasets.
+#' @export
+#' @name calc_age
+#' @examples
+#' \dontrun{
+#'  calc_age(from = "2000-02-29", to = "2021-07-01")
+#' }
+#'
+calc_age <- function(from, to) {
+  # ref: https://stackoverflow.com/questions/3611314/calculate-ages-in-r
+  from_lt = as.POSIXlt(from)
+  to_lt = as.POSIXlt(to)
+
+  age = to_lt$year - from_lt$year
+
+  ifelse(to_lt$mon < from_lt$mon |
+           (to_lt$mon == from_lt$mon & to_lt$mday < from_lt$mday),
+         age - 1, age)
+}
+
 #' Returns the list of datasets currently available for analysis in RADS
 #'
 #' @return Character vector of available datasets.

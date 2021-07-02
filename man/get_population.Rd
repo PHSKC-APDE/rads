@@ -43,6 +43,6 @@ Simple front-end for pulling in standard population data
 }
 \examples{
 \dontrun{
- get_population(geo_type = "region", years = 2017:2019, group_by = c("geo_id", "years", "genders"))[]
+ get_population(geo_type = "region", group_by = c("geo_id"))[]
 }
 }
