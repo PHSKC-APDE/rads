@@ -24,16 +24,6 @@
 #'  get_population(geo_type = "region", group_by = c("geo_id"))[]
 #' }
 
-#    kingco = T
-#    years = c(2019)
-#    ages = c(0:120)
-#    genders = c("M", "F")
-#    races = c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white")
-#    race_type = c("race_eth")
-#    geo_type = c("kc")
-#    group_by = NULL
-#    round = T
-
 # get_population() ----
 get_population <- function(kingco = T,
                            years = c(2019),
@@ -43,7 +33,8 @@ get_population <- function(kingco = T,
                            race_type = c("race_eth"),
                            geo_type = c("kc"),
                            group_by = NULL,
-                           round = T){
+                           round = T,
+                           mykey = "hhsaw"){
 
       #global variables used by data.table declared as NULL here to play nice with devtools::check()
       r_type <- short <- race <- name <- race_eth <- gender <- age <- geo_id <- pop <- geo_id_blk <- region <- hra <- `.` <- NULL
@@ -73,12 +64,13 @@ get_population <- function(kingco = T,
       )
 
     # check / clean / prep arguments ----
-      # check if keyring credentials exist for azure ----
-      trykey <- try(keyring::key_get('azure', keyring::key_list('azure')[['username']]), silent = T)
-      if (inherits(trykey, "try-error")) stop(strwrap(paste0("Your Azure keyring is not properly configured or you are not connected to the VPN.
-                                                       \nPlease check your VPN connection and or set your keyring and run the get_population() function again.
-                                                       \ne.g., keyring::key_set('azure', username = 'ALastname@kingcounty.gov')
-                                                       \nWhen prompted, be sure to enter the same password that you use to log into to your laptop."), prefix = "\n", initial = ""))
+      # check if keyring credentials exist for hhsaw ----
+      trykey <- try(keyring::key_get(mykey, keyring::key_list(mykey)[['username']]), silent = T)
+      if (inherits(trykey, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured or you are not connected to the VPN. \n",
+                                                      "Please check your VPN connection and or set your keyring and run the get_population() function again. \n",
+                                                      paste0("e.g., keyring::key_set('hhsaw', username = 'ALastname@kingcounty.gov') \n"),
+                                                      "When prompted, be sure to enter the same password that you use to log into to your laptop. \n",
+                                                      "If you already have an hhsaw key on your keyring with a different name, you can specify it with the 'mykey = ...' argument \n"))
       rm(trykey)
 
       # check whether keyring credentials are correct / up to date ----
@@ -86,15 +78,15 @@ get_population <- function(kingco = T,
                                     driver ='ODBC Driver 17 for SQL Server',
                                     server = 'kcitazrhpasqlprp16.azds.kingcounty.gov',
                                     database = 'hhs_analytics_workspace',
-                                    uid = keyring::key_list('azure')[["username"]],
-                                    pwd = keyring::key_get('azure', keyring::key_list('azure')[["username"]]),
+                                    uid = keyring::key_list(mykey)[["username"]],
+                                    pwd = keyring::key_get(mykey, keyring::key_list(mykey)[["username"]]),
                                     Encrypt = 'yes',
                                     TrustServerCertificate = 'yes',
                                     Authentication = 'ActiveDirectoryPassword'), silent = T)
-      if (inherits(trykey, "try-error")) stop(strwrap(paste0("Your Azure keyring is not properly configured and is likely to have an outdated password.
-                                                       \nPlease reset your keyring and run the get_population() function again.
-                                                       \ne.g., keyring::key_set('azure', username = 'ALastname@kingcounty.gov')
-                                                       \nWhen prompted, be sure to enter the same password that you use to log into to your laptop."), prefix = "\n", initial = ""))
+      if (inherits(trykey, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured and is likely to have an outdated password. \n",
+                                                             "Please reset your keyring and run the get_population() function again. \n",
+                                                             paste0("e.g., keyring::key_set('", mykey, "', username = 'ALastname@kingcounty.gov') \n"),
+                                                             "When prompted, be sure to enter the same password that you use to log into to your laptop."))
 
       # check kingco ----
       if( !is.logical(kingco) | length(kingco) != 1){
@@ -203,13 +195,13 @@ get_population <- function(kingco = T,
       if(!is.null(group_by)){sql_query <- paste("SELECT", sql_select, "FROM [ref].[pop] WHERE", sql_where, sql_group, sql_order)}
       if( is.null(group_by)){sql_query <- paste("SELECT", sql_select, "FROM [ref].[pop] WHERE", sql_where)}
 
-    # open azure connection ----
+    # open hhsaw connection ----
       con <- DBI::dbConnect(odbc::odbc(),
                             driver ='ODBC Driver 17 for SQL Server',
                             server = 'kcitazrhpasqlprp16.azds.kingcounty.gov',
                             database = 'hhs_analytics_workspace',
-                            uid = keyring::key_list('azure')[["username"]],
-                            pwd = keyring::key_get('azure', keyring::key_list('azure')[["username"]]),
+                            uid = keyring::key_list(mykey)[["username"]],
+                            pwd = keyring::key_get(mykey, keyring::key_list(mykey)[["username"]]),
                             Encrypt = 'yes',
                             TrustServerCertificate = 'yes',
                             Authentication = 'ActiveDirectoryPassword')
