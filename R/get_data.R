@@ -79,6 +79,14 @@ get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcf
   yvar = year
   dat = dat[year %in% yvar, ]
 
+  #identify invalid columns
+  if(!all(is.na(cols))){
+    invalid.cols <- setdiff(cols, names(dat))
+    if(length(invalid.cols) == length(cols)){stop("HYS data cannot be extracted because no valid column names have been submitted. To get all columns, use the argument 'cols = NA'")}
+    if(length(invalid.cols) > 0){message(paste0("The following column names do not exist in the HYS data and have not be extracted: ", paste0(invalid.cols, collapse = ", ")))}
+    cols <- intersect(names(dat), cols)
+  }
+
   #create the survey object
   svy <- srvyr::as_survey_design(dat, ids = sur_psu, strata = year, weights = kcfinalwt, nest = T)
   wt  <- rlang::sym(weight_variable)
@@ -116,20 +124,24 @@ get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
                            Server = "KCITSQLPRPDBM50",
                            Database = "PH_APDEStore")
     birth.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[final].[bir_wa]"))
+    birth.years <- unique(DBI::dbGetQuery(con, "SELECT DISTINCT chi_year FROM [PH_APDEStore].[final].[bir_wa]")$chi_year)
 
-  # pull columns and years from SQL
-    if(!(length(cols) == 1 & is.na(cols[1]))){
+  # identify columns and years to pull from SQL
+    if(!all(is.na(cols))){
       invalid.cols <- setdiff(cols, birth.names)
       valid.cols <- intersect(birth.names, cols)
-    }
-
-    if(!(length(cols) == 1 & is.na(cols[1]))){
       if(length(valid.cols) > 0){cols <- paste(valid.cols, collapse=", ")}
       if(length(valid.cols) == 0){stop("Birth data cannot be extracted because no valid column names have been submitted. To get all columns, use the argument 'cols = NA'")}
       if(length(invalid.cols) > 0){message(paste0("The following column names do not exist in the birth data and have not be extracted: ", paste0(invalid.cols, collapse = ", ")))}
     }
-    if(length(cols) == 1 & is.na(cols[1])){cols <- "*"}
+    if(all(is.na(cols))){cols <- "*"}
 
+    invalid.year <- setdiff(year, birth.years)
+    year <- intersect(year, birth.years)
+    if(length(year) == 0){stop(paste0("Birth data cannot be extracted because no valid years have been provided. Valid years include: ", paste0(birth.years, collapse = ", ")))}
+    if(length(invalid.year)>0){message(paste0("The following years do not exist in the birth data and have not be extracted: ", paste0(invalid.year, collapse = ", ")))}
+
+  # pull columns and years from SQL
   query.string <- glue:: glue_sql ("SELECT ",  cols, " FROM [PH_APDEStore].[final].[bir_wa]
                                    WHERE chi_year IN (",  paste(year, collapse=", "), ")")
 
