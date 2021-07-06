@@ -9,11 +9,7 @@ vignette: |
   %\VignetteEngine{knitr::knitr} %\VignetteIndexEntry{Introduction to get_population}
 ---
 ```{r, echo = F, message=FALSE}
-suppressWarnings( 
-  eval(parse(text = httr::content(httr::GET(
-    url = "https://raw.githubusercontent.com/PHSKC-APDE/pers_dvc/master/R/get_population.R",
-    httr::authenticate(Sys.getenv("GITHUB_PAT"), "")), "text")))
-)
+library(rads)
 ```
 
 
@@ -48,6 +44,8 @@ The standard arguments for get_population() are:
 8) `group_by` << a character vector describing the how you would like to have the estimates grouped (i.e., stratified). For example, if you set the years argument to (2017:2019) and set the `group_by` argument to “years”, you would receive estimates for 2017, 2018, and 2019. Otherwise you would receive one estimate for 2017 through 2019. Valid options are limited to: "years", "ages", "genders", "race", "race_eth", "fips_co", and "geo_id". The default is NULL, meaning estimates are not grouped / stratified.
 
 9) `round` << a logical vector. Do you want to round your population estimates to whole numbers? Default is TRUE. 
+
+10) `mykey` << a character vector with the name of the `keyring::` key that provides access to the Health and Human Services Analytic Workspace (HHSAW). If you have never set your keyring before and or do not know what this is refering to, just type `keyring::key_set('hhsaw', username = 'ALastname@kingcounty.gov')` into your R console (making sure to replace the username). The default is 'hhsaw'. 
 
 There is no need to specify any or all of the arguments listed above. As the following example shows, the default arguments for `get_population` provide the overall 2019 estimated King County population.
 ```{r}
