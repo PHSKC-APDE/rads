@@ -37,7 +37,10 @@ get_population <- function(kingco = T,
                            mykey = "hhsaw"){
 
       #global variables used by data.table declared as NULL here to play nice with devtools::check()
-      r_type <- short <- race <- name <- race_eth <- gender <- age <- geo_id <- pop <- geo_id_blk <- region <- hra <- `.` <- NULL
+      r_type <- short <- race <- name <- race_eth <- gender <- age <- geo_id <- pop <- geo_id_blk <- region <- hra <- server <- `.` <- NULL
+
+    # Logical for whether running on a server ---
+      server <- grepl('server', tolower(Sys.info()['release']))
 
     # KC zips (copied from CHAT for 2019 data on 2021-05-18) ----
       kczips <- c(98001, 98002, 98003, 98004, 98005, 98006, 98007, 98008, 98009, 98010, 98011, 98013, 98014, 98015, 98019, 98022,
@@ -74,19 +77,21 @@ get_population <- function(kingco = T,
       rm(trykey)
 
       # check whether keyring credentials are correct / up to date ----
-      trykey <- try(DBI::dbConnect(odbc::odbc(),
-                                    driver ='ODBC Driver 17 for SQL Server',
-                                    server = 'kcitazrhpasqlprp16.azds.kingcounty.gov',
-                                    database = 'hhs_analytics_workspace',
-                                    uid = keyring::key_list(mykey)[["username"]],
-                                    pwd = keyring::key_get(mykey, keyring::key_list(mykey)[["username"]]),
-                                    Encrypt = 'yes',
-                                    TrustServerCertificate = 'yes',
-                                    Authentication = 'ActiveDirectoryPassword'), silent = T)
-      if (inherits(trykey, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured and is likely to have an outdated password. \n",
-                                                             "Please reset your keyring and run the get_population() function again. \n",
-                                                             paste0("e.g., keyring::key_set('", mykey, "', username = 'ALastname@kingcounty.gov') \n"),
-                                                             "When prompted, be sure to enter the same password that you use to log into to your laptop."))
+      if(server == FALSE){
+        trykey <- try(DBI::dbConnect(odbc::odbc(),
+                                      driver ='ODBC Driver 17 for SQL Server',
+                                      server = 'kcitazrhpasqlprp16.azds.kingcounty.gov',
+                                      database = 'hhs_analytics_workspace',
+                                      uid = keyring::key_list(mykey)[["username"]],
+                                      pwd = keyring::key_get(mykey, keyring::key_list(mykey)[["username"]]),
+                                      Encrypt = 'yes',
+                                      TrustServerCertificate = 'yes',
+                                      Authentication = 'ActiveDirectoryPassword'), silent = T)
+        if (inherits(trykey, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured and is likely to have an outdated password. \n",
+                                                               "Please reset your keyring and run the get_population() function again. \n",
+                                                               paste0("e.g., keyring::key_set('", mykey, "', username = 'ALastname@kingcounty.gov') \n"),
+                                                               "When prompted, be sure to enter the same password that you use to log into to your laptop."))
+      }
 
       # check kingco ----
       if( !is.logical(kingco) | length(kingco) != 1){
@@ -196,15 +201,30 @@ get_population <- function(kingco = T,
       if( is.null(group_by)){sql_query <- paste("SELECT", sql_select, "FROM [ref].[pop] WHERE", sql_where)}
 
     # open hhsaw connection ----
-      con <- DBI::dbConnect(odbc::odbc(),
-                            driver ='ODBC Driver 17 for SQL Server',
-                            server = 'kcitazrhpasqlprp16.azds.kingcounty.gov',
-                            database = 'hhs_analytics_workspace',
-                            uid = keyring::key_list(mykey)[["username"]],
-                            pwd = keyring::key_get(mykey, keyring::key_list(mykey)[["username"]]),
-                            Encrypt = 'yes',
-                            TrustServerCertificate = 'yes',
-                            Authentication = 'ActiveDirectoryPassword')
+      if(server == FALSE){
+          con <- DBI::dbConnect(odbc::odbc(),
+                                driver ='ODBC Driver 17 for SQL Server',
+                                server = 'kcitazrhpasqlprp16.azds.kingcounty.gov',
+                                database = 'hhs_analytics_workspace',
+                                uid = keyring::key_list(mykey)[["username"]],
+                                pwd = keyring::key_get(mykey, keyring::key_list(mykey)[["username"]]),
+                                Encrypt = 'yes',
+                                TrustServerCertificate = 'yes',
+                                Authentication = 'ActiveDirectoryPassword')
+      }
+      if(server == TRUE){
+        message(paste0('Please enter the password you use for your laptop into the pop-up window. \n',
+                       'Note that the pop-up may be behind your Rstudio session. \n',
+                       'You will need to use your two factor authentication app to confirm your KC identity.'))
+        con <- DBI::dbConnect(odbc::odbc(),
+                              driver = "ODBC Driver 17 for SQL Server",
+                              server = "kcitazrhpasqlprp16.azds.kingcounty.gov",
+                              database = "hhs_analytics_workspace",
+                              uid = keyring::key_list(mykey)[["username"]],
+                              Encrypt = "yes",
+                              TrustServerCertificate = "yes",
+                              Authentication = "ActiveDirectoryInteractive")
+      }
 
     # get population labels ----
       pop.lab <- data.table::setDT(DBI::dbGetQuery(con, "SELECT * FROM [ref].[pop_labels]"))
