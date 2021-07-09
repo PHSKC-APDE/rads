@@ -110,6 +110,24 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, ignore_trends = T, 
 
           if(verbose) message(paste("", "", sep = "\n"))
 
+  ## Confirm that critical columns are not missing any values ----
+          for(mycol in c("indicator_key", "year", "data_source", "tab", "cat1", "cat1_group", "run_date")){
+            if(nrow(chi_est[is.na(get(mycol))]) > 0){stop(paste0("'", mycol, "' is missing in at least one row but is a critical identifier column in CHI data. \n",
+                                                            "Fix the error and run this QA script again."))}
+          }
+
+          for(mycol in c("result", "lower_bound", "upper_bound", "se", "rse", "numerator", "denominator", "chi", "source_date", "run_date", "suppression", "caution", "comparison_with_kc", "significance")){
+            if(nrow(chi_est[is.na(get(mycol))]) > 0){warning("'", mycol, "' is missing in at least one row of the CHI data.")}
+          }
+
+          for(mycol in setdiff(names(chi.yaml$metadata), c("latest_year_kc_pop", "latest_year_count"))){
+            if(nrow(chi_meta[is.na(get(mycol))]) > 0){stop(paste0("'", mycol, "' is missing in at least one row but is a critical identifier column in CHI metadata. \n",
+                                                                 "Fix the error and run this QA script again."))}
+          }
+
+          for(mycol in c("latest_year_kc_pop", "latest_year_count")){
+            if(nrow(chi_meta[is.na(get(mycol))]) > 0){warning("'", mycol, "' is missing in at least one row of the metadata.")}
+          }
 
   ## Set the columns in standard order ----
         setcolorder(chi_est, names(chi.yaml$vars))
