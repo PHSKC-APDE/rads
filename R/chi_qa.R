@@ -28,6 +28,7 @@
 #' @importFrom dplyr '%>%' distinct mutate n_distinct left_join
 #' @importFrom glue glue
 #' @importFrom utils write.table
+#' @importFrom yaml yaml.load
 #'
 #' @examples
 #'

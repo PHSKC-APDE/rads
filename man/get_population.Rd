@@ -13,7 +13,8 @@ get_population(
   race_type = c("race_eth"),
   geo_type = c("kc"),
   group_by = NULL,
-  round = T
+  round = T,
+  mykey = "hhsaw"
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ get_population(
 \item{group_by}{Character vector of length 0 to 7. Identifies how you would like the data 'grouped' (i.e., stratified)}
 
 \item{round}{Logical vector of length 1. Identifies whether or not population estimates should be returned as whole numbers}
+
+\item{mykey}{Character vector of length 1. Identifies the keyring:: key that can be used to access the Health & Human Services Analytic Workspace (HHSAW)}
 }
 \value{
 dataset as a data.table for further analysis/tabulation

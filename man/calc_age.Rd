@@ -6,6 +6,11 @@
 \usage{
 calc_age(from, to)
 }
+\arguments{
+\item{from}{Vector of dates or characters ("YYYY-MM-DD") of indeterminate length.  vector of length 1.}
+
+\item{to}{Vector of dates or characters ("YYYY-MM-DD") of indeterminate length.  vector of length 1.}
+}
 \value{
 Character vector of available datasets.
 }
