@@ -11,6 +11,7 @@
 #' @param geo_type Character vector of length 1. Identifies the geographic level for which you want population estimates
 #' @param group_by Character vector of length 0 to 7. Identifies how you would like the data 'grouped' (i.e., stratified)
 #' @param round Logical vector of length 1. Identifies whether or not population estimates should be returned as whole numbers
+#' @param mykey Character vector of length 1. Identifies the keyring:: key that can be used to access the Health & Human Services Analytic Workspace (HHSAW)
 #' @importFrom data.table data.table data.table fread setDT setnames setcolorder
 #' @importFrom keyring key_get key_list
 #' @importFrom DBI dbConnect dbDisconnect dbGetQuery
@@ -57,12 +58,12 @@ get_population <- function(kingco = T,
         data.table(name  = rep("race", 7),
                    r_type = rep("r1_3", 7),
                    value = c("1", "2", "3", "7", "8", "5", "6"),
-                   label = c("White", "Black or African American", "Native American/Alaska Native", "Asian", "Native Hawaiian/Pacific Islander", "Multiple", "Hispanic Ethnicity"),
+                   label = c("White", "Black", "AIAN", "Asian", "NHPI", "Multiple race", "Hispanic"),
                    short = c('white', 'black', 'aian', 'asian', 'nhpi', 'multiple', 'hispanic')),
         data.table(name  = rep("race_eth", 7),
                    r_type = rep("r2_4", 7),
                    value = c("1", "2", "3", "7", "8", "5", "6"),
-                   label = c("White, non-Hispanic", "Black, non-Hispanic", "American Indian/Alaska Native, non-Hispanic", "Asian, non-Hispanic", "Native Hawaiian/Pacific Islander, non-Hispanic", "Multiple, non-Hispanic", "Hispanic Ethnicity"),
+                   label = c("White", "Black", "AIAN", "Asian", "NHPI", "Multiple race", "Hispanic"),
                    short = c('white', 'black', 'aian', 'asian', 'nhpi', 'multiple', 'hispanic'))
       )
 
