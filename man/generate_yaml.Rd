@@ -5,7 +5,7 @@
 \title{Generate a YAML file for SQL loading based on in a data.frame or data.table}
 \usage{
 generate_yaml(
-  mydt = null,
+  mydt,
   outfile = NULL,
   datasource = NULL,
   schema = NULL,
