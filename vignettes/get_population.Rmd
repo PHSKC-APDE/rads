@@ -1,8 +1,9 @@
 ---
 title: "Introduction to get_population()"
 output:
-  html_document: default
   rmarkdown::html_vignette: default
+  github_document: default
+  html_document: default
   pdf_document: default
   urlcolor: blue
 vignette: |
