@@ -56,12 +56,12 @@ get_population <- function(kingco = T,
     # race/eth reference table ----
       ref.table <- rbind(
         data.table(name  = rep("race", 7),
-                   r_type = rep("r1_3", 7),
+                   r_type = rep("r1r3", 7),
                    value = c("1", "2", "3", "7", "8", "5", "6"),
                    label = c("White", "Black", "AIAN", "Asian", "NHPI", "Multiple race", "Hispanic"),
                    short = c('white', 'black', 'aian', 'asian', 'nhpi', 'multiple', 'hispanic')),
         data.table(name  = rep("race_eth", 7),
-                   r_type = rep("r2_4", 7),
+                   r_type = rep("r2r4", 7),
                    value = c("1", "2", "3", "7", "8", "5", "6"),
                    label = c("White", "Black", "AIAN", "Asian", "NHPI", "Multiple race", "Hispanic"),
                    short = c('white', 'black', 'aian', 'asian', 'nhpi', 'multiple', 'hispanic'))
@@ -169,8 +169,8 @@ get_population <- function(kingco = T,
 
       # adjust group_by for name differences ----
         if(!is.null(group_by)){
-          group_by <- gsub("^race_eth$", "race_eth = r2_4", group_by)
-          group_by <- gsub("^race$", "race = r1_3", group_by)
+          group_by <- gsub("^race_eth$", "race_eth = r2r4", group_by)
+          group_by <- gsub("^race$", "race = r1r3", group_by)
           group_by <- gsub("^years$", "year", group_by)
           group_by <- gsub("^ages$", "age", group_by)
           group_by <- gsub("^genders$", "gender", group_by)
@@ -189,8 +189,8 @@ get_population <- function(kingco = T,
       sql_where <- paste0(sql_where, "AND geo_type IN ('", paste(geo_type, collapse = "', '"), "') ")
       sql_where <- paste0(sql_where, " AND age IN (", paste(ages, collapse = ", "), ") ")
       sql_where <- paste0(sql_where, " AND raw_gender IN ('", paste(genders, collapse = "', '"), "') ")
-      if(race_type == "race_eth"){sql_where <- paste0(sql_where, " AND r2_4 IN (", paste(ref.table[r_type == "r2_4" & short %in% races]$value, collapse = ", "), ")" )}
-      if(race_type == "race"){sql_where <- paste0(sql_where, " AND r1_3 IN (", paste(ref.table[r_type == "r1_3" & short %in% races]$value, collapse = ", "), ") ")}
+      if(race_type == "race_eth"){sql_where <- paste0(sql_where, " AND r2r4 IN (", paste(ref.table[r_type == "r2r4" & short %in% races]$value, collapse = ", "), ")" )}
+      if(race_type == "race"){sql_where <- paste0(sql_where, " AND r1r3 IN (", paste(ref.table[r_type == "r1r3" & short %in% races]$value, collapse = ", "), ") ")}
       if(kingco == T & geo_type %in% c("blk", "blkgrp")){sql_where = paste0(sql_where, "AND fips_co = 33")}
       if(kingco == T & geo_type == "zip"){sql_where = paste0(sql_where, " AND geo_id IN (", paste(kczips, collapse = ", "), ")")}
 
