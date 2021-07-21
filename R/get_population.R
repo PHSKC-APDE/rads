@@ -22,7 +22,7 @@
 #'
 #' @examples
 #' \dontrun{
-#'  get_population(geo_type = "region", group_by = c("geo_id"))[]
+#'  get_population(geo_type = "region")[]
 #' }
 
 # get_population() ----
@@ -140,9 +140,11 @@ get_population <- function(kingco = T,
         if(length(race_type) != 1 | !race_type %in% c("race", "race_eth") ){stop(paste0("The `race_type` argument ('", paste(race_type, collapse = "','"), "') is limited to one the following: c('race', 'race_eth')"))}
 
       # check geo_type ----
-        if(length(geo_type) != 1 | !geo_type %in% c('kc', 'blk', 'blkgrp', 'hra', 'region', 'tract', 'zip')){
-          stop(paste0("The `geo_type` argument (", paste(geo_type, collapse = ", "), ") contains an invalid entry. It must have one of the following values: `c('kc', 'blk', 'blkgrp', 'hra', 'region', 'tract', 'zip')`"))
+        if(length(geo_type) != 1 | !geo_type %in% c('kc', 'seattle', 'blk', 'blkgrp', 'hra', 'region', 'tract', 'zip')){
+          stop(paste0("The `geo_type` argument (", paste(geo_type, collapse = ", "), ") contains an invalid entry. It must have one of the following values: `c('kc', 'seattle, 'blk', 'blkgrp', 'hra', 'region', 'tract', 'zip')`"))
         }
+
+        if(geo_type == "seattle"){seattle = 1; geo_type = 'region'} # Seattle is just one of four regions, so set to region and then subset results at end
 
         if(kingco == F & !geo_type %in% c('blk', 'blkgrp', 'tract', 'zip')){
           stop("When 'kingco = F', permissible geo_types are limited to 'blk', 'blkgrp', 'tract', and 'zip'.")
@@ -295,6 +297,14 @@ get_population <- function(kingco = T,
             setnames(pop.dt, "region", "geo_id")
           }
           if(geo_type_orig == "region" & is.null(group_by_orig)){pop.dt[, geo_id := "All regions"]}
+
+        # seattle ----
+          if(exists("seattle")){
+            if(seattle == 1){
+              pop.dt <- pop.dt[geo_id=="Seattle"]
+              pop.dt[, geo_type := "seattle"]
+            }
+          }
 
         # hra ----
           if(geo_type_orig == "hra" & "geo_id" %in% group_by_orig){

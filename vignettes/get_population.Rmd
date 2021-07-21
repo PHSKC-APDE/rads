@@ -3,7 +3,6 @@ title: "Introduction to get_population()"
 output:
   rmarkdown::html_vignette: default
   github_document: default
-  html_document: default
   pdf_document: default
   urlcolor: blue
 vignette: |
@@ -46,7 +45,7 @@ The standard arguments for get_population() are:
 
 6) `race_type` << a character vector limited to “race” (Hispanic as an ethnicity) or “race_eth” (Hispanic as a race). The default is “race_eth”.
 
-7) `geo_type` << a character vector describing the geographic level for which you want population estimates. Possible values are “kc”, “blk”, “blkgrp”, “hra”, “region”, “tract”, and “zip”. Note that all these geo_types except "zip" are available for King, Pierce, and Snohomish counties only. The default geo_type is “kc”.
+7) `geo_type` << a character vector describing the geographic level for which you want population estimates. Possible values are “kc”, "seattle, “blk”, “blkgrp”, “hra”, “region”, “tract”, and “zip”. Note that all these geo_types except "zip" are available for King, Pierce, and Snohomish counties only. The default geo_type is “kc”.
 
 8) `group_by` << a character vector describing the how you would like to have the estimates grouped (i.e., stratified). For example, if you set the years argument to (2017:2019) and set the `group_by` argument to “years”, you would receive estimates for 2017, 2018, and 2019. Otherwise you would receive one estimate for 2017 through 2019. Valid options are limited to: "years", "ages", "genders", "race", "race_eth", "fips_co", and "geo_id". The default is NULL, meaning estimates are not grouped / stratified.
 
