@@ -12,7 +12,6 @@
 #' }
 #'
 calc_age <- function(from, to) {
-  # ref: https://stackoverflow.com/questions/3611314/calculate-ages-in-r
   from_lt = as.POSIXlt(from)
   to_lt = as.POSIXlt(to)
 
@@ -589,7 +588,7 @@ adjust_direct <- function (count, pop, stdpop, per = 100000, conf.level = 0.95)
                                                              wm^2), scale = (dsr.var + wm^2)/(dsr + wm))
   # prep output ----
   adjusted <- per*c(crude.rate = cruderate, crude.lci = crude.lci, crude.uci = crude.uci, adj.rate = dsr, adj.lci = gamma.lci, adj.uci = gamma.uci)
-  adjusted <- c(count = sum(count), adjusted)
+  adjusted <- c(count = sum(count), pop = sum(pop), adjusted)
 }
 
 #' Calculate age standardized rates from a data.table with age, counts, and population columns. (Built on adjust_direct())
