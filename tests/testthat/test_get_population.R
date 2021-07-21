@@ -5,6 +5,8 @@ test_that('get_population',{
 
   expect_equal(19979, get_population(years = 2018, geo_type = c("hra"), group_by = c("geo_id"))[geo_id == "North Highline"]$pop ) # 2018 North Highline HRA
 
+  expect_equal(19979, get_population(years = 2018, geo_type = c("hra"))[geo_id == "North Highline"]$pop ) # 2018 North Highline HRA
+
   expect_equal(2153700, sum(get_population(years = 2017, genders = c("female", "male"))[]$pop) ) # 2017 KC (by summing both genders)
 
   expect_equal(1077304, get_population(years = 2017, genders = "female")[]$pop ) # KC females 2017

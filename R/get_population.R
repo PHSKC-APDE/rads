@@ -40,7 +40,7 @@ get_population <- function(kingco = T,
       #global variables used by data.table declared as NULL here to play nice with devtools::check()
       r_type <- short <- race <- name <- race_eth <- gender <- age <- geo_id <- pop <- geo_id_blk <- region <- hra <- server <- `.` <- NULL
 
-    # Logical for whether running on a server ---
+    # Logical for whether running on a server ----
       server <- grepl('server', tolower(Sys.info()['release']))
 
     # KC zips (copied from CHAT for 2019 data on 2021-05-18) ----
@@ -55,12 +55,12 @@ get_population <- function(kingco = T,
 
     # race/eth reference table ----
       ref.table <- rbind(
-        data.table(name  = rep("race", 7),
+        data.table::data.table(name  = rep("race", 7),
                    r_type = rep("r1r3", 7),
                    value = c("1", "2", "3", "7", "8", "5", "6"),
                    label = c("White", "Black", "AIAN", "Asian", "NHPI", "Multiple race", "Hispanic"),
                    short = c('white', 'black', 'aian', 'asian', 'nhpi', 'multiple', 'hispanic')),
-        data.table(name  = rep("race_eth", 7),
+        data.table::data.table(name  = rep("race_eth", 7),
                    r_type = rep("r2r4", 7),
                    value = c("1", "2", "3", "7", "8", "5", "6"),
                    label = c("White", "Black", "AIAN", "Asian", "NHPI", "Multiple race", "Hispanic"),
@@ -167,6 +167,12 @@ get_population <- function(kingco = T,
         }
           group_by_orig <- copy(group_by)
 
+      # adjust group_by depending on which geo_type specified ----
+          if(geo_type != "kc" & !("geo_id" %in% group_by)) {
+            group_by <- c("geo_id", group_by)
+            group_by_orig <- c("geo_id", group_by)
+          }
+
       # adjust group_by for name differences ----
         if(!is.null(group_by)){
           group_by <- gsub("^race_eth$", "race_eth = r2r4", group_by)
@@ -186,12 +192,12 @@ get_population <- function(kingco = T,
 
       sql_where <- c("")
       sql_where <- paste0(sql_where, "year IN (", paste(years, collapse = ", "), ") ")
-      sql_where <- paste0(sql_where, "AND geo_type IN ('", paste(geo_type, collapse = "', '"), "') ")
+      sql_where <- paste0(sql_where, " AND geo_type IN ('", paste(geo_type, collapse = "', '"), "') ")
       sql_where <- paste0(sql_where, " AND age IN (", paste(ages, collapse = ", "), ") ")
       sql_where <- paste0(sql_where, " AND raw_gender IN ('", paste(genders, collapse = "', '"), "') ")
       if(race_type == "race_eth"){sql_where <- paste0(sql_where, " AND r2r4 IN (", paste(ref.table[r_type == "r2r4" & short %in% races]$value, collapse = ", "), ")" )}
       if(race_type == "race"){sql_where <- paste0(sql_where, " AND r1r3 IN (", paste(ref.table[r_type == "r1r3" & short %in% races]$value, collapse = ", "), ") ")}
-      if(kingco == T & geo_type %in% c("blk", "blkgrp")){sql_where = paste0(sql_where, "AND fips_co = 33")}
+      if(kingco == T & geo_type %in% c("blk", "blkgrp")){sql_where = paste0(sql_where, " AND fips_co = 33")}
       if(kingco == T & geo_type == "zip"){sql_where = paste0(sql_where, " AND geo_id IN (", paste(kczips, collapse = ", "), ")")}
 
       sql_group <- paste("GROUP BY",  gsub("\\[year]\\, |pop=sum\\(pop\\), |race_eth = |race = ", "", sql_select))
