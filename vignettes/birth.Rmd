@@ -1,27 +1,17 @@
 ---
 title: "Exploring Birth Data with RADS"
 output:
-  html_document: default
+  github_document: default
   rmarkdown::html_vignette: default
 vignette: >
-  %\VignetteEngine{knitr::knitr}
   %\VignetteIndexEntry{Exploring Birth Data with RADS}
+  %\VignetteEngine{knitr::knitr}
 ---
 
 ## Introduction
 This vignette will provide some examples of ways to explore and analyze birth data using [`rads`](https://github.com/PHSKC-APDE/rads), APDE's 'R Automated Data System'. [`rads`](https://github.com/PHSKC-APDE/rads) is a suite custom tools and utilities that can be used to analyze survey and record level data for [CHI](https://www.kingcounty.gov/chi), [data requests](https://kingcounty.gov/depts/health/data/data-request-service.aspx), and other APDE projects. Spending the time getting familiar with [`rads`](https://github.com/PHSKC-APDE/rads) now should save you many hours of coding if you will need to calculate standard metrics such as means and rates in the future.   
 
 **NOTE!!** To get the most out of this vignette, I highly recommend that you actually type each and every bit of code into R. Doing so will almost definitely help you learn the syntax much faster than just reading the vignette or copying and pasting the code.
-
-## Installation
-You will need to install [R](https://cran.r-project.org/bin/windows/base/), [Rstudio](https://rstudio.com/products/rstudio/download/#download), and the [`devtools`](https://cran.r-project.org/web/packages/devtools/index.html) and [`rads`](https://github.com/PHSKC-APDE/rads) packages. If needed, 
-
-1) Install R and Rstudio the way you would install any other software. 
-2) Install the [`devtools`](https://cran.r-project.org/web/packages/devtools/index.html) package in R by typing `install.packages("devtools")` in the R console. After successfully installing `devtools`...
-3) Install [`rads`](https://github.com/PHSKC-APDE/rads) by typing `devtools::install_github("PHSKC-APDE/rads")` in the R console. 
-    * If you received a 404 error rather than a successful installation, it is probably because you need to provide authentication to connect to our private GitHub repository. If you have not created and saved a GitHub PAT (Personal Access Token), please follow the detailed instructions in the [`APDE Training/R` wiki](https://teams.microsoft.com/l/channel/19%3A0735c1c38f4e49aa88c9b18b54105914%40thread.skype/tab%3A%3A9153588c-6c86-433d-8b98-0578f27d4cd1?groupId=a338cf08-e066-48cd-9f4c-cb91fcca199f&tenantId=bae5059a-76f0-49d7-9996-72dfe95d69c7)
-    * After following the instructions above, please try typing the following: `devtools::install_github("PHSKC-APDE/rads", auth_token = Sys.getenv("GITHUB_PAT"))`
-4) Exit R studio and starting it again. You should now be ready to walk through this vignette. 
 
 ## Getting data
 Begin by loading the [`rads`](https://github.com/PHSKC-APDE/rads) package/library by typing the following in R:
