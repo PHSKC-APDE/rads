@@ -67,7 +67,7 @@ get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcf
   #visible bindings for data.table
   schgnoid <- sur_psu <- kcfinalwt <- NULL
 
-  dat <- haven::read_dta("J:/HYSdata/hys/Data/hys0418_final_11.dta")
+  dat <- haven::read_dta("//PHDATA01/EPE_Data/HYSdata/hys/Data/hys0418_final_12.dta")
   data.table::setDT(dat)
 
   #prep the dataset
@@ -78,6 +78,14 @@ get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcf
   #subset by year
   yvar = year
   dat = dat[year %in% yvar, ]
+
+  #identify invalid columns
+  if(!all(is.na(cols))){
+    invalid.cols <- setdiff(cols, names(dat))
+    if(length(invalid.cols) == length(cols)){stop("HYS data cannot be extracted because no valid column names have been submitted. To get all columns, use the argument 'cols = NA'")}
+    if(length(invalid.cols) > 0){message(paste0("The following column names do not exist in the HYS data and have not be extracted: ", paste0(invalid.cols, collapse = ", ")))}
+    cols <- intersect(names(dat), cols)
+  }
 
   #create the survey object
   svy <- srvyr::as_survey_design(dat, ids = sur_psu, strata = year, weights = kcfinalwt, nest = T)
@@ -110,19 +118,34 @@ get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcf
 #'  get_data_birth(cols = NA, year = c(2015, 2016, 2017), kingco = F)
 #' }
 get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
-  # pull columns and years from sQL
-  ifelse(is.na(cols), cols <- "*", cols <- paste(cols, collapse=", "))
+  # get list of all colnames from SQL
+    con <- odbc::dbConnect(odbc::odbc(),
+                           Driver = "SQL Server",
+                           Server = "KCITSQLPRPDBM50",
+                           Database = "PH_APDEStore")
+    birth.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[final].[bir_wa]"))
+    birth.years <- unique(DBI::dbGetQuery(con, "SELECT DISTINCT chi_year FROM [PH_APDEStore].[final].[bir_wa]")$chi_year)
 
+  # identify columns and years to pull from SQL
+    if(!all(is.na(cols))){
+      invalid.cols <- setdiff(cols, birth.names)
+      valid.cols <- intersect(birth.names, cols)
+      if(length(valid.cols) > 0){cols <- paste(valid.cols, collapse=", ")}
+      if(length(valid.cols) == 0){stop("Birth data cannot be extracted because no valid column names have been submitted. To get all columns, use the argument 'cols = NA'")}
+      if(length(invalid.cols) > 0){message(paste0("The following column names do not exist in the birth data and have not be extracted: ", paste0(invalid.cols, collapse = ", ")))}
+    }
+    if(all(is.na(cols))){cols <- "*"}
+
+    invalid.year <- setdiff(year, birth.years)
+    year <- intersect(year, birth.years)
+    if(length(year) == 0){stop(paste0("Birth data cannot be extracted because no valid years have been provided. Valid years include: ", paste0(birth.years, collapse = ", ")))}
+    if(length(invalid.year)>0){message(paste0("The following years do not exist in the birth data and have not be extracted: ", paste0(invalid.year, collapse = ", ")))}
+
+  # pull columns and years from SQL
   query.string <- glue:: glue_sql ("SELECT ",  cols, " FROM [PH_APDEStore].[final].[bir_wa]
                                    WHERE chi_year IN (",  paste(year, collapse=", "), ")")
 
   if(kingco == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 1")}
-
-
-  con <- odbc::dbConnect(odbc::odbc(),
-                         Driver = "SQL Server",
-                         Server = "KCITSQLPRPDBM50",
-                         Database = "PH_APDEStore")
 
   dat <- data.table::setDT(DBI::dbGetQuery(con, query.string))
   odbc::dbDisconnect(con)

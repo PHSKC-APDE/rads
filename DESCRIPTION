@@ -22,11 +22,13 @@ Imports:
     methods,
     stats,
     tidyselect (>= 1.0.0),
-    forcats (>= 0.4.0)
+    forcats (>= 0.4.0),
+    keyring (>= 1.2.0),
+    yaml (>= 2.2.1)
 Suggests: 
     httr, 
     knitr,
     rmarkdown, 
+    markdown,
     testthat,
-    yaml
 VignetteBuilder: knitr
