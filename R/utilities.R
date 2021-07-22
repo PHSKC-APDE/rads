@@ -1,3 +1,27 @@
+#' Proper calculation of age in years
+#'
+#' @param from Vector of dates or characters ("YYYY-MM-DD") of indeterminate length.  vector of length 1.
+#' @param to Vector of dates or characters ("YYYY-MM-DD") of indeterminate length.  vector of length 1.
+#'
+#' @return Character vector of available datasets.
+#' @export
+#' @name calc_age
+#' @examples
+#' \dontrun{
+#'  calc_age(from = "2000-02-29", to = "2021-07-01")
+#' }
+#'
+calc_age <- function(from, to) {
+  from_lt = as.POSIXlt(from)
+  to_lt = as.POSIXlt(to)
+
+  age = to_lt$year - from_lt$year
+
+  ifelse(to_lt$mon < from_lt$mon |
+           (to_lt$mon == from_lt$mon & to_lt$mday < from_lt$mday),
+         age - 1, age)
+}
+
 #' Returns the list of datasets currently available for analysis in RADS
 #'
 #' @return Character vector of available datasets.
@@ -37,7 +61,7 @@ list_dataset_columns <- function(dataset, analytic_only = F){
 }
 
 
-#' List ofavailable metrics
+#' List of available metrics
 #' @return character vector. A vector of the available metrics for calculation.
 #' @name metrics
 NULL
@@ -464,3 +488,376 @@ dumb_convert <- function(x, target = 'character'){
 
   stop(paste0('Target class of ', target, ' is invalid'))
 }
+
+
+#' Return vector of all reference populations available in RADS
+#'
+#' @return Character vector of available reference populations
+#' @export
+#' @name list_ref_pop
+#' @examples
+#' \dontrun{
+#'  list_ref_pop()
+#' }
+#' @importFrom data.table fread
+list_ref_pop <- function(){
+  #global variables used by data.table declared as NULL here to play nice with devtools::check()
+  standard <- NULL
+
+  ref_single_to_99 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_single_age_to_99.csv", showProgress=FALSE)
+  ref_single_to_84 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_single_age_to_84.csv", showProgress=FALSE)
+  ref_agecat_18 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_18_age_groups.csv", showProgress=FALSE)
+  ref_agecat_19 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_19_age_groups.csv", showProgress=FALSE)
+  ref_pop_table <- unique(rbind(ref_single_to_99[, list(standard)], ref_single_to_84[, list(standard)], ref_agecat_18[, list(standard)], ref_agecat_19[, list(standard)]))
+  return(ref_pop_table$standard)
+}
+
+#' Load a reference population as a data.table object in memory
+#'
+#' @param ref_name Character vector of length 1. Loads a reference population identified by list_ref_pop()
+#'
+#' @return data.table with complete reference population data
+#' @export
+#' @name get_ref_pop
+#' @examples
+#' \dontrun{
+#'  get_ref_pop("2000 U.S. Std Population (single ages to 84 - Census P25-1130)")
+#' }
+#' @importFrom data.table fread
+get_ref_pop <- function(ref_name = NULL){
+  #global variables used by data.table declared as NULL here to play nice with devtools::check()
+  standard <- agecat <- age_start <- age_end <- pop <- ref_pop_name <- NULL
+
+  ref_single_to_99 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_single_age_to_99.csv", showProgress=FALSE)
+  ref_single_to_84 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_single_age_to_84.csv", showProgress=FALSE)
+  ref_agecat_18 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_18_age_groups.csv", showProgress=FALSE)
+  ref_agecat_19 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_19_age_groups.csv", showProgress=FALSE)
+  ref_pop_table <- rbind(ref_single_to_99, ref_single_to_84, ref_agecat_18, ref_agecat_19)
+  ref_pop_table <- ref_pop_table[standard == ref_name, list(agecat, age_start, age_end, pop)]
+  if(nrow(ref_pop_table) == 0){stop(strwrap(paste0("`ref_name` ('", ref_name, "') does not refer to a valid standard reference population.
+                                                     Type `list_ref_pop()` to get a list of all valid populations."), prefix = " ", initial = ""))}
+  ref_pop_table[, ref_pop_name := ref_name]
+  return(ref_pop_table)
+}
+
+#' Calculate crude and directly adjusted rates
+#'
+#' @param count Numeric vector of indeterminate length. The # of events of interest (e.g., deaths, births, etc.)
+#' @param pop Numeric vector of indeterminate length. The population denominator for the count.
+#' @param stdpop Numeric vector of indeterminate length. The reference standard population corresponding to the population.
+#' @param per Integer vector of length 1. A multiplier for all rates and CI, e.g., when per = 1000, the rates are per 1000 people
+#' @param conf.level A numeric vector of length 1. The confidence interval used in the calculations.
+#'
+#' @return a labeled numeric vector of the count, rate, and adjusted rate with the CI
+#' @export
+#' @name adjust_direct
+#' @examples
+#' \dontrun{
+#'  adjust_direct(count = c(11, 9), pop = c(500, 500), stdpop = c(640, 720),
+#'  per = 100, conf.level = 0.95)[]
+#' }
+#' @importFrom stats qgamma
+adjust_direct <- function (count, pop, stdpop, per = 100000, conf.level = 0.95)
+{
+  # adapted from epitools v0.5-10.1 :: ageadjust.direct & survival 3.2-7 :: cipoisson
+
+  # logic checks ----
+  if((length(count)==length(pop) & length(pop)==length(stdpop)) != T){stop("The length of `count`, `pop`, and `stdpop` must be equal.")}
+  if( !class(per) %in% c("numeric", "integer")){stop(paste0("The `per` argument ('", per, "') you entered is invalid. It must be a positive integer, e.g., 100000."))}
+  if( per%%1 != 0 | (per%%1 == 0 & per <= 0)){stop(paste0("The `per` argument (", per, ") you entered is invalid. It must be a positive integer, e.g., 100000."))}
+  if( !class(conf.level) %in% c("numeric")){stop(paste0("`conf.level` (", conf.level, ") should be a two digit decimal between 0.00 & 0.99"))}
+  if( (100*conf.level)%% 1 != 0 | !(0<=conf.level & conf.level<=0.99)){stop(paste0("`conf.level` (", conf.level, ") should be a two digit decimal between 0.00 & 0.99"))}
+
+  # basic calculations ----
+  rate <- count/pop
+  alpha <- 1 - conf.level
+  cruderate <- sum(count)/sum(pop)
+  stdwt <- stdpop/sum(stdpop)
+
+  # calc exact poisson CI for crude rates ----
+  dummycount <- ifelse(sum(count) == 0, 1, sum(count))
+  crude.lci <- ifelse(sum(count) == 0, 0, qgamma(alpha/2, dummycount)) / sum(pop)
+  crude.uci <- qgamma(1 - alpha/2, sum(count) + 1) / sum(pop)
+
+  # calc exact CI for adjusted rates ----
+  dsr <- sum(stdwt * rate)
+  dsr.var <- sum((stdwt^2) * (count/pop^2))
+  wm <- max(stdwt/pop)
+  gamma.lci <- qgamma(alpha/2, shape = (dsr^2)/dsr.var, scale = dsr.var/dsr)
+  gamma.uci <- qgamma(1 - alpha/2, shape = ((dsr + wm)^2)/(dsr.var +
+                                                             wm^2), scale = (dsr.var + wm^2)/(dsr + wm))
+  # prep output ----
+  adjusted <- per*c(crude.rate = cruderate, crude.lci = crude.lci, crude.uci = crude.uci, adj.rate = dsr, adj.lci = gamma.lci, adj.uci = gamma.uci)
+  adjusted <- c(count = sum(count), pop = sum(pop), adjusted)
+}
+
+#' Calculate age standardized rates from a data.table with age, counts, and population columns. (Built on adjust_direct())
+#' @param my.dt Name of a data.frame or data.table object. Note, if my.dt already has a standard population (ref.popname = "none"),
+#' it must contain a numeric column named 'stdpop'. Otherwise, it must contain a numeric column named 'age'.
+#' @param ref.popname Character vector of length 1. Only valid options are those in list_ref_pop() and
+#' "none" (when standard population already exists in my.dt)
+#' @param collapse Logical vector of length 1. Do you want to collapse my.dt ages to match those in ref.popname?
+#' @param my.count Character vector of length 1. Identifies the column with the count data aggregated by the given demographics.
+#' @param my.pop Character vector of length 1. Identifies the column with the population corresponding to the given demographics.
+#' @param per Integer vector of length 1. A multiplier for all rates and CI, e.g., when per = 1000, the rates are per 1000 people
+#' @param conf.level A numeric vector of length 1. The confidence interval used in the calculations.
+#' @param group_by Character vector of indeterminate length. By which variable(s) do you want to stratify the rate results, if any?
+#'
+#' @return a data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'group_by' variable(s) -- if any
+#' @export
+#' @name age_standardize
+#' @examples
+#' \dontrun{
+#' temp1 <- data.table(age = c(50:60), count = c(25:35), pop = c(seq(1000, 900, -10)) )
+#' age_standardize(my.dt = temp1,
+#' ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)", collapse = T,
+#' my.count = "count", my.pop = "pop", per = 1000, conf.level = 0.95)[]
+#'
+#' temp2 <- data.table(sex = c(rep("M", 11), rep("F", 11)), age = rep(50:60, 2),
+#' count = c(25:35, 26:36), pop = c(seq(1000, 900, -10), seq(1100, 1000, -10)),
+#' stdpop = rep(1000, 22))
+#' age_standardize(my.dt = temp2, ref.popname = "none", collapse = F, my.count = "count",
+#' my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex")[]
+#' }
+#' @importFrom data.table ":=" setDT
+
+age_standardize <- function (my.dt, ref.popname = NULL, collapse = T, my.count = "count", my.pop = "pop", per = 100000, conf.level = 0.95, group_by = NULL)
+{
+  #global variables used by data.table declared as NULL here to play nice with devtools::check()
+  my.dt.name <- age <- age_start <- age_end <- agecat <- count <- pop <- stdpop <- reference_pop <- NULL
+
+  my.dt.name <- deparse(substitute(my.dt))
+  my.dt <- copy(my.dt)
+  # Logic checks ----
+  # Check that my.dt is a data.frame or data.table ----
+  if( inherits(my.dt, "data.frame") == FALSE){stop("my.dt must be a data.frame or a data.table containing both counts and population data.")}
+  if( inherits(my.dt, "data.table") == FALSE){setDT(my.dt)}
+
+  # Check arguments needed for adjust_direct ----
+  if(! my.count %in% colnames(my.dt)){stop(strwrap(paste0("The column '", my.count, "' does not exist in my.dt.
+                                                                my.dt must have a column indicating the count of events (e.g., deaths, births, etc.) and is typically named 'count'.
+                                                                If such a column exists with a different name, you need to specify it in the `my.count` argument. I.e., my.count = 'count.varname'."), prefix = " ", initial = ""))}
+
+  if(! my.pop %in% colnames(my.dt)){stop(strwrap(paste0("The column '", my.pop, "' does not exist in my.dt.
+                                                                my.dt must have a column for the population denominator correspondnig to the given demographics. It is typically named 'pop'.
+                                                                If such a column exists with a different name, you need to specify it in the `my.pop` argument. I.e., my.pop = 'pop.varname'."), prefix = " ", initial = ""))}
+
+  # Ensure the reference population exists ----
+  if(is.null(ref.popname)){ref.popname <- "2000 U.S. Std Population (18 age groups - Census P25-1130)"}
+  if(! ref.popname %in% c( list_ref_pop(), "none")){
+    stop(strwrap(paste0("ref.popname ('", ref.popname, "') is not a valid reference population name.
+          The names of standardized reference populations can be viewed by typing `list_ref_pop()`.
+          If my.dt is already aggregated/collapsed and has a relevant 'stdpop' column, please set ref.popname = 'none'"), prefix = " ", initial = ""))}
+
+  if(ref.popname == "none" & !"stdpop" %in% colnames(my.dt)){stop("When specifying ref.popname = 'none', my.dt must have a column named 'stdpop' with the reference standard population data.")}
+
+  if(ref.popname == "none" & collapse == T){stop(strwrap("When ref.popname = 'none', collapse should equal F.
+                                                                  Selecting ref.popname = 'none' expects that my.dt has already been collapsed/aggregated and has a 'stdpop' column."), prefix = " ", initial = "")}
+
+  # Standardize column names ----
+  # purposefully did not use setnames() because it is possible that count | pop already exists and are intentionally using different columns for this function
+  my.dt[, "count" := get(my.count)]
+  my.dt[, "pop" := get(my.pop)]
+
+  # Collapse my.dt to match standard population bins ----
+  if(collapse==T){
+    if(! "age" %in% colnames(my.dt)){stop(strwrap("When collapse = T, my.dt must have a column named 'age' where age is an integer.
+                                                        This is necessary to generate age bins that align with the selected standard
+                                                        reference population. If my.dt already has an 'agecat' column that is formatted
+                                                        identically to that in the standard reference population, set collapse = F"), prefix = " ", initial = "")}
+    if(is.numeric(my.dt$age) == F){stop("When collapse = T, the 'age' column must be comprised entirely of integers")}
+    if(sum(as.numeric(my.dt$age) %% 1) != 0){stop("When collapse = T, the 'age' column must be comprised entirely of integers")}
+    if("agecat" %in% colnames(my.dt)){stop(strwrap("When collapse = T, a new column named 'agecat' is created to match that in the standard reference population.
+                                                  my.dt already has a column named 'agecat' and it will not be automatically overwritten.
+                                                  If you are sure you want to create a new column named 'agecat', delete the existing column in my.dt and run again."),
+                                           prefix = " ", initial = "")}
+    my.ref.pop <- get_ref_pop(ref.popname)
+    for(z in seq(1, nrow(my.ref.pop))){
+      my.dt[age %in% my.ref.pop[z, age_start]:my.ref.pop[z, age_end], agecat := my.ref.pop[z, agecat]]
+    }
+    my.dt <- my.dt[, list(count = sum(count), pop = sum(pop)), by = "agecat"]
+  }
+
+  # Merge standard pop onto count data ----
+  if(ref.popname != "none"){
+    my.dt <- merge(my.dt, get_ref_pop(ref.popname)[, list(agecat, stdpop = pop)], by = "agecat")
+  }
+
+  # Calculate crude & adjusted rates with CI ----
+  if(!is.null(group_by)){my.rates <- my.dt[, as.list(adjust_direct(count = count, pop = pop, stdpop = stdpop, conf.level = as.numeric(conf.level), per = per)), by = group_by]}
+  if( is.null(group_by)){my.rates <- my.dt[, as.list(adjust_direct(count = count, pop = pop, stdpop = stdpop, conf.level = as.numeric(conf.level), per = per))]}
+
+  # Tidy results ----
+  rate_estimates <- c("crude.rate", "crude.lci", "crude.uci", "adj.rate", "adj.lci", "adj.uci")
+  my.rates[, c(rate_estimates) := lapply(.SD, rads::round2, 2), .SDcols = rate_estimates]
+  my.rates[, reference_pop := ref.popname]
+  if(ref.popname == "none"){my.rates[, reference_pop := paste0("stdpop column in `", my.dt.name, "`")]}
+
+  return(my.rates)
+}
+
+
+#' Generate a YAML file for SQL loading based on in a data.frame or data.table
+#'
+#' #' @description
+#' YAML files can be helpful for uploading data to SQL efficiently and correctly. This function should enable
+#' the user to create a standard YAML file that be be used to push data from R to SQL.
+#'
+#' This function expects data in the form of a data.frame or data.table
+#'
+#'
+#' @param mydt the name of a data.table or data.frame for which you want to create a YAML file
+#' @param outfile optional character vector of length one. The complete filepath for where the *.yaml file
+#' should be saved. If it is not specified, the YAML file will be returned in memory
+#' @param datasource A character vector of length one. A human readable description of the datasource to be
+#' uploaded to SQL. This could be a filepath to the original data on a shared drive or a simple description.
+#' @param schema A character vector of length one. The schema to be used within the specific server and
+#' database that will be specified in your odbc connection.
+#' @param table A character vector of length one. The table to be used within the specific server and
+#' database that will be specified in your odbc connection and within the schema that you specified above.
+#'
+#'
+#' @return a list with the YAML file contents (if outfile not specified) or a message stating where the YAML
+#' file has been saved (if outfile was specified)
+#'
+#' @export
+#'
+#' @keywords YAML
+#'
+#' @importFrom data.table ':=' data.table copy setDT is.data.table
+#' @importFrom yaml read_yaml
+#'
+#' @examples
+#'
+#' data(mtcars)
+#' # output to object in memory
+#'   check <- generate_yaml(mtcars, schema = "SCH", table = "TBL",
+#'   datasource = "R standard mtcars")
+#' # output to a file
+#'   generate_yaml(mtcars, outfile = "C:/temp/test.yaml", schema = "SCH", table = "TBL",
+#'   datasource = "R standard mtcars")
+#'
+generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL, table = NULL){
+
+  #Bindings for data.table/check global variables
+  vartype <- binary <- varname <- ..i <- varlength <- sql <- '.' <- NULL
+
+  mi.outfile = 0
+
+
+  ## Error check ----
+  if(is.null(mydt))stop("mydt, the name of a data.frame or data.table for which you wish to create a YAML file, must be provided.")
+
+  if(!is.data.table(mydt)){
+    if(is.data.frame(mydt)){
+      setDT(mydt)
+    } else {
+      stop(paste0("<mydt> must be the name of a data.frame or data.table."))
+    }
+  }
+
+  if(!is.null(outfile)){
+    if(!grepl("\\.yaml$", outfile)){
+      stop(paste0("The value for 'outfile' (the complete filepath for saving the YAML you are creating), \n",
+                  "must have the file extension '.yaml"))
+    }}
+
+  if(is.null(outfile)){
+    message(paste0("You did not submit a value for 'outfile' (the complete filepath for saving the YAML you are creating), \n",
+                   "and that's okay! \n \n",
+                   "To save the yaml object in memory (as a list), assign a name to the output of this function, e.g., \n",
+                   "my_new_yaml <- generate_yaml(...)"))
+    mi.outfile = 1
+    outfile <- tempfile("blahblah", fileext = ".yaml")
+  }
+
+  if(is.null(schema)){
+    stop("You must submit a SQL schema for the header of the YAML file")
+  }
+
+  if(is.null(schema)){
+    stop("You must submit a SQL table name for the header of the YAML file")
+  }
+
+  if(is.null(datasource)){
+    message(paste0("Warning: You did not enter a datasource for where the underlying data exists on a shared drive. \n",
+                   "         The YAML file will be created, but the datasource will not be recorded in the header."))
+  }
+
+  ## Set up ----
+  # identify column type
+  temp.vartype <- data.table(varname = names(sapply(mydt, class)), vartype = sapply(mydt, class))
+
+  # identify if it is a binary
+  temp.binary <- data.table(varname = names(sapply(mydt,function(x) { all(na.omit(x) %in% 0:1) })), binary = sapply(mydt,function(x) { all(na.omit(x) %in% 0:1) }))
+
+  # merge binary indicator to the column types
+  mydict <- merge(temp.vartype, temp.binary, by = "varname")
+
+  # identify vartype == binary
+  mydict[vartype %in% c("numeric", "integer") & binary == TRUE, vartype := "binary"]
+  mydict[, binary := NULL]
+
+  # ensure consistent ordering
+  mydict[, varname := factor(varname, levels = names(mydt))]
+  setorder(mydict, varname)
+
+  # Identify standard TSQL numeric & string types ----
+  # Identify all integers << tinyint, smallint, and bigint probabld should not be automatically ascribed
+  potential.int <- as.character(mydict[vartype %in% c("numeric", "integer")]$varname)
+  for(i in potential.int){
+    mydict[varname==i & all(mydt[,..i] == floor(mydt[,..i])) == TRUE, vartype := "integer"]
+  }
+
+  # Set varchar (assumed 1 chars ~= 1 byte and will add buffer of 100%)
+  potential.varchar <- as.character(mydict[vartype %in% c("character", "factor")]$varname)
+  for(i in potential.varchar){
+    mydict[varname==i, varlength := ceiling(max(nchar(as.character(mydt[[i]])))*2)]
+    mydict[varname==i & is.na(varlength), varlength := 10] # could be NA, eg, when col is for significance testing and nothign is significant
+  }
+
+  # Ascribe SQL data type names ----
+  sqlkey <- data.table(
+    vartype = c("character", "factor", "integer", "numeric", "Date", "POSIXct,POSIXt"),
+    sql = c("VARCHAR", "VARCHAR", "INT", "NUMERIC(38,3)", "DATE", "DATETIME")  # NUMERIC(38,3) ... allows for up to 38 digits of precision, with 3 of those to the right of the decimal
+  )
+
+  mydict <- merge(mydict, sqlkey, by = "vartype", all.x = TRUE, all.y = FALSE)
+
+  ## Clean up ----
+  mydict[, varname := factor(varname, levels = names(mydt))]
+  mydict[sql == "VARCHAR", sql := paste0(sql, "(", varlength, ")")]
+  mydict[, sql := paste0("    ", varname, ": ", sql)]
+  setorder(mydict, varname) # sort in same order as the data.table
+  mydict <- mydict[, .(sql)]
+
+  if(!is.null(datasource)){
+    header <- data.table(
+      sql = c(paste0("datasource: ", datasource),
+              paste0("schema: ", schema),
+              paste0("table: ", table),
+              "vars: "))
+  } else {
+    header <- data.table(
+      sql = c(paste0("schema: ", schema),
+              paste0("table: ", table),
+              "vars: "))
+  }
+
+
+  mydict <- rbind(header, mydict)
+
+  # save yaml file ----
+  fwrite(x = mydict,
+         file = outfile,
+         quote = F,
+         col.names=F,
+         row.names = F,
+         append=F)
+
+  MyYAML <- yaml::read_yaml(outfile)
+
+  if(mi.outfile == 1){return(MyYAML)}else{message(paste0("YAML saved to ", outfile))}
+
+}
+

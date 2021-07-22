@@ -96,7 +96,8 @@ suppress <- function(sup_data = NULL,
                                                  "mean", "mean_se", "mean_lower", "mean_upper",
                                                  "rate", "rate_se", "rate_lower", "rate_upper",
                                                  "total", "total_se", "total_lower", "total_upper",
-                                                 "median", "numerator", "denominator", "proportion"))
+                                                 "median", "numerator", "denominator", "proportion",
+                                                 "comparison_with_kc", "significance"))
       temp.dt[suppression=="^", (sup_metrics) := NA]
 
   #apply secondary suppression ----

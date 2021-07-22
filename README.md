@@ -1,5 +1,35 @@
 # R Automatic Data System (RADS)
 
+## Purpose
+RADS is a suite of tools written in R and designed to make standard public health analyses faster, more standardized, and less prone to error. While some tools may be applicable for different settings, the toolset has been customized to the needs of [PHSKC's](https://www.kingcounty.gov/depts/health.aspx) [APDE](https://www.kingcounty.gov/depts/health/data). While these tools have only been tested in Windows, they should work identically on a Linux or Mac OS X machine.    
+
+## Installation
+1. Install the [latest version of R from a server near you](https://cran.r-project.org/mirrors.html)
+2. Install the free version of [RStudio Desktop](https://rstudio.com/products/rstudio/download/)
+3. Install the `devtools` package in R by typing `install.packages("devtools")` in the R console
+4.  Follow ***one*** of the following methods:
+    1. Install `rads` using devtools::install_github()
+        * If needed, set up a [GitHub PAT (Personal Access Token) follwing these instructions](https://github.com/PHSKC-APDE/rads/blob/master/ref/Git_PAT_setup.md)
+        * type `devtools::install_github("PHSKC-APDE/rads", auth_token = Sys.getenv("GITHUB_PAT"))` in your R console   
+        * Note this will always give you the latest `rads` release  
+    2. Install `rads` using devtools::install_local()
+        * [Download the rads_#.#.#.zip file](https://github.com/PHSKC-APDE/rads/releases) for the release that you want to install
+        * Install all dependencies by typing the following into your R console: `devtools::install_local("C:/Users/[USERNAME]/Downloads/rads_#.#.#.zip")`. Be sure to update the file path to the zip file!
+        * Type the following in the R console to install rads `install.packages("C:/Users/[USERNAME]/Downloads/rads_#.#.#.zip", repos = NULL, type = "win.binary")`
+5. Exit RStudio and start it again. 
+6. Confirm `rads` installed properly by typing `library(rads)` in the console.
+
+## Getting started
+After installation, we highly recommend that you start by walking through a vignette.
+* "Exploring Birth Data with RADS" 
+
+
+---
+# MOVE REMAINDER ELSEWHERE?
+
+
+
+
 ## General workflow idea
 1. Use `list_apde_data` to highlight which datasources are available for analysis
 2. Use `get_data` to fetch the desired dataset into memory. Use `list_dataset_columns` to investigate which columns are available. `get_data`, given a valid dataset option, dispatches a sub-function/method which returns the data to the user.
