@@ -1,0 +1,189 @@
+---
+title: "Introduction to calc()"
+output:
+  github_document: default
+  rmarkdown::html_vignette: default
+  pdf_document: default
+  urlcolor: blue
+vignette: |
+  %\VignetteEngine{knitr::knitr} %\VignetteIndexEntry{Introduction to calc}
+---
+```{r, echo = F, message=FALSE}
+library(rads)
+```
+## Introducing the `calc()` function
+`calc()` is the analytic workhorse of `rads`. It provides a standardized method for obtaining most of what we usually want to calculate: means, medians, counts, confidence intervals, standard errors, relative standard errors (RSE), numerators, denominators, the number missing, and the proportion missing. `calc()` can be used with record data (e.g., vital status, census, enrollment numbers, etc.) as well as survey data (e.g., [BRFSS](https://www.cdc.gov/brfss/index.html), [ACS PUMS](https://github.com/PHSKC-APDE/svy_acs), etc.). `calc()` is built on top of common R packages and was created to allow APDE staff the convenience of using a common syntax across various data sources. This means that everything `calc` can do can be done with other packages ... sometimes in a more efficient manner.
+
+This vignette will provide some examples to introduce the `calc()` function by walking through basic analyses with vital status (birth data) and survey data (ACS PUMS). To get the most out of this vignette, we recommend that you type each and every bit of code into R. Doing so will almost definitely help you learn the syntax much faster than just reading the vignette or copying and pasting the code.
+
+## `calc()` arguments
+Arguments are the values that we send to a function when it is called. The standard arguments for `calc()` are:
+
+1) `ph.data` <- the name of the data.table/data.frame or survey object that you want to analyze.
+
+2) `what` <- a character vector of the variable(s) for which you want to calculate the metrics. E.g., `what = c("uninsured")`
+
+3) `...` <- think of this as a "where" statement, i.e., a filter or subsetting of data. E.g., `ages %in% c(0:17) & gender == "Female"`. **NOTE** do not type `...` !
+
+4) `by` <- a character vector of the variables that you want to computer the `what` by, i.e., the cross-tab variable(s). E.g., `by = c("gender")` would stratify results by gender
+
+5) `metrics` <- a character vector of the metrics that you want returned. E.g., `metrics = c("mean", "rse")`. You can see a complete list of available metrics by typing `metrics()`
+
+6) `per` <- an integer, which is the denominator when `rate` is selected as a metric. Metrics will be multiplied by this value. E.g., `per = 1000`. **NOTE** this is just a scalar. At present this does not calculate a true rate (i.e., the relevant population denominator is not used).
+
+7) `win` <- an integer, which is the number of consecutive units of time (e.g., years, months, etc.) over which the metrics will be calculated, i.e., the 'window' for a rolling average, sum, etc. E.g. `win = 5` will perform calculations over every 5 time unit window.
+
+8) `time_var` <- a character, which is the name of the time variable in the dataset. Used in combination with the `win` argument to generate time windowed calculations.
+
+9) `proportion` <- a logical (i.e., `T` or `F`) flag determining whether the metrics should be calculated as a proportion. Currently only relevant for survey data. The default is FALSE.
+
+10) `verbose` <- a logical used to toggle on/off printed warnings
+
+There is no need to specify all of the arguments listed above. As you can see in the following example, the `calc` function simply needs a specified dataset (i.e., `ph.data`) and at least one `what` variable to return an intelligible result. 
+
+
+```{r}
+data(mtcars)
+calc(ph.data = mtcars, what = c("mpg"))[]
+```
+**Note **: The use of `[]` after `calc()` is used to print the output to the console. Typically, you would not print the results but would save them as an object. E.g., `my.est <- calc()`.
+
+***
+
+## Example vital status analyses
+**First get the birth data (cf. [`get_data_birth()` vignette](https://github.com/PHSKC-APDE/rads/wiki/Vignette:-get_data_birth()))**
+```{r}
+birth <- get_data_birth(cols = c("chi_year", "chi_sex", "chi_race_eth8", 
+                                 "preterm", "birth_weight_grams", "mother_birthplace_state"), 
+                        year = c(2013:2019), 
+                        kingco = T)
+```
+
+**mean (proportion) for a binary over multiple years**
+```{r}
+calc(ph.data = birth, 
+     what = c("preterm"), 
+     metrics = c("mean", "rse", "numerator", "denominator"), 
+     time_var = "chi_year")[]
+```
+
+**mean (proportion) for a binary over individual years**
+```{r}
+calc(ph.data = birth, 
+     what = c("preterm"), 
+     metrics = c("mean", "rse", "numerator", "denominator"), 
+     time_var = "chi_year", 
+     by = "chi_year")[]
+```
+
+**mean (proportion) for a binary over windowed years**
+```{r}
+calc(ph.data = birth, 
+     what = c("preterm"), 
+     metrics = c("mean", "rse", "numerator", "denominator"), 
+     time_var = "chi_year", 
+     win = 3)[]
+```
+
+**mean for a continuous over windowed years**
+```{r}
+calc(ph.data = birth, 
+     what = c("birth_weight_grams"), 
+     metrics = c("mean", "rse"), 
+     time_var = "chi_year", 
+     win = 3)[]
+```
+
+**mean for a continuous in 2019, by gender and race/eth**
+```{r}
+calc(ph.data = birth, 
+     what = c("birth_weight_grams"), 
+     chi_year == 2019,
+     metrics = c("mean", "rse"), 
+     by = c("chi_race_eth8", "chi_sex"))[]
+```
+
+**Proportion of 2017-2019 births among each race/eth group**
+```{r}
+calc(ph.data = birth, 
+     what = c("chi_race_eth8"), 
+     chi_year %in% 2017:2019,
+     metrics = c("mean", "rse", "obs", "numerator", "denominator"))[]
+```
+
+**2017-2019 rate per 100k of births among each race/eth group**
+```{r}
+calc(ph.data = birth, 
+     what = c("chi_race_eth8"), 
+     chi_year %in% 2017:2019,
+     metrics = c("obs", "numerator", "denominator", "rate"), 
+     per = 100000)[]
+```
+
+**Number and proportion of missing gender by year**
+```{r}
+calc(ph.data = birth, 
+     what = c("chi_sex"), 
+     chi_year %in% 2017:2019,
+     metrics = c("obs", "missing", "missing.prop"), 
+     by = "chi_year")[]
+```
+
+## Example survey analyses
+Before using `rads::calc()` with survey data, the user must survey set the data while properly specifying the survey design. Here is an example of how to set [ACS PUMS](https://github.com/PHSKC-APDE/svy_acs) person level data:
+```{r, warning=FALSE, message=FALSE}
+library(srvyr)
+
+load("//phshare01/epe_share/WORK/surveys/ACS/PUMS data & code all years/2019_1_year/prepped_R_files/2019_1_year_data.RData")
+
+  pums <-     
+    srvyr::as_survey_rep(
+      person.wa ,
+      weights = pwgtp ,
+      combined.weights = TRUE ,
+      repweights = grep('pwgtp[0-9]+', names(person.wa), value  = T) ,
+      scale = 4 / 80 ,
+      rscales = rep( 1 , 80 ) ,
+      mse = TRUE ,
+      type = "JK1"
+    )
+```
+Once the data is survey has been set, we can use the `calc()` function the same way that we used it for vital status data. 
+
+**Mean (proportion) of those near poverty or disabled, by King County (vs. remainder of WA)**
+```{r, warning=FALSE}
+calc(ph.data = pums, 
+     what = c("disability", "GEpov200"), 
+     metrics = c("mean", "rse", "obs", "numerator", "denominator"), 
+     proportion = T, 
+     by = "chi_geo_kc")[]
+```
+
+**Proportion in each CHNA age group, by disability status**
+```{r, warning=FALSE}
+calc(ph.data = pums, 
+     what = c("agechna"), 
+     metrics = c("mean", "rse", "obs", "numerator", "denominator"), 
+     proportion = T, 
+     by = "disability")[]
+```
+
+**Proportion disabled, by CHNA age group**
+```{r, warning=FALSE}
+calc(ph.data = pums, 
+     what = c("disability"), 
+     metrics = c("mean", "rse", "obs", "numerator", "denominator"), 
+     proportion = T, 
+     by = "agechna")[]
+```
+
+**Mean & median age in King County, by disability status**
+```{r, warning=FALSE}
+calc(ph.data = pums, 
+     what = c("agep"),
+     chi_geo_kc == 1,
+     metrics = c("mean", "median", "rse", "obs", "numerator", "denominator"), 
+     by = "disability")[]
+```
+
+
