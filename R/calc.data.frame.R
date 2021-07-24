@@ -251,6 +251,17 @@ calc.data.frame = function(ph.data,
                                  "rate", "rate_per", "rate_lower", "rate_upper", "rate_se",
                                  "total", "obs", "numerator", "denominator", "missing", "missing.prop", "unique.time"))
 
+  # When metrics() includes missing counts / proportions, fix factors (otherwise have the number of missing for each level of a factor)
+  if( nrow(res[variable %in% factor.col]) > 0 & sum(grepl("missing", metrics) ) > 0){
+    res.factors <- res[variable %in% factor.col] # split off rows with variables that are factors
+    res <- res[!variable %in% factor.col] # keep rows with non factors
+    cols.to.drop <- setdiff(metrics(), c("obs", "unique.time", "missing", "missing.prop")) # identify columns to drop
+    cols.to.keep <- setdiff(names(res.factors), c(cols.to.drop, "level", "mean_se", "mean_lower", "mean_upper")) # identify columns to keep
+    mi.table <- unique(copy(res.factors)[, ..cols.to.keep]) # create a table of factor variables with minimal missing data
+    res.factors[, grep("missing", metrics, value = T) := NA] # set missing to NA in rows with factor variables because have data in new table (mi.table)
+    res <- rbind(res, res.factors, mi.table, fill = T) # combine all three datasets
+  }
+
   # Sort / order results
   data.table::setorder(res, variable, level, time)
   data.table::setnames(res, 'time', time_var)
