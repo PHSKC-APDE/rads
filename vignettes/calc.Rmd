@@ -148,7 +148,7 @@ load("//phshare01/epe_share/WORK/surveys/ACS/PUMS data & code all years/2019_1_y
       type = "JK1"
     )
 ```
-Once the data is survey has been set, we can use the `calc()` function the same way that we used it for vital status data. 
+Once the data has been set as a survey, we can use the `calc()` function the same way that we used it for vital status (birth) data. 
 
 **Mean (proportion) of those near poverty or disabled, by King County (vs. remainder of WA)**
 ```{r, warning=FALSE}
