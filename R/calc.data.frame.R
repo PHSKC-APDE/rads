@@ -256,9 +256,10 @@ calc.data.frame = function(ph.data,
     res.factors <- res[variable %in% factor.col] # split off rows with variables that are factors
     res <- res[!variable %in% factor.col] # keep rows with non factors
     cols.to.drop <- setdiff(metrics(), c("obs", "unique.time", "missing", "missing.prop")) # identify columns to drop
-    cols.to.keep <- setdiff(names(res.factors), c(cols.to.drop, "level", "mean_se", "mean_lower", "mean_upper")) # identify columns to keep
+    cols.to.keep <- setdiff(names(res.factors), c(cols.to.drop, "level", "mean_se", "mean_lower", "mean_upper", "rate_se", "rate_lower", "rate_upper")) # identify columns to keep
     mi.table <- unique(copy(res.factors)[, ..cols.to.keep]) # create a table of factor variables with minimal missing data
-    res.factors[, grep("missing", metrics, value = T) := NA] # set missing to NA in rows with factor variables because have data in new table (mi.table)
+    mi.table <- mi.table[missing >0] # keep only if there are a non-zero number of missing rows
+    res.factors[, grep("missing", metrics, value = T) := 0] # set missing to NA in rows with factor variables because have data in new table (mi.table)
     res <- rbind(res, res.factors, mi.table, fill = T) # combine all three datasets
   }
 
