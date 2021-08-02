@@ -19,6 +19,10 @@ test_that('get_population',{
 
   expect_equal(1305627, get_population(years = 2017, race_type = "race_eth", race = "white")[]$pop ) # 2017 White-NH
 
+  expect_equal(2353, get_population(years = 2017, race_type = "race_eth", race = "hispanic", genders = "female", ages = c(0))[]$pop ) # 2017 Hispanic as race, female, age zero
+
+  expect_equal(269, get_population(years = 2017, race_type = "race_eth", race = "white", ages = c(100))[]$pop ) # 2017 White-NH, age 100+ ... check top coding 100+
+
 })
 
 
