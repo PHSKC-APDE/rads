@@ -28,7 +28,7 @@
 # get_population() ----
 get_population <- function(kingco = T,
                            years = c(2019),
-                           ages = c(0:120),
+                           ages = c(0:100),
                            genders = c("F", "M"),
                            races = c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white"),
                            race_type = c("race_eth"),
@@ -106,8 +106,8 @@ get_population <- function(kingco = T,
         years <- unique(years)
 
       # check ages ----
-        if( !all(sapply(ages, function(i) i == as.integer(i))) | max(ages) > 120 | min(ages) < 0 ){
-          stop(paste0("The `ages` argument ('", paste(unique(ages), collapse = ', '), "') you entered is invalid. It must be a vector of at least one age integer between 0 & 120 (e.g., `c(0:17, 65:120)`)"))}
+        if( !all(sapply(ages, function(i) i == as.integer(i))) | max(ages) > 100 | min(ages) < 0 ){
+          stop(paste0("The `ages` argument ('", paste(unique(ages), collapse = ', '), "') you entered is invalid. It must be a vector of at least one age integer between 0 & 100 (e.g., `c(0:17, 65:100)`)"))}
         ages <- unique(ages)
 
       # check / clean genders ----
@@ -169,6 +169,11 @@ get_population <- function(kingco = T,
         }
           group_by_orig <- copy(group_by)
 
+      # Top code age ----
+          if(max(ages) == 100){
+            sql_ages <- c(ages, 101:120)
+          } else {sql_ages <- ages}
+
       # adjust group_by depending on which geo_type specified ----
           if(geo_type != "kc" & !("geo_id" %in% group_by)) {
             group_by <- c("geo_id", group_by)
@@ -195,7 +200,7 @@ get_population <- function(kingco = T,
       sql_where <- c("")
       sql_where <- paste0(sql_where, "year IN (", paste(years, collapse = ", "), ") ")
       sql_where <- paste0(sql_where, " AND geo_type IN ('", paste(geo_type, collapse = "', '"), "') ")
-      sql_where <- paste0(sql_where, " AND age IN (", paste(ages, collapse = ", "), ") ")
+      sql_where <- paste0(sql_where, " AND age IN (", paste(sql_ages, collapse = ", "), ") ")
       sql_where <- paste0(sql_where, " AND raw_gender IN ('", paste(genders, collapse = "', '"), "') ")
       if(race_type == "race_eth"){sql_where <- paste0(sql_where, " AND r2r4 IN (", paste(ref.table[r_type == "r2r4" & short %in% races]$value, collapse = ", "), ")" )}
       if(race_type == "race"){sql_where <- paste0(sql_where, " AND r1r3 IN (", paste(ref.table[r_type == "r1r3" & short %in% races]$value, collapse = ", "), ") ")}
@@ -333,6 +338,12 @@ get_population <- function(kingco = T,
               pop.dt[, geo_id := "WA State"]
             }
           }
+
+      # Collapse ages above 100 ----
+      if(max(ages) == 100){
+        pop.dt[age >= 100, age := 100]
+        pop.dt <- pop.dt[, .(pop = sum(pop)), by = .(age, gender, race_eth, year, geo_type, geo_id)]
+      }
 
       # round ----
         if(round == T){pop.dt[, pop := rads::round2(pop, 0)]}
