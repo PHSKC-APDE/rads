@@ -699,7 +699,7 @@ age_standardize <- function (my.dt, ref.popname = NULL, collapse = T, my.count =
 
 #' Generate a YAML file for SQL loading based on in a data.frame or data.table
 #'
-#' #' @description
+#' @description
 #' YAML files can be helpful for uploading data to SQL efficiently and correctly. This function should enable
 #' the user to create a standard YAML file that be be used to push data from R to SQL.
 #'
@@ -724,11 +724,14 @@ age_standardize <- function (my.dt, ref.popname = NULL, collapse = T, my.count =
 #'
 #' @keywords YAML
 #'
+#' @name generate_yaml
+#'
 #' @importFrom data.table ':=' data.table copy setDT is.data.table
 #' @importFrom yaml read_yaml
 #'
 #' @examples
 #'
+#' \dontrun{
 #' data(mtcars)
 #' # output to object in memory
 #'   check <- generate_yaml(mtcars, schema = "SCH", table = "TBL",
@@ -736,6 +739,7 @@ age_standardize <- function (my.dt, ref.popname = NULL, collapse = T, my.count =
 #' # output to a file
 #'   generate_yaml(mtcars, outfile = "C:/temp/test.yaml", schema = "SCH", table = "TBL",
 #'   datasource = "R standard mtcars")
+#' }
 #'
 generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL, table = NULL){
 
@@ -859,5 +863,38 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
 
   if(mi.outfile == 1){return(MyYAML)}else{message(paste0("YAML saved to ", outfile))}
 
+}
+
+#' Silence (i.e., suppress or mute) printed messages from functions
+#'
+#' @description
+#' Silence noisy functions
+#'
+#' @param myf the name of the function that you desire to silence, along with its arguments
+#'
+#' @return whatever should be returned by the function that is being silenced
+#'
+#' @export
+#'
+#' @keywords quiet quietly silence silent
+#'
+#' @name quiet
+#'
+
+#' @examples
+#' \dontrun{
+#' test <- function(x) {
+#'   x = 3^x
+#'   cat("silences cat(): ", x, "\n")
+#'   print(paste0("silences print():", x))
+#'   message("does not silence message(): ", x)
+#' }
+#' test(4)
+#' quiet(test(4))
+#' }
+quiet <- function(myf) {
+    sink(tempfile())
+    on.exit(sink())
+    invisible(force(myf))
 }
 

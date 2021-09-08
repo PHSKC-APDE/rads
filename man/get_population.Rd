@@ -7,7 +7,7 @@
 get_population(
   kingco = T,
   years = c(2019),
-  ages = c(0:120),
+  ages = c(0:100),
   genders = c("F", "M"),
   races = c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white"),
   race_type = c("race_eth"),
@@ -46,6 +46,6 @@ Simple front-end for pulling in standard population data
 }
 \examples{
 \dontrun{
- get_population(geo_type = "region", group_by = c("geo_id"))[]
+ get_population(geo_type = "region")[]
 }
 }
