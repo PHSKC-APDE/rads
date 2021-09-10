@@ -1,7 +1,7 @@
-Introduction to calc()
+calc()
 ================
 
-## Introducing the `calc()` function
+## Introduction
 
 `calc()` is the analytic workhorse of `rads`. It provides a standardized
 method for obtaining most of what we usually want to calculate: means,
@@ -197,37 +197,37 @@ calc(ph.data = birth,
 
     ##               variable level chi_race_eth8 chi_sex     mean        rse
     ##  1: birth_weight_grams    NA         White  Female 3340.295  0.2179622
-    ##  2: birth_weight_grams    NA         White    Male 3460.298  0.2164470
-    ##  3: birth_weight_grams    NA      Hispanic  Female 3270.074  0.4190681
+    ##  2: birth_weight_grams    NA         Asian    Male 3231.952  0.3027408
+    ##  3: birth_weight_grams    NA         White    Male 3460.298  0.2164470
     ##  4: birth_weight_grams    NA      Hispanic    Male 3301.784  0.4334156
-    ##  5: birth_weight_grams    NA         Black  Female 3196.872  0.5844288
-    ##  6: birth_weight_grams    NA      Multiple    Male 3369.178  0.6933292
-    ##  7: birth_weight_grams    NA      Multiple  Female 3251.312  0.7494198
-    ##  8: birth_weight_grams    NA         Asian    Male 3231.952  0.3027408
-    ##  9: birth_weight_grams    NA         Asian  Female 3145.902  0.2994104
-    ## 10: birth_weight_grams    NA         Black    Male 3306.213  0.5986925
+    ##  5: birth_weight_grams    NA       Oth/unk  Female 3223.599  0.9514328
+    ##  6: birth_weight_grams    NA          NHPI    Male 3444.178  1.2579021
+    ##  7: birth_weight_grams    NA         Black    Male 3306.213  0.5986925
+    ##  8: birth_weight_grams    NA         Black  Female 3196.872  0.5844288
+    ##  9: birth_weight_grams    NA      Multiple    Male 3369.178  0.6933292
+    ## 10: birth_weight_grams    NA         Asian  Female 3145.902  0.2994104
     ## 11: birth_weight_grams    NA          AIAN  Female 3251.965  2.4314716
-    ## 12: birth_weight_grams    NA          NHPI  Female 3287.541  1.5002905
-    ## 13: birth_weight_grams    NA       Oth/unk  Female 3223.599  0.9514328
-    ## 14: birth_weight_grams    NA          NHPI    Male 3444.178  1.2579021
+    ## 12: birth_weight_grams    NA      Multiple  Female 3251.312  0.7494198
+    ## 13: birth_weight_grams    NA      Hispanic  Female 3270.074  0.4190681
+    ## 14: birth_weight_grams    NA          NHPI  Female 3287.541  1.5002905
     ## 15: birth_weight_grams    NA       Oth/unk    Male 3315.557  1.0060823
     ## 16: birth_weight_grams    NA          AIAN    Male 3438.641  2.4517252
     ## 17: birth_weight_grams    NA         White    <NA> 1873.500 70.5364291
     ##         mean_se mean_lower mean_upper
     ##  1:    7.280580   3326.026   3354.565
-    ##  2:    7.489711   3445.618   3474.977
-    ##  3:   13.703835   3243.215   3296.933
+    ##  2:    9.784437   3212.775   3251.129
+    ##  3:    7.489711   3445.618   3474.977
     ##  4:   14.310447   3273.736   3329.832
-    ##  5:   18.683442   3160.253   3233.491
-    ##  6:   23.359494   3323.394   3414.962
-    ##  7:   24.365976   3203.556   3299.069
-    ##  8:    9.784437   3212.775   3251.129
-    ##  9:    9.419157   3127.441   3164.363
-    ## 10:   19.794051   3267.418   3345.009
+    ##  5:   30.670381   3163.487   3283.712
+    ##  6:   43.324387   3359.264   3529.092
+    ##  7:   19.794051   3267.418   3345.009
+    ##  8:   18.683442   3160.253   3233.491
+    ##  9:   23.359494   3323.394   3414.962
+    ## 10:    9.419157   3127.441   3164.363
     ## 11:   79.070604   3096.989   3406.940
-    ## 12:   49.322668   3190.871   3384.212
-    ## 13:   30.670381   3163.487   3283.712
-    ## 14:   43.324387   3359.264   3529.092
+    ## 12:   24.365976   3203.556   3299.069
+    ## 13:   13.703835   3243.215   3296.933
+    ## 14:   49.322668   3190.871   3384.212
     ## 15:   33.357232   3250.178   3380.936
     ## 16:   84.306018   3273.404   3603.877
     ## 17: 1321.500000      0.000  18664.750

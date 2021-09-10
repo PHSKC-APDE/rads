@@ -1,17 +1,17 @@
 ---
-title: "Introduction to calc()"
+title: "calc()"
 output:
   github_document: default
   rmarkdown::html_vignette: default
   pdf_document: default
   urlcolor: blue
 vignette: |
-  %\VignetteEngine{knitr::knitr} %\VignetteIndexEntry{Introduction to calc}
+  %\VignetteEngine{knitr::knitr} %\VignetteIndexEntry{calc}
 ---
 ```{r, echo = F, message=FALSE}
 library(rads)
 ```
-## Introducing the `calc()` function
+## Introduction
 `calc()` is the analytic workhorse of `rads`. It provides a standardized method for obtaining most of what we usually want to calculate: means, medians, counts, confidence intervals, standard errors, relative standard errors (RSE), numerators, denominators, the number missing, and the proportion missing. `calc()` can be used with record data (e.g., vital statistics, census, enrollment numbers, etc.) as well as survey data (e.g., [BRFSS](https://www.cdc.gov/brfss/index.html), [ACS PUMS](https://github.com/PHSKC-APDE/svy_acs), etc.). `calc()` is built on top of common R packages and was created to allow APDE staff the convenience of using a common syntax across various data sources. This means that everything `calc` can do can be done with other packages ... sometimes in a more efficient manner.
 
 This vignette will provide some examples to introduce the `calc()` function by walking through basic analyses with vital statistics (birth data) and survey data (ACS PUMS). To get the most out of this vignette, we recommend that you type each and every bit of code into R. Doing so will almost definitely help you learn the syntax much faster than just reading the vignette or copying and pasting the code.
