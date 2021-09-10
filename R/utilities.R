@@ -509,6 +509,8 @@ list_ref_pop <- function(){
   ref_agecat_18 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_18_age_groups.csv", showProgress=FALSE)
   ref_agecat_19 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_19_age_groups.csv", showProgress=FALSE)
   ref_pop_table <- unique(rbind(ref_single_to_99[, list(standard)], ref_single_to_84[, list(standard)], ref_agecat_18[, list(standard)], ref_agecat_19[, list(standard)]))
+  setorder(ref_pop_table, standard)
+  ref_pop_table <- rbind(ref_pop_table[standard %like% "2000 U.S. Std P"], ref_pop_table[!standard %like% "2000 U.S. Std P"])
   return(ref_pop_table$standard)
 }
 
@@ -675,7 +677,8 @@ age_standardize <- function (my.dt, ref.popname = NULL, collapse = T, my.count =
     for(z in seq(1, nrow(my.ref.pop))){
       my.dt[age %in% my.ref.pop[z, age_start]:my.ref.pop[z, age_end], agecat := my.ref.pop[z, agecat]]
     }
-    my.dt <- my.dt[, list(count = sum(count), pop = sum(pop)), by = "agecat"]
+    if(!is.null(group_by)){my.dt <- my.dt[, list(count = sum(count), pop = sum(pop)), by = c("agecat", group_by)]}
+    if(is.null(group_by)){my.dt <- my.dt[, list(count = sum(count), pop = sum(pop)), by = "agecat"]}
   }
 
   # Merge standard pop onto count data ----
