@@ -1,4 +1,4 @@
-Introduction to get\_data\_birth() & get\_data()
+get\_data()
 ================
 
 ## Introduction
