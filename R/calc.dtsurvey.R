@@ -188,7 +188,7 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
     time_fun = data.table::substitute2(time_format(time_var[!is.na((x))]), list(time_var = time_var, x=x))
 
     #if we're in a window, don't "by" by time var. Instead, let time_format handle things
-    if(!window) by = c(by, time_var) #add time_var to by is specified
+    #if(!window) by = c(by, time_var) #add time_var to by is specified
   }else{
     time_fun = NULL
   }
@@ -347,7 +347,7 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
   if(window){
     data.table::setnames(res, 'time', time_var)
   }else{
-    res[, time := NULL] #already captured in the by var stuff
+    if('time' %in% names(res)) res[, time := NULL] #already captured in the by var stuff
   }
 
   return(res)
