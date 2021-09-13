@@ -2,7 +2,7 @@
 #' @name calc
 #' @param ph.data data.table or tbl_svy. Dataset.
 #' @param what character vector. Variable to calculate metrics for.
-#' @param ... expressions to be passed to \code{\link{filter}} (or equivalent)
+#' @param where subsetting expression
 #' @param by character vector. Must refer to variables within ph.data. The variables within ph.data to compute `what` by
 #' @param metrics character. See \code{\link{metrics}} for the available options. Note, except when 'distinct' is
 #' selected, all metrics are calculated -- this argument just specifies which one gets returned
@@ -18,7 +18,7 @@
 #' @return a data.table containing the results
 #' @details
 #' This function calculates `metrics` for each variable in `what` from rows meeting the conditions specified
-#' by `...` (i.e., where), for each grouping implied by `by`.
+#' by `where` for each grouping implied by `by`.
 #'
 #' Available metrics include:
 #' 1) mean, se, upper, lower: Average response and associated metrics of uncertainty. Underlying ci (e.g. upper and lower) is 95%
