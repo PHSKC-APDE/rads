@@ -40,7 +40,10 @@ calc.dtsurvey = function(ph.data,
 
   # limits metrics to those that have been pre-specified, i.e., non-standard metrics are dropped
   if(!is.null(metrics)){
-    metrics <- intersect(metrics, opts)
+    naughty = setdiff(metrics,opts)
+    if(length(naughty)>0){
+      stop(paste('Requested invalid metric(s):', paste(naughty, collapse = ', ')))
+    }
   }else{
     stop('Must specify a `metric`')
   }
