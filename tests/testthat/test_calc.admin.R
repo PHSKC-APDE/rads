@@ -72,7 +72,6 @@ test_that('Check metrics',{
                         round2(10*mean(dt$kotelchuck, na.rm = T), 3) )
           expect_equal( calc(dt, metrics = c("rate"), per = 10, what = c("kotelchuck"), time_var = "chi_year")$rate_per,
                         10 )
-
         # check rse
           expect_equal( round2(calc(dt, metrics = c("mean", "se", "rse"), what = c("birth_weight_grams"), time_var = "chi_year")$rse, 4),
                         round2( 100*(sd(dt$birth_weight_grams, na.rm = T) / sqrt(nrow(dt[!is.na(birth_weight_grams)]))

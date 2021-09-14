@@ -62,6 +62,7 @@ calc.dtsurvey = function(ph.data,
     if(!is.numeric(win)) stop('`win` must either be NULL or numeric or a non-NA numeric of length one greater than 1')
     if(is.na(win) || length(win) != 1 || win <=0 ) stop('`win` must either be NULL, or a non-NA numeric of length one greater than 1')
   }
+  if(!is.null(time_var) && !is.null(by) && time_var %in% by) stop('`time_var` should not also show up in `by`. If you need/want both, create a duplicate column and pass that instead')
 
   #validate 'fancy_time'
   if(!is.logical(fancy_time)){
@@ -125,7 +126,7 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
   #For each metric, define a function to compute it-- or ignore it if not called for.
   xisfactor = is.factor(DT[,x,env = list(x=x)])
   #construct the query
-  if('mean' %in% metrics){
+  if(any(c('mean', 'rate') %in% metrics)){
     mean_fun = data.table::substitute2(list(dtsurvey::smean(x,
                                                   na.rm = T,
                                                   var_type = c('se', 'ci'),
@@ -289,7 +290,7 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
   }
 
   #if mean/total were asked for, split out things
-  if('mean' %in% metrics){
+  if(any(c('rate', 'mean') %in% metrics)){
 
     if(xisfactor){
       r1m = r1[, unlist(mean, recursive = FALSE), id]
@@ -315,7 +316,7 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
   }
 
   #assemble factors
-  if(any(c('mean', 'total') %in% metrics) && xisfactor){
+  if(any(c('mean', 'rate', 'total') %in% metrics) && xisfactor){
     if(exists('r1m')){
       r1 = merge(r1[, mean:=NULL], r1m, by = 'id')
     }
@@ -326,7 +327,15 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
     }
   }
   if(xisfactor){
-    res = merge(r1,r2, by = c(by, 'level'), all.x = T)
+    if(!any(c('rate','total','mean') %in% metrics)){
+      r1[, one := 1]
+      r2[, one := 1]
+
+      res = merge(r1, r2, by = c('one',by), all.x = T)
+      res[, one := NULL]
+    }else{
+      res = merge(r1,r2, by = c('by', 'level'), all.x = T)
+    }
     res[, id := NULL]
     if(!'numerator' %in% metrics) res[, numerator := NULL]
   }
@@ -340,15 +349,13 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
     res[, c('rate', paste0('rate', c('_se', '_lower', '_upper'))) := .SD * per,
         .SDcols = c('mean', paste0('mean_',c('se', 'lower', 'upper')))]
     res[, rate_per := per]
+
+    if(!'mean' %in% metrics) res[, c('mean', paste0('mean_',c('se', 'lower', 'upper'))) := NULL]
+
   }
 
 
-  #if it was in a window, change the time variable to be the time_vars name
-  if(window){
-    data.table::setnames(res, 'time', time_var)
-  }else{
-    if('time' %in% names(res)) res[, time := NULL] #already captured in the by var stuff
-  }
+  if(!is.null(time_var)) data.table::setnames(res, 'time', time_var)
 
   return(res)
 
