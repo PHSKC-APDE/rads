@@ -201,13 +201,6 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
     ut_fun =NULL
   }
 
-  #ndistinct
-  if('ndistinct' %in% metrics){
-    ndis_fun = data.table::substitute2(length(unique(na.omit(x))), list(x = x))
-  }else{
-    ndis_fun = NULL
-  }
-
   #missing
   if('missing' %in% metrics){
     mis_fun = data.table::substitute2(sum(is.na( x )), list(x = x))
@@ -244,8 +237,7 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
     obs = obs_fun,
     missing = mis_fun,
     missing.prop = misp_fun,
-    unique.time = ut_fun,
-    ndistinct = ndis_fun
+    unique.time = ut_fun
   ),list(X = I(x),
          time_fun = time_fun,
          mean_fun = mean_fun,
@@ -256,7 +248,6 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
          mis_fun = mis_fun,
          misp_fun = misp_fun,
          ut_fun = ut_fun,
-         ndis_fun = ndis_fun,
          obs_fun = obs_fun))
 
   #remove nulls
@@ -333,11 +324,12 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
 
       res = merge(r1, r2, by = c('one',by), all.x = T)
       res[, one := NULL]
-    }else{
-      res = merge(r1,r2, by = c('by', 'level'), all.x = T)
+    }else if('numerator' %in% metrics){
+      res = merge(r1,r2, by = c(by, 'level'), all.x = T)
+    } else{
+      res = r1
     }
     res[, id := NULL]
-    if(!'numerator' %in% metrics) res[, numerator := NULL]
   }
 
   #if asked for, compute rse and rate

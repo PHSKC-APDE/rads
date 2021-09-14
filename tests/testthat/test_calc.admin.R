@@ -89,12 +89,6 @@ test_that('Check metrics',{
         # check obs
           expect_equal( calc(dt, metrics = c("obs"), chi_age<20, what = c("kotelchuck"), time_var = "chi_year")$obs,
                         nrow(dt[chi_age<20]))
-        # check ndistinct for continuous
-          expect_equal( calc(dt, metrics = c("ndistinct"), what = c("birth_weight_grams"), time_var = "chi_year", by = c("chi_sex"))[chi_sex=="Male"]$ndistinct,
-                        length(unique(dt[!is.na(birth_weight_grams) & chi_sex == "Male"]$birth_weight_grams)) )
-        # check ndistinct for continuous
-          expect_equal( calc(dt, metrics = c("ndistinct"), what = c("fetal_pres"), time_var = "chi_year", by = c("chi_sex"))[chi_sex=="Male" & level == "Breech"]$ndistinct,
-                        nrow(unique(dt[chi_sex == "Male" & fetal_pres == "Breech",  .(chi_sex, fetal_pres)])) )
 })
 
 test_that('Check per',{
@@ -172,27 +166,29 @@ test_that('Nonspecified time',{
 
 })
 
-test_that('invalid/NA combinations of by variables results in no rows generated',{
+test_that('NA in by is valid.',{
 
-  sur <- copy(dt)
-  sur[, blah := kotelchuck]
-  sur[fetal_pres == 'Cephalic', blah := NA]
-  sur[, blah2 := kotelchuck]
-  r1 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'fetal_pres', proportion = FALSE)
-  r2 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'fetal_pres', proportion = TRUE)
-  r3 = calc(sur, 'blah2', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'fetal_pres', proportion = FALSE)
-  r4 = calc(sur, 'blah2', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'fetal_pres', proportion = TRUE)
+  dt[, fact := fetal_pres]
+  dt[is.na(fact), fact := 'Turtle']
+  dt[fact == 'Cephalic', fact := NA]
+  r1 = calc(dt, 'kotelchuck', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'fetal_pres', proportion = TRUE)
+  r2 = calc(dt, 'kotelchuck', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'fact', proportion = TRUE)
 
-  expect_equal(r1[, .(mean, numerator, denominator, missing)], r3[!(fetal_pres %in% 'Cephalic'), .(mean, numerator, denominator, missing)])
-  expect_equal(r2[, .(mean, numerator, denominator, missing)], r4[!(fetal_pres %in% 'Cephalic'), .(mean, numerator, denominator, missing)])
-
-  r5 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = FALSE)
-  r6 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = TRUE)
-  r7 = calc(sur, 'blah2', !(fetal_pres %in% 'Cephalic'), metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = FALSE)
-  r8 = calc(sur, 'blah2', !(fetal_pres %in% 'Cephalic'), metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = TRUE)
-
-  expect_equal(r5[, .(mean, numerator, denominator, missing)], r6[, .(mean, numerator, denominator, missing)])
-  expect_equal(r7[, .(mean, numerator, denominator, missing)], r8[, .(mean, numerator, denominator, missing)])
-
+  expect_equal(r1[fetal_pres == 'Cephalic', .(mean, numerator, denominator, missing)], r2[is.na(fact), .(mean, numerator, denominator, missing)])
 
 })
+
+test_that('When a by level is all NA, a result is still provided',{
+
+  dt[, bw := birth_weight_grams]
+  dt[, fact := fetal_pres]
+  dt[fact == 'Cephalic', bw := NA]
+  r1 = calc(dt, 'bw', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'fact', proportion = FALSE)
+
+
+  expect_equal(nrow(r1[fact == 'Cephalic']), 1)
+  expect_equal(r1[fact == 'Cephalic', .(mean, numerator, denominator, mean_se)],
+               data.table(mean = NaN, numerator = 0, denominator = 0, mean_se = NA_real_))
+
+})
+
