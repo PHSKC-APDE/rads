@@ -23,7 +23,7 @@ test_that('Check <what>: class(what) == factor',{
           expect_equal( round2(calc(dt, chi_year==2008, what = c("fetal_pres"), time_var = "chi_year")[level == "Cephalic"]$mean, 3),
                         round2(nrow(dt[chi_year==2008 & fetal_pres=="Cephalic"]) / nrow(dt[chi_year==2008 & !is.na(fetal_pres)]), 3))
           expect_equal( unique(calc(dt, chi_year==2008, what = c("fetal_pres"), time_var = "chi_year")[level == "Cephalic"]$chi_year),
-                        2008)
+                        '2008')
 })
 
 test_that('Check <what>: class(what) == binary',{
@@ -32,7 +32,7 @@ test_that('Check <what>: class(what) == binary',{
           expect_equal( round2(calc(dt, chi_year==2008, what = c("kotelchuck"), time_var = "chi_year")$mean, 3),
                         round2(mean(dt[chi_year==2008]$kotelchuck, na.rm = T), 3))
           expect_equal( unique(calc(dt, chi_year==2008, what = c("kotelchuck"), time_var = "chi_year")$chi_year),
-                        2008)
+                        '2008')
 })
 
 test_that('Check <what>: class(what) == continuous',{
@@ -41,7 +41,7 @@ test_that('Check <what>: class(what) == continuous',{
           expect_equal( round2(calc(dt, chi_year==2008, what = c("birth_weight_grams"), time_var = "chi_year")$mean, 3),
                         round2(mean(dt[chi_year==2008]$birth_weight_grams, na.rm = T), 3))
           expect_equal( unique(calc(dt, chi_year==2008, what = c("birth_weight_grams"), time_var = "chi_year")$chi_year),
-                        2008)
+                        '2008')
 })
 
 test_that('Check <what>: multiple classes',{
