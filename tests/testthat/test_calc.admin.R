@@ -63,8 +63,6 @@ test_that('Check metrics',{
           expect_equal( calc(dt, metrics = c("total"), what = c("birth_weight_grams"), time_var = "chi_year")$total,
                         sum(dt$birth_weight_grams, na.rm = T))
         # check rate
-          expect_equal( calc(dt, metrics = c("rate"), what = c("birth_weight_grams"), time_var = "chi_year")$rate,  # should be NA when not binary
-                        as.numeric(NA) )
           expect_equal( round2(calc(dt, metrics = c("rate"), what = c("kotelchuck"), time_var = "chi_year")$rate, 3),  # should be NA when not binary
                         round2(1*mean(dt$kotelchuck, na.rm = T), 3) ) # when select rate, default is per 1
         # check rate_per
@@ -89,7 +87,7 @@ test_that('Check metrics',{
           expect_equal( round2(calc(dt, metrics = c("missing.prop"), what = c("kotelchuck"), time_var = "chi_year")$missing.prop, 3),
                         round2(nrow(dt[is.na(kotelchuck)])/nrow(dt), 3) )
         # check obs
-          expect_equal( calc(dt, metrics = c("obs"), "chi_age<20", what = c("kotelchuck"), time_var = "chi_year")$obs,
+          expect_equal( calc(dt, metrics = c("obs"), chi_age<20, what = c("kotelchuck"), time_var = "chi_year")$obs,
                         nrow(dt[chi_age<20]))
         # check ndistinct for continuous
           expect_equal( calc(dt, metrics = c("ndistinct"), what = c("birth_weight_grams"), time_var = "chi_year", by = c("chi_sex"))[chi_sex=="Male"]$ndistinct,

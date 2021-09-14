@@ -73,7 +73,7 @@ metrics = function(){
   c('total', #'total_se', 'total_lower', 'total_upper'
     'mean', 'rse', #'mean_se', 'mean_lower', 'mean_upper',
     'numerator', 'denominator', 'obs', 'median',
-    'unique.time', 'ndistinct',
+    'unique.time',
     'missing', 'missing.prop',
     'rate') #, 'rate_per', 'rate_se', 'rate_lower', 'rate_upper')
 }
