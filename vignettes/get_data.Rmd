@@ -1,10 +1,10 @@
 ---
-title: "Introduction to get_data_birth() & get_data()"
+title: "get_data()"
 output:
   github_document: default
   rmarkdown::html_vignette: default
 vignette: >
-  %\VignetteIndexEntry{Introduction to get_data_birth & get_data}
+  %\VignetteIndexEntry{get_data}
   %\VignetteEngine{knitr::knitr}
 ---
 

@@ -32,15 +32,14 @@ a list with the YAML file contents (if outfile not specified) or a message stati
 file has been saved (if outfile was specified)
 }
 \description{
-#' @description
 YAML files can be helpful for uploading data to SQL efficiently and correctly. This function should enable
 the user to create a standard YAML file that be be used to push data from R to SQL.
-}
-\details{
+
 This function expects data in the form of a data.frame or data.table
 }
 \examples{
 
+\dontrun{
 data(mtcars)
 # output to object in memory
   check <- generate_yaml(mtcars, schema = "SCH", table = "TBL",
@@ -48,6 +47,7 @@ data(mtcars)
 # output to a file
   generate_yaml(mtcars, outfile = "C:/temp/test.yaml", schema = "SCH", table = "TBL",
   datasource = "R standard mtcars")
+}
 
 }
 \keyword{YAML}
