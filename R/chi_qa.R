@@ -25,7 +25,6 @@
 #' @keywords CHI, Tableau, Production
 #'
 #' @importFrom data.table is.data.table ':=' setDT setDF data.table setorder copy setnames setorder dcast setcolorder fread shift "%between%"
-#' @importFrom dplyr '%>%' distinct mutate n_distinct left_join
 #' @importFrom glue glue
 #' @importFrom utils write.table
 #' @importFrom yaml yaml.load
