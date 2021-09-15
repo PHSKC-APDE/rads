@@ -136,8 +136,8 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
                                                   ci_method = cim,
                                                   level = l,
                                                   ids = `_id`,
-                                                  sv = sv,
-                                                  st = st)),
+                                                  sv = ..sv,
+                                                  st = ..st)),
                                        list(x = x,
                                             l = level,
                                             cim = I(ci_method)))
@@ -152,8 +152,8 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
                                                     ci_method = 'total',
                                                     level = l,
                                                     ids = `_id`,
-                                                    sv = sv,
-                                                    st = st)),
+                                                    sv = ..sv,
+                                                    st = ..st)),
                                         list(x = x,
                                              l = level))
   }else{
@@ -181,7 +181,7 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
       med_fun = NULL
       warning('Ignoring a request to calculate the median on a factor')
     }else{
-      med_fun = data.table::substitute2(median(x, na.rm = T), list(x=x))
+      med_fun = data.table::substitute2(median(x, na.rm = T) * 1.0, list(x=x))
     }
   }else{
     med_fun = NULL
