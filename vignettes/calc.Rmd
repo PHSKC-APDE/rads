@@ -10,6 +10,7 @@ vignette: |
 ---
 ```{r, echo = F, message=FALSE}
 library(rads)
+library(dtsurvey)
 ```
 ## Introduction
 `calc()` is the analytic workhorse of `rads`. It provides a standardized method for obtaining most of what we usually want to calculate: means, medians, counts, confidence intervals, standard errors, relative standard errors (RSE), numerators, denominators, the number missing, and the proportion missing. `calc()` can be used with record data (e.g., vital statistics, census, enrollment numbers, etc.) as well as survey data (e.g., [BRFSS](https://www.cdc.gov/brfss/index.html), [ACS PUMS](https://github.com/PHSKC-APDE/svy_acs), etc.). `calc()` is built on top of common R packages and was created to allow APDE staff the convenience of using a common syntax across various data sources. This means that everything `calc` can do can be done with other packages ... sometimes in a more efficient manner.
@@ -44,6 +45,7 @@ There is no need to specify all of the arguments listed above. As you can see in
 
 ```{r}
 data(mtcars)
+mtcars = dtadmin(mtcars)
 calc(ph.data = mtcars, what = c("mpg"))[]
 ```
 **Note:** *The use of `[]` after `calc()` is used to print the output to the console. Typically, you would not print the results but would save them as an object. E.g., `my.est <- calc()`.*
@@ -134,21 +136,22 @@ calc(ph.data = birth,
 ## Example survey analyses
 Before using `calc()` with survey data, the user must survey set the data while properly specifying the survey design. Here is an example of how to set [ACS PUMS](https://github.com/PHSKC-APDE/svy_acs) person level data:
 ```{r, warning=FALSE, message=FALSE}
-library(srvyr)
+library(survey)
 
 load("//phshare01/epe_share/WORK/surveys/ACS/PUMS data & code all years/2019_1_year/prepped_R_files/2019_1_year_data.RData")
 
   pums <-     
-    srvyr::as_survey_rep(
-      person.wa ,
-      weights = pwgtp ,
+    survey::svrepdesign(
+      weight = ~pwgtp ,
       combined.weights = TRUE ,
-      repweights = grep('pwgtp[0-9]+', names(person.wa), value  = T) ,
+      repweights = 'pwgtp[0-9]+' ,
       scale = 4 / 80 ,
       rscales = rep( 1 , 80 ) ,
       mse = TRUE ,
-      type = "JK1"
+      type = "JK1" ,
+      data = person.wa
     )
+  pums =dtsurvey::dtrepsurvey(pums)
 ```
 Once the data has been set as a survey, we can use the `calc()` function the same way that we used it for vital statistics (birth) data. 
 
@@ -159,7 +162,7 @@ To confirm that the data has been survey set properly, it would be wise to check
 When `calc` analyzes survey data, the `numerator` is the number of observations in that category and the `total` is the survey weighted value for those observations. We know that the approximate 2019 populations of WA State, King County, and Seattle were ~7.6 million, ~2.2 million, and 750,000, respectively. How do the following 2019 ACS estimates (i.e., `total` values) compare? 
 
 ```{r, warning=FALSE}
-pums$variables$constant <- 1
+pums[, constant :=1]
 
 # WA State
 calc(ph.data = pums, 
@@ -198,18 +201,10 @@ calc(ph.data = pums,
 calc(ph.data = pums, 
      what = c("agechna"), 
      metrics = c("mean", "rse", "obs", "numerator", "denominator"), 
-     proportion = T, 
+     proportion = F, 
      by = "disability")[]
 ```
 
-**Proportion disabled, by CHNA age group**
-```{r, warning=FALSE}
-calc(ph.data = pums, 
-     what = c("disability"), 
-     metrics = c("mean", "rse", "obs", "numerator", "denominator"), 
-     proportion = T, 
-     by = "agechna")[]
-```
 
 **Mean & median age in King County, by disability status**
 ```{r, warning=FALSE}
@@ -232,9 +227,9 @@ set.seed(98121)
 
 mydt <- data.table(
   school = as.factor(sample(c("Alpha", "Beta", "Gamma", "Delta"), 2000, replace = T)),
-  grades = sample(c("A", "B", "C", "D"), 2000, replace = T), 
+  grades = as.factor(sample(c("A", "B", "C", "D"), 2000, replace = T)), 
   year = sample(2016:2021, 2000, replace = T))
-
+mydt = dtsurvey::dtadmin(mydt)
 mydt[]
 ```
 We see that we created a dataset of 2000 rows with grades in four schools between with 2016 and 2021.
@@ -247,7 +242,7 @@ grades.distribution <- calc(
   what = "grades", 
   by = "school", 
   time_var = "year", 
-  metrics = c("numerator", "denominator", "mean"), proportion = T)
+  metrics = c("numerator", "denominator", "mean"), proportion = F)
 
 grades.distribution[1:4]
 ```
@@ -262,7 +257,7 @@ set.seed(98121)
 mydt[, mywghts := sample(50:1300, 2000, replace = T)]
 
 # survey set the data
-mysvy <- srvyr::as_survey_design(mydt, weights = mywghts)
+mysvy <-dtsurvey::dtsurvey(data.table(mydt[, `_id` := NULL]), weight = 'mywghts')
 ```
 
 **Using the survey information, again calculate the proportion of A's and B's in the Alpha and Beta schools**
@@ -273,7 +268,7 @@ grades.distribution2 <- calc(
   what = "grades", 
   by = "school", 
   time_var = "year", 
-  metrics = c("numerator", "denominator", "mean"), proportion = T)
+  metrics = c("numerator", "denominator", "mean"), proportion = FALSE)
 
 grades.distribution2[1:4]
 ```
