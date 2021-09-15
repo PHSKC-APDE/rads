@@ -97,7 +97,7 @@ calc.dtsurvey = function(ph.data,
     st = attr(ph.data, 'stype')
     whatfactor = is.factor(ph.data[[wht]])
     if(st == 'admin' && (whatfactor || proportion == T)) meth = 'unweighted_binary'
-    if(st != 'admin' && (whatfactor || proportion == T)) meth = 'xlogit'
+    if(st != 'admin' && proportion == T) meth = 'xlogit'
 
     #Compute the metric
     r = lapply(wins, function(w){

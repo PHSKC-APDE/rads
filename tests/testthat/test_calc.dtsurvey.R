@@ -9,6 +9,20 @@ apiclus1$nagrp = sample(c(1,2,NA), nrow(apiclus1), replace = T)
 apiclus1$nagrp2 = sample(c(1,2,NA), nrow(apiclus1), replace = T)
 apiclus1$ysw = as.numeric(apiclus1$sch.wide == "Yes")
 apiclus1$yyy = sample(1:4, nrow(apiclus1), replace = T)
+apiclus1$yyy2 = sample(c(1,3,5), nrow(apiclus1), replace = T)
+apiclus1$yyy3 = sample(c(1,3,5), nrow(apiclus1), replace = T)
+apiclus1$yyy3[apiclus1$stype=='E' & apiclus1$yyy3 %in% c(3,5)] = 1
+apiclus1$yyy3[apiclus1$stype!='E' & apiclus1$yyy3 %in% c(3)] = 5
+apiclus1$E = as.numeric(apiclus1$stype == 'E')
+apiclus1$E[apiclus1$yyy3 == 5] = NA
+apiclus1$H = as.numeric(apiclus1$stype == 'H')
+apiclus1$M = as.numeric(apiclus1$stype == 'M')
+apiclus1$blah = sample(c(NA,0,1), nrow(apiclus1), replace = T)
+apiclus1$highenroll = apiclus1$enroll>median(apiclus1$enroll)
+apiclus1$highmeals = apiclus1$meals>median(apiclus1$meals)
+apiclus1$hm_bin = as.numeric(apiclus1$highmeals)
+apiclus1$both_bin = apiclus1$both == 'Yes'
+s2 <- dtrepsurvey(as.svrepdesign(svydesign(id=~dnum, weights=~pw, data=apiclus1)))
 clus<-svydesign(id=~dnum, weights=~pw, data=apiclus1)
 sur = dtsurvey(apiclus1, psu = 'dnum', weight = 'pw')
 set.seed(98104)
@@ -175,7 +189,7 @@ test_that('Invalid input for by',{
 })
 #
 test_that('Invalid input for metric',{
-  expect_error(calc(sur, 'api00', metrics = 'turtles', time_var = NULL), 'Invalid metrics detected: turtles')
+  expect_error(calc(sur, 'api00', metrics = 'turtles', time_var = NULL), 'Requested invalid')
 })
 #
 
@@ -183,8 +197,7 @@ test_that('Invalid input for metric',{
 test_that('Numerator and denominator calculations account for NAs',{
 
   #make a column with NAs
-  sur <- sur %>% mutate(blah = sample(c(0,1, NA), dplyr::n(), replace = T))
-  dt = data.table::as.data.table(sur$variables)
+  dt = data.table::as.data.table(sur)
 
   a <- calc(sur, 'blah', metrics = c('numerator', 'denominator', 'missing'), proportion = T, time_var = NULL, win = NULL)
   b = dt[, .N, by = blah]
@@ -208,25 +221,21 @@ test_that('Numerator and denominator calculations account for NAs',{
 
 test_that('survey design and survey rep design are equal',{
 
-  s1 <- as_survey_design(svydesign(id=~dnum, weights=~pw, data=apiclus1, fpc=~fpc))
-  s2 <- as_survey_rep(as.svrepdesign(s1))
 
-  a1 = calc(s1, 'stype', by = 'both', metrics = metrics())
-  a2 = calc(s2, 'stype', by = 'both', metrics = metrics())
+  a1 = calc(sur, 'stype', by = 'both', time_var = 'yyy', metrics = setdiff(metrics(), 'median'))
+  a2 = calc(s2, 'stype', by = 'both', time_var = 'yyy', metrics = setdiff(metrics(), 'median'))
 
   #Epect that the means are equal. Se is different depending on method
-  expect_equal(a1[, .(mean, total, rate, numerator, missing, ndistinct, unique.time, denominator, missing.prop, obs)],
-               a2[, .(mean, total, rate, numerator, missing, ndistinct, unique.time, denominator, missing.prop, obs)])
+  expect_equal(a1[, .(mean, total, rate, numerator, missing, unique.time, denominator, missing.prop, obs)],
+               a2[, .(mean, total, rate, numerator, missing, unique.time, denominator, missing.prop, obs)])
 
 })
 
 test_that('Multiple by conditions',{
 
-  apiclus1$highenroll = apiclus1$enroll>median(apiclus1$enroll)
-  apiclus1$highmeals = apiclus1$meals>median(apiclus1$meals)
-  apiclus1$both_bin = apiclus1$both == 'Yes'
-  s1 <- as_survey_design(svydesign(id=~dnum, weights=~pw, data=apiclus1, fpc=~fpc))
-  s2 <- as_survey_rep(as.svrepdesign(s1))
+
+  s1 <- sur
+
 
   a1 = calc(s1, 'both', by = c('highenroll', 'highmeals'), metrics = c('mean', 'numerator', 'denominator'))
   a2 = calc(s2, 'both', by = c('highenroll', 'highmeals'), metrics = c('mean', 'numerator', 'denominator'))
@@ -234,7 +243,7 @@ test_that('Multiple by conditions',{
   #confirm survey design and survey rep are the same
   expect_equal(a1[, .(variable, level, highenroll, highmeals, mean, numerator, denominator)],a2[,.(variable, level, highenroll, highmeals, mean, numerator, denominator)])
 
-  r1 = svyby(~both, ~highenroll + highmeals, s1, svymean)
+  r1 = svyby(~both, ~highenroll + highmeals, clus, svymean)
   ci = confint(r1)
   r1 = setDT(as.data.frame(r1))
   r1[, grep('se.', names(r1), fixed = T) := NULL]
@@ -248,108 +257,62 @@ test_that('Multiple by conditions',{
 
 })
 
-test_that('Finding the mean uses svyciprop', {
-  s1 <- as_survey_design(svydesign(id=~dnum, weights=~pw, data=apiclus1, fpc=~fpc))
-  s1 <- s1 %>% mutate(level = stype == 'M')
-  s1 <- s1 %>% mutate(blah = as.numeric(level))
+test_that('Proportion toggle', {
+
 
   #NOTE: confint(svyciprop(~level, s1)) and confint(svyby(~level, 1, s1, svyciprop)) don't give the same answers.
-  #not sure why
+  #not sure why. Note 9/15/21-- I think it might have to do with passing degrees of freedom, but I don't remember.
 
-  a1 = calc(s1, what = c('level', 'blah'), metrics = c('mean', 'numerator', 'denominator'), proportion = T)
-  a2 = svyciprop(~as.numeric(level), s1)
-  a3 = svyby(~level, 1, s1, svyciprop)
+  a1 = calc(sur, what = c('hm_bin'), metrics = c('mean', 'numerator', 'denominator'), proportion = T)
+  a2 = svyciprop(~hm_bin, clus)
+  a3 = svyby(~hm_bin, 1, clus, svyciprop)
 
   #the two different (svyby and normal approaches work)
-  expect_equal(c(as.numeric(a2), confint(a2)), unname(unlist(a1[variable == 'blah', .(mean, mean_lower, mean_upper)])))
+  expect_equal(c(as.numeric(a2), confint(a2)), unname(unlist(a1[, .(mean, mean_lower, mean_upper)])))
 })
 
 test_that('time_var, fancy_time, and missing years because of NAs options', {
-  s1 <- as_survey_design(svydesign(id=~dnum, weights=~pw, data=apiclus1, fpc=~fpc))
-  s1 <- s1 %>% mutate(time = rep(c(1,3, 5), nrow(apiclus1)/3))
 
-  a1 = calc(s1, what = c('api00'), metrics = c('mean', 'numerator', 'denominator'), time_var = 'time', fancy_time = TRUE, proportion = FALSE)
-  expect_equal(unique(a1[,time]) , '1, 3, 5')
+  a1 = calc(sur, what = c('api00'), metrics = c('mean', 'numerator', 'denominator'), time_var = 'yyy2', fancy_time = TRUE, proportion = FALSE)
+  expect_equal(unique(a1[,yyy2]) , '1, 3, 5')
 
-  a2 = calc(s1, what = c('api00'), metrics = c('mean', 'numerator', 'denominator'), time_var = 'time', fancy_time = FALSE, proportion = FALSE)
-  expect_equal(unique(a2[,time]) , '1-5')
-
-  #when a variable is missing in years
-  s1 <- s1 %>% mutate(out = case_when(time != 3 ~ api00))
-  a3 = calc(s1, what = 'out', time_var = 'time', fancy_time = T)
-  a4 = calc(s1, what = 'out', time_var = 'time', fancy_time = F)
-
-  expect_equal(a3$time, '1, 5')
-  expect_equal(a4$time, '1-5')
+  a2 = calc(sur, what = c('api00'), metrics = c('mean', 'numerator', 'denominator'), time_var = 'yyy2', fancy_time = FALSE, proportion = FALSE)
+  expect_equal(unique(a2[,yyy2]) , '1-5')
 
   #what happens when its a factor
   #this tests entire year missingness and additional missingness by type & year
-  d = data.table(s1$variables)
-  d[, sss := as.character(stype)]
-  d[(time ==3) | (time == 5 & sss == 'E'), sss := NA]
+  #time calculations are dependant on the variable, not the value of the variable
+  a3 = calc(sur, what = 'stype', time_var = 'yyy3', fancy_time = T)
+  a4 = calc(sur, what = 'stype', time_var = 'yyy3', fancy_time = F)
 
-  s1 <- as_survey_design(svydesign(id=~dnum, weights=~pw, data=as.data.frame(d), fpc=~fpc))
+  expect_equal(a3[, .(level, yyy3)], data.table(level = c('E', 'H', 'M'), yyy3 = c('1, 5')))
+  expect_equal(a4[, .(level, yyy3)], data.table(level = c('E', 'H', 'M'), yyy3 = c('1-5')))
 
-  a5 = calc(s1, what = 'sss', time_var = 'time', fancy_time = T)
-  a6 = calc(s1, what = 'sss', time_var = 'time', fancy_time = F)
+  #several variables passed to what, with different temporal dimensions
+  a5 = calc(sur, what = c('E', 'H', 'M'), time_var = 'yyy3', fancy_time = T)
+  a6 = calc(sur, what = c('E', 'H', 'M'), time_var = 'yyy3', fancy_time = F)
 
-  expect_equal(a5[, .(level, time)], data.table(level = c('E', 'H', 'M'), time = c('1', '1, 5', '1, 5')))
-  expect_equal(a6[, .(level, time)], data.table(level = c('E', 'H', 'M'), time = c('1', '1-5', '1-5')))
+  expect_equal(a5[, .(variable, yyy3)], data.table(variable = c('E', 'H', 'M'), yyy3 = c('1', '1, 5', '1, 5')))
+  expect_equal(a6[, .(variable, yyy3)], data.table(variable = c('E', 'H', 'M'), yyy3 = c('1', '1-5','1-5')))
+
 
 })
 
 test_that('ci option works', {
-  s1 <- as_survey_design(svydesign(id=~dnum, weights=~pw, data=apiclus1, fpc=~fpc))
-
   #normal vars
-  r1 = calc(s1, what = 'api00', metrics = c('mean'), ci = .95)
-  r2 = calc(s1, what = 'api00', metrics = c('mean'), ci = .99)
+  r1 = calc(sur, what = 'api00', metrics = c('mean'), ci = .95)
+  r2 = calc(sur, what = 'api00', metrics = c('mean'), ci = .99)
 
   expect_gt(r2[, mean_upper], r1[, mean_upper])
   expect_lt(r2[, mean_lower], r1[, mean_lower])
 
   #factor vars
-  r3 = calc(s1, what = 'stype', metrics = c('mean'), ci = .95)
-  r4 = calc(s1, what = 'stype', metrics = c('mean'), ci = .99)
+  r3 = calc(sur, what = 'stype', metrics = c('mean'), ci = .95)
+  r4 = calc(sur, what = 'stype', metrics = c('mean'), ci = .99)
 
   expect_gt(r4[2, mean_upper], r3[2, mean_upper])
   expect_lt(r4[2, mean_lower], r3[2, mean_lower])
 
-})
-
-test_that('invalid/NA combinations of by variables results in no rows generated',{
-
-  sur <- sur %>% mutate(blah = case_when(stype == 'E' ~ NA_integer_,
-                                         TRUE ~ as.integer(api00>600)),
-                        blah2 = as.integer(api00>600))
-
-  r1 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'stype', proportion = FALSE)
-  r2 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'stype', proportion = TRUE)
-  r3 = calc(sur, 'blah2', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'stype', proportion = FALSE)
-  r4 = calc(sur, 'blah2', metrics = c('mean', 'numerator', 'denominator', 'missing'), by = 'stype', proportion = TRUE)
-
-  expect_equal(r1[, .(mean, numerator, denominator, missing)], r3[stype != 'E', .(mean, numerator, denominator, missing)])
-  expect_equal(r2[, .(mean, numerator, denominator, missing)], r4[stype != 'E', .(mean, numerator, denominator, missing)])
-  expect_equal(2, nrow(r1))
-  expect_equal(2, nrow(r2))
-
-  r5 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = FALSE)
-  r6 = calc(sur, 'blah', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = TRUE)
-  r7 = calc(sur, 'blah2', stype != 'E', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = FALSE)
-  r8 = calc(sur, 'blah2', stype != 'E', metrics = c('mean', 'numerator', 'denominator', 'missing'), proportion = TRUE)
-
-  expect_equal(r5[, .(mean, numerator, denominator, missing)], r6[, .(mean, numerator, denominator, missing)])
-  expect_equal(r7[, .(mean, numerator, denominator, missing)], r8[, .(mean, numerator, denominator, missing)])
-
-
-})
-
-test_that('Fancy time option', {
-  sur <- sur %>% mutate(yyy = sample(1:4, nrow(sur), replace = T))
-  r1 = calc(sur, 'api00', metrics = 'mean', proportion = F, time_var = 'yyy', fancy_time = TRUE)
-  r2 = calc(sur, 'api00', metrics = 'mean', proportion = F, time_var = 'yyy', fancy_time = FALSE)
-  r3 = calc(sur, 'stype', metrics = 'mean', proportion = F, time_var = 'yyy', fancy_time = TRUE)
-  r4 = calc(sur, 'stype', metrics = 'mean', proportion = F, time_var = 'yyy', fancy_time = FALSE)
 })
 
 
