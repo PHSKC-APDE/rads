@@ -1,15 +1,15 @@
-Introduction to calc()
+calc()
 ================
 
-## Introducing the `calc()` function
+## Introduction
 
 `calc()` is the analytic workhorse of `rads`. It provides a standardized
 method for obtaining most of what we usually want to calculate: means,
 medians, counts, confidence intervals, standard errors, relative
 standard errors (RSE), numerators, denominators, the number missing, and
 the proportion missing. `calc()` can be used with record data (e.g.,
-vital status, census, enrollment numbers, etc.) as well as survey data
-(e.g., [BRFSS](https://www.cdc.gov/brfss/index.html), [ACS
+vital statistics, census, enrollment numbers, etc.) as well as survey
+data (e.g., [BRFSS](https://www.cdc.gov/brfss/index.html), [ACS
 PUMS](https://github.com/PHSKC-APDE/svy_acs), etc.). `calc()` is built
 on top of common R packages and was created to allow APDE staff the
 convenience of using a common syntax across various data sources. This
@@ -17,7 +17,7 @@ means that everything `calc` can do can be done with other packages …
 sometimes in a more efficient manner.
 
 This vignette will provide some examples to introduce the `calc()`
-function by walking through basic analyses with vital status (birth
+function by walking through basic analyses with vital statistics (birth
 data) and survey data (ACS PUMS). To get the most out of this vignette,
 we recommend that you type each and every bit of code into R. Doing so
 will almost definitely help you learn the syntax much faster than just
@@ -80,16 +80,16 @@ calc(ph.data = mtcars, what = c("mpg"))[]
     ##    variable level     mean numerator denominator  mean_se mean_lower mean_upper
     ## 1:      mpg    NA 20.09062     642.9          32 1.065424   18.00243   22.17882
 
-**Note **: The use of `[]` after `calc()` is used to print the output to
+**Note:** *The use of `[]` after `calc()` is used to print the output to
 the console. Typically, you would not print the results but would save
-them as an object. E.g., `my.est <- calc()`.
+them as an object. E.g., `my.est <- calc()`.*
 
 ------------------------------------------------------------------------
 
-## Example vital status analyses
+## Example vital statistics analyses
 
-**First get the birth data (cf. [`get_data_birth()`
-vignette](https://github.com/PHSKC-APDE/rads/wiki/Vignette:-get_data_birth()))**
+**First get the birth data (cf. [get\_data()
+vignette](https://github.com/PHSKC-APDE/rads/wiki/Vignette:-get_data()))**
 
 ``` r
 birth <- get_data_birth(cols = c("chi_year", "chi_sex", "chi_race_eth8", 
@@ -199,17 +199,17 @@ calc(ph.data = birth,
     ##  1: birth_weight_grams    NA         White  Female 3340.295  0.2179622
     ##  2: birth_weight_grams    NA         Asian    Male 3231.952  0.3027408
     ##  3: birth_weight_grams    NA         White    Male 3460.298  0.2164470
-    ##  4: birth_weight_grams    NA          NHPI  Female 3287.541  1.5002905
-    ##  5: birth_weight_grams    NA      Hispanic    Male 3301.784  0.4334156
-    ##  6: birth_weight_grams    NA      Multiple  Female 3251.312  0.7494198
-    ##  7: birth_weight_grams    NA         Asian  Female 3145.902  0.2994104
-    ##  8: birth_weight_grams    NA         Black    Male 3306.213  0.5986925
+    ##  4: birth_weight_grams    NA      Hispanic    Male 3301.784  0.4334156
+    ##  5: birth_weight_grams    NA       Oth/unk  Female 3223.599  0.9514328
+    ##  6: birth_weight_grams    NA          NHPI    Male 3444.178  1.2579021
+    ##  7: birth_weight_grams    NA         Black    Male 3306.213  0.5986925
+    ##  8: birth_weight_grams    NA         Black  Female 3196.872  0.5844288
     ##  9: birth_weight_grams    NA      Multiple    Male 3369.178  0.6933292
-    ## 10: birth_weight_grams    NA         Black  Female 3196.872  0.5844288
-    ## 11: birth_weight_grams    NA      Hispanic  Female 3270.074  0.4190681
-    ## 12: birth_weight_grams    NA          AIAN  Female 3251.965  2.4314716
-    ## 13: birth_weight_grams    NA       Oth/unk  Female 3223.599  0.9514328
-    ## 14: birth_weight_grams    NA          NHPI    Male 3444.178  1.2579021
+    ## 10: birth_weight_grams    NA         Asian  Female 3145.902  0.2994104
+    ## 11: birth_weight_grams    NA          AIAN  Female 3251.965  2.4314716
+    ## 12: birth_weight_grams    NA      Multiple  Female 3251.312  0.7494198
+    ## 13: birth_weight_grams    NA      Hispanic  Female 3270.074  0.4190681
+    ## 14: birth_weight_grams    NA          NHPI  Female 3287.541  1.5002905
     ## 15: birth_weight_grams    NA       Oth/unk    Male 3315.557  1.0060823
     ## 16: birth_weight_grams    NA          AIAN    Male 3438.641  2.4517252
     ## 17: birth_weight_grams    NA         White    <NA> 1873.500 70.5364291
@@ -217,17 +217,17 @@ calc(ph.data = birth,
     ##  1:    7.280580   3326.026   3354.565
     ##  2:    9.784437   3212.775   3251.129
     ##  3:    7.489711   3445.618   3474.977
-    ##  4:   49.322668   3190.871   3384.212
-    ##  5:   14.310447   3273.736   3329.832
-    ##  6:   24.365976   3203.556   3299.069
-    ##  7:    9.419157   3127.441   3164.363
-    ##  8:   19.794051   3267.418   3345.009
+    ##  4:   14.310447   3273.736   3329.832
+    ##  5:   30.670381   3163.487   3283.712
+    ##  6:   43.324387   3359.264   3529.092
+    ##  7:   19.794051   3267.418   3345.009
+    ##  8:   18.683442   3160.253   3233.491
     ##  9:   23.359494   3323.394   3414.962
-    ## 10:   18.683442   3160.253   3233.491
-    ## 11:   13.703835   3243.215   3296.933
-    ## 12:   79.070604   3096.989   3406.940
-    ## 13:   30.670381   3163.487   3283.712
-    ## 14:   43.324387   3359.264   3529.092
+    ## 10:    9.419157   3127.441   3164.363
+    ## 11:   79.070604   3096.989   3406.940
+    ## 12:   24.365976   3203.556   3299.069
+    ## 13:   13.703835   3243.215   3296.933
+    ## 14:   49.322668   3190.871   3384.212
     ## 15:   33.357232   3250.178   3380.936
     ## 16:   84.306018   3273.404   3603.877
     ## 17: 1321.500000      0.000  18664.750
@@ -311,11 +311,13 @@ calc(ph.data = birth,
     ## 6:  chi_sex   Male     2018 24337       0   0.0000e+00
     ## 7:  chi_sex   Male     2019 24090       0   0.0000e+00
 
+------------------------------------------------------------------------
+
 ## Example survey analyses
 
-Before using `rads::calc()` with survey data, the user must survey set
-the data while properly specifying the survey design. Here is an example
-of how to set [ACS PUMS](https://github.com/PHSKC-APDE/svy_acs) person
+Before using `calc()` with survey data, the user must survey set the
+data while properly specifying the survey design. Here is an example of
+how to set [ACS PUMS](https://github.com/PHSKC-APDE/svy_acs) person
 level data:
 
 ``` r
@@ -337,7 +339,60 @@ load("//phshare01/epe_share/WORK/surveys/ACS/PUMS data & code all years/2019_1_y
 ```
 
 Once the data has been set as a survey, we can use the `calc()` function
-the same way that we used it for vital status (birth) data.
+the same way that we used it for vital statistics (birth) data.
+
+**Quick sanity check before proceeding.**
+
+To confirm that the data has been survey set properly, it would be wise
+to check if the survey weighted population is more or less what you
+would expect.
+
+When `calc` analyzes survey data, the `numerator` is the number of
+observations in that category and the `total` is the survey weighted
+value for those observations. We know that the approximate 2019
+populations of WA State, King County, and Seattle were \~7.6 million,
+\~2.2 million, and 750,000, respectively. How do the following 2019 ACS
+estimates (i.e., `total` values) compare?
+
+``` r
+pums$variables$constant <- 1
+
+# WA State
+calc(ph.data = pums, 
+     what = c("constant"), 
+     metrics = c("numerator", "total"), 
+     proportion = T)[]
+```
+
+    ##    variable level numerator   total total_se total_lower total_upper
+    ## 1: constant    NA     77879 7614893        0     7614893     7614893
+
+``` r
+# King County
+calc(ph.data = pums, 
+     what = c("constant"), 
+     chi_geo_kc ==1,
+     metrics = c("numerator", "total"), 
+     proportion = T)[]
+```
+
+    ##    variable level numerator   total total_se total_lower total_upper
+    ## 1: constant    NA     20767 2252619  1102.38     2250425     2254813
+
+``` r
+# Seattle
+calc(ph.data = pums, 
+     what = c("constant"), 
+     chi_geo_seattle ==1,
+     metrics = c("numerator", "total"), 
+     proportion = T)[]
+```
+
+    ##    variable level numerator  total total_se total_lower total_upper
+    ## 1: constant    NA      6526 752953 1077.184    750808.9    755097.1
+
+Now that we’ve established that our survey data is reasonable, we can
+continue with our analyses.
 
 **Mean (proportion) of those near poverty or disabled, by King County
 (vs. remainder of WA)**
@@ -446,3 +501,127 @@ calc(ph.data = pums,
     ##    denominator    mean_se mean_lower mean_upper
     ## 1:       18457 0.08386155   35.87861   36.21246
     ## 2:        2310 0.66318899   56.60026   59.24035
+
+------------------------------------------------------------------------
+
+## Example analyses with non-standard data
+
+In the examples above we used standard public health data (birth vital
+statistics and the Census Bureau’s ACS survey). However, since `calc()`
+is a generalized function, you can use it with nearly any dataset, as
+long as it is a data.frame, a data.table, or a survey object. To
+demonstrate this, we will use `calc()` with synthetic data that we will
+generate below.
+
+**Create the dataset**
+
+``` r
+library(data.table)
+set.seed(98121) 
+
+mydt <- data.table(
+  school = as.factor(sample(c("Alpha", "Beta", "Gamma", "Delta"), 2000, replace = T)),
+  grades = sample(c("A", "B", "C", "D"), 2000, replace = T), 
+  year = sample(2016:2021, 2000, replace = T))
+
+mydt[]
+```
+
+    ##       school grades year
+    ##    1:  Alpha      A 2017
+    ##    2:  Delta      B 2019
+    ##    3:  Gamma      C 2017
+    ##    4:   Beta      A 2016
+    ##    5:  Delta      C 2018
+    ##   ---                   
+    ## 1996:  Alpha      C 2018
+    ## 1997:   Beta      B 2021
+    ## 1998:  Delta      C 2020
+    ## 1999:  Delta      D 2019
+    ## 2000:  Delta      D 2018
+
+We see that we created a dataset of 2000 rows with grades in four
+schools between with 2016 and 2021.
+
+**Calculate the proportion of A’s and B’s in the Alpha and Beta
+schools**
+
+``` r
+grades.distribution <- calc(
+  ph.data = mydt, 
+  school %in% c("Alpha", "Beta"), 
+  what = "grades", 
+  by = "school", 
+  time_var = "year", 
+  metrics = c("numerator", "denominator", "mean"), proportion = T)
+
+grades.distribution[1:4]
+```
+
+    ##    variable level      year school numerator denominator      mean    mean_se
+    ## 1:   grades     A 2016-2021  Alpha       142         497 0.2857143 0.02028435
+    ## 2:   grades     A 2016-2021   Beta       122         491 0.2484725 0.01952152
+    ## 3:   grades     B 2016-2021  Alpha       127         497 0.2555332 0.01958418
+    ## 4:   grades     B 2016-2021   Beta       126         491 0.2566191 0.01973114
+    ##    mean_lower mean_upper
+    ## 1:  0.2477598  0.3269560
+    ## 2:  0.2123012  0.2885490
+    ## 3:  0.2191639  0.2956526
+    ## 4:  0.2199795  0.2970375
+
+These results show that the Alpha School has a higher proportion of A’s
+(0.286 vs 0.248) and a similar proportion of B’s (0.256 vs 0.257).
+
+**Wait! We forgot the survey weights!**
+
+A colleague just reminded you that you forgot to add the survey weights.
+Let’s add weights and survey set the data.
+
+``` r
+# create weights
+set.seed(98121)
+mydt[, mywghts := sample(50:1300, 2000, replace = T)]
+
+# survey set the data
+mysvy <- srvyr::as_survey_design(mydt, weights = mywghts)
+```
+
+**Using the survey information, again calculate the proportion of A’s
+and B’s in the Alpha and Beta schools**
+
+``` r
+grades.distribution2 <- calc(
+  ph.data = mysvy, 
+  school %in% c("Alpha", "Beta"), 
+  what = "grades", 
+  by = "school", 
+  time_var = "year", 
+  metrics = c("numerator", "denominator", "mean"), proportion = T)
+
+grades.distribution2[1:4]
+```
+
+    ##    variable level      year school numerator denominator      mean    mean_se
+    ## 1:   grades     A 2016-2021  Alpha       142         497 0.2819952 0.02280603
+    ## 2:   grades     A 2016-2021   Beta       122         491 0.2361366 0.02142621
+    ## 3:   grades     B 2016-2021  Alpha       127         497 0.2460211 0.02157805
+    ## 4:   grades     B 2016-2021   Beta       126         491 0.2685865 0.02295556
+    ##    mean_lower mean_upper
+    ## 1:  0.2394149  0.3288741
+    ## 2:  0.1966489  0.2807821
+    ## 3:  0.2061154  0.2908225
+    ## 4:  0.2259363  0.3160011
+
+You’ll note that using the survey design caused small changes in the
+results. For examples, the proportion of A’s in the Alpha school changed
+from 0.286 to 0.282.
+
+------------------------------------------------------------------------
+
+## Knowing is half the battle … but only half
+
+You’ve been introduced to `calc()`, but you’ll only become competent at
+using it by using it. Try it out with your favorite dataset. Use it to
+answer data requests. Play with it. Try to break it and, if you’re
+successful, submit a [GitHub
+issue](https://github.com/PHSKC-APDE/rads/issues/new). Enjoy!

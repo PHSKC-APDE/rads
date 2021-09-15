@@ -342,7 +342,8 @@ get_population <- function(kingco = T,
       # Collapse ages above 100 ----
       if(max(ages) == 100){
         pop.dt[age >= 100, age := 100]
-        pop.dt <- pop.dt[, .(pop = sum(pop)), by = .(age, gender, race_eth, year, geo_type, geo_id)]
+        if(race_type == "race_eth"){pop.dt <- pop.dt[, .(pop = sum(pop)), by = .(age, gender, race_eth, year, geo_type, geo_id)]}
+        if(race_type == "race"){pop.dt <- pop.dt[, .(pop = sum(pop)), by = .(age, gender, race, year, geo_type, geo_id)]}
       }
 
       # round ----
