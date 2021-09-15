@@ -87,7 +87,7 @@ get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcf
 
   #create the survey object
   dat = dat[kcfinalwt>0]
-  svy <- dtsurvey(dat, ids = 'sur_psu', strata = 'year', weights = 'kcfinalwt', nest = T)
+  svy <- dtsurvey::dtsurvey(dat, psu = 'sur_psu', strata = 'year', weight = 'kcfinalwt', nest = T)
 
   if(kingco == T) svy <- svy[kingco == 1,]
 
@@ -155,6 +155,8 @@ get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
   setcolorder(dat, original.order)
 
   setDT(dat) # set it as a data.table again b/c otherwise, ascribing the new class above makes a copy
+
+  dat = dtsurvey::dtadmin(dat, FALSE)
 
   return(dat)
 }

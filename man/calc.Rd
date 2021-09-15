@@ -71,10 +71,9 @@ Available metrics include:
 6) missing, missing.prop: Number of rows in a given grouping with an NA value for `what`. missing + denominator = Number of people in a given group.
    When `what` is a factor/character, the missing information is provided for the other
 7) rse: relative standard error. mean/se
-8) ndistinct: number of non-na distinct values `what` takes on in a given grouping (after filtering and all that jazz)
-9) obs: number of unique observations
-10) median: the median non NA response. Not populated when `what` is a factor or character. Even for surveys, the median is the unweighted result.
-11) unique.time: Number of unique time points (from `time_var`) included in each tabulation
+10) obs: number of unique observations
+11) median: the median non NA response. Not populated when `what` is a factor or character. Even for surveys, the median is the unweighted result.
+12) unique.time: Number of unique time points (from `time_var`) included in each tabulation
 
 For survey data, use the \code{proportion} argument where relevant to ensure metrics are calculated using special proportion (e.g \code{svyciprop})
 methods. That is, when you want to find the fraction of ____, toggle \code{proportion} to \code{TRUE}.
