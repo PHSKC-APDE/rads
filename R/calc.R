@@ -15,6 +15,7 @@
 #'                   Currently does not have functionality for non-survey data.
 #' @param ci numeric. Confidence level, >0 & <1, typically 0.95
 #' @param verbose logical. Mostly unused, but toggles on/off printed warnings.
+#' @param ... not implemented
 #' @return a data.table containing the results
 #' @details
 #' This function calculates `metrics` for each variable in `what` from rows meeting the conditions specified
@@ -45,10 +46,10 @@
 #'
 #' test.results <- calc(test.data,
 #'                      what = c("kotelchuck", "fetal_pres"),
-#'                      "chi_year == 2016 & chi_sex %in% c('Male', 'Female')",
+#'                      chi_year == 2016 & chi_sex %in% c('Male', 'Female'),
 #'                       by = c("chi_year", "chi_sex"),
 #'                       metrics = c("mean", "numerator", "denominator",
-#'                                   "total", "lower", "upper", "se"))
+#'                                   "total"))
 #'
 calc <- function(ph.data, ...) {
   UseMethod("calc")

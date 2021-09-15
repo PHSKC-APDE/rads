@@ -14,7 +14,8 @@ calc.dtsurvey = function(ph.data,
                          proportion = FALSE,
                          fancy_time = TRUE,
                          ci = .95,
-                         verbose = FALSE){
+                         verbose = FALSE,
+                         ...){
 
   #filter the dataset
   if(!missing(where)){
@@ -28,7 +29,7 @@ calc.dtsurvey = function(ph.data,
   #validate other inputs
   #validate what
   stopifnot('what must be a character value and a column in `ph.data`' =
-              is.character(what) && what %in% names(ph.data))
+              is.character(what) && all(what %in% names(ph.data)))
   #validate by
   if(!is.null(by)){
     stopifnot('`by` must be a chatacter vector and represent (a) column(s) in `ph.data`'=

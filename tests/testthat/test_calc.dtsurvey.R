@@ -1,8 +1,9 @@
+library('testthat')
+library('rads')
 library('survey')
 library('data.table')
 library('dtsurvey')
-library('testthat')
-library('rads')
+
 
 data(api) #from the survey package
 apiclus1$nagrp = sample(c(1,2,NA), nrow(apiclus1), replace = T)
@@ -137,8 +138,6 @@ test_that('Proportion toggle changes result',{
 
 #test windowing
 test_that('Win(dows) do sensible things',{
-
-  sur <- sur %>% mutate(yyy = sample(1:4, nrow(sur), replace = T))
   r1 = calc(sur, 'api00', metrics = 'mean', proportion = F, time_var = 'yyy', win = 2)[, .(mean,yyy)]
   r2 = rbind(
     sur[yyy %in% 1:2, .(mean = mean(api00), yyy = paste(unique(sort(yyy)), collapse = '-')) ],

@@ -19,11 +19,14 @@ calc(ph.data, ...)
   proportion = FALSE,
   fancy_time = TRUE,
   ci = 0.95,
-  verbose = FALSE
+  verbose = FALSE,
+  ...
 )
 }
 \arguments{
 \item{ph.data}{data.table or tbl_svy. Dataset.}
+
+\item{...}{not implemented}
 
 \item{what}{character vector. Variable to calculate metrics for.}
 
@@ -85,9 +88,9 @@ test.data <- get_data_birth(year = 2015:2017)
 
 test.results <- calc(test.data,
                      what = c("kotelchuck", "fetal_pres"),
-                     "chi_year == 2016 & chi_sex \%in\% c('Male', 'Female')",
+                     chi_year == 2016 & chi_sex \%in\% c('Male', 'Female'),
                       by = c("chi_year", "chi_sex"),
                       metrics = c("mean", "numerator", "denominator",
-                                  "total", "lower", "upper", "se"))
+                                  "total"))
 
 }

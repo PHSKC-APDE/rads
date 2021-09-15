@@ -71,11 +71,12 @@ calc(ph.data = birth,
 
 **mean (proportion) for a binary over individual years**
 ```{r}
+birth[, cy := chi_year]
 calc(ph.data = birth, 
      what = c("preterm"), 
      metrics = c("mean", "rse", "numerator", "denominator"), 
      time_var = "chi_year", 
-     by = "chi_year")[]
+     by = "cy")[]
 ```
 
 **mean (proportion) for a binary over windowed years**
