@@ -50,11 +50,9 @@ get_data <- function(dataset, cols = NA, year = 2018, ...){
 #'
 #' @return dataset either in data.table (adminstrative data) or svy_tbl (survey data) for further analysis/tabulation
 #'
-#' @importFrom srvyr %>% as_survey_design filter select
+#' @import dtsurvey
 #' @importFrom data.table ":=" .I
 #' @importFrom haven read_dta
-#' @importFrom srvyr as_survey_design filter select
-#' @importFrom rlang sym
 #' @export
 #'
 #' @examples
@@ -88,14 +86,12 @@ get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcf
   }
 
   #create the survey object
-  svy <- srvyr::as_survey_design(dat, ids = sur_psu, strata = year, weights = kcfinalwt, nest = T)
-  wt  <- rlang::sym(weight_variable)
-  svy <- svy %>% srvyr::filter(!!wt != 0)
+  dat = dat[kcfinalwt>0]
+  svy <- dtsurvey(dat, ids = 'sur_psu', strata = 'year', weights = 'kcfinalwt', nest = T)
 
-  if(kingco == T) svy <- svy %>% srvyr::filter(kingco == 1)
+  if(kingco == T) svy <- svy[kingco == 1,]
 
-  if(!all(is.na(cols))) svy <- svy %>% srvyr::select({{cols}})
-  class(svy) <- c(class(svy), 'apde_hys')
+  if(!all(is.na(cols))) svy <- svy[, .SD, .SDcols = cols]
 
   return(svy)
 }
