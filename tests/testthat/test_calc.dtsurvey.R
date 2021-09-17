@@ -3,6 +3,7 @@ library('rads')
 library('survey')
 library('data.table')
 library('dtsurvey')
+set.seed(98104)
 
 
 data(api) #from the survey package
@@ -23,10 +24,10 @@ apiclus1$highenroll = apiclus1$enroll>median(apiclus1$enroll)
 apiclus1$highmeals = apiclus1$meals>median(apiclus1$meals)
 apiclus1$hm_bin = as.numeric(apiclus1$highmeals)
 apiclus1$both_bin = apiclus1$both == 'Yes'
+apiclus1$w = 'banana'
 s2 <- dtrepsurvey(as.svrepdesign(svydesign(id=~dnum, weights=~pw, data=apiclus1)))
 clus<-svydesign(id=~dnum, weights=~pw, data=apiclus1)
 sur = dtsurvey(apiclus1, psu = 'dnum', weight = 'pw')
-set.seed(98104)
 
 test_that('Defaults (mostly) work: svy',{
           r1 = calc(sur, what = 'api00', time_var = NULL)$mean

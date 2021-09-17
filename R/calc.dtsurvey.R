@@ -17,8 +17,16 @@ calc.dtsurvey = function(ph.data,
                          verbose = FALSE,
                          ...){
 
+  call = match.call()
+
   #filter the dataset
   if(!missing(where)){
+
+    if(is.character(call[['where']])){
+      where = str2lang(call[['where']])
+      warning('`where` is a string. It was converted so that it would work, but in the future, this might turn into an error. Please pass unquoted commands that will resolve to a logical' )
+    }
+
     e <- substitute(where)
     r <- eval(e, ph.data, parent.frame())
     stopifnot('`where` does not resolve to a logical' = is.logical(r))
@@ -83,11 +91,12 @@ calc.dtsurvey = function(ph.data,
     if(length(times)>0 && !is.null(win)){
       wins = seq(min(times), max(times - win + 1))
       wins = lapply(wins, function(x) seq(x, x + win - 1))
-      sub_i = data.table::substitute2(tv %in% w, list(tv = time_var))
+      usewins = T
     }
   }else{
     wins = 1
     sub_i = TRUE
+    usewins = F
   }
 
 
@@ -102,6 +111,11 @@ calc.dtsurvey = function(ph.data,
 
     #Compute the metric
     r = lapply(wins, function(w){
+
+      if(usewins == TRUE){
+        sub_i = data.table::substitute2(tv %in% w, list(tv = time_var, w = w))
+      }
+
       compute(ph.data[sub_i, env = list(sub_i = sub_i)], wht, by = by, metrics,
               ci_method = meth, level = ci,
               time_var = time_var, time_format = time_format,

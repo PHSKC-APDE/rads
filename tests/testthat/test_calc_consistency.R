@@ -7,6 +7,7 @@ library('testthat')
 data(api) #from the survey package
 setDT(apisrs)
 apisrs[stype != 'E', bytest := stype]
+apisrs[, c('w', 'tw')] #potentially reserved words for calc
 
 #DO NOT EDIT APISRS AFTER THIS STEP
 sur = dtsurvey(apisrs)
@@ -23,5 +24,13 @@ test_that('Both versions of calc deal with missing in the by var the same',{
 
   expect_equal(names(r1),names(r2))
   expect_equal(r1[, .(variable, level, bytest, mean, numerator, denominator)],r2[, .(variable, level, bytest, mean, numerator, denominator)])
+
+})
+
+test_that('Where with quoted and non-quoted wheres',{
+  r1 = calc(sur, what = 'api00', where = stype == 'H', metrics = c('mean', 'numerator', 'denominator'))
+  r2 = calc(sur, what = 'api00', where = "stype == 'H'", metrics = c('mean', 'numerator', 'denominator'))
+
+  expect_equal(r1,r2)
 
 })
