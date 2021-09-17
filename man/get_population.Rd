@@ -46,6 +46,7 @@ Simple front-end for pulling in standard population data
 }
 \examples{
 \dontrun{
- get_population(geo_type = "region")
+ a = get_population(geo_type = "region")
+ print(a)
 }
 }
