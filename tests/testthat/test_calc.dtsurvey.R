@@ -25,6 +25,7 @@ apiclus1$highmeals = apiclus1$meals>median(apiclus1$meals)
 apiclus1$hm_bin = as.numeric(apiclus1$highmeals)
 apiclus1$both_bin = apiclus1$both == 'Yes'
 apiclus1$w = 'banana'
+apiclus1$awardsYes = as.numeric(apiclus1$awards == 'Yes')
 s2 <- dtrepsurvey(as.svrepdesign(svydesign(id=~dnum, weights=~pw, data=apiclus1)))
 clus<-svydesign(id=~dnum, weights=~pw, data=apiclus1)
 sur = dtsurvey(apiclus1, psu = 'dnum', weight = 'pw')
@@ -312,6 +313,20 @@ test_that('ci option works', {
 
   expect_gt(r4[2, mean_upper], r3[2, mean_upper])
   expect_lt(r4[2, mean_lower], r3[2, mean_lower])
+
+})
+
+test_that('proportion cis for factors', {
+  #normal vars
+  r1 = calc(sur, what = 'awards', metrics = c('mean'), proportion = T, ci = .95)
+  r2 = calc(sur, what = 'awards', metrics = c('mean'), proportion = F, ci = .95)
+  r3 = svyciprop(~awardsYes, clus, method = 'logit')
+  r3 = data.table(t(c(r3, confint(r3))))
+  setnames(r3, c('mean', 'mean_lower', 'mean_upper'))
+
+  expect_equal(r1[, mean], r2[, mean])
+  expect_false(identical(r1,r2))
+  expect_equal(r1[level == 'Yes', .(mean, mean_lower, mean_upper)], r3)
 
 })
 

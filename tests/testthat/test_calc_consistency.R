@@ -7,7 +7,7 @@ library('testthat')
 data(api) #from the survey package
 setDT(apisrs)
 apisrs[stype != 'E', bytest := stype]
-apisrs[, c('w', 'tw')] #potentially reserved words for calc
+#apisrs[, c('w', 'tw')] #potentially reserved words for calc
 
 #DO NOT EDIT APISRS AFTER THIS STEP
 sur = dtsurvey(apisrs)
