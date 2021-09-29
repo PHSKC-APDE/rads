@@ -9,15 +9,22 @@ If you haven’t yet installed [`rads`](https://github.com/PHSKC-APDE/rads), fol
 
 1.  Make sure devtools is installed … `install.packages("devtools")`.
 
-2.  Install [`rads`](https://github.com/PHSKC-APDE/rads) …
-    `devtools::install_github("PHSKC-APDE/rads", auth_token = NULL)`
+2. Install and update `data.table`. This step will hopefully go away when data.table 1.14.3 becomes available.
+   `install.packages('data.table')`
+   `data.table::update.dev.pkg()`
+
+3. Install [`dtsurvey`](https://github.com/dcaseykc/dtsurvey)
+   `devtools::install_github("PHSKC-APDE/rads", auth_token = NULL)`
+
+4.  Install [`rads`](https://github.com/PHSKC-APDE/rads) …
+    `devtools::install_github("dcaseykc/dtsurvey", auth_token = NULL)`
     * To install github from a particular branch, specify it with the 'ref' argument, e.g., `devtools::install_github("PHSKC-APDE/rads", ref = "dev", auth_token = NULL)`
 
-3.  Load [`rads`](https://github.com/PHSKC-APDE/rads) … `library(rads)`
+5.  Load [`rads`](https://github.com/PHSKC-APDE/rads) … `library(rads)`
 
-4. Exit RStudio and start it again. 
+6. Exit RStudio and start it again. 
 
-5. Confirm `rads` installed properly by typing `library(rads)` in the console.
+7. Confirm `rads` installed properly by typing `library(rads)` in the console.
 
 ## Getting started
 After installation, we highly recommend that you start by walking through a vignette on the [wiki](https://github.com/PHSKC-APDE/rads/wiki).
