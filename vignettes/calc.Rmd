@@ -24,7 +24,7 @@ Arguments are the values that we send to a function when it is called. The stand
 
 2) `what` <- a character vector of the variable(s) for which you want to calculate the metrics. E.g., `what = c("uninsured")`
 
-3) `...` <- think of this as a "where" statement, i.e., a filter or subsetting of data. E.g., `ages %in% c(0:17) & gender == "Female"`. **NOTE** do not type `...` !
+3) `where` <- think of this as a "where" statement, i.e., a filter or subsetting of data. E.g., `ages %in% c(0:17) & gender == "Female"`
 
 4) `by` <- a character vector of the variables that you want to computer the `what` by, i.e., the cross-tab variable(s). E.g., `by = c("gender")` would stratify results by gender
 
@@ -45,7 +45,7 @@ There is no need to specify all of the arguments listed above. As you can see in
 
 ```{r}
 data(mtcars)
-mtcars = dtadmin(mtcars)
+mtcars = dtadmin(mtcars) #make it work with calc.dtsurvey
 calc(ph.data = mtcars, what = c("mpg"))[]
 ```
 **Note:** *The use of `[]` after `calc()` is used to print the output to the console. Typically, you would not print the results but would save them as an object. E.g., `my.est <- calc()`.*
