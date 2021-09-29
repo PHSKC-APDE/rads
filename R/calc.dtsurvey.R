@@ -372,7 +372,3 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
 
 }
 
-
-# b = data.table(1:10, byvar = 1:2)
-# a = calc.dtsurvey(b, where = byvar == 1)
-# a2 = calc.dtsurvey(fake_sur, where = byvar == 1)
