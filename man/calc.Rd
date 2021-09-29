@@ -58,8 +58,6 @@ a data.table containing the results
 }
 \description{
 Compute metrics from record (e.g. vital stats) or survey data
-
-Compute CHI type estimates from a dtsurvey object
 }
 \details{
 This function calculates `metrics` for each variable in `what` from rows meeting the conditions specified
@@ -67,15 +65,24 @@ by `where` for each grouping implied by `by`.
 
 Available metrics include:
 1) mean, se, upper, lower: Average response and associated metrics of uncertainty. Underlying ci (e.g. upper and lower) is 95%
+
 2) rate, rate_se, rate_upper, rate_lower: mean \* per and associated metrics of uncertainty \* per. Underlying ci (e.g. upper and lower) is 95%
+
 3) total, total_se, total_upper, total_lower: Count of people with the given value. Mostly relevent for surveys (where total is approximately mean * sum(pweights)). SE/Upper/Lower only valid for survey data
+
 4) numerator: sum of non-na values for `what``
+
 5) denominator: number of rows where `what` is not NA
+
 6) missing, missing.prop: Number of rows in a given grouping with an NA value for `what`. missing + denominator = Number of people in a given group.
    When `what` is a factor/character, the missing information is provided for the other
+
 7) rse: relative standard error. mean/se
+
 8) obs: number of unique observations
+
 9) median: the median non NA response. Not populated when `what` is a factor or character. Even for surveys, the median is the unweighted result.
+
 10) unique.time: Number of unique time points (from `time_var`) included in each tabulation
 
 For survey data, use the \code{proportion} argument where relevant to ensure metrics are calculated using special proportion (e.g \code{svyciprop})

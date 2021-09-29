@@ -1,4 +1,3 @@
-#' Compute CHI type estimates from a dtsurvey object
 #' @rdname calc
 #' @export
 #' @importFrom data.table substitute2

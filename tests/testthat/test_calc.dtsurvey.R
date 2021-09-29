@@ -335,15 +335,9 @@ test_that('Ensure `metric = "total"` provides SE & CI', {
 
   # Test when generic survey
   tt1 = calc(sur, 'stype', by = 'both', time_var = 'yyy', metrics = c("total"))
-  expect_false(nrow(tt1) == nrow(tt1[is.na(total_se)]))
-  expect_false(nrow(tt1) == nrow(tt1[is.na(total_lower)]))
-  expect_false(nrow(tt1) == nrow(tt1[is.na(total_upper)]))
-
-  # Test when survey with replicate weights
-  tt2 = calc(s2, 'stype', by = 'both', time_var = 'yyy', metrics = c("total"))
-  expect_false(nrow(tt2) == nrow(tt2[is.na(total_se)]))
-  expect_false(nrow(tt2) == nrow(tt2[is.na(total_lower)]))
-  expect_false(nrow(tt2) == nrow(tt2[is.na(total_upper)]))
+  expect_false(all(is.na(tt1[, total_se])))
+  expect_false(all(is.na(tt1[, total_upper])))
+  expect_false(all(is.na(tt1[, total_lower])))
 
 })
 
