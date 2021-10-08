@@ -27,7 +27,7 @@
 
 # get_population() ----
 get_population <- function(kingco = T,
-                           years = c(2019),
+                           years = c(2020),
                            ages = c(0:100),
                            genders = c("F", "M"),
                            races = c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white"),
