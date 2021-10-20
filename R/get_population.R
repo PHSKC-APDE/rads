@@ -29,7 +29,8 @@
 #'
 #' @examples
 #' \dontrun{
-#'  get_population(geo_type = "region")[]
+#'  a = get_population(geo_type = "region")
+#'  print(a)
 #' }
 
 # get_population() ----

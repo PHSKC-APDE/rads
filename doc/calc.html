@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title>Introduction</title>
+
+<script type="text/javascript">
+window.onload = function() {
+  var imgs = document.getElementsByTagName('img'), i, img;
+  for (i = 0; i < imgs.length; i++) {
+    img = imgs[i];
+    // center an image if it is the only element of its parent
+    if (img.parentElement.childElementCount === 1)
+      img.parentElement.style.textAlign = 'center';
+  }
+};
+</script>
+
+<!-- Styles for R syntax highlighter -->
+<style type="text/css">
+   pre .operator,
+   pre .paren {
+     color: rgb(104, 118, 135)
+   }
+
+   pre .literal {
+     color: #990073
+   }
+
+   pre .number {
+     color: #099;
+   }
+
+   pre .comment {
+     color: #998;
+     font-style: italic
+   }
+
+   pre .keyword {
+     color: #900;
+     font-weight: bold
+   }
+
+   pre .identifier {
+     color: rgb(0, 0, 0);
+   }
+
+   pre .string {
+     color: #d14;
+   }
+</style>
+
+<!-- R syntax highlighter -->
+<script type="text/javascript">
+var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
+hljs.initHighlightingOnLoad();
+</script>
+
+
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 13px;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 20px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 {
+   font-size:2.2em;
+}
+
+h2 {
+   font-size:1.8em;
+}
+
+h3 {
+   font-size:1.4em;
+}
+
+h4 {
+   font-size:1.0em;
+}
+
+h5 {
+   font-size:0.9em;
+}
+
+h6 {
+   font-size:0.8em;
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre, img {
+  max-width: 100%;
+}
+pre {
+  overflow-x: auto;
+}
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code {
+  font-size: 92%;
+  border: 1px solid #ccc;
+}
+
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * {
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
+   }
+
+   body {
+      font-size:12pt;
+      max-width:100%;
+   }
+
+   a, a:visited {
+      text-decoration: underline;
+   }
+
+   hr {
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote {
+      padding-right: 1em;
+      page-break-inside: avoid;
+   }
+
+   tr, img {
+      page-break-inside: avoid;
+   }
+
+   img {
+      max-width: 100% !important;
+   }
+
+   @page :left {
+      margin: 15mm 20mm 15mm 10mm;
+   }
+
+   @page :right {
+      margin: 15mm 10mm 15mm 20mm;
+   }
+
+   p, h2, h3 {
+      orphans: 3; widows: 3;
+   }
+
+   h2, h3 {
+      page-break-after: avoid;
+   }
+}
+</style>
+
+
+
+</head>
+
+<body>
+<h2>Introduction</h2>
+
+<p><code>calc()</code> is the analytic workhorse of <code>rads</code>. It provides a standardized method for obtaining most of what we usually want to calculate: means, medians, counts, confidence intervals, standard errors, relative standard errors (RSE), numerators, denominators, the number missing, and the proportion missing. <code>calc()</code> can be used with record data (e.g., vital statistics, census, enrollment numbers, etc.) as well as survey data (e.g., <a href="https://www.cdc.gov/brfss/index.html">BRFSS</a>, <a href="https://github.com/PHSKC-APDE/svy_acs">ACS PUMS</a>, etc.). <code>calc()</code> is built on top of common R packages and was created to allow APDE staff the convenience of using a common syntax across various data sources. This means that everything <code>calc</code> can do can be done with other packages &hellip; sometimes in a more efficient manner.</p>
+
+<p>This vignette will provide some examples to introduce the <code>calc()</code> function by walking through basic analyses with vital statistics (birth data) and survey data (ACS PUMS). To get the most out of this vignette, we recommend that you type each and every bit of code into R. Doing so will almost definitely help you learn the syntax much faster than just reading the vignette or copying and pasting the code.</p>
+
+<h2><code>calc()</code> arguments</h2>
+
+<p>Arguments are the values that we send to a function when it is called. The standard arguments for <code>calc()</code> are:</p>
+
+<p>1) <code>ph.data</code> &lt;- the name of the data.table/data.frame or survey object that you want to analyze.</p>
+
+<p>2) <code>what</code> &lt;- a character vector of the variable(s) for which you want to calculate the metrics. E.g., <code>what = c(&quot;uninsured&quot;)</code></p>
+
+<p>3) <code>where</code> &lt;- think of this as a &ldquo;where&rdquo; statement, i.e., a filter or subsetting of data. E.g., <code>ages %in% c(0:17) &amp; gender == &quot;Female&quot;</code></p>
+
+<p>4) <code>by</code> &lt;- a character vector of the variables that you want to computer the <code>what</code> by, i.e., the cross-tab variable(s). E.g., <code>by = c(&quot;gender&quot;)</code> would stratify results by gender</p>
+
+<p>5) <code>metrics</code> &lt;- a character vector of the metrics that you want returned. E.g., <code>metrics = c(&quot;mean&quot;, &quot;rse&quot;)</code>. You can see a complete list of available metrics by typing <code>metrics()</code></p>
+
+<p>6) <code>per</code> &lt;- an integer, which is the denominator when <code>rate</code> is selected as a metric. Metrics will be multiplied by this value. E.g., <code>per = 1000</code>. <strong>NOTE</strong> this is just a scalar. At present this does not calculate a true rate (i.e., the relevant population denominator is not used).</p>
+
+<p>7) <code>win</code> &lt;- an integer, which is the number of consecutive units of time (e.g., years, months, etc.) over which the metrics will be calculated, i.e., the &#39;window&#39; for a rolling average, sum, etc. E.g. <code>win = 5</code> will perform calculations over every 5 time unit window.</p>
+
+<p>8) <code>time_var</code> &lt;- a character, which is the name of the time variable in the dataset. Used in combination with the <code>win</code> argument to generate time windowed calculations.</p>
+
+<p>9) <code>proportion</code> &lt;- a logical (i.e., <code>T</code> or <code>F</code>) flag determining whether the metrics should be calculated as a proportion. Currently only relevant for survey data. The default is FALSE.</p>
+
+<p>10) <code>verbose</code> &lt;- a logical used to toggle on/off printed warnings</p>
+
+<p>There is no need to specify all of the arguments listed above. As you can see in the following example, the <code>calc</code> function simply needs a specified dataset (i.e., <code>ph.data</code>) and at least one <code>what</code> variable to return an intelligible result. </p>
+
+<pre><code class="r">data(mtcars)
+mtcars = dtadmin(mtcars) #make it work with calc.dtsurvey
+calc(ph.data = mtcars, what = c(&quot;mpg&quot;))[]
+</code></pre>
+
+<pre><code>##    variable     mean numerator denominator level  mean_se mean_lower mean_upper
+## 1:      mpg 20.09062     642.9          32    NA 1.065424   18.00243   22.17882
+</code></pre>
+
+<p><strong>Note:</strong> <em>The use of <code>[]</code> after <code>calc()</code> is used to print the output to the console. Typically, you would not print the results but would save them as an object. E.g., <code>my.est &lt;- calc()</code>.</em></p>
+
+<hr/>
+
+<h2>Example vital statistics analyses</h2>
+
+<p><strong>First get the birth data (cf. <a href="https://github.com/PHSKC-APDE/rads/wiki/Vignette:-get_data(">get_data() vignette</a>))</strong></p>
+
+<pre><code class="r">birth &lt;- get_data_birth(cols = c(&quot;chi_year&quot;, &quot;chi_sex&quot;, &quot;chi_race_eth8&quot;, 
+                                 &quot;preterm&quot;, &quot;birth_weight_grams&quot;, &quot;mother_birthplace_state&quot;), 
+                        year = c(2013:2019), 
+                        kingco = T)
+</code></pre>
+
+<p><strong>mean (proportion) for a binary over multiple years</strong></p>
+
+<pre><code class="r">calc(ph.data = birth, 
+     what = c(&quot;preterm&quot;), 
+     metrics = c(&quot;mean&quot;, &quot;rse&quot;, &quot;numerator&quot;, &quot;denominator&quot;), 
+     time_var = &quot;chi_year&quot;)[]
+</code></pre>
+
+<pre><code>##     chi_year variable       mean numerator denominator level      mean_se
+## 1: 2013-2019  preterm 0.09052329     15806      174607    NA 0.0006866673
+##    mean_lower mean_upper       rse
+## 1: 0.08917745 0.09186913 0.7585532
+</code></pre>
+
+<p><strong>mean (proportion) for a binary over individual years</strong></p>
+
+<pre><code class="r">birth[, cy := chi_year]
+calc(ph.data = birth, 
+     what = c(&quot;preterm&quot;), 
+     metrics = c(&quot;mean&quot;, &quot;rse&quot;, &quot;numerator&quot;, &quot;denominator&quot;), 
+     time_var = &quot;chi_year&quot;, 
+     by = &quot;cy&quot;)[]
+</code></pre>
+
+<pre><code>##      cy chi_year variable       mean numerator denominator level     mean_se
+## 1: 2013     2013  preterm 0.09259783      2293       24763    NA 0.001842076
+## 2: 2014     2014  preterm 0.08847557      2231       25216    NA 0.001788407
+## 3: 2015     2015  preterm 0.08829787      2241       25380    NA 0.001781002
+## 4: 2016     2016  preterm 0.08956837      2320       25902    NA 0.001774364
+## 5: 2017     2017  preterm 0.09120521      2296       25174    NA 0.001814576
+## 6: 2018     2018  preterm 0.08944869      2166       24215    NA 0.001834028
+## 7: 2019     2019  preterm 0.09429394      2259       23957    NA 0.001888115
+##    mean_lower mean_upper      rse
+## 1: 0.08898743 0.09620823 1.989329
+## 2: 0.08497036 0.09198078 2.021357
+## 3: 0.08480717 0.09178857 2.017038
+## 4: 0.08609068 0.09304606 1.981016
+## 5: 0.08764871 0.09476172 1.989553
+## 6: 0.08585406 0.09304332 2.050369
+## 7: 0.09059331 0.09799458 2.002371
+</code></pre>
+
+<p><strong>mean (proportion) for a binary over windowed years</strong></p>
+
+<pre><code class="r">calc(ph.data = birth, 
+     what = c(&quot;preterm&quot;), 
+     metrics = c(&quot;mean&quot;, &quot;rse&quot;, &quot;numerator&quot;, &quot;denominator&quot;), 
+     time_var = &quot;chi_year&quot;, 
+     win = 3)[]
+</code></pre>
+
+<pre><code>##     chi_year variable       mean numerator denominator level     mean_se
+## 1: 2013-2015  preterm 0.08977030      6765       75359    NA 0.001041303
+## 2: 2014-2016  preterm 0.08878663      6792       76498    NA 0.001028399
+## 3: 2015-2017  preterm 0.08968557      6857       76456    NA 0.001033366
+## 4: 2016-2018  preterm 0.09007717      6782       75291    NA 0.001043376
+## 5: 2017-2019  preterm 0.09163417      6721       73346    NA 0.001065305
+##    mean_lower mean_upper      rse
+## 1: 0.08772938 0.09181122 1.159964
+## 2: 0.08677101 0.09080226 1.158281
+## 3: 0.08766021 0.09171093 1.152210
+## 4: 0.08803219 0.09212215 1.158314
+## 5: 0.08954621 0.09372213 1.162563
+</code></pre>
+
+<p><strong>mean for a continuous over windowed years</strong></p>
+
+<pre><code class="r">calc(ph.data = birth, 
+     what = c(&quot;birth_weight_grams&quot;), 
+     metrics = c(&quot;mean&quot;, &quot;rse&quot;), 
+     time_var = &quot;chi_year&quot;, 
+     win = 3)[]
+</code></pre>
+
+<pre><code>##     chi_year           variable     mean level  mean_se mean_lower mean_upper
+## 1: 2013-2015 birth_weight_grams 3339.469    NA 2.122024   3335.310   3343.628
+## 2: 2014-2016 birth_weight_grams 3336.555    NA 2.087116   3332.465   3340.646
+## 3: 2015-2017 birth_weight_grams 3333.507    NA 2.068735   3329.452   3337.562
+## 4: 2016-2018 birth_weight_grams 3327.129    NA 2.073889   3323.065   3331.194
+## 5: 2017-2019 birth_weight_grams 3320.961    NA 2.088449   3316.868   3325.055
+##           rse
+## 1: 0.06354375
+## 2: 0.06255302
+## 3: 0.06205880
+## 4: 0.06233269
+## 5: 0.06288689
+</code></pre>
+
+<p><strong>mean for a continuous in 2019, by gender and race/eth</strong></p>
+
+<pre><code class="r">calc(ph.data = birth, 
+     what = c(&quot;birth_weight_grams&quot;), 
+     chi_year == 2019,
+     metrics = c(&quot;mean&quot;, &quot;rse&quot;), 
+     by = c(&quot;chi_race_eth8&quot;, &quot;chi_sex&quot;))[]
+</code></pre>
+
+<pre><code>##     chi_race_eth8 chi_sex           variable     mean level     mean_se
+##  1:         White  Female birth_weight_grams 3340.295    NA    7.280580
+##  2:         White    Male birth_weight_grams 3460.298    NA    7.489711
+##  3:         Asian    Male birth_weight_grams 3231.952    NA    9.784437
+##  4:          NHPI  Female birth_weight_grams 3287.541    NA   49.322668
+##  5:         Black  Female birth_weight_grams 3196.872    NA   18.683442
+##  6:         Black    Male birth_weight_grams 3306.213    NA   19.794051
+##  7:      Multiple  Female birth_weight_grams 3251.312    NA   24.365976
+##  8:       Oth/unk  Female birth_weight_grams 3223.599    NA   30.670381
+##  9:      Hispanic    Male birth_weight_grams 3301.784    NA   14.310447
+## 10:      Multiple    Male birth_weight_grams 3369.178    NA   23.359494
+## 11:          NHPI    Male birth_weight_grams 3444.178    NA   43.324387
+## 12:      Hispanic  Female birth_weight_grams 3270.074    NA   13.703835
+## 13:          AIAN  Female birth_weight_grams 3251.965    NA   79.070604
+## 14:         Asian  Female birth_weight_grams 3145.902    NA    9.419157
+## 15:       Oth/unk    Male birth_weight_grams 3315.557    NA   33.357232
+## 16:          AIAN    Male birth_weight_grams 3438.641    NA   84.306018
+## 17:         White    &lt;NA&gt; birth_weight_grams 1873.500    NA 1321.500000
+##     mean_lower mean_upper        rse
+##  1:   3326.026   3354.565  0.2179622
+##  2:   3445.618   3474.977  0.2164470
+##  3:   3212.775   3251.129  0.3027408
+##  4:   3190.871   3384.212  1.5002905
+##  5:   3160.253   3233.491  0.5844288
+##  6:   3267.418   3345.009  0.5986925
+##  7:   3203.556   3299.069  0.7494198
+##  8:   3163.487   3283.712  0.9514328
+##  9:   3273.736   3329.832  0.4334156
+## 10:   3323.394   3414.962  0.6933292
+## 11:   3359.264   3529.092  1.2579021
+## 12:   3243.215   3296.933  0.4190681
+## 13:   3096.989   3406.940  2.4314716
+## 14:   3127.441   3164.363  0.2994104
+## 15:   3250.178   3380.936  1.0060823
+## 16:   3273.404   3603.877  2.4517252
+## 17: -14917.750  18664.750 70.5364291
+</code></pre>
+
+<p><strong>Proportion of 2017-2019 births among each race/eth group</strong></p>
+
+<pre><code class="r">calc(ph.data = birth, 
+     what = c(&quot;chi_race_eth8&quot;), 
+     chi_year %in% 2017:2019,
+     metrics = c(&quot;mean&quot;, &quot;rse&quot;, &quot;obs&quot;, &quot;numerator&quot;, &quot;denominator&quot;))[]
+</code></pre>
+
+<pre><code>##       level      variable denominator   obs       mean      mean_se  mean_lower
+## 1:     AIAN chi_race_eth8       73701 73701 0.00530522 0.0002675857 0.004805929
+## 2:    Asian chi_race_eth8       73701 73701 0.22911494 0.0015480599 0.226094981
+## 3:    Black chi_race_eth8       73701 73701 0.09036512 0.0010560883 0.088316537
+## 4: Hispanic chi_race_eth8       73701 73701 0.13007965 0.0012391123 0.127670314
+## 5: Multiple chi_race_eth8       73701 73701 0.04203471 0.0007391714 0.040609678
+## 6:     NHPI chi_race_eth8       73701 73701 0.01629557 0.0004663730 0.015406391
+## 7:  Oth/unk chi_race_eth8       73701 73701 0.01867003 0.0004985932 0.017717604
+## 8:    White chi_race_eth8       73701 73701 0.46813476 0.0018380296 0.464534068
+##     mean_upper numerator       rse
+## 1: 0.005856077       391 5.0438189
+## 2: 0.232163131     16886 0.6756696
+## 3: 0.092456411      6660 1.1686901
+## 4: 0.132527538      9587 0.9525797
+## 5: 0.043507475      3098 1.7584788
+## 6: 0.017235175      1201 2.8619613
+## 7: 0.019672633      1376 2.6705534
+## 8: 0.471738775     34502 0.3926283
+</code></pre>
+
+<p><strong>2017-2019 rate per 100k of births among each race/eth group</strong></p>
+
+<pre><code class="r">calc(ph.data = birth, 
+     what = c(&quot;chi_race_eth8&quot;), 
+     chi_year %in% 2017:2019,
+     metrics = c(&quot;obs&quot;, &quot;numerator&quot;, &quot;denominator&quot;, &quot;rate&quot;), 
+     per = 100000)[]
+</code></pre>
+
+<pre><code>##       level      variable denominator   obs numerator      rate   rate_se
+## 1:     AIAN chi_race_eth8       73701 73701       391   530.522  26.75857
+## 2:    Asian chi_race_eth8       73701 73701     16886 22911.494 154.80599
+## 3:    Black chi_race_eth8       73701 73701      6660  9036.512 105.60883
+## 4: Hispanic chi_race_eth8       73701 73701      9587 13007.965 123.91123
+## 5: Multiple chi_race_eth8       73701 73701      3098  4203.471  73.91714
+## 6:     NHPI chi_race_eth8       73701 73701      1201  1629.557  46.63730
+## 7:  Oth/unk chi_race_eth8       73701 73701      1376  1867.003  49.85932
+## 8:    White chi_race_eth8       73701 73701     34502 46813.476 183.80296
+##    rate_lower rate_upper rate_per
+## 1:   480.5929   585.6077    1e+05
+## 2: 22609.4981 23216.3131    1e+05
+## 3:  8831.6537  9245.6411    1e+05
+## 4: 12767.0314 13252.7538    1e+05
+## 5:  4060.9678  4350.7475    1e+05
+## 6:  1540.6391  1723.5175    1e+05
+## 7:  1771.7604  1967.2633    1e+05
+## 8: 46453.4068 47173.8775    1e+05
+</code></pre>
+
+<p><strong>Number and proportion of missing gender by year</strong></p>
+
+<pre><code class="r">calc(ph.data = birth, 
+     what = c(&quot;chi_sex&quot;), 
+     chi_year %in% 2017:2019,
+     metrics = c(&quot;obs&quot;, &quot;missing&quot;, &quot;missing.prop&quot;), 
+     by = &quot;chi_year&quot;)[]
+</code></pre>
+
+<pre><code>##    chi_year variable   obs missing missing.prop  level numerator
+## 1:     2017  chi_sex 25274       0   0.0000e+00 Female     12314
+## 2:     2017  chi_sex 25274       0   0.0000e+00   Male     12960
+## 3:     2018  chi_sex 24337       0   0.0000e+00 Female     11933
+## 4:     2018  chi_sex 24337       0   0.0000e+00   Male     12404
+## 5:     2019  chi_sex 24090       2   8.3022e-05 Female     11833
+## 6:     2019  chi_sex 24090       2   8.3022e-05   Male     12255
+## 7:     2019  chi_sex 24090       2   8.3022e-05   &lt;NA&gt;         2
+</code></pre>
+
+<hr/>
+
+<h2>Example survey analyses</h2>
+
+<p>Before using <code>calc()</code> with survey data, the user must survey set the data while properly specifying the survey design. Here is an example of how to set <a href="https://github.com/PHSKC-APDE/svy_acs">ACS PUMS</a> person level data:</p>
+
+<pre><code class="r">library(survey)
+
+load(&quot;//phshare01/epe_share/WORK/surveys/ACS/PUMS data &amp; code all years/2019_1_year/prepped_R_files/2019_1_year_data.RData&quot;)
+
+  pums &lt;-     
+    survey::svrepdesign(
+      weight = ~pwgtp ,
+      combined.weights = TRUE ,
+      repweights = &#39;pwgtp[0-9]+&#39; ,
+      scale = 4 / 80 ,
+      rscales = rep( 1 , 80 ) ,
+      mse = TRUE ,
+      type = &quot;JK1&quot; ,
+      data = person.wa
+    )
+  pums =dtsurvey::dtrepsurvey(pums)
+</code></pre>
+
+<p>Once the data has been set as a survey, we can use the <code>calc()</code> function the same way that we used it for vital statistics (birth) data. </p>
+
+<p><strong>Quick sanity check before proceeding.</strong></p>
+
+<p>To confirm that the data has been survey set properly, it would be wise to check if the survey weighted population is more or less what you would expect. </p>
+
+<p>When <code>calc</code> analyzes survey data, the <code>numerator</code> is the number of observations in that category and the <code>total</code> is the survey weighted value for those observations. We know that the approximate 2019 populations of WA State, King County, and Seattle were ~7.6 million, ~2.2 million, and 750,000, respectively. How do the following 2019 ACS estimates (i.e., <code>total</code> values) compare? </p>
+
+<pre><code class="r">pums[, constant :=1]
+
+# WA State
+calc(ph.data = pums, 
+     what = c(&quot;constant&quot;), 
+     metrics = c(&quot;numerator&quot;, &quot;total&quot;), 
+     proportion = T)[]
+</code></pre>
+
+<pre><code>##    variable   total numerator level total_se total_lower total_upper
+## 1: constant 7614893     77879    NA        0     7614893     7614893
+</code></pre>
+
+<pre><code class="r"># King County
+calc(ph.data = pums, 
+     what = c(&quot;constant&quot;), 
+     chi_geo_kc ==1,
+     metrics = c(&quot;numerator&quot;, &quot;total&quot;), 
+     proportion = T)[]
+</code></pre>
+
+<pre><code>##    variable   total numerator level total_se total_lower total_upper
+## 1: constant 2252619     20767    NA        0     2252619     2252619
+</code></pre>
+
+<pre><code class="r"># Seattle
+calc(ph.data = pums, 
+     what = c(&quot;constant&quot;), 
+     chi_geo_seattle ==1,
+     metrics = c(&quot;numerator&quot;, &quot;total&quot;), 
+     proportion = T)[]
+</code></pre>
+
+<pre><code>##    variable  total numerator level total_se total_lower total_upper
+## 1: constant 752953      6526    NA        0      752953      752953
+</code></pre>
+
+<p>Now that we&#39;ve established that our survey data is reasonable, we can continue with our analyses. </p>
+
+<p><strong>Mean (proportion) of those near poverty or disabled, by King County (vs. remainder of WA)</strong></p>
+
+<pre><code class="r">calc(ph.data = pums, 
+     what = c(&quot;disability&quot;, &quot;GEpov200&quot;), 
+     metrics = c(&quot;mean&quot;, &quot;rse&quot;, &quot;obs&quot;, &quot;numerator&quot;, &quot;denominator&quot;), 
+     proportion = T, 
+     by = &quot;chi_geo_kc&quot;)[]
+</code></pre>
+
+<pre><code>##    chi_geo_kc   variable       mean numerator denominator   obs level mean_se
+## 1:          0 disability 0.14337089      9038       57112 57112    NA       0
+## 2:          1 disability 0.09965467      2310       20767 20767    NA       0
+## 3:          0   GEpov200 0.73832042     41951       55069 57112    NA       0
+## 4:          1   GEpov200 0.83492701     17250       20149 20767    NA       0
+##    mean_lower mean_upper rse
+## 1: 0.14337089 0.14337089   0
+## 2: 0.09965467 0.09965467   0
+## 3: 0.73832042 0.73832042   0
+## 4: 0.83492701 0.83492701   0
+</code></pre>
+
+<p><strong>Proportion in each CHNA age group, by disability status</strong></p>
+
+<pre><code class="r">calc(ph.data = pums, 
+     what = c(&quot;agechna&quot;), 
+     metrics = c(&quot;mean&quot;, &quot;rse&quot;, &quot;obs&quot;, &quot;numerator&quot;, &quot;denominator&quot;), 
+     proportion = F, 
+     by = &quot;disability&quot;)[]
+</code></pre>
+
+<pre><code>##     disability level variable denominator   obs       mean mean_se mean_lower
+##  1:          0 18-24  agechna       66531 66531 0.09226661       0 0.09226661
+##  2:          0 25-44  agechna       66531 66531 0.30776057       0 0.30776057
+##  3:          0 45-64  agechna       66531 66531 0.24204020       0 0.24204020
+##  4:          0 65-74  agechna       66531 66531 0.08320689       0 0.08320689
+##  5:          0   75+  agechna       66531 66531 0.03492094       0 0.03492094
+##  6:          0   &lt;18  agechna       66531 66531 0.23980479       0 0.23980479
+##  7:          1 18-24  agechna       11348 11348 0.04838122       0 0.04838122
+##  8:          1 25-44  agechna       11348 11348 0.16410713       0 0.16410713
+##  9:          1 45-64  agechna       11348 11348 0.28470479       0 0.28470479
+## 10:          1 65-74  agechna       11348 11348 0.18640300       0 0.18640300
+## 11:          1   75+  agechna       11348 11348 0.24249002       0 0.24249002
+## 12:          1   &lt;18  agechna       11348 11348 0.07391385       0 0.07391385
+##     mean_upper numerator rse
+##  1: 0.09226661      5771   0
+##  2: 0.30776057     18128   0
+##  3: 0.24204020     17535   0
+##  4: 0.08320689      7137   0
+##  5: 0.03492094      2996   0
+##  6: 0.23980479     14964   0
+##  7: 0.04838122       482   0
+##  8: 0.16410713      1592   0
+##  9: 0.28470479      3089   0
+## 10: 0.18640300      2338   0
+## 11: 0.24249002      3173   0
+## 12: 0.07391385       674   0
+</code></pre>
+
+<p><strong>Mean &amp; median age in King County, by disability status</strong></p>
+
+<pre><code class="r">calc(ph.data = pums, 
+     what = c(&quot;agep&quot;),
+     chi_geo_kc == 1,
+     metrics = c(&quot;mean&quot;, &quot;median&quot;, &quot;rse&quot;, &quot;obs&quot;, &quot;numerator&quot;, &quot;denominator&quot;), 
+     by = &quot;disability&quot;)[]
+</code></pre>
+
+<pre><code>##    disability variable     mean median numerator denominator   obs level
+## 1:          1     agep 57.92030     65    139502        2310  2310    NA
+## 2:          0     agep 36.04553     37    694645       18457 18457    NA
+##    mean_se mean_lower mean_upper rse
+## 1:       0   57.92030   57.92030   0
+## 2:       0   36.04553   36.04553   0
+</code></pre>
+
+<hr/>
+
+<h2>Example analyses with non-standard data</h2>
+
+<p>In the examples above we used standard public health data (birth vital statistics and the Census Bureau&#39;s ACS survey). However, since <code>calc()</code> is a generalized function, you can use it with nearly any dataset, as long as it is a data.frame, a data.table, or a survey object. To demonstrate this, we will use <code>calc()</code> with synthetic data that we will generate below.</p>
+
+<p><strong>Create the dataset</strong></p>
+
+<pre><code class="r">library(data.table)
+set.seed(98121) 
+
+mydt &lt;- data.table(
+  school = as.factor(sample(c(&quot;Alpha&quot;, &quot;Beta&quot;, &quot;Gamma&quot;, &quot;Delta&quot;), 2000, replace = T)),
+  grades = as.factor(sample(c(&quot;A&quot;, &quot;B&quot;, &quot;C&quot;, &quot;D&quot;), 2000, replace = T)), 
+  year = sample(2016:2021, 2000, replace = T))
+mydt = dtsurvey::dtadmin(mydt)
+mydt[]
+</code></pre>
+
+<pre><code>##       school grades year  _id
+##    1:  Alpha      A 2017    1
+##    2:  Delta      B 2019    2
+##    3:  Gamma      C 2017    3
+##    4:   Beta      A 2016    4
+##    5:  Delta      C 2018    5
+##   ---                        
+## 1996:  Alpha      C 2018 1996
+## 1997:   Beta      B 2021 1997
+## 1998:  Delta      C 2020 1998
+## 1999:  Delta      D 2019 1999
+## 2000:  Delta      D 2018 2000
+</code></pre>
+
+<p>We see that we created a dataset of 2000 rows with grades in four schools between with 2016 and 2021.</p>
+
+<p><strong>Calculate the proportion of A&#39;s and B&#39;s in the Alpha and Beta schools</strong></p>
+
+<pre><code class="r">grades.distribution &lt;- calc(
+  ph.data = mydt, 
+  school %in% c(&quot;Alpha&quot;, &quot;Beta&quot;), 
+  what = &quot;grades&quot;, 
+  by = &quot;school&quot;, 
+  time_var = &quot;year&quot;, 
+  metrics = c(&quot;numerator&quot;, &quot;denominator&quot;, &quot;mean&quot;), proportion = F)
+
+grades.distribution[1:4]
+</code></pre>
+
+<pre><code>##    school level      year variable denominator      mean    mean_se mean_lower
+## 1:  Alpha     A 2016-2021   grades         497 0.2857143 0.02028435  0.2477598
+## 2:  Alpha     B 2016-2021   grades         497 0.2555332 0.01958418  0.2191639
+## 3:  Alpha     C 2016-2021   grades         497 0.2454728 0.01932406  0.2096836
+## 4:  Alpha     D 2016-2021   grades         497 0.2132797 0.01839264  0.1795372
+##    mean_upper numerator
+## 1:  0.3269560       142
+## 2:  0.2956526       127
+## 3:  0.2851665       122
+## 4:  0.2514204       106
+</code></pre>
+
+<p>These results show that the Alpha School has a higher proportion of A&#39;s (0.286 vs 0.248) and a similar proportion of B&#39;s (0.256 vs 0.257).</p>
+
+<p><strong>Wait! We forgot the survey weights!</strong></p>
+
+<p>A colleague just reminded you that you forgot to add the survey weights. Let&#39;s add weights and survey set the data.</p>
+
+<pre><code class="r"># create weights
+set.seed(98121)
+mydt[, mywghts := sample(50:1300, 2000, replace = T)]
+
+# survey set the data
+mysvy &lt;-dtsurvey::dtsurvey(data.table(mydt[, `_id` := NULL]), weight = &#39;mywghts&#39;)
+</code></pre>
+
+<p><strong>Using the survey information, again calculate the proportion of A&#39;s and B&#39;s in the Alpha and Beta schools</strong></p>
+
+<pre><code class="r">grades.distribution2 &lt;- calc(
+  ph.data = mysvy, 
+  school %in% c(&quot;Alpha&quot;, &quot;Beta&quot;), 
+  what = &quot;grades&quot;, 
+  by = &quot;school&quot;, 
+  time_var = &quot;year&quot;, 
+  metrics = c(&quot;numerator&quot;, &quot;denominator&quot;, &quot;mean&quot;), proportion = FALSE)
+
+grades.distribution2[1:4]
+</code></pre>
+
+<pre><code>##    school level      year variable denominator      mean    mean_se mean_lower
+## 1:  Alpha     A 2016-2021   grades         497 0.2819952 0.02280603  0.2371869
+## 2:  Alpha     B 2016-2021   grades         497 0.2460211 0.02157805  0.2036254
+## 3:  Alpha     C 2016-2021   grades         497 0.2604248 0.02240752  0.2163994
+## 4:  Alpha     D 2016-2021   grades         497 0.2115589 0.02045695  0.1713660
+##    mean_upper numerator
+## 1:  0.3268036       142
+## 2:  0.2884167       127
+## 3:  0.3044501       122
+## 4:  0.2517519       106
+</code></pre>
+
+<p>You&#39;ll note that using the survey design caused small changes in the results. For examples, the proportion of A&#39;s in the Alpha school changed from 0.286 to 0.282.</p>
+
+<hr/>
+
+<h2>Knowing is half the battle &hellip; but only half</h2>
+
+<p>You&#39;ve been introduced to <code>calc()</code>, but you&#39;ll only become competent at using it by using it. Try it out with your favorite dataset. Use it to answer data requests. Play with it. Try to break it and, if you&#39;re successful, submit a <a href="https://github.com/PHSKC-APDE/rads/issues/new">GitHub issue</a>. Enjoy!</p>
+
+</body>
+
+</html>

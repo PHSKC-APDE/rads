@@ -2,7 +2,7 @@
 #' @name calc
 #' @param ph.data data.table or tbl_svy. Dataset.
 #' @param what character vector. Variable to calculate metrics for.
-#' @param ... expressions to be passed to \code{\link{filter}} (or equivalent)
+#' @param where subsetting expression
 #' @param by character vector. Must refer to variables within ph.data. The variables within ph.data to compute `what` by
 #' @param metrics character. See \code{\link{metrics}} for the available options. Note, except when 'distinct' is
 #' selected, all metrics are calculated -- this argument just specifies which one gets returned
@@ -15,24 +15,33 @@
 #'                   Currently does not have functionality for non-survey data.
 #' @param ci numeric. Confidence level, >0 & <1, typically 0.95
 #' @param verbose logical. Mostly unused, but toggles on/off printed warnings.
+#' @param ... not implemented
 #' @return a data.table containing the results
 #' @details
 #' This function calculates `metrics` for each variable in `what` from rows meeting the conditions specified
-#' by `...` (i.e., where), for each grouping implied by `by`.
+#' by `where` for each grouping implied by `by`.
 #'
 #' Available metrics include:
 #' 1) mean, se, upper, lower: Average response and associated metrics of uncertainty. Underlying ci (e.g. upper and lower) is 95%
+#'
 #' 2) rate, rate_se, rate_upper, rate_lower: mean \* per and associated metrics of uncertainty \* per. Underlying ci (e.g. upper and lower) is 95%
+#'
 #' 3) total, total_se, total_upper, total_lower: Count of people with the given value. Mostly relevent for surveys (where total is approximately mean * sum(pweights)). SE/Upper/Lower only valid for survey data
+#'
 #' 4) numerator: sum of non-na values for `what``
+#'
 #' 5) denominator: number of rows where `what` is not NA
+#'
 #' 6) missing, missing.prop: Number of rows in a given grouping with an NA value for `what`. missing + denominator = Number of people in a given group.
 #'    When `what` is a factor/character, the missing information is provided for the other
+#'
 #' 7) rse: relative standard error. mean/se
-#' 8) ndistinct: number of non-na distinct values `what` takes on in a given grouping (after filtering and all that jazz)
-#' 9) obs: number of unique observations
-#' 10) median: the median non NA response. Not populated when `what` is a factor or character. Even for surveys, the median is the unweighted result.
-#' 11) unique.time: Number of unique time points (from `time_var`) included in each tabulation
+#'
+#' 8) obs: number of unique observations
+#'
+#' 9) median: the median non NA response. Not populated when `what` is a factor or character. Even for surveys, the median is the unweighted result.
+#'
+#' 10) unique.time: Number of unique time points (from `time_var`) included in each tabulation
 #'
 #' For survey data, use the \code{proportion} argument where relevant to ensure metrics are calculated using special proportion (e.g \code{svyciprop})
 #' methods. That is, when you want to find the fraction of ____, toggle \code{proportion} to \code{TRUE}.
@@ -46,11 +55,32 @@
 #'
 #' test.results <- calc(test.data,
 #'                      what = c("kotelchuck", "fetal_pres"),
-#'                      "chi_year == 2016 & chi_sex %in% c('Male', 'Female')",
+#'                      chi_year == 2016 & chi_sex %in% c('Male', 'Female'),
 #'                       by = c("chi_year", "chi_sex"),
 #'                       metrics = c("mean", "numerator", "denominator",
-#'                                   "total", "lower", "upper", "se"))
+#'                                   "total"))
 #'
 calc <- function(ph.data, ...) {
   UseMethod("calc")
+}
+
+#' @noRd
+#' @export
+calc.data.frame <- function(ph.data, ...){
+  stop('calc no longer accepts raw data.frames/data.tables/tbl_dfs as an option. Please convert ph.data to an appropriate object type instead.
+       Use `ph.data <- dtsurvey::dtadmin(ph.data)` for non-survey data.')
+}
+
+#' @noRd
+#' @export
+calc.survey.design2 <- function(ph.data, ...){
+  stop('calc no longer accepts tbl_svys or survey.design objects as an option. Please convert ph.data to an appropriate object type instead.
+       Review the documentation for dtsurvey::dtsurvey to properly convert/encode survey data for use with `calc`.')
+}
+
+#' @noRd
+#' @export
+calc.svyrep.design <- function(ph.data, ...){
+  stop('calc no longer accepts svyrep.design objects as an option. Please convert ph.data to an appropriate object type instead.
+       Use `ph.data <- dtsurvey::dtrepsurvey(ph.data)` to convert ph.data and then proceed with calc.')
 }

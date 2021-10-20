@@ -55,6 +55,7 @@ The dataset should have only one row per unique combination of jp_indicator, jp_
 jp_byvar2, & jp_period
 }
 \examples{
+\dontrun{
 # create sample data
 dt <- data.table::data.table(
   indic = c(rep("my.indicator", 14)),
@@ -74,6 +75,7 @@ joinpoint(jp_data = data.table::copy(dt),
      jp_byvar2 = "group2",
      jp_dir = "C:/temp/jp_test_data/"
 )
+}
 }
 \keyword{JoinPoint,}
 \keyword{trends}
