@@ -63,3 +63,24 @@
 calc <- function(ph.data, ...) {
   UseMethod("calc")
 }
+
+#' @noRd
+#' @export
+calc.data.frame <- function(ph.data, ...){
+  stop('calc no longer accepts raw data.frames/data.tables/tbl_dfs as an option. Please convert ph.data to an appropriate object type instead.
+       Use `ph.data <- dtsurvey::dtadmin(ph.data)` for non-survey data.')
+}
+
+#' @noRd
+#' @export
+calc.survey.design2 <- function(ph.data, ...){
+  stop('calc no longer accepts tbl_svys or survey.design objects as an option. Please convert ph.data to an appropriate object type instead.
+       Review the documentation for dtsurvey::dtsurvey to properly convert/encode survey data for use with `calc`.')
+}
+
+#' @noRd
+#' @export
+calc.svyrep.design <- function(ph.data, ...){
+  stop('calc no longer accepts svyrep.design objects as an option. Please convert ph.data to an appropriate object type instead.
+       Use `ph.data <- dtsurvey::dtrepsurvey(ph.data)` to convert ph.data and then proceed with calc.')
+}
