@@ -41,6 +41,7 @@ After installation, we highly recommend that you start by walking through a vign
 * [calc()](https://github.com/PHSKC-APDE/rads/wiki/Vignette:-calc())
 * [get_population()](https://github.com/PHSKC-APDE/rads/wiki/Vignette:-get_population())
 * [get_data()](https://github.com/PHSKC-APDE/rads/wiki/Vignette:-get_data())
+* [age_standardize()](https://github.com/PHSKC-APDE/rads/wiki/Vignette:-age_standardize())
 
 ## Problems?
 * If you come across a bug or have specific suggestions for improvement, please click on ["Issues"](https://github.com/PHSKC-APDE/rads/issues) at the top of this page and then click ["New Issue"](https://github.com/PHSKC-APDE/rads/issues/new/choose) and provide the necessary details. 
