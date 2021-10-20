@@ -84,6 +84,8 @@ load("//phshare01/epe_share/WORK/surveys/ACS/PUMS data & code all years/2019_1_y
       type = "JK1" ,
       data = person.wa
     )
+  
+  #New for version 1.0.0
   pums =dtsurvey::dtrepsurvey(pums)
 
 ## ---- warning=FALSE-----------------------------------------------------------
@@ -138,7 +140,10 @@ mydt <- data.table(
   school = as.factor(sample(c("Alpha", "Beta", "Gamma", "Delta"), 2000, replace = T)),
   grades = as.factor(sample(c("A", "B", "C", "D"), 2000, replace = T)), 
   year = sample(2016:2021, 2000, replace = T))
+
+#New for version 1.0.0
 mydt = dtsurvey::dtadmin(mydt)
+
 mydt[]
 
 ## ---- warning=FALSE, message=FALSE--------------------------------------------
