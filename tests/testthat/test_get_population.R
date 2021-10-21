@@ -23,6 +23,8 @@ test_that('get_population',{
 
   expect_equal(269, get_population(years = 2017, race_type = "race_eth", race = "white", ages = c(100))$pop ) # 2017 White-NH, age 100+ ... check top coding 100+
 
+  expect_equal("65-100", get_population(years = 2019, ages = c(65:100))[]$age ) # ensure that summary age is properly formatted
+
 })
 
 
