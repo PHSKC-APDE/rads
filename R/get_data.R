@@ -91,7 +91,7 @@ get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcf
 
   if(kingco == T) svy <- svy[kingco == 1,]
 
-  if(!all(is.na(cols))) svy <- svy[, .SD, .SDcols = cols]
+  if(!all(is.na(cols))) svy <- svy[, .SD, .SDcols = c(cols, '_id')]
 
   return(svy)
 }
