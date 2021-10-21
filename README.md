@@ -17,7 +17,7 @@ If you haven’t yet installed [`rads`](https://github.com/PHSKC-APDE/rads), fol
    `devtools::install_github("PHSKC-APDE/dtsurvey", auth_token = NULL)`
 
 4. Install [`rads`](https://github.com/PHSKC-APDE/rads) …
-    `devtools::install_github("dcaseykc/dtsurvey", auth_token = NULL)`
+    `devtools::install_github("PHSKC-APDE/rads", auth_token = NULL)`
     * To install github from a particular branch, specify it with the 'ref' argument, e.g., `devtools::install_github("PHSKC-APDE/rads", ref = "dev", auth_token = NULL)`
 
 5. Load [`rads`](https://github.com/PHSKC-APDE/rads) … `library(rads)`
@@ -31,7 +31,7 @@ Version 1.0.0 includes a major overhaul of the workhorse `calc` function and the
 
 Potential breaking changes:
 
-1. `Calc` will only accept objects of type `dtsurvey`, `dtrepsurvey`, or `dtadmin`. The documentation for these types (and the functions used to create them) can be found in the `dtsurvey` package.
+1. `Calc` will only accept objects of type `dtsurvey`, `dtrepsurvey`, or `dtadmin`. The documentation for these types (and the functions used to create them) can be found in the [`dtsurvey`](https://github.com/PHSKC-APDE/dtsurvey) package.
 
 2. Subsetting a dataset via `calc` no longer makes use of a `dplyr::filter`-esque interface. Instead, via the `where` argument, a user may pass an unquoted (e.g., no " or ') expression that would be valid in the `i` part of a `DT[i,j,by]` command.
 
@@ -41,6 +41,7 @@ After installation, we highly recommend that you start by walking through a vign
 * [calc()](https://github.com/PHSKC-APDE/rads/wiki/Vignette:-calc())
 * [get_population()](https://github.com/PHSKC-APDE/rads/wiki/Vignette:-get_population())
 * [get_data()](https://github.com/PHSKC-APDE/rads/wiki/Vignette:-get_data())
+* [age_standardize()](https://github.com/PHSKC-APDE/rads/wiki/Vignette:-age_standardize())
 
 ## Problems?
 * If you come across a bug or have specific suggestions for improvement, please click on ["Issues"](https://github.com/PHSKC-APDE/rads/issues) at the top of this page and then click ["New Issue"](https://github.com/PHSKC-APDE/rads/issues/new/choose) and provide the necessary details. 
