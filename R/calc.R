@@ -4,8 +4,7 @@
 #' @param what character vector. Variable to calculate metrics for.
 #' @param where subsetting expression
 #' @param by character vector. Must refer to variables within ph.data. The variables within ph.data to compute `what` by
-#' @param metrics character. See \code{\link{metrics}} for the available options. Note, except when 'distinct' is
-#' selected, all metrics are calculated -- this argument just specifies which one gets returned
+#' @param metrics character. See \code{\link{metrics}} or scroll below for the available options.
 #' @param per integer. The denominator when "rate" or "adjusted-rate" are selected as the metric. Metrics will be multiplied by this value.
 #' @param win integer. The number of consectutive units of time (e.g., years, months, etc.) over which the metrics will be calculated,
 #' i.e., the 'window' for a rolling average, sum, etc.
@@ -22,26 +21,44 @@
 #' by `where` for each grouping implied by `by`.
 #'
 #' Available metrics include:
-#' 1) mean, se, upper, lower: Average response and associated metrics of uncertainty. Underlying ci (e.g. upper and lower) is 95%
 #'
-#' 2) rate, rate_se, rate_upper, rate_lower: mean \* per and associated metrics of uncertainty \* per. Underlying ci (e.g. upper and lower) is 95%
+#' 1) total: Count of people with the given value. Mostly relevant for surveys
+#' (where total is approximately mean * sum(pweights)).
+#' Returns total, total_se, total_upper, total_lower.
+#' total_se, total_upper, & total_lower are only valid for survey data.
+#' Default ci (e.g. upper and lower) is 95 percent.
 #'
-#' 3) total, total_se, total_upper, total_lower: Count of people with the given value. Mostly relevent for surveys (where total is approximately mean * sum(pweights)). SE/Upper/Lower only valid for survey data
+#' 2) mean: Average response and associated metrics of uncertainty.
+#' Returns mean, mean_se, mean_lower, mean_upper.
+#' Default ci (e.g. upper and lower) is 95 percent.
 #'
-#' 4) numerator: sum of non-na values for `what``
+#' 3) rse: Relative standard error. 100*se/mean.
 #'
-#' 5) denominator: number of rows where `what` is not NA
+#' 4) numerator: Sum of non-NA values for `what``.
+#' The numerator is always unweighted.
 #'
-#' 6) missing, missing.prop: Number of rows in a given grouping with an NA value for `what`. missing + denominator = Number of people in a given group.
-#'    When `what` is a factor/character, the missing information is provided for the other
+#' 5) denominator: Number of rows where `what` is not NA.
+#' The denominator is always unweighted.
 #'
-#' 7) rse: relative standard error. mean/se
+#' 6) obs: Number of unique observations (i.e., rows), agnostic as to whether
+#' there is missing data for `what`. The obs is always unweighted.
 #'
-#' 8) obs: number of unique observations
+#' 7) median: The median non NA response. Not populated when `what` is a factor
+#' or character. Even for surveys, the median is the unweighted result.
 #'
-#' 9) median: the median non NA response. Not populated when `what` is a factor or character. Even for surveys, the median is the unweighted result.
+#' 8) unique.time: Number of unique time points (from `time_var`) included in
+#' each tabulation (i.e., number of unique time points when the `what` is not missing).
 #'
-#' 10) unique.time: Number of unique time points (from `time_var`) included in each tabulation
+#' 9) missing: Number of rows in a given grouping with an NA value for `what`.
+#'    missing + denominator = Number of people in a given group.
+#'    When `what` is a factor/character, the missing information is provided for the other.
+#'
+#' 10) missing.prop: The proportion of the data that has an NA value for `what`.
+#'
+#' 11) rate: mean * per. Provides rescaled mean estimates (i.e., per 100 or per 100,0000).
+#' Returns rate, rate_se, rate_lower, rate_upper.
+#' Default ci (e.g. upper and lower) is 95 percent.
+#'
 #'
 #' For survey data, use the \code{proportion} argument where relevant to ensure metrics are calculated using special proportion (e.g \code{svyciprop})
 #' methods. That is, when you want to find the fraction of ____, toggle \code{proportion} to \code{TRUE}.
