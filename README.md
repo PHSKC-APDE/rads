@@ -9,8 +9,10 @@ If you haven’t yet installed [`rads`](https://github.com/PHSKC-APDE/rads), fol
 
 1.  Make sure devtools is installed … `install.packages("devtools")`.
 
-2. Install and update `data.table`.
+2. Install and update `data.table`:
+
    `install.packages('data.table')`
+   
    `data.table::update.dev.pkg()`
 
 3. Install [`dtsurvey`](https://github.com/PHSKC-APDE/dtsurvey)
@@ -35,6 +37,7 @@ Potential breaking changes:
 
 2. Subsetting a dataset via `calc` no longer makes use of a `dplyr::filter`-esque interface. Instead, via the `where` argument, a user may pass an unquoted (e.g., no " or ') expression that would be valid in the `i` part of a `DT[i,j,by]` command.
 
+3. The default method for computing confidence intervals for survey data has changed. The practical difference of this change is essentially nil, but interested users can fuss around with the differences between the `xlogit` (new) and `logit` methods to computing CIs via `survey::svyciprop`.
 
 ## Getting started
 After installation, we highly recommend that you start by walking through a vignette on the [wiki](https://github.com/PHSKC-APDE/rads/wiki).
