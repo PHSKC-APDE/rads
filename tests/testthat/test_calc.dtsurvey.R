@@ -26,6 +26,22 @@ apiclus1$hm_bin = as.numeric(apiclus1$highmeals)
 apiclus1$both_bin = apiclus1$both == 'Yes'
 apiclus1$w = 'banana'
 apiclus1$awardsYes = as.numeric(apiclus1$awards == 'Yes')
+
+apiclus1$bin = sample(0:1, nrow(apiclus1), T)
+apiclus1$binNA = c(NA, apiclus1$bin[2:nrow(apiclus1)])
+apiclus1$binfct = as.factor(apiclus1$bin)
+apiclus1$binfctNA = as.factor(apiclus1$binNA)
+
+
+apiclus1$bin2 = ifelse(apiclus1$bin == 0, NA, apiclus1$bin)
+apiclus1$bin3 = ifelse(apiclus1$bin == 0, NA, sample(0:1, nrow(apiclus1), T))
+apiclus1$bincpy = apiclus1$bin
+apiclus1$bin2cpy = apiclus1$bin2
+
+apiclus1$grp = letters[sample(c(NA, 1:3), nrow(apiclus1), T)]
+
+apiclus1$grp[1] = 'd'
+
 s2 <- dtrepsurvey(as.svrepdesign(svydesign(id=~dnum, weights=~pw, data=apiclus1)))
 clus<-svydesign(id=~dnum, weights=~pw, data=apiclus1)
 sur = dtsurvey(apiclus1, psu = 'dnum', weight = 'pw')
@@ -340,4 +356,19 @@ test_that('Ensure `metric = "total"` provides SE & CI', {
   expect_false(all(is.na(tt1[, total_lower])))
 
 })
+
+test_that('NAs in what and when do no totally break everything',{
+
+  r1 = calc(sur, what = 'bin2', by = 'bin2cpy', metrics = c('mean'))
+  r2 = sur[, mean(bin2, na.rm = T), bin2cpy]
+  setDT(r2)
+  expect_equal(r1[, .(bin2cpy, V1 = mean)],r2)
+
+  r3 = calc(sur, what = 'bin', by = 'grp')
+  r4 = calc(sur, what = 'binfct', by = 'grp')
+  r5 = calc(sur, what = 'binNA', by = 'grp')
+  r6 = calc(sur, what = 'binfctNA', by = 'grp')
+
+})
+
 
