@@ -21,9 +21,9 @@ If you haven’t yet installed [`rads`](https://github.com/PHSKC-APDE/rads), fol
 
 ## Getting started
 After installation, we highly recommend that you start by walking through a vignette on the [wiki](https://github.com/PHSKC-APDE/rads/wiki).
-* [calc()](https://github.com/PHSKC-APDE/rads/wiki/Vignette:-calc())
-* [get_population()](https://github.com/PHSKC-APDE/rads/wiki/Vignette:-get_population())
-* [get_data()](https://github.com/PHSKC-APDE/rads/wiki/Vignette:-get_data())
+* [calc()](https://github.com/PHSKC-APDE/rads/wiki/Using-the-calc-function)
+* [get_population()](https://github.com/PHSKC-APDE/rads/wiki/Using-the-get_population-function)
+* [get_data()](https://github.com/PHSKC-APDE/rads/wiki/Using-the-get_data-function)
 
 ## Problems?
 * If you come across a bug or have specific suggestions for improvement, please click on ["Issues"](https://github.com/PHSKC-APDE/rads/issues) at the top of this page and then click ["New Issue"](https://github.com/PHSKC-APDE/rads/issues/new/choose) and provide the necessary details. 
