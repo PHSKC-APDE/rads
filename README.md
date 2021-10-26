@@ -9,9 +9,7 @@ If you haven’t yet installed [`rads`](https://github.com/PHSKC-APDE/rads), fol
 
 1.  Make sure devtools is installed … `install.packages("devtools")`.
 
-2. Install and update `data.table`:
-
-   `install.packages('data.table')`
+2. Update `data.table` to use the dev package (until they release the new version):
    
    `data.table::update.dev.pkg()`
 
