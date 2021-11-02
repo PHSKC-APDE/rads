@@ -5,7 +5,6 @@ output:
   rmarkdown::html_vignette: default
   pdf_document: default
   urlcolor: blue
-  keep_md: true
 vignette: |
   %\VignetteEngine{knitr::knitr} %\VignetteIndexEntry{calc}
 ---

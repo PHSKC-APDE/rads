@@ -6,7 +6,7 @@
 \usage{
 get_population(
   kingco = T,
-  years = c(2019),
+  years = c(2020),
   ages = c(0:100),
   genders = c("F", "M"),
   races = c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white"),
@@ -18,34 +18,42 @@ get_population(
 )
 }
 \arguments{
-\item{kingco}{Logical vector of length 1. Identifies whether you want population estimates limited to King County.}
+\item{kingco}{Logical vector of length 1. Identifies whether you want population estimates limited to King County. Default == TRUE.}
 
-\item{years}{Numeric vector. Identifies which year(s) of data should be pulled}
+\item{years}{Numeric vector. Identifies which year(s) of data should be pulled. Default == c(2020).}
 
-\item{ages}{Numeric vector. Identifies which age(s) should be pulled}
+\item{ages}{Numeric vector. Identifies which age(s) should be pulled. Default == c(0:100), with 100 being the top coded value for 100:120.}
 
-\item{genders}{Character vector of length 1 or 2.Identifies gender(s) should be pulled.}
+\item{genders}{Character vector of length 1 or 2. Identifies gender(s) should be pulled. The acceptable values are 'f', 'female', 'm', and 'male'.
+Default == c('F', 'M').}
 
-\item{races}{Character vector of length 1 to 7. Identifies which race(s) or ethnicity should be pulled}
+\item{races}{Character vector of length 1 to 7. Identifies which race(s) or ethnicity should be pulled. The acceptable values are "aian",
+"asian", "black", "hispanic", "multiple", "nhpi", and "white". Default == all the possible values.}
 
-\item{race_type}{Character vector of length 1. Identifies whether to pull race data with Hispanic as an ethnicity ("race") or Hispanic as a race (“race_eth”)}
+\item{race_type}{Character vector of length 1. Identifies whether to pull race data with Hispanic as an ethnicity ("race") or Hispanic as a race ("race_eth").
+Default == c("race_eth").}
 
-\item{geo_type}{Character vector of length 1. Identifies the geographic level for which you want population estimates}
+\item{geo_type}{Character vector of length 1. Identifies the geographic level for which you want population estimates. Possible values are
+"kc", "seattle, "blk", "blkgrp", "hra", "region", "tract", and "zip". Note that all these geo_types except "zip" are available for King,
+Pierce, and Snohomish counties only. Default == "kc".}
 
-\item{group_by}{Character vector of length 0 to 7. Identifies how you would like the data 'grouped' (i.e., stratified)}
+\item{group_by}{Character vector of length 0 to 7. Identifies how you would like the data 'grouped' (i.e., stratified). Valid options are limited to:
+"years", "ages", "genders", "race", "race_eth", "fips_co", and "geo_id". Default == NULL, i.e., estimates are not grouped / stratified.}
 
-\item{round}{Logical vector of length 1. Identifies whether or not population estimates should be returned as whole numbers}
+\item{round}{Logical vector of length 1. Identifies whether or not population estimates should be returned as whole numbers. Default == TRUE.}
 
-\item{mykey}{Character vector of length 1. Identifies the keyring:: key that can be used to access the Health & Human Services Analytic Workspace (HHSAW)}
+\item{mykey}{Character vector of length 1. Identifies the keyring:: key that can be used to access the Health & Human Services Analytic Workspace (HHSAW).
+Default == ‘hhsaw’}
 }
 \value{
 dataset as a data.table for further analysis/tabulation
 }
 \description{
-Simple front-end for pulling in standard population data
+Simple front-end for pulling in standard OFM population data from SQL
 }
 \examples{
 \dontrun{
- get_population(geo_type = "region")[]
+ a = get_population(geo_type = "region")
+ print(a)
 }
 }

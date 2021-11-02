@@ -37,6 +37,7 @@
 #' @import glue
 #'
 #' @examples
+#' \dontrun{
 #' # create sample data
 #' dt <- data.table::data.table(
 #'   indic = c(rep("my.indicator", 14)),
@@ -56,6 +57,7 @@
 #'      jp_byvar2 = "group2",
 #'      jp_dir = "C:/temp/jp_test_data/"
 #' )
+#' }
 
 # JoinPoint function ----
 joinpoint <- function(jp_data = NULL,

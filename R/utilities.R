@@ -61,21 +61,56 @@ list_dataset_columns <- function(dataset, analytic_only = F){
 }
 
 
-#' List of available metrics
-#' @return character vector. A vector of the available metrics for calculation.
+#' List of available metric for `calc`
+#' @return character vector. A vector of the available metrics for `calc`
 #' @name metrics
-NULL
-
+#' @details
+#' 1) total: Count of people with the given value. Mostly relevant for surveys
+#' (where total is approximately mean * sum(pweights)).
+#' Returns total, total_se, total_upper, total_lower.
+#' total_se, total_upper, & total_lower are only valid for survey data.
+#' Default ci (e.g. upper and lower) is 95 percent.
+#'
+#' 2) mean: Average response and associated metrics of uncertainty.
+#' Returns mean, mean_se, mean_lower, mean_upper.
+#' Default ci (e.g. upper and lower) is 95 percent.
+#'
+#' 3) rse: Relative standard error. 100*se/mean.
+#'
+#' 4) numerator: Sum of non-NA values for `what``.
+#' The numerator is always unweighted.
+#'
+#' 5) denominator: Number of rows where `what` is not NA.
+#' The denominator is always unweighted.
+#'
+#' 6) obs: Number of unique observations (i.e., rows), agnostic as to whether
+#' there is missing data for `what`. The obs is always unweighted.
+#'
+#' 7) median: The median non NA response. Not populated when `what` is a factor
+#' or character. Even for surveys, the median is the unweighted result.
+#'
+#' 8) unique.time: Number of unique time points (from `time_var`) included in
+#' each tabulation (i.e., number of unique time points when the `what` is not missing).
+#'
+#' 9) missing: Number of rows in a given grouping with an NA value for `what`.
+#'    missing + denominator = Number of people in a given group.
+#'    When `what` is a factor/character, the missing information is provided for the other.
+#'
+#' 10) missing.prop: The proportion of the data that has an NA value for `what`.
+#'
+#' 11) rate: mean * per. Provides rescaled mean estimates (i.e., per 100 or per 100,0000).
+#' Returns rate, rate_se, rate_lower, rate_upper.
+#' Default ci (e.g. upper and lower) is 95 percent.
+#'
 #' @rdname metrics
 #' @export
 metrics = function(){
-  #c('mean', 'se', 'lower', 'upper', 'numerator', 'denominator', 'total', 'total_se', 'missing', 'rse', 'missing.prop', 'ndistinct')
-  c('total', #'total_se', 'total_lower', 'total_upper'
-    'mean', 'rse', #'mean_se', 'mean_lower', 'mean_upper',
+  c('total',
+    'mean', 'rse',
     'numerator', 'denominator', 'obs', 'median',
-    'unique.time', 'ndistinct',
+    'unique.time',
     'missing', 'missing.prop',
-    'rate') #, 'rate_per', 'rate_se', 'rate_lower', 'rate_upper')
+    'rate')
 }
 
 
