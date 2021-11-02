@@ -7,18 +7,18 @@ RADS, APDE’s ‘R Automated Data System, is a suite of tools written in R and 
 
 If you haven’t yet installed [`rads`](https://github.com/PHSKC-APDE/rads), follow these steps:
 
-1. Make sure devtools is installed … `install.packages("devtools")`.
+1. Make sure devtools is installed … `install.packages("remotes")`.
 
 2. Install `data.table` ... `install.packages("data.table")`. Update `data.table` to use the dev package (until they release the new version):
    
    `data.table::update.dev.pkg()`
 
 3. Install [`dtsurvey`](https://github.com/PHSKC-APDE/dtsurvey)
-   `devtools::install_github("PHSKC-APDE/dtsurvey", auth_token = NULL)`
+   `remotes::install_github("PHSKC-APDE/dtsurvey", auth_token = NULL)`
 
 4. Install [`rads`](https://github.com/PHSKC-APDE/rads) …
-    `devtools::install_github("PHSKC-APDE/rads", auth_token = NULL)`
-    * To install github from a particular branch, specify it with the 'ref' argument, e.g., `devtools::install_github("PHSKC-APDE/rads", ref = "dev", auth_token = NULL)`
+    `remotes::install_github("PHSKC-APDE/rads", auth_token = NULL)`
+    * To install github from a particular branch, specify it with the 'ref' argument, e.g., `remotes::install_github("PHSKC-APDE/rads", ref = "dev", auth_token = NULL)`
 
 5. Load [`rads`](https://github.com/PHSKC-APDE/rads) … `library(rads)`
 
