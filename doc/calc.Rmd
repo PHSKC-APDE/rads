@@ -5,6 +5,7 @@ output:
   rmarkdown::html_vignette: default
   pdf_document: default
   urlcolor: blue
+  keep_md: true
 vignette: |
   %\VignetteEngine{knitr::knitr} %\VignetteIndexEntry{calc}
 ---
@@ -53,7 +54,7 @@ calc(ph.data = mtcars, what = c("mpg"))[]
 ***
 
 ## Example vital statistics analyses
-**First get the birth data (cf. [get_data() vignette](https://github.com/PHSKC-APDE/rads/wiki/Vignette:-get_data()))**
+**First get the birth data (cf. [get_data vignette](https://github.com/PHSKC-APDE/rads/wiki/get_data))**
 ```{r}
 birth <- get_data_birth(cols = c("chi_year", "chi_sex", "chi_race_eth8", 
                                  "preterm", "birth_weight_grams", "mother_birthplace_state"), 
