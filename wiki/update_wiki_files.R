@@ -31,10 +31,6 @@ for(rrr in rmds){
 
 }
 
-
-
-
-
 #push changes
 system('git add .')
 system(paste("git commit -m", shQuote('update wiki from automated process')))
