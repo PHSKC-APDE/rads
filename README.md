@@ -7,7 +7,7 @@ RADS, APDE’s ‘R Automated Data System, is a suite of tools written in R and 
 
 If you haven’t yet installed [`rads`](https://github.com/PHSKC-APDE/rads), follow these steps:
 
-1. Make sure devtools is installed … `install.packages("remotes")`.
+1. Make sure remotes is installed … `install.packages("remotes")`.
 
 2. Install `data.table` ... `install.packages("data.table")`. Update `data.table` to use the dev package (until they release the new version):
    
