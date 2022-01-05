@@ -371,4 +371,16 @@ test_that('NAs in what and when do no totally break everything',{
 
 })
 
+test_that('Ndistinct does things', {
+  #normal vars
+  r1 = calc(sur, what = 'awards', metrics = c('ndistinct'), proportion = T, ci = .95)
+  r2 = calc(sur, what = 'awards', where = awards == 'Yes', metrics = c('ndistinct'), proportion = T, ci = .95)
+  r3 = calc(sur, what = 'enroll', metrics = c('ndistinct'), by = 'stype', proportion = F, ci = .95)
+
+  expect_equal(r1[, unique(ndistinct)], sur[, length(unique(awards))])
+  expect_equal(r2[, unique(ndistinct)], 1)
+  expect_equal(r3[, ndistinct], sur[, length(unique(enroll)), stype][, V1])
+
+
+})
 

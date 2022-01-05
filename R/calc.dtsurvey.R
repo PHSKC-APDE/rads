@@ -16,6 +16,14 @@ calc.dtsurvey = function(ph.data,
                          verbose = FALSE,
                          ...){
 
+  if(!all(c('stype', 'sdes') %in% names(attributes(ph.data)))){
+
+    stop('`ph.data` input does not have the right attributes for this to work. Usually this is caused by using dplyr verbs on a dtsurvey object.
+         If you run into this issue on a administrative type dataset, just call dtadmin after all your data munging. If this occurs on a survey,
+         and you do some filtering and you just have to use dplyr: use the srvyr package (srvyr::as_survey_design()) to convert your data.frame up front,
+         to a survey like object and then do your dplyr-ing. After the data is ready, use dtsurvey::as.dtsurvey (or as.dtrepsurvey) to convert it into the right format.')
+  }
+
   call = match.call()
 
   #filter the dataset
@@ -239,6 +247,13 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
     misp_fun = NULL
   }
 
+  #ndistinct
+  if('ndistinct' %in% metrics){
+    ndis_fun = data.table::substitute2(length(unique(x)), list(x = x))
+  }else{
+    ndis_fun = NULL
+  }
+
   #use something like a = DT[, .(list(a), list(b)), env = list(a = mean_fun, b = total_fun), by = byvar]
   #to capture the se and ci returns and then break out post hoc
   #if it is a factor, compute some things separately
@@ -254,7 +269,8 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
     obs = obs_fun,
     missing = mis_fun,
     missing.prop = misp_fun,
-    unique.time = ut_fun
+    unique.time = ut_fun,
+    ndistinct = ndis_fun
   ),list(X = I(x),
          time_fun = time_fun,
          mean_fun = mean_fun,
@@ -265,7 +281,8 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
          mis_fun = mis_fun,
          misp_fun = misp_fun,
          ut_fun = ut_fun,
-         obs_fun = obs_fun))
+         obs_fun = obs_fun,
+         ndis_fun = ndis_fun))
 
   #remove nulls
   the_call = as.list(the_call)
@@ -273,7 +290,7 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
   the_call = the_call[!nulls]
 
   #Remove numerator if x is a factor since that gets calculated differently
-  if(xisfactor) the_call = the_call[which(!names(the_call) %in% 'numerator')]
+  if(xisfactor) the_call = the_call[which(!names(the_call) %in% c('ndistinct', 'numerator'))]
   the_call = as.call(the_call)
 
   #compute the aggregations
@@ -286,6 +303,8 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
     by = by,
     env = list(ccc = the_call)]
 
+    r1[, ndistinct := length(unique(DT[[x]]))]
+
     #for factors, the numerator needs to be calculated separately per level.
     r2 = DT[, list(
       numerator = .N
@@ -294,6 +313,8 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
     setnames(r2, x, 'level')
 
     r1[, id := .I]
+
+
 
   }
 

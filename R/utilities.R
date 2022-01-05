@@ -102,15 +102,17 @@ list_dataset_columns <- function(dataset, analytic_only = F){
 #' Returns rate, rate_se, rate_lower, rate_upper.
 #' Default ci (e.g. upper and lower) is 95 percent.
 #'
+#' 12) ndistinct: The unique number of `what` values in the given subset. For factors, it is the unique number of levels in the subset.
+#'
 #' @rdname metrics
 #' @export
 metrics = function(){
   c('total',
     'mean', 'rse',
-    'numerator', 'denominator', 'obs', 'median',
+    'numerator','denominator', 'obs', 'median',
     'unique.time',
     'missing', 'missing.prop',
-    'rate')
+    'rate', 'ndistinct')
 }
 
 
