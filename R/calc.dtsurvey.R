@@ -362,6 +362,12 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
 
       res = merge(r1, r2, by = c('one',by), all.x = T)
       res[, one := NULL]
+
+      if(!'numerator' %in% metrics){
+        res[, numerator := NULL]
+      }
+
+
     }else if('numerator' %in% metrics){
       res = merge(r1,r2, by = c(by, 'level'), all.x = T)
     } else{
