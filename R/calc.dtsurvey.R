@@ -303,8 +303,9 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
     by = by,
     env = list(ccc = the_call)]
 
-    r1[, ndistinct := length(unique(DT[[x]]))]
-
+    if('ndistinct' %in% metrics){
+      r1[, ndistinct := length(unique(DT[[x]]))]
+    }
     #for factors, the numerator needs to be calculated separately per level.
     r2 = DT[, list(
       numerator = .N
