@@ -87,7 +87,7 @@ get_population <- function(kingco = T,
 
       # check whether keyring credentials are correct / up to date ----
       if(server == FALSE){
-        trykey <- try(DBI::dbConnect(odbc::odbc(),
+        con <- try(DBI::dbConnect(odbc::odbc(),
                                       driver ='ODBC Driver 17 for SQL Server',
                                       server = 'kcitazrhpasqlprp16.azds.kingcounty.gov',
                                       database = 'hhs_analytics_workspace',
@@ -96,11 +96,25 @@ get_population <- function(kingco = T,
                                       Encrypt = 'yes',
                                       TrustServerCertificate = 'yes',
                                       Authentication = 'ActiveDirectoryPassword'), silent = T)
-        if (inherits(trykey, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured and is likely to have an outdated password. \n",
+        if (inherits(con, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured and is likely to have an outdated password. \n",
                                                                "Please reset your keyring and run the get_population() function again. \n",
                                                                paste0("e.g., keyring::key_set('", mykey, "', username = 'ALastname@kingcounty.gov') \n"),
                                                                "When prompted, be sure to enter the same password that you use to log into to your laptop."))
+      }else{
+        message(paste0('Please enter the password you use for your laptop into the pop-up window. \n',
+                       'Note that the pop-up may be behind your Rstudio session. \n',
+                       'You will need to use your two factor authentication app to confirm your KC identity.'))
+        con <- DBI::dbConnect(odbc::odbc(),
+                              driver = "ODBC Driver 17 for SQL Server",
+                              server = "kcitazrhpasqlprp16.azds.kingcounty.gov",
+                              database = "hhs_analytics_workspace",
+                              uid = keyring::key_list(mykey)[["username"]],
+                              Encrypt = "yes",
+                              TrustServerCertificate = "yes",
+                              Authentication = "ActiveDirectoryInteractive")
       }
+
+
 
       # check kingco ----
       if( !is.logical(kingco) | length(kingco) != 1){
@@ -222,31 +236,6 @@ get_population <- function(kingco = T,
       if(!is.null(group_by)){sql_query <- paste("SELECT", sql_select, "FROM [ref].[pop] WHERE", sql_where, sql_group, sql_order)}
       if( is.null(group_by)){sql_query <- paste("SELECT", sql_select, "FROM [ref].[pop] WHERE", sql_where)}
 
-    # open hhsaw connection ----
-      if(server == FALSE){
-          con <- DBI::dbConnect(odbc::odbc(),
-                                driver ='ODBC Driver 17 for SQL Server',
-                                server = 'kcitazrhpasqlprp16.azds.kingcounty.gov',
-                                database = 'hhs_analytics_workspace',
-                                uid = keyring::key_list(mykey)[["username"]],
-                                pwd = keyring::key_get(mykey, keyring::key_list(mykey)[["username"]]),
-                                Encrypt = 'yes',
-                                TrustServerCertificate = 'yes',
-                                Authentication = 'ActiveDirectoryPassword')
-      }
-      if(server == TRUE){
-        message(paste0('Please enter the password you use for your laptop into the pop-up window. \n',
-                       'Note that the pop-up may be behind your Rstudio session. \n',
-                       'You will need to use your two factor authentication app to confirm your KC identity.'))
-        con <- DBI::dbConnect(odbc::odbc(),
-                              driver = "ODBC Driver 17 for SQL Server",
-                              server = "kcitazrhpasqlprp16.azds.kingcounty.gov",
-                              database = "hhs_analytics_workspace",
-                              uid = keyring::key_list(mykey)[["username"]],
-                              Encrypt = "yes",
-                              TrustServerCertificate = "yes",
-                              Authentication = "ActiveDirectoryInteractive")
-      }
 
     # get population labels ----
       pop.lab <- data.table::setDT(DBI::dbGetQuery(con, "SELECT * FROM [ref].[pop_labels]"))
