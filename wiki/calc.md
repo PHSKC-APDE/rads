@@ -295,7 +295,7 @@ Before using `calc()` with survey data, the user must survey set the data while 
 ```r
 library(survey)
 
-load("//phshare01/epe_share/WORK/surveys/ACS/PUMS data & code all years/2019_1_year/prepped_R_files/2019_1_year_data.RData")
+load("//phshare01/epe_share/WORK/surveys/ACS/PUMS_data/2019_1_year/prepped_R_files/2019_1_year_data.RData")
 
   pums <-     
     survey::svrepdesign(

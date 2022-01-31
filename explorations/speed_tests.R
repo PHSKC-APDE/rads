@@ -3,7 +3,7 @@ library('srvyr')
 library('data.table')
 library('dtsurvey')
 
-acs = fread("S:/WORK/surveys/ACS/PUMS data & code all years/2014_2018_5_year/raw_unzipped_downloads/psam_p53.csv")
+acs = fread("//phshare01/epe_share/WORK/surveys/ACS/PUMS_data/2018_2014_5_year/raw_unzipped_downloads/psam_p53.csv")
 
 dat = data.table(id = 1:10000000)
 dat[, v1 := runif(.N)]
