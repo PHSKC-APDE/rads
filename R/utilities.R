@@ -305,6 +305,7 @@ format_time_simple <- function(x){
     string.columns <- which(vapply(dat,is.character, FUN.VALUE=logical(1) )) # identify string columns
     if(length(string.columns)>0) {
       dat[, (string.columns) := lapply(.SD, trimws, which="both"), .SDcols = string.columns] # trim white space to right or left
+      dat[, (string.columns) := lapply(.SD, function(x){gsub("^ *|(?<= ) | *$", "", x, perl = TRUE)}), .SDcols = string.columns] # collapse multiple consecutive white spaces into one
       dat[, (string.columns) := lapply(.SD, function(x){gsub("^$|^ $", NA, x)}), .SDcols = string.columns] # replace blanks with NA
       if(stringsAsFactors==TRUE){
         dat <- dat[, (string.columns) := lapply(.SD, factor), .SDcols = string.columns] # convert strings to factors
