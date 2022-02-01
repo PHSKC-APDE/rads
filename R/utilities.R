@@ -353,14 +353,36 @@ format_time_simple <- function(x){
 #' @export
 #' @return A simple printed statement, either identifying incompatible column types or a statement of success
 
-  validate_yaml_data <- function(DF = NULL, YML = NULL, VARS = NULL){
+  validate_yaml_data <- function(DF = NULL, YML = NULL, VARS = "vars"){
     ## Global variables used by data.table declared as NULL here to play nice with devtools::check()
-      DF.class <- NULL
+      DF.class <- yamlcols <- yamlnames <- yamlextra <- dfcols <- dfnames <- NULL
 
-    # Check that DT is a data.frame/data.table
+    # Check that DT is a data.frame/data.table ----
       if(is.data.frame(DF) == FALSE){
         stop("'DF' must be a data.frame or a data.table")
       }else{DF <- data.table::setDT(copy(DF))}
+
+    # Check that number of vars in YML is same as ncols in DF ----
+      yamlcols <- length(YML[[VARS]])
+      dfcols <- ncol(DF)
+      if(yamlcols != dfcols){
+        stop(paste0("The number of vars specified in the YAML (", yamlcols, ") does not match the number of columns in DF (", dfcols, ")"))
+      }
+
+    # Check that the column names in YML match those in DF ----
+      yamlnames <- sort(names(YML[[VARS]]))
+      dfnames <- sort(names(DF))
+      yamlextra <- setdiff(yamlnames, dfnames)
+      if(length(yamlextra) == 0){yamlextra <- "_____"}
+      dfextra <- setdiff(dfnames, yamlnames)
+      if(length(dfextra) == 0){dfextra <- "_____"}
+      if(setequal(yamlnames, dfnames)==F){
+            stop(paste0("The following variables are in the YAML but not in DF: ", yamlextra),
+                 paste0(". The following variables are in DF but not in the YAML: ", dfextra), ".")
+      }
+
+    # notice that this might take a while ----
+      message("The validation may take a few minutes if your data & yaml contain dates and or times")
 
     # identify proper classes from YAML file ----
       class.compare <- data.table::data.table(
@@ -369,19 +391,37 @@ format_time_simple <- function(x){
       )
 
     # convert names of SQL data types to R classes ----
-      class.compare[grepl("varchar", tolower(yaml.class)), yaml.class := "character"]
-      class.compare[grepl("int", tolower(yaml.class)), yaml.class := "integer"]
-      class.compare[grepl("float", tolower(yaml.class)), yaml.class := "numeric"]
+      class.compare[grepl("char|text|uniqueidentifier", tolower(yaml.class)), yaml.class := "character"]
+      class.compare[tolower(yaml.class) %in% c("tinyint", "smallint", "int"), yaml.class := "integer"]
+      class.compare[grepl("bigint|decimal|float|money|numeric|real", tolower(yaml.class)), yaml.class := "numeric"]
+      class.compare[grepl("bit", tolower(yaml.class)), yaml.class := "logical"]
+      class.compare[grepl("date", tolower(yaml.class)), yaml.class := "date"]
+      class.compare[grepl("time", tolower(yaml.class)), yaml.class := "POSIXct"]
 
     # identify which VARS should be of which class (assuming YAML is correct) ----
       make.char <- class.compare[yaml.class == "character"]$name
       make.num  <- class.compare[yaml.class == "numeric"]$name
       make.int  <- class.compare[yaml.class == "integer"]$name
+      make.logical  <- class.compare[yaml.class == "logical"]$name
+      make.Date  <- class.compare[yaml.class == "Date"]$name
+      make.POSIXct  <- class.compare[yaml.class == "POSIXct"]$name
 
     # create function to convert column classes if it can be done without introducing NA's ----
       lossless_convert <- function(x, class){
-        if(sum(is.na(x)) == sum(is.na(suppressWarnings(as(x, class)))) ){
-          x <- suppressWarnings(as(x, class))
+        if(!class %in% c("Date", "POSIXct")){
+            if(sum(is.na(x)) == sum(is.na(suppressWarnings(as(x, class)))) ){
+                x <- suppressWarnings(as(x, class))
+            }
+        }
+        if(class %in% c("Date")){
+          if(sum(is.na(x)) == sum(is.na(suppressWarnings(as.Date(as.character(x))))) ){
+            x <- suppressWarnings(as.Date(as.character(x)))
+          }
+        }
+        if(class %in% c("POSIXct")){
+          if(sum(is.na(x)) == sum(is.na(suppressWarnings(as.POSIXct(as.character(x))))) ){
+            x <- suppressWarnings(as.POSIXct(as.character(x)))
+          }
         }
         return(x)
       }
@@ -390,6 +430,9 @@ format_time_simple <- function(x){
       DF[, (make.char) := lapply(.SD, lossless_convert, class = 'character'), .SDcols = make.char]
       DF[, (make.num) := lapply(.SD, lossless_convert, class = 'numeric'), .SDcols = make.num]
       DF[, (make.int) := lapply(.SD, lossless_convert, class = 'integer'), .SDcols = make.int]
+      DF[, (make.logical) := lapply(.SD, lossless_convert, class = 'logical'), .SDcols = make.logical]
+      DF[, (make.Date) := lapply(.SD, lossless_convert, class = 'Date'), .SDcols = make.Date]
+      DF[, (make.POSIXct) := lapply(.SD, lossless_convert, class = 'POSIXct'), .SDcols = make.POSIXct]
 
     # check if there are variables that could not be coerced to proper type ----
       class.compare <- merge(data.table::data.table(name = names(sapply(DF, class)), DF.class = tolower(sapply(DF, class))),
@@ -405,7 +448,7 @@ format_time_simple <- function(x){
         class.problems <- paste(paste0(yaml.name, " (", yaml.class, ")"), collapse = ", ")
         stop(glue::glue("The following variables could not be coerced to their proper class (which is specified in parentheses):
                               {class.problems}"))
-      }else{success <- print(glue::glue("All column classes in your R dataset are compatible with the YAML reference standard."))}
+      }else{success <- message("All column classes in your R dataset are compatible with the YAML reference standard.")}
 
       return(success)
 
@@ -785,7 +828,7 @@ age_standardize <- function (my.dt, ref.popname = NULL, collapse = T, my.count =
 generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL, table = NULL){
 
   #Bindings for data.table/check global variables
-  vartype <- binary <- varname <- ..i <- varlength <- sql <- '.' <- NULL
+  vartype <- binary <- varname <- i <- varlength <- sql <- '.' <- NULL
 
   mi.outfile = 0
 
@@ -848,30 +891,31 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
   setorder(mydict, varname)
 
   # Identify standard TSQL numeric & string types ----
-  # Identify all integers << tinyint, smallint, and bigint probabld should not be automatically ascribed
+  # Identify all integers << tinyint, smallint, and bigint probably should not be automatically ascribed
   potential.int <- as.character(mydict[vartype %in% c("numeric", "integer")]$varname)
   for(i in potential.int){
-    mydict[varname==i & all(mydt[,..i] == floor(mydt[,..i])) == TRUE, vartype := "integer"]
+    mydict[varname==i & all(mydt[!is.na(get(i)), .SD, .SDcols = i] == floor(mydt[!is.na(get(i)), .SD, .SDcols = i])) == TRUE, vartype := "integer"]
+    mydict[varname==i & max(mydt[[i]], na.rm = T) >= 2147483647, vartype := "numeric"]
   }
 
   # Set varchar (assumed 1 chars ~= 1 byte and will add buffer of 100%)
   potential.varchar <- as.character(mydict[vartype %in% c("character", "factor")]$varname)
   for(i in potential.varchar){
-    mydict[varname==i, varlength := ceiling(max(nchar(as.character(mydt[[i]])))*2)]
-    mydict[varname==i & is.na(varlength), varlength := 10] # could be NA, eg, when col is for significance testing and nothign is significant
+    mydict[varname==i, varlength := 2+ceiling(max(nchar(as.character(mydt[[i]])[!is.na(mydt[[i]])]))*2)]
+    mydict[varname==i & is.na(varlength), varlength := 36] # arbitrarily chose 'n'==36 when character vector is 100% NA
   }
 
   # Ascribe SQL data type names ----
   sqlkey <- data.table(
-    vartype = c("character", "factor", "integer", "numeric", "Date", "POSIXct,POSIXt"),
-    sql = c("VARCHAR", "VARCHAR", "INT", "NUMERIC(38,3)", "DATE", "DATETIME")  # NUMERIC(38,3) ... allows for up to 38 digits of precision, with 3 of those to the right of the decimal
+    vartype = c("logical", "character", "factor", "binary", "integer", "numeric", "Date", "POSIXct,POSIXt"),
+    sql = c("BIT", "NVARCHAR", "NVARCHAR", "BIT", "INT", "NUMERIC(38,5)", "DATE", "DATETIME")  # NUMERIC(38,5) ... allows for up to 38 digits of precision, with 5 of those to the right of the decimal
   )
 
   mydict <- merge(mydict, sqlkey, by = "vartype", all.x = TRUE, all.y = FALSE)
 
   ## Clean up ----
   mydict[, varname := factor(varname, levels = names(mydt))]
-  mydict[sql == "VARCHAR", sql := paste0(sql, "(", varlength, ")")]
+  mydict[sql == "NVARCHAR", sql := paste0(sql, "(", varlength, ")")]
   mydict[, sql := paste0("    ", varname, ": ", sql)]
   setorder(mydict, varname) # sort in same order as the data.table
   mydict <- mydict[, .(sql)]
@@ -905,6 +949,7 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
   if(mi.outfile == 1){return(MyYAML)}else{message(paste0("YAML saved to ", outfile))}
 
 }
+
 
 #' Silence (i.e., suppress or mute) printed messages from functions
 #'
