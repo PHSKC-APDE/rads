@@ -19,7 +19,6 @@ Imports:
     haven (>= 2.2.0),
     methods,
     stats,
-    dplyr (>= 1.0.6),
     keyring (>= 1.2.0),
     yaml (>= 2.2.1)
 Suggests: 
