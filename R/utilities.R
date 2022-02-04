@@ -580,15 +580,17 @@ dumb_convert <- function(x, target = 'character'){
 #' \dontrun{
 #'  list_ref_pop()
 #' }
-#' @importFrom data.table fread
+#' @importFrom data.table copy
+#' @import rads.data
+#'
 list_ref_pop <- function(){
   #global variables used by data.table declared as NULL here to play nice with devtools::check()
   standard <- NULL
 
-  ref_single_to_99 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_single_age_to_99.csv", showProgress=FALSE)
-  ref_single_to_84 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_single_age_to_84.csv", showProgress=FALSE)
-  ref_agecat_18 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_18_age_groups.csv", showProgress=FALSE)
-  ref_agecat_19 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_19_age_groups.csv", showProgress=FALSE)
+  ref_single_to_99 <- data.table::copy(rads.data::population_reference_pop_single_age_to_99)
+  ref_single_to_84 <- data.table::copy(rads.data::population_reference_pop_single_age_to_84)
+  ref_agecat_18 <- data.table::copy(rads.data::population_reference_pop_18_age_groups)
+  ref_agecat_19 <- data.table::copy(rads.data::population_reference_pop_19_age_groups)
   ref_pop_table <- unique(rbind(ref_single_to_99[, list(standard)], ref_single_to_84[, list(standard)], ref_agecat_18[, list(standard)], ref_agecat_19[, list(standard)]))
   setorder(ref_pop_table, standard)
   ref_pop_table <- rbind(ref_pop_table[standard %like% "2000 U.S. Std P"], ref_pop_table[!standard %like% "2000 U.S. Std P"])
@@ -606,15 +608,17 @@ list_ref_pop <- function(){
 #' \dontrun{
 #'  get_ref_pop("2000 U.S. Std Population (single ages to 84 - Census P25-1130)")
 #' }
-#' @importFrom data.table fread
+#' @importFrom data.table copy
+#' @import rads.data
+#'
 get_ref_pop <- function(ref_name = NULL){
   #global variables used by data.table declared as NULL here to play nice with devtools::check()
   standard <- agecat <- age_start <- age_end <- pop <- ref_pop_name <- NULL
 
-  ref_single_to_99 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_single_age_to_99.csv", showProgress=FALSE)
-  ref_single_to_84 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_single_age_to_84.csv", showProgress=FALSE)
-  ref_agecat_18 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_18_age_groups.csv", showProgress=FALSE)
-  ref_agecat_19 <- data.table::fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/population_data/reference_pop_19_age_groups.csv", showProgress=FALSE)
+  ref_single_to_99 <- data.table::copy(rads.data::population_reference_pop_single_age_to_99)
+  ref_single_to_84 <- data.table::copy(rads.data::population_reference_pop_single_age_to_84)
+  ref_agecat_18 <- data.table::copy(rads.data::population_reference_pop_18_age_groups)
+  ref_agecat_19 <- data.table::copy(rads.data::population_reference_pop_19_age_groups)
   ref_pop_table <- rbind(ref_single_to_99, ref_single_to_84, ref_agecat_18, ref_agecat_19)
   ref_pop_table <- ref_pop_table[standard == ref_name, list(agecat, age_start, age_end, pop)]
   if(nrow(ref_pop_table) == 0){stop(strwrap(paste0("`ref_name` ('", ref_name, "') does not refer to a valid standard reference population.

@@ -19,7 +19,8 @@
 #' @param round Logical vector of length 1. Identifies whether or not population estimates should be returned as whole numbers. Default == TRUE.
 #' @param mykey Character vector of length 1. Identifies the keyring:: key that can be used to access the Health & Human Services Analytic Workspace (HHSAW).
 #' Default == ‘hhsaw’
-#' @importFrom data.table data.table data.table fread setDT setnames setcolorder
+#' @importFrom data.table data.table copy setDT setnames setcolorder
+#' @import rads.data
 #' @importFrom keyring key_get key_list
 #' @importFrom DBI dbConnect dbDisconnect dbGetQuery
 #' @importFrom odbc odbc
@@ -46,7 +47,8 @@ get_population <- function(kingco = T,
                            mykey = "hhsaw"){
 
       #global variables used by data.table declared as NULL here to play nice with devtools::check()
-      r_type <- short <- race <- name <- race_eth <- gender <- age <- geo_id <- pop <- geo_id_blk <- region <- hra <- server <- `.` <- NULL
+      r_type <- short <- race <- name <- race_eth <- gender <- age <- geo_id <- pop <- geo_id_blk <- region <- hra <-
+        server <- varname <- code <- label <- `.` <- NULL
 
     # Logical for whether running on a server ----
       server <- grepl('server', tolower(Sys.info()['release']))
@@ -62,18 +64,11 @@ get_population <- function(kingco = T,
                   98175, 98177, 98178, 98181, 98184, 98185, 98188, 98189, 98190, 98191, 98194, 98195, 98198, 98199, 98224, 98288)
 
     # race/eth reference table ----
-      ref.table <- rbind(
-        data.table::data.table(name  = rep("race", 7),
-                   r_type = rep("r1r3", 7),
-                   value = c("1", "2", "3", "7", "8", "5", "6"),
-                   label = c("White", "Black", "AIAN", "Asian", "NHPI", "Multiple race", "Hispanic"),
-                   short = c('white', 'black', 'aian', 'asian', 'nhpi', 'multiple', 'hispanic')),
-        data.table::data.table(name  = rep("race_eth", 7),
-                   r_type = rep("r2r4", 7),
-                   value = c("1", "2", "3", "7", "8", "5", "6"),
-                   label = c("White", "Black", "AIAN", "Asian", "NHPI", "Multiple race", "Hispanic"),
-                   short = c('white', 'black', 'aian', 'asian', 'nhpi', 'multiple', 'hispanic'))
-      )
+      ref.table <- copy(rads.data::population_wapop_codebook_values)
+      ref.table <- ref.table[varname %in% c("r1r3", "r2r4")]
+      ref.table[varname == "r1r3", name := "race"]
+      ref.table[varname == "r2r4", name := "race_eth"]
+      ref.table <- ref.table[, .(name, r_type = varname, value = code, label, short)]
 
     # check / clean / prep arguments ----
       # check if keyring credentials exist for hhsaw ----
@@ -189,7 +184,7 @@ get_population <- function(kingco = T,
           }
           group_by <- unique(group_by)
         }
-          group_by_orig <- copy(group_by)
+          group_by_orig <- data.table::copy(group_by)
 
       # Top code age ----
           if(max(ages) == 100){
@@ -291,7 +286,7 @@ get_population <- function(kingco = T,
 
         # region ----
           if(geo_type_orig == "region" & "geo_id" %in% group_by_orig){
-            xwalk <- fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/spatial_data/blocks10_to_region.csv")
+            xwalk <- data.table::copy(rads.data::spatial_blocks10_to_region)
             xwalk <- xwalk[, .(geo_id = as.character(geo_id_blk), region)]
             pop.dt <- merge(pop.dt, xwalk, by = "geo_id", all.x = T)
             nonpopvars <- setdiff(names(pop.dt), c("pop", "geo_id"))
@@ -310,7 +305,7 @@ get_population <- function(kingco = T,
 
         # hra ----
           if(geo_type_orig == "hra" & "geo_id" %in% group_by_orig){
-            xwalk <- fread("https://raw.githubusercontent.com/PHSKC-APDE/reference-data/master/spatial_data/blocks10_to_region.csv")
+            xwalk <- data.table::copy(rads.data::spatial_blocks10_to_region)
             xwalk <- xwalk[, .(geo_id = as.character(geo_id_blk), hra)]
             pop.dt <- merge(pop.dt, xwalk, by = "geo_id", all.x = T)
             nonpopvars <- setdiff(names(pop.dt), c("pop", "geo_id"))
