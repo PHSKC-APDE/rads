@@ -207,7 +207,7 @@ hr {
 
 <p>While you can use Poisson regression or other advanced statistical techniques to calculate age adjusted rates, for simplicity and broader comparison with the work of others, it is often beneficial to adjust your data using a standard reference population. This process is called <strong><em>age standardization</em></strong>. Age standardization answers the question, <em>“What rates would I observe if my data had the same age structure as a different population?”</em></p>
 
-<p>There are 35 reference populations baked into <code>rads</code>. Their names are visible when you type <code>list_ref_pop()</code>. Here are the first five as an example:</p>
+<p>There are 35 reference populations baked into <code>rads</code> (via it&#39;s dependency on <a href="https://github.com/PHSKC-APDE/rads.data"><code>rads.data</code></a>). Their names are visible when you type <code>list_ref_pop()</code>. Here are the first five as an example:</p>
 
 <pre><code class="r">list_ref_pop()[1:5]
 </code></pre>
@@ -246,7 +246,7 @@ hr {
 ## 18:   85+ years        85     120  4259173
 </code></pre>
 
-<p>The <code>age_standardize()</code> function provides a simple way to use reference populations to calculate age standardized rates. This vignette will provide some examples of how to use <code>age_standardize ()</code> and how to understand its output. To get the most out of this vignette, we recommend that you type each and every bit of code into R. Doing so will almost definitely help you learn the syntax much faster than just reading the vignette or copying and pasting the code.</p>
+<p>The <code>age_standardize()</code> function provides a simple way to use reference populations to calculate age standardized rates. This vignette will provide some examples of how to use <code>age_standardize()</code> and how to understand its output. To get the most out of this vignette, we recommend that you type each and every bit of code into R. Doing so will almost definitely help you learn the syntax much faster than just reading the vignette or copying and pasting the code.</p>
 
 <h2><code>age_standardize()</code> arguments</h2>
 
@@ -270,7 +270,13 @@ hr {
 
 <h2>Preparing your datset</h2>
 
-<p>Your dataset must have the following columns &hellip; </p>
+<p>Your dataset must have the following three columns &hellip; </p>
+
+<p>1) &#39;age&#39; or &#39;agecat&#39;: &#39;age&#39; in single years (if collapse = T) or &#39;agecat&#39; with the same age bins as your selected reference population (if collapse = F).</p>
+
+<p>2) a count for the event (e.g., disease) for which you want to find an age standardized rate.</p>
+
+<p>3) the population corresponding to the age or agecat in your original data</p>
 
 <hr/>
 
@@ -446,7 +452,7 @@ ex2.1[]
 
 <p>In this case, the crude rate and age standardized rate are the same. This doesn&#39;t mean there is a mistake. Notice that the confidence intervals differ &ndash; as would be expected. </p>
 
-<p>Also notice that I didn&#39;t include the <code>ref.popname</code> argument. When it is not specified, <code>age_standardize()</code> uses the default which is <code>list_ref_pop()[1]</code> (i.e, 2000 U.S. Std Population (18 age groups - Census P25-1130)).</p>
+<p>Also notice that we didn&#39;t include the <code>ref.popname</code> argument. When it is not specified, <code>age_standardize()</code> uses the default which is <code>list_ref_pop()[1]</code> (i.e, 2000 U.S. Std Population (18 age groups - Census P25-1130)).</p>
 
 <p><strong>Now let&#39;s run the same analysis, but stratified by gender</strong></p>
 
@@ -666,10 +672,12 @@ ex4.1[]
 
 <p><strong>Get the female populations corresponding to the birth counts</strong></p>
 
-<pre><code class="r">  kcpop &lt;- get_population(kingco = T, years = 2019, ages = 13:19, genders = &quot;Female&quot;, group_by = &quot;ages&quot;)
+<pre><code class="r">  kcpop &lt;- get_population(kingco = T, years = 2019, ages = 13:19, 
+                          genders = &quot;Female&quot;, group_by = &quot;ages&quot;)
   kcpop &lt;- kcpop[, .(age, geo = geo_id, pop)] 
 
-  wapop &lt;- get_population(kingco = F, years = 2019, ages = 13:19, genders = &quot;Female&quot;, group_by = &quot;ages&quot;, geo_type = &quot;zip&quot;)
+  wapop &lt;- get_population(kingco = F, years = 2019, ages = 13:19, 
+                          genders = &quot;Female&quot;, group_by = &quot;ages&quot;, geo_type = &quot;zip&quot;)
   wapop &lt;- wapop[, .(pop = sum(pop), geo = &quot;WA State&quot;), by = &quot;age&quot;]
 
   pop &lt;- rbind(kcpop, wapop)

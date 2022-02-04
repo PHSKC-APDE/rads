@@ -153,10 +153,12 @@ ex4.1[]
   births[]
 
 ## ---- warning=FALSE, message=FALSE--------------------------------------------
-  kcpop <- get_population(kingco = T, years = 2019, ages = 13:19, genders = "Female", group_by = "ages")
+  kcpop <- get_population(kingco = T, years = 2019, ages = 13:19, 
+                          genders = "Female", group_by = "ages")
   kcpop <- kcpop[, .(age, geo = geo_id, pop)] 
   
-  wapop <- get_population(kingco = F, years = 2019, ages = 13:19, genders = "Female", group_by = "ages", geo_type = "zip")
+  wapop <- get_population(kingco = F, years = 2019, ages = 13:19, 
+                          genders = "Female", group_by = "ages", geo_type = "zip")
   wapop <- wapop[, .(pop = sum(pop), geo = "WA State"), by = "age"]
   
   pop <- rbind(kcpop, wapop)
