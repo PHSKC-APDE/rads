@@ -46,8 +46,8 @@ This function expects data that has already been formatted for CHI
     numerator = round(rnorm(100, 20, 9), 0)
   )
   table(dt$numerator) # before
-  suppress(dt, suppress_range = c(0, 20), secondary = FALSE) # apply suppression
-  table(dt$numerator) # after
+  newdt <- suppress(dt, suppress_range = c(0, 20), secondary = FALSE) # apply suppression
+  table(newdt$numerator) # after
 
 }
 \keyword{suppression}

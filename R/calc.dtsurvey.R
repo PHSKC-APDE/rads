@@ -1,6 +1,5 @@
 #' @rdname calc
 #' @export
-#' @importFrom data.table substitute
 #' @importFrom stats median na.omit
 calc.dtsurvey = function(ph.data,
                          what,
@@ -156,7 +155,7 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
   st = attr(DT, 'stype')
 
   #For each metric, define a function to compute it-- or ignore it if not called for.
-  xisfactor = is.factor(DT[,x,env = list(x=x)])
+  xisfactor = is.factor(DT[[x]])
 
   x = as.name(x)
 

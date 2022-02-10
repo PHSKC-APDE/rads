@@ -34,7 +34,7 @@
 #'     numerator = round(rnorm(100, 20, 9), 0)
 #'   )
 #'   table(dt$numerator) # before
-#'   new.dt <- suppress(dt, suppress_range = c(0, 20), secondary = FALSE) # apply suppression
+#'   newdt <- suppress(dt, suppress_range = c(0, 20), secondary = FALSE) # apply suppression
 #'   table(newdt$numerator) # after
 #'
 
