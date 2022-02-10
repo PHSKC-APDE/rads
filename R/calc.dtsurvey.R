@@ -16,6 +16,9 @@ calc.dtsurvey = function(ph.data,
                          verbose = FALSE,
                          ...){
 
+  #global variables used by data.table declared as NULL here to play nice with devtools::check()
+  tv <- NULL
+
   if(!all(c('stype', 'sdes') %in% names(attributes(ph.data)))){
 
     stop('`ph.data` input does not have the right attributes for this to work. Usually this is caused by using dplyr verbs on a dtsurvey object.
@@ -144,6 +147,10 @@ calc.dtsurvey = function(ph.data,
 #' see the help/documentation for calc and/or smeanto better understand the inputs
 #' @noRd
 compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, time_var, time_format, per = 1, window = FALSE){
+
+
+  #global variables used by data.table declared as NULL here to play nice with devtools::check()
+  cim <- l <- `_id` <- `..sv` <- `..st` <- tv <- X <- ccc <- ndistinct <- id <- total <- one <- numerator <- rse <- mean_se <- rate_per <- NULL
 
   sv = attr(DT, 'sdes')
   st = attr(DT, 'stype')

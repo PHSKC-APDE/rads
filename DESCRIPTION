@@ -18,8 +18,8 @@ Imports:
     survey (>= 4.0),
     haven (>= 2.2.0),
     methods,
+    rads.data (>= 1.0.0),
     stats,
-    dplyr (>= 1.0.6),
     keyring (>= 1.2.0),
     yaml (>= 2.2.1)
 Suggests: 

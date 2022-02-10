@@ -34,8 +34,8 @@
 #'     numerator = round(rnorm(100, 20, 9), 0)
 #'   )
 #'   table(dt$numerator) # before
-#'   suppress(dt, suppress_range = c(0, 20), secondary = FALSE) # apply suppression
-#'   table(dt$numerator) # after
+#'   new.dt <- suppress(dt, suppress_range = c(0, 20), secondary = FALSE) # apply suppression
+#'   table(newdt$numerator) # after
 #'
 
 suppress <- function(sup_data = NULL,
@@ -91,6 +91,7 @@ suppress <- function(sup_data = NULL,
 
 
   #apply primary suppression ----
+      temp.dt[, suppression := as.character(suppression)]
       temp.dt[numerator %in% suppress_range[1]:suppress_range[2], suppression := "^"]
       sup_metrics <- intersect(names(temp.dt), c("result", "lower_bound", "upper_bound", "se", "rse",
                                                  "mean", "mean_se", "mean_lower", "mean_upper",

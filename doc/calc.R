@@ -71,7 +71,7 @@ calc(ph.data = birth,
 ## ---- warning=FALSE, message=FALSE--------------------------------------------
 library(survey)
 
-load("//phshare01/epe_share/WORK/surveys/ACS/PUMS data & code all years/2019_1_year/prepped_R_files/2019_1_year_data.RData")
+load("//phshare01/epe_share/WORK/surveys/ACS/PUMS_data/2019_1_year/prepped_R_files/2019_1_year_data.RData")
 
   pums <-     
     survey::svrepdesign(
@@ -95,21 +95,21 @@ pums[, constant :=1]
 calc(ph.data = pums, 
      what = c("constant"), 
      metrics = c("numerator", "total"), 
-     proportion = T)[]
+     proportion = F)[]
 
 # King County
 calc(ph.data = pums, 
      what = c("constant"), 
      chi_geo_kc ==1,
      metrics = c("numerator", "total"), 
-     proportion = T)[]
+     proportion = F)[]
 
 # Seattle
 calc(ph.data = pums, 
      what = c("constant"), 
      chi_geo_seattle ==1,
      metrics = c("numerator", "total"), 
-     proportion = T)[]
+     proportion = F)[]
 
 ## ---- warning=FALSE-----------------------------------------------------------
 calc(ph.data = pums, 
@@ -155,7 +155,7 @@ grades.distribution <- calc(
   time_var = "year", 
   metrics = c("numerator", "denominator", "mean"), proportion = F)
 
-grades.distribution[1:4]
+grades.distribution[level %in% c("A", "B")]
 
 ## ---- warning=FALSE, message=FALSE--------------------------------------------
 # create weights
@@ -174,5 +174,5 @@ grades.distribution2 <- calc(
   time_var = "year", 
   metrics = c("numerator", "denominator", "mean"), proportion = FALSE)
 
-grades.distribution2[1:4]
+grades.distribution2[level %in% c("A", "B")]
 
