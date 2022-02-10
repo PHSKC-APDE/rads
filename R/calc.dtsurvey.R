@@ -1,6 +1,6 @@
 #' @rdname calc
 #' @export
-#' @importFrom data.table substitute2
+#' @importFrom data.table substitute
 #' @importFrom stats median na.omit
 calc.dtsurvey = function(ph.data,
                          what,
@@ -120,7 +120,7 @@ calc.dtsurvey = function(ph.data,
     r = lapply(wins, function(w){
 
       if(usewins == TRUE){
-        sub_i = data.table::substitute2(tv %in% w, list(tv = time_var, w = w))
+        sub_i = substitute(tv %in% w, list(tv = time_var, w = w))
       }
 
       compute(ph.data[sub_i, env = list(sub_i = sub_i)], wht, by = by, metrics,
@@ -150,9 +150,12 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
 
   #For each metric, define a function to compute it-- or ignore it if not called for.
   xisfactor = is.factor(DT[,x,env = list(x=x)])
+
+  x = as.name(x)
+
   #construct the query
   if(any(c('mean', 'rate') %in% metrics)){
-    mean_fun = data.table::substitute2(list(dtsurvey::smean(x,
+    mean_fun = substitute(list(dtsurvey::smean(x,
                                                   na.rm = T,
                                                   var_type = c('se', 'ci'),
                                                   ci_method = cim,
@@ -168,7 +171,7 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
   }
 
   if('total' %in% metrics){
-    total_fun = data.table::substitute2(list(dtsurvey::stotal(x,
+    total_fun = substitute(list(dtsurvey::stotal(x,
                                                     na.rm = T,
                                                     var_type = c('se', 'ci'),
                                                     ci_method = 'total',
@@ -184,13 +187,13 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
 
   #numerator
   if('numerator' %in% metrics){
-    num_fun = data.table::substitute2(sum(x,na.rm = T), list(x = x))
+    num_fun = substitute(sum(x,na.rm = T), list(x = x))
   }else{
     num_fun = NULL
   }
   #denominator
   if('denominator' %in% metrics){
-    denom_fun = data.table::substitute2(sum(!is.na(x)), list(x = x))
+    denom_fun = substitute(sum(!is.na(x)), list(x = x))
   }else{
     denom_fun = NULL
   }
@@ -203,7 +206,7 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
       med_fun = NULL
       warning('Ignoring a request to calculate the median on a factor')
     }else{
-      med_fun = data.table::substitute2(median(x, na.rm = T) * 1.0, list(x=x))
+      med_fun = substitute(median(x, na.rm = T) * 1.0, list(x=x))
     }
   }else{
     med_fun = NULL
@@ -211,7 +214,7 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
 
   #time var
   if(!is.null(time_var)){
-    time_fun = data.table::substitute2(time_format(time_var[!is.na((x))]), list(time_var = time_var, x=x))
+    time_fun = substitute(time_format(time_var[!is.na((x))]), list(time_var = time_var, x=x))
 
     #if we're in a window, don't "by" by time var. Instead, let time_format handle things
     #if(!window) by = c(by, time_var) #add time_var to by is specified
@@ -221,14 +224,14 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
 
   #unique.time
   if('unique.time' %in% metrics){
-    ut_fun = data.table::substitute2(length(unique( (tv)[!is.na(x)] )), list(tv = time_var, x =x ))
+    ut_fun = substitute(length(unique( (tv)[!is.na(x)] )), list(tv = time_var, x =x ))
   }else{
     ut_fun =NULL
   }
 
   #missing
   if('missing' %in% metrics){
-    mis_fun = data.table::substitute2(sum(is.na( x )), list(x = x))
+    mis_fun = substitute(sum(is.na( x )), list(x = x))
   }else{
     mis_fun = NULL
   }
@@ -242,14 +245,14 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
 
   #missing.prop
   if('missing.prop' %in% metrics){
-    misp_fun = data.table::substitute2(sum(is.na(x) / .N), list(x = x))
+    misp_fun = substitute(sum(is.na(x) / .N), list(x = x))
   }else{
     misp_fun = NULL
   }
 
   #ndistinct
   if('ndistinct' %in% metrics){
-    ndis_fun = data.table::substitute2(length(unique(x)), list(x = x))
+    ndis_fun = substitute(length(unique(x)), list(x = x))
   }else{
     ndis_fun = NULL
   }
@@ -258,7 +261,7 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
   #to capture the se and ci returns and then break out post hoc
   #if it is a factor, compute some things separately
   # browser()
-  the_call = substitute2(list(
+  the_call = substitute(list(
     time = time_fun,
     variable = X,
     mean = mean_fun,
@@ -271,7 +274,7 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
     missing.prop = misp_fun,
     unique.time = ut_fun,
     ndistinct = ndis_fun
-  ),list(X = I(x),
+  ),list(X = as.character(x),
          time_fun = time_fun,
          mean_fun = mean_fun,
          med_fun = med_fun,
@@ -293,11 +296,13 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
   if(xisfactor) the_call = the_call[which(!names(the_call) %in% c('ndistinct', 'numerator'))]
   the_call = as.call(the_call)
 
+  # browser()
+
   #compute the aggregations
   if(!xisfactor){
-    res = DT[, ccc,
-      by = by,
-      env = list(ccc = the_call)][, level:=NA]
+
+    res = eval(substitute(DT[, ccc, by = bys], list(ccc = the_call, bys = by)))
+    res[, level := NA]
   }else{
     r1 = DT[, ccc,
     by = by,
