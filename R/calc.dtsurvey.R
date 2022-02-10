@@ -123,10 +123,10 @@ calc.dtsurvey = function(ph.data,
     r = lapply(wins, function(w){
 
       if(usewins == TRUE){
-        sub_i = substitute(tv %in% w, list(tv = time_var, w = w))
+        sub_i = substitute(tv %in% w, list(tv = as.name(time_var), w = w))
       }
 
-      compute(ph.data[sub_i, env = list(sub_i = sub_i)], wht, by = by, metrics,
+      compute(eval(substitute(ph.data[sub_i], env = list(sub_i = sub_i))), wht, by = by, metrics,
               ci_method = meth, level = ci,
               time_var = time_var, time_format = time_format,
               per = per, window = !(is.logical(sub_i) && sub_i))
@@ -221,7 +221,7 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
 
   #time var
   if(!is.null(time_var)){
-    time_fun = substitute(time_format(time_var[!is.na((x))]), list(time_var = time_var, x=x))
+    time_fun = substitute(time_format(time_var[!is.na((x))]), list(time_var = as.name(time_var), x=x))
 
     #if we're in a window, don't "by" by time var. Instead, let time_format handle things
     #if(!window) by = c(by, time_var) #add time_var to by is specified
@@ -231,7 +231,7 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
 
   #unique.time
   if('unique.time' %in% metrics){
-    ut_fun = substitute(length(unique( (tv)[!is.na(x)] )), list(tv = time_var, x =x ))
+    ut_fun = substitute(length(unique( (tv)[!is.na(x)] )), list(tv = as.name(time_var), x =x ))
   }else{
     ut_fun =NULL
   }
@@ -303,17 +303,13 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
   if(xisfactor) the_call = the_call[which(!names(the_call) %in% c('ndistinct', 'numerator'))]
   the_call = as.call(the_call)
 
-  # browser()
-
   #compute the aggregations
   if(!xisfactor){
 
-    res = eval(substitute(DT[, ccc, by = bys], list(ccc = the_call, bys = by)))
+    res = eval(substitute(DT[, ccc, by = by], list(ccc = the_call)))
     res[, level := NA]
   }else{
-    r1 = DT[, ccc,
-    by = by,
-    env = list(ccc = the_call)]
+    r1 = eval(substitute(DT[, ccc, by = by], list(ccc = the_call)))
 
     if('ndistinct' %in% metrics){
       r1[, ndistinct := length(unique(DT[[x]]))]
@@ -322,8 +318,8 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
     r2 = DT[, list(
       numerator = .N
     ),
-    by = c(by, x)]
-    setnames(r2, x, 'level')
+    by = c(by, as.character(x))]
+    setnames(r2, as.character(x), 'level')
 
     r1[, id := .I]
 
