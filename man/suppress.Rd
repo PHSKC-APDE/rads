@@ -9,7 +9,8 @@ suppress(
   suppress_range = c(0, 9),
   secondary = FALSE,
   secondary_ids = c("tab", "indicator_key", "cat1", "cat2_group", "year"),
-  secondary_where = NULL
+  secondary_where = NULL,
+  flag_only = FALSE
 )
 }
 \arguments{
@@ -20,21 +21,24 @@ i.e., mean, median, sum, rate, lower, upper, se, rse, numerator, denominator, pr
 
 \item{secondary}{logical (T, TRUE, F, or FALSE) indicating whether secondary suppression should be run}
 
-\item{secondary_ids}{character vector of column names which are used to define groups for secondary suppression}
+\item{secondary_ids}{character vector of column names which are used to define groups for secondary suppression.
+Note, this should not include the most granular level. For example, if you wanted secondary suppression for race/ethnicity
+where category == "race/ethnicity" and group %in% c(AIAN, Asian, Black, etc.), you should have
+secondary_ids = c("geography", "category") rather than secondary_ids = c("geography", "category", "group")}
 
 \item{secondary_where}{an expression identifying the rows to be filtered / excluded from secondary suppression because
 the categories are not mutually exclusive (e.g., race3)}
+
+\item{flag_only}{logical (T, TRUE, F, or FALSE) indicating whether data to be suppressed should be flagged without setting estimates to NA}
 }
 \value{
 a data.table with suppression applied to CHI standard columns.
 }
 \description{
-#' @description
 Default suppression is according to APDE/DOH standards (https://www.doh.wa.gov/Portals/1/Documents/1500/SmallNumbers.pdf)
 Each dataset may have it's own more stringent standards. When the reference sheet of all suppression guidelines is
 made available, this code should be updated to use that resource.
-}
-\details{
+
 This function expects data that has already been formatted for CHI
 }
 \examples{
@@ -46,8 +50,8 @@ This function expects data that has already been formatted for CHI
     numerator = round(rnorm(100, 20, 9), 0)
   )
   table(dt$numerator) # before
-  suppress(dt, suppress_range = c(0, 20), secondary = FALSE) # apply suppression
-  table(dt$numerator) # after
+  new.dt <- suppress(dt, suppress_range = c(0, 20), secondary = FALSE) # apply suppression
+  table(new.dt$numerator) # after
 
 }
 \keyword{suppression}
