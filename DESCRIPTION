@@ -22,6 +22,9 @@ Imports:
     stats,
     keyring (>= 1.2.0),
     yaml (>= 2.2.1)
+Remotes:
+    github::PHSKC-APDE/rads.data
+    github::PHSKC-APDE/dtsurvey
 Suggests: 
     httr, 
     knitr,
