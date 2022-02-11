@@ -14,7 +14,7 @@
 #' @param secondary logical (T, TRUE, F, or FALSE) indicating whether secondary suppression should be run
 #' @param secondary_ids character vector of column names which are used to define groups for secondary suppression.
 #' Note, this should not include the most granular level. For example, if you wanted secondary suppression for race/ethnicity
-#' where category == "race/ethnicity" and group %in% c(AIAN, Asian, Black, etc.), you should have
+#' where category == race/ethnicity and group == AIAN, Asian, Black, etc., you should have
 #' secondary_ids = c("geography", "category") rather than secondary_ids = c("geography", "category", "group")
 #' @param secondary_where an expression identifying the rows to be filtered / excluded from secondary suppression because
 #' the categories are not mutually exclusive (e.g., race3)
@@ -46,7 +46,7 @@ suppress <- function(sup_data = NULL,
                      suppress_range = c(0, 9),
                      secondary = FALSE,
                      secondary_ids = c("tab", "indicator_key", "cat1", "cat2_group", "year"),
-                     secondary_where = NULL,
+                     secondary_where,
                      flag_only = FALSE){
 
   ## Global variables used by data.table declared as NULL here to play nice with devtools::check()
@@ -83,15 +83,26 @@ suppress <- function(sup_data = NULL,
       }
 
   #validate 'secondary_where' ----
-      where <- NULL
-      if(!is.null(secondary_where)){
-        where <- tryCatch(parse(text = paste0(list(secondary_where))),  error = function (e) parse(text = paste0(list(bquote(secondary_where))))) # convert 'where' into an expression
-        if(nrow(sup_data[eval(where), ]) <1 ){
-          stop(paste0("Your '...' (i.e., ", where, ") filters out all rows of data. Please revise and submit again"))
+      if(!missing(secondary_where)){
+        call = match.call()
+
+        if(is.character(call[['secondary_where']])){
+          where = str2lang(call[['secondary_where']])
+          warning('`secondary_where` is a string. It was converted so that it would work, but in the future, this might turn into an error.
+                  In the future, please pass unquoted commands that will resolve to a logical' )
+        } else {where = copy(call[['secondary_where']])}
+
+
+        e <- substitute(expr = where) # get parse tree expression `where`
+        r <- eval(expr = e, envir = sup_data, enclos = parent.frame()) # evaluate
+        stopifnot('`where` does not resolve to a logical' = is.logical(r))
+        if(nrow(sup_data[r,]) <1 ){
+          stop(paste0("Your 'secondary_where' argument filters out all rows of data. Please revise and submit again"))
         }
       }
 
-  #validate 'secondary' ----
+
+  #validate 'flag_only' ----
       if(!is.logical(flag_only)){
         stop("'flag_only' must be specified as a logical (i.e., TRUE, T, FALSE, or F)")
       }
@@ -107,10 +118,10 @@ suppress <- function(sup_data = NULL,
       if(secondary==T){
 
         # apply secondary_where argument
-          if(!is.null(secondary_where)){
-            where <- tryCatch(parse(text = paste0(list(secondary_where))),  error = function (e) parse(text = paste0(list(bquote(secondary_where))))) # convert 'where' into an expression
-            temp.dt.aside <- temp.dt[!eval(where)]
-            temp.dt <- temp.dt[eval(where)]
+          if(!missing(secondary_where)){
+            r <- eval(expr = e, envir = temp.dt, enclos = parent.frame())
+            temp.dt.aside <- fsetdiff(temp.dt, temp.dt[r,])
+            temp.dt <- temp.dt[r,]
           }
 
         # identify max number of rows per group defined by secondary_ids

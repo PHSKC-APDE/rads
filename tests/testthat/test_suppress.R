@@ -30,6 +30,7 @@ test_that('Check that defaults work as expected',{
 })
 
 
+
 # test suppression range ----
 dt2 <- suppress(dt, suppress_range = c(0,10))
 test_that('Check that the suppression_range argument works',{
@@ -73,6 +74,7 @@ dt4 <- suppress(dt, suppress_range = c(0,10),
                 secondary = T,
                 secondary_ids = c("indicator", "team"),
                 secondary_where = "!team %in% c('a10', 'a11')")
+
 #ugly manual method to apply secondary suppression for testing
   sec.suppress4 <- copy(dt2[!team %in% c('a10', 'a11')])
   max.grp.rows <- max(sec.suppress4[, rowct := .N, .(indicator, team)]$rowct)
@@ -92,4 +94,26 @@ test_that('Check that secondary suppression works',{
   expect_equal( nrow(dt4[suppression=="^"]), nrow(dt4[is.na(se)]))
   expect_equal( nrow(dt4[suppression=="^"]), nrow(dt4[is.na(lower_bound)]))
   expect_equal( nrow(dt4[suppression=="^"]), nrow(dt4[is.na(rse)]))
+})
+
+
+
+# test flag_only ----
+dt5 <- suppress(dt, flag_only = T)
+test_that('Check that flag_only works',{
+  expect_equal( nrow(dt5[suppression=="^"]), nrow(dt[numerator <= 9]))
+  expect_equal( 0, nrow(dt5[is.na(mean)]))
+  expect_equal( 0, nrow(dt5[is.na(se)]))
+  expect_equal( 0, nrow(dt5[is.na(lower_bound)]))
+  expect_equal( 0, nrow(dt5[is.na(rse)]))
+  expect_equal( nrow(dt5[caution=="!"]), nrow(dt[rse >=30]))
+})
+
+
+
+# test secondary_where when character and unquoted expression ----
+dt6 <- suppress(dt, secondary_where = "team %like% '^a|^b|^c|^d'")
+dt7 <- suppress(dt, secondary_where = team %like% '^a|^b|^c|^d')
+test_that('Check that the same results are returned whether or not quoted',{
+  expect_identical( dt6, dt7)
 })

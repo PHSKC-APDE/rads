@@ -9,7 +9,7 @@ suppress(
   suppress_range = c(0, 9),
   secondary = FALSE,
   secondary_ids = c("tab", "indicator_key", "cat1", "cat2_group", "year"),
-  secondary_where = NULL,
+  secondary_where,
   flag_only = FALSE
 )
 }
@@ -23,7 +23,7 @@ i.e., mean, median, sum, rate, lower, upper, se, rse, numerator, denominator, pr
 
 \item{secondary_ids}{character vector of column names which are used to define groups for secondary suppression.
 Note, this should not include the most granular level. For example, if you wanted secondary suppression for race/ethnicity
-where category == "race/ethnicity" and group %in% c(AIAN, Asian, Black, etc.), you should have
+where category == race/ethnicity and group == AIAN, Asian, Black, etc., you should have
 secondary_ids = c("geography", "category") rather than secondary_ids = c("geography", "category", "group")}
 
 \item{secondary_where}{an expression identifying the rows to be filtered / excluded from secondary suppression because
@@ -52,5 +52,6 @@ This function expects data that has already been formatted for CHI
   table(dt$numerator) # before
   newdt <- suppress(dt, suppress_range = c(0, 20), secondary = FALSE) # apply suppression
   table(newdt$numerator) # after
+
 }
 \keyword{suppression}
