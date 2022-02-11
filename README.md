@@ -9,22 +9,11 @@ If you haven’t yet installed [`rads`](https://github.com/PHSKC-APDE/rads), fol
 
 1. Make sure remotes is installed … `install.packages("remotes")`.
 
-2. Install `data.table` ... `install.packages("data.table")`. Update `data.table` to use the dev package (until they release the new version):
-   
-   `data.table::update.dev.pkg()`
-
-3. Install [`dtsurvey`](https://github.com/PHSKC-APDE/dtsurvey)
-   `remotes::install_github("PHSKC-APDE/dtsurvey", auth_token = NULL)`
-
-4. Install [`rads`](https://github.com/PHSKC-APDE/rads) …
+2. Install [`rads`](https://github.com/PHSKC-APDE/rads) …
     `remotes::install_github("PHSKC-APDE/rads", auth_token = NULL)`
     * To install github from a particular branch, specify it with the 'ref' argument, e.g., `remotes::install_github("PHSKC-APDE/rads", ref = "dev", auth_token = NULL)`
 
-5. Load [`rads`](https://github.com/PHSKC-APDE/rads) … `library(rads)`
-
-6. Exit RStudio and start it again. 
-
-7. Confirm `rads` installed properly by typing `library(rads)` in the console.
+4. Load [`rads`](https://github.com/PHSKC-APDE/rads) … `library(rads)`
 
 ## New for version 1.0.0
 Version 1.0.0 includes a major overhaul of the workhorse `calc` function and the cleaning up of some dependencies.
