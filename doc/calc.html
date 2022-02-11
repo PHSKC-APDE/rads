@@ -219,7 +219,7 @@ hr {
 
 <p>4) <code>by</code> &lt;- a character vector of the variables that you want to computer the <code>what</code> by, i.e., the cross-tab variable(s). E.g., <code>by = c(&quot;gender&quot;)</code> would stratify results by gender</p>
 
-<p>5) <code>metrics</code> &lt;- a character vector of the metrics that you want returned. E.g., <code>metrics = c(&quot;mean&quot;, &quot;rse&quot;)</code>. You can see a complete list of available metrics by typing <code>metrics()</code></p>
+<p>5) <code>metrics</code> &lt;- a character vector of the metrics that you want returned. E.g., <code>metrics = c(&quot;mean&quot;, &quot;rse&quot;)</code>. You can see a complete list of available metrics by typing <code>metrics()</code> and get detailed descriptions of what each metric means by typing <code>?metrics()</code>.</p>
 
 <p>6) <code>per</code> &lt;- an integer, which is the denominator when <code>rate</code> is selected as a metric. Metrics will be multiplied by this value. E.g., <code>per = 1000</code>. <strong>NOTE</strong> this is just a scalar. At present this does not calculate a true rate (i.e., the relevant population denominator is not used).</p>
 
@@ -227,9 +227,13 @@ hr {
 
 <p>8) <code>time_var</code> &lt;- a character, which is the name of the time variable in the dataset. Used in combination with the <code>win</code> argument to generate time windowed calculations.</p>
 
-<p>9) <code>proportion</code> &lt;- a logical (i.e., <code>T</code> or <code>F</code>) flag determining whether the metrics should be calculated as a proportion. Currently only relevant for survey data. The default is FALSE.</p>
+<p>9) <code>fancy_time</code> &lt;- a logical (i.e., <code>T</code> or <code>F</code>) flag. If TRUE, a record of all the years going into the data is returned. If FALSE, just a simple range (where certain years within the range might not be represented in your data).</p>
 
-<p>10) <code>verbose</code> &lt;- a logical used to toggle on/off printed warnings</p>
+<p>10) <code>proportion</code> &lt;- a logical (i.e., <code>T</code> or <code>F</code>) flag determining whether the metrics should be calculated as a proportion. Currently only relevant for survey data. The default is FALSE.</p>
+
+<p>11) <code>ci</code> &lt;- a numeric value between 0 &amp; 1 for the confidence level returned in the estimates. E.g., 0.95 == 95% confidence interval</p>
+
+<p>12) <code>verbose</code> &lt;- a logical used to toggle on/off printed warnings</p>
 
 <p>There is no need to specify all of the arguments listed above. As you can see in the following example, the <code>calc</code> function simply needs a specified dataset (i.e., <code>ph.data</code>) and at least one <code>what</code> variable to return an intelligible result. </p>
 
@@ -238,8 +242,12 @@ mtcars = dtadmin(mtcars) #make it work with calc.dtsurvey
 calc(ph.data = mtcars, what = c(&quot;mpg&quot;))[]
 </code></pre>
 
-<pre><code>##    variable     mean numerator denominator level  mean_se mean_lower mean_upper
-## 1:      mpg 20.09062     642.9          32    NA 1.065424   18.00243   22.17882
+<pre><code>##    variable     mean numerator denominator  level  mean_se mean_lower
+##      &lt;char&gt;    &lt;num&gt;     &lt;num&gt;       &lt;int&gt; &lt;lgcl&gt;    &lt;num&gt;      &lt;num&gt;
+## 1:      mpg 20.09062     642.9          32     NA 1.065424   18.00243
+##    mean_upper
+##         &lt;num&gt;
+## 1:   22.17882
 </code></pre>
 
 <p><strong>Note:</strong> <em>The use of <code>[]</code> after <code>calc()</code> is used to print the output to the console. Typically, you would not print the results but would save them as an object. E.g., <code>my.est &lt;- calc()</code>.</em></p>
@@ -264,9 +272,11 @@ calc(ph.data = mtcars, what = c(&quot;mpg&quot;))[]
      time_var = &quot;chi_year&quot;)[]
 </code></pre>
 
-<pre><code>##     chi_year variable       mean numerator denominator level      mean_se
-## 1: 2013-2019  preterm 0.09052329     15806      174607    NA 0.0006866673
+<pre><code>##     chi_year variable       mean numerator denominator  level      mean_se
+##       &lt;char&gt;   &lt;char&gt;      &lt;num&gt;     &lt;int&gt;       &lt;int&gt; &lt;lgcl&gt;        &lt;num&gt;
+## 1: 2013-2019  preterm 0.09052329     15806      174607     NA 0.0006866673
 ##    mean_lower mean_upper       rse
+##         &lt;num&gt;      &lt;num&gt;     &lt;num&gt;
 ## 1: 0.08917745 0.09186913 0.7585532
 </code></pre>
 
@@ -280,22 +290,24 @@ calc(ph.data = birth,
      by = &quot;cy&quot;)[]
 </code></pre>
 
-<pre><code>##      cy chi_year variable       mean numerator denominator level     mean_se
-## 1: 2013     2013  preterm 0.09259783      2293       24763    NA 0.001842076
-## 2: 2014     2014  preterm 0.08847557      2231       25216    NA 0.001788407
-## 3: 2015     2015  preterm 0.08829787      2241       25380    NA 0.001781002
-## 4: 2016     2016  preterm 0.08956837      2320       25902    NA 0.001774364
-## 5: 2017     2017  preterm 0.09120521      2296       25174    NA 0.001814576
-## 6: 2019     2019  preterm 0.09429394      2259       23957    NA 0.001888115
-## 7: 2018     2018  preterm 0.08944869      2166       24215    NA 0.001834028
+<pre><code>##       cy chi_year variable       mean numerator denominator  level     mean_se
+##    &lt;int&gt;   &lt;char&gt;   &lt;char&gt;      &lt;num&gt;     &lt;int&gt;       &lt;int&gt; &lt;lgcl&gt;       &lt;num&gt;
+## 1:  2013     2013  preterm 0.09259783      2293       24763     NA 0.001842076
+## 2:  2014     2014  preterm 0.08847557      2231       25216     NA 0.001788407
+## 3:  2015     2015  preterm 0.08829787      2241       25380     NA 0.001781002
+## 4:  2016     2016  preterm 0.08956837      2320       25902     NA 0.001774364
+## 5:  2017     2017  preterm 0.09120521      2296       25174     NA 0.001814576
+## 6:  2018     2018  preterm 0.08944869      2166       24215     NA 0.001834028
+## 7:  2019     2019  preterm 0.09429394      2259       23957     NA 0.001888115
 ##    mean_lower mean_upper      rse
+##         &lt;num&gt;      &lt;num&gt;    &lt;num&gt;
 ## 1: 0.08898743 0.09620823 1.989329
 ## 2: 0.08497036 0.09198078 2.021357
 ## 3: 0.08480717 0.09178857 2.017038
 ## 4: 0.08609068 0.09304606 1.981016
 ## 5: 0.08764871 0.09476172 1.989553
-## 6: 0.09059331 0.09799458 2.002371
-## 7: 0.08585406 0.09304332 2.050369
+## 6: 0.08585406 0.09304332 2.050369
+## 7: 0.09059331 0.09799458 2.002371
 </code></pre>
 
 <p><strong>mean (proportion) for a binary over windowed years</strong></p>
@@ -307,13 +319,15 @@ calc(ph.data = birth,
      win = 3)[]
 </code></pre>
 
-<pre><code>##     chi_year variable       mean numerator denominator level     mean_se
-## 1: 2013-2015  preterm 0.08977030      6765       75359    NA 0.001041303
-## 2: 2014-2016  preterm 0.08878663      6792       76498    NA 0.001028399
-## 3: 2015-2017  preterm 0.08968557      6857       76456    NA 0.001033366
-## 4: 2016-2018  preterm 0.09007717      6782       75291    NA 0.001043376
-## 5: 2017-2019  preterm 0.09163417      6721       73346    NA 0.001065305
+<pre><code>##     chi_year variable       mean numerator denominator  level     mean_se
+##       &lt;char&gt;   &lt;char&gt;      &lt;num&gt;     &lt;int&gt;       &lt;int&gt; &lt;lgcl&gt;       &lt;num&gt;
+## 1: 2013-2015  preterm 0.08977030      6765       75359     NA 0.001041303
+## 2: 2014-2016  preterm 0.08878663      6792       76498     NA 0.001028399
+## 3: 2015-2017  preterm 0.08968557      6857       76456     NA 0.001033366
+## 4: 2016-2018  preterm 0.09007717      6782       75291     NA 0.001043376
+## 5: 2017-2019  preterm 0.09163417      6721       73346     NA 0.001065305
 ##    mean_lower mean_upper      rse
+##         &lt;num&gt;      &lt;num&gt;    &lt;num&gt;
 ## 1: 0.08772938 0.09181122 1.159964
 ## 2: 0.08677101 0.09080226 1.158281
 ## 3: 0.08766021 0.09171093 1.152210
@@ -330,13 +344,15 @@ calc(ph.data = birth,
      win = 3)[]
 </code></pre>
 
-<pre><code>##     chi_year           variable     mean level  mean_se mean_lower mean_upper
-## 1: 2013-2015 birth_weight_grams 3339.469    NA 2.122024   3335.310   3343.628
-## 2: 2014-2016 birth_weight_grams 3336.555    NA 2.087116   3332.465   3340.646
-## 3: 2015-2017 birth_weight_grams 3333.507    NA 2.068735   3329.452   3337.562
-## 4: 2016-2018 birth_weight_grams 3327.129    NA 2.073889   3323.065   3331.194
-## 5: 2017-2019 birth_weight_grams 3320.961    NA 2.088449   3316.868   3325.055
+<pre><code>##     chi_year           variable     mean  level  mean_se mean_lower mean_upper
+##       &lt;char&gt;             &lt;char&gt;    &lt;num&gt; &lt;lgcl&gt;    &lt;num&gt;      &lt;num&gt;      &lt;num&gt;
+## 1: 2013-2015 birth_weight_grams 3339.469     NA 2.122024   3335.310   3343.628
+## 2: 2014-2016 birth_weight_grams 3336.555     NA 2.087116   3332.465   3340.646
+## 3: 2015-2017 birth_weight_grams 3333.507     NA 2.068735   3329.452   3337.562
+## 4: 2016-2018 birth_weight_grams 3327.129     NA 2.073889   3323.065   3331.194
+## 5: 2017-2019 birth_weight_grams 3320.961     NA 2.088449   3316.868   3325.055
 ##           rse
+##         &lt;num&gt;
 ## 1: 0.06354375
 ## 2: 0.06255302
 ## 3: 0.06205880
@@ -353,39 +369,41 @@ calc(ph.data = birth,
      by = c(&quot;chi_race_eth8&quot;, &quot;chi_sex&quot;))[]
 </code></pre>
 
-<pre><code>##     chi_race_eth8 chi_sex           variable     mean level     mean_se
-##  1:         White  Female birth_weight_grams 3340.295    NA    7.280580
-##  2:      Hispanic    Male birth_weight_grams 3301.784    NA   14.310447
-##  3:         White    Male birth_weight_grams 3460.298    NA    7.489711
-##  4:         Asian    Male birth_weight_grams 3231.952    NA    9.784437
-##  5:          NHPI    Male birth_weight_grams 3444.178    NA   43.324387
-##  6:         Asian  Female birth_weight_grams 3145.902    NA    9.419157
-##  7:      Multiple    Male birth_weight_grams 3369.178    NA   23.359494
-##  8:         Black    Male birth_weight_grams 3306.213    NA   19.794051
-##  9:         Black  Female birth_weight_grams 3196.872    NA   18.683442
-## 10:      Multiple  Female birth_weight_grams 3251.312    NA   24.365976
-## 11:       Oth/unk  Female birth_weight_grams 3223.599    NA   30.670381
-## 12:      Hispanic  Female birth_weight_grams 3270.074    NA   13.703835
-## 13:          NHPI  Female birth_weight_grams 3287.541    NA   49.322668
-## 14:          AIAN  Female birth_weight_grams 3251.965    NA   79.070604
-## 15:       Oth/unk    Male birth_weight_grams 3315.557    NA   33.357232
-## 16:          AIAN    Male birth_weight_grams 3438.641    NA   84.306018
-## 17:         White    &lt;NA&gt; birth_weight_grams 1873.500    NA 1321.500000
+<pre><code>##     chi_race_eth8 chi_sex           variable     mean  level     mean_se
+##            &lt;fctr&gt;  &lt;fctr&gt;             &lt;char&gt;    &lt;num&gt; &lt;lgcl&gt;       &lt;num&gt;
+##  1:         White  Female birth_weight_grams 3340.295     NA    7.280580
+##  2:      Hispanic    Male birth_weight_grams 3301.784     NA   14.310447
+##  3:      Multiple    Male birth_weight_grams 3369.178     NA   23.359494
+##  4:         White    Male birth_weight_grams 3460.298     NA    7.489711
+##  5:         Asian    Male birth_weight_grams 3231.952     NA    9.784437
+##  6:      Hispanic  Female birth_weight_grams 3270.074     NA   13.703835
+##  7:         Asian  Female birth_weight_grams 3145.902     NA    9.419157
+##  8:         Black    Male birth_weight_grams 3306.213     NA   19.794051
+##  9:         Black  Female birth_weight_grams 3196.872     NA   18.683442
+## 10:          AIAN  Female birth_weight_grams 3251.965     NA   79.070604
+## 11:       Oth/unk  Female birth_weight_grams 3223.599     NA   30.670381
+## 12:      Multiple  Female birth_weight_grams 3251.312     NA   24.365976
+## 13:          NHPI  Female birth_weight_grams 3287.541     NA   49.322668
+## 14:          NHPI    Male birth_weight_grams 3444.178     NA   43.324387
+## 15:       Oth/unk    Male birth_weight_grams 3315.557     NA   33.357232
+## 16:          AIAN    Male birth_weight_grams 3438.641     NA   84.306018
+## 17:         White    &lt;NA&gt; birth_weight_grams 1873.500     NA 1321.500000
 ##     mean_lower mean_upper        rse
+##          &lt;num&gt;      &lt;num&gt;      &lt;num&gt;
 ##  1:   3326.026   3354.565  0.2179622
 ##  2:   3273.736   3329.832  0.4334156
-##  3:   3445.618   3474.977  0.2164470
-##  4:   3212.775   3251.129  0.3027408
-##  5:   3359.264   3529.092  1.2579021
-##  6:   3127.441   3164.363  0.2994104
-##  7:   3323.394   3414.962  0.6933292
+##  3:   3323.394   3414.962  0.6933292
+##  4:   3445.618   3474.977  0.2164470
+##  5:   3212.775   3251.129  0.3027408
+##  6:   3243.215   3296.933  0.4190681
+##  7:   3127.441   3164.363  0.2994104
 ##  8:   3267.418   3345.009  0.5986925
 ##  9:   3160.253   3233.491  0.5844288
-## 10:   3203.556   3299.069  0.7494198
+## 10:   3096.989   3406.940  2.4314716
 ## 11:   3163.487   3283.712  0.9514328
-## 12:   3243.215   3296.933  0.4190681
+## 12:   3203.556   3299.069  0.7494198
 ## 13:   3190.871   3384.212  1.5002905
-## 14:   3096.989   3406.940  2.4314716
+## 14:   3359.264   3529.092  1.2579021
 ## 15:   3250.178   3380.936  1.0060823
 ## 16:   3273.404   3603.877  2.4517252
 ## 17: -14917.750  18664.750 70.5364291
@@ -400,6 +418,7 @@ calc(ph.data = birth,
 </code></pre>
 
 <pre><code>##       level      variable denominator   obs       mean      mean_se  mean_lower
+##      &lt;char&gt;        &lt;char&gt;       &lt;int&gt; &lt;int&gt;      &lt;num&gt;        &lt;num&gt;       &lt;num&gt;
 ## 1:     AIAN chi_race_eth8       73701 73701 0.00530522 0.0002675857 0.004805929
 ## 2:    Asian chi_race_eth8       73701 73701 0.22911494 0.0015480599 0.226094981
 ## 3:    Black chi_race_eth8       73701 73701 0.09036512 0.0010560883 0.088316537
@@ -409,6 +428,7 @@ calc(ph.data = birth,
 ## 7:  Oth/unk chi_race_eth8       73701 73701 0.01867003 0.0004985932 0.017717604
 ## 8:    White chi_race_eth8       73701 73701 0.46813476 0.0018380296 0.464534068
 ##     mean_upper numerator       rse
+##          &lt;num&gt;     &lt;int&gt;     &lt;num&gt;
 ## 1: 0.005856077       391 5.0438189
 ## 2: 0.232163131     16886 0.6756696
 ## 3: 0.092456411      6660 1.1686901
@@ -429,6 +449,7 @@ calc(ph.data = birth,
 </code></pre>
 
 <pre><code>##       level      variable denominator   obs numerator      rate   rate_se
+##      &lt;char&gt;        &lt;char&gt;       &lt;int&gt; &lt;int&gt;     &lt;int&gt;     &lt;num&gt;     &lt;num&gt;
 ## 1:     AIAN chi_race_eth8       73701 73701       391   530.522  26.75857
 ## 2:    Asian chi_race_eth8       73701 73701     16886 22911.494 154.80599
 ## 3:    Black chi_race_eth8       73701 73701      6660  9036.512 105.60883
@@ -438,6 +459,7 @@ calc(ph.data = birth,
 ## 7:  Oth/unk chi_race_eth8       73701 73701      1376  1867.003  49.85932
 ## 8:    White chi_race_eth8       73701 73701     34502 46813.476 183.80296
 ##    rate_lower rate_upper rate_per
+##         &lt;num&gt;      &lt;num&gt;    &lt;num&gt;
 ## 1:   480.5929   585.6077    1e+05
 ## 2: 22609.4981 23216.3131    1e+05
 ## 3:  8831.6537  9245.6411    1e+05
@@ -457,14 +479,15 @@ calc(ph.data = birth,
      by = &quot;chi_year&quot;)[]
 </code></pre>
 
-<pre><code>##    chi_year variable   obs missing missing.prop  level numerator
-## 1:     2017  chi_sex 25274       0   0.0000e+00 Female     12314
-## 2:     2017  chi_sex 25274       0   0.0000e+00   Male     12960
-## 3:     2018  chi_sex 24337       0   0.0000e+00 Female     11933
-## 4:     2018  chi_sex 24337       0   0.0000e+00   Male     12404
-## 5:     2019  chi_sex 24090       2   8.3022e-05 Female     11833
-## 6:     2019  chi_sex 24090       2   8.3022e-05   Male     12255
-## 7:     2019  chi_sex 24090       2   8.3022e-05   &lt;NA&gt;         2
+<pre><code>##    chi_year variable   obs missing missing.prop  level
+##       &lt;int&gt;   &lt;char&gt; &lt;int&gt;   &lt;int&gt;        &lt;num&gt; &lt;fctr&gt;
+## 1:     2017  chi_sex 25274       0   0.0000e+00 Female
+## 2:     2017  chi_sex 25274       0   0.0000e+00   Male
+## 3:     2018  chi_sex 24337       0   0.0000e+00 Female
+## 4:     2018  chi_sex 24337       0   0.0000e+00   Male
+## 5:     2019  chi_sex 24090       2   8.3022e-05 Female
+## 6:     2019  chi_sex 24090       2   8.3022e-05   Male
+## 7:     2019  chi_sex 24090       2   8.3022e-05   &lt;NA&gt;
 </code></pre>
 
 <hr/>
@@ -475,7 +498,7 @@ calc(ph.data = birth,
 
 <pre><code class="r">library(survey)
 
-load(&quot;//phshare01/epe_share/WORK/surveys/ACS/PUMS data &amp; code all years/2019_1_year/prepped_R_files/2019_1_year_data.RData&quot;)
+load(&quot;//phshare01/epe_share/WORK/surveys/ACS/PUMS_data/2019_1_year/prepped_R_files/2019_1_year_data.RData&quot;)
 
   pums &lt;-     
     survey::svrepdesign(
@@ -507,11 +530,12 @@ load(&quot;//phshare01/epe_share/WORK/surveys/ACS/PUMS data &amp; code all years
 calc(ph.data = pums, 
      what = c(&quot;constant&quot;), 
      metrics = c(&quot;numerator&quot;, &quot;total&quot;), 
-     proportion = T)[]
+     proportion = F)[]
 </code></pre>
 
-<pre><code>##    variable   total numerator level total_se total_lower total_upper
-## 1: constant 7614893     77879    NA        0     7614893     7614893
+<pre><code>##    variable   total numerator  level total_se total_lower total_upper
+##      &lt;char&gt;   &lt;num&gt;     &lt;num&gt; &lt;lgcl&gt;    &lt;num&gt;       &lt;num&gt;       &lt;num&gt;
+## 1: constant 7614893     77879     NA        0     7614893     7614893
 </code></pre>
 
 <pre><code class="r"># King County
@@ -519,11 +543,12 @@ calc(ph.data = pums,
      what = c(&quot;constant&quot;), 
      chi_geo_kc ==1,
      metrics = c(&quot;numerator&quot;, &quot;total&quot;), 
-     proportion = T)[]
+     proportion = F)[]
 </code></pre>
 
-<pre><code>##    variable   total numerator level total_se total_lower total_upper
-## 1: constant 2252619     20767    NA  1102.38     2250425     2254813
+<pre><code>##    variable   total numerator  level total_se total_lower total_upper
+##      &lt;char&gt;   &lt;num&gt;     &lt;num&gt; &lt;lgcl&gt;    &lt;num&gt;       &lt;num&gt;       &lt;num&gt;
+## 1: constant 2252619     20767     NA  1102.38     2250425     2254813
 </code></pre>
 
 <pre><code class="r"># Seattle
@@ -531,11 +556,12 @@ calc(ph.data = pums,
      what = c(&quot;constant&quot;), 
      chi_geo_seattle ==1,
      metrics = c(&quot;numerator&quot;, &quot;total&quot;), 
-     proportion = T)[]
+     proportion = F)[]
 </code></pre>
 
-<pre><code>##    variable  total numerator level total_se total_lower total_upper
-## 1: constant 752953      6526    NA 1077.184    750808.9    755097.1
+<pre><code>##    variable  total numerator  level total_se total_lower total_upper
+##      &lt;char&gt;  &lt;num&gt;     &lt;num&gt; &lt;lgcl&gt;    &lt;num&gt;       &lt;num&gt;       &lt;num&gt;
+## 1: constant 752953      6526     NA 1077.184    750808.9    755097.1
 </code></pre>
 
 <p>Now that we&#39;ve established that our survey data is reasonable, we can continue with our analyses. </p>
@@ -549,12 +575,14 @@ calc(ph.data = pums,
      by = &quot;chi_geo_kc&quot;)[]
 </code></pre>
 
-<pre><code>##    chi_geo_kc   variable       mean numerator denominator   obs level
-## 1:          0 disability 0.14337089      9038       57112 57112    NA
-## 2:          1 disability 0.09965467      2310       20767 20767    NA
-## 3:          0   GEpov200 0.73832042     41951       55069 57112    NA
-## 4:          1   GEpov200 0.83492701     17250       20149 20767    NA
+<pre><code>##    chi_geo_kc   variable       mean numerator denominator   obs  level
+##         &lt;num&gt;     &lt;char&gt;      &lt;num&gt;     &lt;num&gt;       &lt;int&gt; &lt;int&gt; &lt;lgcl&gt;
+## 1:          0 disability 0.14337089      9038       57112 57112     NA
+## 2:          1 disability 0.09965467      2310       20767 20767     NA
+## 3:          0   GEpov200 0.73832042     41951       55069 57112     NA
+## 4:          1   GEpov200 0.83492701     17250       20149 20767     NA
 ##        mean_se mean_lower mean_upper       rse
+##          &lt;num&gt;      &lt;num&gt;      &lt;num&gt;     &lt;num&gt;
 ## 1: 0.001839847 0.13974757  0.1470721 1.2832777
 ## 2: 0.002899820 0.09402953  0.1055771 2.9098684
 ## 3: 0.004032853 0.73021413  0.7462678 0.5462199
@@ -570,20 +598,22 @@ calc(ph.data = pums,
      by = &quot;disability&quot;)[]
 </code></pre>
 
-<pre><code>##     disability level variable denominator   obs       mean      mean_se
-##  1:          0 18-24  agechna       66531 66531 0.09226661 0.0007193595
-##  2:          0 25-44  agechna       66531 66531 0.30776057 0.0011119388
-##  3:          0 45-64  agechna       66531 66531 0.24204020 0.0008892628
-##  4:          0 65-74  agechna       66531 66531 0.08320689 0.0006653204
-##  5:          0   75+  agechna       66531 66531 0.03492094 0.0005877849
-##  6:          0   &lt;18  agechna       66531 66531 0.23980479 0.0006282212
-##  7:          1 18-24  agechna       11348 11348 0.04838122 0.0030271433
-##  8:          1 25-44  agechna       11348 11348 0.16410713 0.0048231944
-##  9:          1 45-64  agechna       11348 11348 0.28470479 0.0042658589
-## 10:          1 65-74  agechna       11348 11348 0.18640300 0.0041475334
-## 11:          1   75+  agechna       11348 11348 0.24249002 0.0040969128
-## 12:          1   &lt;18  agechna       11348 11348 0.07391385 0.0034421598
+<pre><code>##     disability  level variable denominator   obs       mean      mean_se
+##          &lt;num&gt; &lt;char&gt;   &lt;char&gt;       &lt;int&gt; &lt;int&gt;      &lt;num&gt;        &lt;num&gt;
+##  1:          0  18-24  agechna       66531 66531 0.09226661 0.0007193595
+##  2:          0  25-44  agechna       66531 66531 0.30776057 0.0011119388
+##  3:          0  45-64  agechna       66531 66531 0.24204020 0.0008892628
+##  4:          0  65-74  agechna       66531 66531 0.08320689 0.0006653204
+##  5:          0    75+  agechna       66531 66531 0.03492094 0.0005877849
+##  6:          0    &lt;18  agechna       66531 66531 0.23980479 0.0006282212
+##  7:          1  18-24  agechna       11348 11348 0.04838122 0.0030271433
+##  8:          1  25-44  agechna       11348 11348 0.16410713 0.0048231944
+##  9:          1  45-64  agechna       11348 11348 0.28470479 0.0042658589
+## 10:          1  65-74  agechna       11348 11348 0.18640300 0.0041475334
+## 11:          1    75+  agechna       11348 11348 0.24249002 0.0040969128
+## 12:          1    &lt;18  agechna       11348 11348 0.07391385 0.0034421598
 ##     mean_lower mean_upper numerator       rse
+##          &lt;num&gt;      &lt;num&gt;     &lt;int&gt;     &lt;num&gt;
 ##  1: 0.09083477 0.09369846      5771 0.7796531
 ##  2: 0.30554731 0.30997383     18128 0.3613000
 ##  3: 0.24027016 0.24381023     17535 0.3674029
@@ -607,10 +637,12 @@ calc(ph.data = pums,
      by = &quot;disability&quot;)[]
 </code></pre>
 
-<pre><code>##    disability variable     mean median numerator denominator   obs level
-## 1:          1     agep 57.92030     65    139502        2310  2310    NA
-## 2:          0     agep 36.04553     37    694645       18457 18457    NA
+<pre><code>##    disability variable     mean median numerator denominator   obs  level
+##         &lt;num&gt;   &lt;char&gt;    &lt;num&gt;  &lt;num&gt;     &lt;int&gt;       &lt;int&gt; &lt;int&gt; &lt;lgcl&gt;
+## 1:          1     agep 57.92030     65    139502        2310  2310     NA
+## 2:          0     agep 36.04553     37    694645       18457 18457     NA
 ##       mean_se mean_lower mean_upper       rse
+##         &lt;num&gt;      &lt;num&gt;      &lt;num&gt;     &lt;num&gt;
 ## 1: 0.66318899   56.60026   59.24035 1.1450027
 ## 2: 0.08386155   35.87861   36.21246 0.2326545
 </code></pre>
@@ -637,18 +669,19 @@ mydt = dtsurvey::dtadmin(mydt)
 mydt[]
 </code></pre>
 
-<pre><code>##       school grades year  _id
-##    1:  Alpha      A 2017    1
-##    2:  Delta      B 2019    2
-##    3:  Gamma      C 2017    3
-##    4:   Beta      A 2016    4
-##    5:  Delta      C 2018    5
-##   ---                        
-## 1996:  Alpha      C 2018 1996
-## 1997:   Beta      B 2021 1997
-## 1998:  Delta      C 2020 1998
-## 1999:  Delta      D 2019 1999
-## 2000:  Delta      D 2018 2000
+<pre><code>##       school grades  year   _id
+##       &lt;fctr&gt; &lt;fctr&gt; &lt;int&gt; &lt;int&gt;
+##    1:  Alpha      A  2017     1
+##    2:  Delta      B  2019     2
+##    3:  Gamma      C  2017     3
+##    4:   Beta      A  2016     4
+##    5:  Delta      C  2018     5
+##   ---                          
+## 1996:  Alpha      C  2018  1996
+## 1997:   Beta      B  2021  1997
+## 1998:  Delta      C  2020  1998
+## 1999:  Delta      D  2019  1999
+## 2000:  Delta      D  2018  2000
 </code></pre>
 
 <p>We see that we created a dataset of 2000 rows with grades in four schools between with 2016 and 2021.</p>
@@ -663,19 +696,21 @@ mydt[]
   time_var = &quot;year&quot;, 
   metrics = c(&quot;numerator&quot;, &quot;denominator&quot;, &quot;mean&quot;), proportion = F)
 
-grades.distribution[1:4]
+grades.distribution[level %in% c(&quot;A&quot;, &quot;B&quot;)]
 </code></pre>
 
-<pre><code>##    school level      year variable denominator      mean    mean_se mean_lower
-## 1:  Alpha     A 2016-2021   grades         497 0.2857143 0.02028435  0.2477598
-## 2:  Alpha     B 2016-2021   grades         497 0.2555332 0.01958418  0.2191639
-## 3:  Alpha     C 2016-2021   grades         497 0.2454728 0.01932406  0.2096836
-## 4:  Alpha     D 2016-2021   grades         497 0.2132797 0.01839264  0.1795372
+<pre><code>##    school  level      year variable denominator      mean    mean_se mean_lower
+##    &lt;fctr&gt; &lt;char&gt;    &lt;char&gt;   &lt;char&gt;       &lt;int&gt;     &lt;num&gt;      &lt;num&gt;      &lt;num&gt;
+## 1:  Alpha      A 2016-2021   grades         497 0.2857143 0.02028435  0.2477598
+## 2:  Alpha      B 2016-2021   grades         497 0.2555332 0.01958418  0.2191639
+## 3:   Beta      A 2016-2021   grades         491 0.2484725 0.01952152  0.2123012
+## 4:   Beta      B 2016-2021   grades         491 0.2566191 0.01973114  0.2199795
 ##    mean_upper numerator
+##         &lt;num&gt;     &lt;int&gt;
 ## 1:  0.3269560       142
 ## 2:  0.2956526       127
-## 3:  0.2851665       122
-## 4:  0.2514204       106
+## 3:  0.2885490       122
+## 4:  0.2970375       126
 </code></pre>
 
 <p>These results show that the Alpha School has a higher proportion of A&#39;s (0.286 vs 0.248) and a similar proportion of B&#39;s (0.256 vs 0.257).</p>
@@ -702,19 +737,21 @@ mysvy &lt;-dtsurvey::dtsurvey(data.table(mydt[, `_id` := NULL]), weight = &#39;m
   time_var = &quot;year&quot;, 
   metrics = c(&quot;numerator&quot;, &quot;denominator&quot;, &quot;mean&quot;), proportion = FALSE)
 
-grades.distribution2[1:4]
+grades.distribution2[level %in% c(&quot;A&quot;, &quot;B&quot;)]
 </code></pre>
 
-<pre><code>##    school level      year variable denominator      mean    mean_se mean_lower
-## 1:  Alpha     A 2016-2021   grades         497 0.2819952 0.02280603  0.2371869
-## 2:  Alpha     B 2016-2021   grades         497 0.2460211 0.02157805  0.2036254
-## 3:  Alpha     C 2016-2021   grades         497 0.2604248 0.02240752  0.2163994
-## 4:  Alpha     D 2016-2021   grades         497 0.2115589 0.02045695  0.1713660
+<pre><code>##    school  level      year variable denominator      mean    mean_se mean_lower
+##    &lt;fctr&gt; &lt;char&gt;    &lt;char&gt;   &lt;char&gt;       &lt;int&gt;     &lt;num&gt;      &lt;num&gt;      &lt;num&gt;
+## 1:  Alpha      A 2016-2021   grades         497 0.2819952 0.02280603  0.2371869
+## 2:  Alpha      B 2016-2021   grades         497 0.2460211 0.02157805  0.2036254
+## 3:   Beta      A 2016-2021   grades         491 0.2361366 0.02142621  0.1940380
+## 4:   Beta      B 2016-2021   grades         491 0.2685865 0.02295556  0.2234831
 ##    mean_upper numerator
+##         &lt;num&gt;     &lt;int&gt;
 ## 1:  0.3268036       142
 ## 2:  0.2884167       127
-## 3:  0.3044501       122
-## 4:  0.2517519       106
+## 3:  0.2782351       122
+## 4:  0.3136900       126
 </code></pre>
 
 <p>You&#39;ll note that using the survey design caused small changes in the results. For examples, the proportion of A&#39;s in the Alpha school changed from 0.286 to 0.282.</p>

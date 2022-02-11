@@ -49,4 +49,6 @@ each tabulation (i.e., number of unique time points when the `what` is not missi
 11) rate: mean * per. Provides rescaled mean estimates (i.e., per 100 or per 100,0000).
 Returns rate, rate_se, rate_lower, rate_upper.
 Default ci (e.g. upper and lower) is 95 percent.
+
+12) ndistinct: The unique number of `what` values in the given subset. For factors, it is the unique number of levels in the subset.
 }

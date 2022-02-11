@@ -6,10 +6,11 @@
 #' @param by character vector. Must refer to variables within ph.data. The variables within ph.data to compute `what` by
 #' @param metrics character. See \code{\link{metrics}} or scroll below for the available options.
 #' @param per integer. The denominator when "rate" or "adjusted-rate" are selected as the metric. Metrics will be multiplied by this value.
-#' @param win integer. The number of consectutive units of time (e.g., years, months, etc.) over which the metrics will be calculated,
+#' @param win integer. The number of consecutive units of time (e.g., years, months, etc.) over which the metrics will be calculated,
 #' i.e., the 'window' for a rolling average, sum, etc.
 #' @param time_var character. The name of the time variable in the dataset. Used in combination with the "win" argument to do time windowed calculations.
-#' @param fancy_time logical. If TRUE, a record of all the years going into the data is provided. If FALSE, just a simple range (where certain years within the range might not be represented)
+#' @param fancy_time logical. If TRUE, a record of all the years going into the data is provided.
+#' If FALSE, just a simple range (where certain years within the range might not be represented in your data).
 #' @param proportion logical. For survey data, should metrics be calculated assuming the output is proportion-like? See details for more.
 #'                   Currently does not have functionality for non-survey data.
 #' @param ci numeric. Confidence level, >0 & <1, typically 0.95

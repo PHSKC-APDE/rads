@@ -4,7 +4,7 @@
 \alias{validate_yaml_data}
 \title{Compare the expected column types in YAML with the actual column types in R}
 \usage{
-validate_yaml_data(DF = NULL, YML = NULL, VARS = NULL)
+validate_yaml_data(DF = NULL, YML = NULL, VARS = "vars")
 }
 \arguments{
 \item{DF}{Character vector of length 1. Identifies the data.table/data.frame that you want to assess vis-à-vis the YAML file}

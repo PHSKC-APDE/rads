@@ -29,7 +29,7 @@ Arguments are the values that we send to a function when it is called. The stand
 
 4) `by` <- a character vector of the variables that you want to computer the `what` by, i.e., the cross-tab variable(s). E.g., `by = c("gender")` would stratify results by gender
 
-5) `metrics` <- a character vector of the metrics that you want returned. E.g., `metrics = c("mean", "rse")`. You can see a complete list of available metrics by typing `metrics()`
+5) `metrics` <- a character vector of the metrics that you want returned. E.g., `metrics = c("mean", "rse")`. You can see a complete list of available metrics by typing `metrics()` and get detailed descriptions of what each metric means by typing `?metrics()`.
 
 6) `per` <- an integer, which is the denominator when `rate` is selected as a metric. Metrics will be multiplied by this value. E.g., `per = 1000`. **NOTE** this is just a scalar. At present this does not calculate a true rate (i.e., the relevant population denominator is not used).
 
@@ -37,9 +37,13 @@ Arguments are the values that we send to a function when it is called. The stand
 
 8) `time_var` <- a character, which is the name of the time variable in the dataset. Used in combination with the `win` argument to generate time windowed calculations.
 
-9) `proportion` <- a logical (i.e., `T` or `F`) flag determining whether the metrics should be calculated as a proportion. Currently only relevant for survey data. The default is FALSE.
+9) `fancy_time` <- a logical (i.e., `T` or `F`) flag. If TRUE, a record of all the years going into the data is returned. If FALSE, just a simple range (where certain years within the range might not be represented in your data).
 
-10) `verbose` <- a logical used to toggle on/off printed warnings
+10) `proportion` <- a logical (i.e., `T` or `F`) flag determining whether the metrics should be calculated as a proportion. Currently only relevant for survey data. The default is FALSE.
+
+11) `ci` <- a numeric value between 0 & 1 for the confidence level returned in the estimates. E.g., 0.95 == 95% confidence interval
+
+12) `verbose` <- a logical used to toggle on/off printed warnings
 
 There is no need to specify all of the arguments listed above. As you can see in the following example, the `calc` function simply needs a specified dataset (i.e., `ph.data`) and at least one `what` variable to return an intelligible result. 
 
@@ -140,7 +144,7 @@ Before using `calc()` with survey data, the user must survey set the data while 
 ```{r, warning=FALSE, message=FALSE}
 library(survey)
 
-load("//phshare01/epe_share/WORK/surveys/ACS/PUMS data & code all years/2019_1_year/prepped_R_files/2019_1_year_data.RData")
+load("//phshare01/epe_share/WORK/surveys/ACS/PUMS_data/2019_1_year/prepped_R_files/2019_1_year_data.RData")
 
   pums <-     
     survey::svrepdesign(
@@ -172,21 +176,21 @@ pums[, constant :=1]
 calc(ph.data = pums, 
      what = c("constant"), 
      metrics = c("numerator", "total"), 
-     proportion = T)[]
+     proportion = F)[]
 
 # King County
 calc(ph.data = pums, 
      what = c("constant"), 
      chi_geo_kc ==1,
      metrics = c("numerator", "total"), 
-     proportion = T)[]
+     proportion = F)[]
 
 # Seattle
 calc(ph.data = pums, 
      what = c("constant"), 
      chi_geo_seattle ==1,
      metrics = c("numerator", "total"), 
-     proportion = T)[]
+     proportion = F)[]
 ```
 
 Now that we've established that our survey data is reasonable, we can continue with our analyses. 
@@ -251,7 +255,7 @@ grades.distribution <- calc(
   time_var = "year", 
   metrics = c("numerator", "denominator", "mean"), proportion = F)
 
-grades.distribution[1:4]
+grades.distribution[level %in% c("A", "B")]
 ```
 These results show that the Alpha School has a higher proportion of A's (`r round(grades.distribution[school=="Alpha" & level == "A"]$mean, 3)` vs `r round(grades.distribution[school=="Beta" & level == "A"]$mean, 3)`) and a similar proportion of B's (`r round(grades.distribution[school=="Alpha" & level == "B"]$mean, 3)` vs `r round(grades.distribution[school=="Beta" & level == "B"]$mean, 3)`).
 
@@ -277,7 +281,7 @@ grades.distribution2 <- calc(
   time_var = "year", 
   metrics = c("numerator", "denominator", "mean"), proportion = FALSE)
 
-grades.distribution2[1:4]
+grades.distribution2[level %in% c("A", "B")]
 ```
 You'll note that using the survey design caused small changes in the results. For examples, the proportion of A's in the Alpha school changed from `r round(grades.distribution[school=="Alpha" & level == "A"]$mean, 3)` to `r round(grades.distribution2[school=="Alpha" & level == "A"]$mean, 3)`.
 
