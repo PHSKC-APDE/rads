@@ -248,11 +248,9 @@ hr {
 <pre><code class="r">get_population()[]
 </code></pre>
 
-<pre><code>##        pop geo_type      geo_id   year    age       gender
-##      &lt;num&gt;   &lt;char&gt;      &lt;char&gt; &lt;char&gt; &lt;char&gt;       &lt;char&gt;
-## 1: 2260800       kc King County   2020  0-100 Female, Male
+<pre><code>##        pop geo_type      geo_id year   age       gender
+## 1: 2260800       kc King County 2020 0-100 Female, Male
 ##                                               race_eth
-##                                                 &lt;char&gt;
 ## 1: aian, asian, black, hispanic, multiple, nhpi, white
 </code></pre>
 
@@ -271,21 +269,19 @@ hr {
 <pre><code class="r">get_population(kingco = F, geo_type = &quot;zip&quot;)[]
 </code></pre>
 
-<pre><code>##        pop geo_type geo_id   year    age       gender
-##      &lt;num&gt;   &lt;char&gt; &lt;char&gt; &lt;char&gt; &lt;char&gt;       &lt;char&gt;
-##   1:    21      zip  00072   2020  0-100 Female, Male
-##   2:     2      zip  00073   2020  0-100 Female, Male
-##   3:    46      zip  00074   2020  0-100 Female, Male
-##   4:    21      zip  00076   2020  0-100 Female, Male
-##   5: 35718      zip  98001   2020  0-100 Female, Male
-##  ---                                                 
-## 577:   115      zip  99363   2020  0-100 Female, Male
-## 578:   364      zip  99371   2020  0-100 Female, Male
-## 579:   244      zip  99401   2020  0-100 Female, Male
-## 580:  1740      zip  99402   2020  0-100 Female, Male
-## 581: 20729      zip  99403   2020  0-100 Female, Male
+<pre><code>##        pop geo_type geo_id year   age       gender
+##   1:    21      zip  00072 2020 0-100 Female, Male
+##   2:     2      zip  00073 2020 0-100 Female, Male
+##   3:    46      zip  00074 2020 0-100 Female, Male
+##   4:    21      zip  00076 2020 0-100 Female, Male
+##   5: 35718      zip  98001 2020 0-100 Female, Male
+##  ---                                              
+## 577:   115      zip  99363 2020 0-100 Female, Male
+## 578:   364      zip  99371 2020 0-100 Female, Male
+## 579:   244      zip  99401 2020 0-100 Female, Male
+## 580:  1740      zip  99402 2020 0-100 Female, Male
+## 581: 20729      zip  99403 2020 0-100 Female, Male
 ##                                                 race_eth
-##                                                   &lt;char&gt;
 ##   1: aian, asian, black, hispanic, multiple, nhpi, white
 ##   2: aian, asian, black, hispanic, multiple, nhpi, white
 ##   3: aian, asian, black, hispanic, multiple, nhpi, white
@@ -304,11 +300,9 @@ hr {
 <pre><code class="r">get_population()[]
 </code></pre>
 
-<pre><code>##        pop geo_type      geo_id   year    age       gender
-##      &lt;num&gt;   &lt;char&gt;      &lt;char&gt; &lt;char&gt; &lt;char&gt;       &lt;char&gt;
-## 1: 2260800       kc King County   2020  0-100 Female, Male
+<pre><code>##        pop geo_type      geo_id year   age       gender
+## 1: 2260800       kc King County 2020 0-100 Female, Male
 ##                                               race_eth
-##                                                 &lt;char&gt;
 ## 1: aian, asian, black, hispanic, multiple, nhpi, white
 </code></pre>
 
@@ -318,14 +312,12 @@ hr {
                    group_by = c(&quot;geo_id&quot;))[]
 </code></pre>
 
-<pre><code>##       pop geo_type  geo_id   year    age       gender
-##     &lt;num&gt;   &lt;char&gt;  &lt;char&gt; &lt;char&gt; &lt;char&gt;       &lt;char&gt;
-## 1: 761624   region Seattle   2020  0-100 Female, Male
-## 2: 776087   region   South   2020  0-100 Female, Male
-## 3: 136071   region   North   2020  0-100 Female, Male
-## 4: 587018   region    East   2020  0-100 Female, Male
+<pre><code>##       pop geo_type  geo_id year   age       gender
+## 1: 761624   region Seattle 2020 0-100 Female, Male
+## 2: 776087   region   South 2020 0-100 Female, Male
+## 3: 136071   region   North 2020 0-100 Female, Male
+## 4: 587018   region    East 2020 0-100 Female, Male
 ##                                               race_eth
-##                                                 &lt;char&gt;
 ## 1: aian, asian, black, hispanic, multiple, nhpi, white
 ## 2: aian, asian, black, hispanic, multiple, nhpi, white
 ## 3: aian, asian, black, hispanic, multiple, nhpi, white
@@ -338,16 +330,14 @@ hr {
                    group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
 
-<pre><code>##      pop geo_type            geo_id   year    age       gender
-##    &lt;num&gt;   &lt;char&gt;            &lt;char&gt; &lt;char&gt; &lt;char&gt;       &lt;char&gt;
-## 1: 51121      hra     North Seattle   2020  0-100 Female, Male
-## 2: 48761      hra        NW Seattle   2020  0-100 Female, Male
-## 3: 77617      hra        NE Seattle   2020  0-100 Female, Male
-## 4: 63248      hra           Ballard   2020  0-100 Female, Male
-## 5: 65646      hra Fremont/Greenlake   2020  0-100 Female, Male
-## 6: 73652      hra       QA/Magnolia   2020  0-100 Female, Male
+<pre><code>##      pop geo_type            geo_id year   age       gender
+## 1: 51121      hra     North Seattle 2020 0-100 Female, Male
+## 2: 48761      hra        NW Seattle 2020 0-100 Female, Male
+## 3: 77617      hra        NE Seattle 2020 0-100 Female, Male
+## 4: 63248      hra           Ballard 2020 0-100 Female, Male
+## 5: 65646      hra Fremont/Greenlake 2020 0-100 Female, Male
+## 6: 73652      hra       QA/Magnolia 2020 0-100 Female, Male
 ##                                               race_eth
-##                                                 &lt;char&gt;
 ## 1: aian, asian, black, hispanic, multiple, nhpi, white
 ## 2: aian, asian, black, hispanic, multiple, nhpi, white
 ## 3: aian, asian, black, hispanic, multiple, nhpi, white
@@ -362,16 +352,14 @@ hr {
                    group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
 
-<pre><code>##      pop geo_type geo_id   year    age       gender
-##    &lt;num&gt;   &lt;char&gt; &lt;char&gt; &lt;char&gt; &lt;char&gt;       &lt;char&gt;
-## 1: 35718      zip  98001   2020  0-100 Female, Male
-## 2: 35292      zip  98002   2020  0-100 Female, Male
-## 3: 49731      zip  98003   2020  0-100 Female, Male
-## 4: 36244      zip  98004   2020  0-100 Female, Male
-## 5: 20140      zip  98005   2020  0-100 Female, Male
-## 6: 40395      zip  98006   2020  0-100 Female, Male
+<pre><code>##      pop geo_type geo_id year   age       gender
+## 1: 35718      zip  98001 2020 0-100 Female, Male
+## 2: 35292      zip  98002 2020 0-100 Female, Male
+## 3: 49731      zip  98003 2020 0-100 Female, Male
+## 4: 36244      zip  98004 2020 0-100 Female, Male
+## 5: 20140      zip  98005 2020 0-100 Female, Male
+## 6: 40395      zip  98006 2020 0-100 Female, Male
 ##                                               race_eth
-##                                                 &lt;char&gt;
 ## 1: aian, asian, black, hispanic, multiple, nhpi, white
 ## 2: aian, asian, black, hispanic, multiple, nhpi, white
 ## 3: aian, asian, black, hispanic, multiple, nhpi, white
@@ -386,16 +374,14 @@ hr {
                    group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
 
-<pre><code>##      pop geo_type      geo_id   year    age       gender
-##    &lt;num&gt;   &lt;char&gt;      &lt;char&gt; &lt;char&gt; &lt;char&gt;       &lt;char&gt;
-## 1:  8157    tract 53033000100   2020  0-100 Female, Male
-## 2:  8511    tract 53033000200   2020  0-100 Female, Male
-## 3:  2861    tract 53033000300   2020  0-100 Female, Male
-## 4:  6613    tract 53033000401   2020  0-100 Female, Male
-## 5:  5375    tract 53033000402   2020  0-100 Female, Male
-## 6:  3367    tract 53033000500   2020  0-100 Female, Male
+<pre><code>##     pop geo_type      geo_id year   age       gender
+## 1: 8157    tract 53033000100 2020 0-100 Female, Male
+## 2: 8511    tract 53033000200 2020 0-100 Female, Male
+## 3: 2861    tract 53033000300 2020 0-100 Female, Male
+## 4: 6613    tract 53033000401 2020 0-100 Female, Male
+## 5: 5375    tract 53033000402 2020 0-100 Female, Male
+## 6: 3367    tract 53033000500 2020 0-100 Female, Male
 ##                                               race_eth
-##                                                 &lt;char&gt;
 ## 1: aian, asian, black, hispanic, multiple, nhpi, white
 ## 2: aian, asian, black, hispanic, multiple, nhpi, white
 ## 3: aian, asian, black, hispanic, multiple, nhpi, white
@@ -410,16 +396,14 @@ hr {
                    group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
 
-<pre><code>##      pop geo_type       geo_id   year    age       gender
-##    &lt;num&gt;   &lt;char&gt;       &lt;char&gt; &lt;char&gt; &lt;char&gt;       &lt;char&gt;
-## 1:  1341   blkgrp 530330001001   2020  0-100 Female, Male
-## 2:  1782   blkgrp 530330001002   2020  0-100 Female, Male
-## 3:  1630   blkgrp 530330001003   2020  0-100 Female, Male
-## 4:  2172   blkgrp 530330001004   2020  0-100 Female, Male
-## 5:  1231   blkgrp 530330001005   2020  0-100 Female, Male
-## 6:  1159   blkgrp 530330002001   2020  0-100 Female, Male
+<pre><code>##     pop geo_type       geo_id year   age       gender
+## 1: 1341   blkgrp 530330001001 2020 0-100 Female, Male
+## 2: 1782   blkgrp 530330001002 2020 0-100 Female, Male
+## 3: 1630   blkgrp 530330001003 2020 0-100 Female, Male
+## 4: 2172   blkgrp 530330001004 2020 0-100 Female, Male
+## 5: 1231   blkgrp 530330001005 2020 0-100 Female, Male
+## 6: 1159   blkgrp 530330002001 2020 0-100 Female, Male
 ##                                               race_eth
-##                                                 &lt;char&gt;
 ## 1: aian, asian, black, hispanic, multiple, nhpi, white
 ## 2: aian, asian, black, hispanic, multiple, nhpi, white
 ## 3: aian, asian, black, hispanic, multiple, nhpi, white
@@ -434,16 +418,14 @@ hr {
                    group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
 
-<pre><code>##      pop geo_type          geo_id   year    age       gender
-##    &lt;num&gt;   &lt;char&gt;          &lt;char&gt; &lt;char&gt; &lt;char&gt;       &lt;char&gt;
-## 1:     1      blk 530330001001001   2020  0-100 Female, Male
-## 2:    70      blk 530330001001002   2020  0-100 Female, Male
-## 3:    81      blk 530330001001006   2020  0-100 Female, Male
-## 4:    19      blk 530330001001009   2020  0-100 Female, Male
-## 5:    25      blk 530330001001010   2020  0-100 Female, Male
-## 6:    66      blk 530330001001011   2020  0-100 Female, Male
+<pre><code>##    pop geo_type          geo_id year   age       gender
+## 1:   1      blk 530330001001001 2020 0-100 Female, Male
+## 2:  70      blk 530330001001002 2020 0-100 Female, Male
+## 3:  81      blk 530330001001006 2020 0-100 Female, Male
+## 4:  19      blk 530330001001009 2020 0-100 Female, Male
+## 5:  25      blk 530330001001010 2020 0-100 Female, Male
+## 6:  66      blk 530330001001011 2020 0-100 Female, Male
 ##                                               race_eth
-##                                                 &lt;char&gt;
 ## 1: aian, asian, black, hispanic, multiple, nhpi, white
 ## 2: aian, asian, black, hispanic, multiple, nhpi, white
 ## 3: aian, asian, black, hispanic, multiple, nhpi, white
@@ -459,11 +441,9 @@ hr {
 <pre><code class="r">get_population(years = 2017:2019)[]
 </code></pre>
 
-<pre><code>##        pop geo_type      geo_id      year    age       gender
-##      &lt;num&gt;   &lt;char&gt;      &lt;char&gt;    &lt;char&gt; &lt;char&gt;       &lt;char&gt;
-## 1: 6570200       kc King County 2017-2019  0-100 Female, Male
+<pre><code>##        pop geo_type      geo_id      year   age       gender
+## 1: 6570200       kc King County 2017-2019 0-100 Female, Male
 ##                                               race_eth
-##                                                 &lt;char&gt;
 ## 1: aian, asian, black, hispanic, multiple, nhpi, white
 </code></pre>
 
@@ -472,13 +452,11 @@ hr {
 <pre><code class="r">get_population(years = 2017:2019, group_by = &quot;years&quot;)[]
 </code></pre>
 
-<pre><code>##        pop geo_type      geo_id   year    age       gender
-##      &lt;num&gt;   &lt;char&gt;      &lt;char&gt; &lt;char&gt; &lt;char&gt;       &lt;char&gt;
-## 1: 2153700       kc King County   2017  0-100 Female, Male
-## 2: 2190200       kc King County   2018  0-100 Female, Male
-## 3: 2226300       kc King County   2019  0-100 Female, Male
+<pre><code>##        pop geo_type      geo_id year   age       gender
+## 1: 2153700       kc King County 2017 0-100 Female, Male
+## 2: 2190200       kc King County 2018 0-100 Female, Male
+## 3: 2226300       kc King County 2019 0-100 Female, Male
 ##                                               race_eth
-##                                                 &lt;char&gt;
 ## 1: aian, asian, black, hispanic, multiple, nhpi, white
 ## 2: aian, asian, black, hispanic, multiple, nhpi, white
 ## 3: aian, asian, black, hispanic, multiple, nhpi, white
@@ -489,11 +467,9 @@ hr {
 <pre><code class="r">get_population(ages = 65:70)[]
 </code></pre>
 
-<pre><code>##       pop geo_type      geo_id   year    age       gender
-##     &lt;num&gt;   &lt;char&gt;      &lt;char&gt; &lt;char&gt; &lt;char&gt;       &lt;char&gt;
-## 1: 115111       kc King County   2020  65-70 Female, Male
+<pre><code>##       pop geo_type      geo_id year   age       gender
+## 1: 115111       kc King County 2020 65-70 Female, Male
 ##                                               race_eth
-##                                                 &lt;char&gt;
 ## 1: aian, asian, black, hispanic, multiple, nhpi, white
 </code></pre>
 
@@ -502,16 +478,14 @@ hr {
 <pre><code class="r">get_population(ages = 65:70, group_by = &quot;ages&quot;)[]
 </code></pre>
 
-<pre><code>##      pop geo_type      geo_id   year   age       gender
-##    &lt;num&gt;   &lt;char&gt;      &lt;char&gt; &lt;char&gt; &lt;int&gt;       &lt;char&gt;
-## 1: 22873       kc King County   2020    65 Female, Male
-## 2: 21652       kc King County   2020    66 Female, Male
-## 3: 20599       kc King County   2020    67 Female, Male
-## 4: 17291       kc King County   2020    68 Female, Male
-## 5: 15884       kc King County   2020    69 Female, Male
-## 6: 16812       kc King County   2020    70 Female, Male
+<pre><code>##      pop geo_type      geo_id year age       gender
+## 1: 22873       kc King County 2020  65 Female, Male
+## 2: 21652       kc King County 2020  66 Female, Male
+## 3: 20599       kc King County 2020  67 Female, Male
+## 4: 17291       kc King County 2020  68 Female, Male
+## 5: 15884       kc King County 2020  69 Female, Male
+## 6: 16812       kc King County 2020  70 Female, Male
 ##                                               race_eth
-##                                                 &lt;char&gt;
 ## 1: aian, asian, black, hispanic, multiple, nhpi, white
 ## 2: aian, asian, black, hispanic, multiple, nhpi, white
 ## 3: aian, asian, black, hispanic, multiple, nhpi, white
@@ -525,11 +499,9 @@ hr {
 <pre><code class="r">get_population(genders = &quot;F&quot;)[]
 </code></pre>
 
-<pre><code>##        pop geo_type      geo_id   year    age gender
-##      &lt;num&gt;   &lt;char&gt;      &lt;char&gt; &lt;char&gt; &lt;char&gt; &lt;char&gt;
-## 1: 1129225       kc King County   2020  0-100 Female
+<pre><code>##        pop geo_type      geo_id year   age gender
+## 1: 1129225       kc King County 2020 0-100 Female
 ##                                               race_eth
-##                                                 &lt;char&gt;
 ## 1: aian, asian, black, hispanic, multiple, nhpi, white
 </code></pre>
 
@@ -538,12 +510,10 @@ hr {
 <pre><code class="r">get_population(group_by = &quot;genders&quot;)[]
 </code></pre>
 
-<pre><code>##        pop geo_type      geo_id   year    age gender
-##      &lt;num&gt;   &lt;char&gt;      &lt;char&gt; &lt;char&gt; &lt;char&gt; &lt;fctr&gt;
-## 1: 1131575       kc King County   2020  0-100   Male
-## 2: 1129225       kc King County   2020  0-100 Female
+<pre><code>##        pop geo_type      geo_id year   age gender
+## 1: 1131575       kc King County 2020 0-100   Male
+## 2: 1129225       kc King County 2020 0-100 Female
 ##                                               race_eth
-##                                                 &lt;char&gt;
 ## 1: aian, asian, black, hispanic, multiple, nhpi, white
 ## 2: aian, asian, black, hispanic, multiple, nhpi, white
 </code></pre>
@@ -553,9 +523,8 @@ hr {
 <pre><code class="r">get_population(races = &quot;aian&quot;, race_type = &quot;race_eth&quot;)[]
 </code></pre>
 
-<pre><code>##      pop geo_type      geo_id   year    age       gender race_eth
-##    &lt;num&gt;   &lt;char&gt;      &lt;char&gt; &lt;char&gt; &lt;char&gt;       &lt;char&gt;   &lt;char&gt;
-## 1: 13703       kc King County   2020  0-100 Female, Male     aian
+<pre><code>##      pop geo_type      geo_id year   age       gender race_eth
+## 1: 13703       kc King County 2020 0-100 Female, Male     aian
 </code></pre>
 
 <p><strong>King County AIAN regardless of Hispanic ethnicity</strong></p>
@@ -563,9 +532,8 @@ hr {
 <pre><code class="r">get_population(races = &quot;aian&quot;, race_type = &quot;race&quot;)[]
 </code></pre>
 
-<pre><code>##      pop geo_type      geo_id   year    age       gender   race
-##    &lt;num&gt;   &lt;char&gt;      &lt;char&gt; &lt;char&gt; &lt;char&gt;       &lt;char&gt; &lt;char&gt;
-## 1: 23056       kc King County   2020  0-100 Female, Male   aian
+<pre><code>##      pop geo_type      geo_id year   age       gender race
+## 1: 23056       kc King County 2020 0-100 Female, Male aian
 </code></pre>
 
 <p><strong>King County stratified by Hispanic as race</strong></p>
@@ -573,15 +541,14 @@ hr {
 <pre><code class="r">get_population(race_type = &quot;race_eth&quot;, group_by = &quot;race_eth&quot;)[]
 </code></pre>
 
-<pre><code>##        pop geo_type      geo_id   year    age       gender      race_eth
-##      &lt;num&gt;   &lt;char&gt;      &lt;char&gt; &lt;char&gt; &lt;char&gt;       &lt;char&gt;        &lt;fctr&gt;
-## 1: 1303935       kc King County   2020  0-100 Female, Male         White
-## 2:  152999       kc King County   2020  0-100 Female, Male         Black
-## 3:   13703       kc King County   2020  0-100 Female, Male          AIAN
-## 4:  107040       kc King County   2020  0-100 Female, Male Multiple race
-## 5:  233923       kc King County   2020  0-100 Female, Male      Hispanic
-## 6:  429652       kc King County   2020  0-100 Female, Male         Asian
-## 7:   19548       kc King County   2020  0-100 Female, Male          NHPI
+<pre><code>##        pop geo_type      geo_id year   age       gender      race_eth
+## 1: 1303935       kc King County 2020 0-100 Female, Male         White
+## 2:  152999       kc King County 2020 0-100 Female, Male         Black
+## 3:   13703       kc King County 2020 0-100 Female, Male          AIAN
+## 4:  107040       kc King County 2020 0-100 Female, Male Multiple race
+## 5:  233923       kc King County 2020 0-100 Female, Male      Hispanic
+## 6:  429652       kc King County 2020 0-100 Female, Male         Asian
+## 7:   19548       kc King County 2020 0-100 Female, Male          NHPI
 </code></pre>
 
 <p><strong>King County stratified by race-NH</strong></p>
@@ -589,14 +556,13 @@ hr {
 <pre><code class="r">get_population(race_type = &quot;race&quot;, group_by = &quot;race&quot;)[]
 </code></pre>
 
-<pre><code>##        pop geo_type      geo_id   year    age       gender          race
-##      &lt;num&gt;   &lt;char&gt;      &lt;char&gt; &lt;char&gt; &lt;char&gt;       &lt;char&gt;        &lt;fctr&gt;
-## 1: 1495057       kc King County   2020  0-100 Female, Male         White
-## 2:  162296       kc King County   2020  0-100 Female, Male         Black
-## 3:   23056       kc King County   2020  0-100 Female, Male          AIAN
-## 4:  124087       kc King County   2020  0-100 Female, Male Multiple race
-## 5:  435386       kc King County   2020  0-100 Female, Male         Asian
-## 6:   20918       kc King County   2020  0-100 Female, Male          NHPI
+<pre><code>##        pop geo_type      geo_id year   age       gender          race
+## 1: 1495057       kc King County 2020 0-100 Female, Male         White
+## 2:  162296       kc King County 2020 0-100 Female, Male         Black
+## 3:   23056       kc King County 2020 0-100 Female, Male          AIAN
+## 4:  124087       kc King County 2020 0-100 Female, Male Multiple race
+## 5:  435386       kc King County 2020 0-100 Female, Male         Asian
+## 6:   20918       kc King County 2020 0-100 Female, Male          NHPI
 </code></pre>
 
 <h3>Complex arguments</h3>
@@ -606,35 +572,33 @@ hr {
 <pre><code class="r">get_population(geo_type = &quot;region&quot;, years = 2017:2019, group_by = c(&quot;geo_id&quot;, &quot;years&quot;, &quot;genders&quot;))[]
 </code></pre>
 
-<pre><code>##        pop geo_type  geo_id   year    age gender
-##      &lt;num&gt;   &lt;char&gt;  &lt;char&gt; &lt;char&gt; &lt;char&gt; &lt;fctr&gt;
-##  1: 355807   region Seattle   2017  0-100 Female
-##  2: 363819   region Seattle   2018  0-100 Female
-##  3: 371891   region Seattle   2019  0-100 Female
-##  4: 358410   region Seattle   2017  0-100   Male
-##  5: 367101   region Seattle   2018  0-100   Male
-##  6: 375933   region Seattle   2019  0-100   Male
-##  7: 376381   region   South   2017  0-100   Male
-##  8: 377281   region   South   2017  0-100 Female
-##  9: 381035   region   South   2018  0-100   Male
-## 10: 381608   region   South   2018  0-100 Female
-## 11: 384809   region   South   2019  0-100   Male
-## 12: 384875   region   South   2019  0-100 Female
-## 13:  63264   region   North   2017  0-100   Male
-## 14:  65730   region   North   2017  0-100 Female
-## 15:  64237   region   North   2018  0-100   Male
-## 16:  66616   region   North   2018  0-100 Female
-## 17:  65646   region   North   2019  0-100   Male
-## 18:  68115   region   North   2019  0-100 Female
-## 19: 278340   region    East   2017  0-100   Male
-## 20: 278486   region    East   2017  0-100 Female
-## 21: 282887   region    East   2018  0-100   Male
-## 22: 282896   region    East   2018  0-100 Female
-## 23: 287591   region    East   2019  0-100   Male
-## 24: 287441   region    East   2019  0-100 Female
-##        pop geo_type  geo_id   year    age gender
+<pre><code>##        pop geo_type  geo_id year   age gender
+##  1: 355807   region Seattle 2017 0-100 Female
+##  2: 363819   region Seattle 2018 0-100 Female
+##  3: 371891   region Seattle 2019 0-100 Female
+##  4: 358410   region Seattle 2017 0-100   Male
+##  5: 367101   region Seattle 2018 0-100   Male
+##  6: 375933   region Seattle 2019 0-100   Male
+##  7: 376381   region   South 2017 0-100   Male
+##  8: 377281   region   South 2017 0-100 Female
+##  9: 381035   region   South 2018 0-100   Male
+## 10: 381608   region   South 2018 0-100 Female
+## 11: 384809   region   South 2019 0-100   Male
+## 12: 384875   region   South 2019 0-100 Female
+## 13:  63264   region   North 2017 0-100   Male
+## 14:  65730   region   North 2017 0-100 Female
+## 15:  64237   region   North 2018 0-100   Male
+## 16:  66616   region   North 2018 0-100 Female
+## 17:  65646   region   North 2019 0-100   Male
+## 18:  68115   region   North 2019 0-100 Female
+## 19: 278340   region    East 2017 0-100   Male
+## 20: 278486   region    East 2017 0-100 Female
+## 21: 282887   region    East 2018 0-100   Male
+## 22: 282896   region    East 2018 0-100 Female
+## 23: 287591   region    East 2019 0-100   Male
+## 24: 287441   region    East 2019 0-100 Female
+##        pop geo_type  geo_id year   age gender
 ##                                                race_eth
-##                                                  &lt;char&gt;
 ##  1: aian, asian, black, hispanic, multiple, nhpi, white
 ##  2: aian, asian, black, hispanic, multiple, nhpi, white
 ##  3: aian, asian, black, hispanic, multiple, nhpi, white
@@ -667,33 +631,32 @@ hr {
 <pre><code class="r">get_population(ages = 16:25, genders = &quot;F&quot;, years = 2017:2019, races = c(&quot;hispanic&quot;, &quot;asian&quot;), geo_type = &quot;region&quot;, race_type = &quot;race_eth&quot;, group_by = c(&quot;geo_id&quot;, &quot;years&quot;, &quot;race_eth&quot;))[]
 </code></pre>
 
-<pre><code>##       pop geo_type  geo_id   year    age gender race_eth
-##     &lt;num&gt;   &lt;char&gt;  &lt;char&gt; &lt;char&gt; &lt;char&gt; &lt;char&gt;   &lt;fctr&gt;
-##  1:  5167   region Seattle   2017  16-25 Female Hispanic
-##  2: 12051   region Seattle   2017  16-25 Female    Asian
-##  3:  5304   region Seattle   2018  16-25 Female Hispanic
-##  4: 12853   region Seattle   2018  16-25 Female    Asian
-##  5:  5462   region Seattle   2019  16-25 Female Hispanic
-##  6: 13681   region Seattle   2019  16-25 Female    Asian
-##  7:  9086   region   South   2017  16-25 Female Hispanic
-##  8:  9135   region   South   2018  16-25 Female Hispanic
-##  9:  9167   region   South   2019  16-25 Female Hispanic
-## 10:  1344   region   North   2017  16-25 Female    Asian
-## 11:  1416   region   North   2018  16-25 Female    Asian
-## 12:  1504   region   North   2019  16-25 Female    Asian
-## 13:   813   region   North   2017  16-25 Female Hispanic
-## 14:   835   region   North   2018  16-25 Female Hispanic
-## 15:   857   region   North   2019  16-25 Female Hispanic
-## 16:  2464   region    East   2017  16-25 Female Hispanic
-## 17:  5345   region    East   2017  16-25 Female    Asian
-## 18:  2507   region    East   2018  16-25 Female Hispanic
-## 19:  5602   region    East   2018  16-25 Female    Asian
-## 20:  2550   region    East   2019  16-25 Female Hispanic
-## 21:  5913   region    East   2019  16-25 Female    Asian
-## 22:  7803   region   South   2017  16-25 Female    Asian
-## 23:  8125   region   South   2018  16-25 Female    Asian
-## 24:  8451   region   South   2019  16-25 Female    Asian
-##       pop geo_type  geo_id   year    age gender race_eth
+<pre><code>##       pop geo_type  geo_id year   age gender race_eth
+##  1:  5167   region Seattle 2017 16-25 Female Hispanic
+##  2: 12051   region Seattle 2017 16-25 Female    Asian
+##  3:  5304   region Seattle 2018 16-25 Female Hispanic
+##  4: 12853   region Seattle 2018 16-25 Female    Asian
+##  5:  5462   region Seattle 2019 16-25 Female Hispanic
+##  6: 13681   region Seattle 2019 16-25 Female    Asian
+##  7:  9086   region   South 2017 16-25 Female Hispanic
+##  8:  9135   region   South 2018 16-25 Female Hispanic
+##  9:  9167   region   South 2019 16-25 Female Hispanic
+## 10:  1344   region   North 2017 16-25 Female    Asian
+## 11:  1416   region   North 2018 16-25 Female    Asian
+## 12:  1504   region   North 2019 16-25 Female    Asian
+## 13:   813   region   North 2017 16-25 Female Hispanic
+## 14:   835   region   North 2018 16-25 Female Hispanic
+## 15:   857   region   North 2019 16-25 Female Hispanic
+## 16:  2464   region    East 2017 16-25 Female Hispanic
+## 17:  5345   region    East 2017 16-25 Female    Asian
+## 18:  2507   region    East 2018 16-25 Female Hispanic
+## 19:  5602   region    East 2018 16-25 Female    Asian
+## 20:  2550   region    East 2019 16-25 Female Hispanic
+## 21:  5913   region    East 2019 16-25 Female    Asian
+## 22:  7803   region   South 2017 16-25 Female    Asian
+## 23:  8125   region   South 2018 16-25 Female    Asian
+## 24:  8451   region   South 2019 16-25 Female    Asian
+##       pop geo_type  geo_id year   age gender race_eth
 </code></pre>
 
 </body>
