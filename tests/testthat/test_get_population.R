@@ -3,6 +3,8 @@ test_that('get_population',{
 
   expect_equal(2190200, get_population(years = 2018)$pop)  # KC 2018
 
+  expect_equal(35393, get_population(years = 2019, geo_type = c("zip"), group_by = c("geo_id"))[geo_id=="98001"]$pop) # 2019 zip == 98001
+
   expect_equal(19979, get_population(years = 2018, geo_type = c("hra"), group_by = c("geo_id"))[geo_id == "North Highline"]$pop ) # 2018 North Highline HRA
 
   expect_equal(19979, get_population(years = 2018, geo_type = c("hra"))[geo_id == "North Highline"]$pop ) # 2018 North Highline HRA
