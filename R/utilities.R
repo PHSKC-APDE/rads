@@ -1,632 +1,3 @@
-#' Proper calculation of age in years
-#'
-#' @param from Vector of dates or characters ("YYYY-MM-DD") of indeterminate length.  vector of length 1.
-#' @param to Vector of dates or characters ("YYYY-MM-DD") of indeterminate length.  vector of length 1.
-#'
-#' @return Character vector of available datasets.
-#' @export
-#' @name calc_age
-#' @examples
-#' \dontrun{
-#'  calc_age(from = "2000-02-29", to = "2021-07-01")
-#' }
-#'
-calc_age <- function(from, to) {
-  from_lt = as.POSIXlt(from)
-  to_lt = as.POSIXlt(to)
-
-  age = to_lt$year - from_lt$year
-
-  ifelse(to_lt$mon < from_lt$mon |
-           (to_lt$mon == from_lt$mon & to_lt$mday < from_lt$mday),
-         age - 1, age)
-}
-
-#' Returns the list of datasets currently available for analysis in RADS
-#'
-#' @return Character vector of available datasets.
-#' @export
-#' @name list_apde_data
-#' @examples
-#' \dontrun{
-#'  list_apde_data()
-#' }
-list_apde_data <- function(){
-
-  ret <- c('hys', 'birth', 'bsk')
-
-  return(ret)
-
-
-}
-
-#' List columns available for analysis for a particular dataset in RADS
-#'
-#' @param dataset Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options
-#' @param analytic_only logical. Controls whether columns outside the analytic dataset should be returned.
-#'
-#'
-#' @return Data.frame with two columns. First column is the variable name, while the second identifies whether or not it is in the analytic ready dataset
-#' @export
-#' @name list_dataset_columns
-#' @examples
-#' \dontrun{
-#'  list_dataset_columns('hys', T)
-#' }
-list_dataset_columns <- function(dataset, analytic_only = F){
-  dat = match.arg(dataset, list_apde_data())
-
-  warning('list_dataset_columns not currently available/implemented')
-  return(data.frame(variable_name = '', analytic_ready = 'Sure. Why not?'))
-}
-
-
-#' List of available metric for `calc`
-#' @return character vector. A vector of the available metrics for `calc`
-#' @name metrics
-#' @details
-#' 1) total: Count of people with the given value. Mostly relevant for surveys
-#' (where total is approximately mean * sum(pweights)).
-#' Returns total, total_se, total_upper, total_lower.
-#' total_se, total_upper, & total_lower are only valid for survey data.
-#' Default ci (e.g. upper and lower) is 95 percent.
-#'
-#' 2) mean: Average response and associated metrics of uncertainty.
-#' Returns mean, mean_se, mean_lower, mean_upper.
-#' Default ci (e.g. upper and lower) is 95 percent.
-#'
-#' 3) rse: Relative standard error. 100*se/mean.
-#'
-#' 4) numerator: Sum of non-NA values for `what``.
-#' The numerator is always unweighted.
-#'
-#' 5) denominator: Number of rows where `what` is not NA.
-#' The denominator is always unweighted.
-#'
-#' 6) obs: Number of unique observations (i.e., rows), agnostic as to whether
-#' there is missing data for `what`. The obs is always unweighted.
-#'
-#' 7) median: The median non NA response. Not populated when `what` is a factor
-#' or character. Even for surveys, the median is the unweighted result.
-#'
-#' 8) unique.time: Number of unique time points (from `time_var`) included in
-#' each tabulation (i.e., number of unique time points when the `what` is not missing).
-#'
-#' 9) missing: Number of rows in a given grouping with an NA value for `what`.
-#'    missing + denominator = Number of people in a given group.
-#'    When `what` is a factor/character, the missing information is provided for the other.
-#'
-#' 10) missing.prop: The proportion of the data that has an NA value for `what`.
-#'
-#' 11) rate: mean * per. Provides rescaled mean estimates (i.e., per 100 or per 100,0000).
-#' Returns rate, rate_se, rate_lower, rate_upper.
-#' Default ci (e.g. upper and lower) is 95 percent.
-#'
-#' 12) ndistinct: The unique number of `what` values in the given subset. For factors, it is the unique number of levels in the subset.
-#'
-#' @rdname metrics
-#' @export
-metrics = function(){
-  c('total',
-    'mean', 'rse',
-    'numerator','denominator', 'obs', 'median',
-    'unique.time',
-    'missing', 'missing.prop',
-    'rate', 'ndistinct')
-}
-
-
-
-#' List of standard CHI / Tableau Ready columns
-#' @export
-chi_cols = function(){
-  c("data_source", "indicator_key", "tab", "year", "cat1", "cat1_group", "cat1_group_alias", "cat1_varname","cat2",
-    "cat2_group", "cat2_group_alias", "cat2_varname", "result", "lower_bound", "upper_bound", "se", "rse",
-    "comparison_with_kc", "time_trends", "significance", "caution", "suppression", "numerator", "denominator", "chi",
-    "source_date", "run_date")
-}
-
-
-#' List of standard CHI / Tableau Ready metadata columns
-#' @export
-chi_metadata_cols = function(){
-  c("data_source", "indicator_key", "result_type", "valence", "latest_year", "latest_year_result", "latest_year_kc_pop",
-    "latest_year_count", "map_type", "unit", "valid_years", "chi", "run_date")
-}
-
-
-#' Improved rounding function
-#' @param x values to be rounded
-#' @param n number of digits
-#' @export
-#' @return numeric
-round2 = function(x, n = 0) {
-  posneg = sign(x)
-  z = abs(x)*10^n
-  z = z + 0.5
-  z = trunc(z)
-  z = z/10^n
-  z*posneg
-}
-
-
-
-#' Substring selection from the right to complement base R substr
-#' @param x character
-#' @param x.start digit to start (counting from the right)
-#' @param x.stop digit to end  (counting from the right)
-#' @export
-#' @return character vector
-#'
-#' @examples
-#' \dontrun{
-#' substrRight("Good morning!", 2, 8)
-#' }
-substrRight <- function(x, x.start, x.stop){
-  substr(x, nchar(x)-x.stop+1, nchar(x)-x.start+1)
-}
-
-#' Compare CHI standard tabular results to the King County average for the same year within a given data set
-#' @param orig Character vector of length 1. Identifies the data.table/data.frame to be fetched. Note the table must have the following columns:
-#' 'result', 'lower_bound', & 'upper_bound' and all three must be numeric
-#' @param new.col.name Character vector of length 1. It is the name of the column containining the comparison results.
-#' @param linkage.vars Character vector of length 1. It is the name of the column that you will use for merging.
-#'
-#' @importFrom data.table setnames ":=" setDT
-#'
-#' @export
-#' @return data.table comprised of the original data.table and two additional columns ... 'significance' and 'comparison_with_kc' (or alternatively specified name)
-chi_compare_kc <- function(orig,
-                           linkage.vars = c("indicator_key"),
-                           new.col.name = "comparison_with_kc"){
-
-  #Bindings for data.table/check global variables
-  cat1 <- cat1_varname <- result <- comp.result <- lower_bound <- comp.upper_bound <- upper_bound <- comp.lower_bound <- significance <- tab <- ..comparator.vars <- NULL
-
-  #Copy & subset comparator data
-  data.table::setDT(copy(orig))
-
-  #Copy & subset comparator data
-  comparator.vars <- c(linkage.vars, "year", "result", "lower_bound", "upper_bound")
-  comparator <- unique(orig[cat1=="King County" & tab!="crosstabs", ..comparator.vars])
-  data.table::setnames(comparator, c("result", "lower_bound", "upper_bound"), c("comp.result", "comp.lower_bound", "comp.upper_bound"))
-
-  #Merge comparator data onto all other data
-  orig <- merge(orig, comparator, by=c(linkage.vars, "year"), all.x = TRUE, all.y = TRUE)
-
-  #Compare estimates with comparator
-  if(sum(grepl(new.col.name, names(orig))) > 0){orig[, c(new.col.name) := NULL]}
-  orig[result == comp.result, c(new.col.name) := "no different"]
-  orig[result > comp.result, c(new.col.name) := "higher"]
-  orig[result < comp.result, c(new.col.name) := "lower"]
-
-  #According to APDE protocol, we check for overlapping CI rather than SE and Z scores
-  if(sum(grepl("significance", names(orig))) > 0){orig[, significance := NULL]}
-  orig[, significance := NA_character_]
-  orig[(lower_bound > comp.upper_bound) | (upper_bound < comp.lower_bound), significance := "*"]
-
-  #Keep comparison only if statistically significant
-  orig[is.na(significance), c(new.col.name) := "no different"]
-
-  #Drop KC level estimates that were just used for the comparisons
-  orig[, c("comp.result", "comp.upper_bound", "comp.lower_bound") := NULL]
-
-  return(orig)
-}
-
-#' Format a vector of time into a series of human readable chunks
-#' @param x numeric
-#' @export
-#' @return character vector
-#'
-#' @examples
-#' format_time(c(1:5, 10, 12, 24, 25))
-#'
-format_time <- function(x){
-
-  #get the unique values
-  x <- sort(unique(x))
-
-  #find breaks in runs
-  breaks = data.table::shift(x, type = 'lead') == (x + 1)
-  bps = which(!breaks)
-
-  #seperate
-  if(length(bps)>0){
-    seper = split(x, cut(x, c(-Inf, x[bps], Inf)))
-  }else{
-    seper = list(x)
-  }
-
-  #format into string
-  seper = lapply(seper, function(y){
-
-    if(length(y)>1){
-      return(paste(min(y), max(y), sep = '-'))
-    }else{
-      return(paste(y))
-    }
-
-  })
-
-  ret = paste(seper, collapse = ', ')
-
-  return(ret)
-
-}
-
-#' Format a vector of time into a simple human readable chunk
-#' @param x numeric
-#' @export
-#' @return character vector
-#'
-#' @examples
-#' format_time_simple(c(1:5, 10, 12, 24, 25))
-#'
-format_time_simple <- function(x){
-
-  #get the unique values
-    x <- sort(unique(x))
-
-  # format into string
-    if(max(x, na.rm = T) == min(x, na.rm = T)){
-      ret <- paste0(x)
-    } else{
-      ret <- paste0(min(x, na.rm = T), "-", max(x, na.rm = T))
-    }
-
-  return(ret)
-
-}
-
-
-#' Clean string columns read from SQL
-#' @param dat character vector of length one. Name of data.frame or data.table
-#' @param stringsAsFactors logical. Specifies whether to convert strings to factors (TRUE) or not (FALSE)
-#' @export
-#' @return data.table
-  sql_clean <- function(dat = NULL, stringsAsFactors = FALSE){
-
-    # check date.frame
-      if(!is.null(dat)){
-        if(!is.data.frame(dat)){
-          stop("'dat' must be the name of a data.frame or data.table")
-        }
-        if(is.data.frame(dat) && !data.table::is.data.table(dat)){
-          data.table::setDT(dat)
-        }
-      } else {stop("'dat' (the name of a data.frame or data.table) must be specified")}
-
-    original.order <- names(dat)
-    factor.columns <- which(vapply(dat,is.factor, FUN.VALUE=logical(1) )) # identify factor columns
-    if(length(factor.columns)>0) {
-      dat[, (factor.columns) := lapply(.SD, as.character), .SDcols = factor.columns] # convert factor to string
-    }
-    string.columns <- which(vapply(dat,is.character, FUN.VALUE=logical(1) )) # identify string columns
-    if(length(string.columns)>0) {
-      dat[, (string.columns) := lapply(.SD, trimws, which="both"), .SDcols = string.columns] # trim white space to right or left
-      dat[, (string.columns) := lapply(.SD, function(x){gsub("^ *|(?<= ) | *$", "", x, perl = TRUE)}), .SDcols = string.columns] # collapse multiple consecutive white spaces into one
-      dat[, (string.columns) := lapply(.SD, function(x){gsub("^$|^ $", NA, x)}), .SDcols = string.columns] # replace blanks with NA
-      if(stringsAsFactors==TRUE){
-        dat <- dat[, (string.columns) := lapply(.SD, factor), .SDcols = string.columns] # convert strings to factors
-      }
-    }
-    # reorder table
-    data.table::setcolorder(dat, original.order)
-  }
-
-#' Convert the class of a vector to another class is possible without introducing additional NAs
-#' @param x vector of indeterminate length and type
-#' @param class character vector of length one specifying the preferred new column type (i.e.,
-#' 'character', 'numeric', 'integer', or 'factor')
-#' @export
-#' @return a vector of the same length as x, but of the new class (when possible)
-  lossless_convert <- function(x = NULL, class = NULL){
-    if(is.null(x)){
-      stop("'x', the vector you wish to change, must be specified.")
-    }
-
-    if(is.null(class)){
-      stop("'class' must be specified by choosing one of the following: 'character', 'integer', 'numeric'")
-    }
-
-    if(!class %in% c('character', 'integer', 'numeric') || length(class) != 1 ){
-      stop("'class' is limited to *one* of the following: 'character', 'integer', 'numeric'")
-    }
-
-    if(sum(is.na(x)) == sum(is.na(suppressWarnings(as(x, class)))) ){
-      x <- suppressWarnings(as(x, class))
-    }
-    return(x)
-  }
-
-
-#' Compare the expected column types in YAML with the actual column types in R
-#' @param DF Character vector of length 1. Identifies the data.table/data.frame that you want to assess vis-à-vis the YAML file
-#'
-#' @param YML Character vector of length 1. It is the name of the YAML object in memory.
-#'
-#' @param VARS Character vector of length 1. Is is the name of the object in the list contained by YML
-#'
-#' @importFrom data.table data.table setnames ":=" setDT
-#'
-#' @export
-#' @return A simple printed statement, either identifying incompatible column types or a statement of success
-
-  validate_yaml_data <- function(DF = NULL, YML = NULL, VARS = "vars"){
-    ## Global variables used by data.table declared as NULL here to play nice with devtools::check()
-      DF.class <- yamlcols <- yamlnames <- yamlextra <- dfcols <- dfnames <- NULL
-
-    # Check that DT is a data.frame/data.table ----
-      if(is.data.frame(DF) == FALSE){
-        stop("'DF' must be a data.frame or a data.table")
-      }else{DF <- data.table::setDT(copy(DF))}
-
-    # Check that number of vars in YML is same as ncols in DF ----
-      yamlcols <- length(YML[[VARS]])
-      dfcols <- ncol(DF)
-      if(yamlcols != dfcols){
-        stop(paste0("The number of vars specified in the YAML (", yamlcols, ") does not match the number of columns in DF (", dfcols, ")"))
-      }
-
-    # Check that the column names in YML match those in DF ----
-      yamlnames <- sort(names(YML[[VARS]]))
-      dfnames <- sort(names(DF))
-      yamlextra <- setdiff(yamlnames, dfnames)
-      if(length(yamlextra) == 0){yamlextra <- "_____"}
-      dfextra <- setdiff(dfnames, yamlnames)
-      if(length(dfextra) == 0){dfextra <- "_____"}
-      if(setequal(yamlnames, dfnames)==F){
-            stop(paste0("The following variables are in the YAML but not in DF: ", yamlextra),
-                 paste0(". The following variables are in DF but not in the YAML: ", dfextra), ".")
-      }
-
-    # notice that this might take a while ----
-      message("The validation may take a few minutes if your data & yaml contain dates and or times")
-
-    # identify proper classes from YAML file ----
-      class.compare <- data.table::data.table(
-        name =  c(names(YML[[VARS]])),
-        yaml.class = tolower(as.character(YML[[VARS]]))
-      )
-
-    # convert names of SQL data types to R classes ----
-      class.compare[grepl("char|text|uniqueidentifier", tolower(yaml.class)), yaml.class := "character"]
-      class.compare[tolower(yaml.class) %in% c("tinyint", "smallint", "int"), yaml.class := "integer"]
-      class.compare[grepl("bigint|decimal|float|money|numeric|real", tolower(yaml.class)), yaml.class := "numeric"]
-      class.compare[grepl("bit", tolower(yaml.class)), yaml.class := "logical"]
-      class.compare[grepl("date", tolower(yaml.class)), yaml.class := "date"]
-      class.compare[grepl("time", tolower(yaml.class)), yaml.class := "POSIXct"]
-
-    # identify which VARS should be of which class (assuming YAML is correct) ----
-      make.char <- class.compare[yaml.class == "character"]$name
-      make.num  <- class.compare[yaml.class == "numeric"]$name
-      make.int  <- class.compare[yaml.class == "integer"]$name
-      make.logical  <- class.compare[yaml.class == "logical"]$name
-      make.Date  <- class.compare[yaml.class == "Date"]$name
-      make.POSIXct  <- class.compare[yaml.class == "POSIXct"]$name
-
-    # create function to convert column classes if it can be done without introducing NA's ----
-      lossless_convert <- function(x, class){
-        if(!class %in% c("Date", "POSIXct")){
-            if(sum(is.na(x)) == sum(is.na(suppressWarnings(as(x, class)))) ){
-                x <- suppressWarnings(as(x, class))
-            }
-        }
-        if(class %in% c("Date")){
-          if(sum(is.na(x)) == sum(is.na(suppressWarnings(as.Date(as.character(x))))) ){
-            x <- suppressWarnings(as.Date(as.character(x)))
-          }
-        }
-        if(class %in% c("POSIXct")){
-          if(sum(is.na(x)) == sum(is.na(suppressWarnings(as.POSIXct(as.character(x))))) ){
-            x <- suppressWarnings(as.POSIXct(as.character(x)))
-          }
-        }
-        return(x)
-      }
-
-    # use function convert R column types if possible / needed ----
-      DF[, (make.char) := lapply(.SD, lossless_convert, class = 'character'), .SDcols = make.char]
-      DF[, (make.num) := lapply(.SD, lossless_convert, class = 'numeric'), .SDcols = make.num]
-      DF[, (make.int) := lapply(.SD, lossless_convert, class = 'integer'), .SDcols = make.int]
-      DF[, (make.logical) := lapply(.SD, lossless_convert, class = 'logical'), .SDcols = make.logical]
-      DF[, (make.Date) := lapply(.SD, lossless_convert, class = 'Date'), .SDcols = make.Date]
-      DF[, (make.POSIXct) := lapply(.SD, lossless_convert, class = 'POSIXct'), .SDcols = make.POSIXct]
-
-    # check if there are variables that could not be coerced to proper type ----
-      class.compare <- merge(data.table::data.table(name = names(sapply(DF, class)), DF.class = tolower(sapply(DF, class))),
-                             class.compare, by = "name")
-
-    # allow R to be more strict than YAML with numbers ----
-      class.compare[yaml.class=="numeric" & DF.class == "integer", DF.class := "numeric"]
-
-    # Assess whether there were any problems ----
-      if(nrow(class.compare[DF.class != yaml.class]) > 0){
-        yaml.name <- class.compare[DF.class != yaml.class]$name
-        yaml.class <- class.compare[DF.class != yaml.class]$yaml.class
-        class.problems <- paste(paste0(yaml.name, " (", yaml.class, ")"), collapse = ", ")
-        stop(glue::glue("The following variables could not be coerced to their proper class (which is specified in parentheses):
-                              {class.problems}"))
-      }else{success <- message("All column classes in your R dataset are compatible with the YAML reference standard.")}
-
-      return(success)
-
-  }
-
-
-#' Compare two data.frames with properly formatted CHI data
-#' @param OLD Character vector of length 1. Identifies the data.table/data.frame that you want to use as a reference
-#'
-#' @param NEW Character vector of length 1. Identifies the data.table/data.frame that you are interested in validating
-#'
-#' @param OLD.year Character vector of length 1. Specifies the exact year that you want to use in the OLD data
-#'
-#' @param NEW.year Character vector of length 1. Specifies the exact year that you want to use in the NEW data
-#'
-#' @param META Character vector of length 1. OPTIONAL ... identifies the data.table/data.frame containing the metadata for
-#' the NEW data.frame
-#'
-#' @importFrom data.table data.table setnames ":=" setDT copy
-#'
-#' @export
-#' @return A simple printed statement, either identifying incompatible column types or a statement of success
-chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = NULL, META = NULL){
-
-    #Bindings for data.table/check global variables
-  indicator_key <- result_type <- relative.diff <- result.x <- result.y <- absolute.diff <- cat1 <- tab <- ..comparator.vars <-  NULL
-
-    # Check if necessary arguments are present
-  if(is.null(OLD)){stop("You must provide 'OLD', i.e., the name of the table with the OLD data")}
-  if(is.null(NEW)){stop("You must provide 'NEW', i.e., the name of the table with the NEW data")}
-  if(is.null(OLD.year)){stop("You must provide 'OLD.year', i.e., the year of interest in the OLD data")}
-  if(is.null(NEW.year)){stop("You must provide 'NEW.year', i.e., the year of interest in the NEW data")}
-
-    # Check if objects are data.frames & make into data.table if need be
-      if(is.data.frame(OLD) == FALSE){
-        stop("'OLD' must be a data.frame or a data.table")
-      }else{OLD <- data.table::setDT(copy(OLD))}
-
-
-      if(is.data.frame(NEW) == FALSE){
-        stop("'NEW' must be a data.frame or a data.table")
-      }else{NEW <- data.table::setDT(copy(NEW))}
-
-      if(!is.null(META)){
-        if(is.data.frame(META) == FALSE){
-          stop("'META' must be a data.frame or a data.table")
-        }else{META <- data.table::setDT(copy(META))}
-      }
-
-    # If metadata provided, add it to the columns to help interret the output
-      if(!is.null(META)){
-        NEW <- merge(NEW, META[, list(indicator_key, result_type)], by = "indicator_key", all.x = TRUE, all.y = FALSE)
-      } else { NEW[, result_type := "Metadata not provided"]}
-
-    # Merge old and new data based on identifiers
-      comp <- merge(copy(OLD[year == OLD.year]),
-                    copy(NEW[year == NEW.year]),
-                    by = c("indicator_key", "tab",
-                           "cat1", "cat1_group_alias", "cat1_varname",
-                           "cat2", "cat2_group_alias", "cat2_varname"),
-                    all = T)
-
-    # calculate percent differences between old (x) and new(y)
-      comp[, relative.diff := round2(abs((result.x - result.y) / result.x)*100, 1)]
-      comp[, absolute.diff := round2(abs(result.x - result.y)*100, 1)]
-      comp <- comp[!is.na(absolute.diff)]  # drop if absolute difference is NA
-
-    # order variables
-      comp <- comp[, c("absolute.diff", "relative.diff", "result_type",
-                       "indicator_key", "tab",
-                       "cat1", "cat1_group_alias", "cat1_varname",
-                       "cat2", "cat2_group_alias", "cat2_varname", "year.x", "year.y",
-                       "result.x", "result.y", "lower_bound.x", "lower_bound.y",
-                       "upper_bound.x", "upper_bound.y",
-                       "numerator.x", "numerator.y", "denominator.x", "denominator.y",
-                       "se.x", "se.y")]
-
-    # rename suffixes
-      setnames(comp, names(comp), gsub("\\.x$", ".OLD", names(comp)))
-      setnames(comp, names(comp), gsub("\\.y$", ".NEW", names(comp)))
-
-    # order based on percent difference
-      setorder(comp, -absolute.diff)
-
-    # return object
-      return(comp)
-
-}
-
-#' Convert from one type to another type
-#'
-#' @param x factor
-#' @param target character. class of the object to transform the factor into. One of integer, numeric, or character.
-#'
-#'
-dumb_convert <- function(x, target = 'character'){
-
-  stopifnot(length(target) == 1)
-  if(target == 'character'){
-    return(as.character(x))
-  }
-
-  if(target == 'numeric'){
-    return(as.numeric(as.character(x)))
-  }
-
-  if(target == 'integer'){
-    return(as.integer(as.character(x)))
-  }
-
-  if(target == 'logical') return(as.logical(as.character(x)))
-
-  if(target == 'factor'){
-    if(is.factor(x)) return(x)
-
-    return(as.factor(x))
-  }
-
-  stop(paste0('Target class of ', target, ' is invalid'))
-}
-
-
-#' Return vector of all reference populations available in RADS
-#'
-#' @return Character vector of available reference populations
-#' @export
-#' @name list_ref_pop
-#' @examples
-#' \dontrun{
-#'  list_ref_pop()
-#' }
-#' @importFrom data.table copy
-#' @import rads.data
-#'
-list_ref_pop <- function(){
-  #global variables used by data.table declared as NULL here to play nice with devtools::check()
-  standard <- NULL
-
-  ref_single_to_99 <- data.table::copy(rads.data::population_reference_pop_single_age_to_99)
-  ref_single_to_84 <- data.table::copy(rads.data::population_reference_pop_single_age_to_84)
-  ref_agecat_18 <- data.table::copy(rads.data::population_reference_pop_18_age_groups)
-  ref_agecat_19 <- data.table::copy(rads.data::population_reference_pop_19_age_groups)
-  ref_pop_table <- unique(rbind(ref_single_to_99[, list(standard)], ref_single_to_84[, list(standard)], ref_agecat_18[, list(standard)], ref_agecat_19[, list(standard)]))
-  setorder(ref_pop_table, standard)
-  ref_pop_table <- rbind(ref_pop_table[standard %like% "2000 U.S. Std P"], ref_pop_table[!standard %like% "2000 U.S. Std P"])
-  return(ref_pop_table$standard)
-}
-
-#' Load a reference population as a data.table object in memory
-#'
-#' @param ref_name Character vector of length 1. Loads a reference population identified by list_ref_pop()
-#'
-#' @return data.table with complete reference population data
-#' @export
-#' @name get_ref_pop
-#' @examples
-#' \dontrun{
-#'  get_ref_pop("2000 U.S. Std Population (single ages to 84 - Census P25-1130)")
-#' }
-#' @importFrom data.table copy
-#' @import rads.data
-#'
-get_ref_pop <- function(ref_name = NULL){
-  #global variables used by data.table declared as NULL here to play nice with devtools::check()
-  standard <- agecat <- age_start <- age_end <- pop <- ref_pop_name <- NULL
-
-  ref_single_to_99 <- data.table::copy(rads.data::population_reference_pop_single_age_to_99)
-  ref_single_to_84 <- data.table::copy(rads.data::population_reference_pop_single_age_to_84)
-  ref_agecat_18 <- data.table::copy(rads.data::population_reference_pop_18_age_groups)
-  ref_agecat_19 <- data.table::copy(rads.data::population_reference_pop_19_age_groups)
-  ref_pop_table <- rbind(ref_single_to_99, ref_single_to_84, ref_agecat_18, ref_agecat_19)
-  ref_pop_table <- ref_pop_table[standard == ref_name, list(agecat, age_start, age_end, pop)]
-  if(nrow(ref_pop_table) == 0){stop(strwrap(paste0("`ref_name` ('", ref_name, "') does not refer to a valid standard reference population.
-                                                     Type `list_ref_pop()` to get a list of all valid populations."), prefix = " ", initial = ""))}
-  ref_pop_table[, ref_pop_name := ref_name]
-  return(ref_pop_table)
-}
-
 #' Calculate crude and directly adjusted rates
 #'
 #' @param count Numeric vector of indeterminate length. The # of events of interest (e.g., deaths, births, etc.)
@@ -677,6 +48,7 @@ adjust_direct <- function (count, pop, stdpop, per = 100000, conf.level = 0.95)
   adjusted <- per*c(crude.rate = cruderate, crude.lci = crude.lci, crude.uci = crude.uci, adj.rate = dsr, adj.lci = gamma.lci, adj.uci = gamma.uci)
   adjusted <- c(count = sum(count), pop = sum(pop), adjusted)
 }
+
 
 #' Calculate age standardized rates from a data.table with age, counts, and population columns. (Built on adjust_direct())
 #' @param my.dt Name of a data.frame or data.table object. Note, if my.dt already has a standard population (ref.popname = "none"),
@@ -782,6 +154,432 @@ age_standardize <- function (my.dt, ref.popname = NULL, collapse = T, my.count =
   if(ref.popname == "none"){my.rates[, reference_pop := paste0("stdpop column in `", my.dt.name, "`")]}
 
   return(my.rates)
+}
+
+
+#' Proper calculation of age in years
+#'
+#' @param from Vector of dates or characters ("YYYY-MM-DD") of indeterminate length.  vector of length 1.
+#' @param to Vector of dates or characters ("YYYY-MM-DD") of indeterminate length.  vector of length 1.
+#'
+#' @return Character vector of available datasets.
+#' @export
+#' @name calc_age
+#' @examples
+#' \dontrun{
+#'  calc_age(from = "2000-02-29", to = "2021-07-01")
+#' }
+#'
+calc_age <- function(from, to) {
+  from_lt = as.POSIXlt(from)
+  to_lt = as.POSIXlt(to)
+
+  age = to_lt$year - from_lt$year
+
+  ifelse(to_lt$mon < from_lt$mon |
+           (to_lt$mon == from_lt$mon & to_lt$mday < from_lt$mday),
+         age - 1, age)
+}
+
+
+#' List of standard CHI / Tableau Ready columns
+#' @export
+chi_cols = function(){
+  c("data_source", "indicator_key", "tab", "year", "cat1", "cat1_group", "cat1_group_alias", "cat1_varname","cat2",
+    "cat2_group", "cat2_group_alias", "cat2_varname", "result", "lower_bound", "upper_bound", "se", "rse",
+    "comparison_with_kc", "time_trends", "significance", "caution", "suppression", "numerator", "denominator", "chi",
+    "source_date", "run_date")
+}
+
+
+#' Compare two data.frames with properly formatted CHI data
+#' @param OLD Character vector of length 1. Identifies the data.table/data.frame that you want to use as a reference
+#'
+#' @param NEW Character vector of length 1. Identifies the data.table/data.frame that you are interested in validating
+#'
+#' @param OLD.year Character vector of length 1. Specifies the exact year that you want to use in the OLD data
+#'
+#' @param NEW.year Character vector of length 1. Specifies the exact year that you want to use in the NEW data
+#'
+#' @param META Character vector of length 1. OPTIONAL ... identifies the data.table/data.frame containing the metadata for
+#' the NEW data.frame
+#'
+#' @importFrom data.table data.table setnames ":=" setDT copy
+#'
+#' @export
+#' @return A simple printed statement, either identifying incompatible column types or a statement of success
+chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = NULL, META = NULL){
+
+  #Bindings for data.table/check global variables
+  indicator_key <- result_type <- relative.diff <- result.x <- result.y <- absolute.diff <- cat1 <- tab <-  NULL
+
+  # Check if necessary arguments are present
+  if(is.null(OLD)){stop("You must provide 'OLD', i.e., the name of the table with the OLD data")}
+  if(is.null(NEW)){stop("You must provide 'NEW', i.e., the name of the table with the NEW data")}
+  if(is.null(OLD.year)){stop("You must provide 'OLD.year', i.e., the year of interest in the OLD data")}
+  if(is.null(NEW.year)){stop("You must provide 'NEW.year', i.e., the year of interest in the NEW data")}
+
+  # Check if objects are data.frames & make into data.table if need be
+  if(is.data.frame(OLD) == FALSE){
+    stop("'OLD' must be a data.frame or a data.table")
+  }else{OLD <- data.table::setDT(copy(OLD))}
+
+
+  if(is.data.frame(NEW) == FALSE){
+    stop("'NEW' must be a data.frame or a data.table")
+  }else{NEW <- data.table::setDT(copy(NEW))}
+
+  if(!is.null(META)){
+    if(is.data.frame(META) == FALSE){
+      stop("'META' must be a data.frame or a data.table")
+    }else{META <- data.table::setDT(copy(META))}
+  }
+
+  # If metadata provided, add it to the columns to help interret the output
+  if(!is.null(META)){
+    NEW <- merge(NEW, META[, list(indicator_key, result_type)], by = "indicator_key", all.x = TRUE, all.y = FALSE)
+  } else { NEW[, result_type := "Metadata not provided"]}
+
+  # Merge old and new data based on identifiers
+  comp <- merge(copy(OLD[year == OLD.year]),
+                copy(NEW[year == NEW.year]),
+                by = c("indicator_key", "tab",
+                       "cat1", "cat1_group_alias", "cat1_varname",
+                       "cat2", "cat2_group_alias", "cat2_varname"),
+                all = T)
+
+  # calculate percent differences between old (x) and new(y)
+  comp[, relative.diff := round2(abs((result.x - result.y) / result.x)*100, 1)]
+  comp[, absolute.diff := round2(abs(result.x - result.y)*100, 1)]
+  comp <- comp[!is.na(absolute.diff)]  # drop if absolute difference is NA
+
+  # order variables
+  comp <- comp[, c("absolute.diff", "relative.diff", "result_type",
+                   "indicator_key", "tab",
+                   "cat1", "cat1_group_alias", "cat1_varname",
+                   "cat2", "cat2_group_alias", "cat2_varname", "year.x", "year.y",
+                   "result.x", "result.y", "lower_bound.x", "lower_bound.y",
+                   "upper_bound.x", "upper_bound.y",
+                   "numerator.x", "numerator.y", "denominator.x", "denominator.y",
+                   "se.x", "se.y")]
+
+  # rename suffixes
+  setnames(comp, names(comp), gsub("\\.x$", ".OLD", names(comp)))
+  setnames(comp, names(comp), gsub("\\.y$", ".NEW", names(comp)))
+
+  # order based on percent difference
+  setorder(comp, -absolute.diff)
+
+  # return object
+  return(comp)
+
+}
+
+
+#' Compare CHI standard tabular results to the King County average for the same year within a given data set
+#' @param orig Character vector of length 1. Identifies the data.table/data.frame to be fetched. Note the table must have the following columns:
+#' 'result', 'lower_bound', & 'upper_bound' and all three must be numeric
+#' @param new.col.name Character vector of length 1. It is the name of the column containining the comparison results.
+#' @param linkage.vars Character vector of length 1. It is the name of the column that you will use for merging.
+#'
+#' @importFrom data.table setnames ":=" setDT
+#'
+#' @export
+#' @return data.table comprised of the original data.table and two additional columns ... 'significance' and 'comparison_with_kc' (or alternatively specified name)
+chi_compare_kc <- function(orig,
+                           linkage.vars = c("indicator_key"),
+                           new.col.name = "comparison_with_kc"){
+
+  #Deprecation warning
+  .Deprecated("comparison")
+
+  #Bindings for data.table/check global variables
+  cat1 <- cat1_varname <- result <- comp.result <- lower_bound <- comp.upper_bound <- upper_bound <- comp.lower_bound <- significance <- tab <- comparator_vars <- NULL
+
+  #Copy & subset comparator data
+  data.table::setDT(copy(orig))
+
+  #Copy & subset comparator data
+  comparator_vars <- c(linkage.vars, "year", "result", "lower_bound", "upper_bound")
+  comparator <- unique(orig[cat1=="King County" & tab!="crosstabs", (comparator_vars), with = F])
+  data.table::setnames(comparator, c("result", "lower_bound", "upper_bound"), c("comp.result", "comp.lower_bound", "comp.upper_bound"))
+
+  #Merge comparator data onto all other data
+  orig <- merge(orig, comparator, by=c(linkage.vars, "year"), all.x = TRUE, all.y = TRUE)
+
+  #Compare estimates with comparator
+  if(sum(grepl(new.col.name, names(orig))) > 0){orig[, c(new.col.name) := NULL]}
+  orig[result == comp.result, c(new.col.name) := "no different"]
+  orig[result > comp.result, c(new.col.name) := "higher"]
+  orig[result < comp.result, c(new.col.name) := "lower"]
+
+  #According to APDE protocol, we check for overlapping CI rather than SE and Z scores
+  if(sum(grepl("significance", names(orig))) > 0){orig[, significance := NULL]}
+  orig[, significance := NA_character_]
+  orig[(lower_bound > comp.upper_bound) | (upper_bound < comp.lower_bound), significance := "*"]
+
+  #Keep comparison only if statistically significant
+  orig[is.na(significance), c(new.col.name) := "no different"]
+
+  #Drop KC level estimates that were just used for the comparisons
+  orig[, c("comp.result", "comp.upper_bound", "comp.lower_bound") := NULL]
+
+  return(orig)
+}
+
+
+#' List of standard CHI / Tableau Ready metadata columns
+#' @export
+chi_metadata_cols = function(){
+  c("data_source", "indicator_key", "result_type", "valence", "latest_year", "latest_year_result", "latest_year_kc_pop",
+    "latest_year_count", "map_type", "unit", "valid_years", "chi", "run_date")
+}
+
+
+#' Compare aggregated results (proportions or means) for one strata to the rest
+#' of the strata in the summary table.
+#' @param mydt Unquoted name of a data.table or data.frame to be processed. Note
+#' the table must have the following columns: 'result'  OR 'mean' OR 'proportion',
+#' and corresponding confidence interval columns with 'lower' & 'upper' as part
+#' of their names.
+#' @param id_vars Character vector of length >= 1. It contains the name(s) of
+#' columns which identify the grouping for which you want to use for comparison.
+#' For standard rads::calc() output, id_vars should be c("variable", "level") and
+#' for standard CHI tableau ready output, it should be c("indicator_key", "year")
+#' @param key_where An expression identifying the referent/comparator/key to
+#' which other data will be compared. It should be passed unquoted.
+#' rows to be filtered / excluded from secondary suppression because
+#' the categories are not mutually exclusive (e.g., race3)
+#' @param new_col Character vector of length 1. It is the name of the new column
+#' that contains the comparison results (i.e., higher, lower, or no difference).
+#' It is also the stem for the column noting the significance of the results (
+#' e.g., if new_col = "comp", the significance column will be named "comp_sig")
+#' @param tidy logical. Determines whether to drop intermediate variables with
+#' the estimate, lower bound, and upper bound for the referent.
+#'
+#' @importFrom data.table setnames ":=" setDT data.table
+#'
+#' @return data.table comprised of the original data.table and two additional
+#' columns ... 'comp' and 'comp_sig' (or alternatively specified names)
+#'
+#' @export
+#'
+#' @keywords suppression
+#'
+#' @examples
+#' # create test data
+#' set.seed(98104)
+#' dt <- data.table::data.table(
+#'   chi_year = rep(2008:2018, 2000),
+#'   fetal_pres = factor(sample(c("Breech", "Cephalic", "Other", NA),
+#'                              22000, rep = TRUE,
+#'                              prob = c(0.04, 0.945, 0.01, 0.005))),
+#'   bw_grams = round(rnorm(22000, 3343, 576), 0)
+#' )
+#' dt[fetal_pres=='Other', bw_grams := 0.5*bw_grams]
+#' dt = dtsurvey::dtadmin(dt)
+#' dt <- calc(dt, what = c("bw_grams"), by = c("fetal_pres"))
+#' # run function
+#' test <- compare_estimate(mydt = dt,
+#'                          id_vars = c("variable", "level"),
+#'                          key_where = fetal_pres == "Breech",
+#'                          new_col = "comp",
+#'                          tidy = FALSE)
+#' test[]
+#'
+compare_estimate <- function (mydt,
+                              id_vars = c("variable", "level"),
+                              key_where ,
+                              new_col = "comp",
+                              tidy = T){
+  #Bindings for data.table/check global variables
+  comparator_vars <- comp_est <- comp_upper <- comp_lower <- NULL
+
+  # validate 'mydt' ----
+  if(is.null(mydt)){
+    stop("You must specify a dataset (i.e., 'mydt' must be defined)")
+  }
+
+  if(!is.data.table(mydt)){
+    if(is.data.frame(mydt)){
+      data.table::setDT(copy(mydt))
+    } else {
+      stop(paste0("<{mydt}> must be the name of a data.frame or data.table."))
+    }
+  }
+
+  # validate 'id_vars' ----
+  if(length(setdiff(id_vars, names(mydt))) > 0 ){
+    stop("At least one name in 'id_vars' is not found among the column names in 'mydt'")
+  }
+
+  # validate 'key_where' ----
+  if(!missing(key_where)){
+    call = match.call()
+
+    if(is.character(call[['key_where']])){
+      where = str2lang(call[['key_where']])
+      warning('`key_where` is a string. It was converted so that it would work, but in the future, this might turn into an error.
+                  In the future, please pass unquoted commands that will resolve to a logical' )
+
+    } else {where = copy(call[['key_where']])}
+
+    e <- substitute(expr = where) # get parse tree expression `where`
+    r <- eval(expr = e, envir = mydt, enclos = parent.frame()) # evaluate
+
+    stopifnot('`where` does not resolve to a logical' = is.logical(r))
+    if(nrow(mydt[r,]) <1 ){
+      stop(paste0("Your 'key_where' argument filters out all rows of data. Please revise and submit again"))
+    }
+  }
+
+  # validate 'new_col' ----
+  if(is.null(new_col) | new_col == "" | is.na(new_col)){stop("You must enter a 'new_col' for the results of the comparison")}
+  if(length(new_col) > 1){stop("'new_col' is limited to one name")}
+  if(new_col %in% names(mydt)){stop("'new_col' exists in mydt. Please select a novel column name instead")}
+  new_col_sig <- paste0(new_col, "_sig")
+  if(new_col_sig %in% names(mydt)){stop(paste0(new_col_sig, " exists in mydt. Please select a new 'new_col' column name instead"))}
+
+  # validate 'tidy' ----
+  if(!is.logical(tidy)){
+    stop("'tidy' must be specified as a logical (i.e., TRUE, T, FALSE, or F)")
+  }
+
+  # split off the comparator data from main data ----
+  comparator_est_vars <- grep("^mean$|^result$|^proportion$|lower|upper", names(mydt), value = T)
+  comparator_est_vars2 <- gsub("^mean$|^result$|^proportion$", "comp_est", comparator_est_vars)
+  comparator_est_vars2 <- replace(comparator_est_vars2, grep("lower", comparator_est_vars2), "comp_lower")
+  comparator_est_vars2 <- replace(comparator_est_vars2, grep("upper", comparator_est_vars2), "comp_upper")
+  comparator_vars <- c(id_vars, comparator_est_vars)
+  r <- eval(expr = e, envir = mydt, enclos = parent.frame())
+  comparator <- unique(mydt[r,])
+  comparator <- unique(comparator[, (comparator_vars), with = F])
+  data.table::setnames(comparator, comparator_est_vars, comparator_est_vars2)
+
+  # merge comparator data onto main data ----
+  mydt <- merge(mydt, comparator, by = c(id_vars), all.x = TRUE, all.y = TRUE)
+
+  # compare estimates ----
+  name_of_est <- setdiff(comparator_est_vars, grep("upper|lower", comparator_est_vars, value = T))
+  name_of_lower <- grep("lower", comparator_est_vars, value = T)
+  name_of_upper <- grep("upper", comparator_est_vars, value = T)
+
+  mydt[get(name_of_est) == comp_est, c(new_col) := "no different"]
+  mydt[get(name_of_est) > comp_est, c(new_col) := "higher"]
+  mydt[get(name_of_est) < comp_est, c(new_col) := "lower"]
+
+  mydt[, c(new_col_sig) := NA_character_]
+  mydt[(get(name_of_lower) > comp_upper) | (get(name_of_upper) < comp_lower), c(new_col_sig) := "*"]
+
+  mydt[is.na(get(new_col_sig)), c(new_col) := "no different"] # if not significant force "no different"
+
+  # drop intermediate columns ----
+  if(tidy==T){
+    mydt[, c("comp_est", "comp_lower", "comp_upper") := NULL]
+  }
+
+  # return table ----
+  return(mydt)
+}
+
+
+#' Convert from one type to another type
+#'
+#' @param x factor
+#' @param target character. class of the object to transform the factor into. One of integer, numeric, or character.
+#'
+#'
+dumb_convert <- function(x, target = 'character'){
+
+  stopifnot(length(target) == 1)
+  if(target == 'character'){
+    return(as.character(x))
+  }
+
+  if(target == 'numeric'){
+    return(as.numeric(as.character(x)))
+  }
+
+  if(target == 'integer'){
+    return(as.integer(as.character(x)))
+  }
+
+  if(target == 'logical') return(as.logical(as.character(x)))
+
+  if(target == 'factor'){
+    if(is.factor(x)) return(x)
+
+    return(as.factor(x))
+  }
+
+  stop(paste0('Target class of ', target, ' is invalid'))
+}
+
+
+#' Format a vector of time into a series of human readable chunks
+#' @param x numeric
+#' @export
+#' @return character vector
+#'
+#' @examples
+#' format_time(c(1:5, 10, 12, 24, 25))
+#'
+format_time <- function(x){
+
+  #get the unique values
+  x <- sort(unique(x))
+
+  #find breaks in runs
+  breaks = data.table::shift(x, type = 'lead') == (x + 1)
+  bps = which(!breaks)
+
+  #seperate
+  if(length(bps)>0){
+    seper = split(x, cut(x, c(-Inf, x[bps], Inf)))
+  }else{
+    seper = list(x)
+  }
+
+  #format into string
+  seper = lapply(seper, function(y){
+
+    if(length(y)>1){
+      return(paste(min(y), max(y), sep = '-'))
+    }else{
+      return(paste(y))
+    }
+
+  })
+
+  ret = paste(seper, collapse = ', ')
+
+  return(ret)
+
+}
+
+
+#' Format a vector of time into a simple human readable chunk
+#' @param x numeric
+#' @export
+#' @return character vector
+#'
+#' @examples
+#' format_time_simple(c(1:5, 10, 12, 24, 25))
+#'
+format_time_simple <- function(x){
+
+  #get the unique values
+  x <- sort(unique(x))
+
+  # format into string
+  if(max(x, na.rm = T) == min(x, na.rm = T)){
+    ret <- paste0(x)
+  } else{
+    ret <- paste0(min(x, na.rm = T), "-", max(x, na.rm = T))
+  }
+
+  return(ret)
+
 }
 
 
@@ -955,6 +753,365 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
 }
 
 
+#' Load a reference population as a data.table object in memory
+#'
+#' @param ref_name Character vector of length 1. Loads a reference population identified by list_ref_pop()
+#'
+#' @return data.table with complete reference population data
+#' @export
+#' @name get_ref_pop
+#' @examples
+#' \dontrun{
+#'  get_ref_pop("2000 U.S. Std Population (single ages to 84 - Census P25-1130)")
+#' }
+#' @importFrom data.table copy
+#' @import rads.data
+#'
+get_ref_pop <- function(ref_name = NULL){
+  #global variables used by data.table declared as NULL here to play nice with devtools::check()
+  standard <- agecat <- age_start <- age_end <- pop <- ref_pop_name <- NULL
+
+  ref_single_to_99 <- data.table::copy(rads.data::population_reference_pop_single_age_to_99)
+  ref_single_to_84 <- data.table::copy(rads.data::population_reference_pop_single_age_to_84)
+  ref_agecat_18 <- data.table::copy(rads.data::population_reference_pop_18_age_groups)
+  ref_agecat_19 <- data.table::copy(rads.data::population_reference_pop_19_age_groups)
+  ref_pop_table <- rbind(ref_single_to_99, ref_single_to_84, ref_agecat_18, ref_agecat_19)
+  ref_pop_table <- ref_pop_table[standard == ref_name, list(agecat, age_start, age_end, pop)]
+  if(nrow(ref_pop_table) == 0){stop(strwrap(paste0("`ref_name` ('", ref_name, "') does not refer to a valid standard reference population.
+                                                     Type `list_ref_pop()` to get a list of all valid populations."), prefix = " ", initial = ""))}
+  ref_pop_table[, ref_pop_name := ref_name]
+  return(ref_pop_table)
+}
+
+
+#' Returns the list of datasets currently available for analysis in RADS
+#'
+#' @return Character vector of available datasets.
+#' @export
+#' @name list_apde_data
+#' @examples
+#' \dontrun{
+#'  list_apde_data()
+#' }
+list_apde_data <- function(){
+
+  ret <- c('hys', 'birth', 'bsk')
+
+  return(ret)
+
+
+}
+
+
+#' List columns available for analysis for a particular dataset in RADS
+#'
+#' @param dataset Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options
+#' @param analytic_only logical. Controls whether columns outside the analytic dataset should be returned.
+#'
+#'
+#' @return Data.frame with two columns. First column is the variable name, while the second identifies whether or not it is in the analytic ready dataset
+#' @export
+#' @name list_dataset_columns
+#' @examples
+#' \dontrun{
+#'  list_dataset_columns('hys', T)
+#' }
+list_dataset_columns <- function(dataset, analytic_only = F){
+  dat = match.arg(dataset, list_apde_data())
+
+  warning('list_dataset_columns not currently available/implemented')
+  return(data.frame(variable_name = '', analytic_ready = 'Sure. Why not?'))
+}
+
+
+#' Return vector of all reference populations available in RADS
+#'
+#' @return Character vector of available reference populations
+#' @export
+#' @name list_ref_pop
+#' @examples
+#' \dontrun{
+#'  list_ref_pop()
+#' }
+#' @importFrom data.table copy
+#' @import rads.data
+#'
+list_ref_pop <- function(){
+  #global variables used by data.table declared as NULL here to play nice with devtools::check()
+  standard <- NULL
+
+  ref_single_to_99 <- data.table::copy(rads.data::population_reference_pop_single_age_to_99)
+  ref_single_to_84 <- data.table::copy(rads.data::population_reference_pop_single_age_to_84)
+  ref_agecat_18 <- data.table::copy(rads.data::population_reference_pop_18_age_groups)
+  ref_agecat_19 <- data.table::copy(rads.data::population_reference_pop_19_age_groups)
+  ref_pop_table <- unique(rbind(ref_single_to_99[, list(standard)], ref_single_to_84[, list(standard)], ref_agecat_18[, list(standard)], ref_agecat_19[, list(standard)]))
+  setorder(ref_pop_table, standard)
+  ref_pop_table <- rbind(ref_pop_table[standard %like% "2000 U.S. Std P"], ref_pop_table[!standard %like% "2000 U.S. Std P"])
+  return(ref_pop_table$standard)
+}
+
+
+#' Convert the class of a vector to another class is possible without introducing additional NAs
+#' @param x vector of indeterminate length and type
+#' @param class character vector of length one specifying the preferred new column type (i.e.,
+#' 'character', 'numeric', 'integer', or 'factor')
+#' @export
+#' @return a vector of the same length as x, but of the new class (when possible)
+lossless_convert <- function(x = NULL, class = NULL){
+  if(is.null(x)){
+    stop("'x', the vector you wish to change, must be specified.")
+  }
+
+  if(is.null(class)){
+    stop("'class' must be specified by choosing one of the following: 'character', 'integer', 'numeric'")
+  }
+
+  if(!class %in% c('character', 'integer', 'numeric') || length(class) != 1 ){
+    stop("'class' is limited to *one* of the following: 'character', 'integer', 'numeric'")
+  }
+
+  if(sum(is.na(x)) == sum(is.na(suppressWarnings(as(x, class)))) ){
+    x <- suppressWarnings(as(x, class))
+  }
+  return(x)
+}
+
+
+#' List of available metric for `calc`
+#' @return character vector. A vector of the available metrics for `calc`
+#' @name metrics
+#' @details
+#' 1) total: Count of people with the given value. Mostly relevant for surveys
+#' (where total is approximately mean * sum(pweights)).
+#' Returns total, total_se, total_upper, total_lower.
+#' total_se, total_upper, & total_lower are only valid for survey data.
+#' Default ci (e.g. upper and lower) is 95 percent.
+#'
+#' 2) mean: Average response and associated metrics of uncertainty.
+#' Returns mean, mean_se, mean_lower, mean_upper.
+#' Default ci (e.g. upper and lower) is 95 percent.
+#'
+#' 3) rse: Relative standard error. 100*se/mean.
+#'
+#' 4) numerator: Sum of non-NA values for `what``.
+#' The numerator is always unweighted.
+#'
+#' 5) denominator: Number of rows where `what` is not NA.
+#' The denominator is always unweighted.
+#'
+#' 6) obs: Number of unique observations (i.e., rows), agnostic as to whether
+#' there is missing data for `what`. The obs is always unweighted.
+#'
+#' 7) median: The median non NA response. Not populated when `what` is a factor
+#' or character. Even for surveys, the median is the unweighted result.
+#'
+#' 8) unique.time: Number of unique time points (from `time_var`) included in
+#' each tabulation (i.e., number of unique time points when the `what` is not missing).
+#'
+#' 9) missing: Number of rows in a given grouping with an NA value for `what`.
+#'    missing + denominator = Number of people in a given group.
+#'    When `what` is a factor/character, the missing information is provided for the other.
+#'
+#' 10) missing.prop: The proportion of the data that has an NA value for `what`.
+#'
+#' 11) rate: mean * per. Provides rescaled mean estimates (i.e., per 100 or per 100,0000).
+#' Returns rate, rate_se, rate_lower, rate_upper.
+#' Default ci (e.g. upper and lower) is 95 percent.
+#'
+#' 12) ndistinct: The unique number of `what` values in the given subset. For factors, it is the unique number of levels in the subset.
+#'
+#' @rdname metrics
+#' @export
+metrics = function(){
+  c('total',
+    'mean', 'rse',
+    'numerator','denominator', 'obs', 'median',
+    'unique.time',
+    'missing', 'missing.prop',
+    'rate', 'ndistinct')
+}
+
+
+#' Improved rounding function
+#' @param x values to be rounded
+#' @param n number of digits
+#' @export
+#' @return numeric
+round2 = function(x, n = 0) {
+  posneg = sign(x)
+  z = abs(x)*10^n
+  z = z + 0.5
+  z = trunc(z)
+  z = z/10^n
+  z*posneg
+}
+
+
+#' Clean string columns read from SQL
+#' @param dat character vector of length one. Name of data.frame or data.table
+#' @param stringsAsFactors logical. Specifies whether to convert strings to factors (TRUE) or not (FALSE)
+#' @export
+#' @return data.table
+sql_clean <- function(dat = NULL, stringsAsFactors = FALSE){
+
+  # check date.frame
+  if(!is.null(dat)){
+    if(!is.data.frame(dat)){
+      stop("'dat' must be the name of a data.frame or data.table")
+    }
+    if(is.data.frame(dat) && !data.table::is.data.table(dat)){
+      data.table::setDT(dat)
+    }
+  } else {stop("'dat' (the name of a data.frame or data.table) must be specified")}
+
+  original.order <- names(dat)
+  factor.columns <- which(vapply(dat,is.factor, FUN.VALUE=logical(1) )) # identify factor columns
+  if(length(factor.columns)>0) {
+    dat[, (factor.columns) := lapply(.SD, as.character), .SDcols = factor.columns] # convert factor to string
+  }
+  string.columns <- which(vapply(dat,is.character, FUN.VALUE=logical(1) )) # identify string columns
+  if(length(string.columns)>0) {
+    dat[, (string.columns) := lapply(.SD, trimws, which="both"), .SDcols = string.columns] # trim white space to right or left
+    dat[, (string.columns) := lapply(.SD, function(x){gsub("^ *|(?<= ) | *$", "", x, perl = TRUE)}), .SDcols = string.columns] # collapse multiple consecutive white spaces into one
+    dat[, (string.columns) := lapply(.SD, function(x){gsub("^$|^ $", NA, x)}), .SDcols = string.columns] # replace blanks with NA
+    if(stringsAsFactors==TRUE){
+      dat <- dat[, (string.columns) := lapply(.SD, factor), .SDcols = string.columns] # convert strings to factors
+    }
+  }
+  # reorder table
+  data.table::setcolorder(dat, original.order)
+}
+
+
+#' Substring selection from the right to complement base R substr
+#' @param x character
+#' @param x.start digit to start (counting from the right)
+#' @param x.stop digit to end  (counting from the right)
+#' @export
+#' @return character vector
+#'
+#' @examples
+#' \dontrun{
+#' substrRight("Good morning!", 2, 8)
+#' }
+substrRight <- function(x, x.start, x.stop){
+  substr(x, nchar(x)-x.stop+1, nchar(x)-x.start+1)
+}
+
+
+#' Compare the expected column types in YAML with the actual column types in R
+#' @param DF Character vector of length 1. Identifies the data.table/data.frame that you want to assess vis-à-vis the YAML file
+#'
+#' @param YML Character vector of length 1. It is the name of the YAML object in memory.
+#'
+#' @param VARS Character vector of length 1. Is is the name of the object in the list contained by YML
+#'
+#' @importFrom data.table data.table setnames ":=" setDT
+#'
+#' @export
+#' @return A simple printed statement, either identifying incompatible column types or a statement of success
+validate_yaml_data <- function(DF = NULL, YML = NULL, VARS = "vars"){
+  ## Global variables used by data.table declared as NULL here to play nice with devtools::check()
+  DF.class <- yamlcols <- yamlnames <- yamlextra <- dfcols <- dfnames <- NULL
+
+  # Check that DT is a data.frame/data.table ----
+  if(is.data.frame(DF) == FALSE){
+    stop("'DF' must be a data.frame or a data.table")
+  }else{DF <- data.table::setDT(copy(DF))}
+
+  # Check that number of vars in YML is same as ncols in DF ----
+  yamlcols <- length(YML[[VARS]])
+  dfcols <- ncol(DF)
+  if(yamlcols != dfcols){
+    stop(paste0("The number of vars specified in the YAML (", yamlcols, ") does not match the number of columns in DF (", dfcols, ")"))
+  }
+
+  # Check that the column names in YML match those in DF ----
+  yamlnames <- sort(names(YML[[VARS]]))
+  dfnames <- sort(names(DF))
+  yamlextra <- setdiff(yamlnames, dfnames)
+  if(length(yamlextra) == 0){yamlextra <- "_____"}
+  dfextra <- setdiff(dfnames, yamlnames)
+  if(length(dfextra) == 0){dfextra <- "_____"}
+  if(setequal(yamlnames, dfnames)==F){
+    stop(paste0("The following variables are in the YAML but not in DF: ", yamlextra),
+         paste0(". The following variables are in DF but not in the YAML: ", dfextra), ".")
+  }
+
+  # notice that this might take a while ----
+  message("The validation may take a few minutes if your data & yaml contain dates and or times")
+
+  # identify proper classes from YAML file ----
+  class.compare <- data.table::data.table(
+    name =  c(names(YML[[VARS]])),
+    yaml.class = tolower(as.character(YML[[VARS]]))
+  )
+
+  # convert names of SQL data types to R classes ----
+  class.compare[grepl("char|text|uniqueidentifier", tolower(yaml.class)), yaml.class := "character"]
+  class.compare[tolower(yaml.class) %in% c("tinyint", "smallint", "int"), yaml.class := "integer"]
+  class.compare[grepl("bigint|decimal|float|money|numeric|real", tolower(yaml.class)), yaml.class := "numeric"]
+  class.compare[grepl("bit", tolower(yaml.class)), yaml.class := "logical"]
+  class.compare[grepl("date", tolower(yaml.class)), yaml.class := "date"]
+  class.compare[grepl("time", tolower(yaml.class)), yaml.class := "POSIXct"]
+
+  # identify which VARS should be of which class (assuming YAML is correct) ----
+  make.char <- class.compare[yaml.class == "character"]$name
+  make.num  <- class.compare[yaml.class == "numeric"]$name
+  make.int  <- class.compare[yaml.class == "integer"]$name
+  make.logical  <- class.compare[yaml.class == "logical"]$name
+  make.Date  <- class.compare[yaml.class == "Date"]$name
+  make.POSIXct  <- class.compare[yaml.class == "POSIXct"]$name
+
+  # create function to convert column classes if it can be done without introducing NA's ----
+  lossless_convert <- function(x, class){
+    if(!class %in% c("Date", "POSIXct")){
+      if(sum(is.na(x)) == sum(is.na(suppressWarnings(as(x, class)))) ){
+        x <- suppressWarnings(as(x, class))
+      }
+    }
+    if(class %in% c("Date")){
+      if(sum(is.na(x)) == sum(is.na(suppressWarnings(as.Date(as.character(x))))) ){
+        x <- suppressWarnings(as.Date(as.character(x)))
+      }
+    }
+    if(class %in% c("POSIXct")){
+      if(sum(is.na(x)) == sum(is.na(suppressWarnings(as.POSIXct(as.character(x))))) ){
+        x <- suppressWarnings(as.POSIXct(as.character(x)))
+      }
+    }
+    return(x)
+  }
+
+  # use function convert R column types if possible / needed ----
+  DF[, (make.char) := lapply(.SD, lossless_convert, class = 'character'), .SDcols = make.char]
+  DF[, (make.num) := lapply(.SD, lossless_convert, class = 'numeric'), .SDcols = make.num]
+  DF[, (make.int) := lapply(.SD, lossless_convert, class = 'integer'), .SDcols = make.int]
+  DF[, (make.logical) := lapply(.SD, lossless_convert, class = 'logical'), .SDcols = make.logical]
+  DF[, (make.Date) := lapply(.SD, lossless_convert, class = 'Date'), .SDcols = make.Date]
+  DF[, (make.POSIXct) := lapply(.SD, lossless_convert, class = 'POSIXct'), .SDcols = make.POSIXct]
+
+  # check if there are variables that could not be coerced to proper type ----
+  class.compare <- merge(data.table::data.table(name = names(sapply(DF, class)), DF.class = tolower(sapply(DF, class))),
+                         class.compare, by = "name")
+
+  # allow R to be more strict than YAML with numbers ----
+  class.compare[yaml.class=="numeric" & DF.class == "integer", DF.class := "numeric"]
+
+  # Assess whether there were any problems ----
+  if(nrow(class.compare[DF.class != yaml.class]) > 0){
+    yaml.name <- class.compare[DF.class != yaml.class]$name
+    yaml.class <- class.compare[DF.class != yaml.class]$yaml.class
+    class.problems <- paste(paste0(yaml.name, " (", yaml.class, ")"), collapse = ", ")
+    stop(glue::glue("The following variables could not be coerced to their proper class (which is specified in parentheses):
+                              {class.problems}"))
+  }else{success <- message("All column classes in your R dataset are compatible with the YAML reference standard.")}
+
+  return(success)
+
+}
+
+
 #' Silence (i.e., suppress or mute) printed messages from functions
 #'
 #' @description
@@ -983,8 +1140,7 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
 #' quiet(test(4))
 #' }
 quiet <- function(myf) {
-    sink(tempfile())
-    on.exit(sink())
-    invisible(force(myf))
+  sink(tempfile())
+  on.exit(sink())
+  invisible(force(myf))
 }
-
