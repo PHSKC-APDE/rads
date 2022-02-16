@@ -336,6 +336,153 @@ chi_metadata_cols = function(){
 }
 
 
+#' Compare aggregated results (proportions or means) for one strata to the rest
+#' of the strata in the summary table.
+#' @param mydt Unquoted name of a data.table or data.frame to be processed. Note
+#' the table must have the following columns: 'result'  OR 'mean' OR 'proportion',
+#' and corresponding confidence interval columns with 'lower' & 'upper' as part
+#' of their names.
+#' @param id_vars Character vector of length >= 1. It contains the name(s) of
+#' columns which identify the grouping for which you want to use for comparison.
+#' For standard rads::calc() output, id_vars should be c("variable", "level") and
+#' for standard CHI tableau ready output, it should be c("indicator_key", "year")
+#' @param key_where An expression identifying the referent/comparator/key to
+#' which other data will be compared. It should be passed unquoted.
+#' rows to be filtered / excluded from secondary suppression because
+#' the categories are not mutually exclusive (e.g., race3)
+#' @param new_col Character vector of length 1. It is the name of the new column
+#' that contains the comparison results (i.e., higher, lower, or no difference).
+#' It is also the stem for the column noting the significance of the results (
+#' e.g., if new_col = "comp", the significance column will be named "comp_sig")
+#' @param tidy logical. Determines whether to drop intermediate variables with
+#' the estimate, lower bound, and upper bound for the referent.
+#'
+#' @importFrom data.table setnames ":=" setDT data.table
+#'
+#' @return data.table comprised of the original data.table and two additional
+#' columns ... 'comp' and 'comp_sig' (or alternatively specified names)
+#'
+#' @export
+#'
+#' @keywords suppression
+#'
+#' @examples
+#' # create test data
+#' set.seed(98104)
+#' dt <- data.table::data.table(
+#'   chi_year = rep(2008:2018, 2000),
+#'   fetal_pres = factor(sample(c("Breech", "Cephalic", "Other", NA),
+#'                              22000, rep = TRUE,
+#'                              prob = c(0.04, 0.945, 0.01, 0.005))),
+#'   bw_grams = round(rnorm(22000, 3343, 576), 0)
+#' )
+#' dt[fetal_pres=='Other', bw_grams := 0.5*bw_grams]
+#' dt = dtsurvey::dtadmin(dt)
+#' dt <- calc(dt, what = c("bw_grams"), by = c("fetal_pres"))
+#' # run function
+#' test <- compare_estimate(mydt = dt,
+#'                          id_vars = c("variable", "level"),
+#'                          key_where = fetal_pres == "Breech",
+#'                          new_col = "comp",
+#'                          tidy = FALSE)
+#' test[]
+#'
+compare_estimate <- function (mydt,
+                              id_vars = c("variable", "level"),
+                              key_where ,
+                              new_col = "comp",
+                              tidy = T){
+  #Bindings for data.table/check global variables
+  comparator_vars <- comp_est <- comp_upper <- comp_lower <- NULL
+
+  # validate 'mydt' ----
+  if(is.null(mydt)){
+    stop("You must specify a dataset (i.e., 'mydt' must be defined)")
+  }
+
+  if(!is.data.table(mydt)){
+    if(is.data.frame(mydt)){
+      data.table::setDT(copy(mydt))
+    } else {
+      stop(paste0("<{mydt}> must be the name of a data.frame or data.table."))
+    }
+  }
+
+  # validate 'id_vars' ----
+  if(length(setdiff(id_vars, names(mydt))) > 0 ){
+    stop("At least one name in 'id_vars' is not found among the column names in 'mydt'")
+  }
+
+  # validate 'key_where' ----
+  if(!missing(key_where)){
+    call = match.call()
+
+    if(is.character(call[['key_where']])){
+      where = str2lang(call[['key_where']])
+      warning('`key_where` is a string. It was converted so that it would work, but in the future, this might turn into an error.
+                  In the future, please pass unquoted commands that will resolve to a logical' )
+
+    } else {where = copy(call[['key_where']])}
+
+    e <- substitute(expr = where) # get parse tree expression `where`
+    r <- eval(expr = e, envir = mydt, enclos = parent.frame()) # evaluate
+
+    stopifnot('`where` does not resolve to a logical' = is.logical(r))
+    if(nrow(mydt[r,]) <1 ){
+      stop(paste0("Your 'key_where' argument filters out all rows of data. Please revise and submit again"))
+    }
+  }
+
+  # validate 'new_col' ----
+  if(is.null(new_col) | new_col == "" | is.na(new_col)){stop("You must enter a 'new_col' for the results of the comparison")}
+  if(length(new_col) > 1){stop("'new_col' is limited to one name")}
+  if(new_col %in% names(mydt)){stop("'new_col' exists in mydt. Please select a novel column name instead")}
+  new_col_sig <- paste0(new_col, "_sig")
+  if(new_col_sig %in% names(mydt)){stop(paste0(new_col_sig, " exists in mydt. Please select a new 'new_col' column name instead"))}
+
+  # validate 'tidy' ----
+  if(!is.logical(tidy)){
+    stop("'tidy' must be specified as a logical (i.e., TRUE, T, FALSE, or F)")
+  }
+
+  # split off the comparator data from main data ----
+  comparator_est_vars <- grep("^mean$|^result$|^proportion$|lower|upper", names(mydt), value = T)
+  comparator_est_vars2 <- gsub("^mean$|^result$|^proportion$", "comp_est", comparator_est_vars)
+  comparator_est_vars2 <- replace(comparator_est_vars2, grep("lower", comparator_est_vars2), "comp_lower")
+  comparator_est_vars2 <- replace(comparator_est_vars2, grep("upper", comparator_est_vars2), "comp_upper")
+  comparator_vars <- c(id_vars, comparator_est_vars)
+  r <- eval(expr = e, envir = mydt, enclos = parent.frame())
+  comparator <- unique(mydt[r,])
+  comparator <- unique(comparator[, (comparator_vars), with = F])
+  data.table::setnames(comparator, comparator_est_vars, comparator_est_vars2)
+
+  # merge comparator data onto main data ----
+  mydt <- merge(mydt, comparator, by = c(id_vars), all.x = TRUE, all.y = TRUE)
+
+  # compare estimates ----
+  name_of_est <- setdiff(comparator_est_vars, grep("upper|lower", comparator_est_vars, value = T))
+  name_of_lower <- grep("lower", comparator_est_vars, value = T)
+  name_of_upper <- grep("upper", comparator_est_vars, value = T)
+
+  mydt[get(name_of_est) == comp_est, c(new_col) := "no different"]
+  mydt[get(name_of_est) > comp_est, c(new_col) := "higher"]
+  mydt[get(name_of_est) < comp_est, c(new_col) := "lower"]
+
+  mydt[, c(new_col_sig) := NA_character_]
+  mydt[(get(name_of_lower) > comp_upper) | (get(name_of_upper) < comp_lower), c(new_col_sig) := "*"]
+
+  mydt[is.na(get(new_col_sig)), c(new_col) := "no different"] # if not significant force "no different"
+
+  # drop intermediate columns ----
+  if(tidy==T){
+    mydt[, c("comp_est", "comp_lower", "comp_upper") := NULL]
+  }
+
+  # return table ----
+  return(mydt)
+}
+
+
 #' Convert from one type to another type
 #'
 #' @param x factor
