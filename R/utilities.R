@@ -951,6 +951,7 @@ round2 = function(x, n = 0) {
 #' @param dat character vector of length one. Name of data.frame or data.table
 #' @param stringsAsFactors logical. Specifies whether to convert strings to factors (TRUE) or not (FALSE)
 #' @export
+#' @importFrom utf8 utf8_encode
 #' @return data.table
 sql_clean <- function(dat = NULL, stringsAsFactors = FALSE){
 
@@ -971,6 +972,7 @@ sql_clean <- function(dat = NULL, stringsAsFactors = FALSE){
   }
   string.columns <- which(vapply(dat,is.character, FUN.VALUE=logical(1) )) # identify string columns
   if(length(string.columns)>0) {
+    dat[, (string.columns) := lapply(.SD, utf8::utf8_encode), .SDcols = string.columns] # ensure encoding is UTF8
     dat[, (string.columns) := lapply(.SD, trimws, which="both"), .SDcols = string.columns] # trim white space to right or left
     dat[, (string.columns) := lapply(.SD, function(x){gsub("^ *|(?<= ) | *$", "", x, perl = TRUE)}), .SDcols = string.columns] # collapse multiple consecutive white spaces into one
     dat[, (string.columns) := lapply(.SD, function(x){gsub("^$|^ $", NA, x)}), .SDcols = string.columns] # replace blanks with NA
