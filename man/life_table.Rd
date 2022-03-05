@@ -73,10 +73,13 @@ The function returns the following life table columns:
 interval
 }
 \examples{
- temp1 <- data.table::data.table(ages = c("0-1", "1-2", "2-3", "3-4", "4-5", "5-10", "10-15", "15-20", "20+"),
-                     dead = c(391, 30, 17, 14, 8, 41, 73, 202, 28919),
-                     population = c(25640, 25104, 25507, 24998, 24038, 131202, 128490, 127951, 1747871),
-                     fraction = c(0.09, rep(0.5, 8)))
+ temp1 <- data.table::data.table(
+          ages = c("0-1", "1-2", "2-3", "3-4", "4-5", "5-10", "10-15",
+                   "15-20", "20+"),
+          dead = c(391, 30, 17, 14, 8, 41, 73, 202, 28919),
+          population = c(25640, 25104, 25507, 24998, 24038, 131202, 128490,
+                       127951, 1747871),
+          fraction = c(0.09, rep(0.5, 8)))
  temp1[]
  temp2 <- life_table(mydt = temp1,
                       age_interval = "ages",

@@ -63,10 +63,13 @@
 #' @export
 #' @name life_table
 #' @examples
-#'  temp1 <- data.table::data.table(ages = c("0-1", "1-2", "2-3", "3-4", "4-5", "5-10", "10-15", "15-20", "20+"),
-#'                      dead = c(391, 30, 17, 14, 8, 41, 73, 202, 28919),
-#'                      population = c(25640, 25104, 25507, 24998, 24038, 131202, 128490, 127951, 1747871),
-#'                      fraction = c(0.09, rep(0.5, 8)))
+#'  temp1 <- data.table::data.table(
+#'           ages = c("0-1", "1-2", "2-3", "3-4", "4-5", "5-10", "10-15",
+#'                    "15-20", "20+"),
+#'           dead = c(391, 30, 17, 14, 8, 41, 73, 202, 28919),
+#'           population = c(25640, 25104, 25507, 24998, 24038, 131202, 128490,
+#'                        127951, 1747871),
+#'           fraction = c(0.09, rep(0.5, 8)))
 #'  temp1[]
 #'  temp2 <- life_table(mydt = temp1,
 #'                       age_interval = "ages",
@@ -76,7 +79,8 @@
 #'  temp2[]
 #'
 #' @import data.table
-
+#' @importFrom stats qnorm
+#'
 
 life_table <- function(mydt = NULL,
                        age_interval = "age_interval",
@@ -87,6 +91,9 @@ life_table <- function(mydt = NULL,
 
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
     istart <- iend <- irank <- ilength <- mx <- qx <- lx <- dx <- Lx <- Tx <- ex <- NULL
+    ax <- mx_upper <- mx_lower <- mx_se <- qnorm <- qx_variance <- px_variance <- NULL
+    ex_temp <- ex_temp_cumsum <- ex_variance <- ex_se <- ex_lower <- ex_upper <- NULL
+    ordered_cols <- NULL
 
   # Get name of the data.frame/data.table ----
     mydtname <- deparse(substitute(mydt))
@@ -119,7 +126,7 @@ life_table <- function(mydt = NULL,
       if(!is.numeric(mydt[[mydeaths]])){
         stop(paste0("'mydeaths' (i.e., ", mydeaths, ") must be of class == numeric"))}
       if( nrow(mydt[is.na(get(age_interval)) & !is.na(get(mydeaths))]) > 1 ){
-        stop(pasteo("'mydt' (i.e., ", mydtname, ") can only have 1 row with deaths where the age_interval is NA."))}
+        stop(paste0("'mydt' (i.e., ", mydtname, ") can only have 1 row with deaths where the age_interval is NA."))}
 
       if(!myfrac %in% names(mydt)){
         stop(paste0("'myfrac' (", myfrac, ") is not the name of a columnn in 'mydt'."))}
@@ -244,7 +251,7 @@ life_table <- function(mydt = NULL,
       ordered_cols <- c(age_interval, mypop, mydeaths, myfrac, "mx", "qx", "lx", "dx", "ax", "Lx", "Tx", "ex", "ex_lower", "ex_upper", "ex_se")
     }
     ordered_cols <- c(setdiff(orig_cols, ordered_cols), ordered_cols)
-    mydt <- mydt[, ..ordered_cols]
+    mydt <- mydt[, ordered_cols, with = FALSE]
 
     # rounding
     mydt[, c("lx", "dx", "Lx", "Tx", mydeaths) := lapply(.SD, rads::round2, 0), .SDcols = c("lx", "dx", "Lx", "Tx", mydeaths)]
