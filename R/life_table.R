@@ -109,27 +109,27 @@ life_table <- function(mydt = NULL,
       } else {stop("'mydt', the name of a data.frame or data.table with population and death data, must be specified")}
 
       if(!age_interval %in% names(mydt)){
-        stop(paste0("'age_interval' (", age_interval, ") is not the name of a columnn in 'mydt'."))}
-      if(nrow(mydt[!is.na(get(age_interval))]) != nrow(mydt[!is.na(get(age_interval)) & get(age_interval) %like% "[0-9]-[0-9]|[0-9]\\+"])){
+        stop(paste0("'age_interval' (", age_interval, ") is not the name of a column in 'mydt'."))}
+      if(nrow(mydt[!is.na(age_interval)]) != nrow(mydt[!is.na(age_interval) & get(age_interval) %like% "[0-9]-[0-9]|[0-9]\\+"])){
         stop(paste0("The values in 'age_interval' (i.e., ", age_interval, ") must be in the form #-# or #+, e.g., '10-15' or '85+'"))}
       if(nrow(mydt[get(age_interval) %like% "[0-9]\\+"]) != 1){
         stop(paste0("The final age in 'age_interval' (i.e., ", age_interval, ") must be in the form #+, e.g., '85+' or '90+'"))}
       if(nrow(mydt) != length(unique(mydt[[age_interval]]))){stop(paste0("The values in 'age_interval' (i.e., ", age_interval, ") must be unique"))}
 
       if(!mypop %in% names(mydt)){
-        stop(paste0("'mypop' (", mypop, ") is not the name of a columnn in 'mydt'."))}
+        stop(paste0("'mypop' (", mypop, ") is not the name of a column in 'mydt'."))}
       if(!is.numeric(mydt[[mypop]])){
         stop(paste0("'mypop' (i.e., ", mypop, ") must be of class == numeric"))}
 
       if(!mydeaths %in% names(mydt)){
-        stop(paste0("'mydeaths' (", mydeaths, ") is not the name of a columnn in 'mydt'."))}
+        stop(paste0("'mydeaths' (", mydeaths, ") is not the name of a column in 'mydt'."))}
       if(!is.numeric(mydt[[mydeaths]])){
         stop(paste0("'mydeaths' (i.e., ", mydeaths, ") must be of class == numeric"))}
-      if( nrow(mydt[is.na(get(age_interval)) & !is.na(get(mydeaths))]) > 1 ){
+      if( nrow(mydt[is.na(age_interval) & !is.na(mydeaths)]) > 1 ){
         stop(paste0("'mydt' (i.e., ", mydtname, ") can only have 1 row with deaths where the age_interval is NA."))}
 
       if(!myfrac %in% names(mydt)){
-        stop(paste0("'myfrac' (", myfrac, ") is not the name of a columnn in 'mydt'."))}
+        stop(paste0("'myfrac' (", myfrac, ") is not the name of a column in 'mydt'."))}
       if(!is.numeric(mydt[[myfrac]])){
         stop(paste0("'myfrac' (i.e.,", myfrac, ") must be of class == numeric"))}
       if(nrow(mydt[!get(myfrac) %between% 0:1]) > 0){
@@ -155,7 +155,7 @@ life_table <- function(mydt = NULL,
     mydt[is.na(iend), ilength := 100-istart] # adjustment for final interval
 
   # Distribute deaths with unknown age proportionately among deaths with known ages ----
-    if(nrow(mydt[is.na(get(age_interval)) & !is.na(get(mydeaths))]) > 0){
+    if(nrow(mydt[is.na(age_interval) & !is.na(mydeaths)]) > 0){
         deaths.unk.age <- mydt[is.na(get(age_interval))][[mydeaths]] # count num of deaths with unknown age
         mydt <- mydt[!is.na(get(age_interval))] # delete rows from summary table with unknown age
         mydt[, paste0(mydeaths) := get(mydeaths) + (deaths.unk.age * get(mydeaths)/(sum(mydt[[mydeaths]])-deaths.unk.age))] # distribute unknown death
