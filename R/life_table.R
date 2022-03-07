@@ -136,8 +136,8 @@ life_table <- function(mydt = NULL,
         stop(paste0("'myfrac' (i.e., ", ax, ") should be a proportion (i.e., it must be between 0 & 1)"))}
 
       if( !class(ci) %in% c("numeric")){
-        stop(paste0("`ci` (", ci, ") should be a two digit decimal between 0.00 & 0.99"))}
-      if(nrow(mydt[!ci %between% 0:1]) > 0){
+        stop(paste0("`ci` (", ci, ") should be a two digit decimal between 0.01 & 0.99"))}
+      if(!(ci >= 0.01 & ci <= 0.99)){
         stop(paste0("`ci` (", ci, ") should be a two digit decimal between 0.00 & 0.99"))}
 
   # Copy mydt to prevent changing original by reference ----
@@ -155,10 +155,10 @@ life_table <- function(mydt = NULL,
     mydt[is.na(iend), ilength := 100-istart] # adjustment for final interval
 
   # Distribute deaths with unknown age proportionately among deaths with known ages ----
-    if(nrow(mydt[is.na(age_interval) & !is.na(mydeaths)]) > 0){
+    if(nrow(mydt[is.na(get(age_interval)) & !is.na(mydeaths)]) > 0){
         deaths.unk.age <- mydt[is.na(get(age_interval))][[mydeaths]] # count num of deaths with unknown age
         mydt <- mydt[!is.na(get(age_interval))] # delete rows from summary table with unknown age
-        mydt[, paste0(mydeaths) := get(mydeaths) + (deaths.unk.age * get(mydeaths)/(sum(mydt[[mydeaths]])-deaths.unk.age))] # distribute unknown death
+        mydt[, paste0(mydeaths) := get(mydeaths) + (deaths.unk.age * get(mydeaths)/(sum(mydt[[mydeaths]])))] # distribute unknown death
     }
 
   # Check that beginning of each interval == end of previous interval (overlap by one digit) ----
