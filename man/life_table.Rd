@@ -6,10 +6,10 @@
 \usage{
 life_table(
   mydt = NULL,
-  age_interval = "age_interval",
+  myages = "ages",
   mydeaths = "deaths",
-  mypop = "pop",
-  myfrac = "ax",
+  mypops = "pop",
+  myprops = "fraction",
   ci = 0.95
 )
 }
@@ -18,7 +18,7 @@ life_table(
 corresponding populations, as well as the age interval and the average
 fraction of years lived in the interval by those who die in the interval.}
 
-\item{age_interval}{character vector of length one identifying a column
+\item{myages}{character vector of length one identifying a column
 specifying the beginning and end of each age interval separated by a hyphen.
 Note, the start of each interval should be the end of the previous
 interval, e.g., '5-10', '10-15', '15-20', etc. Think of this as short-hand
@@ -31,18 +31,17 @@ other age groups.}
 \item{mydeaths}{character vector of length one identifying a numeric column
 with the total deaths for the given age interval in the given year(s).}
 
-\item{mypop}{character vector of length one identifying a numeric column
+\item{mypops}{character vector of length one identifying a numeric column
 with the total population in the age intervals corresponding to mydeaths.
 This is technically the mid-year population. In practice we usually
 use OFM population estimates.}
 
-\item{myfrac}{character vector of length one identifying a numeric column
+\item{myprops}{character vector of length one identifying a numeric column
 with the average proportion of the interval lived by those who died in the
 interval. For example, if those who died in '80-85' lived an average of 1000
-days past their 80th birthday, myfrac would be 0.54 (1000/(365.25*5)).}
+days past their 80th birthday, myprops would be 0.54 (1000/(365.25*5)).}
 
-\item{ci}{numeric of length one. Must be a number between 0 and 1, default is
-0.95.}
+\item{ci}{numeric of length one. Confidence level, >0 & <1, default == 0.95.}
 }
 \value{
 a data.table with the pre-existing columns plus the
@@ -82,10 +81,10 @@ interval
           fraction = c(0.09, rep(0.5, 8)))
  temp1[]
  temp2 <- life_table(mydt = temp1,
-                      age_interval = "ages",
+                      myages = "ages",
                       mydeaths = "dead",
-                      mypop = "population",
-                      myfrac = "fraction")
+                      mypops = "population",
+                      myprops = "fraction")
  temp2[]
 
 }
