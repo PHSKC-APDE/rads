@@ -24,6 +24,7 @@
 #' @importFrom keyring key_get key_list
 #' @importFrom DBI dbConnect dbDisconnect dbGetQuery
 #' @importFrom odbc odbc
+#' @importFrom glue glue_sql_collapse glue_sql
 #'
 #' @return dataset as a data.table for further analysis/tabulation
 #' @export
@@ -46,7 +47,7 @@ get_population <- function(kingco = T,
                            round = T,
                            mykey = "hhsaw"){
 
-      #global variables used by data.table declared as NULL here to play nice with devtools::check()
+    # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
       r_type <- short <- race <- name <- race_eth <- gender <- age <- geo_id <- pop <- geo_id_blk <- region <- hra <-
         server <- varname <- code <- label <- `.` <- NULL
 
@@ -211,26 +212,32 @@ get_population <- function(kingco = T,
         if(geo_type %in% c("kc", "blkgrp", "hra", "tract", "region")){geo_type <- "blk"} # necessary because kc, blkgrp, tract, hra, region are aggregated up from blk
 
     # generate SQL query ----
-      sql_select <- "pop=sum(pop)"
-      if(!is.null(group_by)){sql_select <- paste0(sql_select, ", ", paste(group_by, collapse = ", "))}
+      tmpselect <- if(is.null(group_by)){
+        glue::glue_sql_collapse("pop=sum(pop)")} else{
+          glue::glue_sql_collapse(c("pop=sum(pop)", group_by), sep = ', ')}
+      tmpyears <- glue::glue_sql_collapse(years, sep = ', ')
+      tmpgeo_type <- glue::glue_sql("{geo_type}", .con = con)
+      tmpages <- glue::glue_sql_collapse(sql_ages, sep = ', ')
+      tmpgenders <- glue::glue_sql_collapse(paste0("'", genders, "'"), sep = ', ')
+      tmpzips <- glue::glue_sql_collapse(paste0("'", kczips, "'"), sep = ", ")
+      tmprace_type <- if(race_type == "race_eth"){
+        race_type_values <- glue::glue_sql_collapse(ref.table[r_type == "r2r4" & short %in% races]$value, sep = ', ')
+        glue::glue_sql("r2r4 IN ({race_type_values})", .con = con)} else{
+          race_type_values <- glue::glue_sql_collapse(ref.table[r_type == "r1r3" & short %in% races]$value, sep = ', ')
+          glue::glue_sql("r1r3 IN ({race_type_values})", .con = con)}
+      tmpgroup_by <- if(!is.null(group_by)){glue::glue_sql_collapse(gsub("\\[year]\\, |pop=sum\\(pop\\), |race_eth = |race = ", "", tmpselect), sep = ', ')}
 
-      sql_where <- c("")
-      sql_where <- paste0(sql_where, "year IN (", paste(years, collapse = ", "), ") ")
-      sql_where <- paste0(sql_where, " AND geo_type IN ('", paste(geo_type, collapse = "', '"), "') ")
-      sql_where <- paste0(sql_where, " AND age IN (", paste(sql_ages, collapse = ", "), ") ")
-      sql_where <- paste0(sql_where, " AND raw_gender IN ('", paste(genders, collapse = "', '"), "') ")
-      if(race_type == "race_eth"){sql_where <- paste0(sql_where, " AND r2r4 IN (", paste(ref.table[r_type == "r2r4" & short %in% races]$value, collapse = ", "), ")" )}
-      if(race_type == "race"){sql_where <- paste0(sql_where, " AND r1r3 IN (", paste(ref.table[r_type == "r1r3" & short %in% races]$value, collapse = ", "), ") ")}
-      if(kingco == T & geo_type %in% c("blk", "blkgrp")){sql_where = paste0(sql_where, " AND fips_co = 33")}
-      if(kingco == T & geo_type == "zip"){sql_where = paste0(sql_where, " AND geo_id IN (", paste(sQuote(kczips, FALSE), collapse = ", "), ")")}
 
-      sql_group <- paste("GROUP BY",  gsub("\\[year]\\, |pop=sum\\(pop\\), |race_eth = |race = ", "", sql_select))
-
-      sql_order <- gsub("GROUP", "ORDER", sql_group)
-
-      if(!is.null(group_by)){sql_query <- paste("SELECT", sql_select, "FROM [ref].[pop] WHERE", sql_where, sql_group, sql_order)}
-      if( is.null(group_by)){sql_query <- paste("SELECT", sql_select, "FROM [ref].[pop] WHERE", sql_where)}
-
+      sql_query <- glue::glue_sql("SELECT {tmpselect}
+                         FROM [ref].[pop]
+                         WHERE year IN ({tmpyears})
+                         AND geo_type IN ({tmpgeo_type})
+                         AND age IN ({tmpages})
+                         AND raw_gender IN ({tmpgenders})
+                         AND {tmprace_type} ", .con = con)
+      if(kingco == T & geo_type %in% c("blk", "blkgrp")){sql_query = glue::glue_sql("{sql_query} AND fips_co = 33 ", .con = con)}
+      if(kingco == T & geo_type == "zip"){sql_query = glue::glue_sql("{sql_query} AND geo_id IN ({tmpzips}) ", .con = con)}
+      if(!is.null(group_by)){sql_query = glue::glue_sql("{sql_query} GROUP BY {tmpgroup_by} ORDER BY {tmpgroup_by}", .con = con)}
 
     # get population labels ----
       pop.lab <- data.table::setDT(DBI::dbGetQuery(con, "SELECT * FROM [ref].[pop_labels]"))
