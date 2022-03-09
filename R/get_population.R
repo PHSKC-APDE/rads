@@ -1,24 +1,47 @@
 #' Get OFM population estimates from SQL
 #'
-#' @description Simple front-end for pulling in standard OFM population data from SQL
+#' @description Simple front-end for pulling in standard OFM population data
+#' from SQL
 #'
-#' @param kingco Logical vector of length 1. Identifies whether you want population estimates limited to King County. Default == TRUE.
-#' @param years Numeric vector. Identifies which year(s) of data should be pulled. Default == c(2020).
-#' @param ages Numeric vector. Identifies which age(s) should be pulled. Default == c(0:100), with 100 being the top coded value for 100:120.
-#' @param genders Character vector of length 1 or 2. Identifies gender(s) should be pulled. The acceptable values are 'f', 'female', 'm', and 'male'.
+#' @param kingco Logical vector of length 1. Identifies whether you want
+#' population estimates limited to King County.
+#' Default == TRUE.
+#' @param years Numeric vector. Identifies which year(s) of data should be
+#' pulled.
+#' Default == c(2020).
+#' @param ages Numeric vector. Identifies which age(s) should be pulled.
+#' Default == c(0:100), with 100 being the top coded value for 100:120.
+#' @param genders Character vector of length 1 or 2. Identifies gender(s) should
+#' be pulled. The acceptable values are 'f', 'female', 'm', and 'male'.
 #' Default == c('F', 'M').
-#' @param races Character vector of length 1 to 7. Identifies which race(s) or ethnicity should be pulled. The acceptable values are "aian",
-#' "asian", "black", "hispanic", "multiple", "nhpi", and "white". Default == all the possible values.
-#' @param race_type Character vector of length 1. Identifies whether to pull race data with Hispanic as an ethnicity ("race") or Hispanic as a race ("race_eth").
+#' @param races Character vector of length 1 to 7. Identifies which race(s) or
+#' ethnicity should be pulled. The acceptable values are "aian",
+#' "asian", "black", "hispanic", "multiple", "nhpi", and "white". Default == all
+#' the possible values.
+#' @param race_type Character vector of length 1. Identifies whether to pull
+#' race data with Hispanic as an ethnicity ("race") or Hispanic as a race
+#' ("race_eth").
 #' Default == c("race_eth").
-#' @param geo_type Character vector of length 1. Identifies the geographic level for which you want population estimates. Possible values are
-#' "kc", "seattle, "blk", "blkgrp", "hra", "region", "tract", and "zip". Note that all these geo_types except "zip" are available for King,
-#' Pierce, and Snohomish counties only. Default == "kc".
-#' @param group_by Character vector of length 0 to 7. Identifies how you would like the data 'grouped' (i.e., stratified). Valid options are limited to:
-#' "years", "ages", "genders", "race", "race_eth", "fips_co", and "geo_id". Default == NULL, i.e., estimates are not grouped / stratified.
-#' @param round Logical vector of length 1. Identifies whether or not population estimates should be returned as whole numbers. Default == TRUE.
-#' @param mykey Character vector of length 1. Identifies the keyring:: key that can be used to access the Health & Human Services Analytic Workspace (HHSAW).
+#' @param geo_type Character vector of length 1. Identifies the geographic level
+#' for which you want population estimates. The acceptable values are: "blk",
+#' "blkgrp", "county", "hra", "kc", "lgd" (WA State legislative districts),
+#' "region", "seattle", "scd" (school districts), "tract", and "zip". Note that
+#' "county", "lgd", and "zip" apply to all of Washington State. "hra", "kc",
+#' "region", and "seattle" only apply to King County.
+#' "blk", "blkgrp", "tract", and "scd" apply to King, Snohomish, and Pierce
+#' counties only.
+#' Default == "kc".
+#' @param group_by Character vector of length 0 to 7. Identifies how you would
+#' like the data 'grouped' (i.e., stratified). Valid options are limited to:
+#' "years", "ages", "genders", "race", "race_eth", "fips_co", and "geo_id".
+#' Default == NULL, i.e., estimates are not grouped / stratified.
+#' @param round Logical vector of length 1. Identifies whether or not population
+#' estimates should be returned as whole numbers.
+#' Default == TRUE.
+#' @param mykey Character vector of length 1. Identifies the keyring:: key that
+#' can be used to access the Health & Human Services Analytic Workspace (HHSAW).
 #' Default == ‘hhsaw’
+#'
 #' @importFrom data.table data.table copy setDT setnames setcolorder
 #' @import rads.data
 #' @importFrom keyring key_get key_list
