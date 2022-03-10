@@ -1,13 +1,25 @@
 library('testthat')
+# all comparison values are from CHAT: https://secureaccess.wa.gov/doh/chat/Entry.mvc
+
 test_that('get_population',{
 
   expect_equal(2190200, get_population(years = 2018)$pop)  # KC 2018
+
+  expect_equal(get_population(years = 2018, geo_type = "kc")$pop, get_population(years = 2018)$pop)  # KC 2018
+
+  expect_equal(1104, get_population(years = 2018, geo_type = "blkgrp")[geo_id == "530330017022"]$pop) # 2018 block group == 530330017022
 
   expect_equal(35393, get_population(years = 2019, geo_type = c("zip"), group_by = c("geo_id"))[geo_id=="98001"]$pop) # 2019 zip == 98001
 
   expect_equal(19979, get_population(years = 2018, geo_type = c("hra"), group_by = c("geo_id"))[geo_id == "North Highline"]$pop ) # 2018 North Highline HRA
 
   expect_equal(19979, get_population(years = 2018, geo_type = c("hra"))[geo_id == "North Highline"]$pop ) # 2018 North Highline HRA
+
+  expect_equal(762643, get_population(years = 2018, geo_type = "region")[geo_id == "South"]$pop) # 2018 South Region (defined by block/HRA, not zip)
+
+  expect_equal(730920, get_population(years = 2018, geo_type = "seattle")$pop) # 2018 Seattle (defined by block/HRA, not zip)
+
+  expect_equal(1965, get_population(years = 2018, geo_type = "tract")[geo_id == "53033032703"]$pop) # 2018 Tract == 53033032703
 
   expect_equal(2153700, sum(get_population(years = 2017, genders = c("female", "male"))$pop) ) # 2017 KC (by summing both genders)
 
@@ -28,5 +40,3 @@ test_that('get_population',{
   expect_equal("65-100", get_population(years = 2019, ages = c(65:100))[]$age ) # ensure that summary age is properly formatted
 
 })
-
-

@@ -217,8 +217,12 @@ get_population <- function(kingco = T,
 
       # adjust group_by depending on which geo_type specified ----
           if(geo_type != "kc" & !("geo_id" %in% group_by)) {
-            group_by <- c("geo_id", group_by)
-            group_by_orig <- c("geo_id", group_by)
+            group_by <- unique(c("geo_id", group_by))
+            group_by_orig <- unique(c("geo_id", group_by))
+          }
+          if(geo_type == "hra") {
+              group_by <- setdiff(c("hra10", group_by), "geo_id")
+              group_by_orig <- data.table::copy(group_by)
           }
 
       # adjust group_by for name differences ----
@@ -249,7 +253,6 @@ get_population <- function(kingco = T,
           race_type_values <- glue::glue_sql_collapse(ref.table[r_type == "r1r3" & short %in% races]$value, sep = ', ')
           glue::glue_sql("r1r3 IN ({race_type_values})", .con = con)}
       tmpgroup_by <- if(!is.null(group_by)){glue::glue_sql_collapse(gsub("\\[year]\\, |pop=sum\\(pop\\), |race_eth = |race = ", "", tmpselect), sep = ', ')}
-
 
       sql_query <- glue::glue_sql("SELECT {tmpselect}
                          FROM [ref].[pop]
@@ -334,13 +337,11 @@ get_population <- function(kingco = T,
           }
 
         # hra ----
-          if(geo_type_orig == "hra" & "geo_id" %in% group_by_orig){
-            xwalk <- data.table::copy(rads.data::spatial_blocks10_to_region)
-            xwalk <- xwalk[, .(geo_id = as.character(geo_id_blk), hra)]
-            pop.dt <- merge(pop.dt, xwalk, by = "geo_id", all.x = T)
-            nonpopvars <- setdiff(names(pop.dt), c("pop", "geo_id"))
-            pop.dt <- pop.dt[, .(pop = sum(pop)), by = nonpopvars]
-            setnames(pop.dt, "hra", "geo_id")
+          if(geo_type_orig == "hra" & "hra10" %in% group_by_orig){
+            xwalk <- data.table::copy(rads.data::spatial_hra_vid_region)
+            xwalk <- xwalk[, .(geo_id_code = vid, geo_id = hra)]
+            setnames(pop.dt, "hra10", "geo_id_code")
+            pop.dt <- merge(pop.dt, xwalk, by = "geo_id_code", all.x = T, all.y = T)
           }
           if(geo_type_orig == "hra" & is.null(group_by_orig)){pop.dt[, geo_id := "All HRAs"]}
 
