@@ -4,43 +4,60 @@
 #' from SQL
 #'
 #' @param kingco Logical vector of length 1. Identifies whether you want
-#' population estimates limited to King County.
+#' population estimates limited to King County. Only impacts results for
+#' geo_type in c('blk', blkgrp', 'scd', 'tract', 'zip').
+#'
 #' Default == TRUE.
 #' @param years Numeric vector. Identifies which year(s) of data should be
 #' pulled.
+#'
 #' Default == c(2020).
 #' @param ages Numeric vector. Identifies which age(s) should be pulled.
+#'
 #' Default == c(0:100), with 100 being the top coded value for 100:120.
 #' @param genders Character vector of length 1 or 2. Identifies gender(s) should
 #' be pulled. The acceptable values are 'f', 'female', 'm', and 'male'.
-#' Default == c('F', 'M').
+#'
+#' Default == c('f', 'm').
 #' @param races Character vector of length 1 to 7. Identifies which race(s) or
 #' ethnicity should be pulled. The acceptable values are "aian",
-#' "asian", "black", "hispanic", "multiple", "nhpi", and "white". Default == all
-#' the possible values.
+#' "asian", "black", "hispanic", "multiple", "nhpi", and "white".
+#'
+#' Default == all the possible values.
 #' @param race_type Character vector of length 1. Identifies whether to pull
 #' race data with Hispanic as an ethnicity ("race") or Hispanic as a race
 #' ("race_eth").
+#'
 #' Default == c("race_eth").
 #' @param geo_type Character vector of length 1. Identifies the geographic level
-#' for which you want population estimates. The acceptable values are: "blk",
-#' "blkgrp", "county", "hra", "kc", "lgd" (WA State legislative districts),
-#' "region", "seattle", "scd" (school districts), "tract", and "zip". Note that
-#' "county", "lgd", and "zip" apply to all of Washington State. "hra", "kc",
-#' "region", and "seattle" only apply to King County.
-#' "blk", "blkgrp", "tract", and "scd" apply to King, Snohomish, and Pierce
-#' counties only.
+#' for which you want population estimates. The acceptable values are: 'blk',
+#' 'blkgrp', 'county', 'hra', 'kc', 'lgd' (WA State legislative districts),
+#' 'region', 'seattle', 'scd' (school districts), 'tract', and 'zip'.
+#'
 #' Default == "kc".
 #' @param group_by Character vector of length 0 to 7. Identifies how you would
 #' like the data 'grouped' (i.e., stratified). Valid options are limited to:
 #' "years", "ages", "genders", "race", "race_eth", "fips_co", and "geo_id".
-#' Default == NULL, i.e., estimates are not grouped / stratified.
+#'
+#' Default == NULL, i.e., estimates are only grouped / aggregated by
+#' geography.
 #' @param round Logical vector of length 1. Identifies whether or not population
 #' estimates should be returned as whole numbers.
+#'
 #' Default == TRUE.
 #' @param mykey Character vector of length 1. Identifies the keyring:: key that
 #' can be used to access the Health & Human Services Analytic Workspace (HHSAW).
-#' Default == ‘hhsaw’
+#'
+#' Default == 'hhsaw'
+#'
+#' @details Note the following geography limitations:
+#'
+#' -- 'county', 'lgd', 'scd', and 'zip' apply to all of WA State
+#'
+#' -- 'hra', 'kc', 'region', and 'seattle' apply to King County only
+#'
+#' -- 'blk', 'blkgrp', and 'tract' apply to King, Snohomish, and Pierce counties
+#' only
 #'
 #' @importFrom data.table data.table copy setDT setnames setcolorder
 #' @import rads.data
@@ -62,7 +79,7 @@
 get_population <- function(kingco = T,
                            years = c(2020),
                            ages = c(0:100),
-                           genders = c("F", "M"),
+                           genders = c("f", "m"),
                            races = c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white"),
                            race_type = c("race_eth"),
                            geo_type = c("kc"),
@@ -86,6 +103,10 @@ get_population <- function(kingco = T,
                   98124, 98125, 98126, 98127, 98129, 98130, 98131, 98132, 98133, 98134, 98136, 98138, 98139, 98140, 98141, 98144,
                   98145, 98146, 98148, 98151, 98154, 98155, 98158, 98160, 98161, 98164, 98165, 98166, 98168, 98170, 98171, 98174,
                   98175, 98177, 98178, 98181, 98184, 98185, 98188, 98189, 98190, 98191, 98194, 98195, 98198, 98199, 98224, 98288))
+
+    # KC School districts (copied from https://www5.kingcounty.gov/sdc/Metadata.aspx?Layer=schdst 2022/03/10) ----
+      kcscds <- c(5300001, 5300300, 5300390, 5302820, 5302880, 5303540, 5303750, 5303960, 5304230, 5304560, 5304980, 5305910,
+                  5307230, 5307710, 5307920, 5307980, 5308040, 5308130, 5308760, 5309300)
 
     # race/eth reference table ----
       ref.table <- copy(rads.data::population_wapop_codebook_values)
@@ -146,6 +167,8 @@ get_population <- function(kingco = T,
           }
         years <- unique(years)
 
+        if(min(years) < 2000 | (geo_type == 'lgd' & min(years) < 2011)){stop("The earliest available year is 2000, except for geo_type == 'lgd' where it is 2011")}
+
       # check ages ----
         if( !all(sapply(ages, function(i) i == as.integer(i))) | max(ages) > 100 | min(ages) < 0 ){
           stop(paste0("The `ages` argument ('", paste(unique(ages), collapse = ', '), "') you entered is invalid. It must be a vector of at least one age integer between 0 & 100 (e.g., `c(0:17, 65:100)`)"))}
@@ -181,18 +204,18 @@ get_population <- function(kingco = T,
         if(length(race_type) != 1 | !race_type %in% c("race", "race_eth") ){stop(paste0("The `race_type` argument ('", paste(race_type, collapse = "','"), "') is limited to one the following: c('race', 'race_eth')"))}
 
       # check geo_type ----
-        if(length(geo_type) != 1 | !geo_type %in% c('kc', 'seattle', 'blk', 'blkgrp', 'hra', 'region', 'tract', 'zip')){
+        if(length(geo_type) != 1 | !geo_type %in% c('kc', 'seattle', 'blk', 'blkgrp', 'county', 'hra', 'lgd', 'region', 'scd', 'tract', 'zip')){
           stop(paste0("The `geo_type` argument (", paste(geo_type, collapse = ", "), ") contains an invalid entry. It must have one of the following values: `c('kc', 'seattle, 'blk', 'blkgrp', 'hra', 'region', 'tract', 'zip')`"))
         }
 
         if(geo_type == "seattle"){seattle = 1; geo_type = 'region'} # Seattle is just one of four regions, so set to region and then subset results at end
 
-        if(kingco == F & !geo_type %in% c('blk', 'blkgrp', 'tract', 'zip')){
-          stop("When 'kingco = F', permissible geo_types are limited to 'blk', 'blkgrp', 'tract', and 'zip'.")
+        if(kingco == F & !geo_type %in% c('blk', 'blkgrp', 'tract', 'scd', 'zip')){
+          stop("When 'kingco = F', permissible geo_types are limited to 'blk', 'blkgrp', 'scd', 'tract', and 'zip'.")
         }
 
-        if(kingco == F & geo_type != "zip"){
-          warning("When 'kingco = F', all permissible geo_types except for 'zip' will provide estimates for King, Snohomish, and Pierce counties only.")
+        if(kingco == F & ! geo_type %in% c("scd", "zip")){
+          warning("When 'kingco = F', all permissible geo_types except for 'scd' and 'zip' will provide estimates for King, Snohomish, and Pierce counties only.")
         }
 
       # check group_by ----
@@ -237,6 +260,7 @@ get_population <- function(kingco = T,
       # adjust geo_type as needed ----
         geo_type_orig <- copy(geo_type)
         if(geo_type %in% c("kc", "blkgrp", "hra", "tract", "region")){geo_type <- "blk"} # necessary because kc, blkgrp, tract, hra, region are aggregated up from blk
+        if(geo_type %in% c("county")){geo_type <- "Cou"} #
 
     # generate SQL query ----
       tmpselect <- if(is.null(group_by)){
@@ -246,6 +270,7 @@ get_population <- function(kingco = T,
       tmpgeo_type <- glue::glue_sql("{geo_type}", .con = con)
       tmpages <- glue::glue_sql_collapse(sql_ages, sep = ', ')
       tmpgenders <- glue::glue_sql_collapse(paste0("'", genders, "'"), sep = ', ')
+      tmpscds <- glue::glue_sql_collapse(paste0("'", kcscds, "'"), sep = ", ")
       tmpzips <- glue::glue_sql_collapse(paste0("'", kczips, "'"), sep = ", ")
       tmprace_type <- if(race_type == "race_eth"){
         race_type_values <- glue::glue_sql_collapse(ref.table[r_type == "r2r4" & short %in% races]$value, sep = ', ')
@@ -263,6 +288,7 @@ get_population <- function(kingco = T,
                          AND {tmprace_type} ", .con = con)
       if(kingco == T & geo_type %in% c("blk", "blkgrp")){sql_query = glue::glue_sql("{sql_query} AND fips_co = 33 ", .con = con)}
       if(kingco == T & geo_type == "zip"){sql_query = glue::glue_sql("{sql_query} AND geo_id IN ({tmpzips}) ", .con = con)}
+      if(kingco == T & geo_type == "scd"){sql_query = glue::glue_sql("{sql_query} AND geo_id IN ({tmpscds}) ", .con = con)}
       if(!is.null(group_by)){sql_query = glue::glue_sql("{sql_query} GROUP BY {tmpgroup_by} ORDER BY {tmpgroup_by}", .con = con)}
 
     # get population labels ----
@@ -336,6 +362,14 @@ get_population <- function(kingco = T,
             }
           }
 
+        # county ----
+          if(geo_type_orig == "county"){
+            xwalk <- data.table::copy(rads.data::spatial_county_codes_to_names)
+            xwalk <- xwalk[, .(geo_id_code = cou_id, geo_id = cou_name)]
+            setnames(pop.dt, "geo_id", "geo_id_code")
+            pop.dt <- merge(pop.dt, xwalk, by = "geo_id_code", all.x = T, all.y = T)
+          }
+
         # hra ----
           if(geo_type_orig == "hra" & "hra10" %in% group_by_orig){
             xwalk <- data.table::copy(rads.data::spatial_hra_vid_region)
@@ -343,7 +377,22 @@ get_population <- function(kingco = T,
             setnames(pop.dt, "hra10", "geo_id_code")
             pop.dt <- merge(pop.dt, xwalk, by = "geo_id_code", all.x = T, all.y = T)
           }
-          if(geo_type_orig == "hra" & is.null(group_by_orig)){pop.dt[, geo_id := "All HRAs"]}
+
+        # lgd ----
+          if(geo_type_orig == "lgd"){
+            xwalk <- data.table::copy(rads.data::spatial_legislative_codes_to_names)
+            xwalk <- xwalk[, .(geo_id_code = lgd_id, geo_id = lgd_name)]
+            setnames(pop.dt, "geo_id", "geo_id_code")
+            pop.dt <- merge(pop.dt, xwalk, by = "geo_id_code", all.x = T, all.y = T)
+          }
+
+        # scd ----
+          if(geo_type_orig == "scd"){
+            xwalk <- data.table::copy(rads.data::spatial_school_codes_to_names)
+            xwalk <- xwalk[, .(geo_id_code = as.character(scd_id), geo_id = scd_name)]
+            setnames(pop.dt, "geo_id", "geo_id_code")
+            pop.dt <- merge(pop.dt, xwalk, by = "geo_id_code", all.x = T, all.y = F)
+          }
 
         # zip ----
           if(is.null(group_by)){
@@ -373,7 +422,9 @@ get_population <- function(kingco = T,
         if(round == T){pop.dt[, pop := rads::round2(pop, 0)]}
 
       # set column order ----
-      setcolorder(pop.dt, c("pop", "geo_type", "geo_id", "year", "age", "gender"))
+      ifelse("geo_id_code" %in% names(pop.dt),
+             setcolorder(pop.dt, c("pop", "geo_type", "geo_id", "geo_id_code", "year", "age", "gender")),
+             setcolorder(pop.dt, c("pop", "geo_type", "geo_id", "year", "age", "gender")) )
 
     # close connection ----
      DBI::dbDisconnect(con)
