@@ -109,7 +109,7 @@ get_population <- function(kingco = T,
                   5307230, 5307710, 5307920, 5307980, 5308040, 5308130, 5308760, 5309300)
 
     # race/eth reference table ----
-      ref.table <- copy(rads.data::population_wapop_codebook_values)
+      ref.table <- data.table::copy(rads.data::population_wapop_codebook_values)
       ref.table <- ref.table[varname %in% c("r1r3", "r2r4")]
       ref.table[varname == "r1r3", name := "race"]
       ref.table[varname == "r2r4", name := "race_eth"]
@@ -258,7 +258,7 @@ get_population <- function(kingco = T,
         }
 
       # adjust geo_type as needed ----
-        geo_type_orig <- copy(geo_type)
+        geo_type_orig <- data.table::copy(geo_type)
         if(geo_type %in% c("kc", "blkgrp", "hra", "tract", "region")){geo_type <- "blk"} # necessary because kc, blkgrp, tract, hra, region are aggregated up from blk
         if(geo_type %in% c("county")){geo_type <- "Cou"} #
 
@@ -291,11 +291,31 @@ get_population <- function(kingco = T,
       if(kingco == T & geo_type == "scd"){sql_query = glue::glue_sql("{sql_query} AND geo_id IN ({tmpscds}) ", .con = con)}
       if(!is.null(group_by)){sql_query = glue::glue_sql("{sql_query} GROUP BY {tmpgroup_by} ORDER BY {tmpgroup_by}", .con = con)}
 
+    # generate supplemental SQL query for Hispanic ethnicity ----
+      # easiest solution is to replace r1r3 with r2r4 (Hispanic as race), then drop all non-Hispanic and append results to those from the main query
+      hisp_eth_flag = F
+      if(race_type == "race" & "hispanic" %in% races & "race" %in% group_by_orig){hisp_eth_flag = T}
+      if(race_type == "race" & identical(races, "hispanic") & is.null(group_by_orig) ){hisp_eth_flag = T}
+
+      if(hisp_eth_flag){sql_query_hisp_eth <- gsub("r1r3", "r2r4", sql_query)}
+      if(hisp_eth_flag & is.null(group_by_orig)){
+        sql_query_hisp_eth <- gsub("pop=sum\\(pop\\)", "pop=sum(pop), race = r2r4", sql_query_hisp_eth)
+        sql_query_hisp_eth <- glue::glue_sql("{sql_query_hisp_eth} GROUP BY r2r4 ORDER BY r2r4")
+        }
+
     # get population labels ----
       pop.lab <- data.table::setDT(DBI::dbGetQuery(con, "SELECT * FROM [ref].[pop_labels]"))
 
     # get population data ----
       pop.dt <- data.table::setDT(DBI::dbGetQuery(con, sql_query))
+
+      # append Hispanic as race if / when needed
+      if(hisp_eth_flag){
+        pop.dt.hisp_eth <- data.table::setDT(DBI::dbGetQuery(con, sql_query_hisp_eth))[race == 6]
+        if(is.null(group_by_orig)){pop.dt = data.table::copy(pop.dt.hisp_eth)}else{
+          pop.dt <- rbind(pop.dt, pop.dt.hisp_eth)
+        }
+      }
 
     # Tidy population data ----
       # add race labels ----
