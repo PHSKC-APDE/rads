@@ -9,7 +9,7 @@ If you haven’t yet installed [`rads`](https://github.com/PHSKC-APDE/rads), fol
 
 1. Make sure remotes is installed … `install.packages("remotes")`.
 
-2. RADs depends on version 17 of [Microsoft ODBC Driver for SQL Server](https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15). You can download it ['here'](https://go.microsoft.com/fwlink/?linkid=2187214)
+2. RADS depends on version 17 of [Microsoft ODBC Driver for SQL Server](https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15). You can download it [here](https://go.microsoft.com/fwlink/?linkid=2187214)
 
 3. Install [`rads`](https://github.com/PHSKC-APDE/rads) …
     `remotes::install_github("PHSKC-APDE/rads", auth_token = NULL)`
