@@ -5,21 +5,21 @@
 \title{Get HYS microdata from storage.}
 \usage{
 get_data_hys(
-  cols = NA,
-  year = c(2016, 2018),
-  weight_variable = "kcfinalwt",
-  kingco = T
+  cols = NULL,
+  year = c(2021),
+  weight_variable = "wt_sex_grade_kc",
+  kingco = TRUE
 )
 }
 \arguments{
-\item{cols}{Character vector of length >-1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
+\item{cols}{Character vector of length >-1. Identifies which columns should be returned. NULL or NA returns all columns in the analytic dataset.
 See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.}
 
 \item{year}{Numeric vector. Identifies which years of data should be pulled}
 
 \item{weight_variable}{Character vector of length 1. Identifies which weight column}
 
-\item{kingco}{logical. Return dataset for analyses in King County only.}
+\item{kingco}{logical. Return dataset for analyses in King County only. The only option}
 }
 \value{
 dataset either in data.table (adminstrative data) or svy_tbl (survey data) for further analysis/tabulation
@@ -30,6 +30,6 @@ Get HYS microdata from storage.
 \examples{
 
 \dontrun{
- get_data_hys(cols = NA, year = c(2016, 2018), weight_variable = 'kcfinalwt')
+ get_data_hys(cols = NULL, year = c(2016, 2018), weight_variable = 'kcfinalwt')
 }
 }
