@@ -4,7 +4,7 @@
 #' @description Simple front-end for pulling in standard APDE data
 #'
 #' @param dataset Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options
-#' @param cols Character vector of length >-1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
+#' @param cols Character vector of length >-1. Identifies which columns should be returned. NULL or NA returns all columns in the analytic dataset.
 #'     See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.
 #' @param year Numeric vector. Identifies which years of data should be pulled
 #' @param ... Additional named arguments based on the specific dataset. To see what these options should be, do \code{help(get_data_`dataset`)}
@@ -15,9 +15,9 @@
 #'
 #' @examples
 #' \dontrun{
-#'  get_data(dataset = 'hys', cols = NA, year = c(2016, 2018)
+#'  get_data(dataset = 'hys', cols = NULL, year = c(2016, 2018)
 #' }
-get_data <- function(dataset, cols = NA, year = 2018, ...){
+get_data <- function(dataset, cols = NULL, year = 2018, ...){
 
   f <- match.fun(paste0('get_data_', dataset))
   f(cols = cols, year = year, ...)
@@ -42,54 +42,61 @@ get_data <- function(dataset, cols = NA, year = 2018, ...){
 #' Get HYS microdata from storage.
 #'
 #'
-#' @param cols Character vector of length >-1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
+#' @param cols Character vector of length >-1. Identifies which columns should be returned. NULL or NA returns all columns in the analytic dataset.
 #'     See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.
 #' @param year Numeric vector. Identifies which years of data should be pulled
 #' @param weight_variable Character vector of length 1. Identifies which weight column
-#' @param kingco logical. Return dataset for analyses in King County only.
+#' @param kingco logical. Return dataset for analyses in King County only. The only option
 #'
 #' @return dataset either in data.table (adminstrative data) or svy_tbl (survey data) for further analysis/tabulation
 #'
 #' @import dtsurvey
 #' @importFrom data.table ":=" .I
-#' @importFrom haven read_dta
 #' @export
 #'
 #' @examples
 #'
 #' \dontrun{
-#'  get_data_hys(cols = NA, year = c(2016, 2018), weight_variable = 'kcfinalwt')
+#'  get_data_hys(cols = NULL, year = c(2016, 2018), weight_variable = 'kcfinalwt')
 #' }
-get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcfinalwt', kingco = T){
+get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_grade_kc', kingco = TRUE){
 
-  #visible bindings for data.table
-  schgnoid <- sur_psu <- kcfinalwt <- NULL
+  stopifnot(all(year %in% c(seq(2004,2018,2), 2021)))
 
-  dat <- haven::read_dta("//PHDATA01/EPE_Data/HYSdata/hys/Data/hys0418_final_12.dta")
-  data.table::setDT(dat)
+  #J:\HYSdata\hys\2021\v1
+  fps = file.path('//PHDATA01/EPE_Data/HYSdata/hys/2021/v1/', paste0('hys_ar_', year, '.rds'))
+  dat <- data.table::rbindlist(lapply(fps, readRDS), use.names = T, fill = T)
 
   #prep the dataset
-  dat[, sur_psu := schgnoid]
-  dat[is.na(sur_psu), sur_psu := -1 * .I]
-  dat <- dat[is.na(get(weight_variable)), (weight_variable) := 0]
+  dat[is.na(psu), psu := -1 * .I]
+  dat[is.na(get(weight_variable)), (weight_variable) := 0]
 
   #subset by year
   yvar = year
-  dat = dat[year %in% yvar, ]
+  dat = dat[chi_year %in% yvar, ]
 
   #identify invalid columns
-  if(!all(is.na(cols))){
+  if(!is.null(cols) && !all(is.na(cols))){
     invalid.cols <- setdiff(cols, names(dat))
     if(length(invalid.cols) == length(cols)){stop("HYS data cannot be extracted because no valid column names have been submitted. To get all columns, use the argument 'cols = NA'")}
     if(length(invalid.cols) > 0){message(paste0("The following column names do not exist in the HYS data and have not be extracted: ", paste0(invalid.cols, collapse = ", ")))}
-    cols <- intersect(names(dat), cols)
+
+  }else{
+    cols = names(dat)
   }
 
   #create the survey object
-  dat = dat[kcfinalwt>0]
-  svy <- dtsurvey::dtsurvey(dat, psu = 'sur_psu', strata = 'year', weight = 'kcfinalwt', nest = T)
+  if(kingco == T){
+    dat <- dat[chi_geo_kc == 1,]
+  }else{
+    warning('Survey will be set to self-weighting so that rows outside of KC do not get dropped for having weights of 0')
+    dat[, weight1 := 1]
+    weight_variable = 'weight1'
+  }
 
-  if(kingco == T) svy <- svy[kingco == 1,]
+  dat = dat[get(weight_variable)>0]
+  svy <- dtsurvey::dtsurvey(dat, psu = 'psu', strata = 'chi_year', weight = weight_variable, nest = T)
+
 
   if(!all(is.na(cols))) svy <- svy[, .SD, .SDcols = c(cols, '_id')]
 
@@ -114,6 +121,8 @@ get_data_hys <- function(cols = NA, year = c(2016, 2018), weight_variable = 'kcf
 #'  get_data_birth(cols = NA, year = c(2015, 2016, 2017), kingco = F)
 #' }
 get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
+  if(is.null(cols)) cols <- NA
+
   # get list of all colnames from SQL
     con <- odbc::dbConnect(odbc::odbc(),
                            Driver = "SQL Server",
