@@ -8,7 +8,7 @@ get_population(
   kingco = T,
   years = c(2020),
   ages = c(0:100),
-  genders = c("F", "M"),
+  genders = c("f", "m"),
   races = c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white"),
   race_type = c("race_eth"),
   geo_type = c("kc"),
@@ -18,38 +18,78 @@ get_population(
 )
 }
 \arguments{
-\item{kingco}{Logical vector of length 1. Identifies whether you want population estimates limited to King County. Default == TRUE.}
+\item{kingco}{Logical vector of length 1. Identifies whether you want
+population estimates limited to King County. Only impacts results for
+geo_type in c('blk', blkgrp', 'scd', 'tract', 'zip').
 
-\item{years}{Numeric vector. Identifies which year(s) of data should be pulled. Default == c(2020).}
+Default == TRUE.}
 
-\item{ages}{Numeric vector. Identifies which age(s) should be pulled. Default == c(0:100), with 100 being the top coded value for 100:120.}
+\item{years}{Numeric vector. Identifies which year(s) of data should be
+pulled.
 
-\item{genders}{Character vector of length 1 or 2. Identifies gender(s) should be pulled. The acceptable values are 'f', 'female', 'm', and 'male'.
-Default == c('F', 'M').}
+Default == c(2020).}
 
-\item{races}{Character vector of length 1 to 7. Identifies which race(s) or ethnicity should be pulled. The acceptable values are "aian",
-"asian", "black", "hispanic", "multiple", "nhpi", and "white". Default == all the possible values.}
+\item{ages}{Numeric vector. Identifies which age(s) should be pulled.
 
-\item{race_type}{Character vector of length 1. Identifies whether to pull race data with Hispanic as an ethnicity ("race") or Hispanic as a race ("race_eth").
+Default == c(0:100), with 100 being the top coded value for 100:120.}
+
+\item{genders}{Character vector of length 1 or 2. Identifies gender(s) should
+be pulled. The acceptable values are 'f', 'female', 'm', and 'male'.
+
+Default == c('f', 'm').}
+
+\item{races}{Character vector of length 1 to 7. Identifies which race(s) or
+ethnicity should be pulled. The acceptable values are "aian",
+"asian", "black", "hispanic", "multiple", "nhpi", and "white".
+
+Default == all the possible values.}
+
+\item{race_type}{Character vector of length 1. Identifies whether to pull
+race data with Hispanic as an ethnicity ("race") or Hispanic as a race
+("race_eth").
+
 Default == c("race_eth").}
 
-\item{geo_type}{Character vector of length 1. Identifies the geographic level for which you want population estimates. Possible values are
-"kc", "seattle, "blk", "blkgrp", "hra", "region", "tract", and "zip". Note that all these geo_types except "zip" are available for King,
-Pierce, and Snohomish counties only. Default == "kc".}
+\item{geo_type}{Character vector of length 1. Identifies the geographic level
+for which you want population estimates. The acceptable values are: 'blk',
+'blkgrp', 'county', 'hra', 'kc', 'lgd' (WA State legislative districts),
+'region', 'seattle', 'scd' (school districts), 'tract', and 'zip'.
 
-\item{group_by}{Character vector of length 0 to 7. Identifies how you would like the data 'grouped' (i.e., stratified). Valid options are limited to:
-"years", "ages", "genders", "race", "race_eth", "fips_co", and "geo_id". Default == NULL, i.e., estimates are not grouped / stratified.}
+Default == "kc".}
 
-\item{round}{Logical vector of length 1. Identifies whether or not population estimates should be returned as whole numbers. Default == TRUE.}
+\item{group_by}{Character vector of length 0 to 7. Identifies how you would
+like the data 'grouped' (i.e., stratified). Valid options are limited to:
+"years", "ages", "genders", "race", "race_eth", "fips_co", and "geo_id".
 
-\item{mykey}{Character vector of length 1. Identifies the keyring:: key that can be used to access the Health & Human Services Analytic Workspace (HHSAW).
-Default == ‘hhsaw’}
+Default == NULL, i.e., estimates are only grouped / aggregated by
+geography.}
+
+\item{round}{Logical vector of length 1. Identifies whether or not population
+estimates should be returned as whole numbers.
+
+Default == TRUE.}
+
+\item{mykey}{Character vector of length 1. Identifies the keyring:: key that
+can be used to access the Health & Human Services Analytic Workspace (HHSAW).
+
+Default == 'hhsaw'}
 }
 \value{
 dataset as a data.table for further analysis/tabulation
 }
 \description{
-Simple front-end for pulling in standard OFM population data from SQL
+Simple front-end for pulling in standard OFM population data
+from SQL
+}
+\details{
+Note the following geography limitations:
+
+-- 'county', 'lgd', 'scd', and 'zip' apply to all of WA State
+
+-- 'hra', 'kc', 'region', and 'seattle' apply to King County only
+
+-- 'blk', 'blkgrp', and 'tract' apply to King, Snohomish, and Pierce counties
+only
 }
 \examples{
 \dontrun{

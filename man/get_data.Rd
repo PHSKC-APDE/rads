@@ -4,12 +4,12 @@
 \alias{get_data}
 \title{Get (micro)data from APDE storage.}
 \usage{
-get_data(dataset, cols = NA, year = 2018, ...)
+get_data(dataset, cols = NULL, year = 2018, ...)
 }
 \arguments{
 \item{dataset}{Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options}
 
-\item{cols}{Character vector of length >-1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
+\item{cols}{Character vector of length >-1. Identifies which columns should be returned. NULL or NA returns all columns in the analytic dataset.
 See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.}
 
 \item{year}{Numeric vector. Identifies which years of data should be pulled}
@@ -24,6 +24,6 @@ Simple front-end for pulling in standard APDE data
 }
 \examples{
 \dontrun{
- get_data(dataset = 'hys', cols = NA, year = c(2016, 2018)
+ get_data(dataset = 'hys', cols = NULL, year = c(2016, 2018)
 }
 }
