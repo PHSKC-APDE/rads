@@ -817,10 +817,21 @@ list_apde_data <- function(){
 #'  list_dataset_columns('hys', T)
 #' }
 list_dataset_columns <- function(dataset, analytic_only = F){
-  dat = match.arg(dataset, list_apde_data())
 
+  #create a negate function of %in% for readability
+  '%!in%' = Negate('%in%')
+
+  if(dataset %!in% list_apde_data) {
+    dat = match.arg(dataset, list_apde_data())
+    warning(paste0('non-exact database chosent. Attempting best match using "', dat,'" instead of "', dataset, '".'))
+  }
+
+  if(analytic_only) {
+    analytic_only = F
+    warning('analytic_only functionality is not currently implemented \n analytic_only = F')
+  }
   warning('list_dataset_columns not currently available/implemented')
-  return(data.frame(variable_name = '', analytic_ready = 'Sure. Why not?'))
+  #return(data.frame(variable_name = '', analytic_ready = 'Sure. Why not?'))
 }
 
 
