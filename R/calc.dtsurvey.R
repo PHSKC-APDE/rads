@@ -42,6 +42,10 @@ calc.dtsurvey = function(ph.data,
     ph.data = ph.data[r,]
     #do.call(subset, args = list(x = ph.data, subset = e)) an alternative approach
 
+    if(nrow(ph.data) == 0){
+      warning(paste0('Provided `where` statement subsets out all rows : ', capture.output(print(e))))
+    }
+
 
   }
 
@@ -155,7 +159,7 @@ calc.dtsurvey = function(ph.data,
 compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, time_var, time_format, per = 1, window = FALSE){
 
 
-  if(nrow(DT) == 0) warning('No valid rows to compute on given `where` and `win` conditions')
+  # if(nrow(DT) == 0) warning('No valid rows to compute on given `where` and `win` conditions')
 
 
   #global variables used by data.table declared as NULL here to play nice with devtools::check()
