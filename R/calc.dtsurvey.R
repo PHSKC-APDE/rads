@@ -42,7 +42,6 @@ calc.dtsurvey = function(ph.data,
     ph.data = ph.data[r,]
     #do.call(subset, args = list(x = ph.data, subset = e)) an alternative approach
 
-    if(nrow(ph.data) == 0) warning('No valid rows to compute on given `where` conditions')
 
   }
 
@@ -108,7 +107,7 @@ calc.dtsurvey = function(ph.data,
       wins = 1
       sub_i = TRUE
       usewins = F
-      warning('Because the `where` condition removed all rows, windowing is ignored')
+      # warning('Because the `where` condition removed all rows, windowing is ignored')
     }
   }else{
     wins = 1
@@ -423,6 +422,9 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
 
 
   if(!is.null(time_var)) data.table::setnames(res, 'time', time_var)
+
+  #make 0 row if ph.data is 0
+  if(nrow(DT) == 0) res = res[FALSE]
 
   return(res)
 
