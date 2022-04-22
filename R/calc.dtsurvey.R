@@ -41,6 +41,12 @@ calc.dtsurvey = function(ph.data,
     stopifnot('`where` does not resolve to a logical' = is.logical(r))
     ph.data = ph.data[r,]
     #do.call(subset, args = list(x = ph.data, subset = e)) an alternative approach
+
+    if(nrow(ph.data) == 0){
+      warning(paste0('Provided `where` statement subsets out all rows : ', capture.output(print(e))))
+    }
+
+
   }
 
   #validate other inputs
@@ -101,6 +107,11 @@ calc.dtsurvey = function(ph.data,
       wins = seq(min(times), max(times - win + 1))
       wins = lapply(wins, function(x) seq(x, x + win - 1))
       usewins = T
+    }else{
+      wins = 1
+      sub_i = TRUE
+      usewins = F
+      # warning('Because the `where` condition removed all rows, windowing is ignored')
     }
   }else{
     wins = 1
@@ -146,6 +157,9 @@ calc.dtsurvey = function(ph.data,
 #' see the help/documentation for calc and/or smeanto better understand the inputs
 #' @noRd
 compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, time_var, time_format, per = 1, window = FALSE){
+
+
+  # if(nrow(DT) == 0) warning('No valid rows to compute on given `where` and `win` conditions')
 
 
   #global variables used by data.table declared as NULL here to play nice with devtools::check()
@@ -335,7 +349,13 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
 
     }else{
       r1m = NULL
-      res[, c('mean', 'mean_se', 'mean_lower', 'mean_upper') := rbindlist(mean)]
+      if(nrow(res) == 0){
+        res[, mean := NULL]
+        res[, c('mean', 'mean_se', 'mean_lower', 'mean_upper') := NA_real_]
+      }else{
+        res[, c('mean', 'mean_se', 'mean_lower', 'mean_upper') := rbindlist(mean)]
+
+      }
     }
   }
 
@@ -347,7 +367,13 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
 
     }else{
       r1t = NULL
-      res[, c('total', 'total_se', 'total_lower', 'total_upper') := rbindlist(total)]
+      if(nrow(res)==0){
+        res[, total := NULL]
+        res[, c('total', 'total_se', 'total_lower', 'total_upper') := NA_real_]
+      }else{
+        res[, c('total', 'total_se', 'total_lower', 'total_upper') := rbindlist(total)]
+
+      }
     }
 
   }
@@ -400,6 +426,9 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
 
 
   if(!is.null(time_var)) data.table::setnames(res, 'time', time_var)
+
+  #make 0 row if ph.data is 0
+  if(nrow(DT) == 0) res = res[FALSE]
 
   return(res)
 
