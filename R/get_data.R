@@ -75,6 +75,7 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_
 
   #identify invalid columns
   if(!is.null(cols) && !all(is.na(cols))){
+    cols = tolower(cols)
     invalid.cols <- setdiff(cols, names(dat))
     if(length(invalid.cols) == length(cols)){stop("HYS data cannot be extracted because no valid column names have been submitted. To get all columns, use the argument 'cols = NA'")}
     if(length(invalid.cols) > 0){message(paste0("The following column names do not exist in the HYS data and have not be extracted: ", paste0(invalid.cols, collapse = ", ")))}
