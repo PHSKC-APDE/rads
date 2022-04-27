@@ -8,7 +8,8 @@ get_data_hys(
   cols = NULL,
   year = c(2021),
   weight_variable = "wt_sex_grade_kc",
-  kingco = TRUE
+  kingco = TRUE,
+  version = "best"
 )
 }
 \arguments{
@@ -20,9 +21,11 @@ See \code{\link{list_dataset_columns}} for more information on which columns are
 \item{weight_variable}{Character vector of length 1. Identifies which weight column}
 
 \item{kingco}{logical. Return dataset for analyses in King County only. The only option}
+
+\item{version}{version of the HYS dataset to pull. Defaults to best. Don't change unless you know what you are doing.}
 }
 \value{
-dataset either in data.table (adminstrative data) or svy_tbl (survey data) for further analysis/tabulation
+dataset either in data.table (administrative data) or svy_tbl (survey data) for further analysis/tabulation
 }
 \description{
 Get HYS microdata from storage.
@@ -30,6 +33,6 @@ Get HYS microdata from storage.
 \examples{
 
 \dontrun{
- get_data_hys(cols = NULL, year = c(2016, 2018), weight_variable = 'kcfinalwt')
+ get_data_hys(cols = NULL, year = c(2016, 2018), weight_variable = 'wt_sex_grade_kc')
 }
 }

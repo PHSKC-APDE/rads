@@ -47,8 +47,8 @@ get_data <- function(dataset, cols = NULL, year = 2018, ...){
 #' @param year Numeric vector. Identifies which years of data should be pulled
 #' @param weight_variable Character vector of length 1. Identifies which weight column
 #' @param kingco logical. Return dataset for analyses in King County only. The only option
-#'
-#' @return dataset either in data.table (adminstrative data) or svy_tbl (survey data) for further analysis/tabulation
+#' @param version version of the HYS dataset to pull. Defaults to best. Don't change unless you know what you are doing.
+#' @return dataset either in data.table (administrative data) or svy_tbl (survey data) for further analysis/tabulation
 #'
 #' @import dtsurvey
 #' @importFrom data.table ":=" .I
@@ -57,14 +57,14 @@ get_data <- function(dataset, cols = NULL, year = 2018, ...){
 #' @examples
 #'
 #' \dontrun{
-#'  get_data_hys(cols = NULL, year = c(2016, 2018), weight_variable = 'kcfinalwt')
+#'  get_data_hys(cols = NULL, year = c(2016, 2018), weight_variable = 'wt_sex_grade_kc')
 #' }
-get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_grade_kc', kingco = TRUE){
+get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_grade_kc', kingco = TRUE, version = 'best'){
 
   stopifnot(all(year %in% c(seq(2004,2018,2), 2021)))
 
   #J:\HYSdata\hys\2021\v1
-  fps = file.path('//PHDATA01/EPE_Data/HYSdata/hys/2021/v1/', paste0('hys_ar_', year, '.rds'))
+  fps = file.path('//PHDATA01/EPE_Data/HYSdata/hys/2021/',version, '/', paste0('hys_ar_', year, '.rds'))
   dat <- data.table::rbindlist(lapply(fps, readRDS), use.names = T, fill = T)
 
   #prep the dataset
