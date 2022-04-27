@@ -9,7 +9,8 @@ get_data_hys(
   year = c(2021),
   weight_variable = "wt_sex_grade_kc",
   kingco = TRUE,
-  version = "best"
+  version = "best",
+  ar = TRUE
 )
 }
 \arguments{
@@ -23,6 +24,8 @@ See \code{\link{list_dataset_columns}} for more information on which columns are
 \item{kingco}{logical. Return dataset for analyses in King County only. The only option}
 
 \item{version}{version of the HYS dataset to pull. Defaults to best. Don't change unless you know what you are doing.}
+
+\item{ar}{logical. Whether to pull from the analytic ready dataset. FALSE will load stage data}
 }
 \value{
 dataset either in data.table (administrative data) or svy_tbl (survey data) for further analysis/tabulation

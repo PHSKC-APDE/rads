@@ -48,6 +48,7 @@ get_data <- function(dataset, cols = NULL, year = 2018, ...){
 #' @param weight_variable Character vector of length 1. Identifies which weight column
 #' @param kingco logical. Return dataset for analyses in King County only. The only option
 #' @param version version of the HYS dataset to pull. Defaults to best. Don't change unless you know what you are doing.
+#' @param ar logical. Whether to pull from the analytic ready dataset. FALSE will load stage data
 #' @return dataset either in data.table (administrative data) or svy_tbl (survey data) for further analysis/tabulation
 #'
 #' @import dtsurvey
@@ -59,21 +60,18 @@ get_data <- function(dataset, cols = NULL, year = 2018, ...){
 #' \dontrun{
 #'  get_data_hys(cols = NULL, year = c(2016, 2018), weight_variable = 'wt_sex_grade_kc')
 #' }
-get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_grade_kc', kingco = TRUE, version = 'best'){
+get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_grade_kc', kingco = TRUE, version = 'best', ar = TRUE){
 
   stopifnot(all(year %in% c(seq(2004,2018,2), 2021)))
 
   #J:\HYSdata\hys\2021\v1
-  fps = file.path('//PHDATA01/EPE_Data/HYSdata/hys/2021/',version, '/', paste0('hys_ar_', year, '.rds'))
+  if(ar){
+    fps = file.path('//PHDATA01/EPE_Data/HYSdata/hys/2021/',version, '/', paste0('hys_ar_', year, '.rds'))
+  }else{
+    fps = file.path('//PHDATA01/EPE_Data/HYSdata/hys/2021/',version, '/', paste0('hys_stage_', year, '.rds'))
+  }
+
   dat <- data.table::rbindlist(lapply(fps, readRDS), use.names = T, fill = T)
-
-  #prep the dataset
-  dat[is.na(psu), psu := -1 * .I]
-  dat[is.na(get(weight_variable)), (weight_variable) := 0]
-
-  #subset by year
-  yvar = year
-  dat = dat[chi_year %in% yvar, ]
 
   #identify invalid columns
   if(!is.null(cols) && !all(is.na(cols))){
@@ -86,13 +84,26 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_
   }
 
   #create the survey object
-  if(kingco == T){
+  if(kingco == TRUE){
     dat <- dat[chi_geo_kc == 1,]
   }else{
     warning('Survey will be set to self-weighting so that rows outside of KC do not get dropped for having weights of 0')
     dat[, weight1 := 1]
     weight_variable = 'weight1'
   }
+  if(!ar){
+    warning('Requested staged data. This dataset does not have weights. Survey set to be self weighting')
+    dat[, weight1 := 1]
+    weight_variable = 'weight1'
+  }
+
+  #prep the dataset
+  dat[is.na(psu), psu := -1 * .I]
+  dat[is.na(get(weight_variable)), (weight_variable) := 0]
+
+  #subset by year
+  yvar = year
+  dat = dat[chi_year %in% yvar, ]
 
   dat = dat[get(weight_variable)>0]
   svy <- dtsurvey::dtsurvey(dat, psu = 'psu', strata = 'chi_year', weight = weight_variable, nest = T)
