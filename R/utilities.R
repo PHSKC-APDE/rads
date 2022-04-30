@@ -828,6 +828,7 @@ list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
 
   # The below code would ideally be replaced by a single call to a generic interface configured by the user
   if(dat == "birth") {
+    message("Column names for birth data are taken from all available years.")
     # get list of all colnames from SQL
     con <- odbc::dbConnect(odbc::odbc(),
                            Driver = "SQL Server",
