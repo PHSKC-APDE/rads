@@ -816,12 +816,12 @@ list_apde_data <- function(){
 #' \dontrun{
 #'  list_dataset_columns('hys', T)
 #' }
-list_dataset_columns <- function(dataset, years = NULL, analytic_only = F){
+list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
 
   # create a negate function of %in% for readability
   '%!in%' = Negate('%in%')
 
-  if(dataset %!in% list_apde_data) {
+  if(dataset %!in% list_apde_data()) {
     dat = match.arg(dataset, list_apde_data())
     warning(paste0('non-exact database chosent. Attempting best match using "', dat,'" instead of "', dataset, '".'))
   }
@@ -835,13 +835,17 @@ list_dataset_columns <- function(dataset, years = NULL, analytic_only = F){
                            Database = "PH_APDEStore")
     var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[final].[bir_wa]"))
   } else if(dat =="hys") {
-    if(is.null(year)) {
-      warning(paste0("invalid or no year(s) indicated. Using '2021'"))
+    if(!all(year %in% c(seq(2004,2018,2), 2021))) {
+      warning(paste0("invalid year(s) indicated for Health Youth Survey data. Using '2021'. Please see department documentation for details on currently correct years."))
+      year <- 2021
     }
+    fps = file.path('//PHDATA01/EPE_Data/HYSdata/hys/2021/v1/', paste0('hys_ar_', year, '.rds'))
+    dat <- data.table::rbindlist(lapply(fps, readRDS), use.names = T, fill = T)
+    var.names <- names(dat)
 
   } else {
-    warning(paste0('list_dataset_columns functionality for dataset "', dat, '" not currently available/implemented'))
-    #return(data.frame(variable_name = '', analytic_ready = 'Sure. Why not?'))
+    stop(paste0('list_dataset_columns functionality for dataset "', dat, '" not currently available/implemented'))
+
   }
 
   #identify "analytics ready" variables
