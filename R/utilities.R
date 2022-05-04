@@ -820,43 +820,46 @@ list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
 
   # create a negate function of %in% for readability
   '%!in%' = Negate('%in%')
+  opts = c('birth', 'hys')
 
-  if(dataset %!in% list_apde_data()) {
-    dat = match.arg(dataset, list_apde_data())
-    warning(paste0('non-exact database chosent. Attempting best match using "', dat,'" instead of "', dataset, '".'))
+  stopifnot('dataset must be a character vector of length 1' = length(dataset) == 1)
+  if(dataset %!in% opts){
+    stop(paste0('list_dataset_columns functionality for dataset "', dataset, '" not currently available/implemented. ',
+                "Only the following datasets are implemented: ", paste(opts, collapse = ', ')))
+
   }
 
+
   # The below code would ideally be replaced by a single call to a generic interface configured by the user
-  if(dat == "birth") {
-    message("Column names for birth data are taken from all available years.")
+  if(dataset == "birth") {
+    #message("Column names for birth data are taken from all available years.")
     # get list of all colnames from SQL
     con <- odbc::dbConnect(odbc::odbc(),
                            Driver = getOption('rads.odbc_version'),
                            Server = "KCITSQLPRPDBM50",
                            Database = "PH_APDEStore")
     var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[final].[bir_wa]"))
-  } else if(dat =="hys") {
+    ar = rep(TRUE, length(var.names))
+  } else if(dataset =="hys") {
     if(!all(year %in% c(seq(2004,2018,2), 2021))) {
-      warning(paste0("invalid year(s) indicated for Health Youth Survey data. Using '2021'. Please see department documentation for details on currently correct years."))
-      year <- 2021
+      stop(paste0("invalid year(s) indicated for Health Youth Survey data. Please see department documentation for details on currently correct years."))
+      #year <- 2021
     }
-    fps = file.path('//PHDATA01/EPE_Data/HYSdata/hys/2021/v1/', paste0('hys_ar_', year, '.rds'))
-    dat <- data.table::rbindlist(lapply(fps, readRDS), use.names = T, fill = T)
-    var.names <- names(dat)
+    dat <- suppressWarnings(get_data_hys(year = year, ar = T))
+    var.names.ar <- names(dat)
 
-  } else {
-    stop(paste0('list_dataset_columns functionality for dataset "', dat, '" not currently available/implemented'))
+    if(!analytic_only){
+      var.names.stg = names(suppressWarnings(get_data_hys(year = year, ar = FALSE)))
+    } else{
+      var.names.stg = NULL
+    }
+
+    var.names = c(var.names.ar, var.names.stg)
+    ar = c(rep(TRUE, length(var.names.ar)), rep(FALSE, length(var.names.stg)))
 
   }
 
-  #identify "analytics ready" variables
-  analytics.ready <- startsWith(var.names,"chi_")
-  #make a data.table fitting output specification
-  Variable_Descriptions <- data.table::data.table(var.names, analytics.ready)
-  #filter by analytics only if flag is set
-  if(analytic_only){
-    Variable_Descriptions <- Variable_Descriptions[analytics.ready == TRUE]
-  }
+  Variable_Descriptions = unique(data.frame(var.names = var.names, analytic_ready = ar))
 
   return(Variable_Descriptions)
 
