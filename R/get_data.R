@@ -139,7 +139,11 @@ get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
     con <- odbc::dbConnect(odbc::odbc(),
                            Driver = getOption('rads.odbc_version'),
                            Server = "KCITSQLPRPDBM50",
-                           Database = "PH_APDEStore")
+                           Database = "PH_APDEStore",
+                           Encrypt = 'yes',
+                           TrustServerCertificate = 'yes',
+                           Authentication = 'ActiveDirectoryIntegrated',
+                           encoding = 'latin1')
     birth.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[final].[bir_wa]"))
     birth.years <- unique(DBI::dbGetQuery(con, "SELECT DISTINCT chi_year FROM [PH_APDEStore].[final].[bir_wa]")$chi_year)
 

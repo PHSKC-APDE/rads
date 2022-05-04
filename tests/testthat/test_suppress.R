@@ -117,3 +117,4 @@ dt7 <- suppress(dt, secondary_where = team %like% '^a|^b|^c|^d')
 test_that('Check that the same results are returned whether or not quoted',{
   expect_identical( dt6, dt7)
 })
+

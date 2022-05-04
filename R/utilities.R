@@ -806,6 +806,7 @@ list_apde_data <- function(){
 #' List columns available for analysis for a particular dataset in RADS
 #'
 #' @param dataset Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options
+#' @param year Year of dataset to check.
 #' @param analytic_only logical. Controls whether columns outside the analytic dataset should be returned.
 #'
 #'
@@ -829,15 +830,18 @@ list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
 
   }
 
-
   # The below code would ideally be replaced by a single call to a generic interface configured by the user
   if(dataset == "birth") {
     #message("Column names for birth data are taken from all available years.")
     # get list of all colnames from SQL
     con <- odbc::dbConnect(odbc::odbc(),
-                           Driver = getOption('rads.odbc_version'),
-                           Server = "KCITSQLPRPDBM50",
-                           Database = "PH_APDEStore")
+                           driver = getOption('rads.odbc_version'),
+                           server = "KCITSQLPRPDBM50",
+                           database = "PH_APDEStore",
+                           Encrypt = 'yes',
+                           TrustServerCertificate = 'yes',
+                           Authentication = 'ActiveDirectoryIntegrated',
+                           encoding = 'latin1')
     var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[final].[bir_wa]"))
     ar = rep(TRUE, length(var.names))
   } else if(dataset =="hys") {

@@ -403,7 +403,7 @@ test_that('Where elimiates everything', {
 
 
   expect_warning(calc(sur, what = 'api00', where = yyy == -1, metrics = c('mean'), proportion = T, ci = .95, time_var = 'yyy', win = 1),
-                 'No valid rows to compute')
+                 'statement subsets out all rows')
 
 
 })
