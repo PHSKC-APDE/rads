@@ -820,6 +820,13 @@ list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
 
   # create a negate function of %in% for readability
   '%!in%' = Negate('%in%')
+  opts = c('birth', 'hys')
+
+  if(dataset %!in% opts){
+    stop(paste0('list_dataset_columns functionality for dataset "', dataset, '" not currently available/implemented. ',
+                "Only the following datasets are implemented: ", paste(opts, collapse = ', ')))
+
+  }
 
   dataset = match.arg(dataset, c('birth', 'hys'))
 
@@ -850,8 +857,6 @@ list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
     var.names = c(var.names.ar, var.names.stg)
     ar = c(rep(TRUE, length(var.names.ar)), rep(FALSE, length(var.names.stg)))
 
-  } else {
-    stop(paste0('list_dataset_columns functionality for dataset "', dat, '" not currently available/implemented'))
   }
 
   Variable_Descriptions = unique(data.frame(var.names = var.names, analytic_ready = ar))
