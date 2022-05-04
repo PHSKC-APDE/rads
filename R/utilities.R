@@ -831,7 +831,7 @@ list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
     message("Column names for birth data are taken from all available years.")
     # get list of all colnames from SQL
     con <- odbc::dbConnect(odbc::odbc(),
-                           Driver = "SQL Server",
+                           Driver = getOption('rads.odbc_version'),
                            Server = "KCITSQLPRPDBM50",
                            Database = "PH_APDEStore")
     var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[final].[bir_wa]"))

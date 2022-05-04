@@ -128,7 +128,7 @@ get_population <- function(kingco = T,
       # check whether keyring credentials are correct / up to date ----
       if(server == FALSE){
         con <- try(DBI::dbConnect(odbc::odbc(),
-                                      driver ='ODBC Driver 17 for SQL Server',
+                                      driver = getOption('rads.odbc_version'),
                                       server = 'kcitazrhpasqlprp16.azds.kingcounty.gov',
                                       database = 'hhs_analytics_workspace',
                                       uid = keyring::key_list(mykey)[["username"]],
@@ -145,7 +145,7 @@ get_population <- function(kingco = T,
                        'Note that the pop-up may be behind your Rstudio session. \n',
                        'You will need to use your two factor authentication app to confirm your KC identity.'))
         con <- DBI::dbConnect(odbc::odbc(),
-                              driver = "ODBC Driver 17 for SQL Server",
+                              driver = getOption('rads.odbc_version'),
                               server = "kcitazrhpasqlprp16.azds.kingcounty.gov",
                               database = "hhs_analytics_workspace",
                               uid = keyring::key_list(mykey)[["username"]],

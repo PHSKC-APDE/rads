@@ -137,7 +137,7 @@ get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
 
   # get list of all colnames from SQL
     con <- odbc::dbConnect(odbc::odbc(),
-                           Driver = "SQL Server",
+                           Driver = getOption('rads.odbc_version'),
                            Server = "KCITSQLPRPDBM50",
                            Database = "PH_APDEStore")
     birth.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[final].[bir_wa]"))
