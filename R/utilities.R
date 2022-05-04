@@ -822,13 +822,13 @@ list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
   '%!in%' = Negate('%in%')
   opts = c('birth', 'hys')
 
+  stopifnot('dataset must be a character vector of length 1' = length(dataset) == 1)
   if(dataset %!in% opts){
     stop(paste0('list_dataset_columns functionality for dataset "', dataset, '" not currently available/implemented. ',
                 "Only the following datasets are implemented: ", paste(opts, collapse = ', ')))
 
   }
 
-  dataset = match.arg(dataset, c('birth', 'hys'))
 
   # The below code would ideally be replaced by a single call to a generic interface configured by the user
   if(dataset == "birth") {
