@@ -821,10 +821,7 @@ list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
   # create a negate function of %in% for readability
   '%!in%' = Negate('%in%')
 
-  if(dataset %!in% list_apde_data()) {
-    dat = match.arg(dataset, list_apde_data())
-    warning(paste0('non-exact dataset chosen. Attempting best match using "', dat,'" instead of "', dataset, '".'))
-  }
+  dataset = match.arg(dataset, c('birth', 'hys'))
 
   # The below code would ideally be replaced by a single call to a generic interface configured by the user
   if(dataset == "birth") {
