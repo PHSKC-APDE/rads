@@ -1,8 +1,8 @@
 library('testthat')
 library('rads')
-library('survey')
 library('data.table')
 library('dtsurvey')
+library('survey')
 set.seed(98104)
 
 

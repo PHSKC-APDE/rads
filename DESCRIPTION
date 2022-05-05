@@ -14,15 +14,14 @@ Imports:
     DBI (>= 1.1.0),
     dtsurvey (>= 0.0.1.5),
     glue (>= 1.6.1),
-    haven (>= 2.2.0),
     keyring (>= 1.2.0),
     methods,
     odbc (>= 1.2.2),
     rads.data (>= 1.0.1),
     stats,
-    survey (>= 4.0),
     utf8 (>= 1.1.4),
-    yaml (>= 2.2.1)
+    yaml (>= 2.2.1),
+    utils
 Remotes:
     github::PHSKC-APDE/rads.data, github::PHSKC-APDE/dtsurvey
 Suggests: 
@@ -31,4 +30,5 @@ Suggests:
     rmarkdown, 
     markdown,
     testthat,
+    survey (>= 4.0)
 VignetteBuilder: knitr
