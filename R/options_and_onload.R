@@ -11,8 +11,7 @@
   }else{
     warning('No usable ODBC driver detected. To use functions requiring a database connection please install an ODBC driver: https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15')
   }
-  #set some options
-  ov = "ODBC Driver 17 for SQL Server"
+
   options(
     rads.odbc_version = ov
   )
