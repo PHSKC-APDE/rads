@@ -112,7 +112,7 @@ suppress <- function(sup_data = NULL,
 
   #apply primary suppression ----
       if("suppression" %in% names(temp.dt)){temp.dt[, suppression := as.character(suppression)]}
-      temp.dt[numerator %in% suppress_range[1]:suppress_range[2], suppression := "^"]
+      temp.dt[numerator >= suppress_range[1] & numerator <= suppress_range[2], suppression := "^"]
 
   #apply secondary suppression ----
       if(secondary==T){
