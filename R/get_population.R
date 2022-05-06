@@ -88,8 +88,9 @@ get_population <- function(kingco = T,
                            mykey = "hhsaw"){
 
     # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-      r_type <- short <- race <- name <- race_eth <- gender <- age <- geo_id <- pop <- geo_id_blk <- region <- hra <-
-        server <- varname <- code <- label <- `.` <- NULL
+    r_type <- short <- race <- name <- race_eth <- gender <- age <- geo_id <- pop <- geo_id_blk <- region <- hra <-
+    server <- varname <- code <- label <- `.` <- cou_id <- cou_name <- vid <- lgd_id <- lgd_name <- scd_id <-
+    scd_name <- NULL
 
     # Logical for whether running on a server ----
       server <- grepl('server', tolower(Sys.info()['release']))
