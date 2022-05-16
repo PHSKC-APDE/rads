@@ -795,7 +795,7 @@ get_ref_pop <- function(ref_name = NULL){
 #' }
 list_apde_data <- function(){
 
-  ret <- c('hys', 'birth', 'bsk')
+  ret <- c('hys', 'birth')
 
   return(ret)
 
