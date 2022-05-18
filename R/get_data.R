@@ -62,6 +62,8 @@ get_data <- function(dataset, cols = NULL, year = 2018, ...){
 #' }
 get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_grade_kc', kingco = TRUE, version = 'best', ar = TRUE){
 
+  chi_geo_kc <- weight1 <- psu <- chi_year <- NULL
+
   stopifnot(all(year %in% c(seq(2004,2018,2), 2021)))
 
   #J:\HYSdata\hys\2021\v1
