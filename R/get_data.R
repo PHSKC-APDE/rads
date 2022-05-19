@@ -47,8 +47,9 @@ get_data <- function(dataset, cols = NULL, year = 2018, ...){
 #' @param year Numeric vector. Identifies which years of data should be pulled
 #' @param weight_variable Character vector of length 1. Identifies which weight column
 #' @param kingco logical. Return dataset for analyses in King County only. The only option
-#'
-#' @return dataset either in data.table (adminstrative data) or svy_tbl (survey data) for further analysis/tabulation
+#' @param version version of the HYS dataset to pull. Defaults to best. Don't change unless you know what you are doing.
+#' @param ar logical. Whether to pull from the analytic ready dataset. FALSE will load stage data
+#' @return dataset either in data.table (administrative data) or svy_tbl (survey data) for further analysis/tabulation
 #'
 #' @import dtsurvey
 #' @importFrom data.table ":=" .I
@@ -57,26 +58,26 @@ get_data <- function(dataset, cols = NULL, year = 2018, ...){
 #' @examples
 #'
 #' \dontrun{
-#'  get_data_hys(cols = NULL, year = c(2016, 2018), weight_variable = 'kcfinalwt')
+#'  get_data_hys(cols = NULL, year = c(2016, 2018), weight_variable = 'wt_sex_grade_kc')
 #' }
-get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_grade_kc', kingco = TRUE){
+get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_grade_kc', kingco = TRUE, version = 'best', ar = TRUE){
+
+  chi_geo_kc <- weight1 <- psu <- chi_year <- NULL
 
   stopifnot(all(year %in% c(seq(2004,2018,2), 2021)))
 
   #J:\HYSdata\hys\2021\v1
-  fps = file.path('//PHDATA01/EPE_Data/HYSdata/hys/2021/v1/', paste0('hys_ar_', year, '.rds'))
+  if(ar){
+    fps = file.path('//PHDATA01/EPE_Data/HYSdata/hys/2021/',version, '/', paste0('hys_ar_', year, '.rds'))
+  }else{
+    fps = file.path('//PHDATA01/EPE_Data/HYSdata/hys/2021/',version, '/', paste0('hys_stage_', year, '.rds'))
+  }
+
   dat <- data.table::rbindlist(lapply(fps, readRDS), use.names = T, fill = T)
-
-  #prep the dataset
-  dat[is.na(psu), psu := -1 * .I]
-  dat[is.na(get(weight_variable)), (weight_variable) := 0]
-
-  #subset by year
-  yvar = year
-  dat = dat[chi_year %in% yvar, ]
 
   #identify invalid columns
   if(!is.null(cols) && !all(is.na(cols))){
+    cols = tolower(cols)
     invalid.cols <- setdiff(cols, names(dat))
     if(length(invalid.cols) == length(cols)){stop("HYS data cannot be extracted because no valid column names have been submitted. To get all columns, use the argument 'cols = NA'")}
     if(length(invalid.cols) > 0){message(paste0("The following column names do not exist in the HYS data and have not be extracted: ", paste0(invalid.cols, collapse = ", ")))}
@@ -86,13 +87,26 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_
   }
 
   #create the survey object
-  if(kingco == T){
+  if(kingco == TRUE){
     dat <- dat[chi_geo_kc == 1,]
   }else{
     warning('Survey will be set to self-weighting so that rows outside of KC do not get dropped for having weights of 0')
     dat[, weight1 := 1]
     weight_variable = 'weight1'
   }
+  if(!ar){
+    warning('Requested staged data. This dataset does not have weights. Survey set to be self weighting')
+    dat[, weight1 := 1]
+    weight_variable = 'weight1'
+  }
+
+  #prep the dataset
+  dat[is.na(psu), psu := -1 * .I]
+  dat[is.na(get(weight_variable)), (weight_variable) := 0]
+
+  #subset by year
+  yvar = year
+  dat = dat[chi_year %in% yvar, ]
 
   dat = dat[get(weight_variable)>0]
   svy <- dtsurvey::dtsurvey(dat, psu = 'psu', strata = 'chi_year', weight = weight_variable, nest = T)
@@ -125,9 +139,13 @@ get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
 
   # get list of all colnames from SQL
     con <- odbc::dbConnect(odbc::odbc(),
-                           Driver = "SQL Server",
+                           Driver = getOption('rads.odbc_version'),
                            Server = "KCITSQLPRPDBM50",
-                           Database = "PH_APDEStore")
+                           Database = "PH_APDEStore",
+                           Encrypt = 'yes',
+                           TrustServerCertificate = 'yes',
+                           Authentication = 'ActiveDirectoryIntegrated',
+                           encoding = 'latin1')
     birth.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[final].[bir_wa]"))
     birth.years <- unique(DBI::dbGetQuery(con, "SELECT DISTINCT chi_year FROM [PH_APDEStore].[final].[bir_wa]")$chi_year)
 

@@ -1,6 +1,7 @@
 #' @rdname calc
 #' @export
 #' @importFrom stats median na.omit
+#' @importFrom utils capture.output
 calc.dtsurvey = function(ph.data,
                          what,
                          where, #this is a change from the main calc framework
@@ -43,7 +44,7 @@ calc.dtsurvey = function(ph.data,
     #do.call(subset, args = list(x = ph.data, subset = e)) an alternative approach
 
     if(nrow(ph.data) == 0){
-      warning(paste0('Provided `where` statement subsets out all rows : ', capture.output(print(e))))
+      warning(paste0('Provided `where` statement subsets out all rows : ', utils::capture.output(print(e))))
     }
 
 

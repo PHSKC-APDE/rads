@@ -806,6 +806,7 @@ list_apde_data <- function(){
 #' List columns available for analysis for a particular dataset in RADS
 #'
 #' @param dataset Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options
+#' @param year Year of dataset to check.
 #' @param analytic_only logical. Controls whether columns outside the analytic dataset should be returned.
 #'
 #'
@@ -816,11 +817,56 @@ list_apde_data <- function(){
 #' \dontrun{
 #'  list_dataset_columns('hys', T)
 #' }
-list_dataset_columns <- function(dataset, analytic_only = F){
-  dat = match.arg(dataset, list_apde_data())
+list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
 
-  warning('list_dataset_columns not currently available/implemented')
-  return(data.frame(variable_name = '', analytic_ready = 'Sure. Why not?'))
+  # create a negate function of %in% for readability
+  '%!in%' = Negate('%in%')
+  opts = c('birth', 'hys')
+
+  stopifnot('dataset must be a character vector of length 1' = length(dataset) == 1)
+  if(dataset %!in% opts){
+    stop(paste0('list_dataset_columns functionality for dataset "', dataset, '" not currently available/implemented. ',
+                "Only the following datasets are implemented: ", paste(opts, collapse = ', ')))
+
+  }
+
+  # The below code would ideally be replaced by a single call to a generic interface configured by the user
+  if(dataset == "birth") {
+    #message("Column names for birth data are taken from all available years.")
+    # get list of all colnames from SQL
+    con <- odbc::dbConnect(odbc::odbc(),
+                           driver = getOption('rads.odbc_version'),
+                           server = "KCITSQLPRPDBM50",
+                           database = "PH_APDEStore",
+                           Encrypt = 'yes',
+                           TrustServerCertificate = 'yes',
+                           Authentication = 'ActiveDirectoryIntegrated',
+                           encoding = 'latin1')
+    var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[final].[bir_wa]"))
+    ar = rep(TRUE, length(var.names))
+  } else if(dataset =="hys") {
+    if(!all(year %in% c(seq(2004,2018,2), 2021))) {
+      stop(paste0("invalid year(s) indicated for Health Youth Survey data. Please see department documentation for details on currently correct years."))
+      #year <- 2021
+    }
+    dat <- suppressWarnings(get_data_hys(year = year, ar = T))
+    var.names.ar <- names(dat)
+
+    if(!analytic_only){
+      var.names.stg = names(suppressWarnings(get_data_hys(year = year, ar = FALSE)))
+    } else{
+      var.names.stg = NULL
+    }
+
+    var.names = c(var.names.ar, var.names.stg)
+    ar = c(rep(TRUE, length(var.names.ar)), rep(FALSE, length(var.names.stg)))
+
+  }
+
+  Variable_Descriptions = unique(data.frame(var.names = var.names, analytic_ready = ar))
+
+  return(Variable_Descriptions)
+
 }
 
 
