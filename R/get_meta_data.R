@@ -13,13 +13,15 @@
 #'  get_meta_data(dataset = "hys")
 #' }
 get_meta_data <- function(data_sources = NA, variable_names = NA){
+  #load available metadata table. Expand to reference to configuration call in future
+  DT <- as.data.table(rads:::metadata)
 
-  DT <- data.table::as.data.table(rads:::metadata)
   if(!is.na(data_sources)[1] & !is.na(variable_names)[1]) {
     DT <- DT[data_source %in% data_sources & variable_name %in% variable_names]
-  } else if (!is.na(data_sources)) {
-
-  } else if (!is.na(variable_names)) {
+  } else if (!is.na(data_sources)[1]) {
+    DT <- DT[data_source %in% data_sources]
+  } else if (!is.na(variable_names)[1]) {
+    DT <- DT[variable_name %in% variable_names]
   }
   return(DT)
 }
