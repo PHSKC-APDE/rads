@@ -31,14 +31,97 @@
 # chi_tableau_read_output header
 
 APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabulation = TRUE, chi_est = NULL ){
+  meta <- rads::get_meta_data("hys")
+
+  #temp reformat to originating script
+  names(meta) <- c("cat", "group", "group_alias", "varname", "ng", "gval", "data_source")
+  meta$data_source <- NULL
+  meta$good <- TRUE
+
+
+  #list of single variables to calculate against that needs to be fed
+  vars <- c("sex_nocondom_lsttime",
+            "drug_use_bin_30days",
+            "alc_binge_bin_30days",
+            "mj_drive_ride_bin_30days",
+            "tob_ecig_bin_30days",
+            "abusive_adult",
+            "junk_soda_bin_30days",
+            "dental_care_bin",
+            "viol_weap_school",
+            "abusive_intimate_partner",
+            "mhlth_depressed_lstyr",
+            "no_bkfast_tdy",
+            "supportive_adult",
+            "mj_use_bin_30days",
+            "fruit_veg_bin_not5perday",
+            "phys_60min7days_bin",
+            "phys_pe5days_bin",
+            "screen_ovr_3hrs_bin",
+            "safe_school_bin",
+            "good_grades_bin",
+            "tob_2ndhand_bin",
+            "mhlth_suicideidea_lstyr",
+            "tob_cigar_bin_30days",
+            "tob_hookah_bin_30days",
+            "tob_cig_bin_30days",
+            "tob_anytob_bin_30days",
+            "bmi_obese_bin",
+            "bmi_ovrwght_only_bin" )
+
+  #list of single variables to calculate against
+  bys <- c("chi_race_aic_aian",
+           "chi_race_aic_cambodian",
+           "chi_race_aic_chinese",
+           "chi_race_aic_filipino",
+           "chi_race_aic_indian",
+           "chi_race_aic_japanese",
+           "chi_race_aic_korean",
+           "chi_race_aic_asianother",
+           "chi_race_aic_vietnamese",
+           "chi_race_aic_asian",
+           "chi_race_aic_black",
+           "chi_grade_orig",
+           "chi_race_aic_his",
+           "chi_race_aic_nhpi",
+           "chi_race_aic_oth",
+           "chi_race_eth8",
+           "chi_sex",
+           "chi_sexorien_3",
+           "chi_race_aic_wht",
+           "chi_geo_region",
+           "chi_geo_kc")
+
+  #list of variables to create time trend information against
+  ttbys = c("chi_race_aic_aian",
+            "chi_race_aic_asian",
+            "chi_race_aic_black",
+            "chi_grade_orig",
+            "chi_race_aic_his",
+            "chi_race_aic_nhpi",
+            "chi_race_aic_oth",
+            "chi_race_eth8",
+            "chi_sex",
+            "chi_race_aic_wht",
+            "chi_geo_region",
+            "chi_geo_kc"  )
+
 
   #create crosstabs to be calculated. This uses all variables except geographies and crosstab on their own identity
   ctabs = CJ(cat1_varname = bys, cat2_varname = bys)
   ctabs = ctabs[cat1_varname != cat2_varname & cat1_varname != 'chi_geo_kc' & cat2_varname != 'chi_geo_kc']
 
+  #hard load data for testing script
+  hysinit <- get_data("hys", year = c(seq(2004,2018,2),2021),ar =T)
+  hys = hysinit[chi_grade_orig %in% c(8, 10, 12) & chi_geo_kc == 1 & !is.na(chi_sex)]
+  hys = dtsurvey(hys[!is.na(wt_sex_grade_kc), -('_id')], psu = 'psu', strata = 'chi_grade_orig', weight = "wt_sex_grade_kc")
+
+
+
+
   #create function to calculate the various tables desired
   domath = function(hys, v, bys, ctabs, ttbys, meta){
-
+    print(v)
     ##Identify years for current update of the system
     #what two cycles do the data represent (even if in some combos this is not true)?
     grp_yrs = unique(hys[!is.na(get(v)), .SD, .SDcols = c(v, 'chi_year')][, chi_year])
@@ -174,7 +257,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     return(res)
   }
 
-  FormatedAnalysis = rbindlist(future_lapply(vars, function(v) domath(LineData, v, bys, ctabs, ttbys, meta)))
+  FormatedAnalysis = rbindlist(future.apply::future_lapply(vars, function(v) domath(hys, v, bys, ctabs, ttbys, meta)))
   return(FormatedAnalysis)
 
 }
