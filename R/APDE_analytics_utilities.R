@@ -121,7 +121,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
   #create function to calculate the various tables desired
   domath = function(hys, v, bys, ctabs, ttbys, meta){
-    print(v)
+
     ##Identify years for current update of the system
     #what two cycles do the data represent (even if in some combos this is not true)?
     grp_yrs = unique(hys[!is.na(get(v)), .SD, .SDcols = c(v, 'chi_year')][, chi_year])
@@ -257,8 +257,186 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     return(res)
   }
 
-  FormatedAnalysis = rbindlist(future.apply::future_lapply(vars, function(v) domath(hys, v, bys, ctabs, ttbys, meta)))
+  FormatedAnalysisOriginal = rbindlist(future.apply::future_lapply(vars, function(v) domath(hys, v, bys, ctabs, ttbys, meta)))
+
+
+
+  ########assumptions of an APDE CHI TRO###################
+
+
+  ###############create basic two variable comparison
+
+  #########in function variables
+  data <- hys
+  variables <- vars
+  bivariables <- bys
+  crosstabs <- ctabs
+  meta <- meta
+
+  ##create county wide point estimate of all variable
+  #calculate point estimate
+  for(variable in variables) {
+    ##Identify years of output and generate year tag for TRO format
+    #what two cycles do the data represent (even if in some combos this is not true)?
+    grp_yrs = unique(data[!is.na(get(variables)), .SD, .SDcols = c(variables, 'chi_year')][, chi_year])
+    grp_yrs = grp_yrs[(length(grp_yrs)-1):length(grp_yrs)]
+    #create a human readable description of the data range of the current point estimates
+    gyl = paste(grp_yrs, collapse = ' & ')
+  }
+
+  #receives a data set and a variable name indicating sequence
+  #returns a vector of unique time items in sequence for the variable of interest
+  .find_number_of_indicator_observations <- function(data, ivar, t_var) {
+    data <- as.data.table(data)
+    DT <- data[!is.na(get(ivar)), .SD, .SDcols = c(ivar, t_var)]
+    time_var_list <- unlist(unique(DT[,..t_var]))
+    return(time_var_list)
+
+  }
+
+  APDE_CHI_TRO_crosstabular_analysis <- function(data, indicators, variables1, variables2, binary_variables, expected_series_length = 1) {
+    #failure checks
+    if(nrow(variable1) != nrow(variable2)) { stop("list of crosstabular variables must be symetrical")}
+
+    #preparing output datatable
+    Tableau_Ready_DT <- data.table::data.table("year" = as.character(),
+                                               "indicator_key" = as.character(),
+                                               "result" = as.numeric(),
+                                               "numerator" = as.numeric(),
+                                               "denominator" = as,integer(),
+                                               "se" = as.numeric(),
+                                               "lower_bound" = as.numeric(),
+                                               "upper_bound" = as.numeric(),
+                                               "rse" = as.numeric(),
+                                               "tab" = as.character(),
+                                               "cat1" = as.character(),
+                                               "cat1_group" = as.character(),
+                                               "cat1_varname" = as.character(),
+                                               "cat1_group_alias" = as.character(),
+                                               "cat2" = as.character(),
+                                               "cat2_group" = as.character(),
+                                               "cat2_varname" = as.character(),
+                                               "cat2_group_alias" = as.character(),
+                                               "data_source" = as.character(),
+                                               "run_date" = as.character(),
+                                               "comparison_with_kc" = as.character(),
+                                               "significance" = as.character())
+
+    calculate_a_crosstab <- function(indicator) {
+      rads::calc(data, what = indicator, where =)
+
+    }
+
+    #notes on future https://cran.r-project.org/web/packages/future/vignettes/future-3-topologies.html
+    future.apply::future_lapply()
+    cts = lapply(seq_len(nrow(ctabs)), function(x){
+      by1 = ctabs[x, cat1_varname]
+      by2 = ctabs[x, cat2_varname]
+
+      r= rads::calc(hys, what = v, where = chi_year %in% grp_yrs, by = c(by1, by2), metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T, time_var = 'chi_year')
+
+      #cat1 fixes
+      setnames(r, by1, 'cat1_group') #will need to be updated to something human readable
+      if(any(r[, cat1_group] %in% 1)) r=  r[cat1_group == 1]
+      r[, cat1_varname :=by1]
+      r= r[!is.na(cat1_group)]
+
+      #cat2 fixes
+      setnames(r, by2, 'cat2_group') #will need to be updated to something human readable
+      if(any(r[, cat2_group] %in% 1)) r=  r[cat2_group == 1]
+      r[, cat2_varname :=by2]
+      r= r[!is.na(cat2_group)]
+
+      r[, chi_year := gyl]
+
+      r
+
+
+    })
+    cts = rbindlist(cts)
+    cts[, tab := 'crosstabs']
+
+    #merge on cat information for cat1
+    cts = merge(cts, meta, all.x = T, by.x = c('cat1_varname', 'cat1_group'), by.y = c('varname', 'gval'))
+    stopifnot(all(cts[, good]))
+    cts[, c('ng', 'good', 'cat1_group') := NULL]
+    setnames(cts, c('cat', 'group', 'group_alias'), c('cat1', 'cat1_group', 'cat1_group_alias'))
+
+    #merge on cat information for cat2
+    cts = merge(cts, meta, all.x = T, by.x = c('cat2_varname', 'cat2_group'), by.y = c('varname', 'gval'))
+    stopifnot(all(cts[, good]))
+    cts[, c('ng', 'good', 'cat2_group') := NULL]
+    setnames(cts, c('cat', 'group', 'group_alias'), c('cat2', 'cat2_group', 'cat2_group_alias'))
+
+
+    #binary variables don't need to calculate their 0.
+    #does removing the zeros before calc perform faster (probably)
+    #a binary variable should check both sides and remove
+
+    #for non trendline analyses, we should confirm number of time variables to calculate over and that enough data were provided
+
+  }
+
+  APDE_CHI_TRO_time_trend_analysis <- function(data, variables, bivariables, KC = TRUE) {
+    Tableau_Ready_DT <- data.table::data.table("year" = as.character(),
+                                               "indicator_key" = as.character(),
+                                               "result" = as.numeric(),
+                                               "numerator" = as.numeric(),
+                                               "denominator" = as,integer(),
+                                               "se" = as.numeric(),
+                                               "lower_bound" = as.numeric(),
+                                               "upper_bound" = as.numeric(),
+                                               "rse" = as.numeric(),
+                                               "tab" = as.character(),
+                                               "cat1" = as.character(),
+                                               "cat1_group" = as.character(),
+                                               "cat1_varname" = as.character(),
+                                               "cat1_group_alias" = as.character(),
+                                               "cat2" = as.character(),
+                                               "cat2_group" = as.character(),
+                                               "cat2_varname" = as.character(),
+                                               "cat2_group_alias" = as.character(),
+                                               "data_source" = as.character(),
+                                               "run_date" = as.character(),
+                                               "comparison_with_kc" = as.character(),
+                                               "significance" = as.character())
+
+    #note have historically always created a KC trend as well
+
+  }
+
+  calculate_King_County <- function(x, v, years) {
+    kc = rads::calc(x, what = v, where = chi_year %in% years, metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T, time_var = 'chi_year')
+    #assign metadata
+    kc[, tab := '_kingcounty']
+    kc[, cat1 := 'King County']
+    kc[, cat1_group := 'King County']
+    kc[, cat1_varname := 'chi_geo_kc']
+    kc[, cat1_group_alias := 'King County']
+    kc[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(cat1, cat1_group, cat1_varname, cat1_group_alias) ]
+    kc[, chi_year := gyl]
+
+    return(kc)
+  }
+
+
+
+
+
+
+
+
+
+
+
+  #compare output of original and new code
+  if(identical(FormatedAnalysisOriginal, FormatedAnalysis)) {
+    stop("function not performing as expected")
+  }
+
   return(FormatedAnalysis)
+
+
 
 }
 
