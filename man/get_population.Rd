@@ -20,7 +20,7 @@ get_population(
 \arguments{
 \item{kingco}{Logical vector of length 1. Identifies whether you want
 population estimates limited to King County. Only impacts results for
-geo_type in c('blk', blkgrp', 'scd', 'tract', 'zip').
+geo_type in c('blk', blkgrp', 'lgd', 'scd', 'tract', 'zip').
 
 Default == TRUE.}
 

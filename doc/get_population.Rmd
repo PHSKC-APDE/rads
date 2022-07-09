@@ -1,8 +1,8 @@
 ---
 title: "get_population()"
 output:
-  github_document: default
   rmarkdown::html_vignette: default
+  github_document: default
   pdf_document: default
   urlcolor: blue
 vignette: |
@@ -24,23 +24,23 @@ args(get_population)
 ```
 The standard arguments for get_population() are:
  
-1) `kingco` << a logical vector. Do you want the estimates limited to King County? The default is TRUE.
+1) `kingco`	<< Logical vector of length 1. Identifies whether you want population estimates limited to King County. Only impacts results for geo_type in c('blk', blkgrp', 'lgd', 'scd', 'tract', 'zip'). Default == TRUE.
 
-2) `years` << a numeric vector of the year(s) of interest. Currently only provides estimates for 2010+. The default is 2020.
+2) `years`	<< Numeric vector. Identifies which year(s) of data should be pulled. Default == c(2020).
 
-3) `ages` << a numeric vector of the age(s) of interest. The acceptable range and current default is 0 to 100. (Note! Age 100 is actually the top coding for ages 100-120.)
+3) `ages`	<< Numeric vector. Identifies which age(s) should be pulled. Default == c(0:100), with 100 being the top coded value for 100:120.
 
-4) `genders` << a character vector of the gender(s) of interest. The acceptable values are “f”, “female”, “m”, and “male”. The default is both female and male. 
+4) `genders` << Character vector of length 1 or 2. Identifies gender(s) should be pulled. The acceptable values are 'f', 'female', 'm', and 'male'. Default == c('f', 'm').
 
-5) `races` << a character vector of the racial/ethnic group(s) of interest. The acceptable values are "aian", "asian", "black", "hispanic", "multiple", "nhpi", and "white". The default is all the possible values. 
+5) `races` << Character vector of length 1 to 7. Identifies which race(s) or ethnicity should be pulled. The acceptable values are "aian", "asian", "black", "hispanic", "multiple", "nhpi", and "white". Default == all the possible values.
 
-6) `race_type` << a character vector limited to “race” (Hispanic as an ethnicity) or “race_eth” (Hispanic as a race). The default is “race_eth”.
+6) `race_type` << Character vector of length 1. Identifies whether to pull race data with Hispanic as an ethnicity ("race") or Hispanic as a race ("race_eth"). Default == c("race_eth").
 
-7) `geo_type` << a character vector describing the geographic level for which you want population estimates. Possible values are “kc”, "seattle, “blk”, “blkgrp”, “hra”, “region”, “tract”, and “zip”. Note that all these geo_types except "zip" are available for King, Pierce, and Snohomish counties only. The default geo_type is “kc”.
+7) `geo_type`	<< Character vector of length 1. Identifies the geographic level for which you want population estimates. The acceptable values are: 'blk', 'blkgrp', 'county', 'hra', 'kc', 'lgd' (WA State legislative districts), 'region', 'seattle', 'scd' (school districts), 'tract', and 'zip'. Default == "kc".
 
-8) `group_by` << a character vector describing the how you would like to have the estimates grouped (i.e., stratified). For example, if you set the years argument to (2017:2019) and set the `group_by` argument to “years”, you would receive estimates for 2017, 2018, and 2019. Otherwise you would receive one estimate for 2017 through 2019. Valid options are limited to: "years", "ages", "genders", "race", "race_eth", "fips_co", and "geo_id". The default is NULL, meaning estimates are not grouped / stratified.
+8) `group_by`	<< Character vector of length 0 to 7. Identifies how you would like the data 'grouped' (i.e., stratified). Valid options are limited to: "years", "ages", "genders", "race", "race_eth", "fips_co", and "geo_id". Default == NULL, i.e., estimates are only grouped / aggregated by geography.
 
-9) `round` << a logical vector. Do you want to round your population estimates to whole numbers? Default is TRUE. 
+9) `round` << Logical vector of length 1. Identifies whether or not population estimates should be returned as whole numbers. Default == TRUE.
 
 10) `mykey` << a character vector with the name of the `keyring::` key that provides access to the Health and Human Services Analytic Workspace (HHSAW). If you have never set your keyring before and or do not know what this is refering to, just type `keyring::key_set('hhsaw', username = 'ALastname@kingcounty.gov')` into your R console (making sure to replace the username). The default is 'hhsaw'. 
 

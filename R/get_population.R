@@ -5,7 +5,7 @@
 #'
 #' @param kingco Logical vector of length 1. Identifies whether you want
 #' population estimates limited to King County. Only impacts results for
-#' geo_type in c('blk', blkgrp', 'scd', 'tract', 'zip').
+#' geo_type in c('blk', blkgrp', 'lgd', 'scd', 'tract', 'zip').
 #'
 #' Default == TRUE.
 #' @param years Numeric vector. Identifies which year(s) of data should be
@@ -109,6 +109,10 @@ get_population <- function(kingco = T,
       kcscds <- c(5300001, 5300300, 5300390, 5302820, 5302880, 5303540, 5303750, 5303960, 5304230, 5304560, 5304980, 5305910,
                   5307230, 5307710, 5307920, 5307980, 5308040, 5308130, 5308760, 5309300)
 
+    # KC WA State House legislative districts (https://en.wikipedia.org/wiki/Washington_(state)_legislative_districts 2022/07/08) ----
+      kclgds <- c(53001, 53005, 53011, 53030, 53031, 53032, 53033, 53034, 53036, 53037, 53039, 53041,
+                  53043, 53045, 53046, 53047, 53048)
+
     # race/eth reference table ----
       ref.table <- data.table::copy(rads.data::population_wapop_codebook_values)
       ref.table <- ref.table[varname %in% c("r1r3", "r2r4")]
@@ -211,12 +215,12 @@ get_population <- function(kingco = T,
 
         if(geo_type == "seattle"){seattle = 1; geo_type = 'region'} # Seattle is just one of four regions, so set to region and then subset results at end
 
-        if(kingco == F && !geo_type %in% c('blk', 'blkgrp', 'tract', 'scd', 'zip')){
+        if(kingco == F && !geo_type %in% c('blk', 'blkgrp', 'lgd', 'tract', 'scd', 'zip')){
           stop("When 'kingco = F', permissible geo_types are limited to 'blk', 'blkgrp', 'scd', 'tract', and 'zip'.")
         }
 
-        if(kingco == F && ! geo_type %in% c("scd", "zip")){
-          warning("When 'kingco = F', all permissible geo_types except for 'scd' and 'zip' will provide estimates for King, Snohomish, and Pierce counties only.")
+        if(kingco == F && ! geo_type %in% c("lgd", "scd", "zip")){
+          warning("When 'kingco = F', all permissible geo_types except for 'lgd', 'scd' and 'zip' will provide estimates for King, Snohomish, and Pierce counties only.")
         }
 
       # check group_by ----
@@ -274,6 +278,7 @@ get_population <- function(kingco = T,
       tmpgeo_type <- glue::glue_sql("{geo_type}", .con = con)
       tmpages <- glue::glue_sql_collapse(sql_ages, sep = ', ')
       tmpgenders <- glue::glue_sql_collapse(paste0("'", genders, "'"), sep = ', ')
+      tmplgds <- glue::glue_sql_collapse(paste0("'", kclgds, "'"), sep = ", ")
       tmpscds <- glue::glue_sql_collapse(paste0("'", kcscds, "'"), sep = ", ")
       tmpzips <- glue::glue_sql_collapse(paste0("'", kczips, "'"), sep = ", ")
 
@@ -296,8 +301,9 @@ get_population <- function(kingco = T,
                          AND raw_gender IN ({tmpgenders})
                          AND {tmprace_type} ", .con = con)
       if(kingco == T && geo_type %in% c("blk", "blkgrp")){sql_query = glue::glue_sql("{sql_query} AND fips_co = 33 ", .con = con)}
-      if(kingco == T && geo_type == "zip"){sql_query = glue::glue_sql("{sql_query} AND geo_id IN ({tmpzips}) ", .con = con)}
+      if(kingco == T && geo_type == "lgd"){sql_query = glue::glue_sql("{sql_query} AND geo_id IN ({tmplgds}) ", .con = con)}
       if(kingco == T && geo_type == "scd"){sql_query = glue::glue_sql("{sql_query} AND geo_id IN ({tmpscds}) ", .con = con)}
+      if(kingco == T && geo_type == "zip"){sql_query = glue::glue_sql("{sql_query} AND geo_id IN ({tmpzips}) ", .con = con)}
       if(!is.null(group_by)){sql_query = glue::glue_sql("{sql_query} GROUP BY {tmpgroup_by} ORDER BY {tmpgroup_by}", .con = con)}
 
     # generate supplemental SQL query for Hispanic ethnicity ----
@@ -412,7 +418,7 @@ get_population <- function(kingco = T,
             xwalk <- data.table::copy(rads.data::spatial_legislative_codes_to_names)
             xwalk <- xwalk[, .(geo_id_code = lgd_id, geo_id = lgd_name)]
             setnames(pop.dt, "geo_id", "geo_id_code")
-            pop.dt <- merge(pop.dt, xwalk, by = "geo_id_code", all.x = T, all.y = T)
+            pop.dt <- merge(pop.dt, xwalk, by = "geo_id_code", all.x = T, all.y = F)
           }
 
         # scd ----

@@ -73,4 +73,6 @@ test_that('get_population',{
 
   expect_equal("65-100", get_population(years = 2019, ages = c(65:100))[]$age ) # ensure that summary age is properly formatted
 
+  expect_equal(17, nrow(get_population(geo_type = "lgd", years = 2020))) # ensure kingco = T (default) subsets to KC districts only
+
 })
