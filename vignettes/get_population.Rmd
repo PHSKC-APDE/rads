@@ -24,7 +24,7 @@ args(get_population)
 ```
 The standard arguments for get_population() are:
  
-1) `kingco`	<< Logical vector of length 1. Identifies whether you want population estimates limited to King County. Only impacts results for geo_type in c('blk', blkgrp', 'scd', 'tract', 'zip'). Default == TRUE.
+1) `kingco`	<< Logical vector of length 1. Identifies whether you want population estimates limited to King County. Only impacts results for geo_type in c('blk', blkgrp', 'lgd', 'scd', 'tract', 'zip'). Default == TRUE.
 
 2) `years`	<< Numeric vector. Identifies which year(s) of data should be pulled. Default == c(2020).
 
