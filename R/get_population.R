@@ -162,17 +162,21 @@ get_population <- function(kingco = T,
 
 
       # check kingco ----
-      if( !is.logical(kingco) || length(kingco) != 1){
-        stop(paste0("The `kingco` argument ('", paste(kingco, collapse = ', '), "') you entered is invalid. It must be a logcial vector (i.e., TRUE or FALSE) of length 1"))
-      }
+        if( !is.logical(kingco) || length(kingco) != 1){
+          stop(paste0("The `kingco` argument ('", paste(kingco, collapse = ', '), "') you entered is invalid. It must be a logcial vector (i.e., TRUE or FALSE) of length 1"))
+        }
 
       # check years ----
-        if( !all(sapply(years, function(i) i == as.integer(i))) || !sum(years)/length(years) > 2010 || min(years) < 2010){
-          stop(paste0("The `years` argument ('", paste(unique(years), collapse = ', '), "') you entered is invalid. It must be a vector of at least one 4 digit integer > 2010 (e.g., `c(2017:2019)`)"))
+        avail.years <- setDT(DBI::dbGetQuery(conn = con, "SELECT DISTINCT year from [ref].[pop]"))
+        if( !all(sapply(years, function(i) i == as.integer(i))) || min(years) < min(avail.years$year) || max(years) > max(avail.years$year)){
+          stop(paste0("The `years` argument ('", paste(unique(years), collapse = ', '), "') you entered is invalid. It must be a vector of at least one 4 digit integer in the interval [",
+                      min(avail.years$year), ", ", max(avail.years$year), "] (e.g., `c(2017:2019)`)"))
           }
         years <- unique(years)
 
-        if(min(years) < 2000 || (geo_type == 'lgd' && min(years) < 2011)){stop("The earliest available year is 2000, except for geo_type == 'lgd' where it is 2011")}
+        avail.lgd.years <- setDT(DBI::dbGetQuery(conn = con, "SELECT DISTINCT year from [ref].[pop] where geo_type = 'lgd'"))
+        if(geo_type == 'lgd' && min(years) < min(avail.lgd.years$year)){
+          stop(paste0("The `years` argument ('", paste(unique(years), collapse = ', '), "') you entered is invalid. When geo_type == 'lgd', the minimum year is ", min(avail.lgd.years$year)))}
 
       # check ages ----
         if( !all(sapply(ages, function(i) i == as.integer(i))) || max(ages) > 100 || min(ages) < 0 ){
