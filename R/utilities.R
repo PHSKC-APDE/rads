@@ -1031,6 +1031,45 @@ sql_clean <- function(dat = NULL, stringsAsFactors = FALSE){
 }
 
 
+#' Calculate standard error of the mean
+#' @param x name of a column in a data.frame/data.table or a vector
+#' @export
+#' @return numeric
+#' @name std_error
+#' @source plotrix R package July 11, 2022: \url{https://github.com/plotrix/plotrix/blob/master/R/std_error.R}.
+#' @importFrom stats sd
+#' @examples
+#' \dontrun{
+#' temp1 <- data.table::data.table(x = c(seq(0, 400, 100), seq(1000, 1800, 200), NA),
+#' mygroup = c(rep("A", 5), rep("B", 6))
+#' )
+#' std_error(c(seq(0, 400, 100), NA)) # expected value for mygroup == A
+#' std_error(c(seq(1000, 1800, 200), NA)) # expected value for mygroup == B
+#' temp1[, .(sem = std_error(x)), by = 'mygroup'][] # view summary table
+#' temp1[, sem := std_error(x), by = 'mygroup'][] # save results in the original
+#' }
+#'
+std_error<-function(x) {
+  vn<-function(x) return(sum(!is.na(x)))
+  dimx<-dim(x)
+  if(is.null(dimx)) {
+    stderr<-sd(x,na.rm=TRUE)
+    vnx<-vn(x)
+  }
+  else {
+    if(is.data.frame(x)) {
+      vnx<-unlist(sapply(x,vn))
+      stderr<-unlist(sapply(x,sd,na.rm=TRUE))
+    }
+    else {
+      vnx<-unlist(apply(x,2,vn))
+      stderr<-unlist(apply(x,2,sd,na.rm=TRUE))
+    }
+  }
+  return(stderr/sqrt(vnx))
+}
+
+
 #' Substring selection from the right to complement base R substr
 #' @param x character
 #' @param x.start digit to start (counting from the right)
