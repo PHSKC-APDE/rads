@@ -342,8 +342,8 @@ Office of Financial Management (OFM) population unit</a>. OFM produces
 two sets of estimates: (1) <a href="https://ofm.wa.gov/washington-data-research/population-demographics/population-estimates/april-1-official-population-estimates">April
 1 official population estimates</a> for cities and towns and (2) <a href="https://ofm.wa.gov/washington-data-research/population-demographics/population-estimates/small-area-estimates-program">Small
 Area Estimates (SAE)</a> for smaller geographies. The
-<code>get_population()</code> function pulls the SAE numbers and should
-be the same as those in <a href="https://secureaccess.wa.gov/doh/chat/Entry.mvc">CHAT</a>.</p>
+<code>get_population()</code> function pulls the SAE numbers and, when
+<code>round = T</code>, should be the same as those in <a href="https://secureaccess.wa.gov/doh/chat/Entry.mvc">CHAT</a>.</p>
 <p><strong>NOTE!!</strong> To get the most out of this vignette, I
 highly recommend that you actually type each and every bit of code into
 R. Doing so will almost definitely help you learn the syntax much faster
@@ -362,48 +362,46 @@ example,</p>
 ##     group_by = NULL, round = T, mykey = &quot;hhsaw&quot;) 
 ## NULL</code></pre>
 <p>The standard arguments for get_population() are:</p>
-<ol style="list-style-type: decimal">
-<li><p><code>kingco</code> &lt;&lt; Logical vector of length 1.
+<p>1) <code>kingco</code> &lt;&lt; Logical vector of length 1.
 Identifies whether you want population estimates limited to King County.
 Only impacts results for geo_type in c(‘blk’, blkgrp’, ‘lgd’, ‘scd’,
-‘tract’, ‘zip’). Default == TRUE.</p></li>
-<li><p><code>years</code> &lt;&lt; Numeric vector. Identifies which
-year(s) of data should be pulled. Default == c(2020).</p></li>
-<li><p><code>ages</code> &lt;&lt; Numeric vector. Identifies which
-age(s) should be pulled. Default == c(0:100), with 100 being the top
-coded value for 100:120.</p></li>
-<li><p><code>genders</code> &lt;&lt; Character vector of length 1 or 2.
+‘tract’, ‘zip’). Default == TRUE.</p>
+<p>2) <code>years</code> &lt;&lt; Numeric vector. Identifies which
+year(s) of data should be pulled. Default == c(2020).</p>
+<p>3) <code>ages</code> &lt;&lt; Numeric vector. Identifies which age(s)
+should be pulled. Default == c(0:100), with 100 being the top coded
+value for 100:120.</p>
+<p>4) <code>genders</code> &lt;&lt; Character vector of length 1 or 2.
 Identifies gender(s) should be pulled. The acceptable values are ‘f’,
-‘female’, ‘m’, and ‘male’. Default == c(‘f’, ‘m’).</p></li>
-<li><p><code>races</code> &lt;&lt; Character vector of length 1 to 7.
+‘female’, ‘m’, and ‘male’. Default == c(‘f’, ‘m’).</p>
+<p>5) <code>races</code> &lt;&lt; Character vector of length 1 to 7.
 Identifies which race(s) or ethnicity should be pulled. The acceptable
 values are “aian”, “asian”, “black”, “hispanic”, “multiple”, “nhpi”, and
-“white”. Default == all the possible values.</p></li>
-<li><p><code>race_type</code> &lt;&lt; Character vector of length 1.
+“white”. Default == all the possible values.</p>
+<p>6) <code>race_type</code> &lt;&lt; Character vector of length 1.
 Identifies whether to pull race data with Hispanic as an ethnicity
 (“race”) or Hispanic as a race (“race_eth”). Default ==
-c(“race_eth”).</p></li>
-<li><p><code>geo_type</code> &lt;&lt; Character vector of length 1.
+c(“race_eth”).</p>
+<p>7) <code>geo_type</code> &lt;&lt; Character vector of length 1.
 Identifies the geographic level for which you want population estimates.
 The acceptable values are: ‘blk’, ‘blkgrp’, ‘county’, ‘hra’, ‘kc’, ‘lgd’
 (WA State legislative districts), ‘region’, ‘seattle’, ‘scd’ (school
-districts), ‘tract’, and ‘zip’. Default == “kc”.</p></li>
-<li><p><code>group_by</code> &lt;&lt; Character vector of length 0 to 7.
+districts), ‘tract’, and ‘zip’. Default == “kc”.</p>
+<p>8) <code>group_by</code> &lt;&lt; Character vector of length 0 to 7.
 Identifies how you would like the data ‘grouped’ (i.e., stratified).
 Valid options are limited to: “years”, “ages”, “genders”, “race”,
 “race_eth”, “fips_co”, and “geo_id”. Default == NULL, i.e., estimates
-are only grouped / aggregated by geography.</p></li>
-<li><p><code>round</code> &lt;&lt; Logical vector of length 1.
-Identifies whether or not population estimates should be returned as
-whole numbers. Default == TRUE.</p></li>
-<li><p><code>mykey</code> &lt;&lt; a character vector with the name of
+are only grouped / aggregated by geography.</p>
+<p>9) <code>round</code> &lt;&lt; Logical vector of length 1. Identifies
+whether or not population estimates should be returned as whole numbers.
+Default == TRUE.</p>
+<p>10) <code>mykey</code> &lt;&lt; a character vector with the name of
 the <code>keyring::</code> key that provides access to the Health and
 Human Services Analytic Workspace (HHSAW). If you have never set your
 keyring before and or do not know what this is refering to, just type
 <code>keyring::key_set(&#39;hhsaw&#39;, username = &#39;ALastname@kingcounty.gov&#39;)</code>
 into your R console (making sure to replace the username). The default
-is ‘hhsaw’.</p></li>
-</ol>
+is ‘hhsaw’.</p>
 <p>There is no need to specify any or all of the arguments listed above.
 As the following example shows, the default arguments for
 <code>get_population</code> provide the overall most recent year’s
@@ -461,7 +459,7 @@ you would not print the results but would save them as an object. E.g.,
 ## 1: aian, asian, black, hispanic, multiple, nhpi, white</code></pre>
 <p><strong>King County Regions</strong></p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">geo_type =</span> <span class="fu">c</span>(<span class="st">&quot;region&quot;</span>),</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>                   <span class="at">group_by =</span> <span class="fu">c</span>(<span class="st">&quot;geo_id&quot;</span>))[]</span></code></pre></div>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">group_by =</span> <span class="fu">c</span>(<span class="st">&quot;geo_id&quot;</span>))[]</span></code></pre></div>
 <pre><code>##       pop geo_type  geo_id year   age       gender
 ## 1: 761624   region Seattle 2020 0-100 Female, Male
 ## 2: 776087   region   South 2020 0-100 Female, Male
@@ -472,9 +470,25 @@ you would not print the results but would save them as an object. E.g.,
 ## 2: aian, asian, black, hispanic, multiple, nhpi, white
 ## 3: aian, asian, black, hispanic, multiple, nhpi, white
 ## 4: aian, asian, black, hispanic, multiple, nhpi, white</code></pre>
+<p><strong>King County Regions with
+<code>round=FALSE</code></strong></p>
+<p>Turn off rounding to get the exact (fractional) number of people
+estimatd by OFM.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>rads<span class="sc">::</span><span class="fu">get_population</span>(<span class="at">geo_type =</span> <span class="st">&#39;region&#39;</span>, </span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                     <span class="at">round =</span> F)[]</span></code></pre></div>
+<pre><code>##         pop geo_type  geo_id year   age       gender
+## 1: 761624.3   region Seattle 2020 0-100 Female, Male
+## 2: 776086.6   region   South 2020 0-100 Female, Male
+## 3: 136070.6   region   North 2020 0-100 Female, Male
+## 4: 587018.5   region    East 2020 0-100 Female, Male
+##                                               race_eth
+## 1: aian, asian, black, hispanic, multiple, nhpi, white
+## 2: aian, asian, black, hispanic, multiple, nhpi, white
+## 3: aian, asian, black, hispanic, multiple, nhpi, white
+## 4: aian, asian, black, hispanic, multiple, nhpi, white</code></pre>
 <p><strong>King County HRAs</strong></p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>    <span class="fu">head</span>(<span class="fu">get_population</span>(<span class="at">geo_type =</span> <span class="fu">c</span>(<span class="st">&quot;hra&quot;</span>),</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                   <span class="at">group_by =</span> <span class="fu">c</span>(<span class="st">&quot;geo_id&quot;</span>))[])  </span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>    <span class="fu">head</span>(<span class="fu">get_population</span>(<span class="at">geo_type =</span> <span class="fu">c</span>(<span class="st">&quot;hra&quot;</span>),</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>                        <span class="at">group_by =</span> <span class="fu">c</span>(<span class="st">&quot;geo_id&quot;</span>))[])  </span></code></pre></div>
 <pre><code>##      pop geo_type              geo_id geo_id_code year   age       gender
 ## 1: 44870      hra        Auburn-North        1000 2020 0-100 Female, Male
 ## 2: 28373      hra        Auburn-South        1100 2020 0-100 Female, Male
@@ -490,8 +504,8 @@ you would not print the results but would save them as an object. E.g.,
 ## 5: aian, asian, black, hispanic, multiple, nhpi, white
 ## 6: aian, asian, black, hispanic, multiple, nhpi, white</code></pre>
 <p><strong>King County Zip codes</strong></p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>    <span class="fu">head</span>(<span class="fu">get_population</span>(<span class="at">geo_type =</span> <span class="fu">c</span>(<span class="st">&quot;zip&quot;</span>),</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>                   <span class="at">group_by =</span> <span class="fu">c</span>(<span class="st">&quot;geo_id&quot;</span>))[])  </span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>    <span class="fu">head</span>(<span class="fu">get_population</span>(<span class="at">geo_type =</span> <span class="fu">c</span>(<span class="st">&quot;zip&quot;</span>),</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>                        <span class="at">group_by =</span> <span class="fu">c</span>(<span class="st">&quot;geo_id&quot;</span>))[])  </span></code></pre></div>
 <pre><code>##      pop geo_type geo_id year   age       gender
 ## 1: 35718      zip  98001 2020 0-100 Female, Male
 ## 2: 35292      zip  98002 2020 0-100 Female, Male
@@ -507,8 +521,8 @@ you would not print the results but would save them as an object. E.g.,
 ## 5: aian, asian, black, hispanic, multiple, nhpi, white
 ## 6: aian, asian, black, hispanic, multiple, nhpi, white</code></pre>
 <p><strong>King County Census Tracts</strong></p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>    <span class="fu">head</span>(<span class="fu">get_population</span>(<span class="at">geo_type =</span> <span class="fu">c</span>(<span class="st">&quot;tract&quot;</span>),</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>                   <span class="at">group_by =</span> <span class="fu">c</span>(<span class="st">&quot;geo_id&quot;</span>))[])  </span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>    <span class="fu">head</span>(<span class="fu">get_population</span>(<span class="at">geo_type =</span> <span class="fu">c</span>(<span class="st">&quot;tract&quot;</span>),</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>                        <span class="at">group_by =</span> <span class="fu">c</span>(<span class="st">&quot;geo_id&quot;</span>))[])  </span></code></pre></div>
 <pre><code>##     pop geo_type      geo_id year   age       gender
 ## 1: 8157    tract 53033000100 2020 0-100 Female, Male
 ## 2: 8511    tract 53033000200 2020 0-100 Female, Male
@@ -524,8 +538,8 @@ you would not print the results but would save them as an object. E.g.,
 ## 5: aian, asian, black, hispanic, multiple, nhpi, white
 ## 6: aian, asian, black, hispanic, multiple, nhpi, white</code></pre>
 <p><strong>King County Census Block Groups</strong></p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>    <span class="fu">head</span>(<span class="fu">get_population</span>(<span class="at">geo_type =</span> <span class="fu">c</span>(<span class="st">&quot;blkgrp&quot;</span>),</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>                   <span class="at">group_by =</span> <span class="fu">c</span>(<span class="st">&quot;geo_id&quot;</span>))[])  </span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>    <span class="fu">head</span>(<span class="fu">get_population</span>(<span class="at">geo_type =</span> <span class="fu">c</span>(<span class="st">&quot;blkgrp&quot;</span>),</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>                        <span class="at">group_by =</span> <span class="fu">c</span>(<span class="st">&quot;geo_id&quot;</span>))[])  </span></code></pre></div>
 <pre><code>##     pop geo_type       geo_id year   age       gender
 ## 1: 1341   blkgrp 530330001001 2020 0-100 Female, Male
 ## 2: 1782   blkgrp 530330001002 2020 0-100 Female, Male
@@ -541,8 +555,8 @@ you would not print the results but would save them as an object. E.g.,
 ## 5: aian, asian, black, hispanic, multiple, nhpi, white
 ## 6: aian, asian, black, hispanic, multiple, nhpi, white</code></pre>
 <p><strong>King County Census Blocks</strong></p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>    <span class="fu">head</span>(<span class="fu">get_population</span>(<span class="at">geo_type =</span> <span class="fu">c</span>(<span class="st">&quot;blk&quot;</span>),</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>                   <span class="at">group_by =</span> <span class="fu">c</span>(<span class="st">&quot;geo_id&quot;</span>))[])  </span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>    <span class="fu">head</span>(<span class="fu">get_population</span>(<span class="at">geo_type =</span> <span class="fu">c</span>(<span class="st">&quot;blk&quot;</span>),</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>                        <span class="at">group_by =</span> <span class="fu">c</span>(<span class="st">&quot;geo_id&quot;</span>))[])  </span></code></pre></div>
 <pre><code>##    pop geo_type          geo_id year   age       gender
 ## 1:   1      blk 530330001001001 2020 0-100 Female, Male
 ## 2:  70      blk 530330001001002 2020 0-100 Female, Male
@@ -561,13 +575,14 @@ you would not print the results but would save them as an object. E.g.,
 <div id="other-simple-arguments" class="section level3">
 <h3>Other simple arguments</h3>
 <p><strong>King County multiple years combined</strong></p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">years =</span> <span class="dv">2017</span><span class="sc">:</span><span class="dv">2019</span>)[]</span></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">years =</span> <span class="dv">2017</span><span class="sc">:</span><span class="dv">2019</span>)[]</span></code></pre></div>
 <pre><code>##        pop geo_type      geo_id      year   age       gender
 ## 1: 6570200       kc King County 2017-2019 0-100 Female, Male
 ##                                               race_eth
 ## 1: aian, asian, black, hispanic, multiple, nhpi, white</code></pre>
 <p><strong>King County multiple years stratified</strong></p>
-<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">years =</span> <span class="dv">2017</span><span class="sc">:</span><span class="dv">2019</span>, <span class="at">group_by =</span> <span class="st">&quot;years&quot;</span>)[]</span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">years =</span> <span class="dv">2017</span><span class="sc">:</span><span class="dv">2019</span>, </span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">group_by =</span> <span class="st">&quot;years&quot;</span>)[]</span></code></pre></div>
 <pre><code>##        pop geo_type      geo_id year   age       gender
 ## 1: 2153700       kc King County 2017 0-100 Female, Male
 ## 2: 2190200       kc King County 2018 0-100 Female, Male
@@ -577,13 +592,14 @@ you would not print the results but would save them as an object. E.g.,
 ## 2: aian, asian, black, hispanic, multiple, nhpi, white
 ## 3: aian, asian, black, hispanic, multiple, nhpi, white</code></pre>
 <p><strong>King County multiple ages combined</strong></p>
-<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">ages =</span> <span class="dv">65</span><span class="sc">:</span><span class="dv">70</span>)[]</span></code></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">ages =</span> <span class="dv">65</span><span class="sc">:</span><span class="dv">70</span>)[]</span></code></pre></div>
 <pre><code>##       pop geo_type      geo_id year   age       gender
 ## 1: 115111       kc King County 2020 65-70 Female, Male
 ##                                               race_eth
 ## 1: aian, asian, black, hispanic, multiple, nhpi, white</code></pre>
 <p><strong>King County multiple ages stratified</strong></p>
-<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">ages =</span> <span class="dv">65</span><span class="sc">:</span><span class="dv">70</span>, <span class="at">group_by =</span> <span class="st">&quot;ages&quot;</span>)[]</span></code></pre></div>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">ages =</span> <span class="dv">65</span><span class="sc">:</span><span class="dv">70</span>, </span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">group_by =</span> <span class="st">&quot;ages&quot;</span>)[]</span></code></pre></div>
 <pre><code>##      pop geo_type      geo_id year age       gender
 ## 1: 22873       kc King County 2020  65 Female, Male
 ## 2: 21652       kc King County 2020  66 Female, Male
@@ -599,13 +615,13 @@ you would not print the results but would save them as an object. E.g.,
 ## 5: aian, asian, black, hispanic, multiple, nhpi, white
 ## 6: aian, asian, black, hispanic, multiple, nhpi, white</code></pre>
 <p><strong>King County female only</strong></p>
-<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">genders =</span> <span class="st">&quot;F&quot;</span>)[]</span></code></pre></div>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">genders =</span> <span class="st">&quot;F&quot;</span>)[]</span></code></pre></div>
 <pre><code>##        pop geo_type      geo_id year   age gender
 ## 1: 1129225       kc King County 2020 0-100 Female
 ##                                               race_eth
 ## 1: aian, asian, black, hispanic, multiple, nhpi, white</code></pre>
 <p><strong>King County gender stratified</strong></p>
-<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">group_by =</span> <span class="st">&quot;genders&quot;</span>)[]</span></code></pre></div>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">group_by =</span> <span class="st">&quot;genders&quot;</span>)[]</span></code></pre></div>
 <pre><code>##        pop geo_type      geo_id year   age gender
 ## 1: 1131575       kc King County 2020 0-100   Male
 ## 2: 1129225       kc King County 2020 0-100 Female
@@ -613,16 +629,19 @@ you would not print the results but would save them as an object. E.g.,
 ## 1: aian, asian, black, hispanic, multiple, nhpi, white
 ## 2: aian, asian, black, hispanic, multiple, nhpi, white</code></pre>
 <p><strong>King County AIAN-NH</strong></p>
-<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">races =</span> <span class="st">&quot;aian&quot;</span>, <span class="at">race_type =</span> <span class="st">&quot;race_eth&quot;</span>)[]</span></code></pre></div>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">races =</span> <span class="st">&quot;aian&quot;</span>, </span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">race_type =</span> <span class="st">&quot;race_eth&quot;</span>)[]</span></code></pre></div>
 <pre><code>##      pop geo_type      geo_id year   age       gender race_eth
 ## 1: 13703       kc King County 2020 0-100 Female, Male     aian</code></pre>
 <p><strong>King County AIAN regardless of Hispanic
 ethnicity</strong></p>
-<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">races =</span> <span class="st">&quot;aian&quot;</span>, <span class="at">race_type =</span> <span class="st">&quot;race&quot;</span>)[]</span></code></pre></div>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">races =</span> <span class="st">&quot;aian&quot;</span>, </span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">race_type =</span> <span class="st">&quot;race&quot;</span>)[]</span></code></pre></div>
 <pre><code>##      pop geo_type      geo_id year   age       gender race
 ## 1: 23056       kc King County 2020 0-100 Female, Male aian</code></pre>
 <p><strong>King County stratified by Hispanic as race</strong></p>
-<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">race_type =</span> <span class="st">&quot;race_eth&quot;</span>, <span class="at">group_by =</span> <span class="st">&quot;race_eth&quot;</span>)[]</span></code></pre></div>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">race_type =</span> <span class="st">&quot;race_eth&quot;</span>, </span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">group_by =</span> <span class="st">&quot;race_eth&quot;</span>)[]</span></code></pre></div>
 <pre><code>##        pop geo_type      geo_id year   age       gender      race_eth
 ## 1: 1303935       kc King County 2020 0-100 Female, Male         White
 ## 2:  152999       kc King County 2020 0-100 Female, Male         Black
@@ -632,7 +651,8 @@ ethnicity</strong></p>
 ## 6:  429652       kc King County 2020 0-100 Female, Male         Asian
 ## 7:   19548       kc King County 2020 0-100 Female, Male          NHPI</code></pre>
 <p><strong>King County stratified by race-NH</strong></p>
-<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">race_type =</span> <span class="st">&quot;race&quot;</span>, <span class="at">group_by =</span> <span class="st">&quot;race&quot;</span>)[]</span></code></pre></div>
+<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">race_type =</span> <span class="st">&quot;race&quot;</span>, </span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">group_by =</span> <span class="st">&quot;race&quot;</span>)[]</span></code></pre></div>
 <pre><code>##        pop geo_type      geo_id year   age       gender          race
 ## 1: 1495057       kc King County 2020 0-100 Female, Male         White
 ## 2:  162296       kc King County 2020 0-100 Female, Male         Black
@@ -646,7 +666,9 @@ ethnicity</strong></p>
 <h3>Complex arguments</h3>
 <p><strong>King County regions stratified by year and
 gender</strong></p>
-<div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">geo_type =</span> <span class="st">&quot;region&quot;</span>, <span class="at">years =</span> <span class="dv">2017</span><span class="sc">:</span><span class="dv">2019</span>, <span class="at">group_by =</span> <span class="fu">c</span>(<span class="st">&quot;geo_id&quot;</span>, <span class="st">&quot;years&quot;</span>, <span class="st">&quot;genders&quot;</span>))[]</span></code></pre></div>
+<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">geo_type =</span> <span class="st">&quot;region&quot;</span>, </span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">years =</span> <span class="dv">2017</span><span class="sc">:</span><span class="dv">2019</span>, </span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>               <span class="at">group_by =</span> <span class="fu">c</span>(<span class="st">&quot;geo_id&quot;</span>, <span class="st">&quot;years&quot;</span>, <span class="st">&quot;genders&quot;</span>))[]</span></code></pre></div>
 <pre><code>##        pop geo_type  geo_id year   age gender
 ##  1: 355807   region Seattle 2017 0-100 Female
 ##  2: 363819   region Seattle 2018 0-100 Female
@@ -700,34 +722,41 @@ gender</strong></p>
 ## 24: aian, asian, black, hispanic, multiple, nhpi, white
 ##                                                race_eth</code></pre>
 <p><strong>King County regions stratified by year – Female Hispanic and
-Asian-NH residents aged 16-25 only</strong></p>
-<div class="sourceCode" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">ages =</span> <span class="dv">16</span><span class="sc">:</span><span class="dv">25</span>, <span class="at">genders =</span> <span class="st">&quot;F&quot;</span>, <span class="at">years =</span> <span class="dv">2017</span><span class="sc">:</span><span class="dv">2019</span>, <span class="at">races =</span> <span class="fu">c</span>(<span class="st">&quot;hispanic&quot;</span>, <span class="st">&quot;asian&quot;</span>), <span class="at">geo_type =</span> <span class="st">&quot;region&quot;</span>, <span class="at">race_type =</span> <span class="st">&quot;race_eth&quot;</span>, <span class="at">group_by =</span> <span class="fu">c</span>(<span class="st">&quot;geo_id&quot;</span>, <span class="st">&quot;years&quot;</span>, <span class="st">&quot;race_eth&quot;</span>))[]</span></code></pre></div>
-<pre><code>##       pop geo_type  geo_id year   age gender race_eth
-##  1:  5167   region Seattle 2017 16-25 Female Hispanic
-##  2: 12051   region Seattle 2017 16-25 Female    Asian
-##  3:  5304   region Seattle 2018 16-25 Female Hispanic
-##  4: 12853   region Seattle 2018 16-25 Female    Asian
-##  5:  5462   region Seattle 2019 16-25 Female Hispanic
-##  6: 13681   region Seattle 2019 16-25 Female    Asian
-##  7:  9086   region   South 2017 16-25 Female Hispanic
-##  8:  9135   region   South 2018 16-25 Female Hispanic
-##  9:  9167   region   South 2019 16-25 Female Hispanic
-## 10:  1344   region   North 2017 16-25 Female    Asian
-## 11:  1416   region   North 2018 16-25 Female    Asian
-## 12:  1504   region   North 2019 16-25 Female    Asian
-## 13:   813   region   North 2017 16-25 Female Hispanic
-## 14:   835   region   North 2018 16-25 Female Hispanic
-## 15:   857   region   North 2019 16-25 Female Hispanic
-## 16:  2464   region    East 2017 16-25 Female Hispanic
-## 17:  5345   region    East 2017 16-25 Female    Asian
-## 18:  2507   region    East 2018 16-25 Female Hispanic
-## 19:  5602   region    East 2018 16-25 Female    Asian
-## 20:  2550   region    East 2019 16-25 Female Hispanic
-## 21:  5913   region    East 2019 16-25 Female    Asian
-## 22:  7803   region   South 2017 16-25 Female    Asian
-## 23:  8125   region   South 2018 16-25 Female    Asian
-## 24:  8451   region   South 2019 16-25 Female    Asian
-##       pop geo_type  geo_id year   age gender race_eth</code></pre>
+Asian-NH residents aged 16-25 only – not rounded</strong></p>
+<div class="sourceCode" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">get_population</span>(<span class="at">ages =</span> <span class="dv">16</span><span class="sc">:</span><span class="dv">25</span>, </span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">genders =</span> <span class="st">&quot;F&quot;</span>, </span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>               <span class="at">years =</span> <span class="dv">2017</span><span class="sc">:</span><span class="dv">2019</span>, </span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">races =</span> <span class="fu">c</span>(<span class="st">&quot;hispanic&quot;</span>, <span class="st">&quot;asian&quot;</span>), </span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">geo_type =</span> <span class="st">&quot;region&quot;</span>, </span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>               <span class="at">race_type =</span> <span class="st">&quot;race_eth&quot;</span>, </span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>               <span class="at">group_by =</span> <span class="fu">c</span>(<span class="st">&quot;geo_id&quot;</span>, <span class="st">&quot;years&quot;</span>, <span class="st">&quot;race_eth&quot;</span>), </span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>               <span class="at">round =</span> F)[]</span></code></pre></div>
+<pre><code>##            pop geo_type  geo_id year   age gender race_eth
+##  1:  5166.6387   region Seattle 2017 16-25 Female Hispanic
+##  2: 12050.7535   region Seattle 2017 16-25 Female    Asian
+##  3:  5304.4328   region Seattle 2018 16-25 Female Hispanic
+##  4: 12852.6707   region Seattle 2018 16-25 Female    Asian
+##  5:  5461.9309   region Seattle 2019 16-25 Female Hispanic
+##  6: 13680.7887   region Seattle 2019 16-25 Female    Asian
+##  7:  9085.5216   region   South 2017 16-25 Female Hispanic
+##  8:  9135.2329   region   South 2018 16-25 Female Hispanic
+##  9:  9166.8226   region   South 2019 16-25 Female Hispanic
+## 10:  1344.2301   region   North 2017 16-25 Female    Asian
+## 11:  1415.6761   region   North 2018 16-25 Female    Asian
+## 12:  1504.3222   region   North 2019 16-25 Female    Asian
+## 13:   812.6681   region   North 2017 16-25 Female Hispanic
+## 14:   834.7468   region   North 2018 16-25 Female Hispanic
+## 15:   857.0914   region   North 2019 16-25 Female Hispanic
+## 16:  2464.3317   region    East 2017 16-25 Female Hispanic
+## 17:  5344.9752   region    East 2017 16-25 Female    Asian
+## 18:  2506.7903   region    East 2018 16-25 Female Hispanic
+## 19:  5602.3695   region    East 2018 16-25 Female    Asian
+## 20:  2550.4508   region    East 2019 16-25 Female Hispanic
+## 21:  5913.1718   region    East 2019 16-25 Female    Asian
+## 22:  7802.6359   region   South 2017 16-25 Female    Asian
+## 23:  8125.3239   region   South 2018 16-25 Female    Asian
+## 24:  8450.6634   region   South 2019 16-25 Female    Asian
+##            pop geo_type  geo_id year   age gender race_eth</code></pre>
 </div>
 </div>
 

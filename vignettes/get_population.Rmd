@@ -1,166 +1,221 @@
 ---
 title: "get_population()"
 output:
-  github_document: default
   rmarkdown::html_vignette: default
+  github_document: default
   pdf_document: default
   urlcolor: blue
 vignette: |
   %\VignetteEngine{knitr::knitr} %\VignetteIndexEntry{get_population}
 ---
+
 ```{r, echo = F, message=FALSE}
 library(rads)
 ```
+
 ## Introduction
 
-This vignette will provide some examples of ways to pull population data into R from the Azure cloud (thank you Jeremy!). Population numbers are estimated by the [WA Office of Financial Management (OFM) population unit](https://ofm.wa.gov/washington-data-research/population-demographics). OFM produces two sets of estimates: (1) [April 1 official population estimates](https://ofm.wa.gov/washington-data-research/population-demographics/population-estimates/april-1-official-population-estimates) for cities and towns and (2) [Small Area Estimates (SAE)](https://ofm.wa.gov/washington-data-research/population-demographics/population-estimates/small-area-estimates-program) for smaller geographies. The `get_population()` function pulls the SAE numbers and should be the same as those in [CHAT](https://secureaccess.wa.gov/doh/chat/Entry.mvc). 
+This vignette will provide some examples of ways to pull population data into R from the Azure cloud (thank you Jeremy!). Population numbers are estimated by the [WA Office of Financial Management (OFM) population unit](https://ofm.wa.gov/washington-data-research/population-demographics). OFM produces two sets of estimates: (1) [April 1 official population estimates](https://ofm.wa.gov/washington-data-research/population-demographics/population-estimates/april-1-official-population-estimates) for cities and towns and (2) [Small Area Estimates (SAE)](https://ofm.wa.gov/washington-data-research/population-demographics/population-estimates/small-area-estimates-program) for smaller geographies. The `get_population()` function pulls the SAE numbers and, when `round = T`, should be the same as those in [CHAT](https://secureaccess.wa.gov/doh/chat/Entry.mvc).
 
 **NOTE!!** To get the most out of this vignette, I highly recommend that you actually type each and every bit of code into R. Doing so will almost definitely help you learn the syntax much faster than just reading the vignette or copying and pasting the code.
 
 ## `get_population` arguments
-Arguments are the values that we send to a function when it is called. Generally, typing `args(my_function_of_interest)` will return the possible arguments including any defaults. For example, 
+
+Arguments are the values that we send to a function when it is called. Generally, typing `args(my_function_of_interest)` will return the possible arguments including any defaults. For example,
+
 ```{r}
 args(get_population)
 ```
+
 The standard arguments for get_population() are:
- 
-1) `kingco`	<< Logical vector of length 1. Identifies whether you want population estimates limited to King County. Only impacts results for geo_type in c('blk', blkgrp', 'lgd', 'scd', 'tract', 'zip'). Default == TRUE.
 
-2) `years`	<< Numeric vector. Identifies which year(s) of data should be pulled. Default == c(2020).
+1\) `kingco` \<\< Logical vector of length 1. Identifies whether you want population estimates limited to King County. Only impacts results for geo_type in c('blk', blkgrp', 'lgd', 'scd', 'tract', 'zip'). Default == TRUE.
 
-3) `ages`	<< Numeric vector. Identifies which age(s) should be pulled. Default == c(0:100), with 100 being the top coded value for 100:120.
+2\) `years` \<\< Numeric vector. Identifies which year(s) of data should be pulled. Default == c(2020).
 
-4) `genders` << Character vector of length 1 or 2. Identifies gender(s) should be pulled. The acceptable values are 'f', 'female', 'm', and 'male'. Default == c('f', 'm').
+3\) `ages` \<\< Numeric vector. Identifies which age(s) should be pulled. Default == c(0:100), with 100 being the top coded value for 100:120.
 
-5) `races` << Character vector of length 1 to 7. Identifies which race(s) or ethnicity should be pulled. The acceptable values are "aian", "asian", "black", "hispanic", "multiple", "nhpi", and "white". Default == all the possible values.
+4\) `genders` \<\< Character vector of length 1 or 2. Identifies gender(s) should be pulled. The acceptable values are 'f', 'female', 'm', and 'male'. Default == c('f', 'm').
 
-6) `race_type` << Character vector of length 1. Identifies whether to pull race data with Hispanic as an ethnicity ("race") or Hispanic as a race ("race_eth"). Default == c("race_eth").
+5\) `races` \<\< Character vector of length 1 to 7. Identifies which race(s) or ethnicity should be pulled. The acceptable values are "aian", "asian", "black", "hispanic", "multiple", "nhpi", and "white". Default == all the possible values.
 
-7) `geo_type`	<< Character vector of length 1. Identifies the geographic level for which you want population estimates. The acceptable values are: 'blk', 'blkgrp', 'county', 'hra', 'kc', 'lgd' (WA State legislative districts), 'region', 'seattle', 'scd' (school districts), 'tract', and 'zip'. Default == "kc".
+6\) `race_type` \<\< Character vector of length 1. Identifies whether to pull race data with Hispanic as an ethnicity ("race") or Hispanic as a race ("race_eth"). Default == c("race_eth").
 
-8) `group_by`	<< Character vector of length 0 to 7. Identifies how you would like the data 'grouped' (i.e., stratified). Valid options are limited to: "years", "ages", "genders", "race", "race_eth", "fips_co", and "geo_id". Default == NULL, i.e., estimates are only grouped / aggregated by geography.
+7\) `geo_type` \<\< Character vector of length 1. Identifies the geographic level for which you want population estimates. The acceptable values are: 'blk', 'blkgrp', 'county', 'hra', 'kc', 'lgd' (WA State legislative districts), 'region', 'seattle', 'scd' (school districts), 'tract', and 'zip'. Default == "kc".
 
-9) `round` << Logical vector of length 1. Identifies whether or not population estimates should be returned as whole numbers. Default == TRUE.
+8\) `group_by` \<\< Character vector of length 0 to 7. Identifies how you would like the data 'grouped' (i.e., stratified). Valid options are limited to: "years", "ages", "genders", "race", "race_eth", "fips_co", and "geo_id". Default == NULL, i.e., estimates are only grouped / aggregated by geography.
 
-10) `mykey` << a character vector with the name of the `keyring::` key that provides access to the Health and Human Services Analytic Workspace (HHSAW). If you have never set your keyring before and or do not know what this is refering to, just type `keyring::key_set('hhsaw', username = 'ALastname@kingcounty.gov')` into your R console (making sure to replace the username). The default is 'hhsaw'. 
+9\) `round` \<\< Logical vector of length 1. Identifies whether or not population estimates should be returned as whole numbers. Default == TRUE.
+
+10\) `mykey` \<\< a character vector with the name of the `keyring::` key that provides access to the Health and Human Services Analytic Workspace (HHSAW). If you have never set your keyring before and or do not know what this is refering to, just type `keyring::key_set('hhsaw', username = 'ALastname@kingcounty.gov')` into your R console (making sure to replace the username). The default is 'hhsaw'.
 
 There is no need to specify any or all of the arguments listed above. As the following example shows, the default arguments for `get_population` provide the overall most recent year's estimated King County population.
+
 ```{r}
 get_population()[]
 ```
 
-***
+------------------------------------------------------------------------
 
 ## Example analyses
+
 ***Note 1**: The use of `head()` below is not necessary. It is a convenience function that displays the first 6 rows of data and was used to keep the output in this vignette tidy.*
 
 ***Note 2**: The use of `[]` after get_population() is used to print the output to the console. Typically, you would not print the results but would save them as an object. E.g., `my.pop.est <- get_population()`.*
 
 ### Geographic estimates
+
 **WA**
+
 ```{r}
-get_population(kingco = F, geo_type = "zip")[]
+get_population(kingco = F, 
+               geo_type = "zip")[]
 ```
 
 **King County**
+
 ```{r}
 get_population()[]
 ```
 
 **King County Regions**
+
 ```{r}
 get_population(geo_type = c("region"),
-                   group_by = c("geo_id"))[]
+               group_by = c("geo_id"))[]
+```
+
+**King County Regions with `round=FALSE`**
+
+Turn off rounding to get the exact (fractional) number of people estimatd by OFM.
+
+```{r}
+rads::get_population(geo_type = 'region', 
+                     round = F)[]
 ```
 
 **King County HRAs**
+
 ```{r}
     head(get_population(geo_type = c("hra"),
-                   group_by = c("geo_id"))[])  
+                        group_by = c("geo_id"))[])  
 ```
 
 **King County Zip codes**
+
 ```{r}
     head(get_population(geo_type = c("zip"),
-                   group_by = c("geo_id"))[])  
+                        group_by = c("geo_id"))[])  
 ```
 
 **King County Census Tracts**
+
 ```{r}
     head(get_population(geo_type = c("tract"),
-                   group_by = c("geo_id"))[])  
+                        group_by = c("geo_id"))[])  
 ```
 
 **King County Census Block Groups**
+
 ```{r}
     head(get_population(geo_type = c("blkgrp"),
-                   group_by = c("geo_id"))[])  
+                        group_by = c("geo_id"))[])  
 ```
 
 **King County Census Blocks**
+
 ```{r}
     head(get_population(geo_type = c("blk"),
-                   group_by = c("geo_id"))[])  
+                        group_by = c("geo_id"))[])  
 ```
 
 ### Other simple arguments
+
 **King County multiple years combined**
+
 ```{r}
 get_population(years = 2017:2019)[]
 ```
 
 **King County multiple years stratified**
+
 ```{r}
-get_population(years = 2017:2019, group_by = "years")[]
+get_population(years = 2017:2019, 
+               group_by = "years")[]
 ```
 
 **King County multiple ages combined**
+
 ```{r}
 get_population(ages = 65:70)[]
 ```
 
 **King County multiple ages stratified**
+
 ```{r}
-get_population(ages = 65:70, group_by = "ages")[]
+get_population(ages = 65:70, 
+               group_by = "ages")[]
 ```
 
 **King County female only**
+
 ```{r}
 get_population(genders = "F")[]
 ```
 
 **King County gender stratified**
+
 ```{r}
 get_population(group_by = "genders")[]
 ```
 
 **King County AIAN-NH**
+
 ```{r}
-get_population(races = "aian", race_type = "race_eth")[]
+get_population(races = "aian", 
+               race_type = "race_eth")[]
 ```
 
 **King County AIAN regardless of Hispanic ethnicity**
+
 ```{r}
-get_population(races = "aian", race_type = "race")[]
+get_population(races = "aian", 
+               race_type = "race")[]
 ```
 
 **King County stratified by Hispanic as race**
+
 ```{r}
-get_population(race_type = "race_eth", group_by = "race_eth")[]
+get_population(race_type = "race_eth", 
+               group_by = "race_eth")[]
 ```
 
 **King County stratified by race-NH**
+
 ```{r}
-get_population(race_type = "race", group_by = "race")[]
+get_population(race_type = "race", 
+               group_by = "race")[]
 ```
 
 ### Complex arguments
+
 **King County regions stratified by year and gender**
+
 ```{r}
-get_population(geo_type = "region", years = 2017:2019, group_by = c("geo_id", "years", "genders"))[]
+get_population(geo_type = "region", 
+               years = 2017:2019, 
+               group_by = c("geo_id", "years", "genders"))[]
 ```
 
-**King County regions stratified by year -- Female Hispanic and Asian-NH residents aged 16-25 only**
+**King County regions stratified by year -- Female Hispanic and Asian-NH residents aged 16-25 only -- not rounded**
+
 ```{r}
-get_population(ages = 16:25, genders = "F", years = 2017:2019, races = c("hispanic", "asian"), geo_type = "region", race_type = "race_eth", group_by = c("geo_id", "years", "race_eth"))[]
+get_population(ages = 16:25, 
+               genders = "F", 
+               years = 2017:2019, 
+               races = c("hispanic", "asian"), 
+               geo_type = "region", 
+               race_type = "race_eth", 
+               group_by = c("geo_id", "years", "race_eth"), 
+               round = F)[]
 ```
