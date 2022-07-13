@@ -121,7 +121,7 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_
 #'
 #' @param cols Character vector of length >=1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
 #'     See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.
-#' @param year Numeric vector. Identifies which years of data should be pulled
+#' @param year Numeric vector. Identifies which year(s) of data should be pulled. Defaults to the most recent year.
 #' @param kingco logical. Return dataset for analyses where mother's residence is in King County only.
 #'
 #' @return dataset either data.table (adminstrative data) for further analysis/tabulation
@@ -134,8 +134,9 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_
 #' \dontrun{
 #'  get_data_birth(cols = NA, year = c(2015, 2016, 2017), kingco = F)
 #' }
-get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
+get_data_birth <- function(cols = NA, year = NA,  kingco = T){
   if(is.null(cols)) cols <- NA
+  if(is.null(year)) year <- NA
 
   # get list of all colnames from SQL
     con <- odbc::dbConnect(odbc::odbc(),
@@ -159,10 +160,13 @@ get_data_birth <- function(cols = NA, year = c(2017),  kingco = T){
     }
     if(all(is.na(cols))){cols <- "*"}
 
+    if(length(year) == 1 && is.na(year)){
+      year = max(birth.years)
+      message(paste0("You did not specify a year so the most recent available year, ", max(birth.years), ", was selected for you. Available years include ", format_time(birth.years)))}
     invalid.year <- setdiff(year, birth.years)
     year <- intersect(year, birth.years)
-    if(length(year) == 0){stop(paste0("Birth data cannot be extracted because no valid years have been provided. Valid years include: ", paste0(birth.years, collapse = ", ")))}
-    if(length(invalid.year)>0){message(paste0("The following years do not exist in the birth data and have not be extracted: ", paste0(invalid.year, collapse = ", ")))}
+    if(length(year) == 0){stop(paste0("Birth data cannot be extracted because no valid years have been provided. Valid years include: ", format_time(birth.years)))}
+    if(length(invalid.year)>0){message(paste0("The following years do not exist in the birth data and have not be extracted: ", format_time(invalid.year)))}
 
   # pull columns and years from SQL
   query.string <- glue:: glue_sql ("SELECT ",  cols, " FROM [PH_APDEStore].[final].[bir_wa]
