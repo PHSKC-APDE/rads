@@ -4,13 +4,13 @@
 \alias{get_data_birth}
 \title{Get Birth microdata from storage.}
 \usage{
-get_data_birth(cols = NA, year = c(2017), kingco = T)
+get_data_birth(cols = NA, year = NA, kingco = T)
 }
 \arguments{
 \item{cols}{Character vector of length >=1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
 See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.}
 
-\item{year}{Numeric vector. Identifies which years of data should be pulled}
+\item{year}{Numeric vector. Identifies which year(s) of data should be pulled. Defaults to the most recent year.}
 
 \item{kingco}{logical. Return dataset for analyses where mother's residence is in King County only.}
 }

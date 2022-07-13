@@ -11,7 +11,7 @@
 #' @param years Numeric vector. Identifies which year(s) of data should be
 #' pulled.
 #'
-#' Default == c(2020).
+#' Default == most recent available year.
 #' @param ages Numeric vector. Identifies which age(s) should be pulled.
 #'
 #' Default == c(0:100), with 100 being the top coded value for 100:120.
@@ -77,7 +77,7 @@
 
 # get_population() ----
 get_population <- function(kingco = T,
-                           years = c(2020),
+                           years = NA,
                            ages = c(0:100),
                            genders = c("f", "m"),
                            races = c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white"),
@@ -91,6 +91,9 @@ get_population <- function(kingco = T,
     r_type <- short <- race <- name <- race_eth <- gender <- age <- geo_id <- pop <- geo_id_blk <- region <- hra <-
     server <- varname <- code <- label <- `.` <- cou_id <- cou_name <- vid <- lgd_id <- lgd_name <- scd_id <-
     scd_name <- NULL
+
+    # Ensure years argument is accounted for
+    if(is.null(years)) years <- NA
 
     # Logical for whether running on a server ----
       server <- grepl('server', tolower(Sys.info()['release']))
@@ -167,10 +170,16 @@ get_population <- function(kingco = T,
         }
 
       # check years ----
-        avail.years <- setDT(DBI::dbGetQuery(conn = con, "SELECT DISTINCT year from [ref].[pop]"))
-        if( !all(sapply(years, function(i) i == as.integer(i))) || min(years) < min(avail.years$year) || max(years) > max(avail.years$year)){
-          stop(paste0("The `years` argument ('", paste(unique(years), collapse = ', '), "') you entered is invalid. It must be a vector of at least one 4 digit integer in the interval [",
-                      min(avail.years$year), ", ", max(avail.years$year), "] (e.g., `c(2017:2019)`)"))
+        avail.years <- as.integer(DBI::dbGetQuery(conn = con, "SELECT DISTINCT year from [ref].[pop]")[]$year)
+
+        if(length(years) == 1 && is.na(years)){
+          years = max(avail.years)
+          message(paste0("You did not specify a year so the most recent available year, ", max(avail.years), ", was selected for you. Available years include ", format_time(avail.years)))
+          }
+
+        if( !all(sapply(years, function(i) i == as.integer(i))) || min(years) < min(avail.years) || max(years) > max(avail.years)){
+          stop(paste0("The `years` argument ('", paste(unique(years), collapse = ', '), "') you entered is invalid. It must be a vector of at least one 4 digit integer in ",
+                      format_time(avail.years), " (e.g., `c(2017:2019)`)"))
           }
         years <- unique(years)
 
