@@ -119,3 +119,6 @@ test.results <- calc(test.data,
                                   "total"))
 
 }
+\references{
+\url{https://github.com/PHSKC-APDE/rads/wiki/calc}
+}

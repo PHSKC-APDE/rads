@@ -12,7 +12,7 @@
 #'
 #' @return dataset either in data.table (adminstrative data) or svy_tbl (survey data) for further analysis/tabulation
 #' @export
-#'
+#' @references \url{https://github.com/PHSKC-APDE/rads/wiki/get_data}
 #' @examples
 #' \dontrun{
 #'  get_data(dataset = 'hys', cols = NULL, year = c(2016, 2018)

@@ -65,7 +65,7 @@
 #' @importFrom DBI dbConnect dbDisconnect dbGetQuery
 #' @importFrom odbc odbc
 #' @importFrom glue glue_sql_collapse glue_sql
-#'
+#' @references \url{https://github.com/PHSKC-APDE/rads/wiki/get_population}
 #' @return dataset as a data.table for further analysis/tabulation
 #' @export
 #'

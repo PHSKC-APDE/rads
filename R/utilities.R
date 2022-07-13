@@ -65,6 +65,7 @@ adjust_direct <- function (count, pop, stdpop, per = 100000, conf.level = 0.95)
 #' @return a data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'group_by' variable(s) -- if any
 #' @export
 #' @name age_standardize
+#' @references \url{https://github.com/PHSKC-APDE/rads/wiki/age_standardize}
 #' @examples
 #' \dontrun{
 #' temp1 <- data.table(age = c(50:60), count = c(25:35), pop = c(seq(1000, 900, -10)) )
