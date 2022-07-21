@@ -53,23 +53,17 @@ attributes.
 }
 \details{
 The function returns the following life table columns:
-
-- mx: age interval specific death rate
-
-- qx: probability of dying in the age interval
-
-- lx: # of (theoretical) persons alive at the start of the age interval
-
-- dx: # of deaths during the age interval
-
-- ax: average fraction of the interval lived by those who died in the interval
-
-- Lx: total person years lived in the age interval
-
-- Tx: total person years lived beyond the start of the age interval
-
-- ex: expectation of life (a.k.a., life expectancy) at the start of the age
+\itemize{
+\item mx: age interval specific death rate
+\item qx: probability of dying in the age interval
+\item lx: # of (theoretical) persons alive at the start of the age interval
+\item dx: # of deaths during the age interval
+\item ax: average fraction of the interval lived by those who died in the interval
+\item Lx: total person years lived in the age interval
+\item Tx: total person years lived beyond the start of the age interval
+\item ex: expectation of life (a.k.a., life expectancy) at the start of the age
 interval
+}
 }
 \examples{
  temp1 <- data.table::data.table(

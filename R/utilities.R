@@ -754,6 +754,133 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
 }
 
 
+#' Load clean geographic crosswalk tables
+#' @description
+#' This function provides a curated assortment of standardized geographic crosswalks.
+#' Though limited in scope, it provides quick and consistent access to many of the
+#' standard crosswalks used in APDE. If there is a common crosswalk missing
+#' among the options in \code{list_ref_xwalk()}, please let us know by posting a detailed
+#' request in a [GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new).
+#'
+#' If you need less common crosswalks that are not available through this function, please
+#' explore the spatial data built into [rads.data](https://github.com/PHSKC-APDE/rads.data),
+#' e.g., \code{rads.data::spatial_geocomp_blk10_kps}. These rads.data tables were
+#' created by many people over many years so you should expect to invest some time
+#' in exploration and data harmonization to prepare your two columns of interest.
+#'
+#' @param geo1 character vector of length 1 defining one half of the crosswalk
+#' desired, e.g., \code{geo1 = 'zip'}
+#' @param geo2 character vector of length 1 defining the other  half of the
+#' crosswalk desired, e.g., \code{geo1 = 'city'}
+#' @details
+#' A list of all acceptable geographic pairings can be found by typing
+#' \code{list_ref_xwalk()}.
+#'
+#'Note that the pairings given as arguments to this function are critical but
+#' the order is not. In other words, \code{get_xwalk(geo1 = 'zip', geo2 = 'city')}
+#' will return the same table as \code{get_xwalk(geo1 = 'city', geo2 = 'zip')}.
+#'
+#'
+#' ## geo definitions
+#'
+#' * \code{blk1}: 2010 Census Block. 15 digit Census GEOID (e.g., 530330110012006).
+#'   * 1-2: State (53 = WA)
+#'   * 3-5: County (033 = King County)
+#'   * 6-11: Tract (011001)
+#'   * 12: Block group (2)
+#'   * 12-15: Block (2006)
+#' * \code{ccd10}: 2010 Seattle City Council Districts
+#' * \code{city}: King County cities
+#' * \code{coo10}: 2010 COO places.
+#' * \code{hra10}: 2010 Health Reporting Areas
+#' * \code{kc}: King County
+#' * \code{kccd10}: 2010 King County Council Districts
+#' * \code{lgd10}: 2010 WA State legislative districts
+#' * \code{puma10}: 2010 Public Use Microdata Areas
+#' * \code{region10}: King County regions (North, South, East, & Seattle)
+#' * \code{scd10}: 2010 King County school districts
+#' * \code{sea10}: Seattle or KC except Seattle
+#' * \code{tract10}: 2010 Census Tract. 11 digit Census GEOID.
+#' * \code{zip}: Zip codes in King County.
+#'   * _Note!_ This is different from the 133 zip
+#' codes used with HCA data. To view the latter, please type \code{rads.data::spatial_zip_hca}.
+#' @return a data.table with two columns of geographic identifiers
+#' @export
+#' @import rads.data
+#' @importFrom data.table copy setnames
+#' @name get_xwalk
+#' @examples
+#' \dontrun{
+#'  get_xwalk(geo1 = 'zip', geo2 = 'city')
+#' }
+get_xwalk <- function(geo1 = NA, geo2 = NA){
+  # load xwalk table ----
+  geodt <- data.table::copy(ref_get_xwalk)
+  geodt <- sql_clean(geodt)
+
+  # validate input and output ----
+  if(is.null(geo1)){geo1 <- NA}
+  if(is.null(geo2)){geo2 <- NA}
+  if(!geo1 %in% c(geodt$input, geodt$output)){
+    stop("The `geo1` argument is not a valid geography. Please type `list_ref_xwalk` to see all valid values.")
+  }
+  if(!geo2 %in% c(geodt$input, geodt$output)){
+    stop("The `geo1` argument is not a valid geography. Please type `list_ref_xwalk` to see all valid values.")
+  }
+  geodt.sub <- geodt[input == geo1 & output == geo2]
+  if(nrow(geodt.sub) == 0){geodt.sub <- geodt[input == geo2 & output == geo1]}
+  if(nrow(geodt.sub) == 0){
+    stop("The combination of `geo1` & `geo2` does not exist in the crosswalk reference table. Please type `list_ref_xwalk` to see all valid combinations.")
+  }
+  if(nrow(geodt.sub) > 1){
+    stop("The combination of `geo1` & `geo2` returned more than 1 row in the reference table. Please submit an issue on GitHub.")
+  }
+  if(nrow(geodt.sub) == 1){
+    geodt <- copy(geodt.sub)
+  }
+
+  # get crosswalk data ----
+  # assign('xwalkdt', rads.data::spatial_zip_city_region_vid) # WORKS
+  # assign('xwalkdt', spatial_zip_city_region_vid) # doesn't work
+  # assign('xwalkdt', get(paste0('rads.data::', geodt$object))) # doesn't work
+  # assign('xwalkdt', eval(parse(text=paste0('rads.data::', geodt$object)), envir=.GlobalEnv)) # WORKS
+  # xwalkdt <- copy(rads.data::spatial_zip_city_region_vid) # WORKS
+  # xwalkdt <- copy(get(paste0('rads.data::', geodt$object))) # doesn't work
+  # xwalkdt <- copy(get(paste0('rads.data::', geodt$object), envir=.GlobalEnv)) # doesn't work
+  # xwalkdt <- copy(eval(parse(text=paste0('rads.data::', geodt$object)), envir=.GlobalEnv)) # WORKS
+  # mygeo <- paste0('rads.data::', geodt$object); xwalkdt <- (function(...)get(data(...,envir = .GlobalEnv)))(mygeo) # doesn't work
+  xwalkdt <- copy(eval(parse(text=paste0('rads.data::', geodt$object)))) # WORKS
+  sql_clean(xwalkdt)
+  keepers <- c(geodt$inputvar, geodt$outputvar)
+  xwalkdt <- xwalkdt[, ..keepers]
+  setnames(xwalkdt, c(geodt$inputvar, geodt$outputvar), c(geodt$input, geodt$output))
+
+  # clean crosswalk data ----
+  xwalkdt <- xwalkdt[!is.na(get(geodt$input)) & !is.na(get(geodt$output))] # drop when either value is missing
+  if("lgd10" %in% names(xwalkdt)){xwalkdt[, lgd10 := gsub("Leg Dist ", "", lgd10)]}
+  if("scd10" %in% names(xwalkdt)){xwalkdt[, scd10 := gsub(" School District", "", scd10)]}
+  if("region10" %in% names(xwalkdt)){xwalkdt[, region10 := gsub("\\b([a-z])", "\\U\\1", tolower(region10), perl = T)]} # ensure first letter capitalized
+  if("tract10" %in% names(xwalkdt)){
+    xwalkdt[, tract10 := gsub("14000US", "", tract10)]
+    xwalkdt[, tract10 := as.numeric(tract10)]
+    xwalkdt[, tract10_new := as.character(tract10)]
+    xwalkdt[nchar(tract10) == 6, tract10_new := paste0("53033", tract10)]
+    xwalkdt[nchar(tract10) < 6, tract10_new := paste0("53033", sprintf("%06i", tract10))]
+    xwalkdt[, tract10 := tract10_new]
+    xwalkdt[, tract10_new := NULL]
+  }
+
+  # create informative message ----
+  mymessage <- c(paste0("This crosswalk information is pulled from `rads.data::", geodt$object, "`."))
+  if(!is.na(geodt$notes)){
+    mymessage <- message(c(mymessage, paste0(" Note!! ", geodt$notes)))
+  }
+
+  # return object
+  message(mymessage)
+  return(xwalkdt)
+}
+
 #' Load a reference population as a data.table object in memory
 #'
 #' @param ref_name Character vector of length 1. Loads a reference population identified by list_ref_pop()
@@ -868,6 +995,54 @@ list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
 
   return(Variable_Descriptions)
 
+}
+
+
+#' View table of geographic pairs usable in the get_xwalk() function
+#' @description
+#' Displays a table of geographic pairings that can be submitted to \code{get_xwalk()}
+#' for crosswalk table generation. The numbers in the geographies (e.g.,
+#' the \code{10} in \code{hra10}) refer to the vintage, which typically reflects
+#' the Census Bureau's decennial updates.
+#' @details
+#' ## geo definitions
+#'
+#' * \code{blk1}: 2010 Census Block. 15 digit Census GEOID (e.g., 530330110012006).
+#'   * 1-2: State (53 = WA)
+#'   * 3-5: County (033 = King County)
+#'   * 6-11: Tract (011001)
+#'   * 12: Block group (2)
+#'   * 12-15: Block (2006)
+#' * \code{ccd10}: 2010 Seattle City Council Districts
+#' * \code{city}: King County cities
+#' * \code{coo10}: 2010 COO places.
+#' * \code{hra10}: 2010 Health Reporting Areas
+#' * \code{kc}: King County
+#' * \code{kccd10}: 2010 King County Council Districts
+#' * \code{lgd10}: 2010 WA State legislative districts
+#' * \code{puma10}: 2010 Public Use Microdata Areas
+#' * \code{region10}: King County regions (North, South, East, & Seattle)
+#' * \code{scd10}: 2010 King County school districts
+#' * \code{sea}: Seattle or KC except Seattle
+#' * \code{tract10}: 2010 Census Tract. 11 digit Census GEOID.
+#' * \code{zip}: Zip codes in King County.
+#'   * _Note!_ This is different from the 133 zip
+#' codes used with HCA data. To view the latter, please type \code{rads.data::spatial_zip_hca}.
+#' @return a data.table with two columns (geo1 & geo2), which define the acceptable
+#' geographic pairings for get_xwalk
+#' @export
+#' @import rads.data
+#' @importFrom data.table copy
+#' @name list_ref_xwalk
+#' @examples
+#' \dontrun{
+#'  list_ref_xwalk()
+#' }
+list_ref_xwalk <- function(){
+  geodt <- copy(ref_get_xwalk)
+  geodt <- sql_clean(geodt)
+  geodt <- geodt[, .(geo1 = input, geo2 = output)]
+  return(geodt)
 }
 
 

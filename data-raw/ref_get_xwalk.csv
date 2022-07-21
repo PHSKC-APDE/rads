@@ -1,0 +1,17 @@
+﻿input,output,object,inputvar,outputvar,notes
+blk10,hra10,spatial_geocomp_blk10_kps,geo_id_blk10,hracode_name,
+blk10,kc,spatial_geocomp_blk10_kps,geo_id_blk10,cou_name     ,
+blk10,lgd10,spatial_geocomp_blk10_kps,geo_id_blk10,leg_name,
+blk10,region10,spatial_geocomp_blk10_kps,geo_id_blk10,rgn_name,
+blk10,scd10,spatial_geocomp_blk10_kps,geo_id_blk10,scd_name,"King, Snohomish, & Pierce county school districts"
+blk10,sea,spatial_geocomp_blk10_kps,geo_id_blk10,svc_name,
+coo10,region10,spatial_acs_hra_region_place_etc,coo.place,region,
+hra10,coo10,spatial_acs_hra_region_place_etc,hraname,coo.place,
+hra10,region10,spatial_hra_vid_region,hra,region,
+scd10,region10,spatial_school_dist_to_region,school_district,region,King County school districts
+tract10,ccd10,spatial_acs_council_districts,geoid,sea_ccd,
+tract10,kccd10,spatial_acs_council_districts,geoid,kccd,
+tract10,puma10,spatial_tract10_to_puma,tract10,puma,
+zip,ccd10,spatial_zip_to_city_council_dist,zip,district,
+zip,city,spatial_zip_city_region_vid,zip,city,"For HCA data, zips use rads.data::spatial_zip_hca"
+zip,region10,spatial_zip_city_region_vid,zip,region,
