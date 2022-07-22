@@ -32,7 +32,7 @@ calc(ph.data, ...)
 
 \item{where}{subsetting expression}
 
-\item{by}{character vector. Must refer to variables within ph.data. The variables within ph.data to compute `what` by}
+\item{by}{character vector. Must refer to variables within ph.data. The variables within ph.data to compute \code{what} by}
 
 \item{metrics}{character. See \code{\link{metrics}} or scroll below for the available options.}
 
@@ -60,48 +60,38 @@ a data.table containing the results
 Compute metrics from record (e.g. vital stats) or survey data
 }
 \details{
-This function calculates `metrics` for each variable in `what` from rows meeting the conditions specified
-by `where` for each grouping implied by `by`.
+This function calculates \code{metrics} for each variable in \code{what} from rows meeting the conditions specified
+by \code{where} for each grouping implied by \code{by}.
 
 Available metrics include:
-
-1) total: Count of people with the given value. Mostly relevant for surveys
+\enumerate{
+\item total: Count of people with the given value. Mostly relevant for surveys
 (where total is approximately mean * sum(pweights)).
 Returns total, total_se, total_upper, total_lower.
 total_se, total_upper, & total_lower are only valid for survey data.
 Default ci (e.g. upper and lower) is 95 percent.
-
-2) mean: Average response and associated metrics of uncertainty.
+\item mean: Average response and associated metrics of uncertainty.
 Returns mean, mean_se, mean_lower, mean_upper.
 Default ci (e.g. upper and lower) is 95 percent.
-
-3) rse: Relative standard error. 100*se/mean.
-
-4) numerator: Sum of non-NA values for `what``.
+\item rse: Relative standard error. 100*se/mean.
+\item numerator: Sum of non-NA values for `what``.
 The numerator is always unweighted.
-
-5) denominator: Number of rows where `what` is not NA.
+\item denominator: Number of rows where \code{what} is not NA.
 The denominator is always unweighted.
-
-6) obs: Number of unique observations (i.e., rows), agnostic as to whether
-there is missing data for `what`. The obs is always unweighted.
-
-7) median: The median non NA response. Not populated when `what` is a factor
+\item obs: Number of unique observations (i.e., rows), agnostic as to whether
+there is missing data for \code{what}. The obs is always unweighted.
+\item median: The median non NA response. Not populated when \code{what} is a factor
 or character. Even for surveys, the median is the unweighted result.
-
-8) unique.time: Number of unique time points (from `time_var`) included in
-each tabulation (i.e., number of unique time points when the `what` is not missing).
-
-9) missing: Number of rows in a given grouping with an NA value for `what`.
-   missing + denominator = Number of people in a given group.
-   When `what` is a factor/character, the missing information is provided for the other.
-
-10) missing.prop: The proportion of the data that has an NA value for `what`.
-
-11) rate: mean * per. Provides rescaled mean estimates (i.e., per 100 or per 100,0000).
+\item unique.time: Number of unique time points (from \code{time_var}) included in
+each tabulation (i.e., number of unique time points when the \code{what} is not missing).
+\item missing: Number of rows in a given grouping with an NA value for \code{what}.
+missing + denominator = Number of people in a given group.
+When \code{what} is a factor/character, the missing information is provided for the other.
+\item missing.prop: The proportion of the data that has an NA value for \code{what}.
+\item rate: mean * per. Provides rescaled mean estimates (i.e., per 100 or per 100,0000).
 Returns rate, rate_se, rate_lower, rate_upper.
 Default ci (e.g. upper and lower) is 95 percent.
-
+}
 
 For survey data, use the \code{proportion} argument where relevant to ensure metrics are calculated using special proportion (e.g \code{svyciprop})
 methods. That is, when you want to find the fraction of ____, toggle \code{proportion} to \code{TRUE}.

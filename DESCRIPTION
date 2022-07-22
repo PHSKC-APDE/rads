@@ -8,7 +8,8 @@ Description: Fetch and analyze data from Public Health Seattle & King County.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.0
+Roxygen: list(markdown = TRUE)
 Imports:
     data.table (>= 1.14.2),
     DBI (>= 1.1.0),
@@ -32,3 +33,5 @@ Suggests:
     testthat,
     survey (>= 4.0)
 VignetteBuilder: knitr
+Depends: 
+    R (>= 2.10)
