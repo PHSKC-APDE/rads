@@ -65,9 +65,22 @@ codes used with HCA data. To view the latter, please type \code{rads.data::spati
 }
 }
 }
+
+\subsection{A note about error propagation!}{
+
+If you're merging the crosswalk table onto line level data, you can use
+\code{rads::calc}, or \code{data.table}, or whatever package you like
+for further analysis. However, if you're merging on to pre-aggregated data,
+to further collapse/aggregate/sum, you'll need to properly account for error
+propagation. Here is a line of \code{data.table} code as an example:
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{DT[, .(estimate = sum(estimate), stderror = sqrt(sum(stderror)^2)), c(group_by_vars)]
+}\if{html}{\out{</div>}}
+}
 }
 \examples{
 \dontrun{
- get_xwalk(geo1 = 'zip', geo2 = 'city')
+ myxwalk <- get_xwalk(geo1 = 'zip', geo2 = 'city')
+ myxwalk[]
 }
 }

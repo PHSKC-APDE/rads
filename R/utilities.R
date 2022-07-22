@@ -804,18 +804,35 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
 #' * \code{zip}: Zip codes in King County.
 #'   * _Note!_ This is different from the 133 zip
 #' codes used with HCA data. To view the latter, please type \code{rads.data::spatial_zip_hca}.
+#'
+#' ## A note about error propagation!
+#' If you're merging the crosswalk table onto line level data, you can use
+#' \code{rads::calc}, or \code{data.table}, or whatever package you like
+#' for further analysis. However, if you're merging on to pre-aggregated data,
+#' to further collapse/aggregate/sum, you'll need to properly account for error
+#' propagation. Here is a line of \code{data.table} code as an example:
+#' ```
+#' DT[, .(estimate = sum(estimate), stderror = sqrt(sum(stderror)^2)), c(group_by_vars)]
+#' ```
+#'
 #' @return a data.table with two columns of geographic identifiers
 #' @export
 #' @import rads.data
 #' @importFrom data.table copy setnames
+#' @importFrom utils data
 #' @name get_xwalk
 #' @examples
 #' \dontrun{
-#'  get_xwalk(geo1 = 'zip', geo2 = 'city')
+#'  myxwalk <- get_xwalk(geo1 = 'zip', geo2 = 'city')
+#'  myxwalk[]
 #' }
 get_xwalk <- function(geo1 = NA, geo2 = NA){
+  # bindings for data.table/check global variables ----
+  ref_get_xwalk <- input <- output <- lgd10 <- scd10 <- region10 <- tract10 <- tract10_new <- `rads.data::x` <- x <-  NULL
+
   # load xwalk table ----
-  geodt <- data.table::copy(ref_get_xwalk)
+  data("ref_get_xwalk", envir=environment()) # import ref_get_xwalk from /data as a promise
+  geodt <- copy(ref_get_xwalk) # evaluate / import the promise
   geodt <- sql_clean(geodt)
 
   # validate input and output ----
@@ -840,19 +857,12 @@ get_xwalk <- function(geo1 = NA, geo2 = NA){
   }
 
   # get crosswalk data ----
-  # assign('xwalkdt', rads.data::spatial_zip_city_region_vid) # WORKS
-  # assign('xwalkdt', spatial_zip_city_region_vid) # doesn't work
-  # assign('xwalkdt', get(paste0('rads.data::', geodt$object))) # doesn't work
-  # assign('xwalkdt', eval(parse(text=paste0('rads.data::', geodt$object)), envir=.GlobalEnv)) # WORKS
-  # xwalkdt <- copy(rads.data::spatial_zip_city_region_vid) # WORKS
-  # xwalkdt <- copy(get(paste0('rads.data::', geodt$object))) # doesn't work
-  # xwalkdt <- copy(get(paste0('rads.data::', geodt$object), envir=.GlobalEnv)) # doesn't work
-  # xwalkdt <- copy(eval(parse(text=paste0('rads.data::', geodt$object)), envir=.GlobalEnv)) # WORKS
-  # mygeo <- paste0('rads.data::', geodt$object); xwalkdt <- (function(...)get(data(...,envir = .GlobalEnv)))(mygeo) # doesn't work
-  xwalkdt <- copy(eval(parse(text=paste0('rads.data::', geodt$object)))) # WORKS
+  # xwalkdt <- copy(eval(parse(text=paste0('rads.data::', geodt$object))))
+  neo <- geodt$object
+  xwalkdt = eval(substitute(rads.data::x, list(x = as.name(neo))))
   sql_clean(xwalkdt)
   keepers <- c(geodt$inputvar, geodt$outputvar)
-  xwalkdt <- xwalkdt[, ..keepers]
+  xwalkdt <- xwalkdt[, (keepers), with = FALSE] # alternative to xwalkdt[, ..keepers]
   setnames(xwalkdt, c(geodt$inputvar, geodt$outputvar), c(geodt$input, geodt$output))
 
   # clean crosswalk data ----
@@ -1033,13 +1043,17 @@ list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
 #' @export
 #' @import rads.data
 #' @importFrom data.table copy
+#' @importFrom utils data
 #' @name list_ref_xwalk
 #' @examples
 #' \dontrun{
 #'  list_ref_xwalk()
 #' }
 list_ref_xwalk <- function(){
-  geodt <- copy(ref_get_xwalk)
+  # bindings for data.table/check global variables ----
+  ref_get_xwalk <- input <- output <- '.' <-  NULL
+  data("ref_get_xwalk", envir=environment()) # import ref_get_xwalk from /data as a promise
+  geodt <- copy(ref_get_xwalk) # evaluate / import the promise
   geodt <- sql_clean(geodt)
   geodt <- geodt[, .(geo1 = input, geo2 = output)]
   return(geodt)
