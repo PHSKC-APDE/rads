@@ -10,7 +10,7 @@ age_standardize(
   collapse = T,
   my.count = "count",
   my.pop = "pop",
-  per = 1e+05,
+  per = 100000,
   conf.level = 0.95,
   group_by = NULL
 )

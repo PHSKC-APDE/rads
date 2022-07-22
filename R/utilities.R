@@ -1,3 +1,4 @@
+options("scipen"=999) # turn off scientific notation
 #' Calculate crude and directly adjusted rates
 #'
 #' @param count Numeric vector of indeterminate length. The # of events of interest (e.g., deaths, births, etc.)
