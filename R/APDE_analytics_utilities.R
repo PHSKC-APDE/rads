@@ -278,7 +278,24 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   #Bivariate batcher
   #crosstab batcher
 
-  APDE_TRO_FORMATING <- function(data, cat1_group, cat2_group, tab ) {
+  APDE_TRO_FORMATING <- function(data, tab_var, cat1_var, cat1_group_var, cat2_var = NULL) {
+    #PRACTICE< DETELE
+    data <- calc_result
+    tab_var <- "trends"
+    cat1_group_var <- bivariable
+
+        #create tab column
+    data[, tab := tab_var]
+
+    #turn the column identified as cat1_group into the data of a column named cat1_group
+    setnames(data, cat1_var, "cat1_group")
+    data[, cat1_varname := cat1_var]
+
+    if(is.null(cat2_var)) {
+      data[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(NA_character_, NA_character_, NA_character_, NA_character_) ]
+
+    }
+
 
   }
 
@@ -309,27 +326,35 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
 
     #call defined process for each combination of variables and by variables across range of available timepoints
-    .internal_time_trend_calc <- function(v, bivariables, data) {
-      #for(bivariable in bivariables) {
-      #  raw_result = rads::calc(data, what = v, by = c(bivariable, 'chi_year'), metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T)
-      #  setnames(raw_result, bivariable, "cat1_group")
-      #  raw_result[, cat1_varname := bivariable]
-      #}
-      raw_result <- rbindlist(future.apply::future_lapply(bivariables, function(bivariable) {
-        calc_result = rads::calc(data, what = v, by = c(bivariable, 'chi_year'), metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T)
+    .internal_time_trend_calc <- function(v, bivariables, time_var, data) {
 
+      all_results <- rbindlist(future.apply::future_lapply(bivariables, function(bivariable) {
+        calc_result = rads::calc(data, what = v, by = c(bivariable, time_var), metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T)
+        calc_result_backup <- calc_result
         #old, all internal, approach
-        setnames(calc_result, bivariable, "cat1_group")
+        {
+          setnames(calc_result, bivariable, "cat1_group")
+          calc_result[, cat1_varname := bivariable]
+        }
+        calc_results_first <- calc_result
 
+        calc_result <- calc_result_backup
         #external call approach
-        tab_rdy_result <- APDE_TRO_FORMATING(calc_result, bivariable, )
-        calc_result[, cat1_varname := bivariable]
-        return(result)
+        calc_result <- APDE_TRO_FORMATING(calc_result, "trends", bivariable )
+
+        if(any(calc_result[, cat1_group] %in% 1)) {
+          calc_result <- calc_result[cat1_group == 1,]
+        } else {
+          calc_result <- calc_result[!is.na(cat1_group)]
+        }
+
+
+        return(tab_rdy_result)
       }))
-      return(raw_result)
+      return(all_results)
     }
 
-    test <- rbindlist(future.apply::future_lapply(variables, function(v) .internal_time_trend_calc(v, bivariables ,data)))
+    test <- rbindlist(future.apply::future_lapply(variables, function(v) .internal_time_trend_calc(v, bivariables, "chi_year" ,data)))
     test2 <- APDE_TRO_FORMATING(test, "trends",)
 
   }
@@ -348,14 +373,14 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
       if(any(r2[, cat1_group] %in% 1)) r2=  r2[cat1_group == 1] ##???? if any cat1_group were identified, remove anything that isn't
 
       #create cat1_varname variable using the by variable (bys) identified
-      r[, cat1_varname := x]
-      r= r[!is.na(cat1_group)]
+      r2[, cat1_varname := x]
+      r2= r2[!is.na(cat1_group)]
 
       r
 
     })
-    dgs = rbindlist(dgs)
-    dgs[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(NA_character_, NA_character_, NA_character_, NA_character_) ]
+    #dgs = rbindlist(dgs)
+    r2[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(NA_character_, NA_character_, NA_character_, NA_character_) ]
     #remove demgroups on kc wide geography
     dgs = dgs[!(tab == 'demgroups' & cat1_varname == 'chi_geo_kc')]
 
