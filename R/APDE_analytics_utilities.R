@@ -278,28 +278,30 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   #Bivariate batcher
   #crosstab batcher
 
-  APDE_TRO_FORMATING <- function(data, tab_var, cat1_var, cat1_group_var, cat2_var = NULL) {
+  APDE_TRO_FORMATING <- function(DT, tab_var, cat1_var, cat1_group_var, cat2_var = NULL) {
     #PRACTICE< DETELE
-    data <- calc_result
+    cat1_var <- bivariable
+    DT <- calc_result
     tab_var <- "trends"
     cat1_group_var <- bivariable
+    cat2_var <- NULL
 
         #create tab column
-    data[, tab := tab_var]
+    DT[, tab := tab_var]
 
     #turn the column identified as cat1_group into the data of a column named cat1_group
-    setnames(data, cat1_var, "cat1_group")
-    data[, cat1_varname := cat1_var]
+    setnames(DT, cat1_var, "cat1_group")
+    DT[, cat1_varname := cat1_var]
 
     if(is.null(cat2_var)) {
-      data[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(NA_character_, NA_character_, NA_character_, NA_character_) ]
+      DT[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(NA_character_, NA_character_, NA_character_, NA_character_) ]
 
     }
 
 
   }
 
-  APDE_CHI_TRO_time_trend_analysis <- function(data, variables, bivariables, KC = TRUE, process = "calc") {
+  APDE_CHI_TRO_time_trend_analysis <- function(data, variables, bivariables, KC = TRUE) {
     #takes data set manageable by calc fuction, list of independent variables,
     Tableau_Ready_DT <- data.table::data.table("year" = as.character(),
                                                "indicator_key" = as.character(),
@@ -326,38 +328,51 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
 
     #call defined process for each combination of variables and by variables across range of available timepoints
+
+    #TESTING REMOVE
+#    {
+#      v <- variables[1]
+#      bivariable <- bivariables[1]
+#      time_var <- "chi_year"
+#    }
+
     .internal_time_trend_calc <- function(v, bivariables, time_var, data) {
 
-      all_results <- rbindlist(future.apply::future_lapply(bivariables, function(bivariable) {
+      all_calc_results <- rbindlist(future.apply::future_lapply(bivariables, function(bivariable) {
         calc_result = rads::calc(data, what = v, by = c(bivariable, time_var), metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T)
-        calc_result_backup <- calc_result
-        #old, all internal, approach
-        {
-          setnames(calc_result, bivariable, "cat1_group")
-          calc_result[, cat1_varname := bivariable]
-        }
-        calc_results_first <- calc_result
+        #calc_result_backup <- calc_result
 
-        calc_result <- calc_result_backup
-        #external call approach
-        calc_result <- APDE_TRO_FORMATING(calc_result, "trends", bivariable )
+        #calc_result <- calc_result_backup
 
-        if(any(calc_result[, cat1_group] %in% 1)) {
-          calc_result <- calc_result[cat1_group == 1,]
-        } else {
-          calc_result <- calc_result[!is.na(cat1_group)]
-        }
+        #calc_result <- APDE_TRO_FORMATING(calc_result, "trends", bivariable )
+
+        #if(any(calc_result[, cat1_group] %in% 1)) {
+        #  calc_result <- calc_result[cat1_group == 1,]
+        #} else {
+        #  calc_result <- calc_result[!is.na(cat1_group)]
+        #}
 
 
-        return(tab_rdy_result)
+        calc_result
       }))
-      return(all_results)
+      return(all_calc_results)
     }
 
-    test <- rbindlist(future.apply::future_lapply(variables, function(v) .internal_time_trend_calc(v, bivariables, "chi_year" ,data)))
-    test2 <- APDE_TRO_FORMATING(test, "trends",)
+    test <- (future.apply::future_lapply(variables, function(v) .internal_time_trend_calc(v, bivariables, "chi_year" ,data)))
+    test
 
   }
+
+trend_resultDT <- trend_result
+
+
+trend_resultunlist <- APDE_CHI_TRO_time_trend_analysis(data, variables, bivariables)
+
+
+DT <- trend_resultDT
+DT[, tab := "tremds"]
+DT
+
   {
     #note have historically always created a KC trend as well
     dgs = lapply(bys, function(x){
