@@ -912,9 +912,14 @@ get_ref_pop <- function(ref_name = NULL){
 
   ref_single_to_99 <- data.table::copy(rads.data::population_reference_pop_single_age_to_99)
   ref_single_to_84 <- data.table::copy(rads.data::population_reference_pop_single_age_to_84)
+  ref_agecat_11 <- data.table::copy(rads.data::population_reference_pop_11_age_groups)
   ref_agecat_18 <- data.table::copy(rads.data::population_reference_pop_18_age_groups)
   ref_agecat_19 <- data.table::copy(rads.data::population_reference_pop_19_age_groups)
-  ref_pop_table <- rbind(ref_single_to_99, ref_single_to_84, ref_agecat_18, ref_agecat_19)
+  ref_pop_table <- rbind(ref_single_to_99,
+                         ref_single_to_84,
+                         ref_agecat_11,
+                         ref_agecat_18,
+                         ref_agecat_19)
   ref_pop_table <- ref_pop_table[standard == ref_name, list(agecat, age_start, age_end, pop)]
   if(nrow(ref_pop_table) == 0){stop(strwrap(paste0("`ref_name` ('", ref_name, "') does not refer to a valid standard reference population.
                                                      Type `list_ref_pop()` to get a list of all valid populations."), prefix = " ", initial = ""))}
@@ -1079,9 +1084,14 @@ list_ref_pop <- function(){
 
   ref_single_to_99 <- data.table::copy(rads.data::population_reference_pop_single_age_to_99)
   ref_single_to_84 <- data.table::copy(rads.data::population_reference_pop_single_age_to_84)
+  ref_agecat_11 <- data.table::copy(rads.data::population_reference_pop_11_age_groups)
   ref_agecat_18 <- data.table::copy(rads.data::population_reference_pop_18_age_groups)
   ref_agecat_19 <- data.table::copy(rads.data::population_reference_pop_19_age_groups)
-  ref_pop_table <- unique(rbind(ref_single_to_99[, list(standard)], ref_single_to_84[, list(standard)], ref_agecat_18[, list(standard)], ref_agecat_19[, list(standard)]))
+  ref_pop_table <- unique(rbind(ref_single_to_99[, list(standard)],
+                                ref_single_to_84[, list(standard)],
+                                ref_agecat_11[, list(standard)],
+                                ref_agecat_18[, list(standard)],
+                                ref_agecat_19[, list(standard)]))
   setorder(ref_pop_table, standard)
   ref_pop_table <- rbind(ref_pop_table[standard %like% "2000 U.S. Std P"], ref_pop_table[!standard %like% "2000 U.S. Std P"])
   return(ref_pop_table$standard)
