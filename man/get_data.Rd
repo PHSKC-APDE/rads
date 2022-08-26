@@ -27,3 +27,6 @@ Simple front-end for pulling in standard APDE data
  get_data(dataset = 'hys', cols = NULL, year = c(2016, 2018)
 }
 }
+\references{
+\url{https://github.com/PHSKC-APDE/rads/wiki/get_data}
+}

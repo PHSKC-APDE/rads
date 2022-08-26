@@ -9,7 +9,7 @@ enact_recodes(data, ..., ignore_case = TRUE, copy = TRUE)
 \arguments{
 \item{data}{data.frame (or something that inherits from a data frame)}
 
-\item{...}{objects coercible to a list of `recode_instructions`}
+\item{...}{objects coercible to a list of \code{recode_instructions}}
 
 \item{ignore_case}{logical. should the case of names(data) be ignored?}
 

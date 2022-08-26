@@ -1,64 +1,70 @@
 ---
 title: "calc()"
 output:
-  github_document: default
   rmarkdown::html_vignette: default
+  github_document: default
   pdf_document: default
   urlcolor: blue
   keep_md: true
 vignette: |
   %\VignetteEngine{knitr::knitr} %\VignetteIndexEntry{calc}
 ---
+
 ```{r, echo = F, message=FALSE}
 library(rads)
 library(dtsurvey)
 ```
+
 ## Introduction
+
 `calc()` is the analytic workhorse of `rads`. It provides a standardized method for obtaining most of what we usually want to calculate: means, medians, counts, confidence intervals, standard errors, relative standard errors (RSE), numerators, denominators, the number missing, and the proportion missing. `calc()` can be used with record data (e.g., vital statistics, census, enrollment numbers, etc.) as well as survey data (e.g., [BRFSS](https://www.cdc.gov/brfss/index.html), [ACS PUMS](https://github.com/PHSKC-APDE/svy_acs), etc.). `calc()` is built on top of common R packages and was created to allow APDE staff the convenience of using a common syntax across various data sources. This means that everything `calc` can do can be done with other packages ... sometimes in a more efficient manner.
 
 This vignette will provide some examples to introduce the `calc()` function by walking through basic analyses with vital statistics (birth data) and survey data (ACS PUMS). To get the most out of this vignette, we recommend that you type each and every bit of code into R. Doing so will almost definitely help you learn the syntax much faster than just reading the vignette or copying and pasting the code.
 
 ## `calc()` arguments
+
 Arguments are the values that we send to a function when it is called. The standard arguments for `calc()` are:
 
-1) `ph.data` <- the name of the data.table/data.frame or survey object that you want to analyze.
+1\) `ph.data` \<- the name of the data.table/data.frame or survey object that you want to analyze.
 
-2) `what` <- a character vector of the variable(s) for which you want to calculate the metrics. E.g., `what = c("uninsured")`
+2\) `what` \<- a character vector of the variable(s) for which you want to calculate the metrics. E.g., `what = c("uninsured")`
 
-3) `where` <- think of this as a "where" statement, i.e., a filter or subsetting of data. E.g., `ages %in% c(0:17) & gender == "Female"`
+3\) `where` \<- think of this as a SQL `WHERE` clause, i.e., a filtering or subsetting of data. E.g., `ages %in% c(0:17) & gender == "Female"`
 
-4) `by` <- a character vector of the variables that you want to computer the `what` by, i.e., the cross-tab variable(s). E.g., `by = c("gender")` would stratify results by gender
+4\) `by` \<- a character vector of the variables that you want to computer the `what` by, i.e., the cross-tab variable(s). E.g., `by = c("gender")` would stratify results by gender
 
-5) `metrics` <- a character vector of the metrics that you want returned. E.g., `metrics = c("mean", "rse")`. You can see a complete list of available metrics by typing `metrics()` and get detailed descriptions of what each metric means by typing `?metrics()`.
+5\) `metrics` \<- a character vector of the metrics that you want returned. E.g., `metrics = c("mean", "rse")`. You can see a complete list of available metrics by typing `metrics()` and get detailed descriptions of what each metric means by typing `?metrics()`.
 
-6) `per` <- an integer, which is the denominator when `rate` is selected as a metric. Metrics will be multiplied by this value. E.g., `per = 1000`. **NOTE** this is just a scalar. At present this does not calculate a true rate (i.e., the relevant population denominator is not used).
+6\) `per` \<- an integer, which is the denominator when `rate` is selected as a metric. Metrics will be multiplied by this value. E.g., `per = 1000`. **NOTE** this is just a scalar. At present this does not calculate a true rate (i.e., the relevant population denominator is not used).
 
-7) `win` <- an integer, which is the number of consecutive units of time (e.g., years, months, etc.) over which the metrics will be calculated, i.e., the 'window' for a rolling average, sum, etc. E.g. `win = 5` will perform calculations over every 5 time unit window.
+7\) `win` \<- an integer, which is the number of consecutive units of time (e.g., years, months, etc.) over which the metrics will be calculated, i.e., the 'window' for a rolling average, sum, etc. E.g. `win = 5` will perform calculations over every 5 time unit window.
 
-8) `time_var` <- a character, which is the name of the time variable in the dataset. Used in combination with the `win` argument to generate time windowed calculations.
+8\) `time_var` \<- a character, which is the name of the time variable in the dataset. Used in combination with the `win` argument to generate time windowed calculations.
 
-9) `fancy_time` <- a logical (i.e., `T` or `F`) flag. If TRUE, a record of all the years going into the data is returned. If FALSE, just a simple range (where certain years within the range might not be represented in your data).
+9\) `fancy_time` \<- a logical (i.e., `T` or `F`) flag. If TRUE, a record of all the years going into the data is returned. If FALSE, just a simple range (where certain years within the range might not be represented in your data).
 
-10) `proportion` <- a logical (i.e., `T` or `F`) flag determining whether the metrics should be calculated as a proportion. Currently only relevant for survey data. The default is FALSE.
+10\) `proportion` \<- a logical (i.e., `T` or `F`) flag determining whether the metrics should be calculated as a proportion. Currently only relevant for survey data. The default is FALSE.
 
-11) `ci` <- a numeric value between 0 & 1 for the confidence level returned in the estimates. E.g., 0.95 == 95% confidence interval
+11\) `ci` \<- a numeric value between 0 & 1 for the confidence level returned in the estimates. E.g., 0.95 == 95% confidence interval
 
-12) `verbose` <- a logical used to toggle on/off printed warnings
+12\) `verbose` \<- a logical used to toggle on/off printed warnings
 
-There is no need to specify all of the arguments listed above. As you can see in the following example, the `calc` function simply needs a specified dataset (i.e., `ph.data`) and at least one `what` variable to return an intelligible result. 
-
+There is no need to specify all of the arguments listed above. As you can see in the following example, the `calc` function simply needs a specified dataset (i.e., `ph.data`) and at least one `what` variable to return an intelligible result.
 
 ```{r}
 data(mtcars)
 mtcars = dtadmin(mtcars) #make it work with calc.dtsurvey
 calc(ph.data = mtcars, what = c("mpg"))[]
 ```
+
 **Note:** *The use of `[]` after `calc()` is used to print the output to the console. Typically, you would not print the results but would save them as an object. E.g., `my.est <- calc()`.*
 
-***
+------------------------------------------------------------------------
 
 ## Example vital statistics analyses
+
 **First get the birth data (cf. [get_data vignette](https://github.com/PHSKC-APDE/rads/wiki/get_data))**
+
 ```{r}
 birth <- get_data_birth(cols = c("chi_year", "chi_sex", "chi_race_eth8", 
                                  "preterm", "birth_weight_grams", "mother_birthplace_state"), 
@@ -67,6 +73,7 @@ birth <- get_data_birth(cols = c("chi_year", "chi_sex", "chi_race_eth8",
 ```
 
 **mean (proportion) for a binary over multiple years**
+
 ```{r}
 calc(ph.data = birth, 
      what = c("preterm"), 
@@ -74,7 +81,28 @@ calc(ph.data = birth,
      time_var = "chi_year")[]
 ```
 
+**mean (proportion) for a binary over multiple years -- `where` newborn is male**
+
+```{r}
+calc(ph.data = birth, 
+     what = c("preterm"), 
+     where = chi_sex == "Male",
+     metrics = c("mean", "rse", "numerator", "denominator"), 
+     time_var = "chi_year")[]
+```
+
+**mean (proportion) for a binary over multiple years -- `where` newborn is male born to a Hispanic mother**
+
+```{r}
+calc(ph.data = birth, 
+     what = c("preterm"), 
+     where = chi_sex == "Male" & chi_race_eth8 == "Hispanic",
+     metrics = c("mean", "rse", "numerator", "denominator"), 
+     time_var = "chi_year")[]
+```
+
 **mean (proportion) for a binary over individual years**
+
 ```{r}
 birth[, cy := chi_year]
 calc(ph.data = birth, 
@@ -85,6 +113,7 @@ calc(ph.data = birth,
 ```
 
 **mean (proportion) for a binary over windowed years**
+
 ```{r}
 calc(ph.data = birth, 
      what = c("preterm"), 
@@ -94,6 +123,7 @@ calc(ph.data = birth,
 ```
 
 **mean for a continuous over windowed years**
+
 ```{r}
 calc(ph.data = birth, 
      what = c("birth_weight_grams"), 
@@ -103,6 +133,7 @@ calc(ph.data = birth,
 ```
 
 **mean for a continuous in 2019, by gender and race/eth**
+
 ```{r}
 calc(ph.data = birth, 
      what = c("birth_weight_grams"), 
@@ -112,6 +143,7 @@ calc(ph.data = birth,
 ```
 
 **Proportion of 2017-2019 births among each race/eth group**
+
 ```{r}
 calc(ph.data = birth, 
      what = c("chi_race_eth8"), 
@@ -120,6 +152,7 @@ calc(ph.data = birth,
 ```
 
 **2017-2019 rate per 100k of births among each race/eth group**
+
 ```{r}
 calc(ph.data = birth, 
      what = c("chi_race_eth8"), 
@@ -129,6 +162,7 @@ calc(ph.data = birth,
 ```
 
 **Number and proportion of missing gender by year**
+
 ```{r}
 calc(ph.data = birth, 
      what = c("chi_sex"), 
@@ -137,10 +171,12 @@ calc(ph.data = birth,
      by = "chi_year")[]
 ```
 
-***
+------------------------------------------------------------------------
 
 ## Example survey analyses
+
 Before using `calc()` with survey data, the user must survey set the data while properly specifying the survey design. Here is an example of how to set [ACS PUMS](https://github.com/PHSKC-APDE/svy_acs) person level data:
+
 ```{r, warning=FALSE, message=FALSE}
 library(survey)
 
@@ -161,13 +197,14 @@ load("//phshare01/epe_share/WORK/surveys/ACS/PUMS_data/2019_1_year/prepped_R_fil
   #New for version 1.0.0
   pums =dtsurvey::dtrepsurvey(pums)
 ```
-Once the data has been set as a survey, we can use the `calc()` function the same way that we used it for vital statistics (birth) data. 
+
+Once the data has been set as a survey, we can use the `calc()` function the same way that we used it for vital statistics (birth) data.
 
 **Quick sanity check before proceeding.**
 
-To confirm that the data has been survey set properly, it would be wise to check if the survey weighted population is more or less what you would expect. 
+To confirm that the data has been survey set properly, it would be wise to check if the survey weighted population is more or less what you would expect.
 
-When `calc` analyzes survey data, the `numerator` is the number of observations in that category and the `total` is the survey weighted value for those observations. We know that the approximate 2019 populations of WA State, King County, and Seattle were ~7.6 million, ~2.2 million, and 750,000, respectively. How do the following 2019 ACS estimates (i.e., `total` values) compare? 
+When `calc` analyzes survey data, the `numerator` is the number of observations in that category and the `total` is the survey weighted value for those observations. We know that the approximate 2019 populations of WA State, King County, and Seattle were \~7.6 million, \~2.2 million, and 750,000, respectively. How do the following 2019 ACS estimates (i.e., `total` values) compare?
 
 ```{r, warning=FALSE}
 pums[, constant :=1]
@@ -193,9 +230,10 @@ calc(ph.data = pums,
      proportion = F)[]
 ```
 
-Now that we've established that our survey data is reasonable, we can continue with our analyses. 
+Now that we've established that our survey data is reasonable, we can continue with our analyses.
 
 **Mean (proportion) of those near poverty or disabled, by King County (vs. remainder of WA)**
+
 ```{r, warning=FALSE}
 calc(ph.data = pums, 
      what = c("disability", "GEpov200"), 
@@ -205,6 +243,7 @@ calc(ph.data = pums,
 ```
 
 **Proportion in each CHNA age group, by disability status**
+
 ```{r, warning=FALSE}
 calc(ph.data = pums, 
      what = c("agechna"), 
@@ -213,8 +252,8 @@ calc(ph.data = pums,
      by = "disability")[]
 ```
 
-
 **Mean & median age in King County, by disability status**
+
 ```{r, warning=FALSE}
 calc(ph.data = pums, 
      what = c("agep"),
@@ -223,12 +262,14 @@ calc(ph.data = pums,
      by = "disability")[]
 ```
 
-***
+------------------------------------------------------------------------
 
 ## Example analyses with non-standard data
+
 In the examples above we used standard public health data (birth vital statistics and the Census Bureau's ACS survey). However, since `calc()` is a generalized function, you can use it with nearly any dataset, as long as it is a data.frame, a data.table, or a survey object. To demonstrate this, we will use `calc()` with synthetic data that we will generate below.
 
 **Create the dataset**
+
 ```{r, warning=FALSE, message=FALSE}
 library(data.table)
 set.seed(98121) 
@@ -243,9 +284,11 @@ mydt = dtsurvey::dtadmin(mydt)
 
 mydt[]
 ```
+
 We see that we created a dataset of 2000 rows with grades in four schools between with 2016 and 2021.
 
 **Calculate the proportion of A's and B's in the Alpha and Beta schools**
+
 ```{r, warning=FALSE, message=FALSE}
 grades.distribution <- calc(
   ph.data = mydt, 
@@ -257,11 +300,13 @@ grades.distribution <- calc(
 
 grades.distribution[level %in% c("A", "B")]
 ```
+
 These results show that the Alpha School has a higher proportion of A's (`r round(grades.distribution[school=="Alpha" & level == "A"]$mean, 3)` vs `r round(grades.distribution[school=="Beta" & level == "A"]$mean, 3)`) and a similar proportion of B's (`r round(grades.distribution[school=="Alpha" & level == "B"]$mean, 3)` vs `r round(grades.distribution[school=="Beta" & level == "B"]$mean, 3)`).
 
 **Wait! We forgot the survey weights!**
 
 A colleague just reminded you that you forgot to add the survey weights. Let's add weights and survey set the data.
+
 ```{r, warning=FALSE, message=FALSE}
 # create weights
 set.seed(98121)
@@ -272,6 +317,7 @@ mysvy <-dtsurvey::dtsurvey(data.table(mydt[, `_id` := NULL]), weight = 'mywghts'
 ```
 
 **Using the survey information, again calculate the proportion of A's and B's in the Alpha and Beta schools**
+
 ```{r, warning=FALSE, message=FALSE}
 grades.distribution2 <- calc(
   ph.data = mysvy, 
@@ -283,10 +329,11 @@ grades.distribution2 <- calc(
 
 grades.distribution2[level %in% c("A", "B")]
 ```
+
 You'll note that using the survey design caused small changes in the results. For examples, the proportion of A's in the Alpha school changed from `r round(grades.distribution[school=="Alpha" & level == "A"]$mean, 3)` to `r round(grades.distribution2[school=="Alpha" & level == "A"]$mean, 3)`.
 
-***
+------------------------------------------------------------------------
 
 ## Knowing is half the battle ... but only half
-You've been introduced to `calc()`, but you'll only become competent at using it by using it. Try it out with your favorite dataset. Use it to answer data requests. Play with it. Try to break it and, if you're successful, submit a [GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new). Enjoy!
 
+You've been introduced to `calc()`, but you'll only become competent at using it by using it. Try it out with your favorite dataset. Use it to answer data requests. Play with it. Try to break it and, if you're successful, submit a [GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new). Enjoy!

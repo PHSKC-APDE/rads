@@ -10,7 +10,7 @@ age_standardize(
   collapse = T,
   my.count = "count",
   my.pop = "pop",
-  per = 1e+05,
+  per = 100000,
   conf.level = 0.95,
   group_by = NULL
 )
@@ -53,4 +53,7 @@ stdpop = rep(1000, 22))
 age_standardize(my.dt = temp2, ref.popname = "none", collapse = F, my.count = "count",
 my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex")[]
 }
+}
+\references{
+\url{https://github.com/PHSKC-APDE/rads/wiki/age_standardize}
 }

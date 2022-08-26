@@ -6,7 +6,7 @@
 \usage{
 get_population(
   kingco = T,
-  years = c(2020),
+  years = NA,
   ages = c(0:100),
   genders = c("f", "m"),
   races = c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white"),
@@ -20,14 +20,14 @@ get_population(
 \arguments{
 \item{kingco}{Logical vector of length 1. Identifies whether you want
 population estimates limited to King County. Only impacts results for
-geo_type in c('blk', blkgrp', 'scd', 'tract', 'zip').
+geo_type in c('blk', blkgrp', 'lgd', 'scd', 'tract', 'zip').
 
 Default == TRUE.}
 
 \item{years}{Numeric vector. Identifies which year(s) of data should be
 pulled.
 
-Default == c(2020).}
+Default == most recent available year.}
 
 \item{ages}{Numeric vector. Identifies which age(s) should be pulled.
 
@@ -96,4 +96,7 @@ only
  a = get_population(geo_type = "region")
  print(a)
 }
+}
+\references{
+\url{https://github.com/PHSKC-APDE/rads/wiki/get_population}
 }
