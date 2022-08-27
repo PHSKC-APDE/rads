@@ -244,9 +244,9 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     newover[, c('cat2', 'cat2_varname', 'cat2_group') := list('Overall', NA_character_, 'Overall')]
     res = rbind(res, newover)
 
+    #compare to KC
     kc_comp = res[cat1_varname == 'chi_geo_kc', .(year, kcr = result, lower_bound_kc = lower_bound, upper_bound_kc = upper_bound)]
 
-    #compare to KC
     res = merge(res, kc_comp, all.x = T, by = 'year')
     res[upper_bound < lower_bound_kc, comparison_with_kc := 'lower']
     res[lower_bound > upper_bound_kc, comparison_with_kc := 'upper']
@@ -274,40 +274,91 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   meta <- meta
 
   #List of needed functions:
-  #Trendline calculator
+  #Trendline batcher
   #Bivariate batcher
   #crosstab batcher
 
-  APDE_TRO_FORMATING <- function(DT, tab_var, cat1_var, cat1_group_var, cat2_var = NULL) {
-    #PRACTICE< DETELE
-    cat1_var <- bivariable
-    DT <- calc_result
-    tab_var <- "trends"
-    cat1_group_var <- bivariable
-    cat2_var <- NULL
 
-        #create tab column
-    DT[, tab := tab_var]
+  #trendline batcher
 
-    #turn the column identified as cat1_group into the data of a column named cat1_group
-    setnames(DT, cat1_var, "cat1_group")
-    DT[, cat1_varname := cat1_var]
+  APDE_CHI_TRO_time_trend_analysis <- function(data, variables, bivariables) {
+    #return a data structure containing calc results for each combination of variables and by variables across range of available timepoints
+    #
+    .internal_time_trend_calc <- function(v, bivariables, time_var, data) {
 
-    if(is.null(cat2_var)) {
-      DT[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(NA_character_, NA_character_, NA_character_, NA_character_) ]
-
+      all_calc_results <- (future.apply::future_lapply(bivariables, function(bivariable) {
+        calc_result = rads::calc(data, what = v, by = c(bivariable, time_var), metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T)
+        calc_result
+      }))
+      return(all_calc_results)
     }
 
+    returner <- future.apply::future_lapply(variables, function(v) .internal_time_trend_calc(v, bivariables, "chi_year" , data))
+    returner
 
   }
 
-  APDE_CHI_TRO_time_trend_analysis <- function(data, variables, bivariables, KC = TRUE) {
-    #takes data set manageable by calc fuction, list of independent variables,
+  ###################################
+  #test call to trends function to generate list of DT's containing calc output
+  trend_resultunlist <- APDE_CHI_TRO_time_trend_analysis(data, variables, bivariables)
+
+  ##############################
+  #does it work with only one variable and bivariable?
+  test.one.row <- APDE_CHI_TRO_time_trend_analysis(data, variables[1], bivariables[1])
+  ###################################
+
+
+  #Test user script that uses tableau formatting function
+  test <- trend_resultunlist[[1]][[1]][0,]
+  test[, tab := "trends"]
+  setnames(test, names(test)[1], "cat1_group")
+
+  #trend_resultunlist_backup <- trend_resultunlist
+
+  for(listofDF in trend_resultunlist) {
+    for(DT in listofDF) {
+
+      #create temporary DT to work with
+      #temp <- DT
+      temp <- trend_resultunlist[[1]][[1]] #working in loop ver
+
+      #remove negation of binary observations
+      if(any(unlist(temp[, 1]) %in% 1)) temp =  temp[get(c1val) == 1,]
+
+      #create variables to pass to table function
+
+
+      ####### this only works with provided metadata table.
+      #get category 1 variable, which is the name of the variable column, which happens to be first variable in calc returned DT
+      variablenamelookup <- names(temp)[1]
+      variablevaluelookup <- unique(unlist(temp[,1]))
+      if(length(variablevaluelookup) !=1) stop("unexpectedly have too many 'indicator key' values")
+
+
+      names(temp)[1] <- "cat1_group"
+      temp <- APDE_TRO_FORMATING(temp, "chi_year", variablevaluelookup,  )
+
+      #setnames(temp, names(temp)[1], "cat1_group")
+      test <- rbind(test, temp)
+    }
+  }
+
+  trend_resultunlist <- trend_resultunlist_backup
+
+
+  #############You'll need to loead this before running above....
+  ###############################################################
+  APDE_TRO_FORMATING <- function(DT, year, indicatorKeyVariable, ) {
+    #Will check if value exists in the names of a dataframe, or a new value is provided
+    #if a value is a name, it will rename that vector in the dataframe to the standard name (order matters) and apply any known cleaning
+    #otherwise, will create the needed vector with the standard name and give all instances of it the value provided
+    #excluded from check are: tab
+
     Tableau_Ready_DT <- data.table::data.table("year" = as.character(),
                                                "indicator_key" = as.character(),
                                                "result" = as.numeric(),
                                                "numerator" = as.numeric(),
-                                               "denominator" = as,integer(),
+                                               "denominator" = as.numeric(),
                                                "se" = as.numeric(),
                                                "lower_bound" = as.numeric(),
                                                "upper_bound" = as.numeric(),
@@ -324,55 +375,31 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
                                                "data_source" = as.character(),
                                                "run_date" = as.character(),
                                                "comparison_with_kc" = as.character(),
-                                               "significance" = as.character())
+                                               "significance" = as.character(),
+                                               stringsAsFactors = FALSE)
+
+    Tableau_Ready_DT[1,] <- FormatedAnalysisOriginal[1,]
 
 
-    #call defined process for each combination of variables and by variables across range of available timepoints
+    #create tab column
+    DT[, tab := tab_var]
 
-    #TESTING REMOVE
-#    {
-#      v <- variables[1]
-#      bivariable <- bivariables[1]
-#      time_var <- "chi_year"
-#    }
+    #turn the column identified as cat1_group into the data of a column named cat1_group
+    #setnames(DT, cat1_var, "cat1_group")
+    #DT[, cat1_varname := cat1_var]
 
-    .internal_time_trend_calc <- function(v, bivariables, time_var, data) {
+    #if(is.null(cat2_var)) {
+    #  DT[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(NA_character_, NA_character_, NA_character_, NA_character_) ]
 
-      all_calc_results <- rbindlist(future.apply::future_lapply(bivariables, function(bivariable) {
-        calc_result = rads::calc(data, what = v, by = c(bivariable, time_var), metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T)
-        #calc_result_backup <- calc_result
+    #}
 
-        #calc_result <- calc_result_backup
-
-        #calc_result <- APDE_TRO_FORMATING(calc_result, "trends", bivariable )
-
-        #if(any(calc_result[, cat1_group] %in% 1)) {
-        #  calc_result <- calc_result[cat1_group == 1,]
-        #} else {
-        #  calc_result <- calc_result[!is.na(cat1_group)]
-        #}
-
-
-        calc_result
-      }))
-      return(all_calc_results)
-    }
-
-    test <- (future.apply::future_lapply(variables, function(v) .internal_time_trend_calc(v, bivariables, "chi_year" ,data)))
-    test
-
+    return(Tableau_Ready_DT)
   }
 
-trend_resultDT <- trend_result
 
-
-trend_resultunlist <- APDE_CHI_TRO_time_trend_analysis(data, variables, bivariables)
-
-
-DT <- trend_resultDT
-DT[, tab := "tremds"]
-DT
-
+  #####################################################
+  ############code to migrate##########################
+  #####################################################
   {
     #note have historically always created a KC trend as well
     dgs = lapply(bys, function(x){
@@ -385,7 +412,7 @@ DT
 
       #generate rename variable "x" (by variable currently being manipulated) to "cat1_group"
       setnames(r2, x, 'cat1_group') #will need to be updated to something human readable
-      if(any(r2[, cat1_group] %in% 1)) r2=  r2[cat1_group == 1] ##???? if any cat1_group were identified, remove anything that isn't
+      if(any(r2[, cat1_group] %in% 1)) r2=  r2[cat1_group == 1] ##???? if any cat1_group were identified as equal to 1, remove anything that isn't
 
       #create cat1_varname variable using the by variable (bys) identified
       r2[, cat1_varname := x]
@@ -394,6 +421,8 @@ DT
       r
 
     })
+
+
     #dgs = rbindlist(dgs)
     r2[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(NA_character_, NA_character_, NA_character_, NA_character_) ]
     #remove demgroups on kc wide geography
@@ -410,8 +439,37 @@ DT
     #weird fix for chi_geo_kc
     dgs[tab == 'trends' & cat1_varname=='chi_geo_kc', c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(cat1, cat1_group, cat1_varname, cat1_group_alias)]
 
+    setnames(res,
+             c('mean', 'mean_se', 'mean_lower', 'mean_upper', 'variable', 'chi_year'),
+             c('result', 'se', 'lower_bound', 'upper_bound', 'indicator_key', 'year'))
+
+
+    res[, data_source := 'hys']
+    res[, level := NULL]
+    res[, run_date := Sys.Date()]
+    res[, year := gsub(', ', ' & ', year, fixed = T)]
+
+    #compare to KC
+    kc_comp = res[cat1_varname == 'chi_geo_kc', .(year, kcr = result, lower_bound_kc = lower_bound, upper_bound_kc = upper_bound)]
+
+    res = merge(res, kc_comp, all.x = T, by = 'year')
+    res[upper_bound < lower_bound_kc, comparison_with_kc := 'lower']
+    res[lower_bound > upper_bound_kc, comparison_with_kc := 'upper']
+    res[upper_bound >= lower_bound_kc | lower_bound <= upper_bound_kc, comparison_with_kc := 'no different']
+    res[comparison_with_kc %in% c('higher', 'lower'), significance := '*' ]
+    res[, c('kcr', 'lower_bound_kc', 'upper_bound_kc') := NULL]
+
+    res[is.nan(result), result := NA ]
 
   }
+
+
+  ########################################
+  ########################################
+  ########OTHER###########################
+  ########################################
+  ########################################
+
 
   ##create county wide point estimate of all variable
   #calculate point estimate
@@ -439,28 +497,6 @@ DT
     if(nrow(variable1) != nrow(variable2)) { stop("list of crosstabular variables must be symetrical")}
 
     #preparing output datatable
-    Tableau_Ready_DT <- data.table::data.table("year" = as.character(),
-                                               "indicator_key" = as.character(),
-                                               "result" = as.numeric(),
-                                               "numerator" = as.numeric(),
-                                               "denominator" = as,integer(),
-                                               "se" = as.numeric(),
-                                               "lower_bound" = as.numeric(),
-                                               "upper_bound" = as.numeric(),
-                                               "rse" = as.numeric(),
-                                               "tab" = as.character(),
-                                               "cat1" = as.character(),
-                                               "cat1_group" = as.character(),
-                                               "cat1_varname" = as.character(),
-                                               "cat1_group_alias" = as.character(),
-                                               "cat2" = as.character(),
-                                               "cat2_group" = as.character(),
-                                               "cat2_varname" = as.character(),
-                                               "cat2_group_alias" = as.character(),
-                                               "data_source" = as.character(),
-                                               "run_date" = as.character(),
-                                               "comparison_with_kc" = as.character(),
-                                               "significance" = as.character())
 
     calculate_a_crosstab <- function(indicator) {
       rads::calc(data, what = indicator, where =)
@@ -541,7 +577,30 @@ DT
 
   return(FormatedAnalysis)
 
-
+  #
+  #
+  # Tableau_Ready_DT <- data.table::data.table("year" = as.character(),
+  #                                            "indicator_key" = as.character(),
+  #                                            "result" = as.numeric(),
+  #                                            "numerator" = as.numeric(),
+  #                                            "denominator" = as,integer(),
+  #                                            "se" = as.numeric(),
+  #                                            "lower_bound" = as.numeric(),
+  #                                            "upper_bound" = as.numeric(),
+  #                                            "rse" = as.numeric(),
+  #                                            "tab" = as.character(),
+  #                                            "cat1" = as.character(),
+  #                                            "cat1_group" = as.character(),
+  #                                            "cat1_varname" = as.character(),
+  #                                            "cat1_group_alias" = as.character(),
+  #                                            "cat2" = as.character(),
+  #                                            "cat2_group" = as.character(),
+  #                                            "cat2_varname" = as.character(),
+  #                                            "cat2_group_alias" = as.character(),
+  #                                            "data_source" = as.character(),
+  #                                            "run_date" = as.character(),
+  #                                            "comparison_with_kc" = as.character(),
+  #                                            "significance" = as.character())
 
 }
 
