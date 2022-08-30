@@ -330,13 +330,13 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
       ####### this only works with provided metadata table.
       #get category 1 variable, which is the name of the variable column, which happens to be first variable in calc returned DT
-      variablenamelookup <- names(temp)[1]
+      variableNameLookup <- names(temp)[1]
       variablevaluelookup <- unique(unlist(temp[,1]))
       if(length(variablevaluelookup) !=1) stop("unexpectedly have too many 'indicator key' values")
 
 
       names(temp)[1] <- "cat1_group"
-      temp <- APDE_TRO_FORMATING(temp, "chi_year", variablevaluelookup,  )
+      temp <- APDE_TRO_FORMATING(temp, "chi_year", variableNameLookup, "mean", "numerator", "denominator", "mean_se", "mean_lower", "mean_upper", "rse", "trends" )
 
       #setnames(temp, names(temp)[1], "cat1_group")
       test <- rbind(test, temp)
@@ -348,41 +348,107 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
   #############You'll need to loead this before running above....
   ###############################################################
-  APDE_TRO_FORMATING <- function(DT, year, indicatorKeyVariable, ) {
+  APDE_TRO_FORMATING <- function(DT, yearVariable, indicatorKeyVariable, resultVariable, numeratorVariable, denomenatorVariable, seVariable, tabVariable ) {
     #Will check if value exists in the names of a dataframe, or a new value is provided
     #if a value is a name, it will rename that vector in the dataframe to the standard name (order matters) and apply any known cleaning
     #otherwise, will create the needed vector with the standard name and give all instances of it the value provided
-    #excluded from check are: tab
-
-    Tableau_Ready_DT <- data.table::data.table("year" = as.character(),
-                                               "indicator_key" = as.character(),
-                                               "result" = as.numeric(),
-                                               "numerator" = as.numeric(),
-                                               "denominator" = as.numeric(),
-                                               "se" = as.numeric(),
-                                               "lower_bound" = as.numeric(),
-                                               "upper_bound" = as.numeric(),
-                                               "rse" = as.numeric(),
-                                               "tab" = as.character(),
-                                               "cat1" = as.character(),
-                                               "cat1_group" = as.character(),
-                                               "cat1_varname" = as.character(),
-                                               "cat1_group_alias" = as.character(),
-                                               "cat2" = as.character(),
-                                               "cat2_group" = as.character(),
-                                               "cat2_varname" = as.character(),
-                                               "cat2_group_alias" = as.character(),
-                                               "data_source" = as.character(),
-                                               "run_date" = as.character(),
-                                               "comparison_with_kc" = as.character(),
-                                               "significance" = as.character(),
-                                               stringsAsFactors = FALSE)
-
-    Tableau_Ready_DT[1,] <- FormatedAnalysisOriginal[1,]
+    #excluded from check are: indicatorkey, tab
 
 
-    #create tab column
-    DT[, tab := tab_var]
+
+    #################################### temp testing
+    DT <- temp
+    yearVariable <- "chi_year"
+    indicatorKeyVariable <- variableNameLookup
+    resultVariable <- "mean"
+    numeratorVariable <- "numerator"
+    denominatorVariable <- "denominator"
+    seVariable <- "mean_se"
+    lowerBoundVariable <- "mean_lower"
+    upperBoundVariable <- "mean_upper"
+    rseVariable <- "rse"
+    tabVariable <- "trends"
+
+
+    #make target datatable of correct size
+    outputNames <- c("year",
+                     "indicator_key",
+                     "result",
+                     "numerator",
+                     "denominator",
+                     "se",
+                     "lower_bound",
+                     "upper_bound",
+                     "rse",
+                     "tab",
+                     "cat1",
+                     "cat1_group",
+                     "cat1_varname",
+                     "cat1_group_alias",
+                     "cat2",
+                     "cat2_group",
+                     "cat2_varname",
+                     "cat2_group_alias",
+                     "data_source",
+                     "run_date",
+                     "comparison_with_kc",
+                     "significance")
+    Tableau_Ready_DT <- matrix(rep(NA, time = 22*nrow(DT)), ncol = 22, byrow= TRUE)
+    colnames(Tableau_Ready_DT) <- outputNames
+    Tableau_Ready_DT <- data.table::as.data.table(Tableau_Ready_DT)
+
+    #process and add years
+    if(yearVariable %in% names(DT)) {
+      Tableau_Ready_DT$year <- DT[, ..yearVariable]
+    }
+    Tableau_Ready_DT$year <- as.character(Tableau_Ready_DT$year)
+
+
+    #process and add indicator_key
+    Tableau_Ready_DT$indicator_key <- rep(indicatorKeyVariable, nrow(DT))
+
+    #process and add result
+    if(resultVariable %in% names(DT)) {
+      Tableau_Ready_DT$result <- DT[, ..resultVariable]
+    }
+    Tableau_Ready_DT[is.nan(result), result := NA]
+
+    #process and add numerator
+    if(numeratorVariable %in% names(DT)) {
+      Tableau_Ready_DT$numerator <- DT[, ..numeratorVariable]
+    }
+    Tableau_Ready_DT[]
+
+    #process and add denominator
+    if(denominatorVariable %in% names(DT)) {
+      Tableau_Ready_DT$denominator <- DT[, ..denominatorVariable]
+    }
+
+    #process and add se
+    if(seVariable %in% names(DT)) {
+      Tableau_Ready_DT$se <- DT[, ..seVariable]
+    }
+
+    #process and add lower_bound
+    if(lowerBoundVariable %in% names(DT)) {
+      Tableau_Ready_DT$lower_bound <- DT[, ..lowerBoundVariable]
+    }
+
+    #process and add upper_bound
+    if(upperBoundVariable %in% names(DT)) {
+      Tableau_Ready_DT$upper_bound <- DT[, ..upperBoundVariable]
+    }
+
+    #process and add rse
+    if(rseVariable %in% names(DT)) {
+      Tableau_Ready_DT$rse <- DT[, ..rseVariable]
+    }
+
+    #process and add tab
+    Tableau_Ready_DT$tab <- rep(tabVariable, nrow(DT))
+    Tableau_Ready_DT$tab <- as.character(Tableau_Ready_DT$tab)
+
+
 
     #turn the column identified as cat1_group into the data of a column named cat1_group
     #setnames(DT, cat1_var, "cat1_group")
@@ -392,6 +458,34 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     #  DT[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(NA_character_, NA_character_, NA_character_, NA_character_) ]
 
     #}
+
+    ##################list of variables notably stuck in old approach of creating DT directly instead of matrix first
+    # Tableau_Ready_DT <- data.table::data.table("year" = as.character(),
+    #                                            "indicator_key" = as.character(),
+    #                                            "result" = as.numeric(),
+    #                                            "numerator" = as.numeric(),
+    #                                            "denominator" = as.numeric(),
+    #                                            "se" = as.numeric(),
+    #                                            "lower_bound" = as.numeric(),
+    #                                            "upper_bound" = as.numeric(),
+    #                                            "rse" = as.numeric(),
+    #                                            "tab" = as.character(),
+    #                                            "cat1" = as.character(),
+    #                                            "cat1_group" = as.character(),
+    #                                            "cat1_varname" = as.character(),
+    #                                            "cat1_group_alias" = as.character(),
+    #                                            "cat2" = as.character(),
+    #                                            "cat2_group" = as.character(),
+    #                                            "cat2_varname" = as.character(),
+    #                                            "cat2_group_alias" = as.character(),
+    #                                            "data_source" = as.character(),
+    #                                            "run_date" = as.character(),
+    #                                            "comparison_with_kc" = as.character(),
+    #                                            "significance" = as.character(),
+    #                                            stringsAsFactors = FALSE)
+    # Tableau_Ready_DT<- Tableau_Ready_DT[NA]
+
+
 
     return(Tableau_Ready_DT)
   }
