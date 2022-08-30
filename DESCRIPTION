@@ -13,7 +13,7 @@ Roxygen: list(markdown = TRUE)
 Imports:
     data.table (>= 1.14.2),
     DBI (>= 1.1.0),
-    dtsurvey (>= 0.0.1.5),
+    dtsurvey (>= 0.0.1.6),
     glue (>= 1.6.1),
     keyring (>= 1.2.0),
     methods,
