@@ -309,9 +309,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
 
   #Test user script that uses tableau formatting function
-  test <- trend_resultunlist[[1]][[1]][0,]
-  test[, tab := "trends"]
-  setnames(test, names(test)[1], "cat1_group")
+  test <- FormatedAnalysis[1,]
 
   #trend_resultunlist_backup <- trend_resultunlist
 
@@ -331,15 +329,40 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
       ####### this only works with provided metadata table.
       #get category 1 variable, which is the name of the variable column, which happens to be first variable in calc returned DT
       variableNameLookup <- names(temp)[1]
-      variablevaluelookup <- unique(unlist(temp[,1]))
-      if(length(variablevaluelookup) !=1) stop("unexpectedly have too many 'indicator key' values")
+      variableValuelookup <- unique(unlist(temp[,1]))
+      if(length(variableValuelookup) !=1) stop("unexpectedly have too many 'indicator key' values")
+      tempCat <- meta[varname == variableNameLookup & gval == variableValuelookup]$cat
+      tempCatGroup <- meta[varname == variableNameLookup & gval == variableValuelookup]$group
 
+      tempCatGroupAlias <- meta[varname == variableNameLookup & gval == variableValuelookup]$group_alias
 
       names(temp)[1] <- "cat1_group"
-      temp <- APDE_TRO_FORMATING(temp, "chi_year", variableNameLookup, "mean", "numerator", "denominator", "mean_se", "mean_lower", "mean_upper", "rse", "trends" )
+      formatedOutput <- APDE_TRO_FORMATING(temp,
+                                 "chi_year",
+                                 "variable",
+                                 "mean",
+                                 "numerator",
+                                 "denominator",
+                                 "mean_se",
+                                 "mean_lower",
+                                 "mean_upper",
+                                 "rse",
+                                 "trends",
+                                 tempCat,
+                                 tempCatGroup,
+                                 variableNameLookup,
+                                 tempCatGroupAlias,
+                                 NA,
+                                 NA,
+                                 NA,
+                                 NA,
+                                 "hys",
+                                 NA,
+                                 NA,
+                                 NA)
 
       #setnames(temp, names(temp)[1], "cat1_group")
-      test <- rbind(test, temp)
+      test <- rbind(test, formatedOutput)
     }
   }
 
@@ -348,26 +371,60 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
   #############You'll need to loead this before running above....
   ###############################################################
-  APDE_TRO_FORMATING <- function(DT, yearVariable, indicatorKeyVariable, resultVariable, numeratorVariable, denomenatorVariable, seVariable, tabVariable ) {
+  APDE_TRO_FORMATING <- function(DT,
+                                 yearVariable,
+                                 indicatorKeyVariable,
+                                 resultVariable,
+                                 numeratorVariable,
+                                 denominatorVariable,
+                                 seVariable,
+                                 lowerBoundVariable,
+                                 upperBoundVariable,
+                                 rseVariable,
+                                 tabVariable,
+                                 cat1Variable,
+                                 cat1_groupVariable,
+                                 cat1_varnameVariable,
+                                 cat1_group_aliasVariable,
+                                 cat2Variable = NA,
+                                 cat2_groupVariable = NA,
+                                 cat2_varnameVariable = NA,
+                                 cat2_group_aliasVariable = NA,
+                                 data_sourceVariable,
+                                 run_dateVariable,
+                                 comparison_with_KCVariable,
+                                 significanceVariable) {
     #Will check if value exists in the names of a dataframe, or a new value is provided
     #if a value is a name, it will rename that vector in the dataframe to the standard name (order matters) and apply any known cleaning
     #otherwise, will create the needed vector with the standard name and give all instances of it the value provided
-    #excluded from check are: indicatorkey, tab
+    #excluded from check are: tab
 
 
 
-    #################################### temp testing
-    DT <- temp
-    yearVariable <- "chi_year"
-    indicatorKeyVariable <- variableNameLookup
-    resultVariable <- "mean"
-    numeratorVariable <- "numerator"
-    denominatorVariable <- "denominator"
-    seVariable <- "mean_se"
-    lowerBoundVariable <- "mean_lower"
-    upperBoundVariable <- "mean_upper"
-    rseVariable <- "rse"
-    tabVariable <- "trends"
+    # #################################### temp testing
+    # DT <- temp
+    # yearVariable <- "chi_year"
+    # indicatorKeyVariable <- "variable"
+    # resultVariable <- "mean"
+    # numeratorVariable <- "numerator"
+    # denominatorVariable <- "denominator"
+    # seVariable <- "mean_se"
+    # lowerBoundVariable <- "mean_lower"
+    # upperBoundVariable <- "mean_upper"
+    # rseVariable <- "rse"
+    # tabVariable <- "trends"
+    # cat1Variable <- tempCat
+    # cat1_groupVariable <- tempCatGroup
+    # cat1_varnameVariable <- variableNameLookup
+    # cat1_group_aliasVariable <- tempCatGroupAlias
+    # cat2Variable <- NA
+    # cat2_groupVariable <- NA
+    # cat2_varnameVariable <- NA
+    # cat2_group_aliasVariable <- NA
+    # data_sourceVariable <- "hys"
+    # run_dateVariable <- NA
+    # comparison_with_KCVariable <- NA
+    # significanceVariable <- NA
 
 
     #make target datatable of correct size
@@ -405,7 +462,10 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
 
     #process and add indicator_key
-    Tableau_Ready_DT$indicator_key <- rep(indicatorKeyVariable, nrow(DT))
+    if(indicatorKeyVariable %in% names(DT)) {
+      Tableau_Ready_DT$indicator_key <- DT[, ..indicatorKeyVariable]
+    }
+    Tableau_Ready_DT$indicator_key <- as.character(Tableau_Ready_DT$indicator_key)
 
     #process and add result
     if(resultVariable %in% names(DT)) {
@@ -417,7 +477,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     if(numeratorVariable %in% names(DT)) {
       Tableau_Ready_DT$numerator <- DT[, ..numeratorVariable]
     }
-    Tableau_Ready_DT[]
+
 
     #process and add denominator
     if(denominatorVariable %in% names(DT)) {
@@ -448,7 +508,41 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     Tableau_Ready_DT$tab <- rep(tabVariable, nrow(DT))
     Tableau_Ready_DT$tab <- as.character(Tableau_Ready_DT$tab)
 
+    #process and add cat1
+    Tableau_Ready_DT$cat1 <- rep(cat1Variable, nrow(DT))
 
+    #process and add cat1_group
+    Tableau_Ready_DT$cat1_group <- rep(cat1_groupVariable, nrow(DT))
+
+    #process and add cat1_varname
+    Tableau_Ready_DT$cat1_varname <- rep(cat1_varnameVariable, nrow(DT))
+
+    #process and add cat1_group_alias
+    Tableau_Ready_DT$cat1_group_alias <- rep(cat1_group_aliasVariable, nrow(DT))
+
+    #process and add cat2
+    Tableau_Ready_DT$cat2 <- rep(cat2Variable, nrow(DT))
+
+    #process and add cat2_group
+    Tableau_Ready_DT$cat2_group <- rep(cat2_groupVariable, nrow(DT))
+
+    #process and add cat2_varname
+    Tableau_Ready_DT$cat2_varname <- rep(cat2_varnameVariable, nrow(DT))
+
+    #process and add cat2_group_alias
+    Tableau_Ready_DT$cat2_group_alias <- rep(cat2_group_aliasVariable, nrow(DT))
+
+    #process and add data_source
+    Tableau_Ready_DT$data_source <- rep(data_sourceVariable, nrow(DT))
+
+    #process and add run_date
+    Tableau_Ready_DT$run_date <- rep(run_dateVariable, nrow(DT))
+
+    #process and add comparison_with_kc
+    Tableau_Ready_DT$comparison_with_kc <- rep(comparison_with_KCVariable, nrow(DT))
+
+    #process and add significance
+    Tableau_Ready_DT$significance <- rep(significanceVariable, nrow(DT))
 
     #turn the column identified as cat1_group into the data of a column named cat1_group
     #setnames(DT, cat1_var, "cat1_group")
