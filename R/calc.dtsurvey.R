@@ -431,7 +431,7 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
   #make 0 row if ph.data is 0
   if(nrow(DT) == 0) res = res[FALSE]
 
-  return(res)
+  return(data.table::data.table(res))
 
 
 }
