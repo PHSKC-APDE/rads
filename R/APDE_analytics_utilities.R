@@ -317,11 +317,15 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     for(DT in listofDF) {
 
       #create temporary DT to work with
-      #temp <- DT
-      temp <- trend_resultunlist[[1]][[1]] #working in loop ver
+      temp <- DT
+      #temp <- trend_resultunlist[[1]][[1]] #working in loop ver
 
+      c1val <- names(temp)[1]
       #remove negation of binary observations
       if(any(unlist(temp[, 1]) %in% 1)) temp =  temp[get(c1val) == 1,]
+
+      #remove obvious NA's
+      temp <- temp[!is.na(get(c1val))]
 
       #create variables to pass to table function
 
@@ -330,39 +334,41 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
       #get category 1 variable, which is the name of the variable column, which happens to be first variable in calc returned DT
       variableNameLookup <- names(temp)[1]
       variableValuelookup <- unique(unlist(temp[,1]))
-      if(length(variableValuelookup) !=1) stop("unexpectedly have too many 'indicator key' values")
-      tempCat <- meta[varname == variableNameLookup & gval == variableValuelookup]$cat
-      tempCatGroup <- meta[varname == variableNameLookup & gval == variableValuelookup]$group
+      #if(length(variableValuelookup) !=1) stop("unexpectedly have too many 'indicator key' values")
+      for(singleVariableValueLookup in variableValuelookup) {
+        tempCat <- meta[varname == variableNameLookup & gval == singleVariableValueLookup]$cat
+        tempCatGroup <- meta[varname == variableNameLookup & gval == singleVariableValueLookup]$group
 
-      tempCatGroupAlias <- meta[varname == variableNameLookup & gval == variableValuelookup]$group_alias
+        tempCatGroupAlias <- meta[varname == variableNameLookup & gval == singleVariableValueLookup]$group_alias
 
-      names(temp)[1] <- "cat1_group"
-      formatedOutput <- APDE_TRO_FORMATING(temp,
-                                 "chi_year",
-                                 "variable",
-                                 "mean",
-                                 "numerator",
-                                 "denominator",
-                                 "mean_se",
-                                 "mean_lower",
-                                 "mean_upper",
-                                 "rse",
-                                 "trends",
-                                 tempCat,
-                                 tempCatGroup,
-                                 variableNameLookup,
-                                 tempCatGroupAlias,
-                                 NA,
-                                 NA,
-                                 NA,
-                                 NA,
-                                 "hys",
-                                 NA,
-                                 NA,
-                                 NA)
+        names(temp)[1] <- "cat1_group"
+        formatedOutput <- APDE_TRO_FORMATING(temp,
+                                   "chi_year",
+                                   "variable",
+                                   "mean",
+                                   "numerator",
+                                   "denominator",
+                                   "mean_se",
+                                   "mean_lower",
+                                   "mean_upper",
+                                   "rse",
+                                   "trends",
+                                   tempCat,
+                                   tempCatGroup,
+                                   variableNameLookup,
+                                   tempCatGroupAlias,
+                                   NA,
+                                   NA,
+                                   NA,
+                                   NA,
+                                   "hys",
+                                   Sys.Date(),
+                                   NA,
+                                   NA)
 
-      #setnames(temp, names(temp)[1], "cat1_group")
-      test <- rbind(test, formatedOutput)
+        #setnames(temp, names(temp)[1], "cat1_group")
+        test <- rbind(test, formatedOutput)
+      }
     }
   }
 
