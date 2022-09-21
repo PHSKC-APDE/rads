@@ -678,7 +678,7 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
 
   ## Set up ----
   # identify column type
-  temp.vartype <- data.table(varname = names(sapply(mydt, class)), vartype = sapply(mydt, class))
+  temp.vartype <- data.table(varname = names(sapply(mydt, class)), vartype = sapply(mydt, function(x) paste(class(x), collapse = ',')))
 
   # identify if it is a binary
   temp.binary <- data.table(varname = names(sapply(mydt,function(x) { all(na.omit(x) %in% 0:1) })), binary = sapply(mydt,function(x) { all(na.omit(x) %in% 0:1) }))
