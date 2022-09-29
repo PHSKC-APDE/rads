@@ -293,7 +293,7 @@ chi_compare_kc <- function(orig,
                            new.col.name = "comparison_with_kc"){
 
   #Deprecation warning
-  .Deprecated("comparison")
+  .Deprecated("compare_estimate")
 
   #Bindings for data.table/check global variables
   cat1 <- cat1_varname <- result <- comp.result <- lower_bound <- comp.upper_bound <- upper_bound <- comp.lower_bound <- significance <- tab <- comparator_vars <- NULL
