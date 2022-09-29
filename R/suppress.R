@@ -16,7 +16,7 @@
 #' Note, this should not include the most granular level. For example, if you wanted secondary suppression for race/ethnicity
 #' where category == race/ethnicity and group == AIAN, Asian, Black, etc., you should have
 #' secondary_ids = c("geography", "category") rather than secondary_ids = c("geography", "category", "group")
-#' @param secondary_where an expression identifying the rows to be filtered / excluded from secondary suppression because
+#' @param secondary_exclude an expression identifying the rows to be filtered / excluded from secondary suppression because
 #' the categories are not mutually exclusive (e.g., race3)
 #' @param flag_only logical (T, TRUE, F, or FALSE) indicating whether data to be suppressed should be flagged without setting estimates to NA
 #'
@@ -46,11 +46,11 @@ suppress <- function(sup_data = NULL,
                      suppress_range = c(0, 9),
                      secondary = FALSE,
                      secondary_ids = c("tab", "indicator_key", "cat1", "cat2_group", "year"),
-                     secondary_where,
+                     secondary_exclude,
                      flag_only = FALSE){
 
   ## Global variables used by data.table declared as NULL here to play nice with devtools::check()
-    numerator <- suppression <- my.group <- my.order <- my.rowct <- suppressed.group <- my.flag <- rse <- caution <- NULL
+    numerator <- suppression <- my.group <- my.order <- my.rowct <- suppressed.group <- my.flag <- rse <- caution <- rows.unsuppressed <- NULL
 
   #validate 'sup_data' ----
       if(is.null(sup_data)){
@@ -82,22 +82,22 @@ suppress <- function(sup_data = NULL,
         stop("At least one name in 'secondary_ids' is not found among the column names in 'sup_data'")
       }
 
-  #validate 'secondary_where' ----
-      if(!missing(secondary_where)){
+  #validate 'secondary_exclude' ----
+      if(!missing(secondary_exclude)){
         call = match.call()
 
-        if(is.character(call[['secondary_where']])){
-          where = str2lang(call[['secondary_where']])
-          warning('`secondary_where` is a string. It was converted so that it would work, but in the future, this might turn into an error.
+        if(is.character(call[['secondary_exclude']])){
+          where = str2lang(call[['secondary_exclude']])
+          warning('`secondary_exclude` is a string. It was converted so that it would work, but in the future, this might turn into an error.
                   In the future, please pass unquoted commands that will resolve to a logical' )
-        } else {where = copy(call[['secondary_where']])}
+        } else {where = copy(call[['secondary_exclude']])}
 
 
         e <- substitute(expr = where) # get parse tree expression `where`
         r <- eval(expr = e, envir = sup_data, enclos = parent.frame()) # evaluate
         stopifnot('`where` does not resolve to a logical' = is.logical(r))
         if(nrow(sup_data[r,]) <1 ){
-          stop(paste0("Your 'secondary_where' argument filters out all rows of data. Please revise and submit again"))
+          stop(paste0("Your 'secondary_exclude' argument filters out all rows of data. Please revise and submit again"))
         }
       }
 
@@ -117,43 +117,45 @@ suppress <- function(sup_data = NULL,
   #apply secondary suppression ----
       if(secondary==T){
 
-        # apply secondary_where argument
-          if(!missing(secondary_where)){
-            r <- eval(expr = e, envir = temp.dt, enclos = parent.frame())
-            temp.dt.aside <- fsetdiff(temp.dt, temp.dt[r,])
-            temp.dt <- temp.dt[r,]
-          }
-
-        # identify max number of rows per group defined by secondary_ids
-          max.grp.rows <- max(copy(temp.dt)[, my.rowct := .N, secondary_ids]$my.rowct)
+        # apply secondary_exclude argument
+        if(!missing(secondary_exclude)){
+          r <- eval(expr = e, envir = temp.dt, enclos = parent.frame())
+          temp.dt.aside <- fsetdiff(temp.dt, temp.dt[r,])
+          temp.dt <- temp.dt[r,]
+        }
 
         # create group id for each set of secondary_ids
-          temp.dt[, my.group := .GRP, secondary_ids]
+        temp.dt[, my.group := .GRP, secondary_ids]
+        setorder(temp.dt, my.group)
+
+        # identify max number of rows per group defined by secondary_ids
+        temp.dt[, my.rowct := .N, secondary_ids]
 
         # identify groups that had initial suppression
-          temp.dt[, suppressed.group := F][my.group %in% temp.dt[suppression=="^"]$my.group, suppressed.group := T]
+        temp.dt[, suppressed.group := F][my.group %in% unique(temp.dt[suppression=="^"]$my.group), suppressed.group := T]
 
         # within groups that had suppression, count the number of rows that were not suppressed
-          temp.dt[is.na(suppression), my.rowct := .N, secondary_ids]
+        temp.dt[my.group %in% unique(temp.dt[suppressed.group == T]$my.group) & is.na(suppression), rows.unsuppressed := .N, secondary_ids]
+        suppressWarnings(temp.dt[, rows.unsuppressed := max(rows.unsuppressed, na.rm = T), my.group])
 
         # identify when the number of un-suppressed rows (in groups that had suppression) is max rows minus 1 (these need secondary suppression)
-          temp.dt[is.na(suppression) & my.rowct == max.grp.rows - 1, my.flag := "group needs secondary suppression"]
+        temp.dt[is.na(suppression) & rows.unsuppressed == my.rowct - 1, my.flag := "group needs secondary suppression"]
 
         # sort table so the smallest numerator per group that needs secondary suppression is first
-          setorder(temp.dt, my.group, numerator, na.last = T)
+        setorder(temp.dt, my.group, numerator, na.last = T)
 
         # suppress row with smallest numerator among groups needing secondary suppression
-          temp.dt[my.flag == "group needs secondary suppression", my.order := 1:.N, my.group]
-          temp.dt[my.order==1, suppression := "^"]
+        temp.dt[my.flag == "group needs secondary suppression", my.order := 1:.N, my.group]
+        temp.dt[my.order==1, suppression := "^"]
 
         # drop all temporary variables
-          temp.dt[, c("my.group", "suppressed.group", "my.rowct", "my.flag", "my.order") := NULL]
+        temp.dt[, c("my.group", "suppressed.group", "my.rowct", "my.flag", "my.order", "rows.unsuppressed") := NULL]
 
-        # combine back with data filtered out by secondary_where
-          if(exists("temp.dt.aside")){
-            temp.dt <- rbind(temp.dt, temp.dt.aside)
-            rm(temp.dt.aside)
-          }
+        # combine back with data filtered out by secondary_exclude
+        if(exists("temp.dt.aside")){
+          temp.dt <- rbind(temp.dt, temp.dt.aside)
+          rm(temp.dt.aside)
+        }
       }
 
   #suppress data if has suppression flag
@@ -162,7 +164,7 @@ suppress <- function(sup_data = NULL,
                                                  "rate", "rate_se", "rate_lower", "rate_upper",
                                                  "total", "total_se", "total_lower", "total_upper",
                                                  "median", "numerator", "denominator", "proportion",
-                                                 "comparison_with_kc", "significance"))
+                                                 "comparison_with_kc", "significance", "caution"))
       if(isFALSE(flag_only)){temp.dt[suppression=="^", (sup_metrics) := NA]}
 
   #apply caution flag if possible ----
