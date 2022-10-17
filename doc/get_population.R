@@ -8,46 +8,53 @@ args(get_population)
 get_population()[]
 
 ## -----------------------------------------------------------------------------
-get_population(kingco = F, geo_type = "zip")[]
+get_population(kingco = F, 
+               geo_type = "zip")[]
 
 ## -----------------------------------------------------------------------------
 get_population()[]
 
 ## -----------------------------------------------------------------------------
 get_population(geo_type = c("region"),
-                   group_by = c("geo_id"))[]
+               group_by = c("geo_id"))[]
+
+## -----------------------------------------------------------------------------
+rads::get_population(geo_type = 'region', 
+                     round = F)[]
 
 ## -----------------------------------------------------------------------------
     head(get_population(geo_type = c("hra"),
-                   group_by = c("geo_id"))[])  
+                        group_by = c("geo_id"))[])  
 
 ## -----------------------------------------------------------------------------
     head(get_population(geo_type = c("zip"),
-                   group_by = c("geo_id"))[])  
+                        group_by = c("geo_id"))[])  
 
 ## -----------------------------------------------------------------------------
     head(get_population(geo_type = c("tract"),
-                   group_by = c("geo_id"))[])  
+                        group_by = c("geo_id"))[])  
 
 ## -----------------------------------------------------------------------------
     head(get_population(geo_type = c("blkgrp"),
-                   group_by = c("geo_id"))[])  
+                        group_by = c("geo_id"))[])  
 
 ## -----------------------------------------------------------------------------
     head(get_population(geo_type = c("blk"),
-                   group_by = c("geo_id"))[])  
+                        group_by = c("geo_id"))[])  
 
 ## -----------------------------------------------------------------------------
 get_population(years = 2017:2019)[]
 
 ## -----------------------------------------------------------------------------
-get_population(years = 2017:2019, group_by = "years")[]
+get_population(years = 2017:2019, 
+               group_by = "years")[]
 
 ## -----------------------------------------------------------------------------
 get_population(ages = 65:70)[]
 
 ## -----------------------------------------------------------------------------
-get_population(ages = 65:70, group_by = "ages")[]
+get_population(ages = 65:70, 
+               group_by = "ages")[]
 
 ## -----------------------------------------------------------------------------
 get_population(genders = "F")[]
@@ -56,20 +63,33 @@ get_population(genders = "F")[]
 get_population(group_by = "genders")[]
 
 ## -----------------------------------------------------------------------------
-get_population(races = "aian", race_type = "race_eth")[]
+get_population(races = "aian", 
+               race_type = "race_eth")[]
 
 ## -----------------------------------------------------------------------------
-get_population(races = "aian", race_type = "race")[]
+get_population(races = "aian", 
+               race_type = "race")[]
 
 ## -----------------------------------------------------------------------------
-get_population(race_type = "race_eth", group_by = "race_eth")[]
+get_population(race_type = "race_eth", 
+               group_by = "race_eth")[]
 
 ## -----------------------------------------------------------------------------
-get_population(race_type = "race", group_by = "race")[]
+get_population(race_type = "race", 
+               group_by = "race")[]
 
 ## -----------------------------------------------------------------------------
-get_population(geo_type = "region", years = 2017:2019, group_by = c("geo_id", "years", "genders"))[]
+get_population(geo_type = "region", 
+               years = 2017:2019, 
+               group_by = c("geo_id", "years", "genders"))[]
 
 ## -----------------------------------------------------------------------------
-get_population(ages = 16:25, genders = "F", years = 2017:2019, races = c("hispanic", "asian"), geo_type = "region", race_type = "race_eth", group_by = c("geo_id", "years", "race_eth"))[]
+get_population(ages = 16:25, 
+               genders = "F", 
+               years = 2017:2019, 
+               races = c("hispanic", "asian"), 
+               geo_type = "region", 
+               race_type = "race_eth", 
+               group_by = c("geo_id", "years", "race_eth"), 
+               round = F)[]
 

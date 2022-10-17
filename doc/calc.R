@@ -20,6 +20,20 @@ calc(ph.data = birth,
      time_var = "chi_year")[]
 
 ## -----------------------------------------------------------------------------
+calc(ph.data = birth, 
+     what = c("preterm"), 
+     where = chi_sex == "Male",
+     metrics = c("mean", "rse", "numerator", "denominator"), 
+     time_var = "chi_year")[]
+
+## -----------------------------------------------------------------------------
+calc(ph.data = birth, 
+     what = c("preterm"), 
+     where = chi_sex == "Male" & chi_race_eth8 == "Hispanic",
+     metrics = c("mean", "rse", "numerator", "denominator"), 
+     time_var = "chi_year")[]
+
+## -----------------------------------------------------------------------------
 birth[, cy := chi_year]
 calc(ph.data = birth, 
      what = c("preterm"), 

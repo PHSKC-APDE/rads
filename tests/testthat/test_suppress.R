@@ -32,7 +32,7 @@ test_that('Check that defaults work as expected',{
 
 
 # test suppression range ----
-dt2 <- suppress(dt, suppress_range = c(0,10))
+dt2 <- suppress(dt, suppress_range = c(0,10), secondary = F)
 test_that('Check that the suppression_range argument works',{
   expect_equal( nrow(dt2[suppression=="^"]), nrow(dt[numerator <= 10]))
   expect_equal( nrow(dt2[suppression=="^"]), nrow(dt2[is.na(mean)]))
@@ -48,18 +48,21 @@ test_that('Check that the suppression_range argument works',{
 dt3 <- suppress(dt, suppress_range = c(0,10),
                 secondary = T,
                 secondary_ids = c("indicator", "team"))
-  #ugly manual method to apply secondary suppression for testing
-    sec.suppress3 <- copy(dt2)
-    max.grp.rows <- max(sec.suppress3[, rowct := .N, .(indicator, team)]$rowct)
-    sec.suppress3[, group := .GRP, by = c("indicator", "team")]
-    sec.suppress3 <- sec.suppress3[group %in% sec.suppress3[suppression=="^"]$group] # id groups with suppression
-    sec.suppress3 <- sec.suppress3[is.na(suppression)]
-    sec.suppress3 <- sec.suppress3[, rowct := .N, .(indicator, team)]
-    sec.suppress3 <- sec.suppress3[rowct == max.grp.rows - 1]
-    setorder(sec.suppress3, group, numerator)
-    sec.suppress3[, order := 1:.N, group]
-    sec.suppress3[order==1, suppression := "^"][, c("rowct", "group", "order") := NULL]
-    sec.suppress3 <- rbind(dt2[suppression=="^"], sec.suppress3[suppression=="^"])
+  #ugly manual method to apply secondary suppression for comparison
+    sec.suppress3 <- copy(dt2) # build off results from initial / primary suppression
+    sec.suppress3[, max.grp.rows := .N, .(indicator, team)] # num of rows per set of secondary_ids
+    sec.suppress3[, group := .GRP, by = .(indicator, team)] # create group id for each set of secondary_ids
+    supp.ids <- unique(sec.suppress3[suppression=="^"]$group) # get group ids where there was initial suppression
+    sec.suppress3[, suppressed.group := F]
+    sec.suppress3[group %in% supp.ids, suppressed.group := T] # identify groups with initial suppression in table
+    sec.suppress3[group %in% supp.ids & is.na(suppression), unsuppressed := .N, .(indicator, team)] # rows unsuppressed per group
+    suppressWarnings(sec.suppress3[, unsuppressed := max(unsuppressed, na.rm = T), .(indicator, team)]) # fill in NA for rows unsuppressed
+    sec.suppress3[is.na(suppression) & unsuppressed == max.grp.rows - 1, secondary.suppression := T] # identify groups that need secondary suppression (groups with exactly one suppressed row)
+    setorder(sec.suppress3, group, numerator, na.last = T) # sort from smallest to largest numerator by group
+    sec.suppress3[secondary.suppression == T, order := 1:.N, group] # identify 1st row (smallest numerator) of each group needing secondary suppression
+    sec.suppress3[order==1, suppression := "^"] # mark the specific rows to have secondary suppression
+    sec.suppress3[suppression == "^", c("numerator", "denominator", "mean", "se", "lower_bound", "upper_bound", "rse", "caution") := NA]
+    sec.suppress3[, c("max.grp.rows", "group", "suppressed.group", "unsuppressed", "secondary.suppression", "order") := NULL]
 
 test_that('Check that secondary suppression works',{
   expect_equal( nrow(dt3[suppression=="^"]), nrow(sec.suppress3[suppression=="^"]))
@@ -69,24 +72,29 @@ test_that('Check that secondary suppression works',{
   expect_equal( nrow(dt3[suppression=="^"]), nrow(dt3[is.na(rse)]))
 })
 
-# test secondary suppression with secondary_where ----
+# test secondary suppression with secondary_exclude ----
 dt4 <- suppress(dt, suppress_range = c(0,10),
                 secondary = T,
                 secondary_ids = c("indicator", "team"),
-                secondary_where = "!team %in% c('a10', 'a11')")
+                secondary_exclude = !team %in% c('a10', 'a11'))
 
-#ugly manual method to apply secondary suppression for testing
-  sec.suppress4 <- copy(dt2[!team %in% c('a10', 'a11')])
-  max.grp.rows <- max(sec.suppress4[, rowct := .N, .(indicator, team)]$rowct)
-  sec.suppress4[, group := .GRP, by = c("indicator", "team")]
-  sec.suppress4 <- sec.suppress4[group %in% sec.suppress4[suppression=="^"]$group] # id groups with suppression
-  sec.suppress4 <- sec.suppress4[is.na(suppression)]
-  sec.suppress4 <- sec.suppress4[, rowct := .N, .(indicator, team)]
-  sec.suppress4 <- sec.suppress4[rowct == max.grp.rows - 1]
-  setorder(sec.suppress4, group, numerator)
-  sec.suppress4[, order := 1:.N, group]
-  sec.suppress4[order==1, suppression := "^"][, c("rowct", "group", "order") := NULL]
-  sec.suppress4 <- rbind(dt2[suppression=="^"], sec.suppress4[suppression=="^"])
+  #ugly manual method to apply secondary suppression for testing
+    exclusion4 <- copy(dt2)[team %in% c('a10', 'a11')] # partition off part excluded from secondary suppression
+    sec.suppress4 <- copy(dt2)[!team %in% c('a10', 'a11')] # build off results from initial / primary suppression
+    sec.suppress4[, max.grp.rows := .N, .(indicator, team)] # num of rows per set of secondary_ids
+    sec.suppress4[, group := .GRP, by = .(indicator, team)] # create group id for each set of secondary_ids
+    supp.ids <- unique(sec.suppress4[suppression=="^"]$group) # get group ids where there was initial suppression
+    sec.suppress4[, suppressed.group := F]
+    sec.suppress4[group %in% supp.ids, suppressed.group := T] # identify groups with initial suppression in table
+    sec.suppress4[group %in% supp.ids & is.na(suppression), unsuppressed := .N, .(indicator, team)] # rows unsuppressed per group
+    suppressWarnings(sec.suppress4[, unsuppressed := max(unsuppressed, na.rm = T), .(indicator, team)]) # fill in NA for rows unsuppressed
+    sec.suppress4[is.na(suppression) & unsuppressed == max.grp.rows - 1, secondary.suppression := T] # identify groups that need secondary suppression (groups with exactly one suppressed row)
+    setorder(sec.suppress4, group, numerator, na.last = T) # sort from smallest to largest numerator by group
+    sec.suppress4[secondary.suppression == T, order := 1:.N, group] # identify 1st row (smallest numerator) of each group needing secondary suppression
+    sec.suppress4[order==1, suppression := "^"] # mark the specific rows to have secondary suppression
+    sec.suppress4[suppression == "^", c("numerator", "denominator", "mean", "se", "lower_bound", "upper_bound", "rse", "caution") := NA]
+    sec.suppress4[, c("max.grp.rows", "group", "suppressed.group", "unsuppressed", "secondary.suppression", "order") := NULL]
+    sec.suppress4 <- rbind(sec.suppress4, exclusion4)
 
 test_that('Check that secondary suppression works',{
   expect_equal( nrow(dt4[suppression=="^"]), nrow(sec.suppress4[suppression=="^"]))
@@ -111,10 +119,11 @@ test_that('Check that flag_only works',{
 
 
 
-# test secondary_where when character and unquoted expression ----
-dt6 <- suppress(dt, secondary_where = "team %like% '^a|^b|^c|^d'")
-dt7 <- suppress(dt, secondary_where = team %like% '^a|^b|^c|^d')
+# test secondary_exclude when character and unquoted expression ----
+
 test_that('Check that the same results are returned whether or not quoted',{
+  expect_warning(dt6 <- suppress(dt, secondary_exclude = "team %like% '^a|^b|^c|^d'"))
+  dt7 <- suppress(dt, secondary_exclude = team %like% '^a|^b|^c|^d')
   expect_identical( dt6, dt7)
 })
 
