@@ -18,7 +18,7 @@ Imports:
     keyring (>= 1.2.0),
     methods,
     odbc (>= 1.2.2),
-    rads.data (>= 1.0.1),
+    rads.data (>= 1.0.4),
     stats,
     utf8 (>= 1.1.4),
     yaml (>= 2.2.1),
