@@ -12,7 +12,7 @@ test_that('format_time',{
 
 test_that('list_ref_pop',{
 
-  expect_equal(35, length(list_ref_pop()))
+  expect_equal(36, length(list_ref_pop()))
 
 })
 
@@ -102,3 +102,4 @@ test_that('age_standardize',{
 test_that('std_error',{
   expect_equal(std_error(c(seq(0, 400, 100), NA)), sd(c(seq(0, 400, 100), NA), na.rm = T) / sqrt(5))
 })
+

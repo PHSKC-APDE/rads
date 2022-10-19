@@ -118,10 +118,13 @@ get_population <- function(kingco = T,
 
     # race/eth reference table ----
       ref.table <- data.table::copy(rads.data::population_wapop_codebook_values)
-      ref.table <- ref.table[varname %in% c("r1r3", "r2r4")]
-      ref.table[varname == "r1r3", name := "race"]
-      ref.table[varname == "r2r4", name := "race_eth"]
+      ref.table <- ref.table[varname %in% c("r1r3", "r2r4", "r3", "r4")]
+      ref.table[varname == "r1r3" | varname == "r3", name := "race"]
+      ref.table[varname == "r2r4" | varname == "r4", name := "race_eth"]
       ref.table <- ref.table[, .(name, r_type = varname, value = code, label, short)]
+      ref.table[r_type == "r3", r_type := "r1r3"]
+      ref.table[r_type == "r4", r_type := "r2r4"]
+      ref.table <- unique(ref.table)
 
     # check / clean / prep arguments ----
       # check if keyring credentials exist for hhsaw ----
@@ -393,7 +396,7 @@ get_population <- function(kingco = T,
 
         # region ----
           if(geo_type_orig == "region" & "geo_id" %in% group_by_orig){
-            xwalk <- data.table::copy(rads.data::spatial_blocks10_to_region)
+            xwalk <- data.table::copy(rads.data::spatial_blocks10_to_hra_to_region)
             xwalk <- xwalk[, .(geo_id = as.character(geo_id_blk), region)]
             pop.dt <- merge(pop.dt, xwalk, by = "geo_id", all.x = T)
             nonpopvars <- setdiff(names(pop.dt), c("pop", "geo_id"))
@@ -413,7 +416,7 @@ get_population <- function(kingco = T,
         # county ----
           if(geo_type_orig == "county"){
             xwalk <- data.table::copy(rads.data::spatial_county_codes_to_names)
-            xwalk <- xwalk[, .(geo_id_code = cou_id, geo_id = cou_name)]
+            xwalk <- xwalk[, .(geo_id_code = as.character(cou_id), geo_id = cou_name)]
             setnames(pop.dt, "geo_id", "geo_id_code")
             pop.dt <- merge(pop.dt, xwalk, by = "geo_id_code", all.x = T, all.y = T)
           }
@@ -429,7 +432,7 @@ get_population <- function(kingco = T,
         # lgd ----
           if(geo_type_orig == "lgd"){
             xwalk <- data.table::copy(rads.data::spatial_legislative_codes_to_names)
-            xwalk <- xwalk[, .(geo_id_code = lgd_id, geo_id = lgd_name)]
+            xwalk <- xwalk[, .(geo_id_code = as.character(lgd_id), geo_id = lgd_name)]
             setnames(pop.dt, "geo_id", "geo_id_code")
             pop.dt <- merge(pop.dt, xwalk, by = "geo_id_code", all.x = T, all.y = F)
           }
