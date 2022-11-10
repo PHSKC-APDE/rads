@@ -262,16 +262,97 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   FormatedAnalysisOriginal = rbindlist(future.apply::future_lapply(vars, function(v) domath(hys, v, bys, ctabs, ttbys, meta)))
 
 
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
+###########################################################
 
-  ########assumptions of an APDE CHI TRO###################
 
+  #data to work with
+  #hard load data for testing script
+  data <- get_data("hys", year = c(seq(2004,2018,2),2021),ar =T)
+  data <- data[chi_grade_orig %in% c(8, 10, 12) & chi_geo_kc == 1 & !is.na(chi_sex)]
+  data <- dtsurvey(data[!is.na(wt_sex_grade_kc), -('_id')], psu = 'psu', strata = 'chi_grade_orig', weight = "wt_sex_grade_kc")
 
-  #########in function variables
-  data <- hys
-  variables <- vars
-  bivariables <- bys
+  #base variables
+  variables <- c("sex_nocondom_lsttime",
+                 "drug_use_bin_30days",
+                 "alc_binge_bin_30days",
+                 "mj_drive_ride_bin_30days",
+                 "tob_ecig_bin_30days",
+                 "abusive_adult",
+                 "junk_soda_bin_30days",
+                 "dental_care_bin",
+                 "viol_weap_school",
+                 "abusive_intimate_partner",
+                 "mhlth_depressed_lstyr",
+                 "no_bkfast_tdy",
+                 "supportive_adult",
+                 "mj_use_bin_30days",
+                 "fruit_veg_bin_not5perday",
+                 "phys_60min7days_bin",
+                 "phys_pe5days_bin",
+                 "screen_ovr_3hrs_bin",
+                 "safe_school_bin",
+                 "good_grades_bin",
+                 "tob_2ndhand_bin",
+                 "mhlth_suicideidea_lstyr",
+                 "tob_cigar_bin_30days",
+                 "tob_hookah_bin_30days",
+                 "tob_cig_bin_30days",
+                 "tob_anytob_bin_30days",
+                 "bmi_obese_bin",
+                 "bmi_ovrwght_only_bin" )
+
+  #varibales for bivariate analysis
+  bivariables <- c("chi_race_aic_aian",
+                   "chi_race_aic_cambodian",
+                   "chi_race_aic_chinese",
+                   "chi_race_aic_filipino",
+                   "chi_race_aic_indian",
+                   "chi_race_aic_japanese",
+                   "chi_race_aic_korean",
+                   "chi_race_aic_asianother",
+                   "chi_race_aic_vietnamese",
+                   "chi_race_aic_asian",
+                   "chi_race_aic_black",
+                   "chi_grade_orig",
+                   "chi_race_aic_his",
+                   "chi_race_aic_nhpi",
+                   "chi_race_aic_oth",
+                   "chi_race_eth8",
+                   "chi_sex",
+                   "chi_sexorien_3",
+                   "chi_race_aic_wht",
+                   "chi_geo_region",
+                   "chi_geo_kc")
+
+  #variables to calculate crosstabulations against
+  #create crosstabs to be calculated. This uses all variables except geographies and crosstab on their own identity
+  ctabs = CJ(cat1_varname = bivariables, cat2_varname = bivariables)
+  ctabs = ctabs[cat1_varname != cat2_varname & cat1_varname != 'chi_geo_kc' & cat2_varname != 'chi_geo_kc']
   crosstabs <- ctabs
-  meta <- meta
+
+  timeTrendBivariables <- c("chi_race_aic_aian",
+                            "chi_race_aic_asian",
+                            "chi_race_aic_black",
+                            "chi_grade_orig",
+                            "chi_race_aic_his",
+                            "chi_race_aic_nhpi",
+                            "chi_race_aic_oth",
+                            "chi_race_eth8",
+                            "chi_sex",
+                            "chi_race_aic_wht",
+                            "chi_geo_region",
+                            "chi_geo_kc"  )
+
+
+  #metadata from prior code that should be phased out sooner rather than later! Should be user input
+  meta <- rads::get_meta_data("hys")
+
 
   #List of needed functions:
   #Trendline batcher
@@ -282,7 +363,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   #trendline batcher
 
   APDE_CHI_TRO_time_trend_analysis <- function(data, variables, bivariables) {
-    #return a data structure containing calc results for each combination of variables and by variables across range of available timepoints
+    #return a data structure containing calc results for each combination of variables and bivariables across range of available timepoints
     #
     .internal_time_trend_calc <- function(v, bivariables, time_var, data) {
 
@@ -301,7 +382,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   ###################################
   #test call to trends function to generate list of DT's containing calc output
   trend_resultunlist <- APDE_CHI_TRO_time_trend_analysis(data, variables, bivariables)
-
+  trend_resultunlist_backup <- trend_resultunlist
   ##############################
   #does it work with only one variable and bivariable?
   test.one.row <- APDE_CHI_TRO_time_trend_analysis(data, variables[1], bivariables[1])
@@ -313,16 +394,17 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
   #trend_resultunlist_backup <- trend_resultunlist
 
-  for(listofDF in trend_resultunlist) {
-    for(DT in listofDF) {
+  for(listofDT in trend_resultunlist) {
+    for(DT in listofDT) {
 
       #create temporary DT to work with
       temp <- DT
       #temp <- trend_resultunlist[[1]][[1]] #working in loop ver
 
-      c1val <- names(temp)[1]
+      #get category 1 variable, which is the name of the variable column, which happens to be first variable in calc returned DT
+      variableNameLookup <- names(temp)[1]
       #remove negation of binary observations
-      if(any(unlist(temp[, 1]) %in% 1)) temp =  temp[get(c1val) == 1,]
+      if(any(unlist(temp[, 1]) %in% 1)) temp =  temp[get(variableNameLookup) == 1,]
 
       #remove obvious NA's
       temp <- temp[!is.na(get(c1val))]
@@ -331,8 +413,6 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
 
       ####### this only works with provided metadata table.
-      #get category 1 variable, which is the name of the variable column, which happens to be first variable in calc returned DT
-      variableNameLookup <- names(temp)[1]
       variableValuelookup <- unique(unlist(temp[,1]))
       #if(length(variableValuelookup) !=1) stop("unexpectedly have too many 'indicator key' values")
       for(singleVariableValueLookup in variableValuelookup) {
@@ -770,31 +850,6 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   }
 
   return(FormatedAnalysis)
-
-  #
-  #
-  # Tableau_Ready_DT <- data.table::data.table("year" = as.character(),
-  #                                            "indicator_key" = as.character(),
-  #                                            "result" = as.numeric(),
-  #                                            "numerator" = as.numeric(),
-  #                                            "denominator" = as,integer(),
-  #                                            "se" = as.numeric(),
-  #                                            "lower_bound" = as.numeric(),
-  #                                            "upper_bound" = as.numeric(),
-  #                                            "rse" = as.numeric(),
-  #                                            "tab" = as.character(),
-  #                                            "cat1" = as.character(),
-  #                                            "cat1_group" = as.character(),
-  #                                            "cat1_varname" = as.character(),
-  #                                            "cat1_group_alias" = as.character(),
-  #                                            "cat2" = as.character(),
-  #                                            "cat2_group" = as.character(),
-  #                                            "cat2_varname" = as.character(),
-  #                                            "cat2_group_alias" = as.character(),
-  #                                            "data_source" = as.character(),
-  #                                            "run_date" = as.character(),
-  #                                            "comparison_with_kc" = as.character(),
-  #                                            "significance" = as.character())
 
 }
 
