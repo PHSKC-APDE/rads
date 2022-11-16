@@ -378,85 +378,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
   }
 
-  ###################################
-  #test call to trends function to generate list of DT's containing calc output
-  trend_resultunlist <- APDE_CHI_TRO_time_trend_analysis(data, variables, bivariables)
-  trend_resultunlist_backup <- trend_resultunlist
-  ##############################
-  #does it work with only one variable and bivariable?
-  test.one.row <- APDE_CHI_TRO_time_trend_analysis(data, variables[1], bivariables[1])
-  ###################################
 
-
-  #Test user script that uses tableau formatting function
-  test <- FormatedAnalysis[1,]
-
-  #trend_resultunlist_backup <- trend_resultunlist
-
-  #approach for walking through data stucture and updating to final format
-  for(listofDT in trend_resultunlist) {
-    for(DT in listofDT) {
-
-      #create temporary DT to work with
-      temp <- DT
-      #temp <- trend_resultunlist[[1]][[1]] #working in loop ver
-
-      #get category 1 variable, which is the name of the variable column, which happens to be first variable in calc returned DT
-      variableNameLookup <- names(temp)[1]
-      #remove negation of binary observations
-      if(any(unlist(temp[, 1]) %in% 1)) temp =  temp[get(variableNameLookup) == 1,]
-
-      #remove obvious NA's
-      temp <- temp[!is.na(get(c1val))]
-
-      #create variables to pass to table function
-
-
-      ####### this only works with provided metadata table.
-      variableValuelookup <- unique(unlist(temp[,1]))
-      #if(length(variableValuelookup) !=1) stop("unexpectedly have too many 'indicator key' values")
-      for(singleVariableValueLookup in variableValuelookup) {
-        tempCat <- meta[varname == variableNameLookup & gval == singleVariableValueLookup]$cat
-        tempCatGroup <- meta[varname == variableNameLookup & gval == singleVariableValueLookup]$group
-
-        tempCatGroupAlias <- meta[varname == variableNameLookup & gval == singleVariableValueLookup]$group_alias
-
-        names(temp)[1] <- "cat1_group"
-        formatedOutput <- APDE_TRO_FORMATING(temp,
-                                   "chi_year",
-                                   "variable",
-                                   "mean",
-                                   "numerator",
-                                   "denominator",
-                                   "mean_se",
-                                   "mean_lower",
-                                   "mean_upper",
-                                   "rse",
-                                   "trends",
-                                   tempCat,
-                                   tempCatGroup,
-                                   variableNameLookup,
-                                   tempCatGroupAlias,
-                                   NA,
-                                   NA,
-                                   NA,
-                                   NA,
-                                   "hys",
-                                   Sys.Date(),
-                                   NA,
-                                   NA)
-
-        #setnames(temp, names(temp)[1], "cat1_group")
-        test <- rbind(test, formatedOutput)
-      }
-    }
-  }
-
-  trend_resultunlist <- trend_resultunlist_backup
-
-
-  #############You'll need to load this before running above....
-  ###############################################################
   APDE_TRO_FORMATING <- function(DT,
                                  yearVariable,
                                  indicatorKeyVariable,
@@ -662,6 +584,90 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   ########################################
   ########################################
 
+
+
+  ###################################
+  #test call to trends function to generate list of DT's containing calc output
+  #this returns  calc output for all "trends" that then need to be formated
+  trend_resultunlist <- APDE_CHI_TRO_time_trend_analysis(data, variables, bivariables)
+  trend_resultunlist_backup <- trend_resultunlist
+  ##############################
+  #does it work with only one variable and bivariable?
+  test.one.row <- APDE_CHI_TRO_time_trend_analysis(data, variables[1], bivariables[1])
+  ###################################
+
+  #to format this, we need to walk through the resulting data structure. The structure is 2 dimensional matrix of data frames.
+  #the first dimension is the primary variable, the second dimension is the bivariate
+  #we walk through each data table, clean it as necessary, and the reparameterize it for tableau using the "APDE_TRO_FORMATING()" helper function
+  test <- FormatedAnalysis[1,]
+
+  #trend_resultunlist_backup <- trend_resultunlist
+
+  #approach for walking through data stucture and updating to final format
+  for(listofDT in trend_resultunlist) {
+    for(DT in listofDT) {
+
+      #create temporary DT to work with
+      temp <- DT
+      #temp <- trend_resultunlist[[1]][[1]] #working in loop ver
+
+      #get category 1 variable, which is the name of the variable column, which happens to be first variable in calc returned DT
+      variableNameLookup <- names(temp)[1]
+      #remove negation of binary observations
+      if(any(unlist(temp[, 1]) %in% 1)) temp =  temp[get(variableNameLookup) == 1,]
+
+      #remove obvious NA's
+      temp <- temp[!is.na(get(c1val))]
+
+      #create variables to pass to table function
+
+
+      ####### this only works with provided metadata table.
+      variableValuelookup <- unique(unlist(temp[,1]))
+      #if(length(variableValuelookup) !=1) stop("unexpectedly have too many 'indicator key' values")
+      for(singleVariableValueLookup in variableValuelookup) {
+        tempCat <- meta[varname == variableNameLookup & gval == singleVariableValueLookup]$cat
+        tempCatGroup <- meta[varname == variableNameLookup & gval == singleVariableValueLookup]$group
+
+        tempCatGroupAlias <- meta[varname == variableNameLookup & gval == singleVariableValueLookup]$group_alias
+
+        names(temp)[1] <- "cat1_group"
+        formatedOutput <- APDE_TRO_FORMATING(temp,
+                                             "chi_year",
+                                             "variable",
+                                             "mean",
+                                             "numerator",
+                                             "denominator",
+                                             "mean_se",
+                                             "mean_lower",
+                                             "mean_upper",
+                                             "rse",
+                                             "trends",
+                                             tempCat,
+                                             tempCatGroup,
+                                             variableNameLookup,
+                                             tempCatGroupAlias,
+                                             NA,
+                                             NA,
+                                             NA,
+                                             NA,
+                                             "hys",
+                                             Sys.Date(),
+                                             NA,
+                                             NA)
+
+        #setnames(temp, names(temp)[1], "cat1_group")
+        test <- rbind(test, formatedOutput)
+      }
+    }
+  }
+
+  trend_resultunlist <- trend_resultunlist_backup
+
+
+
+
+
   ##create county wide point estimate of the current variable just using the data set
   #calculate point estimate
   kc = rads::calc(hys, what = v, where = chi_year %in% grp_yrs, metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T, time_var = 'chi_year')
@@ -673,6 +679,8 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   kc[, cat1_group_alias := 'King County']
   kc[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(cat1, cat1_group, cat1_varname, cat1_group_alias) ]
   kc[, chi_year := gyl]
+
+
 
   #####################################################
   ############code to migrate##########################
