@@ -265,7 +265,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 ###########################################################
 ###########################################################
 ###########################################################
-###########################################################
+#########################NEW CODE##########################
 ###########################################################
 ###########################################################
 ###########################################################
@@ -358,9 +358,8 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   #Trendline batcher
   #Bivariate batcher
   #crosstab batcher
+  #tableau formater
 
-
-  #trendline batcher
 
   APDE_CHI_TRO_time_trend_analysis <- function(data, variables, bivariables) {
     #return a data structure containing calc results for each combination of variables and bivariables across range of available timepoints
@@ -394,6 +393,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
   #trend_resultunlist_backup <- trend_resultunlist
 
+  #approach for walking through data stucture and updating to final format
   for(listofDT in trend_resultunlist) {
     for(DT in listofDT) {
 
@@ -455,7 +455,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   trend_resultunlist <- trend_resultunlist_backup
 
 
-  #############You'll need to loead this before running above....
+  #############You'll need to load this before running above....
   ###############################################################
   APDE_TRO_FORMATING <- function(DT,
                                  yearVariable,
@@ -540,7 +540,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     colnames(Tableau_Ready_DT) <- outputNames
     Tableau_Ready_DT <- data.table::as.data.table(Tableau_Ready_DT)
 
-    #process and add years
+    #process and add year variable
     if(yearVariable %in% names(DT)) {
       Tableau_Ready_DT$year <- DT[, ..yearVariable]
     }
@@ -630,46 +630,49 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     #process and add significance
     Tableau_Ready_DT$significance <- rep(significanceVariable, nrow(DT))
 
-    #turn the column identified as cat1_group into the data of a column named cat1_group
-    #setnames(DT, cat1_var, "cat1_group")
-    #DT[, cat1_varname := cat1_var]
-
-    #if(is.null(cat2_var)) {
-    #  DT[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(NA_character_, NA_character_, NA_character_, NA_character_) ]
-
-    #}
-
-    ##################list of variables notably stuck in old approach of creating DT directly instead of matrix first
-    # Tableau_Ready_DT <- data.table::data.table("year" = as.character(),
-    #                                            "indicator_key" = as.character(),
-    #                                            "result" = as.numeric(),
-    #                                            "numerator" = as.numeric(),
-    #                                            "denominator" = as.numeric(),
-    #                                            "se" = as.numeric(),
-    #                                            "lower_bound" = as.numeric(),
-    #                                            "upper_bound" = as.numeric(),
-    #                                            "rse" = as.numeric(),
-    #                                            "tab" = as.character(),
-    #                                            "cat1" = as.character(),
-    #                                            "cat1_group" = as.character(),
-    #                                            "cat1_varname" = as.character(),
-    #                                            "cat1_group_alias" = as.character(),
-    #                                            "cat2" = as.character(),
-    #                                            "cat2_group" = as.character(),
-    #                                            "cat2_varname" = as.character(),
-    #                                            "cat2_group_alias" = as.character(),
-    #                                            "data_source" = as.character(),
-    #                                            "run_date" = as.character(),
-    #                                            "comparison_with_kc" = as.character(),
-    #                                            "significance" = as.character(),
-    #                                            stringsAsFactors = FALSE)
-    # Tableau_Ready_DT<- Tableau_Ready_DT[NA]
-
-
-
     return(Tableau_Ready_DT)
   }
 
+  calculate_King_County <- function(x, v, years) {
+    kc = rads::calc(x, what = v, where = chi_year %in% years, metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T, time_var = 'chi_year')
+    #assign metadata
+    kc[, tab := '_kingcounty']
+    kc[, cat1 := 'King County']
+    kc[, cat1_group := 'King County']
+    kc[, cat1_varname := 'chi_geo_kc']
+    kc[, cat1_group_alias := 'King County']
+    kc[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(cat1, cat1_group, cat1_varname, cat1_group_alias) ]
+    kc[, chi_year := gyl]
+
+    return(kc)
+  }
+
+
+  #compare output of original and new code
+  if(!identical(FormatedAnalysisOriginal, FormatedAnalysis)) {
+    stop("function not performing as expected")
+  }
+
+  return(FormatedAnalysis)
+
+
+  ########################################
+  ########################################
+  ########USAGE###########################
+  ########################################
+  ########################################
+
+  ##create county wide point estimate of the current variable just using the data set
+  #calculate point estimate
+  kc = rads::calc(hys, what = v, where = chi_year %in% grp_yrs, metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T, time_var = 'chi_year')
+  #assign metadata
+  kc[, tab := '_kingcounty']
+  kc[, cat1 := 'King County']
+  kc[, cat1_group := 'King County']
+  kc[, cat1_varname := 'chi_geo_kc']
+  kc[, cat1_group_alias := 'King County']
+  kc[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(cat1, cat1_group, cat1_varname, cat1_group_alias) ]
+  kc[, chi_year := gyl]
 
   #####################################################
   ############code to migrate##########################
@@ -738,9 +741,11 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   }
 
 
+
+
   ########################################
   ########################################
-  ########OTHER###########################
+  ########OLDstuff to fix#################
   ########################################
   ########################################
 
@@ -829,27 +834,6 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
 
 
-  calculate_King_County <- function(x, v, years) {
-    kc = rads::calc(x, what = v, where = chi_year %in% years, metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T, time_var = 'chi_year')
-    #assign metadata
-    kc[, tab := '_kingcounty']
-    kc[, cat1 := 'King County']
-    kc[, cat1_group := 'King County']
-    kc[, cat1_varname := 'chi_geo_kc']
-    kc[, cat1_group_alias := 'King County']
-    kc[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(cat1, cat1_group, cat1_varname, cat1_group_alias) ]
-    kc[, chi_year := gyl]
-
-    return(kc)
-  }
-
-
-  #compare output of original and new code
-  if(identical(FormatedAnalysisOriginal, FormatedAnalysis)) {
-    stop("function not performing as expected")
-  }
-
-  return(FormatedAnalysis)
 
 }
 
