@@ -62,20 +62,20 @@ calc(ph.data = birth,
      metrics = c("mean", "rse"), 
      by = c("chi_race_eth8", "chi_sex"))[]
 
-## -----------------------------------------------------------------------------
+## ---- warning=FALSE-----------------------------------------------------------
 calc(ph.data = birth, 
      what = c("chi_race_eth8"), 
      chi_year %in% 2017:2019,
      metrics = c("mean", "rse", "obs", "numerator", "denominator"))[]
 
-## -----------------------------------------------------------------------------
+## ---- warning=FALSE-----------------------------------------------------------
 calc(ph.data = birth, 
      what = c("chi_race_eth8"), 
      chi_year %in% 2017:2019,
      metrics = c("obs", "numerator", "denominator", "rate"), 
      per = 100000)[]
 
-## -----------------------------------------------------------------------------
+## ---- warning=FALSE-----------------------------------------------------------
 calc(ph.data = birth, 
      what = c("chi_sex"), 
      chi_year %in% 2017:2019,
@@ -100,7 +100,7 @@ load("//phshare01/epe_share/WORK/surveys/ACS/PUMS_data/2019_1_year/prepped_R_fil
     )
   
   #New for version 1.0.0
-  pums =dtsurvey::dtrepsurvey(pums)
+  pums = dtsurvey::dtrepsurvey(pums)
 
 ## ---- warning=FALSE-----------------------------------------------------------
 pums[, constant :=1]
