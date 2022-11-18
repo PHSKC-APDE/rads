@@ -32,7 +32,7 @@
 #' @param geo_type Character vector of length 1. Identifies the geographic level
 #' for which you want population estimates. The acceptable values are: 'blk',
 #' 'blkgrp', 'county', 'hra', 'kc', 'lgd' (WA State legislative districts),
-#' 'region', 'seattle', 'scd' (school districts), 'tract', and 'zip'.
+#' 'region', 'seattle', 'scd' (school districts), 'tract', 'wa', and 'zip'.
 #'
 #' Default == "kc".
 #' @param group_by Character vector of length 0 to 7. Identifies how you would
@@ -90,7 +90,7 @@ get_population <- function(kingco = T,
     # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
     r_type <- short <- race <- name <- race_eth <- gender <- age <- geo_id <- pop <- geo_id_blk <- region <- hra <-
     server <- varname <- code <- label <- `.` <- cou_id <- cou_name <- vid <- lgd_id <- lgd_name <- scd_id <-
-    scd_name <- NULL
+    scd_name <- geo_id_code <- NULL
 
     # Ensure years argument is accounted for
     if(is.null(years)) years <- NA
@@ -225,18 +225,19 @@ get_population <- function(kingco = T,
         if(length(race_type) != 1 | !race_type %in% c("race", "race_eth") ){stop(paste0("The `race_type` argument ('", paste(race_type, collapse = "','"), "') is limited to one the following: c('race', 'race_eth')"))}
 
       # check geo_type ----
-        if(length(geo_type) != 1 | !geo_type %in% c('kc', 'seattle', 'blk', 'blkgrp', 'county', 'hra', 'lgd', 'region', 'scd', 'tract', 'zip')){
-          stop(paste0("The `geo_type` argument (", paste(geo_type, collapse = ", "), ") contains an invalid entry. It must have one of the following values: `c('kc', 'seattle, 'blk', 'blkgrp', 'hra', 'region', 'tract', 'zip')`"))
+        if(length(geo_type) != 1 | !geo_type %in% c('kc', 'seattle', 'blk', 'blkgrp', 'county', 'hra', 'lgd', 'region', 'scd', 'tract', 'wa', 'zip')){
+          stop(paste0("The `geo_type` argument (", paste(geo_type, collapse = ", "), ") contains an invalid entry. It must have one of the following values: `c('kc', 'seattle, 'blk', 'blkgrp', 'hra', 'region', 'tract', 'wa', 'zip')`"))
         }
 
         if(geo_type == "seattle"){seattle = 1; geo_type = 'region'} # Seattle is just one of four regions, so set to region and then subset results at end
+        if(geo_type == "wa"){wastate = 1; geo_type = 'county'} # WA State is just the sum of all counties
 
         if(kingco == F & !geo_type %in% c('blk', 'blkgrp', 'lgd', 'tract', 'scd', 'zip')){
           stop("When 'kingco = F', permissible geo_types are limited to 'blk', 'blkgrp', 'scd', 'tract', and 'zip'.")
         }
 
         if(kingco == F & ! geo_type %in% c("lgd", "scd", "zip")){
-          warning("When 'kingco = F', all permissible geo_types except for 'lgd', 'scd' and 'zip' will provide estimates for King, Snohomish, and Pierce counties only.")
+          warning("When 'kingco = F', all permissible geo_types except for 'county', 'lgd', 'scd', 'wa', and 'zip' will provide estimates for King, Snohomish, and Pierce counties only.")
         }
 
       # check group_by ----
@@ -445,6 +446,17 @@ get_population <- function(kingco = T,
             pop.dt <- merge(pop.dt, xwalk, by = "geo_id_code", all.x = T, all.y = F)
           }
 
+        # wa ----
+          if(exists("wastate")){
+            if(wastate == 1){
+              pop.dt[, geo_type := "wa"]
+              pop.dt[, geo_id := "Washington State"]
+              pop.dt[, geo_id_code := NULL]
+              nonpopvars <- setdiff(names(pop.dt), c("pop"))
+              pop.dt <- pop.dt[, .(pop = sum(pop)), by = nonpopvars]
+            }
+          }
+
         # zip ----
           if(is.null(group_by)){
             if(geo_type_orig == "zip" & kingco == T ){
@@ -482,4 +494,3 @@ get_population <- function(kingco = T,
 
     return(pop.dt)
 }
-

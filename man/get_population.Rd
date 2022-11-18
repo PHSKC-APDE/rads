@@ -53,7 +53,7 @@ Default == c("race_eth").}
 \item{geo_type}{Character vector of length 1. Identifies the geographic level
 for which you want population estimates. The acceptable values are: 'blk',
 'blkgrp', 'county', 'hra', 'kc', 'lgd' (WA State legislative districts),
-'region', 'seattle', 'scd' (school districts), 'tract', and 'zip'.
+'region', 'seattle', 'scd' (school districts), 'tract', 'wa', and 'zip'.
 
 Default == "kc".}
 
