@@ -5,7 +5,7 @@
 \title{Calculate age standardized rates from a data.table with age, counts, and population columns. (Built on adjust_direct())}
 \usage{
 age_standardize(
-  my.dt,
+  ph.data,
   ref.popname = NULL,
   collapse = T,
   my.count = "count",
@@ -16,13 +16,13 @@ age_standardize(
 )
 }
 \arguments{
-\item{my.dt}{Name of a data.frame or data.table object. Note, if my.dt already has a standard population (ref.popname = "none"),
+\item{ph.data}{Name of a data.frame or data.table object. Note, if ph.data already has a standard population (ref.popname = "none"),
 it must contain a numeric column named 'stdpop'. Otherwise, it must contain a numeric column named 'age'.}
 
 \item{ref.popname}{Character vector of length 1. Only valid options are those in list_ref_pop() and
-"none" (when standard population already exists in my.dt)}
+"none" (when standard population already exists in ph.data)}
 
-\item{collapse}{Logical vector of length 1. Do you want to collapse my.dt ages to match those in ref.popname?}
+\item{collapse}{Logical vector of length 1. Do you want to collapse ph.data ages to match those in ref.popname?}
 
 \item{my.count}{Character vector of length 1. Identifies the column with the count data aggregated by the given demographics.}
 
@@ -38,19 +38,26 @@ it must contain a numeric column named 'stdpop'. Otherwise, it must contain a nu
 a data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'group_by' variable(s) -- if any
 }
 \description{
-Calculate age standardized rates from a data.table with age, counts, and population columns. (Built on adjust_direct())
+Calculate age standardized rates from a data.table with age, counts, and population columns.
+
+Your dataset must have the following three columns ...
+\itemize{
+\item 'age' or 'agecat': 'age' in single years (if collapse = T) or 'agecat' with the same age bins as your selected reference population (if collapse = F) item
+\item a count for the event (e.g., disease) for which you want to find an age standardized rate item
+\item the population corresponding to the age or agecat in your original data item
+}
 }
 \examples{
 \dontrun{
 temp1 <- data.table(age = c(50:60), count = c(25:35), pop = c(seq(1000, 900, -10)) )
-age_standardize(my.dt = temp1,
+age_standardize(ph.data = temp1,
 ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)", collapse = T,
 my.count = "count", my.pop = "pop", per = 1000, conf.level = 0.95)[]
 
 temp2 <- data.table(sex = c(rep("M", 11), rep("F", 11)), age = rep(50:60, 2),
 count = c(25:35, 26:36), pop = c(seq(1000, 900, -10), seq(1100, 1000, -10)),
 stdpop = rep(1000, 22))
-age_standardize(my.dt = temp2, ref.popname = "none", collapse = F, my.count = "count",
+age_standardize(ph.data = temp2, ref.popname = "none", collapse = F, my.count = "count",
 my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex")[]
 }
 }

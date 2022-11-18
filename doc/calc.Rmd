@@ -144,7 +144,7 @@ calc(ph.data = birth,
 
 **Proportion of 2017-2019 births among each race/eth group**
 
-```{r}
+```{r, warning=FALSE}
 calc(ph.data = birth, 
      what = c("chi_race_eth8"), 
      chi_year %in% 2017:2019,
@@ -153,7 +153,7 @@ calc(ph.data = birth,
 
 **2017-2019 rate per 100k of births among each race/eth group**
 
-```{r}
+```{r, warning=FALSE}
 calc(ph.data = birth, 
      what = c("chi_race_eth8"), 
      chi_year %in% 2017:2019,
@@ -163,7 +163,7 @@ calc(ph.data = birth,
 
 **Number and proportion of missing gender by year**
 
-```{r}
+```{r, warning=FALSE}
 calc(ph.data = birth, 
      what = c("chi_sex"), 
      chi_year %in% 2017:2019,
@@ -195,7 +195,7 @@ load("//phshare01/epe_share/WORK/surveys/ACS/PUMS_data/2019_1_year/prepped_R_fil
     )
   
   #New for version 1.0.0
-  pums =dtsurvey::dtrepsurvey(pums)
+  pums = dtsurvey::dtrepsurvey(pums)
 ```
 
 Once the data has been set as a survey, we can use the `calc()` function the same way that we used it for vital statistics (birth) data.

@@ -1,4 +1,3 @@
-
 #' Get (micro)data from APDE storage.
 #'
 #' @description Simple front-end for pulling in standard APDE data
@@ -139,26 +138,26 @@ get_data_birth <- function(cols = NA, year = NA,  kingco = T){
   if(is.null(year)) year <- NA
 
   # get list of all colnames from SQL
-    con <- odbc::dbConnect(odbc::odbc(),
-                           Driver = getOption('rads.odbc_version'),
-                           Server = "KCITSQLPRPDBM50",
-                           Database = "PH_APDEStore",
-                           Encrypt = 'yes',
-                           TrustServerCertificate = 'yes',
-                           Authentication = 'ActiveDirectoryIntegrated',
-                           encoding = 'latin1')
-    birth.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[final].[bir_wa]"))
-    birth.years <- unique(DBI::dbGetQuery(con, "SELECT DISTINCT chi_year FROM [PH_APDEStore].[final].[bir_wa]")$chi_year)
+  con <- odbc::dbConnect(odbc::odbc(),
+                         Driver = getOption('rads.odbc_version'),
+                         Server = "KCITSQLPRPDBM50",
+                         Database = "PH_APDEStore",
+                         Encrypt = 'yes',
+                         TrustServerCertificate = 'yes',
+                         Authentication = 'ActiveDirectoryIntegrated',
+                         encoding = 'latin1')
+  birth.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[final].[bir_wa]"))
+  birth.years <- unique(DBI::dbGetQuery(con, "SELECT DISTINCT chi_year FROM [PH_APDEStore].[final].[bir_wa]")$chi_year)
 
   # identify columns and years to pull from SQL
-    if(!all(is.na(cols))){
-      invalid.cols <- setdiff(cols, birth.names)
-      valid.cols <- intersect(birth.names, cols)
-      if(length(valid.cols) > 0){cols <- paste(valid.cols, collapse=", ")}
-      if(length(valid.cols) == 0){stop("Birth data cannot be extracted because no valid column names have been submitted. To get all columns, use the argument 'cols = NA'")}
-      if(length(invalid.cols) > 0){message(paste0("The following column names do not exist in the birth data and have not be extracted: ", paste0(invalid.cols, collapse = ", ")))}
-    }
-    if(all(is.na(cols))){cols <- "*"}
+  if(!all(is.na(cols))){
+    invalid.cols <- setdiff(cols, birth.names)
+    valid.cols <- intersect(birth.names, cols)
+    if(length(valid.cols) > 0){cols <- paste(valid.cols, collapse=", ")}
+    if(length(valid.cols) == 0){stop("Birth data cannot be extracted because no valid column names have been submitted. To get all columns, use the argument 'cols = NA'")}
+    if(length(invalid.cols) > 0){message(paste0("The following column names do not exist in the birth data and have not be extracted: ", paste0(invalid.cols, collapse = ", ")))}
+  }
+  if(all(is.na(cols))){cols <- "*"}
 
     if(length(year) == 1 && is.na(year)){
       year = max(birth.years)
@@ -189,5 +188,134 @@ get_data_birth <- function(cols = NA, year = NA,  kingco = T){
 
   dat = dtsurvey::dtadmin(dat, FALSE)
 
+  return(dat)
+}
+
+
+#' Get Death microdata from storage.
+#'
+#' @param cols Character vector of length >=1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
+#'     See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.
+#'
+#' Default = NA
+#' @param year Numeric vector. Identifies which years of data should be pulled. Defaults to the most recent year.
+#'
+#' Default = most recent year only
+#' @param kingco logical. Return dataset for analyses where county of decedent's residence is King County.
+#'
+#' Default = T
+#'
+#' @param topcode logical. Do you want to top code chi_age at 100 to match population data?
+#'
+#' Default = T
+#'
+#' @return dataset either data.table (adminstrative data) for further analysis/tabulation
+#'
+#' @import data.table
+#' @import DBI
+#' @import odbc
+#' @import dtsurvey
+#' @export
+#'
+#' @examples
+#'
+#' \dontrun{
+#'  get_data_death(cols = NA, year = c(2019), kingco = T, topcode = F)
+#' }
+get_data_death <- function(cols = NA, year = NA,  kingco = T, topcode = T){
+
+  chi_age <- date_of_birth <- date_of_death <- age_years <- chi_race_eth7 <- chi_race_6 <-
+    chi_race_eth8 <- chi_race_7 <- geo_id_code <- NULL
+
+
+  # get list of all colnames from SQL
+  con <- odbc::dbConnect(odbc::odbc(),
+                         Driver = "SQL Server",
+                         Server = "KCITSQLUTPDBH51",
+                         Database = "PH_APDEStore")
+  death.names <- names(DBI::dbGetQuery(con, "SELECT TOP (0) * FROM [PH_APDEStore].[death].[final_analytic]"))
+  death.years <- sort(unique(DBI::dbGetQuery(con, "SELECT DISTINCT chi_year FROM [PH_APDEStore].[death].[final_analytic]")$chi_year))
+
+  # identify columns and years to pull from SQL
+  if(!all(is.na(cols))){
+    invalid.cols <- setdiff(cols, death.names)
+    valid.cols <- intersect(death.names, cols)
+    if(length(valid.cols) > 0){cols <- glue::glue_sql_collapse(valid.cols, sep=", ")}
+    if(length(invalid.cols) > 0){message(paste0("The following column names do not exist in the death data and have not be extracted: ", paste0(invalid.cols, collapse = ", ")))}
+    if(length(valid.cols) == 0){stop("Death data cannot be extracted because no valid column names have been submitted. To get all columns, use the argument 'cols = NA'")}
+  }
+  if(all(is.na(cols))){cols <- glue::glue_sql_collapse("*", sep = ', ')}
+
+  if(length(year) == 1 && is.na(year)){
+    year = max(death.years)
+    message(paste0("You did not specify a year so the most recent available year, ", max(death.years), ", was selected for you. Available years include ", format_time(death.years)))}
+
+  invalid.year <- setdiff(year, death.years)
+  year <- intersect(year, death.years)
+  if(length(year) == 0){stop(paste0("Death data cannot be extracted because no valid years have been provided. Valid years include: ", format_time(death.years)))}
+  if(length(invalid.year)>0){message(paste0("The following years do not exist in the death data and have not been extracted: ", format_time(invalid.year)))}
+
+  # pull columns and years from SQL
+  validyears <- glue::glue_sql_collapse(year, sep=", ")
+  query.string <- glue:: glue_sql ("SELECT {cols} FROM [PH_APDEStore].[death].[final_analytic]
+                                   WHERE chi_year IN ({validyears})", .con = con)
+
+  if(kingco == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 1")}
+
+  dat <- data.table::setDT(DBI::dbGetQuery(con, query.string))
+
+  datevars <- DBI::dbGetQuery(con, "SELECT ColumnName FROM [PH_APDEStore].[death].[crosswalk_fields] WHERE ColumnType = 'Date'")[]$ColumnName
+  datevars <- intersect(datevars, names(dat)) # names of all date variables that are in actual dataset
+
+  odbc::dbDisconnect(con)
+
+  # Format string variables due to SQL import quirks
+  original.order <- names(dat)
+
+  if(length(datevars > 0)){
+    for(i in 1:length(datevars)){
+      dat[, datevars[i] := as.Date(as.character(get(datevars[i])))]
+    }
+  }
+
+  if( 'chi_age' %in% cols | 'chi_age' %in% names(dat) ){
+    dat[chi_age < 0, chi_age := NA] # cannot have a negative age (due to 9999 as year of birth)
+    if(topcode == T){
+      dat[chi_age > 100, chi_age := 100] # top code to 100 to match population data
+    }
+  }
+
+  sql_clean(dat, stringsAsFactors = FALSE) # clean random white spaces and change strings to factors
+
+  # label race_ethnicity data
+  if( 'chi_race_eth7' %in% cols | 'chi_race_eth7' %in% names(dat) ){
+    dat[, chi_race_eth7 := factor(chi_race_eth7,
+                                levels = c(2, 1, 5, 7, 8, 6, 3),
+                                labels = c("Black", "White", "Multiple", "Asian", "NHPI", "Hispanic", "AIAN"))]
+  }
+  if( 'chi_race_eth8' %in% cols | 'chi_race_eth8' %in% names(dat) ){
+    dat[, chi_race_eth8 := factor(chi_race_eth8,
+                                  levels = c(2, 1, 5, 7, 8, 6, 3, 9),
+                                  labels = c("Black", "White", "Multiple", "Asian", "NHPI", "Hispanic", "AIAN", "Oth/unk"))]
+  }
+  if( 'chi_race_6' %in% cols | 'chi_race_6' %in% names(dat) ){
+    dat[, chi_race_6 := factor(chi_race_6,
+                                  levels = c(3, 6, 4, 2, 1, 5),
+                                  labels = c("Black", "White", "Multiple", "Asian", "AIAN", "NHPI"))]
+  }
+  if( 'chi_race_7' %in% cols | 'chi_race_7' %in% names(dat) ){
+    dat[, chi_race_7 := factor(chi_race_7,
+                               levels = c(3, 6, 4, 2, 1, 5, 9),
+                               labels = c("Black", "White", "Multiple", "Asian", "AIAN", "NHPI", "Oth/unk"))]
+  }
+
+  # reorder table
+  setcolorder(dat, original.order)
+
+  setDT(dat) # set it as a data.table again b/c otherwise, ascribing the new class above makes a copy
+
+  dat = dtsurvey::dtadmin(dat, FALSE)
+
+  # return object
   return(dat)
 }

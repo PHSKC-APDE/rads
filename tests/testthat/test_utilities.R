@@ -51,8 +51,8 @@ test_that('adjust_direct',{
 
 test_that('age_standardize',{
   temp.dt1 <- data.table(age = c(50:60), count = c(25:35), pop = c(seq(1000, 800, -20)) )
-  temp.agestd1 <- age_standardize(my.dt = temp.dt1, ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)", collapse = T,
-                  my.count = "count", my.pop = "pop", per = 1000, conf.level = 0.95)
+  temp.agestd1 <- suppressWarnings(age_standardize(ph.data = temp.dt1, ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)", collapse = T,
+                  my.count = "count", my.pop = "pop", per = 1000, conf.level = 0.95))
 
   expect_equal(sum(temp.dt1$count), temp.agestd1[["count"]])
 
@@ -69,13 +69,11 @@ test_that('age_standardize',{
   expect_equal(40.25, temp.agestd1[["adj.uci"]] ) # checked vis-à-vis epitools::ageadjust.direct
 
 
-
-
   temp.dt2 <- data.table(sex = c(rep("M", 11), rep("F", 11)), age = rep(50:60, 2),
                       count = c(25:35, 26:36), pop = c(seq(1000, 900, -10), seq(1100, 1000, -10)),
                       stdpop = rep(1000, 22))
-  temp.agestd2 <- age_standardize(my.dt = temp.dt2, ref.popname = "none", collapse = F, my.count = "count",
-                  my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex")
+  temp.agestd2 <- suppressWarnings(age_standardize(ph.data = temp.dt2, ref.popname = "none", collapse = F, my.count = "count",
+                  my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex"))
 
   expect_equal(sum(temp.dt2[sex == "M"]$count) , temp.agestd2[sex == "M"]$count)
   expect_equal(sum(temp.dt2[sex == "F"]$count) , temp.agestd2[sex == "F"]$count)
@@ -97,6 +95,31 @@ test_that('age_standardize',{
 
   expect_equal(35.35 , temp.agestd2[sex == "M"]$adj.uci) # checked vis-à-vis epitools::ageadjust.direct
   expect_equal(32.97 , temp.agestd2[sex == "F"]$adj.uci) # checked vis-à-vis epitools::ageadjust.direct
+
+  # test for errors and warnings
+  set.seed(98104)
+  temp.dt3 <- data.table(age = c(0:100), count = sample(1000:4000, size = 101), pop = sample(10000:40000, size = 101) )
+
+  expect_silent(age_standardize(temp.dt3, my.count = "count", my.pop = "pop")) # no error, no warning
+
+  expect_error(age_standardize(copy(temp.dt3)[1, age := NA], my.count = "count", my.pop = "pop"))
+  expect_warning(age_standardize(copy(temp.dt3)[1, age := 103], my.count = "count", my.pop = "pop"))
+  expect_error(age_standardize(copy(temp.dt3)[1, age := -1], my.count = "count", my.pop = "pop"))
+  expect_warning(age_standardize(copy(temp.dt3)[!2, ], my.count = "count", my.pop = "pop"))
+  expect_warning(age_standardize(copy(temp.dt3)[!1], my.count = "count", my.pop = "pop"))
+
+  expect_warning(age_standardize(copy(temp.dt3)[1, count := NA], my.count = "count", my.pop = "pop"))
+  expect_error(age_standardize(copy(temp.dt3)[1, count := -1], my.count = "count", my.pop = "pop"))
+
+  expect_error(age_standardize(copy(temp.dt3)[1, pop:= NA], my.count = "count", my.pop = "pop"))
+  expect_error(age_standardize(copy(temp.dt3)[1, pop := -1], my.count = "count", my.pop = "pop"))
+
+  expect_warning(age_standardize(copy(temp.dt3)[1, count := pop + 1], my.count = "count", my.pop = "pop"))
+
+  })
+
+test_that('std_error',{
+  expect_equal(std_error(c(seq(0, 400, 100), NA)), sd(c(seq(0, 400, 100), NA), na.rm = T) / sqrt(5))
 })
 
 test_that('std_error',{

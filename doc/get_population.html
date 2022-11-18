@@ -248,9 +248,6 @@ hr {
 <pre><code class="r">get_population()[]
 </code></pre>
 
-<pre><code>## You did not specify a year so the most recent available year, 2020, was selected for you. Available years include 2000-2020
-</code></pre>
-
 <pre><code>##        pop geo_type      geo_id year   age       gender
 ## 1: 2260800       kc King County 2020 0-100 Female, Male
 ##                                               race_eth
@@ -269,45 +266,18 @@ hr {
 
 <p><strong>WA</strong></p>
 
-<pre><code class="r">get_population(kingco = F, 
-               geo_type = &quot;zip&quot;)[]
+<pre><code class="r">get_population(geo_type = &#39;wa&#39;)[]
 </code></pre>
 
-<pre><code>## You did not specify a year so the most recent available year, 2020, was selected for you. Available years include 2000-2020
-</code></pre>
-
-<pre><code>##        pop geo_type geo_id year   age       gender
-##   1:    21      zip  00072 2020 0-100 Female, Male
-##   2:     2      zip  00073 2020 0-100 Female, Male
-##   3:    46      zip  00074 2020 0-100 Female, Male
-##   4:    21      zip  00076 2020 0-100 Female, Male
-##   5: 35718      zip  98001 2020 0-100 Female, Male
-##  ---                                              
-## 577:   115      zip  99363 2020 0-100 Female, Male
-## 578:   364      zip  99371 2020 0-100 Female, Male
-## 579:   244      zip  99401 2020 0-100 Female, Male
-## 580:  1740      zip  99402 2020 0-100 Female, Male
-## 581: 20729      zip  99403 2020 0-100 Female, Male
-##                                                 race_eth
-##   1: aian, asian, black, hispanic, multiple, nhpi, white
-##   2: aian, asian, black, hispanic, multiple, nhpi, white
-##   3: aian, asian, black, hispanic, multiple, nhpi, white
-##   4: aian, asian, black, hispanic, multiple, nhpi, white
-##   5: aian, asian, black, hispanic, multiple, nhpi, white
-##  ---                                                    
-## 577: aian, asian, black, hispanic, multiple, nhpi, white
-## 578: aian, asian, black, hispanic, multiple, nhpi, white
-## 579: aian, asian, black, hispanic, multiple, nhpi, white
-## 580: aian, asian, black, hispanic, multiple, nhpi, white
-## 581: aian, asian, black, hispanic, multiple, nhpi, white
+<pre><code>##        pop geo_type           geo_id year   age       gender
+## 1: 7656200       wa Washington State 2020 0-100 Female, Male
+##                                               race_eth
+## 1: aian, asian, black, hispanic, multiple, nhpi, white
 </code></pre>
 
 <p><strong>King County</strong></p>
 
 <pre><code class="r">get_population()[]
-</code></pre>
-
-<pre><code>## You did not specify a year so the most recent available year, 2020, was selected for you. Available years include 2000-2020
 </code></pre>
 
 <pre><code>##        pop geo_type      geo_id year   age       gender
@@ -320,9 +290,6 @@ hr {
 
 <pre><code class="r">get_population(geo_type = c(&quot;region&quot;),
                group_by = c(&quot;geo_id&quot;))[]
-</code></pre>
-
-<pre><code>## You did not specify a year so the most recent available year, 2020, was selected for you. Available years include 2000-2020
 </code></pre>
 
 <pre><code>##       pop geo_type  geo_id year   age       gender
@@ -339,13 +306,10 @@ hr {
 
 <p><strong>King County Regions with <code>round=FALSE</code></strong></p>
 
-<p>Turn off rounding to get the exact (fractional) number of people estimatd by OFM.</p>
+<p>Turn off rounding to get the exact (fractional) number of people estimated by OFM.</p>
 
 <pre><code class="r">rads::get_population(geo_type = &#39;region&#39;, 
                      round = F)[]
-</code></pre>
-
-<pre><code>## You did not specify a year so the most recent available year, 2020, was selected for you. Available years include 2000-2020
 </code></pre>
 
 <pre><code>##         pop geo_type  geo_id year   age       gender
@@ -362,11 +326,7 @@ hr {
 
 <p><strong>King County HRAs</strong></p>
 
-<pre><code class="r">    head(get_population(geo_type = c(&quot;hra&quot;),
-                        group_by = c(&quot;geo_id&quot;))[])  
-</code></pre>
-
-<pre><code>## You did not specify a year so the most recent available year, 2020, was selected for you. Available years include 2000-2020
+<pre><code class="r">head(get_population(geo_type = c(&quot;hra&quot;), group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
 
 <pre><code>##      pop geo_type              geo_id geo_id_code year   age       gender
@@ -387,11 +347,7 @@ hr {
 
 <p><strong>King County Zip codes</strong></p>
 
-<pre><code class="r">    head(get_population(geo_type = c(&quot;zip&quot;),
-                        group_by = c(&quot;geo_id&quot;))[])  
-</code></pre>
-
-<pre><code>## You did not specify a year so the most recent available year, 2020, was selected for you. Available years include 2000-2020
+<pre><code class="r">head(get_population(geo_type = c(&quot;zip&quot;), group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
 
 <pre><code>##      pop geo_type geo_id year   age       gender
@@ -412,11 +368,7 @@ hr {
 
 <p><strong>King County Census Tracts</strong></p>
 
-<pre><code class="r">    head(get_population(geo_type = c(&quot;tract&quot;),
-                        group_by = c(&quot;geo_id&quot;))[])  
-</code></pre>
-
-<pre><code>## You did not specify a year so the most recent available year, 2020, was selected for you. Available years include 2000-2020
+<pre><code class="r">head(get_population(geo_type = c(&quot;tract&quot;), group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
 
 <pre><code>##     pop geo_type      geo_id year   age       gender
@@ -437,11 +389,7 @@ hr {
 
 <p><strong>King County Census Block Groups</strong></p>
 
-<pre><code class="r">    head(get_population(geo_type = c(&quot;blkgrp&quot;),
-                        group_by = c(&quot;geo_id&quot;))[])  
-</code></pre>
-
-<pre><code>## You did not specify a year so the most recent available year, 2020, was selected for you. Available years include 2000-2020
+<pre><code class="r">head(get_population(geo_type = c(&quot;blkgrp&quot;), group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
 
 <pre><code>##     pop geo_type       geo_id year   age       gender
@@ -462,11 +410,7 @@ hr {
 
 <p><strong>King County Census Blocks</strong></p>
 
-<pre><code class="r">    head(get_population(geo_type = c(&quot;blk&quot;),
-                        group_by = c(&quot;geo_id&quot;))[])  
-</code></pre>
-
-<pre><code>## You did not specify a year so the most recent available year, 2020, was selected for you. Available years include 2000-2020
+<pre><code class="r">head(get_population(geo_type = c(&quot;blk&quot;), group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
 
 <pre><code>##    pop geo_type          geo_id year   age       gender
@@ -519,9 +463,6 @@ hr {
 <pre><code class="r">get_population(ages = 65:70)[]
 </code></pre>
 
-<pre><code>## You did not specify a year so the most recent available year, 2020, was selected for you. Available years include 2000-2020
-</code></pre>
-
 <pre><code>##       pop geo_type      geo_id year   age       gender
 ## 1: 115111       kc King County 2020 65-70 Female, Male
 ##                                               race_eth
@@ -530,11 +471,7 @@ hr {
 
 <p><strong>King County multiple ages stratified</strong></p>
 
-<pre><code class="r">get_population(ages = 65:70, 
-               group_by = &quot;ages&quot;)[]
-</code></pre>
-
-<pre><code>## You did not specify a year so the most recent available year, 2020, was selected for you. Available years include 2000-2020
+<pre><code class="r">get_population(ages = 65:70, group_by = &quot;ages&quot;)[]
 </code></pre>
 
 <pre><code>##      pop geo_type      geo_id year age       gender
@@ -558,9 +495,6 @@ hr {
 <pre><code class="r">get_population(genders = &quot;F&quot;)[]
 </code></pre>
 
-<pre><code>## You did not specify a year so the most recent available year, 2020, was selected for you. Available years include 2000-2020
-</code></pre>
-
 <pre><code>##        pop geo_type      geo_id year   age gender
 ## 1: 1129225       kc King County 2020 0-100 Female
 ##                                               race_eth
@@ -572,9 +506,6 @@ hr {
 <pre><code class="r">get_population(group_by = &quot;genders&quot;)[]
 </code></pre>
 
-<pre><code>## You did not specify a year so the most recent available year, 2020, was selected for you. Available years include 2000-2020
-</code></pre>
-
 <pre><code>##        pop geo_type      geo_id year   age gender
 ## 1: 1131575       kc King County 2020 0-100   Male
 ## 2: 1129225       kc King County 2020 0-100 Female
@@ -583,26 +514,18 @@ hr {
 ## 2: aian, asian, black, hispanic, multiple, nhpi, white
 </code></pre>
 
-<p><strong>King County AIAN-NH</strong></p>
+<p><strong>King County AIAN (not Hispanic)</strong></p>
 
-<pre><code class="r">get_population(races = &quot;aian&quot;, 
-               race_type = &quot;race_eth&quot;)[]
-</code></pre>
-
-<pre><code>## You did not specify a year so the most recent available year, 2020, was selected for you. Available years include 2000-2020
+<pre><code class="r">get_population(races = &quot;aian&quot;, race_type = &quot;race_eth&quot;)[]
 </code></pre>
 
 <pre><code>##      pop geo_type      geo_id year   age       gender race_eth
 ## 1: 13703       kc King County 2020 0-100 Female, Male     aian
 </code></pre>
 
-<p><strong>King County AIAN regardless of Hispanic ethnicity</strong></p>
+<p><strong>King County AIAN (regardless of Hispanic ethnicity)</strong></p>
 
-<pre><code class="r">get_population(races = &quot;aian&quot;, 
-               race_type = &quot;race&quot;)[]
-</code></pre>
-
-<pre><code>## You did not specify a year so the most recent available year, 2020, was selected for you. Available years include 2000-2020
+<pre><code class="r">get_population(races = &quot;aian&quot;, race_type = &quot;race&quot;)[]
 </code></pre>
 
 <pre><code>##      pop geo_type      geo_id year   age       gender race
@@ -611,11 +534,7 @@ hr {
 
 <p><strong>King County stratified by Hispanic as race</strong></p>
 
-<pre><code class="r">get_population(race_type = &quot;race_eth&quot;, 
-               group_by = &quot;race_eth&quot;)[]
-</code></pre>
-
-<pre><code>## You did not specify a year so the most recent available year, 2020, was selected for you. Available years include 2000-2020
+<pre><code class="r">get_population(race_type = &quot;race_eth&quot;, group_by = &quot;race_eth&quot;)[]
 </code></pre>
 
 <pre><code>##        pop geo_type      geo_id year   age       gender      race_eth
@@ -628,13 +547,9 @@ hr {
 ## 7:   19548       kc King County 2020 0-100 Female, Male          NHPI
 </code></pre>
 
-<p><strong>King County stratified by race-NH</strong></p>
+<p><strong>King County stratified by race (Hispanic as ethnicity)</strong></p>
 
-<pre><code class="r">get_population(race_type = &quot;race&quot;, 
-               group_by = &quot;race&quot;)[]
-</code></pre>
-
-<pre><code>## You did not specify a year so the most recent available year, 2020, was selected for you. Available years include 2000-2020
+<pre><code class="r">get_population(race_type = &quot;race&quot;, group_by = &quot;race&quot;)[]
 </code></pre>
 
 <pre><code>##        pop geo_type      geo_id year   age       gender          race

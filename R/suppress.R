@@ -145,11 +145,13 @@ suppress <- function(sup_data = NULL,
         setorder(temp.dt, my.group, numerator, na.last = T)
 
         # suppress row with smallest numerator among groups needing secondary suppression
-        temp.dt[my.flag == "group needs secondary suppression", my.order := 1:.N, my.group]
-        temp.dt[my.order==1, suppression := "^"]
+        if(nrow(temp.dt[my.flag == "group needs secondary suppression"])>0){
+          temp.dt[my.flag == "group needs secondary suppression", my.order := 1:.N, my.group]
+          temp.dt[my.order==1, suppression := "^"]
+        }
 
         # drop all temporary variables
-        temp.dt[, c("my.group", "suppressed.group", "my.rowct", "my.flag", "my.order", "rows.unsuppressed") := NULL]
+        temp.dt[, intersect(c("my.group", "suppressed.group", "my.rowct", "my.flag", "my.order", "rows.unsuppressed"), names(temp.dt)) := NULL]
 
         # combine back with data filtered out by secondary_exclude
         if(exists("temp.dt.aside")){

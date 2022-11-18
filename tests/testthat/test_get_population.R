@@ -75,4 +75,6 @@ test_that('get_population',{
 
   expect_equal(17, nrow(get_population(geo_type = "lgd", years = 2020))) # ensure kingco = T (default) subsets to KC districts only
 
+  expect_equal(7656200, get_population(geo_type = "wa", years = 2020)[]$pop) # Washington State population
+
 })
