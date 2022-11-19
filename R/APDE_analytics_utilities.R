@@ -617,7 +617,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
       if(any(unlist(temp[, 1]) %in% 1)) temp =  temp[get(variableNameLookup) == 1,]
 
       #remove obvious NA's
-      temp <- temp[!is.na(get(c1val))]
+      temp <- temp[!is.na(get(variableNameLookup))]
 
       #create variables to pass to table function
 
@@ -662,10 +662,32 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     }
   }
 
-  trend_resultunlist <- trend_resultunlist_backup
 
+  #compare to KC
+  for(indicator in unique(test$indicator_key)) {
 
+    for(categorical in unique(test[indicator_key == indicator,]$cat1_varname)) {
+      for(ayear in unique(test[indicator_key == indicator & cat1_varname == categorical]$year)){
+        if(!all(is.na(test[indicator_key == indicator & cat1_varname == categorical & year == ayear,]$result))) {
+          if(length(test[indicator_key == indicator & cat1_varname == "chi_geo_kc" & year == testyear,]$result) > 1) {
+            print(test[indicator_key == indicator & cat1_varname == "chi_geo_kc" & year == testyear,])
+            #need to figure out why some of these have 2 and not 1 for KC.
+            #the double appears to have NAs for cat2
+            #ooooooo it is because some of these are bivariate on their identity isn't it????
+            #OR because I'm creating a forced king county as cat 2 set and a non one
+          }
+        }
+      }
+    }
+  }
+  kc_comp2 = test[cat1_varname == 'chi_geo_kc', .(year, kcr = result, lower_bound_kc = lower_bound, upper_bound_kc = upper_bound)]
 
+  res = merge(res, kc_comp, all.x = T, by = 'year')
+  res[upper_bound < lower_bound_kc, comparison_with_kc := 'lower']
+  res[lower_bound > upper_bound_kc, comparison_with_kc := 'upper']
+  res[upper_bound >= lower_bound_kc | lower_bound <= upper_bound_kc, comparison_with_kc := 'no different']
+  res[comparison_with_kc %in% c('higher', 'lower'), significance := '*' ]
+  res[, c('kcr', 'lower_bound_kc', 'upper_bound_kc') := NULL]
 
 
   ##create county wide point estimate of the current variable just using the data set
