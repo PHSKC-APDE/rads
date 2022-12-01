@@ -589,7 +589,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   ###################################
   #test call to trends function to generate list of DT's containing calc output
   #this returns  calc output for all "trends" that then need to be formated
-  trend_resultunlist <- APDE_CHI_TRO_time_trend_analysis(data, variables, bivariables)
+  trend_resultunlist <- APDE_CHI_TRO_time_trend_analysis(data, variables, timeTrendBivariables)
   trend_resultunlist_backup <- trend_resultunlist
   ##############################
   #does it work with only one variable and bivariable?
@@ -680,6 +680,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
       }
     }
   }
+
   kc_comp2 = test[cat1_varname == 'chi_geo_kc', .(year, kcr = result, lower_bound_kc = lower_bound, upper_bound_kc = upper_bound)]
 
   res = merge(res, kc_comp, all.x = T, by = 'year')
