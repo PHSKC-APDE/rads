@@ -56,8 +56,6 @@ testthat::test_that('Multiple types (beyond dtsurvey) work',{
     expect_equal(t3, t4.1)
   }
 
-
-
 })
 
 

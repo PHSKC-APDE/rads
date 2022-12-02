@@ -112,3 +112,10 @@ calc.svyrep.design <- function(ph.data, ...){
   ph.data = dtsurvey::dtrepsurvey(ph.data)
   calc(ph.data, ...)
 }
+
+#' @noRd
+#' @export
+calc.grouped_df <- function(ph.data, ...){
+  stop("calc doesn't know how to handle `grouped_df` objects. Likely, you have a dplyr::group_by somewhere higher up in the code.
+       Instead of grouping before running calc, use the `by` argument in calc")
+}
