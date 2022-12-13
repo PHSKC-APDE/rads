@@ -353,6 +353,11 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   #metadata from prior code that should be phased out sooner rather than later! Should be user input
   meta <- rads::get_meta_data("hys")
 
+  #temp reformat to originating script
+  names(meta) <- c("cat", "group", "group_alias", "varname", "ng", "gval", "data_source")
+  meta$data_source <- NULL
+  meta$good <- TRUE
+
 
   #List of needed functions:
   #Trendline batcher
@@ -570,12 +575,6 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   }
 
 
-  #compare output of original and new code
-  if(!identical(FormatedAnalysisOriginal, FormatedAnalysis)) {
-    stop("function not performing as expected")
-  }
-
-  return(FormatedAnalysis)
 
 
   ########################################
@@ -599,16 +598,21 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   #to format this, we need to walk through the resulting data structure. The structure is 2 dimensional matrix of data frames.
   #the first dimension is the primary variable, the second dimension is the bivariate
   #we walk through each data table, clean it as necessary, and the reparameterize it for tableau using the "APDE_TRO_FORMATING()" helper function
-  test <- FormatedAnalysis[1,]
+
 
   #trend_resultunlist_backup <- trend_resultunlist
 
-  #approach for walking through data stucture and updating to final format
+  #approach for walking through data structure and updating to final format
+  remove(returnDF)
+
+
   for(listofDT in trend_resultunlist) {
+
     for(DT in listofDT) {
 
       #create temporary DT to work with
       temp <- DT
+
       #temp <- trend_resultunlist[[1]][[1]] #working in loop ver
 
       #get category 1 variable, which is the name of the variable column, which happens to be first variable in calc returned DT
@@ -620,19 +624,20 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
       temp <- temp[!is.na(get(variableNameLookup))]
 
       #create variables to pass to table function
-
-
       ####### this only works with provided metadata table.
-      variableValuelookup <- unique(unlist(temp[,1]))
+      variableValueLookup <- unique(unlist(temp[,1]))
       #if(length(variableValuelookup) !=1) stop("unexpectedly have too many 'indicator key' values")
-      for(singleVariableValueLookup in variableValuelookup) {
-        tempCat <- meta[varname == variableNameLookup & gval == singleVariableValueLookup]$cat
-        tempCatGroup <- meta[varname == variableNameLookup & gval == singleVariableValueLookup]$group
+
+      for(singleVariableValueLookup in variableValueLookup) {
+        tempCat <- meta[varname == variableNameLookup & gval == singleVariableValueLookup,]$cat
+        tempCatGroup <- meta[varname == variableNameLookup & gval == singleVariableValueLookup,]$group
 
         tempCatGroupAlias <- meta[varname == variableNameLookup & gval == singleVariableValueLookup]$group_alias
 
         names(temp)[1] <- "cat1_group"
-        formatedOutput <- APDE_TRO_FORMATING(temp,
+
+
+        formatedOutput <- APDE_TRO_FORMATING(temp[cat1_group == singleVariableValueLookup,],
                                              "chi_year",
                                              "variable",
                                              "mean",
@@ -655,27 +660,51 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
                                              Sys.Date(),
                                              NA,
                                              NA)
+        if(nrow(temp[cat1_group == singleVariableValueLookup,]) == 0) {
+          print("input was 0 length")
+          print(temp)
+        }
 
         #setnames(temp, names(temp)[1], "cat1_group")
-        test <- rbind(test, formatedOutput)
+        if(exists("returnDF")) {
+          returnDF <- rbind(returnDF, formatedOutput)
+        } else {
+          returnDF <- formatedOutput
+        }
+
       }
     }
   }
 
+  test <- returnDF
+  test2 <- FormatedAnalysisOriginal[tab=="trends",]
 
   #compare to KC
   for(indicator in unique(test$indicator_key)) {
-
+    #for each indicator
     for(categorical in unique(test[indicator_key == indicator,]$cat1_varname)) {
-      for(ayear in unique(test[indicator_key == indicator & cat1_varname == categorical]$year)){
-        if(!all(is.na(test[indicator_key == indicator & cat1_varname == categorical & year == ayear,]$result))) {
-          if(length(test[indicator_key == indicator & cat1_varname == "chi_geo_kc" & year == testyear,]$result) > 1) {
-            print(test[indicator_key == indicator & cat1_varname == "chi_geo_kc" & year == testyear,])
-            #need to figure out why some of these have 2 and not 1 for KC.
-            #the double appears to have NAs for cat2
-            #ooooooo it is because some of these are bivariate on their identity isn't it????
-            #OR because I'm creating a forced king county as cat 2 set and a non one
+      #for each bivariate
+      for(group in unique(test[indicator_key == indicator & cat1_varname == categorical,]$cat1_group))
+        #for each bivariate group
+        for(ayear in unique(test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group,]$year)){
+          #for each year
+          if(!all(is.na(test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear,]$result))) {
+            print(test[indicator_key == "supportive_adult" & cat1_varname == "chi_geo_region" & cat1_group == "East" & year == 2021,])
+            print(test[indicator_key == indicator & cat1_varname == categorical & year == ayear & tab == "trends",])
           }
+        }
+    }
+  }
+
+  for(indicator in unique(test$indicator_key)) {
+    #for each indicator
+    for(categorical in unique(test[indicator_key == indicator,]$cat1_varname)) {
+      #for each variable
+      for(ayear in unique(test[indicator_key == indicator & cat1_varname == categorical]$year)){
+        #for each year
+        if(!all(is.na(test[indicator_key == indicator & cat1_varname == categorical & year == ayear,]$result))) {
+          print(test[indicator_key == "supportive_adult" & cat1_varname == "chi_geo_region" & year == 2021,])
+          print(test[indicator_key == indicator & cat1_varname == categorical & year == ayear & tab == "trends",])
         }
       }
     }
@@ -702,6 +731,14 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   kc[, cat1_group_alias := 'King County']
   kc[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(cat1, cat1_group, cat1_varname, cat1_group_alias) ]
   kc[, chi_year := gyl]
+
+
+
+  #compare output of original and new code
+  if(!identical(FormatedAnalysisOriginal[tab == "trends",], returnDF )) {
+    stop("function not performing as expected")
+  }
+
 
 
 
