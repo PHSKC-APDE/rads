@@ -553,9 +553,11 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
     #process and add comparison_with_kc
     Tableau_Ready_DT$comparison_with_kc <- rep(comparison_with_KCVariable, nrow(DT))
+    Tableau_Ready_DT$comparison_with_kc <- as.character(Tableau_Ready_DT$comparison_with_kc)
 
     #process and add significance
     Tableau_Ready_DT$significance <- rep(significanceVariable, nrow(DT))
+    Tableau_Ready_DT$significance <- as.character(Tableau_Ready_DT$significance)
 
     return(Tableau_Ready_DT)
   }
@@ -658,8 +660,10 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
                                              NA,
                                              "hys",
                                              Sys.Date(),
+                                             #"no different",
                                              NA,
                                              NA)
+                                             #"*")
         if(nrow(temp[cat1_group == singleVariableValueLookup,]) == 0) {
           print("input was 0 length")
           print(temp)
@@ -679,7 +683,8 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   test <- returnDF
   test2 <- FormatedAnalysisOriginal[tab=="trends",]
 
-  #compare to KC
+  #assign comaprison to KC
+
   for(indicator in unique(test$indicator_key)) {
     #for each indicator
     for(categorical in unique(test[indicator_key == indicator,]$cat1_varname)) {
@@ -688,58 +693,30 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
         #for each bivariate group
         for(ayear in unique(test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group,]$year)){
           #for each year
-          if(!all(is.na(test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear,]$result))) {
-            print(test[indicator_key == "supportive_adult" & cat1_varname == "chi_geo_region" & cat1_group == "East" & year == 2021,])
-            print(test[indicator_key == indicator & cat1_varname == categorical & year == ayear & tab == "trends",])
-          }
+            if(!is.na(test[indicator_key == indicator & cat1_group == "King County" & year == ayear & tab == "trends",]$result)) {
+              #if not an NA result, append description relative to KC wide
+              test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$comparison_with_kc <- "no different"
+              if(test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$upper_bound <
+                       test[indicator_key == indicator & cat1_group == "King County" & year == ayear & tab == "trends",]$lower_bound) {
+                test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$comparison_with_kc <- "lower"
+              }
+              if(test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$lower_bound <
+                 test[indicator_key == indicator & cat1_group == "King County" & year == ayear & tab == "trends",]$upper_bound) {
+                test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$comparison_with_kc <- "higher"
+              }
+
+            } else if(!is.na(test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$result)) {
+              print("warning, missing KC but not missing bivariate")
+            }
         }
     }
   }
-
-  for(indicator in unique(test$indicator_key)) {
-    #for each indicator
-    for(categorical in unique(test[indicator_key == indicator,]$cat1_varname)) {
-      #for each variable
-      for(ayear in unique(test[indicator_key == indicator & cat1_varname == categorical]$year)){
-        #for each year
-        if(!all(is.na(test[indicator_key == indicator & cat1_varname == categorical & year == ayear,]$result))) {
-          print(test[indicator_key == "supportive_adult" & cat1_varname == "chi_geo_region" & year == 2021,])
-          print(test[indicator_key == indicator & cat1_varname == categorical & year == ayear & tab == "trends",])
-        }
-      }
-    }
-  }
-
-  kc_comp2 = test[cat1_varname == 'chi_geo_kc', .(year, kcr = result, lower_bound_kc = lower_bound, upper_bound_kc = upper_bound)]
-
-  res = merge(res, kc_comp, all.x = T, by = 'year')
-  res[upper_bound < lower_bound_kc, comparison_with_kc := 'lower']
-  res[lower_bound > upper_bound_kc, comparison_with_kc := 'upper']
-  res[upper_bound >= lower_bound_kc | lower_bound <= upper_bound_kc, comparison_with_kc := 'no different']
-  res[comparison_with_kc %in% c('higher', 'lower'), significance := '*' ]
-  res[, c('kcr', 'lower_bound_kc', 'upper_bound_kc') := NULL]
-
-
-  ##create county wide point estimate of the current variable just using the data set
-  #calculate point estimate
-  kc = rads::calc(hys, what = v, where = chi_year %in% grp_yrs, metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T, time_var = 'chi_year')
-  #assign metadata
-  kc[, tab := '_kingcounty']
-  kc[, cat1 := 'King County']
-  kc[, cat1_group := 'King County']
-  kc[, cat1_varname := 'chi_geo_kc']
-  kc[, cat1_group_alias := 'King County']
-  kc[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(cat1, cat1_group, cat1_varname, cat1_group_alias) ]
-  kc[, chi_year := gyl]
-
 
 
   #compare output of original and new code
   if(!identical(FormatedAnalysisOriginal[tab == "trends",], returnDF )) {
     stop("function not performing as expected")
   }
-
-
 
 
   #####################################################
