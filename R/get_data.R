@@ -65,24 +65,49 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_
 
   stopifnot(all(year %in% c(seq(2004,2018,2), 2021)))
 
-  #J:\HYSdata\hys\2021\v1
-  if(ar){
-    fps = file.path('//PHDATA01/EPE_Data/HYSdata/hys/2021/',version, '/', paste0('hys_ar_', year, '.rds'))
-  }else{
-    fps = file.path('//PHDATA01/EPE_Data/HYSdata/hys/2021/',version, '/', paste0('hys_stage_', year, '.rds'))
+  # pull the list of vars
+  vars = file.path('//PHDATA01/EPE_Data/HYSdata/hys/2021/',version, 'hys_cols.csv')
+  vars = data.table::fread(vars)
+
+  # subset by year
+  yyy = year
+  vars = vars[year %in% yyy]
+
+  # confirm that the columns requested exist in the dataset
+  # and load them if that is the case
+  if(!is.null(cols)){
+    noexist = setdiff(cols, vars[, colname])
+    if(length(noexist)>0){
+      stop(paste('The following columns were requested but do not exist for the supplied years:',
+                 paste(noexist, collapse = ',')))
+    }
+  } else{
+    if(ar) cols = vars[ar == TRUE, colname]
+    if(!ar) cols = vars[ar == FALSE, colname]
   }
 
-  dat <- data.table::rbindlist(lapply(fps, readRDS), use.names = T, fill = T)
+  #figure out whether to load stage, analytic ready or both
+  vars = vars[colname %in% cols]
+  arfp = c()
+  sfp = c()
+  if(any(vars[, ar])){
+    arfp = file.path('//PHDATA01/EPE_Data/HYSdata/hys/2021/',version, '/', paste0('hys_ar_', year, '.rds'))
+    ardat = data.table::rbindlist(lapply(arfp, readRDS), use.names = T, fill = T)
 
-  #identify invalid columns
-  if(!is.null(cols) && !all(is.na(cols))){
-    cols = tolower(cols)
-    invalid.cols <- setdiff(cols, names(dat))
-    if(length(invalid.cols) == length(cols)){stop("HYS data cannot be extracted because no valid column names have been submitted. To get all columns, use the argument 'cols = NA'")}
-    if(length(invalid.cols) > 0){message(paste0("The following column names do not exist in the HYS data and have not be extracted: ", paste0(invalid.cols, collapse = ", ")))}
+  }
+  if(any(!vars[, ar])){
+    sfp = file.path('//PHDATA01/EPE_Data/HYSdata/hys/2021/',version, '/', paste0('hys_stage_', year, '.rds'))
+    sdat = data.table::rbindlist(lapply(sfp, readRDS), use.names = T, fill = T)
 
-  }else{
-    cols = names(dat)
+  }
+  # If both were loaded, merge them
+  if(exists('ardat') && exists('sdat')){
+    scols = vars[ar == FALSE, colname] # prevent column duplication
+    dat = merge(ardat, sdat[, .SD, .SDcols = c('obs_id', scols)], all.x = T, by = 'obs_id')
+  }else if(exists('ardat'))(
+    dat = ardat
+  )else{
+    dat = sdat
   }
 
   #create the survey object
@@ -93,8 +118,8 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_
     dat[, weight1 := 1]
     weight_variable = 'weight1'
   }
-  if(!ar){
-    warning('Requested staged data. This dataset does not have weights. Survey set to be self weighting')
+  if(all(vars[, ar == FALSE])){
+    warning('Requested staged data only. This dataset does not have weights. Survey set to be self weighting')
     dat[, weight1 := 1]
     weight_variable = 'weight1'
   }
@@ -110,8 +135,7 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_
   dat = dat[get(weight_variable)>0]
   svy <- dtsurvey::dtsurvey(dat, psu = 'psu', strata = 'chi_year', weight = weight_variable, nest = T)
 
-
-  if(!all(is.na(cols))) svy <- svy[, .SD, .SDcols = c(cols, '_id')]
+  svy <- svy[, .SD, .SDcols = c(cols, '_id')]
 
   return(svy)
 }
