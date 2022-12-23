@@ -1076,7 +1076,7 @@ list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
                 "Only the following datasets are implemented: ", paste(opts, collapse = ', ')))
 
   }
-
+1``
   # The below code would ideally be replaced by a single call to a generic interface configured by the user
   if(dataset == "birth") {
     #message("Column names for birth data are taken from all available years.")

@@ -8,7 +8,7 @@
 #' @details
 #' This function ensures that the structure of the data matches all CHI Tableau Ready
 #' specifications. QA for data quality vis-à-vis previous production data, CHAT, or any other source,
-#' must be performed seperately
+#' must be performed separately
 #'
 #'
 #' @param chi_est Name of a data.table or data.frame containing the prepared data to be pushed to SQL
@@ -18,7 +18,7 @@
 #' @param verbose Logical. Should the function be talkative?
 #'
 #' @return If there are no problems, a printed statement of success. Otherwise, it will stop and provide informative
-#' feedback everytime there is an error.
+#' feedback every time there is an error.
 #'
 #' @export
 #'
