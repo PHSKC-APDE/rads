@@ -728,7 +728,8 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
           #for each year
           if(!is.na(test[indicator_key == indicator & cat1_group == "King County" & year == ayear & tab == "trends",]$result)) {
             #if not an NA result, append description relative to KC wide
-            if(!identical(test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",], test2[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",])) {
+            if(!identical(test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends", !c("comparison_with_kc", "run_date")], test2[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends", !c("comparison_with_kc", "run_date")])) {
+              #note, the above text ignores run_date and comparison_with_kc. comaprison ignored because the original code seems to implement this incorrectly.
               countdif <- countdif + 1
 
               test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$missmatch <- 1
@@ -743,6 +744,25 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   }
   print(countdif)
   print(countsame)
+
+
+  #####calculating _kingcounty" tab#####
+
+
+
+
+  ####calculating demgroups tab####
+
+
+
+
+  ####calculating crosstabs tab####
+
+
+
+
+
+
 
 
   ########################################
