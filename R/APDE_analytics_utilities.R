@@ -535,15 +535,19 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
     #process and add cat2
     Tableau_Ready_DT$cat2 <- rep(cat2Variable, nrow(DT))
+    Tableau_Ready_DT$cat2 <- as.character(Tableau_Ready_DT$cat2)
 
     #process and add cat2_group
     Tableau_Ready_DT$cat2_group <- rep(cat2_groupVariable, nrow(DT))
+    Tableau_Ready_DT$cat2_group <- as.character(Tableau_Ready_DT$cat2_group)
 
     #process and add cat2_varname
     Tableau_Ready_DT$cat2_varname <- rep(cat2_varnameVariable, nrow(DT))
+    Tableau_Ready_DT$cat2_varname <- as.character(Tableau_Ready_DT$cat2_varname)
 
     #process and add cat2_group_alias
     Tableau_Ready_DT$cat2_group_alias <- rep(cat2_group_aliasVariable, nrow(DT))
+    Tableau_Ready_DT$cat2_group_alias <- as.character(Tableau_Ready_DT$cat2_group_alias)
 
     #process and add data_source
     Tableau_Ready_DT$data_source <- rep(data_sourceVariable, nrow(DT))
@@ -562,21 +566,39 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     return(Tableau_Ready_DT)
   }
 
-  calculate_King_County <- function(x, v, years) {
-    kc = rads::calc(x, what = v, where = chi_year %in% years, metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T, time_var = 'chi_year')
-    #assign metadata
-    kc[, tab := '_kingcounty']
-    kc[, cat1 := 'King County']
-    kc[, cat1_group := 'King County']
-    kc[, cat1_varname := 'chi_geo_kc']
-    kc[, cat1_group_alias := 'King County']
-    kc[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(cat1, cat1_group, cat1_varname, cat1_group_alias) ]
-    kc[, chi_year := gyl]
+  APDE_TRO_KCCompare <- function(DT) {
+    #takes a properly formatted tableau ready data.table
+    #returns the same data.table with comparison to KC for each item
+    #NOTE currently only check cat1 and cat1group, doesn't support bivariates yet
 
-    return(kc)
+    DT$comparison_with_kc <- "no different"
+    for(indicator in unique(DT$indicator_key)) {
+      #for each indicator
+      for(categorical in unique(DT[indicator_key == indicator,]$cat1_varname)) {
+        #for each bivariate
+        for(group in unique(DT[indicator_key == indicator & cat1_varname == categorical,]$cat1_group))
+          #for each bivariate group
+          for(ayear in unique(DT[indicator_key == indicator & cat1_varname == categorical & cat1_group == group,]$year)){
+            #for each year
+            if(!is.na(DT[indicator_key == indicator & cat1_group == "King County" & year == ayear & tab == "trends",]$result)) {
+              #if not an NA result, append description relative to KC wide
+              if(DT[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$upper_bound <
+                 DT[indicator_key == indicator & cat1_group == "King County" & year == ayear & tab == "trends",]$lower_bound) {
+                DT[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$comparison_with_kc <- "lower"
+              }
+              if(DT[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$lower_bound <
+                 DT[indicator_key == indicator & cat1_group == "King County" & year == ayear & tab == "trends",]$upper_bound) {
+                DT[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$comparison_with_kc <- "higher"
+              }
+
+            } else if(!is.na(DT[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$result)) {
+              print("warning, missing KC but not missing bivariate")
+            }
+          }
+      }
+    }
+    return(DT)
   }
-
-
 
 
   ########################################
@@ -680,11 +702,25 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     }
   }
 
+
+  #assign comparison to KC
+  returnDF <- APDE_TRO_KCCompare(returnDF)
+
+
+  returnDF[tab == "trends" & cat1_varname == "chi_geo_kc", c("cat2", "cat2_group", "cat2_varname", "cat2_group_alias") := list(cat1, cat1_group, cat1_varname, cat1_group_alias)]
+
+typeof(returnDF$cat2)
+
+
+  #compare output of original and new code
+
   test <- returnDF
   test2 <- FormatedAnalysisOriginal[tab=="trends",]
+  test$missmatch <- 0
+  test2$missmatch <- 0
 
-  #assign comaprison to KC
-
+  countdif <- 0
+  countsame <- 0
   for(indicator in unique(test$indicator_key)) {
     #for each indicator
     for(categorical in unique(test[indicator_key == indicator,]$cat1_varname)) {
@@ -693,30 +729,23 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
         #for each bivariate group
         for(ayear in unique(test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group,]$year)){
           #for each year
-            if(!is.na(test[indicator_key == indicator & cat1_group == "King County" & year == ayear & tab == "trends",]$result)) {
-              #if not an NA result, append description relative to KC wide
-              test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$comparison_with_kc <- "no different"
-              if(test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$upper_bound <
-                       test[indicator_key == indicator & cat1_group == "King County" & year == ayear & tab == "trends",]$lower_bound) {
-                test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$comparison_with_kc <- "lower"
-              }
-              if(test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$lower_bound <
-                 test[indicator_key == indicator & cat1_group == "King County" & year == ayear & tab == "trends",]$upper_bound) {
-                test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$comparison_with_kc <- "higher"
-              }
+          if(!is.na(test[indicator_key == indicator & cat1_group == "King County" & year == ayear & tab == "trends",]$result)) {
+            #if not an NA result, append description relative to KC wide
+            if(!identical(test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",], test2[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",])) {
+              countdif <- countdif + 1
 
-            } else if(!is.na(test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$result)) {
-              print("warning, missing KC but not missing bivariate")
+              test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$missmatch <- 1
+              test2[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$missmatch <- 1
+            } else {
+              countsame <- countsame + 1
             }
+          }
+
         }
     }
   }
-
-
-  #compare output of original and new code
-  if(!identical(FormatedAnalysisOriginal[tab == "trends",], returnDF )) {
-    stop("function not performing as expected")
-  }
+  print(countdif)
+  print(countsame)
 
 
   #####################################################
