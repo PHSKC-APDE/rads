@@ -249,7 +249,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
     res = merge(res, kc_comp, all.x = T, by = 'year')
     res[upper_bound < lower_bound_kc, comparison_with_kc := 'lower']
-    res[lower_bound > upper_bound_kc, comparison_with_kc := 'upper']
+    res[lower_bound > upper_bound_kc, comparison_with_kc := 'higher']
     res[upper_bound >= lower_bound_kc | lower_bound <= upper_bound_kc, comparison_with_kc := 'no different']
     res[comparison_with_kc %in% c('higher', 'lower'), significance := '*' ]
     res[, c('kcr', 'lower_bound_kc', 'upper_bound_kc') := NULL]
@@ -551,6 +551,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
     #process and add data_source
     Tableau_Ready_DT$data_source <- rep(data_sourceVariable, nrow(DT))
+    Tableau_Ready_DT$data_source <- as.character(Tableau_Ready_DT$data_source)
 
     #process and add run_date
     Tableau_Ready_DT$run_date <- rep(run_dateVariable, nrow(DT))
@@ -586,7 +587,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
                  DT[indicator_key == indicator & cat1_group == "King County" & year == ayear & tab == "trends",]$lower_bound) {
                 DT[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$comparison_with_kc <- "lower"
               }
-              if(DT[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$lower_bound <
+              if(DT[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$lower_bound >
                  DT[indicator_key == indicator & cat1_group == "King County" & year == ayear & tab == "trends",]$upper_bound) {
                 DT[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$comparison_with_kc <- "higher"
               }
@@ -707,10 +708,6 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   returnDF <- APDE_TRO_KCCompare(returnDF)
 
 
-  returnDF[tab == "trends" & cat1_varname == "chi_geo_kc", c("cat2", "cat2_group", "cat2_varname", "cat2_group_alias") := list(cat1, cat1_group, cat1_varname, cat1_group_alias)]
-
-typeof(returnDF$cat2)
-
 
   #compare output of original and new code
 
@@ -746,75 +743,6 @@ typeof(returnDF$cat2)
   }
   print(countdif)
   print(countsame)
-
-
-  #####################################################
-  ############code to migrate##########################
-  #####################################################
-  {
-    #note have historically always created a KC trend as well
-    dgs = lapply(bys, function(x){
-
-      if(x %in% ttbys){
-        r2 = rads::calc(hys, what = v, by = c(x, 'chi_year'), metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T)
-        r2[, tab := 'trends']
-        r = rbind(r, r2)
-      }
-
-      #generate rename variable "x" (by variable currently being manipulated) to "cat1_group"
-      setnames(r2, x, 'cat1_group') #will need to be updated to something human readable
-      if(any(r2[, cat1_group] %in% 1)) r2=  r2[cat1_group == 1] ##???? if any cat1_group were identified as equal to 1, remove anything that isn't
-
-      #create cat1_varname variable using the by variable (bys) identified
-      r2[, cat1_varname := x]
-      r2= r2[!is.na(cat1_group)]
-
-      r
-
-    })
-
-
-    #dgs = rbindlist(dgs)
-    r2[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(NA_character_, NA_character_, NA_character_, NA_character_) ]
-    #remove demgroups on kc wide geography
-    dgs = dgs[!(tab == 'demgroups' & cat1_varname == 'chi_geo_kc')]
-
-
-    #merge on cat information
-    #note, cat1_group
-    dgs = merge(dgs, meta, all.x = T, by.x = c('cat1_varname', 'cat1_group'), by.y = c('varname', 'gval'))
-    stopifnot(all(dgs[, good]))
-    dgs[, c('ng', 'good', 'cat1_group') := NULL]
-    setnames(dgs, c('cat', 'group', 'group_alias'), c('cat1', 'cat1_group', 'cat1_group_alias'))
-
-    #weird fix for chi_geo_kc
-    dgs[tab == 'trends' & cat1_varname=='chi_geo_kc', c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(cat1, cat1_group, cat1_varname, cat1_group_alias)]
-
-    setnames(res,
-             c('mean', 'mean_se', 'mean_lower', 'mean_upper', 'variable', 'chi_year'),
-             c('result', 'se', 'lower_bound', 'upper_bound', 'indicator_key', 'year'))
-
-
-    res[, data_source := 'hys']
-    res[, level := NULL]
-    res[, run_date := Sys.Date()]
-    res[, year := gsub(', ', ' & ', year, fixed = T)]
-
-    #compare to KC
-    kc_comp = res[cat1_varname == 'chi_geo_kc', .(year, kcr = result, lower_bound_kc = lower_bound, upper_bound_kc = upper_bound)]
-
-    res = merge(res, kc_comp, all.x = T, by = 'year')
-    res[upper_bound < lower_bound_kc, comparison_with_kc := 'lower']
-    res[lower_bound > upper_bound_kc, comparison_with_kc := 'upper']
-    res[upper_bound >= lower_bound_kc | lower_bound <= upper_bound_kc, comparison_with_kc := 'no different']
-    res[comparison_with_kc %in% c('higher', 'lower'), significance := '*' ]
-    res[, c('kcr', 'lower_bound_kc', 'upper_bound_kc') := NULL]
-
-    res[is.nan(result), result := NA ]
-
-  }
-
-
 
 
   ########################################
