@@ -42,8 +42,8 @@ formatted death data obtained using the \code{get_data_death()} function.}
 \item{kingco}{a logical vector of length one. It specifies whether you want to
 limit the analysis to King County.
 
-\strong{NOTE}
-this only works with data imported with the \code{get_data_death()} function.
+\strong{NOTE} this only works with data imported with the \code{get_data_death()}
+function because it needs the logical variable \code{chi_geo_kc}.
 
 The default is kingco = TRUE.}
 
@@ -60,15 +60,13 @@ The default is \code{ypll_age = NULL}, which will skip YPLL calculations.}
 \item{death_age_col}{an optional character vector of length one that specifies
 the name of the column in ph.data with the decedents' age at death
 in years. It is only needed if \code{ypll_age} is
-specified AND if ph.data lacks columns named \code{date_of_birth} and
-\code{date_of_death} that are of class \code{"Date"}. If the latter two
-columns exist, the code calculates the age at death for you.
+specified AND if ph.data lacks a column named \code{chi_age}.
 
 The default is \code{death_age_col = NULL}.}
 }
 \value{
-Generates a table with four columns, \code{causeid},  \code{cause.of.death},
-\code{deaths}, & \code{rank}. If \code{ypll_age} is specified, a \code{ypll_##} column
+Generates a table with three columns, \code{causeid},  \code{cause.of.death},
+and \code{deaths}. If \code{ypll_age} is specified, a \code{ypll_##} column
 will also be added to the table. Any other columns that are in the original data
 set that is submitted to this function will also be returned. E.g., if the
 original data contained gender and race_eth, the returned table would contain
@@ -80,7 +78,7 @@ causes of death you want to assess using the \code{causeids} or \code{cause}
 arguments.
 }
 \description{
-Generate death counts and the death rank for the National Center for Health
+Generate death counts for the National Center for Health
 Statistics (NCHS) 113 Selected Causes of Death (COD). Needs line-level death
 data with a properly formatted ICD10 column.
 
@@ -105,7 +103,7 @@ included 'year', 'race_eth', and 'gender', the results would be stratified
 by every combination of year_x_race_eth_x_gender.
 }
 \examples{
-# example 1: death count and rank only
+# example 1: death count only
 set.seed(98104)
 deathdata <- data.table::data.table(
   cod.icd10 = c(rep("A85.2", round(runif(1, 30, 100000), 0)),

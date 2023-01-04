@@ -85,7 +85,7 @@ calc(ph.data = birth,
 ## ---- warning=FALSE, message=FALSE--------------------------------------------
 library(survey)
 
-load("//phshare01/epe_share/WORK/surveys/ACS/PUMS_data/2019_1_year/prepped_R_files/2019_1_year_data.RData")
+load("//dphcifs/APDE-CDIP/ACS/PUMS_data/2019_1_year/prepped_R_files/2019_1_year_data.RData")
 
   pums <-     
     survey::svrepdesign(

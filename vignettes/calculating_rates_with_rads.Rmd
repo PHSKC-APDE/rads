@@ -82,15 +82,13 @@ nrow(deaths) # should be ~65,000 based on apriori knowledge
 
 ```
 
-We see that the column names and the number of rows are what we expected. Now, let's identify the deaths from falls using the `rads::death_injury_matrix_count` function. To learn about this function, type `?death_injury_matrix_count` in your console. For now, just trust that this is the correct syntax:
+We see that the column names and the number of rows are what we expected. Now, let's identify the deaths from falls using the `rads::death_injury_matrix_count` function. To learn about this function, type `?death_injury_matrix_count` in your console or walk through the [death_functions wiki](https://github.com/PHSKC-APDE/rads/wiki/get_data). For now, just trust that this is the correct syntax:
 
 ```{r message=FALSE, warning=FALSE}
 deaths <- death_injury_matrix_count(ph.data = deaths,
                                intent = "*", # all five intents
                                mechanism = "fall",
                                icdcol = 'underlying_cod_code',
-                               byage = TRUE,
-                               death_age_col = 'chi_age',
                                kingco = F) # False because already subset
 head(deaths[deaths >9]) # only display non-suppressed data
 
