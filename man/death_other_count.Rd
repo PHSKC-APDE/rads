@@ -85,7 +85,7 @@ included 'year', 'race_eth', and 'gender', the results would be stratified
 by every combination of year_x_race_eth_x_gender.
 }
 \examples{
-# example 1: death count and rank only
+# example 1: death count only
 set.seed(98104)
 deathdata <- data.table::data.table(
   cod.icd10 = c(rep("D52.1", round(runif(1, 30, 100000), 0)),
