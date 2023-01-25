@@ -336,6 +336,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   ctabs = ctabs[cat1_varname != cat2_varname & cat1_varname != 'chi_geo_kc' & cat2_varname != 'chi_geo_kc']
   crosstabs <- ctabs
 
+  #list of variables to use in time trend analysis
   timeTrendBivariables <- c("chi_race_aic_aian",
                             "chi_race_aic_asian",
                             "chi_race_aic_black",
@@ -410,35 +411,6 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     #Will check if value exists in the names of a dataframe, or a new value is provided
     #if a value is a name, it will rename that vector in the dataframe to the standard name (order matters) and apply any known cleaning
     #otherwise, will create the needed vector with the standard name and give all instances of it the value provided
-    #excluded from check are: tab
-
-
-
-    # #################################### temp testing
-    # DT <- temp
-    # yearVariable <- "chi_year"
-    # indicatorKeyVariable <- "variable"
-    # resultVariable <- "mean"
-    # numeratorVariable <- "numerator"
-    # denominatorVariable <- "denominator"
-    # seVariable <- "mean_se"
-    # lowerBoundVariable <- "mean_lower"
-    # upperBoundVariable <- "mean_upper"
-    # rseVariable <- "rse"
-    # tabVariable <- "trends"
-    # cat1Variable <- tempCat
-    # cat1_groupVariable <- tempCatGroup
-    # cat1_varnameVariable <- variableNameLookup
-    # cat1_group_aliasVariable <- tempCatGroupAlias
-    # cat2Variable <- NA
-    # cat2_groupVariable <- NA
-    # cat2_varnameVariable <- NA
-    # cat2_group_aliasVariable <- NA
-    # data_sourceVariable <- "hys"
-    # run_dateVariable <- NA
-    # comparison_with_KCVariable <- NA
-    # significanceVariable <- NA
-
 
     #make target datatable of correct size
     outputNames <- c("year",
@@ -613,12 +585,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   ###################################
   #test call to trends function to generate list of DT's containing calc output
   #this returns  calc output for all "trends" that then need to be formated
-  trend_resultunlist <- APDE_CHI_TRO_time_trend_analysis(data, variables, timeTrendBivariables)
-  trend_resultunlist_backup <- trend_resultunlist
-  ##############################
-  #does it work with only one variable and bivariable?
-  test.one.row <- APDE_CHI_TRO_time_trend_analysis(data, variables[1], bivariables[1])
-  ###################################
+  trend_result_list_of_lists <- APDE_CHI_TRO_time_trend_analysis(data, variables, timeTrendBivariables)
 
   #to format this, we need to walk through the resulting data structure. The structure is 2 dimensional matrix of data frames.
   #the first dimension is the primary variable, the second dimension is the bivariate
@@ -631,7 +598,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   remove(returnDF)
 
 
-  for(listofDT in trend_resultunlist) {
+  for(listofDT in trend_result_list_of_lists) {
 
     for(DT in listofDT) {
 
