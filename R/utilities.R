@@ -633,7 +633,7 @@ format_time <- function(x){
   breaks = data.table::shift(x, type = 'lead') == (x + 1)
   bps = which(!breaks)
 
-  #seperate
+  #separate
   if(length(bps)>0){
     seper = split(x, cut(x, c(-Inf, x[bps], Inf)))
   }else{
