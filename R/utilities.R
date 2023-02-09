@@ -1,3 +1,5 @@
+options("scipen"=999) # turn off scientific notation
+
 #' Calculate crude and directly adjusted rates
 #'
 #' @param count Numeric vector of indeterminate length. The # of events of interest (e.g., deaths, births, etc.)
@@ -51,11 +53,22 @@ adjust_direct <- function (count, pop, stdpop, per = 100000, conf.level = 0.95)
 
 
 #' Calculate age standardized rates from a data.table with age, counts, and population columns. (Built on adjust_direct())
-#' @param my.dt Name of a data.frame or data.table object. Note, if my.dt already has a standard population (ref.popname = "none"),
+#'
+#' @description
+#' Calculate age standardized rates from a data.table with age, counts, and population columns.
+#'
+#' Your dataset must have the following three columns ...
+#' \itemize{
+#' \item 'age' or 'agecat': 'age' in single years (if collapse = T) or 'agecat' with the same age bins as your selected reference population (if collapse = F) item
+#' \item a count for the event (e.g., disease) for which you want to find an age standardized rate item
+#' \item the population corresponding to the age or agecat in your original data item
+#' }
+#'
+#' @param ph.data Name of a data.frame or data.table object. Note, if ph.data already has a standard population (ref.popname = "none"),
 #' it must contain a numeric column named 'stdpop'. Otherwise, it must contain a numeric column named 'age'.
 #' @param ref.popname Character vector of length 1. Only valid options are those in list_ref_pop() and
-#' "none" (when standard population already exists in my.dt)
-#' @param collapse Logical vector of length 1. Do you want to collapse my.dt ages to match those in ref.popname?
+#' "none" (when standard population already exists in ph.data)
+#' @param collapse Logical vector of length 1. Do you want to collapse ph.data ages to match those in ref.popname?
 #' @param my.count Character vector of length 1. Identifies the column with the count data aggregated by the given demographics.
 #' @param my.pop Character vector of length 1. Identifies the column with the population corresponding to the given demographics.
 #' @param per Integer vector of length 1. A multiplier for all rates and CI, e.g., when per = 1000, the rates are per 1000 people
@@ -65,94 +78,179 @@ adjust_direct <- function (count, pop, stdpop, per = 100000, conf.level = 0.95)
 #' @return a data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'group_by' variable(s) -- if any
 #' @export
 #' @name age_standardize
+#' @references \url{https://github.com/PHSKC-APDE/rads/wiki/age_standardize}
 #' @examples
 #' \dontrun{
 #' temp1 <- data.table(age = c(50:60), count = c(25:35), pop = c(seq(1000, 900, -10)) )
-#' age_standardize(my.dt = temp1,
+#' age_standardize(ph.data = temp1,
 #' ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)", collapse = T,
 #' my.count = "count", my.pop = "pop", per = 1000, conf.level = 0.95)[]
 #'
 #' temp2 <- data.table(sex = c(rep("M", 11), rep("F", 11)), age = rep(50:60, 2),
 #' count = c(25:35, 26:36), pop = c(seq(1000, 900, -10), seq(1100, 1000, -10)),
 #' stdpop = rep(1000, 22))
-#' age_standardize(my.dt = temp2, ref.popname = "none", collapse = F, my.count = "count",
+#' age_standardize(ph.data = temp2, ref.popname = "none", collapse = F, my.count = "count",
 #' my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex")[]
 #' }
 #' @importFrom data.table ":=" setDT
 
-age_standardize <- function (my.dt, ref.popname = NULL, collapse = T, my.count = "count", my.pop = "pop", per = 100000, conf.level = 0.95, group_by = NULL)
+age_standardize <- function (ph.data, ref.popname = NULL, collapse = T, my.count = "count", my.pop = "pop", per = 100000, conf.level = 0.95, group_by = NULL)
 {
   #global variables used by data.table declared as NULL here to play nice with devtools::check()
-  my.dt.name <- age <- age_start <- age_end <- agecat <- count <- pop <- stdpop <- reference_pop <- NULL
+  ph.data.name <- age <- age_start <- age_end <- agecat <- count <- pop <- stdpop <- reference_pop <- adj.lci <- adj.uci <- NULL
 
-  my.dt.name <- deparse(substitute(my.dt))
-  my.dt <- copy(my.dt)
+  ph.data.name <- deparse(substitute(ph.data))
+  ph.data <- copy(ph.data)
   # Logic checks ----
-  # Check that my.dt is a data.frame or data.table ----
-  if( inherits(my.dt, "data.frame") == FALSE){stop("my.dt must be a data.frame or a data.table containing both counts and population data.")}
-  if( inherits(my.dt, "data.table") == FALSE){setDT(my.dt)}
+  # Check that ph.data is a data.frame or data.table ----
+  if( inherits(ph.data, "data.frame") == FALSE){stop("ph.data must be a data.frame or a data.table containing both counts and population data.")}
+  if( inherits(ph.data, "data.table") == FALSE){setDT(ph.data)}
 
   # Check arguments needed for adjust_direct ----
-  if(! my.count %in% colnames(my.dt)){stop(strwrap(paste0("The column '", my.count, "' does not exist in my.dt.
-                                                                my.dt must have a column indicating the count of events (e.g., deaths, births, etc.) and is typically named 'count'.
+  if(! my.count %in% colnames(ph.data)){stop(strwrap(paste0("The column '", my.count, "' does not exist in ph.data.
+                                                                ph.data must have a column indicating the count of events (e.g., deaths, births, etc.) and is typically named 'count'.
                                                                 If such a column exists with a different name, you need to specify it in the `my.count` argument. I.e., my.count = 'count.varname'."), prefix = " ", initial = ""))}
 
-  if(! my.pop %in% colnames(my.dt)){stop(strwrap(paste0("The column '", my.pop, "' does not exist in my.dt.
-                                                                my.dt must have a column for the population denominator correspondnig to the given demographics. It is typically named 'pop'.
+  if(! my.pop %in% colnames(ph.data)){stop(strwrap(paste0("The column '", my.pop, "' does not exist in ph.data.
+                                                                ph.data must have a column for the population denominator correspondnig to the given demographics. It is typically named 'pop'.
                                                                 If such a column exists with a different name, you need to specify it in the `my.pop` argument. I.e., my.pop = 'pop.varname'."), prefix = " ", initial = ""))}
 
   # Ensure the reference population exists ----
-  if(is.null(ref.popname)){ref.popname <- "2000 U.S. Std Population (18 age groups - Census P25-1130)"}
+  if(is.null(ref.popname)){ref.popname <- "2000 U.S. Std Population (11 age groups)"}
   if(! ref.popname %in% c( list_ref_pop(), "none")){
     stop(strwrap(paste0("ref.popname ('", ref.popname, "') is not a valid reference population name.
           The names of standardized reference populations can be viewed by typing `list_ref_pop()`.
-          If my.dt is already aggregated/collapsed and has a relevant 'stdpop' column, please set ref.popname = 'none'"), prefix = " ", initial = ""))}
+          If ph.data is already aggregated/collapsed and has a relevant 'stdpop' column, please set ref.popname = 'none'"), prefix = " ", initial = ""))}
 
-  if(ref.popname == "none" & !"stdpop" %in% colnames(my.dt)){stop("When specifying ref.popname = 'none', my.dt must have a column named 'stdpop' with the reference standard population data.")}
+  if(ref.popname == "none" & !"stdpop" %in% colnames(ph.data)){stop("When specifying ref.popname = 'none', ph.data must have a column named 'stdpop' with the reference standard population data.")}
 
   if(ref.popname == "none" & collapse == T){stop(strwrap("When ref.popname = 'none', collapse should equal F.
-                                                                  Selecting ref.popname = 'none' expects that my.dt has already been collapsed/aggregated and has a 'stdpop' column."), prefix = " ", initial = "")}
+                                                                  Selecting ref.popname = 'none' expects that ph.data has already been collapsed/aggregated and has a 'stdpop' column."), prefix = " ", initial = "")}
 
   # Standardize column names ----
   # purposefully did not use setnames() because it is possible that count | pop already exists and are intentionally using different columns for this function
-  my.dt[, "count" := get(my.count)]
-  my.dt[, "pop" := get(my.pop)]
+  ph.data[, "count" := get(my.count)]
+  ph.data[, "pop" := get(my.pop)]
 
-  # Collapse my.dt to match standard population bins ----
+  # Check ranges for age, count, and population ----
+    # Check age ----
+    if(!"agecat" %in% names(ph.data)){ # if given agecat, ignore these tests for single years of age
+        if(nrow(ph.data[is.na(age)]) > 0){
+          stop(paste0("ph.data (", ph.data.name, ") contains at least one row where age is missing.
+                      Correct the data and try again."))
+        }
+        if(nrow(ph.data[age > 100]) > 0){
+          warning(paste0("ph.data (", ph.data.name, ") contains at least one row where age is greater than 100.
+                      Those values have automatically been recoded to 100 because population pulled from
+                      get_population() is top coded to 100 and reference populations are usually top coded at 85."))
+          ph.data[age > 100, age := 100]
+        }
+        if(nrow(ph.data[age < 0]) > 0){
+          stop(paste0("ph.data (", ph.data.name, ") contains at least one row where age is negative.
+                          Correct the data and try again."))
+        }
+        if( !identical(sort(unique(ph.data$age)), min(ph.data$age):max(ph.data$age)) ){
+          warning(paste0("There are gaps in the ages in ph.data (", ph.data.name, ").
+                         Age-adjusted rates can be calculated but they will BE DIFFERENT from those
+                         that account for the complete population and ages with zero events.
+
+                         UNLESS YOU ARE CERTAIN THAT you know what you are doing, you should stop
+                         and fill in all missing ages, with their corresponding populations and
+                         counts (even if the counts are zero), and run the code again."))
+        }
+        if(min(ph.data$age) != 0 | max(ph.data$age) != 100){
+          warning(paste0("The ages in ph.data (", ph.data.name, ") do not span from 0 to 100.
+                         This may be what you intended if you are calculating an age_adjusted
+                         rate for a subset of the population. Typically however, you will want
+                         to include population and count data for all ages between 0 and 100,
+                         inclusive."))
+        }
+    }
+
+    # Check count ----
+      if(nrow(ph.data[is.na(count)]) > 0){
+        warning(paste0("\U00026A0 ph.data (", ph.data.name, ") contains at least one row where my.count is missing.
+                    Those values have been replaced with zero."))
+        ph.data[is.na(count), count := 0]
+      }
+      if(nrow(ph.data[count < 0]) > 0){
+        stop(paste0("\U0001f47f ph.data (", ph.data.name, ") contains at least one row where my.count is negative.
+                        Correct the data and try again."))
+      }
+
+    # Check population ----
+      if(nrow(ph.data[is.na(pop)]) > 0){
+        stop(paste0("\U0001f47f ph.data (", ph.data.name, ") contains at least one row where my.pop is missing.
+                     Correct the data and try again."))
+      }
+      if(nrow(ph.data[pop < 0]) > 0){
+        stop(paste0("\U0001f47f ph.data (", ph.data.name, ") contains at least one row where my.pop is negative.
+                        Correct the data and try again."))
+      }
+
+    # Check count vs population ----
+      if(nrow(ph.data[count > pop]) > 0 ){
+        warning(paste0("\U00026A0 ph.data (", ph.data.name, ") contains at least one row where the count is greater than the population.
+                        This may be correct because OFM populations are just estimates. However, you are encouraged to check the data."))
+      }
+
+  # Collapse ph.data to match standard population bins ----
   if(collapse==T){
-    if(! "age" %in% colnames(my.dt)){stop(strwrap("When collapse = T, my.dt must have a column named 'age' where age is an integer.
+    if(! "age" %in% colnames(ph.data)){stop(strwrap("When collapse = T, ph.data must have a column named 'age' where age is an integer.
                                                         This is necessary to generate age bins that align with the selected standard
-                                                        reference population. If my.dt already has an 'agecat' column that is formatted
+                                                        reference population. If ph.data already has an 'agecat' column that is formatted
                                                         identically to that in the standard reference population, set collapse = F"), prefix = " ", initial = "")}
-    if(is.numeric(my.dt$age) == F){stop("When collapse = T, the 'age' column must be comprised entirely of integers")}
-    if(sum(as.numeric(my.dt$age) %% 1) != 0){stop("When collapse = T, the 'age' column must be comprised entirely of integers")}
-    if("agecat" %in% colnames(my.dt)){stop(strwrap("When collapse = T, a new column named 'agecat' is created to match that in the standard reference population.
-                                                  my.dt already has a column named 'agecat' and it will not be automatically overwritten.
-                                                  If you are sure you want to create a new column named 'agecat', delete the existing column in my.dt and run again."),
+    if(is.numeric(ph.data$age) == F){stop("When collapse = T, the 'age' column must be comprised entirely of integers")}
+    if(sum(as.numeric(ph.data$age) %% 1) != 0){stop("When collapse = T, the 'age' column must be comprised entirely of integers")}
+    if("agecat" %in% colnames(ph.data)){stop(strwrap("When collapse = T, a new column named 'agecat' is created to match that in the standard reference population.
+                                                  ph.data already has a column named 'agecat' and it will not be automatically overwritten.
+                                                  If you are sure you want to create a new column named 'agecat', delete the existing column in ph.data and run again."),
                                            prefix = " ", initial = "")}
     my.ref.pop <- get_ref_pop(ref.popname)
     for(z in seq(1, nrow(my.ref.pop))){
-      my.dt[age %in% my.ref.pop[z, age_start]:my.ref.pop[z, age_end], agecat := my.ref.pop[z, agecat]]
+      ph.data[age %in% my.ref.pop[z, age_start]:my.ref.pop[z, age_end], agecat := my.ref.pop[z, agecat]]
     }
-    if(!is.null(group_by)){my.dt <- my.dt[, list(count = sum(count), pop = sum(pop)), by = c("agecat", group_by)]}
-    if(is.null(group_by)){my.dt <- my.dt[, list(count = sum(count), pop = sum(pop)), by = "agecat"]}
+    if(!is.null(group_by)){ph.data <- ph.data[, list(count = sum(count), pop = sum(pop)), by = c("agecat", group_by)]}
+    if(is.null(group_by)){ph.data <- ph.data[, list(count = sum(count), pop = sum(pop)), by = "agecat"]}
+  }
+
+  # Hack when pop < count in age collapsed data ----
+    if(nrow(ph.data[pop < count]) > 0){
+      warning(paste0("\U00026A0
+      When ph.data (", ph.data.name, ") was collapsed to match the standard
+      population, the aggregate `count` was greater than the aggreate `pop` for
+      the following age group(s): ",
+      sort(paste(unique(ph.data[pop < count]$agecat), collapse = ', ')), ". In these rows, the
+      `pop` was ascribed the `count` value. This is necessary to calculate
+      the age adjusted rate and only nomimally biases the calculated rates since
+      the counts are typically small."))
+
+      ph.data[pop < count, pop := count]
+    }
+
+  # Hack when pop == 0 ----
+  if(nrow(ph.data[pop ==0]) > 0){
+    ph.data[pop == 0, pop := 1]
   }
 
   # Merge standard pop onto count data ----
   if(ref.popname != "none"){
-    my.dt <- merge(my.dt, get_ref_pop(ref.popname)[, list(agecat, stdpop = pop)], by = "agecat")
+    ph.data <- merge(ph.data, get_ref_pop(ref.popname)[, list(agecat, stdpop = pop)], by = "agecat")
   }
 
   # Calculate crude & adjusted rates with CI ----
-  if(!is.null(group_by)){my.rates <- my.dt[, as.list(adjust_direct(count = count, pop = pop, stdpop = stdpop, conf.level = as.numeric(conf.level), per = per)), by = group_by]}
-  if( is.null(group_by)){my.rates <- my.dt[, as.list(adjust_direct(count = count, pop = pop, stdpop = stdpop, conf.level = as.numeric(conf.level), per = per))]}
+  if(!is.null(group_by)){my.rates <- ph.data[, as.list(adjust_direct(count = count, pop = pop, stdpop = stdpop, conf.level = as.numeric(conf.level), per = per)), by = group_by]}
+  if( is.null(group_by)){my.rates <- ph.data[, as.list(adjust_direct(count = count, pop = pop, stdpop = stdpop, conf.level = as.numeric(conf.level), per = per))]}
 
   # Tidy results ----
   rate_estimates <- c("crude.rate", "crude.lci", "crude.uci", "adj.rate", "adj.lci", "adj.uci")
   my.rates[, c(rate_estimates) := lapply(.SD, rads::round2, 2), .SDcols = rate_estimates]
   my.rates[, reference_pop := ref.popname]
-  if(ref.popname == "none"){my.rates[, reference_pop := paste0("stdpop column in `", my.dt.name, "`")]}
+  my.rates[is.nan(adj.lci) & count == 0, adj.lci := 0]
+  if(ref.popname == "none"){my.rates[, reference_pop := paste0("stdpop column in `", ph.data.name, "`")]}
 
+
+  # Return object ----
   return(my.rates)
 }
 
@@ -212,7 +310,7 @@ chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = 
 
   #Bindings for data.table/check global variables
   indicator_key <- result_type <- relative.diff <- result.x <- result.y <- absolute.diff <- cat1 <- tab <-  NULL
-
+  # Check inputs ----
   # Check if necessary arguments are present
   if(is.null(OLD)){stop("You must provide 'OLD', i.e., the name of the table with the OLD data")}
   if(is.null(NEW)){stop("You must provide 'NEW', i.e., the name of the table with the NEW data")}
@@ -235,7 +333,8 @@ chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = 
     }else{META <- data.table::setDT(copy(META))}
   }
 
-  # If metadata provided, add it to the columns to help interret the output
+  # Process data ----
+  # If metadata provided, add it to the columns to help interpret the output
   if(!is.null(META)){
     NEW <- merge(NEW, META[, list(indicator_key, result_type)], by = "indicator_key", all.x = TRUE, all.y = FALSE)
   } else { NEW[, result_type := "Metadata not provided"]}
@@ -250,7 +349,8 @@ chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = 
 
   # calculate percent differences between old (x) and new(y)
   comp[, relative.diff := round2(abs((result.x - result.y) / result.x)*100, 1)]
-  comp[, absolute.diff := round2(abs(result.x - result.y)*100, 1)]
+  comp[result_type != "rate", absolute.diff := round2(abs(result.x - result.y)*100, 1)]
+  comp[result_type == "rate", absolute.diff := round2(abs(result.x - result.y), 1)]
   comp <- comp[!is.na(absolute.diff)]  # drop if absolute difference is NA
 
   # order variables
@@ -270,7 +370,7 @@ chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = 
   # order based on percent difference
   setorder(comp, -absolute.diff)
 
-  # return object
+  # return object ----
   return(comp)
 
 }
@@ -676,7 +776,7 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
 
   ## Set up ----
   # identify column type
-  temp.vartype <- data.table(varname = names(sapply(mydt, class)), vartype = sapply(mydt, class))
+  temp.vartype <- data.table(varname = names(sapply(mydt, class)), vartype = sapply(mydt, function(x) paste(class(x), collapse = ',')))
 
   # identify if it is a binary
   temp.binary <- data.table(varname = names(sapply(mydt,function(x) { all(na.omit(x) %in% 0:1) })), binary = sapply(mydt,function(x) { all(na.omit(x) %in% 0:1) }))
@@ -753,6 +853,148 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
 }
 
 
+#' Load clean geographic crosswalk tables
+#' @description
+#' This function provides a curated assortment of standardized geographic crosswalks.
+#' Though limited in scope, it provides quick and consistent access to many of the
+#' standard crosswalks used in APDE. If there is a common crosswalk missing
+#' among the options in \code{list_ref_xwalk()}, please let us know by posting a detailed
+#' request in a [GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new).
+#'
+#' If you need less common crosswalks that are not available through this function, please
+#' explore the spatial data built into [rads.data](https://github.com/PHSKC-APDE/rads.data),
+#' e.g., \code{rads.data::spatial_geocomp_blk10_kps}. These rads.data tables were
+#' created by many people over many years so you should expect to invest some time
+#' in exploration and data harmonization to prepare your two columns of interest.
+#'
+#' @param geo1 character vector of length 1 defining one half of the crosswalk
+#' desired, e.g., \code{geo1 = 'zip'}
+#' @param geo2 character vector of length 1 defining the other  half of the
+#' crosswalk desired, e.g., \code{geo1 = 'city'}
+#' @details
+#' A list of all acceptable geographic pairings can be found by typing
+#' \code{list_ref_xwalk()}.
+#'
+#'Note that the pairings given as arguments to this function are critical but
+#' the order is not. In other words, \code{get_xwalk(geo1 = 'zip', geo2 = 'city')}
+#' will return the same table as \code{get_xwalk(geo1 = 'city', geo2 = 'zip')}.
+#'
+#'
+#' ## geo definitions
+#'
+#' * \code{blk1}: 2010 Census Block. 15 digit Census GEOID (e.g., 530330110012006).
+#'   * 1-2: State (53 = WA)
+#'   * 3-5: County (033 = King County)
+#'   * 6-11: Tract (011001)
+#'   * 12: Block group (2)
+#'   * 12-15: Block (2006)
+#' * \code{ccd10}: 2010 Seattle City Council Districts
+#' * \code{city}: King County cities
+#' * \code{coo10}: 2010 COO places.
+#' * \code{hra10}: 2010 Health Reporting Areas
+#' * \code{kc}: King County
+#' * \code{kccd10}: 2010 King County Council Districts
+#' * \code{lgd10}: 2010 WA State legislative districts
+#' * \code{puma10}: 2010 Public Use Microdata Areas
+#' * \code{region10}: King County regions (North, South, East, & Seattle)
+#' * \code{scd10}: 2010 King County school districts
+#' * \code{sea10}: Seattle or KC except Seattle
+#' * \code{tract10}: 2010 Census Tract. 11 digit Census GEOID.
+#' * \code{zip}: Zip codes in King County.
+#'   * _Note!_ This is different from the 133 zip
+#' codes used with HCA data. To view the latter, please type \code{rads.data::spatial_zip_hca}.
+#'
+#' ## A note about error propagation!
+#' If you're merging the crosswalk table onto line level data, you can use
+#' \code{rads::calc}, or \code{data.table}, or whatever package you like
+#' for further analysis. However, if you're merging on to pre-aggregated data,
+#' to further collapse/aggregate/sum, you'll need to properly account for error
+#' propagation. Here is a line of \code{data.table} code as an example:
+#' ```
+#' DT[, .(estimate = sum(estimate), stderror = sqrt(sum(stderror)^2)), c(group_by_vars)]
+#' ```
+#'
+#' @return a data.table with two columns of geographic identifiers
+#' @export
+#' @import rads.data
+#' @importFrom data.table copy setnames
+#' @importFrom utils data
+#' @name get_xwalk
+#' @examples
+#' \dontrun{
+#'  myxwalk <- get_xwalk(geo1 = 'zip', geo2 = 'city')
+#'  myxwalk[]
+#' }
+get_xwalk <- function(geo1 = NA, geo2 = NA){
+  # bindings for data.table/check global variables ----
+  ref_get_xwalk <- input <- output <- lgd10 <- scd10 <- region10 <- tract10 <-
+    tract10_new <- `rads.data::x` <- x <- hra10 <- NULL
+
+  # load xwalk table ----
+  data("ref_get_xwalk", envir=environment()) # import ref_get_xwalk from /data as a promise
+  geodt <- copy(ref_get_xwalk) # evaluate / import the promise
+  geodt <- sql_clean(geodt)
+
+  # validate input and output ----
+  if(is.null(geo1)){geo1 <- NA}
+  if(is.null(geo2)){geo2 <- NA}
+  if(!geo1 %in% c(geodt$input, geodt$output)){
+    stop("The `geo1` argument is not a valid geography. Please type `list_ref_xwalk` to see all valid values.")
+  }
+  if(!geo2 %in% c(geodt$input, geodt$output)){
+    stop("The `geo1` argument is not a valid geography. Please type `list_ref_xwalk` to see all valid values.")
+  }
+  geodt.sub <- geodt[input == geo1 & output == geo2]
+  if(nrow(geodt.sub) == 0){geodt.sub <- geodt[input == geo2 & output == geo1]}
+  if(nrow(geodt.sub) == 0){
+    stop("The combination of `geo1` & `geo2` does not exist in the crosswalk reference table. Please type `list_ref_xwalk` to see all valid combinations.")
+  }
+  if(nrow(geodt.sub) > 1){
+    stop("The combination of `geo1` & `geo2` returned more than 1 row in the reference table. Please submit an issue on GitHub.")
+  }
+  if(nrow(geodt.sub) == 1){
+    geodt <- copy(geodt.sub)
+  }
+
+  # get crosswalk data ----
+  # xwalkdt <- copy(eval(parse(text=paste0('rads.data::', geodt$object))))
+  neo <- geodt$object
+  xwalkdt = eval(substitute(rads.data::x, list(x = as.name(neo))))
+  sql_clean(xwalkdt)
+  keepers <- c(geodt$inputvar, geodt$outputvar)
+  xwalkdt <- xwalkdt[, (keepers), with = FALSE] # alternative to xwalkdt[, ..keepers]
+  setnames(xwalkdt, c(geodt$inputvar, geodt$outputvar), c(geodt$input, geodt$output))
+
+  # clean crosswalk data ----
+  xwalkdt <- xwalkdt[!is.na(get(geodt$input)) & !is.na(get(geodt$output))] # drop when either value is missing
+  if("lgd10" %in% names(xwalkdt)){xwalkdt[, lgd10 := gsub("Leg Dist ", "", lgd10)]}
+  if("scd10" %in% names(xwalkdt)){xwalkdt[, scd10 := gsub(" School District", "", scd10)]}
+  if("region10" %in% names(xwalkdt)){xwalkdt[, region10 := gsub("\\b([a-z])", "\\U\\1", tolower(region10), perl = T)]} # ensure first letter capitalized
+  if("tract10" %in% names(xwalkdt)){
+    xwalkdt[, tract10 := gsub("14000US", "", tract10)]
+    xwalkdt[, tract10 := as.numeric(tract10)]
+    xwalkdt[, tract10_new := as.character(tract10)]
+    xwalkdt[nchar(tract10) == 6, tract10_new := paste0("53033", tract10)]
+    xwalkdt[nchar(tract10) < 6, tract10_new := paste0("53033", sprintf("%06i", tract10))]
+    xwalkdt[, tract10 := tract10_new]
+    xwalkdt[, tract10_new := NULL]
+  }
+
+  if('hra10' %in% names(xwalkdt)){
+    xwalkdt[hra10 == "Fed Way-Dash Point/Woodmont", hra10 := "Fed Way-Dash Pt"]
+    }
+
+  # create informative message ----
+  mymessage <- c(paste0("This crosswalk information is pulled from `rads.data::", geodt$object, "`."))
+  if(!is.na(geodt$notes)){
+    mymessage <- message(c(mymessage, paste0(" Note!! ", geodt$notes)))
+  }
+
+  # return object
+  message(mymessage)
+  return(xwalkdt)
+}
+
 #' Load a reference population as a data.table object in memory
 #'
 #' @param ref_name Character vector of length 1. Loads a reference population identified by list_ref_pop()
@@ -769,13 +1011,18 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
 #'
 get_ref_pop <- function(ref_name = NULL){
   #global variables used by data.table declared as NULL here to play nice with devtools::check()
-  standard <- agecat <- age_start <- age_end <- pop <- ref_pop_name <- NULL
+  standard <- agecat <- age_start <- age_end <- pop <- ref_pop_name <- uploaded <- NULL
 
   ref_single_to_99 <- data.table::copy(rads.data::population_reference_pop_single_age_to_99)
   ref_single_to_84 <- data.table::copy(rads.data::population_reference_pop_single_age_to_84)
+  ref_agecat_11 <- data.table::copy(rads.data::population_reference_pop_11_age_groups)
   ref_agecat_18 <- data.table::copy(rads.data::population_reference_pop_18_age_groups)
   ref_agecat_19 <- data.table::copy(rads.data::population_reference_pop_19_age_groups)
-  ref_pop_table <- rbind(ref_single_to_99, ref_single_to_84, ref_agecat_18, ref_agecat_19)
+  ref_pop_table <- rbind(suppressWarnings(ref_single_to_99[, uploaded := NULL]),
+                         suppressWarnings(ref_single_to_84[, uploaded := NULL]),
+                         suppressWarnings(ref_agecat_11[, uploaded := NULL]),
+                         suppressWarnings(ref_agecat_18[, uploaded := NULL]),
+                         suppressWarnings(ref_agecat_19[, uploaded := NULL]))
   ref_pop_table <- ref_pop_table[standard == ref_name, list(agecat, age_start, age_end, pop)]
   if(nrow(ref_pop_table) == 0){stop(strwrap(paste0("`ref_name` ('", ref_name, "') does not refer to a valid standard reference population.
                                                      Type `list_ref_pop()` to get a list of all valid populations."), prefix = " ", initial = ""))}
@@ -795,7 +1042,7 @@ get_ref_pop <- function(ref_name = NULL){
 #' }
 list_apde_data <- function(){
 
-  ret <- c('hys', 'birth', 'bsk')
+  ret <- c('hys', 'birth')
 
   return(ret)
 
@@ -870,6 +1117,58 @@ list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
 }
 
 
+#' View table of geographic pairs usable in the get_xwalk() function
+#' @description
+#' Displays a table of geographic pairings that can be submitted to \code{get_xwalk()}
+#' for crosswalk table generation. The numbers in the geographies (e.g.,
+#' the \code{10} in \code{hra10}) refer to the vintage, which typically reflects
+#' the Census Bureau's decennial updates.
+#' @details
+#' ## geo definitions
+#'
+#' * \code{blk1}: 2010 Census Block. 15 digit Census GEOID (e.g., 530330110012006).
+#'   * 1-2: State (53 = WA)
+#'   * 3-5: County (033 = King County)
+#'   * 6-11: Tract (011001)
+#'   * 12: Block group (2)
+#'   * 12-15: Block (2006)
+#' * \code{ccd10}: 2010 Seattle City Council Districts
+#' * \code{city}: King County cities
+#' * \code{coo10}: 2010 COO places.
+#' * \code{hra10}: 2010 Health Reporting Areas
+#' * \code{kc}: King County
+#' * \code{kccd10}: 2010 King County Council Districts
+#' * \code{lgd10}: 2010 WA State legislative districts
+#' * \code{puma10}: 2010 Public Use Microdata Areas
+#' * \code{region10}: King County regions (North, South, East, & Seattle)
+#' * \code{scd10}: 2010 King County school districts
+#' * \code{sea}: Seattle or KC except Seattle
+#' * \code{tract10}: 2010 Census Tract. 11 digit Census GEOID.
+#' * \code{zip}: Zip codes in King County.
+#'   * _Note!_ This is different from the 133 zip
+#' codes used with HCA data. To view the latter, please type \code{rads.data::spatial_zip_hca}.
+#' @return a data.table with two columns (geo1 & geo2), which define the acceptable
+#' geographic pairings for get_xwalk
+#' @export
+#' @import rads.data
+#' @importFrom data.table copy
+#' @importFrom utils data
+#' @name list_ref_xwalk
+#' @examples
+#' \dontrun{
+#'  list_ref_xwalk()
+#' }
+list_ref_xwalk <- function(){
+  # bindings for data.table/check global variables ----
+  ref_get_xwalk <- input <- output <- '.' <-  NULL
+  data("ref_get_xwalk", envir=environment()) # import ref_get_xwalk from /data as a promise
+  geodt <- copy(ref_get_xwalk) # evaluate / import the promise
+  geodt <- sql_clean(geodt)
+  geodt <- geodt[, .(geo1 = input, geo2 = output)]
+  return(geodt)
+}
+
+
 #' Return vector of all reference populations available in RADS
 #'
 #' @return Character vector of available reference populations
@@ -888,9 +1187,14 @@ list_ref_pop <- function(){
 
   ref_single_to_99 <- data.table::copy(rads.data::population_reference_pop_single_age_to_99)
   ref_single_to_84 <- data.table::copy(rads.data::population_reference_pop_single_age_to_84)
+  ref_agecat_11 <- data.table::copy(rads.data::population_reference_pop_11_age_groups)
   ref_agecat_18 <- data.table::copy(rads.data::population_reference_pop_18_age_groups)
   ref_agecat_19 <- data.table::copy(rads.data::population_reference_pop_19_age_groups)
-  ref_pop_table <- unique(rbind(ref_single_to_99[, list(standard)], ref_single_to_84[, list(standard)], ref_agecat_18[, list(standard)], ref_agecat_19[, list(standard)]))
+  ref_pop_table <- unique(rbind(ref_single_to_99[, list(standard)],
+                                ref_single_to_84[, list(standard)],
+                                ref_agecat_11[, list(standard)],
+                                ref_agecat_18[, list(standard)],
+                                ref_agecat_19[, list(standard)]))
   setorder(ref_pop_table, standard)
   ref_pop_table <- rbind(ref_pop_table[standard %like% "2000 U.S. Std P"], ref_pop_table[!standard %like% "2000 U.S. Std P"])
   return(ref_pop_table$standard)
@@ -1028,6 +1332,45 @@ sql_clean <- function(dat = NULL, stringsAsFactors = FALSE){
   }
   # reorder table
   data.table::setcolorder(dat, original.order)
+}
+
+
+#' Calculate standard error of the mean
+#' @param x name of a column in a data.frame/data.table or a vector
+#' @export
+#' @return numeric
+#' @name std_error
+#' @source plotrix R package July 11, 2022: \url{https://github.com/plotrix/plotrix/blob/master/R/std_error.R}.
+#' @importFrom stats sd
+#' @examples
+#' \dontrun{
+#' temp1 <- data.table::data.table(x = c(seq(0, 400, 100), seq(1000, 1800, 200), NA),
+#' mygroup = c(rep("A", 5), rep("B", 6))
+#' )
+#' std_error(c(seq(0, 400, 100), NA)) # expected value for mygroup == A
+#' std_error(c(seq(1000, 1800, 200), NA)) # expected value for mygroup == B
+#' temp1[, .(sem = std_error(x)), by = 'mygroup'][] # view summary table
+#' temp1[, sem := std_error(x), by = 'mygroup'][] # save results in the original
+#' }
+#'
+std_error<-function(x) {
+  vn<-function(x) return(sum(!is.na(x)))
+  dimx<-dim(x)
+  if(is.null(dimx)) {
+    stderr<-sd(x,na.rm=TRUE)
+    vnx<-vn(x)
+  }
+  else {
+    if(is.data.frame(x)) {
+      vnx<-unlist(sapply(x,vn))
+      stderr<-unlist(sapply(x,sd,na.rm=TRUE))
+    }
+    else {
+      vnx<-unlist(apply(x,2,vn))
+      stderr<-unlist(apply(x,2,sd,na.rm=TRUE))
+    }
+  }
+  return(stderr/sqrt(vnx))
 }
 
 

@@ -203,19 +203,19 @@ hr {
 <body>
 <h2>Introduction</h2>
 
-<p>This vignette will provide some examples of ways to pull population data into R from the Azure cloud (thank you Jeremy!). Population numbers are estimated by the <a href="https://ofm.wa.gov/washington-data-research/population-demographics">WA Office of Financial Management (OFM) population unit</a>. OFM produces two sets of estimates: (1) <a href="https://ofm.wa.gov/washington-data-research/population-demographics/population-estimates/april-1-official-population-estimates">April 1 official population estimates</a> for cities and towns and (2) <a href="https://ofm.wa.gov/washington-data-research/population-demographics/population-estimates/small-area-estimates-program">Small Area Estimates (SAE)</a> for smaller geographies. The <code>get_population()</code> function pulls the SAE numbers and should be the same as those in <a href="https://secureaccess.wa.gov/doh/chat/Entry.mvc">CHAT</a>. </p>
+<p>This vignette will provide some examples of ways to pull population data into R from the Azure cloud (thank you Jeremy!). Population numbers are estimated by the <a href="https://ofm.wa.gov/washington-data-research/population-demographics">WA Office of Financial Management (OFM) population unit</a>. OFM produces two sets of estimates: (1) <a href="https://ofm.wa.gov/washington-data-research/population-demographics/population-estimates/april-1-official-population-estimates">April 1 official population estimates</a> for cities and towns and (2) <a href="https://ofm.wa.gov/washington-data-research/population-demographics/population-estimates/small-area-estimates-program">Small Area Estimates (SAE)</a> for smaller geographies. The <code>get_population()</code> function pulls the SAE numbers and, when <code>round = T</code>, should be the same as those in <a href="https://secureaccess.wa.gov/doh/chat/Entry.mvc">CHAT</a>.</p>
 
 <p><strong>NOTE!!</strong> To get the most out of this vignette, I highly recommend that you actually type each and every bit of code into R. Doing so will almost definitely help you learn the syntax much faster than just reading the vignette or copying and pasting the code.</p>
 
 <h2><code>get_population</code> arguments</h2>
 
-<p>Arguments are the values that we send to a function when it is called. Generally, typing <code>args(my_function_of_interest)</code> will return the possible arguments including any defaults. For example, </p>
+<p>Arguments are the values that we send to a function when it is called. Generally, typing <code>args(my_function_of_interest)</code> will return the possible arguments including any defaults. For example,</p>
 
 <pre><code class="r">args(get_population)
 </code></pre>
 
-<pre><code>## function (kingco = T, years = c(2020), ages = c(0:100), genders = c(&quot;F&quot;, 
-##     &quot;M&quot;), races = c(&quot;aian&quot;, &quot;asian&quot;, &quot;black&quot;, &quot;hispanic&quot;, &quot;multiple&quot;, 
+<pre><code>## function (kingco = T, years = NA, ages = c(0:100), genders = c(&quot;f&quot;, 
+##     &quot;m&quot;), races = c(&quot;aian&quot;, &quot;asian&quot;, &quot;black&quot;, &quot;hispanic&quot;, &quot;multiple&quot;, 
 ##     &quot;nhpi&quot;, &quot;white&quot;), race_type = c(&quot;race_eth&quot;), geo_type = c(&quot;kc&quot;), 
 ##     group_by = NULL, round = T, mykey = &quot;hhsaw&quot;) 
 ## NULL
@@ -223,25 +223,25 @@ hr {
 
 <p>The standard arguments for get_population() are:</p>
 
-<p>1) <code>kingco</code> &lt;&lt; a logical vector. Do you want the estimates limited to King County? The default is TRUE.</p>
+<p>1) <code>kingco</code> &lt;&lt; Logical vector of length 1. Identifies whether you want population estimates limited to King County. Only impacts results for geo_type in c(&#39;blk&#39;, blkgrp&#39;, &#39;lgd&#39;, &#39;scd&#39;, &#39;tract&#39;, &#39;zip&#39;). Default == TRUE.</p>
 
-<p>2) <code>years</code> &lt;&lt; a numeric vector of the year(s) of interest. Currently only provides estimates for 2010+. The default is 2020.</p>
+<p>2) <code>years</code> &lt;&lt; Numeric vector. Identifies which year(s) of data should be pulled. Default == c(2020).</p>
 
-<p>3) <code>ages</code> &lt;&lt; a numeric vector of the age(s) of interest. The acceptable range and current default is 0 to 100. (Note! Age 100 is actually the top coding for ages 100-120.)</p>
+<p>3) <code>ages</code> &lt;&lt; Numeric vector. Identifies which age(s) should be pulled. Default == c(0:100), with 100 being the top coded value for 100:120.</p>
 
-<p>4) <code>genders</code> &lt;&lt; a character vector of the gender(s) of interest. The acceptable values are “f”, “female”, “m”, and “male”. The default is both female and male. </p>
+<p>4) <code>genders</code> &lt;&lt; Character vector of length 1 or 2. Identifies gender(s) should be pulled. The acceptable values are &#39;f&#39;, &#39;female&#39;, &#39;m&#39;, and &#39;male&#39;. Default == c(&#39;f&#39;, &#39;m&#39;).</p>
 
-<p>5) <code>races</code> &lt;&lt; a character vector of the racial/ethnic group(s) of interest. The acceptable values are &ldquo;aian&rdquo;, &ldquo;asian&rdquo;, &ldquo;black&rdquo;, &ldquo;hispanic&rdquo;, &ldquo;multiple&rdquo;, &ldquo;nhpi&rdquo;, and &ldquo;white&rdquo;. The default is all the possible values. </p>
+<p>5) <code>races</code> &lt;&lt; Character vector of length 1 to 7. Identifies which race(s) or ethnicity should be pulled. The acceptable values are &ldquo;aian&rdquo;, &ldquo;asian&rdquo;, &ldquo;black&rdquo;, &ldquo;hispanic&rdquo;, &ldquo;multiple&rdquo;, &ldquo;nhpi&rdquo;, and &ldquo;white&rdquo;. Default == all the possible values.</p>
 
-<p>6) <code>race_type</code> &lt;&lt; a character vector limited to “race” (Hispanic as an ethnicity) or “race_eth” (Hispanic as a race). The default is “race_eth”.</p>
+<p>6) <code>race_type</code> &lt;&lt; Character vector of length 1. Identifies whether to pull race data with Hispanic as an ethnicity (&ldquo;race&rdquo;) or Hispanic as a race (&ldquo;race_eth&rdquo;). Default == c(&ldquo;race_eth&rdquo;).</p>
 
-<p>7) <code>geo_type</code> &lt;&lt; a character vector describing the geographic level for which you want population estimates. Possible values are “kc”, &ldquo;seattle, “blk”, “blkgrp”, “hra”, “region”, “tract”, and “zip”. Note that all these geo_types except &quot;zip&rdquo; are available for King, Pierce, and Snohomish counties only. The default geo_type is “kc”.</p>
+<p>7) <code>geo_type</code> &lt;&lt; Character vector of length 1. Identifies the geographic level for which you want population estimates. The acceptable values are: &#39;blk&#39;, &#39;blkgrp&#39;, &#39;county&#39;, &#39;hra&#39;, &#39;kc&#39;, &#39;lgd&#39; (WA State legislative districts), &#39;region&#39;, &#39;seattle&#39;, &#39;scd&#39; (school districts), &#39;tract&#39;, and &#39;zip&#39;. Default == &ldquo;kc&rdquo;.</p>
 
-<p>8) <code>group_by</code> &lt;&lt; a character vector describing the how you would like to have the estimates grouped (i.e., stratified). For example, if you set the years argument to (2017:2019) and set the <code>group_by</code> argument to “years”, you would receive estimates for 2017, 2018, and 2019. Otherwise you would receive one estimate for 2017 through 2019. Valid options are limited to: &ldquo;years&rdquo;, &ldquo;ages&rdquo;, &ldquo;genders&rdquo;, &ldquo;race&rdquo;, &ldquo;race_eth&rdquo;, &ldquo;fips_co&rdquo;, and &ldquo;geo_id&rdquo;. The default is NULL, meaning estimates are not grouped / stratified.</p>
+<p>8) <code>group_by</code> &lt;&lt; Character vector of length 0 to 7. Identifies how you would like the data &#39;grouped&#39; (i.e., stratified). Valid options are limited to: &ldquo;years&rdquo;, &ldquo;ages&rdquo;, &ldquo;genders&rdquo;, &ldquo;race&rdquo;, &ldquo;race_eth&rdquo;, &ldquo;fips_co&rdquo;, and &ldquo;geo_id&rdquo;. Default == NULL, i.e., estimates are only grouped / aggregated by geography.</p>
 
-<p>9) <code>round</code> &lt;&lt; a logical vector. Do you want to round your population estimates to whole numbers? Default is TRUE. </p>
+<p>9) <code>round</code> &lt;&lt; Logical vector of length 1. Identifies whether or not population estimates should be returned as whole numbers. Default == TRUE.</p>
 
-<p>10) <code>mykey</code> &lt;&lt; a character vector with the name of the <code>keyring::</code> key that provides access to the Health and Human Services Analytic Workspace (HHSAW). If you have never set your keyring before and or do not know what this is refering to, just type <code>keyring::key_set(&#39;hhsaw&#39;, username = &#39;ALastname@kingcounty.gov&#39;)</code> into your R console (making sure to replace the username). The default is &#39;hhsaw&#39;. </p>
+<p>10) <code>mykey</code> &lt;&lt; a character vector with the name of the <code>keyring::</code> key that provides access to the Health and Human Services Analytic Workspace (HHSAW). If you have never set your keyring before and or do not know what this is refering to, just type <code>keyring::key_set(&#39;hhsaw&#39;, username = &#39;ALastname@kingcounty.gov&#39;)</code> into your R console (making sure to replace the username). The default is &#39;hhsaw&#39;.</p>
 
 <p>There is no need to specify any or all of the arguments listed above. As the following example shows, the default arguments for <code>get_population</code> provide the overall most recent year&#39;s estimated King County population.</p>
 
@@ -266,33 +266,13 @@ hr {
 
 <p><strong>WA</strong></p>
 
-<pre><code class="r">get_population(kingco = F, geo_type = &quot;zip&quot;)[]
+<pre><code class="r">get_population(geo_type = &#39;wa&#39;)[]
 </code></pre>
 
-<pre><code>##        pop geo_type geo_id year   age       gender
-##   1:    21      zip  00072 2020 0-100 Female, Male
-##   2:     2      zip  00073 2020 0-100 Female, Male
-##   3:    46      zip  00074 2020 0-100 Female, Male
-##   4:    21      zip  00076 2020 0-100 Female, Male
-##   5: 35718      zip  98001 2020 0-100 Female, Male
-##  ---                                              
-## 577:   115      zip  99363 2020 0-100 Female, Male
-## 578:   364      zip  99371 2020 0-100 Female, Male
-## 579:   244      zip  99401 2020 0-100 Female, Male
-## 580:  1740      zip  99402 2020 0-100 Female, Male
-## 581: 20729      zip  99403 2020 0-100 Female, Male
-##                                                 race_eth
-##   1: aian, asian, black, hispanic, multiple, nhpi, white
-##   2: aian, asian, black, hispanic, multiple, nhpi, white
-##   3: aian, asian, black, hispanic, multiple, nhpi, white
-##   4: aian, asian, black, hispanic, multiple, nhpi, white
-##   5: aian, asian, black, hispanic, multiple, nhpi, white
-##  ---                                                    
-## 577: aian, asian, black, hispanic, multiple, nhpi, white
-## 578: aian, asian, black, hispanic, multiple, nhpi, white
-## 579: aian, asian, black, hispanic, multiple, nhpi, white
-## 580: aian, asian, black, hispanic, multiple, nhpi, white
-## 581: aian, asian, black, hispanic, multiple, nhpi, white
+<pre><code>##        pop geo_type           geo_id year   age       gender
+## 1: 7656200       wa Washington State 2020 0-100 Female, Male
+##                                               race_eth
+## 1: aian, asian, black, hispanic, multiple, nhpi, white
 </code></pre>
 
 <p><strong>King County</strong></p>
@@ -309,7 +289,7 @@ hr {
 <p><strong>King County Regions</strong></p>
 
 <pre><code class="r">get_population(geo_type = c(&quot;region&quot;),
-                   group_by = c(&quot;geo_id&quot;))[]
+               group_by = c(&quot;geo_id&quot;))[]
 </code></pre>
 
 <pre><code>##       pop geo_type  geo_id year   age       gender
@@ -324,19 +304,38 @@ hr {
 ## 4: aian, asian, black, hispanic, multiple, nhpi, white
 </code></pre>
 
-<p><strong>King County HRAs</strong></p>
+<p><strong>King County Regions with <code>round=FALSE</code></strong></p>
 
-<pre><code class="r">    head(get_population(geo_type = c(&quot;hra&quot;),
-                   group_by = c(&quot;geo_id&quot;))[])  
+<p>Turn off rounding to get the exact (fractional) number of people estimated by OFM.</p>
+
+<pre><code class="r">rads::get_population(geo_type = &#39;region&#39;, 
+                     round = F)[]
 </code></pre>
 
-<pre><code>##      pop geo_type            geo_id year   age       gender
-## 1: 51121      hra     North Seattle 2020 0-100 Female, Male
-## 2: 48761      hra        NW Seattle 2020 0-100 Female, Male
-## 3: 77617      hra        NE Seattle 2020 0-100 Female, Male
-## 4: 63248      hra           Ballard 2020 0-100 Female, Male
-## 5: 65646      hra Fremont/Greenlake 2020 0-100 Female, Male
-## 6: 73652      hra       QA/Magnolia 2020 0-100 Female, Male
+<pre><code>##         pop geo_type  geo_id year   age       gender
+## 1: 761624.3   region Seattle 2020 0-100 Female, Male
+## 2: 776086.6   region   South 2020 0-100 Female, Male
+## 3: 136070.6   region   North 2020 0-100 Female, Male
+## 4: 587018.5   region    East 2020 0-100 Female, Male
+##                                               race_eth
+## 1: aian, asian, black, hispanic, multiple, nhpi, white
+## 2: aian, asian, black, hispanic, multiple, nhpi, white
+## 3: aian, asian, black, hispanic, multiple, nhpi, white
+## 4: aian, asian, black, hispanic, multiple, nhpi, white
+</code></pre>
+
+<p><strong>King County HRAs</strong></p>
+
+<pre><code class="r">head(get_population(geo_type = c(&quot;hra&quot;), group_by = c(&quot;geo_id&quot;))[])  
+</code></pre>
+
+<pre><code>##      pop geo_type              geo_id geo_id_code year   age       gender
+## 1: 44870      hra        Auburn-North        1000 2020 0-100 Female, Male
+## 2: 28373      hra        Auburn-South        1100 2020 0-100 Female, Male
+## 3: 63248      hra             Ballard        2000 2020 0-100 Female, Male
+## 4: 43457      hra Beacon/Gtown/S.Park        2100 2020 0-100 Female, Male
+## 5: 59147      hra Capitol Hill/E.lake        2200 2020 0-100 Female, Male
+## 6: 55924      hra     Central Seattle        2300 2020 0-100 Female, Male
 ##                                               race_eth
 ## 1: aian, asian, black, hispanic, multiple, nhpi, white
 ## 2: aian, asian, black, hispanic, multiple, nhpi, white
@@ -348,8 +347,7 @@ hr {
 
 <p><strong>King County Zip codes</strong></p>
 
-<pre><code class="r">    head(get_population(geo_type = c(&quot;zip&quot;),
-                   group_by = c(&quot;geo_id&quot;))[])  
+<pre><code class="r">head(get_population(geo_type = c(&quot;zip&quot;), group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
 
 <pre><code>##      pop geo_type geo_id year   age       gender
@@ -370,8 +368,7 @@ hr {
 
 <p><strong>King County Census Tracts</strong></p>
 
-<pre><code class="r">    head(get_population(geo_type = c(&quot;tract&quot;),
-                   group_by = c(&quot;geo_id&quot;))[])  
+<pre><code class="r">head(get_population(geo_type = c(&quot;tract&quot;), group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
 
 <pre><code>##     pop geo_type      geo_id year   age       gender
@@ -392,8 +389,7 @@ hr {
 
 <p><strong>King County Census Block Groups</strong></p>
 
-<pre><code class="r">    head(get_population(geo_type = c(&quot;blkgrp&quot;),
-                   group_by = c(&quot;geo_id&quot;))[])  
+<pre><code class="r">head(get_population(geo_type = c(&quot;blkgrp&quot;), group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
 
 <pre><code>##     pop geo_type       geo_id year   age       gender
@@ -414,8 +410,7 @@ hr {
 
 <p><strong>King County Census Blocks</strong></p>
 
-<pre><code class="r">    head(get_population(geo_type = c(&quot;blk&quot;),
-                   group_by = c(&quot;geo_id&quot;))[])  
+<pre><code class="r">head(get_population(geo_type = c(&quot;blk&quot;), group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
 
 <pre><code>##    pop geo_type          geo_id year   age       gender
@@ -449,7 +444,8 @@ hr {
 
 <p><strong>King County multiple years stratified</strong></p>
 
-<pre><code class="r">get_population(years = 2017:2019, group_by = &quot;years&quot;)[]
+<pre><code class="r">get_population(years = 2017:2019, 
+               group_by = &quot;years&quot;)[]
 </code></pre>
 
 <pre><code>##        pop geo_type      geo_id year   age       gender
@@ -518,7 +514,7 @@ hr {
 ## 2: aian, asian, black, hispanic, multiple, nhpi, white
 </code></pre>
 
-<p><strong>King County AIAN-NH</strong></p>
+<p><strong>King County AIAN (not Hispanic)</strong></p>
 
 <pre><code class="r">get_population(races = &quot;aian&quot;, race_type = &quot;race_eth&quot;)[]
 </code></pre>
@@ -527,7 +523,7 @@ hr {
 ## 1: 13703       kc King County 2020 0-100 Female, Male     aian
 </code></pre>
 
-<p><strong>King County AIAN regardless of Hispanic ethnicity</strong></p>
+<p><strong>King County AIAN (regardless of Hispanic ethnicity)</strong></p>
 
 <pre><code class="r">get_population(races = &quot;aian&quot;, race_type = &quot;race&quot;)[]
 </code></pre>
@@ -551,7 +547,7 @@ hr {
 ## 7:   19548       kc King County 2020 0-100 Female, Male          NHPI
 </code></pre>
 
-<p><strong>King County stratified by race-NH</strong></p>
+<p><strong>King County stratified by race (Hispanic as ethnicity)</strong></p>
 
 <pre><code class="r">get_population(race_type = &quot;race&quot;, group_by = &quot;race&quot;)[]
 </code></pre>
@@ -563,13 +559,16 @@ hr {
 ## 4:  124087       kc King County 2020 0-100 Female, Male Multiple race
 ## 5:  435386       kc King County 2020 0-100 Female, Male         Asian
 ## 6:   20918       kc King County 2020 0-100 Female, Male          NHPI
+## 7:  233923       kc King County 2020 0-100 Female, Male      Hispanic
 </code></pre>
 
 <h3>Complex arguments</h3>
 
 <p><strong>King County regions stratified by year and gender</strong></p>
 
-<pre><code class="r">get_population(geo_type = &quot;region&quot;, years = 2017:2019, group_by = c(&quot;geo_id&quot;, &quot;years&quot;, &quot;genders&quot;))[]
+<pre><code class="r">get_population(geo_type = &quot;region&quot;, 
+               years = 2017:2019, 
+               group_by = c(&quot;geo_id&quot;, &quot;years&quot;, &quot;genders&quot;))[]
 </code></pre>
 
 <pre><code>##        pop geo_type  geo_id year   age gender
@@ -626,37 +625,44 @@ hr {
 ##                                                race_eth
 </code></pre>
 
-<p><strong>King County regions stratified by year &ndash; Female Hispanic and Asian-NH residents aged 16-25 only</strong></p>
+<p><strong>King County regions stratified by year &ndash; Female Hispanic and Asian-NH residents aged 16-25 only &ndash; not rounded</strong></p>
 
-<pre><code class="r">get_population(ages = 16:25, genders = &quot;F&quot;, years = 2017:2019, races = c(&quot;hispanic&quot;, &quot;asian&quot;), geo_type = &quot;region&quot;, race_type = &quot;race_eth&quot;, group_by = c(&quot;geo_id&quot;, &quot;years&quot;, &quot;race_eth&quot;))[]
+<pre><code class="r">get_population(ages = 16:25, 
+               genders = &quot;F&quot;, 
+               years = 2017:2019, 
+               races = c(&quot;hispanic&quot;, &quot;asian&quot;), 
+               geo_type = &quot;region&quot;, 
+               race_type = &quot;race_eth&quot;, 
+               group_by = c(&quot;geo_id&quot;, &quot;years&quot;, &quot;race_eth&quot;), 
+               round = F)[]
 </code></pre>
 
-<pre><code>##       pop geo_type  geo_id year   age gender race_eth
-##  1:  5167   region Seattle 2017 16-25 Female Hispanic
-##  2: 12051   region Seattle 2017 16-25 Female    Asian
-##  3:  5304   region Seattle 2018 16-25 Female Hispanic
-##  4: 12853   region Seattle 2018 16-25 Female    Asian
-##  5:  5462   region Seattle 2019 16-25 Female Hispanic
-##  6: 13681   region Seattle 2019 16-25 Female    Asian
-##  7:  9086   region   South 2017 16-25 Female Hispanic
-##  8:  9135   region   South 2018 16-25 Female Hispanic
-##  9:  9167   region   South 2019 16-25 Female Hispanic
-## 10:  1344   region   North 2017 16-25 Female    Asian
-## 11:  1416   region   North 2018 16-25 Female    Asian
-## 12:  1504   region   North 2019 16-25 Female    Asian
-## 13:   813   region   North 2017 16-25 Female Hispanic
-## 14:   835   region   North 2018 16-25 Female Hispanic
-## 15:   857   region   North 2019 16-25 Female Hispanic
-## 16:  2464   region    East 2017 16-25 Female Hispanic
-## 17:  5345   region    East 2017 16-25 Female    Asian
-## 18:  2507   region    East 2018 16-25 Female Hispanic
-## 19:  5602   region    East 2018 16-25 Female    Asian
-## 20:  2550   region    East 2019 16-25 Female Hispanic
-## 21:  5913   region    East 2019 16-25 Female    Asian
-## 22:  7803   region   South 2017 16-25 Female    Asian
-## 23:  8125   region   South 2018 16-25 Female    Asian
-## 24:  8451   region   South 2019 16-25 Female    Asian
-##       pop geo_type  geo_id year   age gender race_eth
+<pre><code>##            pop geo_type  geo_id year   age gender race_eth
+##  1:  5166.6387   region Seattle 2017 16-25 Female Hispanic
+##  2: 12050.7535   region Seattle 2017 16-25 Female    Asian
+##  3:  5304.4328   region Seattle 2018 16-25 Female Hispanic
+##  4: 12852.6707   region Seattle 2018 16-25 Female    Asian
+##  5:  5461.9309   region Seattle 2019 16-25 Female Hispanic
+##  6: 13680.7887   region Seattle 2019 16-25 Female    Asian
+##  7:  9085.5216   region   South 2017 16-25 Female Hispanic
+##  8:  9135.2329   region   South 2018 16-25 Female Hispanic
+##  9:  9166.8226   region   South 2019 16-25 Female Hispanic
+## 10:  1344.2301   region   North 2017 16-25 Female    Asian
+## 11:  1415.6761   region   North 2018 16-25 Female    Asian
+## 12:  1504.3222   region   North 2019 16-25 Female    Asian
+## 13:   812.6681   region   North 2017 16-25 Female Hispanic
+## 14:   834.7468   region   North 2018 16-25 Female Hispanic
+## 15:   857.0914   region   North 2019 16-25 Female Hispanic
+## 16:  2464.3317   region    East 2017 16-25 Female Hispanic
+## 17:  5344.9752   region    East 2017 16-25 Female    Asian
+## 18:  2506.7903   region    East 2018 16-25 Female Hispanic
+## 19:  5602.3695   region    East 2018 16-25 Female    Asian
+## 20:  2550.4508   region    East 2019 16-25 Female Hispanic
+## 21:  5913.1718   region    East 2019 16-25 Female    Asian
+## 22:  7802.6359   region   South 2017 16-25 Female    Asian
+## 23:  8125.3239   region   South 2018 16-25 Female    Asian
+## 24:  8450.6634   region   South 2019 16-25 Female    Asian
+##            pop geo_type  geo_id year   age gender race_eth
 </code></pre>
 
 </body>

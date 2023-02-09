@@ -212,37 +212,30 @@ hr {
 <pre><code class="r">list_ref_pop()[1:5]
 </code></pre>
 
-<pre><code>## [1] &quot;2000 U.S. Std Population (18 age groups - Census P25-1130)&quot;    
-## [2] &quot;2000 U.S. Std Population (19 age groups - Census P25-1130)&quot;    
-## [3] &quot;2000 U.S. Std Population (single ages to 84 - Census P25-1130)&quot;
-## [4] &quot;2000 U.S. Std Population (single ages to 99 - Census P25-1130)&quot;
-## [5] &quot;1940 U.S. Std Million (18 age groups)&quot;
+<pre><code>## [1] &quot;2000 U.S. Std Population (11 age groups)&quot;                      
+## [2] &quot;2000 U.S. Std Population (18 age groups - Census P25-1130)&quot;    
+## [3] &quot;2000 U.S. Std Population (19 age groups - Census P25-1130)&quot;    
+## [4] &quot;2000 U.S. Std Population (single ages to 84 - Census P25-1130)&quot;
+## [5] &quot;2000 U.S. Std Population (single ages to 99 - Census P25-1130)&quot;
 </code></pre>
 
-<p>The first one is the default reference population used by APDE. Taking a peek behind the curtain shows that each reference standard is a simple table of age ranges with their corresponding populations. </p>
+<p>The first one is the default reference population used by APDE and WA DOH. Taking a peek behind the curtain shows that each reference standard is a simple table of age ranges with their corresponding populations. </p>
 
-<pre><code class="r">get_ref_pop(&quot;2000 U.S. Std Population (18 age groups - Census P25-1130)&quot;)[, 1:4]
+<pre><code class="r">get_ref_pop(&quot;2000 U.S. Std Population (11 age groups)&quot;)[, 1:4]
 </code></pre>
 
 <pre><code>##          agecat age_start age_end      pop
-##  1:   0-4 years         0       4 18986520
-##  2:   5-9 years         5       9 19919840
-##  3: 10-14 years        10      14 20056779
-##  4: 15-19 years        15      19 19819518
-##  5: 20-24 years        20      24 18257225
-##  6: 25-29 years        25      29 17722067
-##  7: 30-34 years        30      34 19511370
-##  8: 35-39 years        35      39 22179956
-##  9: 40-44 years        40      44 22479229
-## 10: 45-49 years        45      49 19805793
-## 11: 50-54 years        50      54 17224359
-## 12: 55-59 years        55      59 13307234
-## 13: 60-64 years        60      64 10654272
-## 14: 65-69 years        65      69  9409940
-## 15: 70-74 years        70      74  8725574
-## 16: 75-79 years        75      79  7414559
-## 17: 80-84 years        80      84  4900234
-## 18:   85+ years        85     120  4259173
+##  1:           0         0       0  3795000
+##  2:   1-4 years         1       4 15192000
+##  3:  5-14 years         5      14 39977000
+##  4: 15-24 years        15      24 38077000
+##  5: 25-34 years        25      34 37233000
+##  6: 35-44 years        35      44 44659000
+##  7: 45-54 years        45      54 37030000
+##  8: 55-64 years        55      64 23961000
+##  9: 65-74 years        65      74 18136000
+## 10: 75-84 years        75      84 12315000
+## 11:   85+ years        85     120  4259000
 </code></pre>
 
 <p>The <code>age_standardize()</code> function provides a simple way to use reference populations to calculate age standardized rates. This vignette will provide some examples of how to use <code>age_standardize()</code> and how to understand its output. To get the most out of this vignette, we recommend that you type each and every bit of code into R. Doing so will almost definitely help you learn the syntax much faster than just reading the vignette or copying and pasting the code.</p>
@@ -251,13 +244,13 @@ hr {
 
 <p>Arguments are the values that we send to a function when it is called. The standard arguments for <code>age_standardize()</code> are:</p>
 
-<p>1) <code>my.dt</code> &lt;- the name of the data.table/data.frame with the data that you want to age standardize. <strong>Note:</strong> <em>my.dt must contain a numeric column named &#39;age&#39;. The sole exception is if it already has a standard population merged onto the dataset, in which case it must contain a numeric column named &#39;stdpop&#39;.</em></p>
+<p>1) <code>ph.data</code> &lt;- the name of the data.table/data.frame with the data that you want to age standardize. <strong>Note:</strong> <em>ph.data must contain a numeric column named &#39;age&#39;. The sole exception is if it already has a standard population merged onto the dataset, in which case it must contain a numeric column named &#39;stdpop&#39;.</em></p>
 
-<p>2) <code>ref.popname</code> &lt;- a character vector whose only valid options are &ldquo;none&rdquo; (used when my.dt has a &#39;stdpop&#39; column) or one of the reference standarards contained in <code>list_ref_pop()</code></p>
+<p>2) <code>ref.popname</code> &lt;- a character vector whose only valid options are &ldquo;none&rdquo; (used when ph.data has a &#39;stdpop&#39; column) or one of the reference standarards contained in <code>list_ref_pop()</code></p>
 
-<p>3) <code>collapse</code> &lt;- a logical vector (T|F), determines whether or not to to collapse the &#39;age&#39; column in my.dt to match those in ref.popname. If your data is already collapsed / aggregated into the same age bins as your reference population, and if that variable is named &ldquo;agecat&rdquo;, then you can set collapse to F. The default is T</p>
+<p>3) <code>collapse</code> &lt;- a logical vector (T|F), determines whether or not to to collapse the &#39;age&#39; column in ph.data to match those in ref.popname. If your data is already collapsed / aggregated into the same age bins as your reference population, and if that variable is named &ldquo;agecat&rdquo;, then you can set collapse to F. The default is T</p>
 
-<p>4) <code>my.count</code> &lt;- a character vector, identifies the column name for the <strong>aggregated</strong> count data in my.dt. The default is &ldquo;count&rdquo;</p>
+<p>4) <code>my.count</code> &lt;- a character vector, identifies the column name for the <strong>aggregated</strong> count data in ph.data. The default is &ldquo;count&rdquo;</p>
 
 <p>5) <code>my.pop</code> &lt;- a character vector, identifies the column name for the population number corresponding to the count. The default is &ldquo;pop&rdquo;</p>
 
@@ -308,10 +301,10 @@ temp1[]
 ## 1000:  60       0  910
 </code></pre>
 
-<p><strong>Run age_standardize with APDE&#39;s default population</strong></p>
+<p><strong>Run age_standardize with APDE&#39;s default reference population</strong></p>
 
-<pre><code class="r">age_standardize(my.dt = temp1,
-                ref.popname = &quot;2000 U.S. Std Population (18 age groups - Census P25-1130)&quot;, 
+<pre><code class="r">age_standardize(ph.data = temp1,
+                ref.popname = &quot;2000 U.S. Std Population (11 age groups)&quot;, 
                 collapse = T,
                 my.count = &quot;disease&quot;, 
                 my.pop = &quot;pop&quot;, 
@@ -320,9 +313,9 @@ temp1[]
 </code></pre>
 
 <pre><code>##    count    pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci
-## 1:   511 955000       0.54      0.49      0.58     0.52    0.47    0.58
-##                                                 reference_pop
-## 1: 2000 U.S. Std Population (18 age groups - Census P25-1130)
+## 1:   511 955000       0.54      0.49      0.58     0.52    0.47    0.57
+##                               reference_pop
+## 1: 2000 U.S. Std Population (11 age groups)
 </code></pre>
 
 <p><em>Does anything seem fishy? Think for a moment &hellip;</em> </p>
@@ -336,7 +329,7 @@ temp1[]
 
 <p><em>Did you find the problem?</em></p>
 
-<p>The problem is that the population is too big. Eyeballing the output when we created the dataset above, we see that the total population for those 51 to 60 would have to be less than 10,000. In this case it is almost 1 million! In the description of the arguments above, it specifies that we need to use aggregated count data. Now you see why. Ignoring that detail caused us to inflate the population (and therefore deflate the rate and CI) 1000x.</p>
+<p>The problem is that the population is too big. Eyeballing the output when we created the dataset above, we see that the total population for those 51 to 60 would have to be less than 10,000 (10 age groups with max 1,000 population for each). In this case it is almost 1 million! In the description of the arguments above, it specifies that we need to <em>use aggregated count data</em>. Now you see why. Ignoring that detail caused us to inflate the population (and therefore deflate the rate and CI) 1000x.</p>
 
 <p><strong>Aggregate (collapse) the line level data</strong></p>
 
@@ -359,8 +352,8 @@ temp1[]
 
 <p><strong>Run age_standardize again &lt;&lt; this time with aggregated disease events</strong></p>
 
-<pre><code class="r">ex1.1 &lt;- age_standardize(my.dt = temp1,
-                      ref.popname = &quot;2000 U.S. Std Population (18 age groups - Census P25-1130)&quot;, 
+<pre><code class="r">ex1.1 &lt;- age_standardize(ph.data = temp1,
+                      ref.popname = &quot;2000 U.S. Std Population (11 age groups)&quot;, 
                       collapse = T,
                       my.count = &quot;disease&quot;, 
                       my.pop = &quot;pop&quot;, 
@@ -370,15 +363,15 @@ ex1.1[]
 </code></pre>
 
 <pre><code>##    count  pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci
-## 1:   511 9550      53.51     48.97     58.35    52.22   47.11   57.92
-##                                                 reference_pop
-## 1: 2000 U.S. Std Population (18 age groups - Census P25-1130)
+## 1:   511 9550      53.51     48.97     58.35    51.93   47.19   57.05
+##                               reference_pop
+## 1: 2000 U.S. Std Population (11 age groups)
 </code></pre>
 
-<p>Now that count, pop, and rates seem reasonable, let&#39;s see what happens if we change the reference population. We&#39;ll arbitrarily set the references population to the 35th in the list provided by <code>list_ref_pop()</code> (i.e., &#39;World (WHO 2000-2025) Std Million (single ages to 99)&#39;). </p>
+<p>Now that count, pop, and rates seem reasonable, let&#39;s see what happens if we change the reference population. We&#39;ll arbitrarily set the references population to the 36th in the list provided by <code>list_ref_pop()</code> (i.e., &#39;World (WHO 2000-2025) Std Million (single ages to 99)&#39;). </p>
 
-<pre><code class="r">ex1.2 &lt;- age_standardize(my.dt = temp1,
-                      ref.popname = list_ref_pop()[35], 
+<pre><code class="r">ex1.2 &lt;- age_standardize(ph.data = temp1,
+                      ref.popname = list_ref_pop()[36], 
                       collapse = T,
                       my.count = &quot;disease&quot;, 
                       my.pop = &quot;pop&quot;, 
@@ -393,7 +386,7 @@ ex1.2[]
 ## 1: World (WHO 2000-2025) Std Million (single ages to 99)
 </code></pre>
 
-<p>As we&#39;d expect, the crude rates are identical since the reference population is irrelevant for those calculations (53.51 vs 53.51). However, the age-standardized rates changed from 52.22 to 53.34. Remember, if you want to compare your age-adjusted rates to those published by other health jurisdictions, it&#39;s important that you use the same reference population.</p>
+<p>As we&#39;d expect, the crude rates are identical since the reference population is irrelevant for those calculations (53.51 vs 53.51). However, the age-standardized rates changed from 51.93 to 53.34. Remember, if you want to compare your age-adjusted rates to those published by other health jurisdictions, it&#39;s important that you use the same reference population.</p>
 
 <hr/>
 
@@ -422,7 +415,7 @@ head(temp2)
 
 <p><strong>Let&#39;s examine the overall rates</strong></p>
 
-<pre><code class="r">ex2.1 &lt;- age_standardize(my.dt = temp2,
+<pre><code class="r">ex2.1 &lt;- age_standardize(ph.data = temp2,
                        collapse = T,
                        my.count = &quot;disease&quot;, 
                        my.pop = &quot;pop&quot;, 
@@ -433,18 +426,18 @@ ex2.1[]
 </code></pre>
 
 <pre><code>##    count    pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci
-## 1:  1333 115448      11.55     10.93     12.18    11.55   10.87   12.27
-##                                                 reference_pop
-## 1: 2000 U.S. Std Population (18 age groups - Census P25-1130)
+## 1:  1333 115448      11.55     10.93     12.18    11.68   10.87   12.57
+##                               reference_pop
+## 1: 2000 U.S. Std Population (11 age groups)
 </code></pre>
 
 <p>In this case, the crude rate and age standardized rate are the same. This doesn&#39;t mean there is a mistake. Notice that the confidence intervals differ &ndash; as would be expected. </p>
 
-<p>Also notice that we didn&#39;t include the <code>ref.popname</code> argument. When it is not specified, <code>age_standardize()</code> uses the default which is <code>list_ref_pop()[1]</code> (i.e, 2000 U.S. Std Population (18 age groups - Census P25-1130)).</p>
+<p>Also notice that we didn&#39;t include the <code>ref.popname</code> argument. When it is not specified, <code>age_standardize()</code> uses the default which is <code>list_ref_pop()[1]</code> (i.e, 2000 U.S. Std Population (11 age groups)).</p>
 
 <p><strong>Now let&#39;s run the same analysis, but stratified by gender</strong></p>
 
-<pre><code class="r">ex2.2 &lt;- age_standardize(my.dt = temp2,
+<pre><code class="r">ex2.2 &lt;- age_standardize(ph.data = temp2,
                        collapse = T,
                        my.count = &quot;disease&quot;, 
                        my.pop = &quot;pop&quot;, 
@@ -456,11 +449,11 @@ ex2.2[]
 </code></pre>
 
 <pre><code>##    gender count   pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci
-## 1:      F   731 60827      12.02     11.16     12.92    11.88   10.95   12.90
-## 2:      M   602 54621      11.02     10.16     11.94    11.21   10.25   12.26
-##                                                 reference_pop
-## 1: 2000 U.S. Std Population (18 age groups - Census P25-1130)
-## 2: 2000 U.S. Std Population (18 age groups - Census P25-1130)
+## 1:      F   731 60827      12.02     11.16     12.92    12.22   11.07   13.50
+## 2:      M   602 54621      11.02     10.16     11.94    11.09    9.97   12.36
+##                               reference_pop
+## 1: 2000 U.S. Std Population (11 age groups)
+## 2: 2000 U.S. Std Population (11 age groups)
 </code></pre>
 
 <p>Here we see that the crude and age standardized rates are higher among females when compared to males. </p>
@@ -511,7 +504,7 @@ head(temp3)
 
 <p>Note that I need to specify <code>collapse = F</code> because the function expects data to be pre-aggregated for the custom reference population contained in <code>stdpop</code>.</p>
 
-<pre><code class="r">ex3.1 &lt;- age_standardize(my.dt = temp3,
+<pre><code class="r">ex3.1 &lt;- age_standardize(ph.data = temp3,
                        ref.popname = &quot;none&quot;,
                        collapse = F,
                        my.count = &quot;disease&quot;, 
@@ -585,7 +578,7 @@ temp4[]
 
 <p><strong>Now you are able to run age_standardize with <code>collapse = F</code></strong></p>
 
-<pre><code class="r">ex4.1 &lt;- age_standardize(my.dt = temp4,
+<pre><code class="r">ex4.1 &lt;- age_standardize(ph.data = temp4,
                        collapse = F,
                        my.count = &quot;disease&quot;, 
                        my.pop = &quot;pop&quot;, 
@@ -596,12 +589,7 @@ temp4[]
 ex4.1[]
 </code></pre>
 
-<pre><code>##    gender count   pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci
-## 1:      M   731 60827      12.02     11.16     12.92    11.88   10.95   12.90
-## 2:      F   602 54621      11.02     10.16     11.94    11.21   10.25   12.26
-##                                                 reference_pop
-## 1: 2000 U.S. Std Population (18 age groups - Census P25-1130)
-## 2: 2000 U.S. Std Population (18 age groups - Census P25-1130)
+<pre><code>## Empty data.table (0 rows and 10 cols): gender,count,pop,crude.rate,crude.lci,crude.uci...
 </code></pre>
 
 <p>Note the results in ex4.1 are exactly the same as those in ex2.2. This makes sense since <code>age_standardize()</code> collapsed the data in a similar (but more efficient manner) when creating ex2.2.</p>
@@ -703,7 +691,7 @@ ex4.1[]
 
 <p><strong>Run <code>age_standardize()</code></strong></p>
 
-<pre><code class="r">  ex5.1 &lt;- age_standardize(my.dt = temp5,
+<pre><code class="r">  ex5.1 &lt;- age_standardize(ph.data = temp5,
                            ref.popname = &quot;World (WHO 2000-2025) Std Million (single ages to 84)&quot;, 
                            collapse = T,
                            my.count = &quot;births&quot;, 

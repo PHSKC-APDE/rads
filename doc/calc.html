@@ -215,7 +215,7 @@ hr {
 
 <p>2) <code>what</code> &lt;- a character vector of the variable(s) for which you want to calculate the metrics. E.g., <code>what = c(&quot;uninsured&quot;)</code></p>
 
-<p>3) <code>where</code> &lt;- think of this as a &ldquo;where&rdquo; statement, i.e., a filter or subsetting of data. E.g., <code>ages %in% c(0:17) &amp; gender == &quot;Female&quot;</code></p>
+<p>3) <code>where</code> &lt;- think of this as a SQL <code>WHERE</code> clause, i.e., a filtering or subsetting of data. E.g., <code>ages %in% c(0:17) &amp; gender == &quot;Female&quot;</code></p>
 
 <p>4) <code>by</code> &lt;- a character vector of the variables that you want to computer the <code>what</code> by, i.e., the cross-tab variable(s). E.g., <code>by = c(&quot;gender&quot;)</code> would stratify results by gender</p>
 
@@ -235,7 +235,7 @@ hr {
 
 <p>12) <code>verbose</code> &lt;- a logical used to toggle on/off printed warnings</p>
 
-<p>There is no need to specify all of the arguments listed above. As you can see in the following example, the <code>calc</code> function simply needs a specified dataset (i.e., <code>ph.data</code>) and at least one <code>what</code> variable to return an intelligible result. </p>
+<p>There is no need to specify all of the arguments listed above. As you can see in the following example, the <code>calc</code> function simply needs a specified dataset (i.e., <code>ph.data</code>) and at least one <code>what</code> variable to return an intelligible result.</p>
 
 <pre><code class="r">data(mtcars)
 mtcars = dtadmin(mtcars) #make it work with calc.dtsurvey
@@ -272,6 +272,36 @@ calc(ph.data = mtcars, what = c(&quot;mpg&quot;))[]
 ## 1: 2013-2019  preterm 0.09052329     15806      174607    NA 0.0006866673
 ##    mean_lower mean_upper       rse
 ## 1: 0.08917745 0.09186913 0.7585532
+</code></pre>
+
+<p><strong>mean (proportion) for a binary over multiple years &ndash; <code>where</code> newborn is male</strong></p>
+
+<pre><code class="r">calc(ph.data = birth, 
+     what = c(&quot;preterm&quot;), 
+     where = chi_sex == &quot;Male&quot;,
+     metrics = c(&quot;mean&quot;, &quot;rse&quot;, &quot;numerator&quot;, &quot;denominator&quot;), 
+     time_var = &quot;chi_year&quot;)[]
+</code></pre>
+
+<pre><code>##     chi_year variable       mean numerator denominator level      mean_se
+## 1: 2013-2019  preterm 0.09716898      8694       89473    NA 0.0009902013
+##    mean_lower mean_upper      rse
+## 1: 0.09522822 0.09910974 1.019051
+</code></pre>
+
+<p><strong>mean (proportion) for a binary over multiple years &ndash; <code>where</code> newborn is male born to a Hispanic mother</strong></p>
+
+<pre><code class="r">calc(ph.data = birth, 
+     what = c(&quot;preterm&quot;), 
+     where = chi_sex == &quot;Male&quot; &amp; chi_race_eth8 == &quot;Hispanic&quot;,
+     metrics = c(&quot;mean&quot;, &quot;rse&quot;, &quot;numerator&quot;, &quot;denominator&quot;), 
+     time_var = &quot;chi_year&quot;)[]
+</code></pre>
+
+<pre><code>##     chi_year variable      mean numerator denominator level     mean_se
+## 1: 2013-2019  preterm 0.1105628      1277       11550    NA 0.002918031
+##    mean_lower mean_upper      rse
+## 1:  0.1048435   0.116282 2.639253
 </code></pre>
 
 <p><strong>mean (proportion) for a binary over individual years</strong></p>
@@ -359,36 +389,36 @@ calc(ph.data = birth,
 
 <pre><code>##     chi_race_eth8 chi_sex           variable     mean level     mean_se
 ##  1:         White    Male birth_weight_grams 3460.298    NA    7.489711
-##  2:      Hispanic    Male birth_weight_grams 3301.784    NA   14.310447
-##  3:          AIAN  Female birth_weight_grams 3251.965    NA   79.070604
-##  4:         White  Female birth_weight_grams 3340.295    NA    7.280580
-##  5:         Black    Male birth_weight_grams 3306.213    NA   19.794051
-##  6:      Multiple  Female birth_weight_grams 3251.312    NA   24.365976
-##  7:       Oth/unk  Female birth_weight_grams 3223.599    NA   30.670381
-##  8:         Asian  Female birth_weight_grams 3145.902    NA    9.419157
-##  9:         Asian    Male birth_weight_grams 3231.952    NA    9.784437
-## 10:      Hispanic  Female birth_weight_grams 3270.074    NA   13.703835
-## 11:          NHPI  Female birth_weight_grams 3287.541    NA   49.322668
-## 12:         Black  Female birth_weight_grams 3196.872    NA   18.683442
-## 13:      Multiple    Male birth_weight_grams 3369.178    NA   23.359494
+##  2:         White  Female birth_weight_grams 3340.295    NA    7.280580
+##  3:         Asian    Male birth_weight_grams 3231.952    NA    9.784437
+##  4:          NHPI  Female birth_weight_grams 3287.541    NA   49.322668
+##  5:      Hispanic    Male birth_weight_grams 3301.784    NA   14.310447
+##  6:      Hispanic  Female birth_weight_grams 3270.074    NA   13.703835
+##  7:      Multiple    Male birth_weight_grams 3369.178    NA   23.359494
+##  8:         Black    Male birth_weight_grams 3306.213    NA   19.794051
+##  9:         Black  Female birth_weight_grams 3196.872    NA   18.683442
+## 10:      Multiple  Female birth_weight_grams 3251.312    NA   24.365976
+## 11:         Asian  Female birth_weight_grams 3145.902    NA    9.419157
+## 12:       Oth/unk  Female birth_weight_grams 3223.599    NA   30.670381
+## 13:          AIAN  Female birth_weight_grams 3251.965    NA   79.070604
 ## 14:          NHPI    Male birth_weight_grams 3444.178    NA   43.324387
 ## 15:       Oth/unk    Male birth_weight_grams 3315.557    NA   33.357232
 ## 16:          AIAN    Male birth_weight_grams 3438.641    NA   84.306018
 ## 17:         White    &lt;NA&gt; birth_weight_grams 1873.500    NA 1321.500000
 ##     mean_lower mean_upper        rse
 ##  1:   3445.618   3474.977  0.2164470
-##  2:   3273.736   3329.832  0.4334156
-##  3:   3096.989   3406.940  2.4314716
-##  4:   3326.026   3354.565  0.2179622
-##  5:   3267.418   3345.009  0.5986925
-##  6:   3203.556   3299.069  0.7494198
-##  7:   3163.487   3283.712  0.9514328
-##  8:   3127.441   3164.363  0.2994104
-##  9:   3212.775   3251.129  0.3027408
-## 10:   3243.215   3296.933  0.4190681
-## 11:   3190.871   3384.212  1.5002905
-## 12:   3160.253   3233.491  0.5844288
-## 13:   3323.394   3414.962  0.6933292
+##  2:   3326.026   3354.565  0.2179622
+##  3:   3212.775   3251.129  0.3027408
+##  4:   3190.871   3384.212  1.5002905
+##  5:   3273.736   3329.832  0.4334156
+##  6:   3243.215   3296.933  0.4190681
+##  7:   3323.394   3414.962  0.6933292
+##  8:   3267.418   3345.009  0.5986925
+##  9:   3160.253   3233.491  0.5844288
+## 10:   3203.556   3299.069  0.7494198
+## 11:   3127.441   3164.363  0.2994104
+## 12:   3163.487   3283.712  0.9514328
+## 13:   3096.989   3406.940  2.4314716
 ## 14:   3359.264   3529.092  1.2579021
 ## 15:   3250.178   3380.936  1.0060823
 ## 16:   3273.404   3603.877  2.4517252
@@ -494,16 +524,16 @@ load(&quot;//phshare01/epe_share/WORK/surveys/ACS/PUMS_data/2019_1_year/prepped_
     )
 
   #New for version 1.0.0
-  pums =dtsurvey::dtrepsurvey(pums)
+  pums = dtsurvey::dtrepsurvey(pums)
 </code></pre>
 
-<p>Once the data has been set as a survey, we can use the <code>calc()</code> function the same way that we used it for vital statistics (birth) data. </p>
+<p>Once the data has been set as a survey, we can use the <code>calc()</code> function the same way that we used it for vital statistics (birth) data.</p>
 
 <p><strong>Quick sanity check before proceeding.</strong></p>
 
-<p>To confirm that the data has been survey set properly, it would be wise to check if the survey weighted population is more or less what you would expect. </p>
+<p>To confirm that the data has been survey set properly, it would be wise to check if the survey weighted population is more or less what you would expect.</p>
 
-<p>When <code>calc</code> analyzes survey data, the <code>numerator</code> is the number of observations in that category and the <code>total</code> is the survey weighted value for those observations. We know that the approximate 2019 populations of WA State, King County, and Seattle were ~7.6 million, ~2.2 million, and 750,000, respectively. How do the following 2019 ACS estimates (i.e., <code>total</code> values) compare? </p>
+<p>When <code>calc</code> analyzes survey data, the <code>numerator</code> is the number of observations in that category and the <code>total</code> is the survey weighted value for those observations. We know that the approximate 2019 populations of WA State, King County, and Seattle were ~7.6 million, ~2.2 million, and 750,000, respectively. How do the following 2019 ACS estimates (i.e., <code>total</code> values) compare?</p>
 
 <pre><code class="r">pums[, constant :=1]
 
@@ -542,7 +572,7 @@ calc(ph.data = pums,
 ## 1: constant 752953      6526    NA 1077.184    750808.9    755097.1
 </code></pre>
 
-<p>Now that we&#39;ve established that our survey data is reasonable, we can continue with our analyses. </p>
+<p>Now that we&#39;ve established that our survey data is reasonable, we can continue with our analyses.</p>
 
 <p><strong>Mean (proportion) of those near poverty or disabled, by King County (vs. remainder of WA)</strong></p>
 

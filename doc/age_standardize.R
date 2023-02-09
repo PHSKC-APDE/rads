@@ -5,7 +5,7 @@ library(rads)
 list_ref_pop()[1:5]
 
 ## -----------------------------------------------------------------------------
-get_ref_pop("2000 U.S. Std Population (18 age groups - Census P25-1130)")[, 1:4]
+get_ref_pop("2000 U.S. Std Population (11 age groups)")[, 1:4]
 
 ## ---- warning=FALSE, message=FALSE--------------------------------------------
 library(data.table)
@@ -19,8 +19,8 @@ temp1 <- data.table(
 temp1[]
 
 ## ---- warning=FALSE, message=FALSE--------------------------------------------
-age_standardize(my.dt = temp1,
-                ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)", 
+age_standardize(ph.data = temp1,
+                ref.popname = "2000 U.S. Std Population (11 age groups)", 
                 collapse = T,
                 my.count = "disease", 
                 my.pop = "pop", 
@@ -32,8 +32,8 @@ temp1 <- temp1[, .(disease = sum(disease)), by = c("age", "pop")]
 temp1[]
 
 ## ---- warning=FALSE, message=FALSE--------------------------------------------
-ex1.1 <- age_standardize(my.dt = temp1,
-                      ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)", 
+ex1.1 <- age_standardize(ph.data = temp1,
+                      ref.popname = "2000 U.S. Std Population (11 age groups)", 
                       collapse = T,
                       my.count = "disease", 
                       my.pop = "pop", 
@@ -42,8 +42,8 @@ ex1.1 <- age_standardize(my.dt = temp1,
 ex1.1[]
 
 ## ---- warning=FALSE, message=FALSE--------------------------------------------
-ex1.2 <- age_standardize(my.dt = temp1,
-                      ref.popname = list_ref_pop()[35], 
+ex1.2 <- age_standardize(ph.data = temp1,
+                      ref.popname = list_ref_pop()[36], 
                       collapse = T,
                       my.count = "disease", 
                       my.pop = "pop", 
@@ -62,7 +62,7 @@ temp2 <- data.table(
 head(temp2)
 
 ## ---- warning = FALSE, message = FALSE----------------------------------------
-ex2.1 <- age_standardize(my.dt = temp2,
+ex2.1 <- age_standardize(ph.data = temp2,
                        collapse = T,
                        my.count = "disease", 
                        my.pop = "pop", 
@@ -72,7 +72,7 @@ ex2.1 <- age_standardize(my.dt = temp2,
 ex2.1[]
 
 ## ---- warning = FALSE, message = FALSE----------------------------------------
-ex2.2 <- age_standardize(my.dt = temp2,
+ex2.2 <- age_standardize(ph.data = temp2,
                        collapse = T,
                        my.count = "disease", 
                        my.pop = "pop", 
@@ -97,7 +97,7 @@ temp3 <- merge(temp2, new.standard, by = c("age", "gender"), all = T)
 head(temp3)
 
 ## ---- warning = FALSE, message = FALSE----------------------------------------
-ex3.1 <- age_standardize(my.dt = temp3,
+ex3.1 <- age_standardize(ph.data = temp3,
                        ref.popname = "none",
                        collapse = F,
                        my.count = "disease", 
@@ -129,7 +129,7 @@ temp4 <- temp4[, .(pop = sum(pop), disease = sum(disease)), by = c("agecat", "ge
 temp4[]
 
 ## ---- warning=FALSE, message=FALSE--------------------------------------------
-ex4.1 <- age_standardize(my.dt = temp4,
+ex4.1 <- age_standardize(ph.data = temp4,
                        collapse = F,
                        my.count = "disease", 
                        my.pop = "pop", 
@@ -171,7 +171,7 @@ ex4.1[]
   temp5[]
 
 ## ---- warning=FALSE, message=FALSE--------------------------------------------
-  ex5.1 <- age_standardize(my.dt = temp5,
+  ex5.1 <- age_standardize(ph.data = temp5,
                            ref.popname = "World (WHO 2000-2025) Std Million (single ages to 84)", 
                            collapse = T,
                            my.count = "births", 

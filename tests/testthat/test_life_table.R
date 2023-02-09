@@ -20,7 +20,7 @@ dt <- data.table::data.table(
 
 # run functions and save output ----
 # default argument values
-test1 <- life_table(mydt = dt,
+test1 <- life_table(ph.data = dt,
                    myages = "ages",
                    mydeaths = "deaths",
                    mypops = "pop",
@@ -30,7 +30,7 @@ test1 <- life_table(mydt = dt,
 # when argument have non-default values
 dt2 <- copy(dt)
 setnames(dt2, paste0(names(dt), "x"))
-test2 <- life_table(mydt = dt2,
+test2 <- life_table(ph.data = dt2,
                    myages = "agesx",
                    mydeaths = "deathsx",
                    mypops = "popx",
@@ -39,13 +39,13 @@ test2 <- life_table(mydt = dt2,
 setnames(test2, c("agesx", "popx", "deathsx", "fractionx"), c("ages", "pop", "deaths", "fraction"))
 
 # alternate ci
-test1.90 <- life_table(mydt = dt,
+test1.90 <- life_table(ph.data = dt,
                     myages = "ages",
                     mydeaths = "deaths",
                     mypops = "pop",
                     myprops = "fraction",
                     ci = 0.90)
-test1.99 <- life_table(mydt = dt,
+test1.99 <- life_table(ph.data = dt,
                        myages = "ages",
                        mydeaths = "deaths",
                        mypops = "pop",

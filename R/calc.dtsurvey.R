@@ -322,6 +322,11 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
 
     res = eval(substitute(DT[, ccc, by = by], list(ccc = the_call)))
     res[, level := NA]
+
+    # convert to standard data.table and clean up
+    data.table::setDT(res)
+    data.table::setattr(res, 'sdes', NULL)
+    data.table::setattr(res, 'stype', NULL)
   }else{
     r1 = eval(substitute(DT[, ccc, by = by], list(ccc = the_call)))
 
@@ -336,6 +341,14 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
     setnames(r2, as.character(x), 'level')
 
     r1[, id := .I]
+
+    # convert to standard data.table and clean up
+    data.table::setDT(r1)
+    data.table::setattr(r1, 'sdes', NULL)
+    data.table::setattr(r1, 'stype', NULL)
+    data.table::setDT(r2)
+    data.table::setattr(r2, 'sdes', NULL)
+    data.table::setattr(r2, 'stype', NULL)
 
 
 
@@ -431,7 +444,7 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
   #make 0 row if ph.data is 0
   if(nrow(DT) == 0) res = res[FALSE]
 
-  return(res)
+  return(data.table::data.table(res))
 
 
 }
