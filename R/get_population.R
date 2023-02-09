@@ -100,7 +100,7 @@ get_population <- function(kingco = T,
                            round = FALSE,
                            mykey = "hhsaw",
                            census_vintage = 2020,
-                           geo_vintage = 'latest'){
+                           geo_vintage = 2020){
 
     # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
     r_type <- short <- race <- name <- race_eth <- gender <- age <- geo_id <- pop <- geo_id_blk <- region <- hra <-
@@ -262,6 +262,16 @@ get_population <- function(kingco = T,
           group_by <- unique(group_by)
         }
           group_by_orig <- data.table::copy(group_by)
+
+
+      # Check and create geo_vintage ----
+          stopifnot('geo_vintage must be one of 2010 or 2020' = length(geo_vintage)==1 && geo_vintage %in% c(2010, 2020))
+          where_geo_vintage = glue::glue_sql('geo_year >= {geo_vintage} AND geo_year <= {geo_vintage + 9}', .con = con)
+          if(geo_type %in% c('scd', 'zip')) where_geo_vintage = SQL()
+
+      # Census vintage ----
+          census_vintage = match.arg(census_vintage, c(2010, 2020))
+          where_census_year = glue::glue_sql('census_year = {census_vintage}', .con = con)
 
       # Top code age ----
           # will need to be changed if age groups are allowed
