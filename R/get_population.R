@@ -44,11 +44,18 @@
 #' @param round Logical vector of length 1. Identifies whether or not population
 #' estimates should be returned as whole numbers.
 #'
-#' Default == TRUE.
-#' @param mykey Character vector of length 1. Identifies the keyring:: key that
+#' Default == FALSE. As of 02/2023.
+#' @param mykey Character vector of length 1 OR a database connection. Identifies the keyring:: key that
 #' can be used to access the Health & Human Services Analytic Workspace (HHSAW).
 #'
 #' Default == 'hhsaw'
+#'
+#' @param census_vintage Integer. One of 2010 or 2020. Refers to latest Census to influence the set of
+#' population estimates
+#'
+#' Default == 2020
+#'
+#' @param geo_vintage One of 2010 or 2020. Refers to the
 #'
 #' @details Note the following geography limitations:
 #'
@@ -58,6 +65,12 @@
 #'
 #' -- 'blk', 'blkgrp', and 'tract' apply to King, Snohomish, and Pierce counties
 #' only
+#'
+#' Note on geo_vintage:
+#' ZIP codes and school districts (scd) are unaffected by geo_vintage.
+#' ZIP codes are year specific when possible and school districts are mostly considered fixed.
+#'
+#' For all other geographies, the value should represent the vintage/era of the Census
 #'
 #' @importFrom data.table data.table copy setDT setnames setcolorder
 #' @import rads.data
@@ -84,8 +97,10 @@ get_population <- function(kingco = T,
                            race_type = c("race_eth"),
                            geo_type = c("kc"),
                            group_by = NULL,
-                           round = T,
-                           mykey = "hhsaw"){
+                           round = FALSE,
+                           mykey = "hhsaw",
+                           census_vintage = 2020,
+                           geo_vintage = 'latest'){
 
     # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
     r_type <- short <- race <- name <- race_eth <- gender <- age <- geo_id <- pop <- geo_id_blk <- region <- hra <-
@@ -96,6 +111,7 @@ get_population <- function(kingco = T,
       server <- grepl('server', tolower(Sys.info()['release']))
 
     # KC zips (copied from CHAT for 2019 data on 2021-05-18) ----
+    # TODO: CHANGE THIS TO RADS DATA
       kczips <- (c(98001, 98002, 98003, 98004, 98005, 98006, 98007, 98008, 98009, 98010, 98011, 98013, 98014, 98015, 98019, 98022,
                   98023, 98024, 98025, 98027, 98028, 98029, 98030, 98031, 98032, 98033, 98034, 98035, 98038, 98039, 98040, 98041,
                   98042, 98045, 98047, 98050, 98051, 98052, 98053, 98054, 98055, 98056, 98057, 98058, 98059, 98062, 98063, 98064,
@@ -106,6 +122,7 @@ get_population <- function(kingco = T,
                   98175, 98177, 98178, 98181, 98184, 98185, 98188, 98189, 98190, 98191, 98194, 98195, 98198, 98199, 98224, 98288))
 
     # KC School districts (copied from https://www5.kingcounty.gov/sdc/Metadata.aspx?Layer=schdst 2022/03/10) ----
+    # TODO CHANGE THIS TO RADS DATA
       kcscds <- c(5300001, 5300300, 5300390, 5302820, 5302880, 5303540, 5303750, 5303960, 5304230, 5304560, 5304980, 5305910,
                   5307230, 5307710, 5307920, 5307980, 5308040, 5308130, 5308760, 5309300)
 
@@ -117,6 +134,9 @@ get_population <- function(kingco = T,
       ref.table <- ref.table[, .(name, r_type = varname, value = code, label, short)]
 
     # check / clean / prep arguments ----
+      # TODO: Rework so that it checks if the input object is already a DB connection
+      # if not, check if the key exists and if it does create a db connection
+      # but remember to close it after
       # check if keyring credentials exist for hhsaw ----
       trykey <- try(keyring::key_get(mykey, keyring::key_list(mykey)[['username']]), silent = T)
       if (inherits(trykey, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured or you are not connected to the VPN. \n",
@@ -163,7 +183,7 @@ get_population <- function(kingco = T,
       }
 
       # check years ----
-        if( !all(sapply(years, function(i) i == as.integer(i))) || !sum(years)/length(years) > 2010 || min(years) < 2010){
+        if(!all(sapply(years, function(i) i == as.integer(i))) || !sum(years)/length(years) > 2010 || min(years) < 2010){
           stop(paste0("The `years` argument ('", paste(unique(years), collapse = ', '), "') you entered is invalid. It must be a vector of at least one 4 digit integer > 2010 (e.g., `c(2017:2019)`)"))
           }
         years <- unique(years)
@@ -171,6 +191,7 @@ get_population <- function(kingco = T,
         if(min(years) < 2000 || (geo_type == 'lgd' && min(years) < 2011)){stop("The earliest available year is 2000, except for geo_type == 'lgd' where it is 2011")}
 
       # check ages ----
+        # TODO allow pulling age groups
         if( !all(sapply(ages, function(i) i == as.integer(i))) || max(ages) > 100 || min(ages) < 0 ){
           stop(paste0("The `ages` argument ('", paste(unique(ages), collapse = ', '), "') you entered is invalid. It must be a vector of at least one age integer between 0 & 100 (e.g., `c(0:17, 65:100)`)"))}
         ages <- unique(ages)
@@ -178,6 +199,7 @@ get_population <- function(kingco = T,
       # check / clean genders ----
         if(sum(tolower(genders) %in% c("f", "female", "m", "male")) != length(genders)){stop(paste0("The `genders` argument ('", paste(genders, collapse = "','"), "') is limited to the following: c('f', 'female', 'm', 'male')"))}
 
+        # TODO: CHange this to be toupper(substr(genders,1,1))
         genders_orig <- paste(genders, collapse = ', ')
         genders <- gsub("Female|female|f", "F", genders)
         genders <- gsub("Male|male|m", "M", genders)
@@ -187,6 +209,7 @@ get_population <- function(kingco = T,
         }
 
       # check / clean races ----
+        # TODO is this functionality really needed any more? I'd rather just have people pass names explictly
         races_orig <- paste(races, collapse = ', ')
         races <- gsub(".*aian.*|.*indian.*", "aian", tolower(races))
         races <- gsub(".*_as.*|.*asian.*", "asian", tolower(races))
@@ -235,7 +258,8 @@ get_population <- function(kingco = T,
           group_by_orig <- data.table::copy(group_by)
 
       # Top code age ----
-          if(max(ages) == 100){
+          # will need to be changed if age groups are allowed
+          if(max(ages) >= 100){
             sql_ages <- c(ages, 101:120)
           } else {sql_ages <- ages}
 
@@ -250,6 +274,7 @@ get_population <- function(kingco = T,
           }
 
       # adjust group_by for name differences ----
+        # TODO: This seems wonky. Not sure why regular expressions are needed here
         if(!is.null(group_by)){
           group_by <- gsub("^race_eth$", "race_eth = r2r4", group_by)
           group_by <- gsub("^race$", "race = r1r3", group_by)
@@ -259,6 +284,7 @@ get_population <- function(kingco = T,
         }
 
       # adjust geo_type as needed ----
+          # TODO: HRA stuff is precomputed along with region (as 'reg')
         geo_type_orig <- data.table::copy(geo_type)
         if(geo_type %in% c("kc", "blkgrp", "hra", "tract", "region")){geo_type <- "blk"} # necessary because kc, blkgrp, tract, hra, region are aggregated up from blk
         if(geo_type %in% c("county")){geo_type <- "Cou"} #
@@ -285,6 +311,7 @@ get_population <- function(kingco = T,
           tmprace_type <- glue::glue_sql("r1r3 IN ({race_type_values})", .con = con)
       }
       if(!is.null(group_by)){
+        #TODO: What are all these slashes doing here?
         tmpgroup_by <- glue::glue_sql_collapse(gsub("\\[year]\\, |pop=sum\\(pop\\), |race_eth = |race = ", "", tmpselect), sep = ', ')
       }
 
