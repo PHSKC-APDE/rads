@@ -112,19 +112,10 @@ get_population <- function(kingco = T,
 
     # KC zips (copied from CHAT for 2019 data on 2021-05-18) ----
     # TODO: CHANGE THIS TO RADS DATA
-      kczips <- (c(98001, 98002, 98003, 98004, 98005, 98006, 98007, 98008, 98009, 98010, 98011, 98013, 98014, 98015, 98019, 98022,
-                  98023, 98024, 98025, 98027, 98028, 98029, 98030, 98031, 98032, 98033, 98034, 98035, 98038, 98039, 98040, 98041,
-                  98042, 98045, 98047, 98050, 98051, 98052, 98053, 98054, 98055, 98056, 98057, 98058, 98059, 98062, 98063, 98064,
-                  98065, 98070, 98071, 98072, 98073, 98074, 98075, 98077, 98083, 98089, 98092, 98093, 98101, 98102, 98103, 98104,
-                  98105, 98106, 98107, 98108, 98109, 98111, 98112, 98113, 98114, 98115, 98116, 98117, 98118, 98119, 98121, 98122,
-                  98124, 98125, 98126, 98127, 98129, 98130, 98131, 98132, 98133, 98134, 98136, 98138, 98139, 98140, 98141, 98144,
-                  98145, 98146, 98148, 98151, 98154, 98155, 98158, 98160, 98161, 98164, 98165, 98166, 98168, 98170, 98171, 98174,
-                  98175, 98177, 98178, 98181, 98184, 98185, 98188, 98189, 98190, 98191, 98194, 98195, 98198, 98199, 98224, 98288))
+      kczips <- rads.data::spatial_zip_city_region_scc$zip
 
     # KC School districts (copied from https://www5.kingcounty.gov/sdc/Metadata.aspx?Layer=schdst 2022/03/10) ----
-    # TODO CHANGE THIS TO RADS DATA
-      kcscds <- c(5300001, 5300300, 5300390, 5302820, 5302880, 5303540, 5303750, 5303960, 5304230, 5304560, 5304980, 5305910,
-                  5307230, 5307710, 5307920, 5307980, 5308040, 5308130, 5308760, 5309300)
+      kcscds <- rads.data::spatial_school_districts
 
     # race/eth reference table ----
       ref.table <- data.table::copy(rads.data::population_wapop_codebook_values)
@@ -209,7 +200,7 @@ get_population <- function(kingco = T,
         }
 
       # check / clean races ----
-        # TODO is this functionality really needed any more? I'd rather just have people pass names explictly
+        # TODO is this functionality really needed any more? I'd rather just have people pass names explicitly
         races_orig <- paste(races, collapse = ', ')
         races <- gsub(".*aian.*|.*indian.*", "aian", tolower(races))
         races <- gsub(".*_as.*|.*asian.*", "asian", tolower(races))
@@ -346,6 +337,7 @@ get_population <- function(kingco = T,
       pop.dt <- data.table::setDT(DBI::dbGetQuery(con, sql_query))
 
       # append Hispanic as race if / when needed
+      # TODO: Don't double the query
       if(hisp_eth_flag){
         pop.dt.hisp_eth <- data.table::setDT(DBI::dbGetQuery(con, sql_query_hisp_eth))[race == 6]
         if(is.null(group_by_orig)){pop.dt = data.table::copy(pop.dt.hisp_eth)}else{
