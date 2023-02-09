@@ -25,8 +25,8 @@
 #'
 #' Default == all the possible values.
 #' @param race_type Character vector of length 1. Identifies whether to pull
-#' race data with Hispanic as an ethnicity ("race") or Hispanic as a race
-#' ("race_eth").
+#' race data with Hispanic as an ethnicity ("race"), Hispanic as a race
+#' ("race_eth"), or each race, including Hispanic, alone and in combination ('race_aic').
 #'
 #' Default == c("race_eth").
 #' @param geo_type Character vector of length 1. Identifies the geographic level
@@ -118,11 +118,11 @@ get_population <- function(kingco = T,
       kczips <- rads.data::spatial_zip_city_region_scc$zip
 
     # KC School districts (copied from https://www5.kingcounty.gov/sdc/Metadata.aspx?Layer=schdst 2022/03/10) ----
-      kcscds <- rads.data::spatial_school_districts
+      kcscds <- rads.data::spatial_school_districts$geo_id
 
     # KC WA State House legislative districts (https://en.wikipedia.org/wiki/Washington_(state)_legislative_districts 2022/07/08) ----
-      kclgds <- c(53001, 53005, 53011, 53030, 53031, 53032, 53033, 53034, 53036, 53037, 53039, 53041,
-                  53043, 53045, 53046, 53047, 53048)
+      # note: the codes from 2010 (in spatial_legislative_codes_to_names) work for 2022 districts
+      kclgds <- rads.data::spatial_legislative_codes_to_names$lgd_id
 
     # race/eth reference table ----
       ref.table <- data.table::copy(rads.data::population_wapop_codebook_values)
@@ -135,10 +135,6 @@ get_population <- function(kingco = T,
       ref.table <- unique(ref.table)
 
     # check / clean / prep arguments ----
-      # TODO: Rework so that it checks if the input object is already a DB connection
-      # if not, check if the key exists and if it does create a db connection
-      # but remember to close it after
-      # check if keyring credentials exist for hhsaw ----
       trykey <- try(keyring::key_get(mykey, keyring::key_list(mykey)[['username']]), silent = T)
       if (inherits(trykey, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured or you are not connected to the VPN. \n",
                                                       "Please check your VPN connection and or set your keyring and run the get_population() function again. \n",
@@ -212,9 +208,7 @@ get_population <- function(kingco = T,
 
         # TODO: CHange this to be toupper(substr(genders,1,1))
         genders_orig <- paste(genders, collapse = ', ')
-        genders <- gsub("Female|female|f", "F", genders)
-        genders <- gsub("Male|male|m", "M", genders)
-        genders <- unique(genders)
+        genders <- unique(toupper(substr(genders, 1,1)))
         if(sum(genders %in% c("M", "F")) == 0){
           stop(paste0("The `genders` argument that you entered ('", genders_orig, "') is invalid. It must have one or two of the following values: `c('F', 'M')`"))
         }
