@@ -13,8 +13,11 @@ get_population(
   race_type = c("race_eth"),
   geo_type = c("kc"),
   group_by = NULL,
-  round = T,
-  mykey = "hhsaw"
+  round = FALSE,
+  mykey = "hhsaw",
+  census_vintage = 2020,
+  geo_vintage = 2020,
+  pop_table = DBI::Id(schema = "ref", table = "pop_f")
 )
 }
 \arguments{
@@ -45,8 +48,8 @@ ethnicity should be pulled. The acceptable values are "aian",
 Default == all the possible values.}
 
 \item{race_type}{Character vector of length 1. Identifies whether to pull
-race data with Hispanic as an ethnicity ("race") or Hispanic as a race
-("race_eth").
+race data with Hispanic as an ethnicity ("race"), Hispanic as a race
+("race_eth"), or each race, including Hispanic, alone and in combination ('race_aic').
 
 Default == c("race_eth").}
 
@@ -67,12 +70,21 @@ geography.}
 \item{round}{Logical vector of length 1. Identifies whether or not population
 estimates should be returned as whole numbers.
 
-Default == TRUE.}
+Default == FALSE. As of 02/2023.}
 
-\item{mykey}{Character vector of length 1. Identifies the keyring:: key that
+\item{mykey}{Character vector of length 1 OR a database connection. Identifies the keyring:: key that
 can be used to access the Health & Human Services Analytic Workspace (HHSAW).
 
 Default == 'hhsaw'}
+
+\item{census_vintage}{Integer. One of 2010 or 2020. Refers to latest Census to influence the set of
+population estimates
+
+Default == 2020}
+
+\item{geo_vintage}{One of 2010 or 2020. Refers to the the Census that influenced the creation of the geographies. See details for notes.}
+
+\item{pop_table}{DBI::Id of the pop table. Can be used to change backends when \code{mykey} is a DB connection.}
 }
 \value{
 dataset as a data.table for further analysis/tabulation
@@ -90,6 +102,12 @@ Note the following geography limitations:
 
 -- 'blk', 'blkgrp', and 'tract' apply to King, Snohomish, and Pierce counties
 only
+
+Note on geo_vintage:
+ZIP codes and school districts (scd) are unaffected by geo_vintage.
+ZIP codes are year specific when possible and school districts are mostly considered fixed.
+
+For all other geographies, the value should represent the vintage/era of the Census
 }
 \examples{
 \dontrun{
