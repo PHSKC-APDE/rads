@@ -11,7 +11,7 @@
 #' @param years Numeric vector. Identifies which year(s) of data should be
 #' pulled.
 #'
-#' Default == most recent available year.
+#' Default == 2022.
 #' @param ages Numeric vector. Identifies which age(s) should be pulled.
 #'
 #' Default == c(0:100), with 100 being the top coded value for 100:120.
@@ -59,6 +59,8 @@
 #'
 #' @param pop_table DBI::Id of the pop table. Can be used to change backends when `mykey` is a DB connection.
 #'
+#' @param return_query logical. Instead of computing the results, return the query for fetching the results
+#'
 #' @details Note the following geography limitations:
 #'
 #' -- 'county', 'lgd', 'scd', and 'zip' apply to all of WA State
@@ -92,7 +94,7 @@
 
 # get_population() ----
 get_population <- function(kingco = T,
-                           years = NA,
+                           years = 2022,
                            ages = c(0:100),
                            genders = c("f", "m"),
                            races = c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white"),
@@ -103,7 +105,8 @@ get_population <- function(kingco = T,
                            mykey = "hhsaw",
                            census_vintage = 2020,
                            geo_vintage = 2020,
-                           pop_table = DBI::Id(schema = 'ref', table = 'pop_f')){
+                           pop_table = DBI::Id(schema = 'ref', table = 'pop_f'),
+                           return_query = FALSE){
 
 
   # A function to make subsets
@@ -118,7 +121,7 @@ get_population <- function(kingco = T,
   }
 
   # valid inputs
-  validate_input = function(varname, vals, allowed_vals, additional = ""){
+  validate_input = function(varname, vals, allowed_vals, additional = "", convert_to_all = TRUE){
 
     invalid = setdiff(vals, allowed_vals)
     if(length(invalid)>0){
@@ -128,6 +131,8 @@ get_population <- function(kingco = T,
 
 
     }
+
+    if(convert_to_all && all(allowed_vals %in% vals)) return('All')
 
     unique(vals)
 
@@ -236,7 +241,7 @@ get_population <- function(kingco = T,
     group_geo_type = SQL('') # over the whole state
     select_geo_type = glue::glue_sql('53 as geo_id', .con = con)
   }else if(geo_type == 'kc'){
-    where_geo_type = SQL("geo_type = 'cou' AND geo_id = 53033")
+    where_geo_type = SQL("geo_type = 'cou' AND geo_id = '53033'")
     group_geo_type = SQL('') # over the whole county
     select_geo_type = DBI::Id(column = 'geo_id')
   }else{
@@ -250,14 +255,14 @@ get_population <- function(kingco = T,
   kingco = validate_input('kingco', kingco, c(TRUE, FALSE))
   subset_by_kingco = SQL('')
   if(kingco && geo_type %in% c('blk', 'blkgrp', 'tract', 'cou')){
-    subset_by_kingco = SQL('substr(geo_id,1,5) = 53033')
+    subset_by_kingco = SQL("SUBSTRING(geo_id,1,5) = '53033'")
   }else if(kingco && geo_type == 'zip'){
     # TODO: THIS IS A CHANGE FROM PAST PRACTICE
-    subset_by_kingco = make_subset(con, 'geo_id', rads.data::spatial_zip_city_region_scc$zip)
+    subset_by_kingco = make_subset(con, 'geo_id', as.character(rads.data::spatial_zip_city_region_scc$zip))
   }else if(kingco && geo_type == 'scd'){
-    subset_by_kingco = make_subset(con, 'geo_id', rads.data::spatial_school_dist_to_region$geo_id)
+    subset_by_kingco = make_subset(con, 'geo_id', as.character(rads.data::spatial_school_dist_to_region$geo_id))
   }else if(kingco && geo_type == 'lgd'){
-    subset_by_kingco = make_subset(con, 'geo_id', rads.data::spatial_legislative_codes_to_names[grep('King', lgd_counties), lgd_id])
+    subset_by_kingco = make_subset(con, 'geo_id', as.character(rads.data::spatial_legislative_codes_to_names[grep('King', lgd_counties), lgd_id]))
   }
 
   ## validate geo_vintage ----
@@ -270,13 +275,14 @@ get_population <- function(kingco = T,
 
   ## validate years ----
   ## integer year between 2000 and 2022
-  year_q = glue::glue_sql('select max(year) as maxyear from {`pop_table`}
-                            where {where_geo_type} AND {where_census_vintage}', .con  = con)
-  year_r = dbGetQuery(con, year_q)
-  if(all(is.na(years)) || is.null(years)){
-    years = year_r$maxyear
-  }
-  years = validate_input('years', years, seq(2000, year_r$maxyear))
+  ## TODO: This is a bottleneck. Fix it.
+  # year_q = glue::glue_sql('select max(year) as maxyear from {`pop_table`}
+  #                           where {where_geo_type} AND {where_census_vintage}', .con  = con)
+  # year_r = dbGetQuery(con, year_q)
+  # if(all(is.na(years)) || is.null(years)){
+  #   years = year_r$maxyear
+  # }
+  years = validate_input('years', years, seq(2000, 2022))
 
 
   ## validate age ----
@@ -301,6 +307,7 @@ get_population <- function(kingco = T,
             At present, genders outside the binary do not have population estimates.')
   }
   genders = which(c('M', 'F') %in% genders)
+  genders = validate_input('genders', genders, 1:2)
 
   ## validate races ----
   races = tolower(races)
@@ -317,7 +324,8 @@ get_population <- function(kingco = T,
   ref.table[r_type == "r3", r_type := "r1r3"]
   ref.table[r_type == "r4", r_type := "r2r4"]
   ref.table <- unique(ref.table)
-  races = ref.table[r_type == race_col & short %in% races, value]
+  if(!all(races == 'All')) races = ref.table[r_type == race_col & short %in% races, value]
+
 
   ### TODO: With AIC pop, this will need to be be changed
 
@@ -327,13 +335,13 @@ get_population <- function(kingco = T,
   race_type = match.arg(race_type, c('race', 'race_eth', 'race_aic'))
 
   ## validate group_by ----
-  group_by = validate_input('group_by', group_by, c("years", "ages", "genders", "race", "race_eth", "geo_id"))
+  group_by = validate_input('group_by', group_by, c("years", "ages", "genders", "race", "race_eth", "geo_id"), convert_to_all = FALSE)
 
   # only one of race or race_eth is allowed
   if(all(c('race', 'race_eth') %in% group_by)) stop('Only one of race or race_eth can be in `group_by`')
 
   ## validate round ----
-  validate_input('round', round, c(TRUE, FALSE))
+  stopifnot(length(round)  == 1 && is.logical(round))
 
   # Generate query parts ----
   ## output columns: c("pop", "geo_type", "geo_id", "year", "age", "gender", "race_eth")
@@ -366,11 +374,11 @@ get_population <- function(kingco = T,
 
     if(length(grp_cols_sql)==1) grp_cols_sql = grp_cols_sql[[1]]
     group_vars = glue_sql('GROUP BY {`grp_cols_sql`*}', .con = con)
-    compute_pop = DBI::SQL('SUM(pop) as pop')
   }else{
     group_vars = DBI::SQL('')
-    compute_pop = DBI::SQL('pop')
+    # compute_pop = DBI::SQL('pop')
   }
+  compute_pop = DBI::SQL('SUM(pop) as pop')
 
   ## select clause ----
   ### custom selection for geo_type ----
@@ -417,6 +425,8 @@ get_population <- function(kingco = T,
      {group_vars}', .con = con
   )
 
+  if(return_query) return(q)
+
   r = DBI::dbGetQuery(con, q)
   setDT(r)
 
@@ -426,9 +436,7 @@ get_population <- function(kingco = T,
 
 
 
-
-
-  return(list(q,r))
+  return(r)
 
   ## Query for Hispanic/AIC ----
 

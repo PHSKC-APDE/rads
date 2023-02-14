@@ -17,7 +17,8 @@ get_population(
   mykey = "hhsaw",
   census_vintage = 2020,
   geo_vintage = 2020,
-  pop_table = DBI::Id(schema = "ref", table = "pop_f")
+  pop_table = DBI::Id(schema = "ref", table = "pop_f"),
+  return_query = FALSE
 )
 }
 \arguments{
@@ -85,6 +86,8 @@ Default == 2020}
 \item{geo_vintage}{One of 2010 or 2020. Refers to the the Census that influenced the creation of the geographies. See details for notes.}
 
 \item{pop_table}{DBI::Id of the pop table. Can be used to change backends when \code{mykey} is a DB connection.}
+
+\item{return_query}{logical. Instead of computing the results, return the query for fetching the results}
 }
 \value{
 dataset as a data.table for further analysis/tabulation

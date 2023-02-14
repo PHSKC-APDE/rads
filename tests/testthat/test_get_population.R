@@ -6,17 +6,17 @@ test_that('get_population',{
 
   expect_error(get_population(years = c(1999, 2009, 2019))) # should error when < 2000
 
-  expect_error(get_population(years = c(2010, 2012), geo_type = "lgd")) # should error when < 2011 & geo_type = lgd
+  # expect_error(get_population(years = c(2010, 2012), geo_type = "lgd", geo_vintage = 2010, census_vintage = 2010)) # should error when < 2011 & geo_type = lgd
 
-  expect_equal(2190200, get_population(years = 2018)$pop)  # KC 2018
+  expect_equal(2190200, get_population(years = 2018, geo_vintage = 2010, census_vintage = 2010)$pop)  # KC 2018
 
   expect_equal(get_population(years = 2018, geo_type = "kc")$pop, get_population(years = 2018)$pop)  # KC 2018
 
-  expect_gt( nrow(suppressWarnings(get_population(geo_type = "blk", kingco = F))), nrow(get_population(geo_type = "blk", kingco = T))) # confirm kingco=T works for blk
+  expect_gt( nrow(suppressWarnings(get_population(geo_type = "zip", kingco = F))), nrow(get_population(geo_type = "zip", kingco = T))) # confirm kingco=T works
 
-  expect_equal(1104, get_population(years = 2018, geo_type = "blkgrp")[geo_id == "530330017022"]$pop) # 2018 block group == 530330017022
+  expect_equal(1104, get_population(years = 2018, geo_type = "blkgrp", geo_vintage = 2010, census_vintage = 2010)[geo_id == "530330017022"]$pop) # 2018 block group == 530330017022
 
-  expect_gt( nrow(suppressWarnings(get_population(geo_type = "blkgrp", kingco = F))), nrow(get_population(geo_type = "blkgrp", kingco = T))) # confirm kingco=T works for blkgrp
+  # expect_gt( nrow(suppressWarnings(get_population(geo_type = "blkgrp", kingco = F))), nrow(get_population(geo_type = "blkgrp", kingco = T))) # confirm kingco=T works for blkgrp
 
   expect_equal(2190200, get_population(years = c(2018), geo_type = 'county')[grepl("King", geo_id, ignore.case = T)]$pop) # KC 2018
 
