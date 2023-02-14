@@ -6,7 +6,7 @@
 \usage{
 get_population(
   kingco = T,
-  years = NA,
+  years = 2022,
   ages = c(0:100),
   genders = c("f", "m"),
   races = c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white"),
@@ -31,7 +31,7 @@ Default == TRUE.}
 \item{years}{Numeric vector. Identifies which year(s) of data should be
 pulled.
 
-Default == most recent available year.}
+Default == 2022.}
 
 \item{ages}{Numeric vector. Identifies which age(s) should be pulled.
 

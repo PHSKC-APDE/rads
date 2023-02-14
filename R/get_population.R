@@ -35,9 +35,9 @@
 #' 'region', 'seattle', 'scd' (school districts), 'tract', 'wa', and 'zip'.
 #'
 #' Default == "kc".
-#' @param group_by Character vector of length 0 to 7. Identifies how you would
+#' @param group_by Character vector. Identifies how you would
 #' like the data 'grouped' (i.e., stratified). Valid options are limited to:
-#' "years", "ages", "genders", "race", "race_eth", "fips_co", and "geo_id".
+#' "years", "ages", "genders", "race", and/or "race_eth". Results are always grouped by geo_id.
 #'
 #' Default == NULL, i.e., estimates are only grouped / aggregated by
 #' geography.
@@ -107,7 +107,7 @@ get_population <- function(kingco = T,
                            geo_vintage = 2020,
                            pop_table = DBI::Id(schema = 'ref', table = 'pop_f'),
                            return_query = FALSE){
-
+  max_year = 2022
 
   # A function to make subsets
   make_subset = function(con, var, items = NULL){
@@ -267,11 +267,19 @@ get_population <- function(kingco = T,
 
   ## validate geo_vintage ----
   geo_vintage = validate_input('geo_vintage', geo_vintage, c(2010, 2020))
+
+  ## FIXME: A temporary fix for hras until the new ones get released
+  if(geo_vintage == 2020 & geo_type == 'hra'){
+    stop('2020 geo_vintage HRAs are not available yet. If you are getting this message after mid-march 2023 try reinstalling rads')
+  }
+
   where_geo_vintage = glue_sql('geo_year >= {geo_vintage} AND geo_year<= {geo_vintage + 9}')
   # geo_vintage is not relevant for ZIPs and school districts
   if(geo_type %in% c('zip', 'scd')){
     where_geo_vintage = SQL('')
   }
+
+
 
   ## validate years ----
   ## integer year between 2000 and 2022
@@ -282,7 +290,7 @@ get_population <- function(kingco = T,
   # if(all(is.na(years)) || is.null(years)){
   #   years = year_r$maxyear
   # }
-  years = validate_input('years', years, seq(2000, 2022))
+  years = validate_input('years', years, seq(2000, max_year))
 
 
   ## validate age ----
@@ -335,7 +343,8 @@ get_population <- function(kingco = T,
   race_type = match.arg(race_type, c('race', 'race_eth', 'race_aic'))
 
   ## validate group_by ----
-  group_by = validate_input('group_by', group_by, c("years", "ages", "genders", "race", "race_eth", "geo_id"), convert_to_all = FALSE)
+  group_by = validate_input('group_by', group_by, c("years", "ages", "genders", "race", "race_eth"), convert_to_all = FALSE)
+  group_by = c('geo_id', group_by)
 
   # only one of race or race_eth is allowed
   if(all(c('race', 'race_eth') %in% group_by)) stop('Only one of race or race_eth can be in `group_by`')
@@ -430,28 +439,90 @@ get_population <- function(kingco = T,
   r = DBI::dbGetQuery(con, q)
   setDT(r)
 
-  # add the columns
-  if('age_100' %in% names(r)) setnames(r,'age_100', 'age')
-  if(race_col %in% names(r)) setnames(r, race_col, race_type)
+  # TODO: AIC/Ethnicity results
+
+  # tidy the result ----
+  ## age ----
+  if('age_100' %in% names(r)){
+    setnames(r,'age_100', 'age')
+  }else{
+    if(all(ages == 'All')) ages = 0:100
+    r[, age := rads::format_time(ages)]
+  }
+
+  ## race ----
+  if(race_col %in% names(r)){
+    data.table::setnames(r, race_col, race_type)
+    r[, (race_type) := factor(get(race_type),
+                              ref.table[name == race_type, value],
+                              ref.table[name == race_type, label])]
+  }else{
+    r[, (race_type) := ref.table[name == race_type & value %in% races, paste(label, sep = ', ')]]
+  }
+
+
+  ## year ----
+  if(!'year' %in% names(r)){
+    if(all(years == 'all')) years = seq(2000, max_year,1)
+    r[, year := rads::format_time(years)]
+  }
+
+  ## gender ----
+  if(!'gender' %in% names(r)){
+    if(all(genders == 'All')) genders = 1:2
+    r[, gender := c('Female, Male')]
+  }else{
+    r[, gender := c('Female', 'Male')[as.numeric(gender)]]
+  }
+
+  ## geography ----
+  r[, geo_type := geo_type]
+  if(geo_type == 'kc') r[, geo_id := 'King County']
+  if(geo_type == 'region'){
+    regs = unique(rads.data::spatial_hra_vid_region[,.(region, region_id)])
+    setorder(regs, 'region_id')
+    r[, geo_id_code := geo_id]
+    r[, geo_id := regs[, region][geo_id]]
+  }
+  if(geo_type == 'seattle') r[, geo_id := "Seattle"][,geo_type := 'Seattle']
+
+  if(geo_type == 'county'){
+    cnames = rads.data::spatial_county_codes_to_names
+    cnames = cnames[,.(geo_id_code = as.character(cou_id), geo_id = cou_name)]
+    cnames = setNames(cnames[, geo_id], cnames[, geo_id_code])
+    r[, geo_id_code := geo_id]
+    r[, geo_id := cnames[as.character(geo_id)]]
+  }
+
+  if(geo_type == 'hra'){
+    # FIXME: change to work with 2020 HRAs as well
+    hranames = rads.data::spatial_hra_vid_region[, setNames(hra, vid)]
+    r[, geo_id_code := geo_id]
+    r[, geo_id := hranames[as.character(geo_id)]]
+  }
+
+  if(geo_type == 'scd'){
+    lnames = rads.data::spatial_legislative_codes_to_names[, setNames(scd_name, scd_id)]
+    r[, geo_id_code := geo_id]
+    r[, geo_id := lnames(as.character(geo_id))]
+  }
+
+  if(geo_type == 'wa'){
+    r[, geo_id := 'Washington State']
+    r[, geo_id_code := 53]
+  }
+
+  if(round) r[, pop := rads::round2(pop, 0)]
+
+  data.table::setcolorder(r, c("pop", "geo_type", "geo_id", "year", "age", "gender"))
+
+
+  ## Close connection ----
+  ## Now done with on.exit
+  # if(closeserve) DBI::dbDisconnect(con)
 
 
 
   return(r)
 
-  ## Query for Hispanic/AIC ----
-
-  # Add labels ----
-
-  # collapse/top code age ----
-
-  # round ----
-
-  # set column
-
-  # close connection ----
-  # its done with on exit
-  # if(closeserve) DBI::dbDisconnect(con)
-  #
-  # # return ----
-  # return(pop.dt)
 }
