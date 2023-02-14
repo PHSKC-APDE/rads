@@ -151,7 +151,7 @@ get_population <- function(kingco = T,
   }
   closeserver = TRUE
   if(is.character(mykey)){
-
+    server <- grepl('server', tolower(Sys.info()['release']))
     trykey <- try(keyring::key_get(mykey, keyring::key_list(mykey)[['username']]), silent = T)
     if (inherits(trykey, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured or you are not connected to the VPN. \n",
                                                    "Please check your VPN connection and or set your keyring and run the get_population() function again. \n",
@@ -188,7 +188,7 @@ get_population <- function(kingco = T,
                             Authentication = "ActiveDirectoryInteractive")
     }
 
-    on.exist(DBI::dbDisconnect(con))
+    on.exit(DBI::dbDisconnect(con))
 
   }else if(is.db(mykey)){
     closeserver = FALSE
@@ -209,7 +209,7 @@ get_population <- function(kingco = T,
   if(nrow(pt_chk) != 1) stop('`pop_table` does not exist in the supplied database and/or some how refers to multiple tables.')
 
   ## validate census_vintage ----
-  census_vintage = match.arg(census_vintage, c(2010, 2020))
+  census_vintage = validate_input('census_vintage', census_vintage, c(2010, 2020))
   where_census_vintage = glue::glue_sql('census_year = {census_vintage}', .con = con)
 
   ## validate geo_type and kingco ----
@@ -218,6 +218,7 @@ get_population <- function(kingco = T,
                   'region', 'seattle', 'scd' , 'tract', 'wa', 'zip')
   geo_type = match.arg(geo_type, valid_geogs)
   ## create geo_type selectors and filters ----
+  ## TODO: should we recompute blkgrp and tract? It'll be a lot faster
   if(geo_type %in% c('blkgrp')){
     where_geo_type = SQL("geo_type = 'blk'")
     group_geo_type = SQL('SUBSTRING(geo_id,1,12)')
@@ -234,16 +235,33 @@ get_population <- function(kingco = T,
     where_geo_type = SQL("geo_type = 'cou'")
     group_geo_type = SQL('') # over the whole state
     select_geo_type = glue::glue_sql('53 as geo_id', .con = con)
+  }else if(geo_type == 'kc'){
+    where_geo_type = SQL("geo_type = 'cou' AND geo_id = 53033")
+    group_geo_type = SQL('') # over the whole county
+    select_geo_type = DBI::Id(column = 'geo_id')
   }else{
-    where_geo_type = SQL("geo_type = {substr(geo_type, 1,3)}")
+    where_geo_type = glue_sql("geo_type = {substr(geo_type, 1,3)}", .con = con)
     group_geo_type = SQL('geo_id') # over the whole state
     select_geo_type = DBI::Id(column = 'geo_id')
   }
 
-  ## TODO: validate kingco
+  ## validate kingco
+  ## TODO: THIS should be precomputed/in ref.pop already
+  kingco = validate_input('kingco', kingco, c(TRUE, FALSE))
+  subset_by_kingco = SQL('')
+  if(kingco && geo_type %in% c('blk', 'blkgrp', 'tract', 'cou')){
+    subset_by_kingco = SQL('substr(geo_id,1,5) = 53033')
+  }else if(kingco && geo_type == 'zip'){
+    # TODO: THIS IS A CHANGE FROM PAST PRACTICE
+    subset_by_kingco = make_subset(con, 'geo_id', rads.data::spatial_zip_city_region_scc$zip)
+  }else if(kingco && geo_type == 'scd'){
+    subset_by_kingco = make_subset(con, 'geo_id', rads.data::spatial_school_dist_to_region$geo_id)
+  }else if(kingco && geo_type == 'lgd'){
+    subset_by_kingco = make_subset(con, 'geo_id', rads.data::spatial_legislative_codes_to_names[grep('King', lgd_counties), lgd_id])
+  }
 
   ## validate geo_vintage ----
-  geo_vintage = match.arg(geo_vintage, c(2010, 2020))
+  geo_vintage = validate_input('geo_vintage', geo_vintage, c(2010, 2020))
   where_geo_vintage = glue_sql('geo_year >= {geo_vintage} AND geo_year<= {geo_vintage + 9}')
   # geo_vintage is not relevant for ZIPs and school districts
   if(geo_type %in% c('zip', 'scd')){
@@ -252,7 +270,6 @@ get_population <- function(kingco = T,
 
   ## validate years ----
   ## integer year between 2000 and 2022
-
   year_q = glue::glue_sql('select max(year) as maxyear from {`pop_table`}
                             where {where_geo_type} AND {where_census_vintage}', .con  = con)
   year_r = dbGetQuery(con, year_q)
@@ -283,16 +300,11 @@ get_population <- function(kingco = T,
     stop('`genders` should be one or both of "M" and "F".
             At present, genders outside the binary do not have population estimates.')
   }
+  genders = which(c('M', 'F') %in% genders)
 
   ## validate races ----
   races = tolower(races)
   races = validate_input('races', races, c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white"))
-  if(length(invalid_race)>0){
-    stop(paste('Valid options for the `races` argument are one or more of
-         "aian", "asian", "black", "hispanic", "multiple", "nhpi", and/or "white".
-         The following invalid value(s) were provided:'),
-         paste(invalid_race, sep = ','))
-  }
   race_col = 'r2r4'
   if(race_type == 'race') race_col = 'r1r3'
 
@@ -318,7 +330,7 @@ get_population <- function(kingco = T,
   group_by = validate_input('group_by', group_by, c("years", "ages", "genders", "race", "race_eth", "geo_id"))
 
   # only one of race or race_eth is allowed
-  if(all('race', 'race_eth') %in% group_by) stop('Only one of race or race_eth can be in `group_by`')
+  if(all(c('race', 'race_eth') %in% group_by)) stop('Only one of race or race_eth can be in `group_by`')
 
   ## validate round ----
   validate_input('round', round, c(TRUE, FALSE))
@@ -334,8 +346,9 @@ get_population <- function(kingco = T,
   if(race_type == 'race_aic') cols = cols[coltype != race_type]
 
   ## Identify groups ----
-  grp_cols = cols[coltype %in% groups, colname]
+  grp_cols = cols[coltype %in% group_by, colname]
   grp_cols = setdiff(grp_cols, 'All')
+  grp_cols_sql = SQL('')
 
   ### if groups are requested, create the relevant sql ----
   if(length(grp_cols)>0){
@@ -350,7 +363,8 @@ get_population <- function(kingco = T,
       grp_cols_sql[['geo_id']] <- group_geo_type
     }
 
-    if(length(grp_cols)==1) grp_cols = grp_cols[[1]]
+
+    if(length(grp_cols_sql)==1) grp_cols_sql = grp_cols_sql[[1]]
     group_vars = glue_sql('GROUP BY {`grp_cols_sql`*}', .con = con)
     compute_pop = DBI::SQL('SUM(pop) as pop')
   }else{
@@ -364,7 +378,12 @@ get_population <- function(kingco = T,
     grp_cols_sql[['geo_id']] <- select_geo_type
   }
   ### create select_me ----
-  select_me = glue_sql_collapse(c(glue_sql('{`grp_cols_sql`*}', .con = con), compute_pop), sep = ',')
+
+  if(length(grp_cols) == 0){
+    select_me = compute_pop
+  }else{
+    select_me = glue_sql_collapse(c(compute_pop, glue_sql('{`grp_cols_sql`*}', .con = con)), sep = ',')
+  }
 
   ## Subset clauses ----
   ### create clauses ----
@@ -380,7 +399,8 @@ get_population <- function(kingco = T,
            subset_by_year,
            subset_by_age,
            subset_by_gender,
-           subset_by_raceeth)
+           subset_by_raceeth,
+           subset_by_kingco)
   subs = subs[subs != SQL('')]
   subset_me = glue_sql_collapse(subs, sep = ' AND ')
   if(!subset_me == '') subset_me = glue_sql('where {subset_me}', .con = con)
@@ -392,12 +412,23 @@ get_population <- function(kingco = T,
     '
     select
     {select_me}
-    from {`pop_tab`} as p
+    from {`pop_table`} as p
     {subset_me}
      {group_vars}', .con = con
   )
 
-  return(q)
+  r = DBI::dbGetQuery(con, q)
+  setDT(r)
+
+  # add the columns
+  if('age_100' %in% names(r)) setnames(r,'age_100', 'age')
+  if(race_col %in% names(r)) setnames(r, race_col, race_type)
+
+
+
+
+
+  return(list(q,r))
 
   ## Query for Hispanic/AIC ----
 
@@ -410,6 +441,7 @@ get_population <- function(kingco = T,
   # set column
 
   # close connection ----
+  # its done with on exit
   # if(closeserve) DBI::dbDisconnect(con)
   #
   # # return ----
