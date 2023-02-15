@@ -2,6 +2,20 @@ library('testthat')
 # all comparison values except for lgd are from CHAT: https://secureaccess.wa.gov/doh/chat/Entry.mvc
 # lgd comparison is from SQL data base because legislative district population not given in CHAT
 
+# Test some queries. Mostly for manual inspection, but it'll be good to run these incase they break all of a sudden
+test_that('get_population queries',{
+
+  q1.1 = get_population(ages = 10:20, genders = 'm', races = c('aian', 'hispanic'), race_type = 'race_eth', group_by = 'race_eth', return_query = T)
+  q1.2 = get_population(ages = 10:20, genders = 'm', races = c('aian', 'hispanic'), race_type = 'race', group_by = 'race', return_query = T)
+  q1.3 = get_population(ages = 10:20, genders = 'm', races = c('aian', 'hispanic'), race_type = 'race_aic', group_by = 'race_aic', return_query = T)
+
+  q2.1 = get_population(ages = 10:20, genders = 'm', race_type = 'race_eth', group_by = 'race_eth', return_query = T)
+  q2.2 = get_population(ages = 10:20, genders = 'm', race_type = 'race', group_by = 'race', return_query = T)
+  q2.3 = get_population(ages = 10:20, genders = 'm', race_type = 'race_aic', group_by = 'race_aic', return_query = T)
+
+})
+
+
 test_that('get_population',{
 
   expect_error(get_population(years = c(1999, 2009, 2019))) # should error when < 2000

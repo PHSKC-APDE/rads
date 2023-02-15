@@ -16,8 +16,9 @@ get_population(
   round = FALSE,
   mykey = "hhsaw",
   census_vintage = 2020,
-  geo_vintage = 2020,
-  pop_table = DBI::Id(schema = "ref", table = "pop_f"),
+  geo_vintage = census_vintage,
+  schema = "ref",
+  table_prefix = "pop_geo_",
   return_query = FALSE
 )
 }
@@ -61,9 +62,11 @@ for which you want population estimates. The acceptable values are: 'blk',
 
 Default == "kc".}
 
-\item{group_by}{Character vector of length 0 to 7. Identifies how you would
+\item{group_by}{Character vector. Identifies how you would
 like the data 'grouped' (i.e., stratified). Valid options are limited to:
-"years", "ages", "genders", "race", "race_eth", "fips_co", and "geo_id".
+"years", "ages", "genders", "race", "race_eth", or "race_aic".
+If "race" or "race_aic" are the \code{race_type} then they must be included in \code{group_by}.
+Results are always grouped by geo_id.
 
 Default == NULL, i.e., estimates are only grouped / aggregated by
 geography.}
@@ -85,7 +88,10 @@ Default == 2020}
 
 \item{geo_vintage}{One of 2010 or 2020. Refers to the the Census that influenced the creation of the geographies. See details for notes.}
 
-\item{pop_table}{DBI::Id of the pop table. Can be used to change backends when \code{mykey} is a DB connection.}
+\item{schema}{character. Name of the schema in the db where pop data is stored}
+
+\item{table_prefix}{character. Prefix of the tables in \code{schema} where pop data is stored.
+The table will be selected as {schema}.pop_geo_{geo_type} unless geo_type is aggregated on the fly from blocks}
 
 \item{return_query}{logical. Instead of computing the results, return the query for fetching the results}
 }

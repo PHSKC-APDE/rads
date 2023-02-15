@@ -4,6 +4,16 @@ library('data.table')
 library('DBI')
 source('explorations/old_get_pop.R')
 
+r = old_get_population(years = c(2000, 2010, 2019),
+                   ages = 10:20,
+                   genders = 'f',
+                   races = c('asian', 'black'),
+                   race_type = 'race',
+                   geo_type = 'county',
+                   round = FALSE,
+                   group_by = 'race')
+
+
 q1.1 = get_population(years = c(2000, 2010, 2019),
                       ages = 10:20,
                       genders = 'f',

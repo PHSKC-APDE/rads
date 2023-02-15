@@ -115,17 +115,6 @@ get_population <- function(kingco = T,
                            return_query = FALSE){
   max_year = 2022
 
-  # A function to make subsets
-  make_subset = function(con, var, items = NULL){
-    if(is.null(items) || items[1] == 'All'){
-      return(SQL(''))
-    }else{
-      thecol = Id(column = var)
-      subme = glue_sql('{`thecol`} in ({items*})', .con = con)
-      return(subme)
-    }
-  }
-
   # valid inputs
   validate_input = function(varname, vals, allowed_vals, additional = "", convert_to_all = TRUE){
 
@@ -230,7 +219,7 @@ get_population <- function(kingco = T,
   }else if(geo_type == 'seattle'){
     pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, 'reg'))
     where_geo_type = SQL("geo_type = 'reg' AND geo_id = 3")
-    group_geo_type = SQL('')
+    group_geo_type = DBI::Id(column = 'geo_id')
     select_geo_type = DBI::Id(column = 'geo_id')
   }else if(geo_type == 'wa'){
     pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, 'cou'))
@@ -240,7 +229,7 @@ get_population <- function(kingco = T,
   }else if(geo_type == 'kc'){
     pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, 'cou'))
     where_geo_type = SQL("geo_type = 'cou' AND geo_id = '53033'")
-    group_geo_type = SQL('') # over the whole county
+    group_geo_type = DBI::Id(column = 'geo_id')
     select_geo_type = DBI::Id(column = 'geo_id')
   }else{
     pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, tolower(substring(geo_type,1,3))))
@@ -375,99 +364,67 @@ get_population <- function(kingco = T,
   ## TODO: race will need to be a bit more complicatd here with race_aic
 
   cols = data.table(coltype = c("years", "ages", "genders", race_type, "geo_id"),
-                    colname = c('year', 'age_100', 'gender', race_col, 'geo_id'))
-
-  if(race_type == 'race_aic') cols = cols[coltype != race_type]
-
-  ## Identify groups ----
-  grp_cols = cols[coltype %in% group_by, colname]
-  grp_cols = setdiff(grp_cols, 'All')
-  grp_cols_sql = SQL('')
-
-  ### if groups are requested, create the relevant sql ----
-  if(length(grp_cols)>0){
-
-    #### geo_id is custom ----
-    grp_cols_sql = lapply(setdiff(grp_cols, 'geo_id'), function(x){
-        DBI::Id(column = x)
-    })
-    if(length(grp_cols_sql)>0) names(grp_cols_sql) = c(grp_cols)
-    grp_cols_sql <- append(list(geo_id = group_geo_type), grp_cols_sql)
-
-
-    if(length(grp_cols_sql)==1) grp_cols_sql = grp_cols_sql[[1]]
-    group_vars = glue_sql('GROUP BY {`grp_cols_sql`*}', .con = con)
-  }else{
-    group_vars = DBI::SQL('')
-    # compute_pop = DBI::SQL('pop')
-  }
-  compute_pop = DBI::SQL('SUM(pop) as pop')
-
-  ## select clause ----
-  ### custom selection for geo_type ----
-  if(any(grp_cols %in% 'geo_id')){
-    if(length(grp_cols_sql)>1){
-      grp_cols_sql[['geo_id']] <- select_geo_type
-    } else{
-      grp_cols_sql = select_geo_type
-    }
-
-  }
-  ### create select_me ----
-  if(length(grp_cols) == 0){
-    select_me = compute_pop
-  }else{
-    select_me = glue_sql_collapse(c(compute_pop, glue_sql('{`grp_cols_sql`*}', .con = con)), sep = ',')
-  }
-
-  ## Subset clauses ----
-  ### create clauses ----
-  subset_by_age = make_subset(con, 'age_100', ages)
-  subset_by_year = make_subset(con, 'year', years)
-  subset_by_gender = make_subset(con, 'gender', genders)
-  subset_by_raceeth = make_subset(con, race_col, races)
-
-  ### A function to make the query ----
-  make_query = function(select_me, pop_table, subs, group_vars){
-    subs = subs[subs != SQL('')]
-    subset_me = glue_sql_collapse(subs, sep = ' AND ')
-    if(!subset_me == '') subset_me = glue_sql('where {subset_me}', .con = con)
-
-    q = glue::glue_sql(
-      '
-      select
-      {select_me}
-      from {`pop_table`} as p
-      {subset_me}
-       {group_vars}', .con = con
-    )
-
-    q
-
-  }
+                    colname = c('year', 'age_100', 'gender', race_col, 'geo_id'),
+                    cat = c('year', 'age', 'gender', 'race', 'geo_id'))
 
   # Assemble query ----
   ## Query for race/eth ----
   if(race_type == 'race_eth'){
-    q = make_query(
-      select_me,
-      pop_table,
-      subs = c(
-        where_geo_type,
-        where_geo_vintage,
-        where_census_vintage,
-        subset_by_year,
-        subset_by_age,
-        subset_by_gender,
-        subset_by_raceeth,
-        subset_by_kingco
-      ),
-      group_vars
-    )
-  }
-  ### Query for race and race_aic ----
-  if(race_type %in% c('race', 'race_aic')){
-    #### figure out what race groups need aic calculated ----
+    q = build_getpop_query(con = con,
+                           cols = cols,
+                           pop_table = pop_table,
+                           group_by = group_by,
+                           group_geo_type = group_geo_type,
+                           select_geo_type = select_geo_type,
+                           ages = ages,
+                           years = years,
+                           genders = genders,
+                           races = races,
+                           where_geo_type,
+                           where_geo_vintage,
+                           where_census_vintage,
+                           subset_by_kingco)
+  }else if(race_type == 'race'){
+    ## Query for race ----
+    ### The query to data by race (ignoring ethnicity) ----
+    q1 = build_getpop_query(con = con,
+                           cols = cols,
+                           pop_table = pop_table,
+                           group_by = group_by,
+                           group_geo_type = group_geo_type,
+                           select_geo_type = select_geo_type,
+                           ages = ages,
+                           years = years,
+                           genders = genders,
+                           races = races,
+                           where_geo_type,
+                           where_geo_vintage,
+                           where_census_vintage,
+                           subset_by_kingco)
+
+    ### A query for the hispanic data ----
+    hcols = data.table::copy(cols)
+    hcols[coltype == race_type, colname := 'race_hisp']
+    q2 = build_getpop_query(con = con,
+                            cols = hcols,
+                            pop_table = pop_table,
+                            group_by = group_by,
+                            group_geo_type = group_geo_type,
+                            select_geo_type = select_geo_type,
+                            ages = ages,
+                            years = years,
+                            genders = genders,
+                            races = 1, # only hispanic
+                            where_geo_type,
+                            where_geo_vintage,
+                            where_census_vintage,
+                            subset_by_kingco)
+
+    q = list(q1,q2)
+
+  }else if(race_type == 'race_aic'){
+    ## query for AIC races ----
+    ### figure out what race groups need aic calculated ----
     if(races[1] == 'All'){
       aic_flag = seq_len(nrow(ref.table))
     }else{
@@ -476,40 +433,57 @@ get_population <- function(kingco = T,
     aics = ref.table[aic_flag]
     aics = aics[!is.na(sql_col)] # remove multiple race
 
-    #### Limit to hispanic if race
-    if(race_type == 'race'){
-      aics = aics[short == 'hispanic']
-    }
+    ### for each race, get pop ----
+    q = lapply(aics[,sql_col], function(rcol){
+      hcols = data.table::copy(cols)
+      hcols[coltype == race_type, colname := rcol]
+      build_getpop_query(
+                        con = con,
+                        cols = hcols,
+                        pop_table = pop_table,
+                        group_by = group_by,
+                        group_geo_type = group_geo_type,
+                        select_geo_type = select_geo_type,
+                        ages = ages,
+                        years = years,
+                        genders = genders,
+                        races = 1,
+                        where_geo_type,
+                        where_geo_vintage,
+                        where_census_vintage,
+                        subset_by_kingco
+                      )
 
-    # if there is anything to compute
-    if(nrow(aics)>0){
-      # generate the queries
-      aic_q = lapply(split(ref.table, by = 'short'), function(x){
 
-        # create a new subset_by_raceeth
-        subset_by_raceeth_aic = make_subset(con, var = x$sql_col)
+    })
 
-        # alter the select_me component
-
-
-
-
-      })
-
-
-    }else{
-      aic_q = list()
-    }
-
+  }else{
+    stop('invalid race_type option snuck through')
   }
 
-  q = append(list(q), aic_q)
-
   ## run the query/queries ----
+  ### return query if requested ----
   if(return_query) return(q)
+  r = lapply(q, function(x){
 
-  r = DBI::dbGetQuery(con, q)
-  setDT(r)
+    # run the query
+    r = DBI::dbGetQuery(con, x)
+    setDT(r)
+
+    #rename/relabel the race col
+    rc = ref.table[sql_col %in% names(r), ]
+    stopifnot(nrow(rc)<=1)
+    if(nrow(rc) == 1){
+      data.table::setnames(r, rc[, sql_col], race_col)
+      r[, (race_col) := rc[, value]]
+    }
+
+    r
+
+  })
+
+  r = rbindlist(r)
+
 
   # tidy the result ----
   ## age ----
@@ -524,10 +498,10 @@ get_population <- function(kingco = T,
   if(race_col %in% names(r)){
     data.table::setnames(r, race_col, race_type)
     r[, (race_type) := factor(get(race_type),
-                              ref.table[name == race_type, value],
-                              ref.table[name == race_type, label])]
+                              ref.table[, value],
+                              ref.table[, label])]
   }else{
-    r[, (race_type) := ref.table[name == race_type & value %in% races, paste(label, collapse = ', ')]]
+    r[, (race_type) := ref.table[value %in% races, paste(label, collapse = ', ')]]
   }
 
 
