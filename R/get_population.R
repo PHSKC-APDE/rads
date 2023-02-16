@@ -471,7 +471,7 @@ get_population <- function(kingco = T,
     rc = ref.table[sql_col %in% names(r), ]
     stopifnot(nrow(rc)<=1)
     if(nrow(rc) == 1){
-      data.table::setnames(r, rc[, sql_col], race_col)
+      r[,(rc[,sql_col]) := NULL]
       r[, (race_col) := rc[, value]]
     }
 

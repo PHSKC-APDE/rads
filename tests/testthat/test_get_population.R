@@ -90,4 +90,18 @@ test_that('get_population',{
 
   expect_equal(7656200, get_population(geo_type = "wa", years = 2020,geo_vintage = 2010, census_vintage = 2010, round = T)[]$pop) # Washington State population
 
+  # expectations for race_eth, race, and race_aic
+  r1.1 = get_population(geo_type = 'county', years = c(2000,2010,2022), ages = c(0:10, 90:100), genders = 'F', races = c('aian', 'hispanic'), race_type = 'race_eth', group_by = 'race_eth')
+  r1.2 = get_population(geo_type = 'county', years = c(2000,2010,2022), ages = c(0:10, 90:100), genders = 'F', races = c('aian', 'hispanic'), race_type = 'race', group_by = 'race')
+  r1.3 = get_population(geo_type = 'county', years = c(2000,2010,2022), ages = c(0:10, 90:100), genders = 'F', races = c('aian', 'hispanic'), race_type = 'race_aic', group_by = 'race_aic')
+  r1.1 = r1.1[, .(geo_id, year, age, gender, race = race_eth, pop1.1 = pop)]
+  r1.2 = r1.2[, .(geo_id, year, age, gender, race = race, pop1.2 = pop)]
+  r1.3 = r1.3[, .(geo_id, year, age, gender, race = race_aic, pop1.3 = pop)]
+
+  r1 = merge(r1.1, r1.2, all = T, by = c('geo_id', 'year', 'age', 'gender', 'race'))
+  r1 = merge(r1, r1.3, all = T, by = c('geo_id', 'year', 'age', 'gender', 'race'))
+  expect_true(r1[race == 'Hispanic', all(all.equal(pop1.1, pop1.2) & all.equal(pop1.3, pop1.2))])
+  expect_true(r1[race == 'AIAN', all(pop1.1 <= pop1.2 & pop1.2 <= pop1.3)])
+
+
 })
