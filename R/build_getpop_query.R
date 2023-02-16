@@ -23,16 +23,6 @@ build_getpop_query = function(con,
                               genders,
                               races,
                               ...) {
-  # A function to make subsets
-  make_subset = function(con, var, items = NULL){
-    if(is.null(items) || items[1] == 'All'){
-      return(SQL(''))
-    }else{
-      thecol = Id(column = var)
-      subme = glue_sql('{`thecol`} in ({items*})', .con = con)
-      return(subme)
-    }
-  }
 
   # Define columns to group by ----
   grp_cols = cols[coltype %in% group_by, colname]
@@ -57,7 +47,13 @@ build_getpop_query = function(con,
 
     })
     grpz = glue::glue_sql_collapse(grp_cols_sql, sep = ', ')
-    group_vars = glue::glue_sql('GROUP BY {grpz}', .con = con)
+    if(grpz == SQL('')){
+      grp_cols_sql = DBI::SQL('')
+      group_vars = DBI::SQL('')
+    }else{
+      group_vars = glue::glue_sql('GROUP BY {grpz}', .con = con)
+
+    }
   } else{
     grp_cols_sql = DBI::SQL('')
     group_vars = DBI::SQL('')
@@ -108,4 +104,17 @@ build_getpop_query = function(con,
   q
 
 
+}
+#' A function to make subsets
+#' @param con a database connection
+#' @param var variable name
+#' @param items list of items/values to subset on
+make_subset = function(con, var, items = NULL){
+  if(is.null(items) || items[1] == 'All'){
+    return(SQL(''))
+  }else{
+    thecol = Id(column = var)
+    subme = glue_sql('{`thecol`} in ({items*})', .con = con)
+    return(subme)
+  }
 }

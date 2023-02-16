@@ -209,12 +209,12 @@ get_population <- function(kingco = T,
   if(geo_type %in% c('blkgrp')){
     pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, 'blk'))
     where_geo_type = SQL("")
-    group_geo_type = SQL('SUBSTRING(geo_id,1,12)')
+    group_geo_type = SQL('LEFT(geo_id,12)')
     select_geo_type = glue::glue_sql('{group_geo_type} as geo_id', .con = con)
   }else if(geo_type == 'tract'){
     pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, 'blk'))
     where_geo_type = SQL("")
-    group_geo_type = SQL('SUBSTRING(geo_id,1,11)')
+    group_geo_type = SQL('LEFT(geo_id,11)')
     select_geo_type = glue::glue_sql('{group_geo_type} as geo_id', .con = con)
   }else if(geo_type == 'seattle'){
     pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, 'reg'))
@@ -254,7 +254,7 @@ get_population <- function(kingco = T,
   kingco = validate_input('kingco', kingco, c(TRUE, FALSE))
   subset_by_kingco = SQL('')
   if(kingco && geo_type %in% c('blk', 'blkgrp', 'tract')){
-    subset_by_kingco = SQL("SUBSTRING(geo_id,1,5) = '53033'")
+    subset_by_kingco = SQL("fips_co = '33'")
   }else if(kingco && geo_type == 'zip'){
     # TODO: THIS IS A CHANGE FROM PAST PRACTICE
     subset_by_kingco = make_subset(con, 'geo_id', as.character(rads.data::spatial_zip_city_region_scc$zip))
@@ -303,9 +303,6 @@ get_population <- function(kingco = T,
   ## Integers between 0 and 100. 100 gets expanded to include 105 and 110 which
   ## ofm/frankenpop uses to store 100+ stuff
   ages = validate_input('ages', ages, 0:100)
-  if(max(ages)==100){
-    ages = c(ages, 105,110)
-  }
   ages = unique(ages)
 
 
@@ -342,8 +339,8 @@ get_population <- function(kingco = T,
   ### race_aic is handled below
 
   ## validate group_by ----
-  group_by = validate_input('group_by', group_by, c("years", "ages", "genders", "race", "race_eth", 'race_aic'), convert_to_all = FALSE)
-  group_by = c('geo_id', group_by)
+  group_by = validate_input('group_by', group_by, c("years", "ages", "genders", "race", "race_eth", 'race_aic', 'geo_id'), convert_to_all = FALSE)
+  group_by = unique(c('geo_id', group_by))
 
   ## race_type sanity checking ----
   ## confirm only one of race, race_eth, or race_aic is in the list
@@ -523,10 +520,11 @@ get_population <- function(kingco = T,
   r[, geo_type := geo_type]
   if(geo_type == 'kc') r[, geo_id := 'King County']
   if(geo_type == 'region'){
-    regs = unique(rads.data::spatial_hra_vid_region[,.(region, region_id)])
-    setorder(regs, 'region_id')
+    rnames = unique(rads.data::spatial_hra_vid_region[,.(region, region_id)])
+    rnames = rnames[, setNames(region, region_id)]
     r[, geo_id_code := geo_id]
-    r[, geo_id := regs[, region][geo_id]]
+    r[, geo_id := rnames[as.character(geo_id)]]
+
   }
   if(geo_type == 'seattle') r[, geo_id := "Seattle"][,geo_type := 'Seattle']
 
@@ -545,10 +543,17 @@ get_population <- function(kingco = T,
     r[, geo_id := hranames[as.character(geo_id)]]
   }
 
-  if(geo_type == 'scd'){
-    lnames = rads.data::spatial_legislative_codes_to_names[, setNames(scd_name, scd_id)]
+  if(geo_type == 'lgd'){
+    lnames = rads.data::spatial_legislative_codes_to_names[, setNames(lgd_name, lgd_id)]
     r[, geo_id_code := geo_id]
-    r[, geo_id := lnames(as.character(geo_id))]
+    r[, geo_id := lnames[as.character(geo_id)]]
+
+  }
+
+  if(geo_type == 'scd'){
+    lnames = rads.data::spatial_school_codes_to_names[, setNames(scd_name, scd_id)]
+    r[, geo_id_code := geo_id]
+    r[, geo_id := lnames[as.character(geo_id)]]
   }
 
   if(geo_type == 'wa'){

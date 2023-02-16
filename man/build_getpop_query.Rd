@@ -10,6 +10,7 @@ build_getpop_query(
   pop_table,
   group_by,
   group_geo_type,
+  select_geo_type,
   ages,
   years,
   genders,
@@ -20,13 +21,15 @@ build_getpop_query(
 \arguments{
 \item{con}{a database connection}
 
-\item{cols}{data.table A two column data.table that describes the colname and coltype}
+\item{cols}{data.table A three column data.table that describes the colname and coltype and cat}
 
 \item{pop_table}{DBI::Id of the relevant database table}
 
 \item{group_by}{character vector of column types to group results by. Should use types passed in cols}
 
 \item{group_geo_type}{SQL defining how to handle geo type grouping (mostly for things computed on the fly from blocks)}
+
+\item{select_geo_type}{SQL defining how to select geo_id}
 
 \item{ages}{vector of the ages to subset by. Use "All" to not subset}
 
