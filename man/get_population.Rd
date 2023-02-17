@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_population.R
 \name{get_population}
 \alias{get_population}
-\title{Get OFM population estimates from SQL}
+\title{Get standard population estimates from SQL}
 \usage{
 get_population(
   kingco = T,
@@ -65,8 +65,8 @@ Default == "kc".}
 \item{group_by}{Character vector. Identifies how you would
 like the data 'grouped' (i.e., stratified). Valid options are limited to:
 "years", "ages", "genders", "race", "race_eth", or "race_aic".
-If "race" or "race_aic" are the \code{race_type} then they must be included in \code{group_by}.
-Results are always grouped by geo_id.
+If "race" or "race_aic" are the \code{race_type} then they must be included in
+\code{group_by}. Results are always grouped by geo_id.
 
 Default == NULL, i.e., estimates are only grouped / aggregated by
 geography.}
@@ -76,30 +76,44 @@ estimates should be returned as whole numbers.
 
 Default == FALSE. As of 02/2023.}
 
-\item{mykey}{Character vector of length 1 OR a database connection. Identifies the keyring:: key that
-can be used to access the Health & Human Services Analytic Workspace (HHSAW).
+\item{mykey}{Character vector of length 1 OR a database connection. Identifies
+the keyring:: key that can be used to access the Health & Human Services
+Analytic Workspace (HHSAW).
 
 Default == 'hhsaw'}
 
-\item{census_vintage}{Integer. One of 2010 or 2020. Refers to latest Census to influence the set of
-population estimates
+\item{census_vintage}{Integer. One of 2010 or 2020. Refers to latest Census
+to influence the set of population estimates
 
 Default == 2020}
 
-\item{geo_vintage}{One of 2010 or 2020. Refers to the the Census that influenced the creation of the geographies. See details for notes.}
+\item{geo_vintage}{Integer. One of 2010 or 2020. Refers to the the Census
+that influenced the creation of the geographies. See details for notes.
 
-\item{schema}{character. Name of the schema in the db where pop data is stored}
+Default == same as \code{census_vintage}}
 
-\item{table_prefix}{character. Prefix of the tables in \code{schema} where pop data is stored.
-The table will be selected as {schema}.pop_geo_{geo_type} unless geo_type is aggregated on the fly from blocks}
+\item{schema}{character. Name of the schema in the db where pop data is stored.
+\emph{Unless you know what you are doing, do not change the default!}
 
-\item{return_query}{logical. Instead of computing the results, return the query for fetching the results}
+Default = 'ref'}
+
+\item{table_prefix}{character. Prefix of the tables in \code{schema} where pop data
+is stored. The table will be selected as {schema}.pop_geo_{geo_type} unless
+geo_type is aggregated on the fly from blocks. \emph{Unless you know what you
+are doing, do not change the default!}
+
+Default = 'pop_geo_'}
+
+\item{return_query}{logical. Instead of computing the results, return the
+query for fetching the results
+
+Default == FALSE}
 }
 \value{
 dataset as a data.table for further analysis/tabulation
 }
 \description{
-Simple front-end for pulling in standard OFM population data
+Simple front-end for pulling in standard population data
 from SQL
 }
 \details{
