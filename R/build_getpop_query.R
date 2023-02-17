@@ -114,7 +114,7 @@ make_subset = function(con, var, items = NULL){
     return(SQL(''))
   }else{
     thecol = Id(column = var)
-    subme = glue_sql('{`thecol`} in ({items*})', .con = con)
+    subme = glue::glue_sql('{`thecol`} in ({items*})', .con = con)
     return(subme)
   }
 }

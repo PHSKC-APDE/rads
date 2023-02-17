@@ -1,6 +1,6 @@
-#' Get OFM population estimates from SQL
+#' Get standard population estimates from SQL
 #'
-#' @description Simple front-end for pulling in standard OFM population data
+#' @description Simple front-end for pulling in standard population data
 #' from SQL
 #'
 #' @param kingco Logical vector of length 1. Identifies whether you want
@@ -38,8 +38,8 @@
 #' @param group_by Character vector. Identifies how you would
 #' like the data 'grouped' (i.e., stratified). Valid options are limited to:
 #' "years", "ages", "genders", "race", "race_eth", or "race_aic".
-#' If "race" or "race_aic" are the `race_type` then they must be included in `group_by`.
-#'  Results are always grouped by geo_id.
+#' If "race" or "race_aic" are the `race_type` then they must be included in
+#' `group_by`. Results are always grouped by geo_id.
 #'
 #' Default == NULL, i.e., estimates are only grouped / aggregated by
 #' geography.
@@ -47,24 +47,38 @@
 #' estimates should be returned as whole numbers.
 #'
 #' Default == FALSE. As of 02/2023.
-#' @param mykey Character vector of length 1 OR a database connection. Identifies the keyring:: key that
-#' can be used to access the Health & Human Services Analytic Workspace (HHSAW).
+#' @param mykey Character vector of length 1 OR a database connection. Identifies
+#' the keyring:: key that can be used to access the Health & Human Services
+#' Analytic Workspace (HHSAW).
 #'
 #' Default == 'hhsaw'
 #'
-#' @param census_vintage Integer. One of 2010 or 2020. Refers to latest Census to influence the set of
-#' population estimates
+#' @param census_vintage Integer. One of 2010 or 2020. Refers to latest Census
+#' to influence the set of population estimates
 #'
 #' Default == 2020
 #'
-#' @param geo_vintage One of 2010 or 2020. Refers to the the Census that influenced the creation of the geographies. See details for notes.
+#' @param geo_vintage Integer. One of 2010 or 2020. Refers to the the Census
+#' that influenced the creation of the geographies. See details for notes.
 #'
-#' @param schema character. Name of the schema in the db where pop data is stored
+#' Default == same as `census_vintage`
 #'
-#' @param table_prefix character. Prefix of the tables in `schema` where pop data is stored.
-#' The table will be selected as {schema}.pop_geo_{geo_type} unless geo_type is aggregated on the fly from blocks
+#' @param schema character. Name of the schema in the db where pop data is stored.
+#' \emph{Unless you know what you are doing, do not change the default!}
 #'
-#' @param return_query logical. Instead of computing the results, return the query for fetching the results
+#' Default = 'ref'
+#'
+#' @param table_prefix character. Prefix of the tables in `schema` where pop data
+#' is stored. The table will be selected as {schema}.pop_geo_{geo_type} unless
+#' geo_type is aggregated on the fly from blocks. \emph{Unless you know what you
+#' are doing, do not change the default!}
+#'
+#' Default = 'pop_geo_'
+#'
+#' @param return_query logical. Instead of computing the results, return the
+#' query for fetching the results
+#'
+#' Default == FALSE
 #'
 #' @details Note the following geography limitations:
 #'
@@ -296,7 +310,7 @@ get_population <- function(kingco = T,
   years = validate_input('years', years, seq(2000, max_year))
 
 
-  ## validate age ----
+  ## validate ages ----
   ## TODO allow age groups-- ideally with database side computation
   ## it'd probably be a bunch of case_whens. OR at least the
   ## list could be turned into a bunch of clever case_whens
@@ -306,7 +320,7 @@ get_population <- function(kingco = T,
   ages = unique(ages)
 
 
-  ## validate gender ----
+  ## validate genders ----
   ## one of m/f.
   stopifnot('`genders` must be a character vector' = is.character(genders))
   genders = unique(toupper(substr(genders, 1,1)))
