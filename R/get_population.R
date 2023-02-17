@@ -272,10 +272,18 @@ get_population <- function(kingco = T,
 
   ## FIXME: A temporary fix for hras until the new ones get released
   if(geo_vintage == 2020 & geo_type == 'hra'){
-    stop('2020 geo_vintage HRAs are not available yet. If you are getting this message after mid-march 2023 try reinstalling rads')
+    warning('2020 geo_vintage HRAs are not available yet. If you are getting this message April 2023 try reinstalling rads. geo_vintage changed to 2010')
+    geo_vintage = 2010
   }
   if(geo_vintage == 2020 & geo_type == 'region'){
-    stop('2010 geo_vintage HRAs are not available yet. If you are getting this message after mid-march 2023 try reinstalling rads')
+    stop('2020 geo_vintage region are not available yet. If you are getting this message April 2023 try reinstalling rads, geo_vintage changed to 2010')
+    geo_vintage = 2010
+
+  }
+  # TODO: REVISIT THIS
+  if(geo_vintage == 2010 & census_vintage == 2020 & geo_type == 'county'){
+    geo_vintage = 2020
+    warning('geo_vintage changed from 2010 to 2020 since the WA county boundaries did not change between 2010 and 2020')
   }
 
   where_geo_vintage = glue_sql('geo_year >= {geo_vintage} AND geo_year<= {geo_vintage + 9}')
@@ -306,6 +314,7 @@ get_population <- function(kingco = T,
   if(all(is.na(years)) || is.null(years)){
     years = as.numeric(year_r$maxyear)
   }
+  if(is.na(year_r$maxyear)) stop('No data for the combination of geo_type, year, geo_vintage, and census_vintage available')
   years = validate_input('years', years, seq(2000, year_r$maxyear))
 
 

@@ -13,6 +13,9 @@ make_subset(con, var, items = NULL)
 
 \item{items}{list of items/values to subset on}
 }
+\value{
+SQL representing a query subset
+}
 \description{
 A function to make subsets
 }

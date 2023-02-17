@@ -6,7 +6,7 @@
 \usage{
 get_population(
   kingco = T,
-  years = 2022,
+  years = NA,
   ages = c(0:100),
   genders = c("f", "m"),
   races = c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white"),
@@ -16,7 +16,7 @@ get_population(
   round = FALSE,
   mykey = "hhsaw",
   census_vintage = 2020,
-  geo_vintage = census_vintage,
+  geo_vintage = 2010,
   schema = "ref",
   table_prefix = "pop_geo_",
   return_query = FALSE
