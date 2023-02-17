@@ -99,7 +99,7 @@
 
 # get_population() ----
 get_population <- function(kingco = T,
-                           years = 2022,
+                           years = NA,
                            ages = c(0:100),
                            genders = c("f", "m"),
                            races = c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white"),
@@ -109,11 +109,10 @@ get_population <- function(kingco = T,
                            round = FALSE,
                            mykey = "hhsaw",
                            census_vintage = 2020,
-                           geo_vintage = census_vintage,
+                           geo_vintage = 2010,
                            schema = 'ref',
                            table_prefix = 'pop_geo_',
                            return_query = FALSE){
-  max_year = 2022
 
   # valid inputs
   validate_input = function(varname, vals, allowed_vals, additional = "", convert_to_all = TRUE){
@@ -275,6 +274,9 @@ get_population <- function(kingco = T,
   if(geo_vintage == 2020 & geo_type == 'hra'){
     stop('2020 geo_vintage HRAs are not available yet. If you are getting this message after mid-march 2023 try reinstalling rads')
   }
+  if(geo_vintage == 2020 & geo_type == 'region'){
+    stop('2010 geo_vintage HRAs are not available yet. If you are getting this message after mid-march 2023 try reinstalling rads')
+  }
 
   where_geo_vintage = glue_sql('geo_year >= {geo_vintage} AND geo_year<= {geo_vintage + 9}')
   # geo_vintage is not relevant for ZIPs and school districts
@@ -286,14 +288,25 @@ get_population <- function(kingco = T,
 
   ## validate years ----
   ## integer year between 2000 and 2022
-  ## TODO: This is a bottleneck. Fix it.
-  # year_q = glue::glue_sql('select max(year) as maxyear from {`pop_table`}
-  #                           where {where_geo_type} AND {where_census_vintage}', .con  = con)
-  # year_r = dbGetQuery(con, year_q)
-  # if(all(is.na(years)) || is.null(years)){
-  #   years = year_r$maxyear
-  # }
-  years = validate_input('years', years, seq(2000, max_year))
+  gt = substr(pop_table@name['table'],9,nchar(pop_table@name['table']))
+  find_years_where = c(
+    DBI::SQL('r_type = 97'),
+    DBI::SQL('load_ref_datetime is not null'),
+    DBI::SQL('delete_ref_datetime is null'),
+    where_census_vintage,
+    where_geo_vintage,
+    glue::glue_sql('geo_type = {gt}', .con = con)
+  )
+  find_years_where = find_years_where[!sapply(find_years_where, function(x) x == DBI::SQL(''))]
+  find_years_where = glue::glue_sql_collapse(find_years_where, sep = ' AND ')
+  year_q = glue::glue_sql('select max(year) as maxyear from
+                          ref.pop_metadata_etl_log
+                          where {find_years_where}',.con  = con)
+  year_r = dbGetQuery(con, year_q)
+  if(all(is.na(years)) || is.null(years)){
+    years = as.numeric(year_r$maxyear)
+  }
+  years = validate_input('years', years, seq(2000, year_r$maxyear))
 
 
   ## validate age ----
@@ -505,7 +518,7 @@ get_population <- function(kingco = T,
   ## year ----
   if(!'year' %in% names(r)){
     if(all(years == 'all')) years = seq(2000, max_year,1)
-    r[, year := rads::format_time(years)]
+    r[, year := rads::format_time(as.numeric(years))]
   }
 
   ## gender ----

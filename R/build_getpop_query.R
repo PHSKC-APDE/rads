@@ -109,6 +109,7 @@ build_getpop_query = function(con,
 #' @param con a database connection
 #' @param var variable name
 #' @param items list of items/values to subset on
+#' @return SQL representing a query subset
 make_subset = function(con, var, items = NULL){
   if(is.null(items) || items[1] == 'All'){
     return(SQL(''))
