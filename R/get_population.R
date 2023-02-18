@@ -295,7 +295,7 @@ get_population <- function(kingco = T,
 
   }
   # TODO: REVISIT THIS
-  if(geo_vintage == 2010 & census_vintage == 2020 & geo_type == 'county'){
+  if(geo_vintage == 2010 & census_vintage == 2020 & geo_type %in% c('kc','county', 'wa')){
     geo_vintage = 2020
     warning('geo_vintage changed from 2010 to 2020 since the WA county boundaries did not change between 2010 and 2020')
   }
@@ -434,26 +434,30 @@ get_population <- function(kingco = T,
                            where_geo_vintage,
                            where_census_vintage,
                            subset_by_kingco)
+    q = list(q1)
 
     ### A query for the hispanic data ----
-    hcols = data.table::copy(cols)
-    hcols[coltype == race_type, colname := 'race_hisp']
-    q2 = build_getpop_query(con = con,
-                            cols = hcols,
-                            pop_table = pop_table,
-                            group_by = group_by,
-                            group_geo_type = group_geo_type,
-                            select_geo_type = select_geo_type,
-                            ages = ages,
-                            years = years,
-                            genders = genders,
-                            races = 1, # only hispanic
-                            where_geo_type,
-                            where_geo_vintage,
-                            where_census_vintage,
-                            subset_by_kingco)
+    if('6' %in% races){
+      hcols = data.table::copy(cols)
+      hcols[coltype == race_type, colname := 'race_hisp']
+      q2 = build_getpop_query(con = con,
+                              cols = hcols,
+                              pop_table = pop_table,
+                              group_by = group_by,
+                              group_geo_type = group_geo_type,
+                              select_geo_type = select_geo_type,
+                              ages = ages,
+                              years = years,
+                              genders = genders,
+                              races = 1, # only hispanic
+                              where_geo_type,
+                              where_geo_vintage,
+                              where_census_vintage,
+                              subset_by_kingco)
 
-    q = list(q1,q2)
+      q = list(q1,q2)
+    }
+
 
   }else if(race_type == 'race_aic'){
     ## query for AIC races ----
@@ -534,6 +538,7 @@ get_population <- function(kingco = T,
                               ref.table[, value],
                               ref.table[, label])]
   }else{
+    if(races == 'All') races = ref.table[, value]
     r[, (race_type) := ref.table[value %in% races, paste(label, collapse = ', ')]]
   }
 

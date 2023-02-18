@@ -119,5 +119,8 @@ test_that('get_population',{
   expect_true(r1[race == 'Hispanic', all(all.equal(pop1.1, pop1.2) & all.equal(pop1.3, pop1.2))])
   expect_true(r1[race == 'AIAN', all(pop1.1 <= pop1.2 & pop1.2 <= pop1.3)])
 
+  # make sure hispanic doesn't sneak through
+  r2 = get_population(races = 'aian', group_by = 'race')
+  expect_true(all(r2[, race_eth] == 'AIAN'))
 
 })
