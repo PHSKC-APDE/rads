@@ -100,6 +100,7 @@
 #' @importFrom keyring key_get key_list
 #' @importFrom DBI dbConnect dbDisconnect dbGetQuery
 #' @importFrom odbc odbc
+#' @importFrom stats setNames
 #' @importFrom glue glue_sql_collapse glue_sql
 #' @references \url{https://github.com/PHSKC-APDE/rads/wiki/get_population}
 #' @return dataset as a data.table for further analysis/tabulation
@@ -127,6 +128,11 @@ get_population <- function(kingco = T,
                            schema = 'ref',
                            table_prefix = 'pop_geo_',
                            return_query = FALSE){
+
+  # visible bindings ----
+  . <- age <-  code <- colname <- coltype <- cou_id <- cou_name <- gender <-  geo_id <- geo_id_code <- NULL
+  hra <- label <- lgd_counties<-  lgd_id<-  lgd_name<-  max_year<-  pop <- region <- region_id<- NULL
+  scd_id <- scd_name <- setNames <- short<-  sql_col <- value<-  varname<-  vid <- NULL
 
   # valid inputs
   validate_input = function(varname, vals, allowed_vals, additional = "", convert_to_all = TRUE){
@@ -562,7 +568,7 @@ get_population <- function(kingco = T,
   if(geo_type == 'kc') r[, geo_id := 'King County']
   if(geo_type == 'region'){
     rnames = unique(rads.data::spatial_hra_vid_region[,.(region, region_id)])
-    rnames = rnames[, setNames(region, region_id)]
+    rnames = rnames[, stats::setNames(region, region_id)]
     r[, geo_id_code := geo_id]
     r[, geo_id := rnames[as.character(geo_id)]]
 
@@ -572,7 +578,7 @@ get_population <- function(kingco = T,
   if(geo_type == 'county'){
     cnames = rads.data::spatial_county_codes_to_names
     cnames = cnames[,.(geo_id_code = as.character(cou_id), geo_id = cou_name)]
-    cnames = setNames(cnames[, geo_id], cnames[, geo_id_code])
+    cnames = stats::setNames(cnames[, geo_id], cnames[, geo_id_code])
     r[, geo_id_code := geo_id]
     r[, geo_id := cnames[as.character(geo_id)]]
   }

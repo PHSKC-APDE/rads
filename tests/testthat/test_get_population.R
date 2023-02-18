@@ -101,8 +101,7 @@ test_that('get_population',{
 
   expect_equal(17, nrow(get_population(geo_type = "lgd", years = 2020, geo_vintage = 2010, census_vintage = 2010, round = T))) # ensure kingco = T (default) subsets to KC districts only
 
-  # TODO FIX THIS-- I messed up the input for Jeremy's table builder
-  #expect_equal(17, nrow(get_population(geo_type = "lgd", years = 2020, geo_vintage = 2020, census_vintage = 2020, round = T))) # ensure kingco = T (default) subsets to KC districts only
+  expect_equal(17, nrow(get_population(geo_type = "lgd", years = 2020, geo_vintage = 2020, census_vintage = 2020, round = T))) # ensure kingco = T (default) subsets to KC districts only
 
   expect_equal(7656200, get_population(geo_type = "wa", years = 2020,geo_vintage = 2010, census_vintage = 2010, round = T)[]$pop) # Washington State population
 

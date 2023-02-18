@@ -24,6 +24,9 @@ build_getpop_query = function(con,
                               races,
                               ...) {
 
+  # fix visible bindings
+  coltype <- colname <- NULL
+
   # Define columns to group by ----
   grp_cols = cols[coltype %in% group_by, colname]
   grp_cols = setdiff(grp_cols, 'All')
