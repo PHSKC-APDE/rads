@@ -1065,7 +1065,7 @@ list_apde_data <- function(){
 #'  list_dataset_columns('hys', T)
 #' }
 list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
-
+  colname <- NULL
   # create a negate function of %in% for readability
   '%!in%' = Negate('%in%')
   opts = c('birth', 'hys')

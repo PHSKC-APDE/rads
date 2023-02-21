@@ -4,6 +4,10 @@ library('data.table')
 library('dtsurvey')
 library('survey')
 
+if(requireNamespace('srvyr')){
+  library(srvyr)
+}
+
 
 a = data.frame(V1 = 1:10)
 b = data.table(V1 = 1:10)
@@ -51,8 +55,7 @@ testthat::test_that('Multiple types (beyond dtsurvey) work',{
 
   # test srvyr
   if(requireNamespace('srvyr')){
-    require(srvyr)
-    e = srvyr::as_survey_design(apistrat, strata = stype, weights = pw)
+    e = as_survey_design(apistrat, strata = stype, weights = pw)
     t4.1 = calc(e, 'api00', by = 'awards')
     expect_equal(t3, t4.1)
   }
