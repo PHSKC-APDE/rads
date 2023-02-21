@@ -8,14 +8,15 @@ args(get_population)
 get_population()[]
 
 ## ---- warning = FALSE, message = FALSE----------------------------------------
-get_population(geo_type = 'wa')[]
+get_population(geo_type = 'wa', round = TRUE)[]
 
 ## ---- warning = FALSE, message = FALSE----------------------------------------
-get_population()[]
+get_population(round = T)[]
 
 ## ---- warning = FALSE, message = FALSE----------------------------------------
 get_population(geo_type = c("region"),
-               group_by = c("geo_id"))[]
+               group_by = c("geo_id"),
+               round = TRUE)[]
 
 ## ---- warning = FALSE, message = FALSE----------------------------------------
 rads::get_population(geo_type = 'region', 
@@ -28,13 +29,14 @@ head(get_population(geo_type = c("hra"), group_by = c("geo_id"))[])
 head(get_population(geo_type = c("zip"), group_by = c("geo_id"))[])  
 
 ## ---- warning = FALSE, message = FALSE----------------------------------------
-head(get_population(geo_type = c("tract"), group_by = c("geo_id"))[])  
+head(get_population(geo_type = c("tract"), group_by = c("geo_id"), ages = 18, census_vintage = 2020, geo_vintage = 2020)[])  
 
 ## ---- warning = FALSE, message = FALSE----------------------------------------
-head(get_population(geo_type = c("blkgrp"), group_by = c("geo_id"))[])  
+head(get_population(geo_type = c("blkgrp"), group_by = c("geo_id"), ages = 18,census_vintage = 2020, geo_vintage = 2020)[])  
 
 ## ---- warning = FALSE, message = FALSE----------------------------------------
-head(get_population(geo_type = c("blk"), group_by = c("geo_id"))[])  
+#ages added to make things go faster
+head(get_population(geo_type = c("blk"), group_by = c("geo_id"), ages = 18, census_vintage = 2020, geo_vintage = 2020)[])  
 
 ## ---- warning = FALSE, message = FALSE----------------------------------------
 get_population(years = 2017:2019)[]
@@ -59,7 +61,7 @@ get_population(group_by = "genders")[]
 get_population(races = "aian", race_type = "race_eth")[]
 
 ## ---- warning = FALSE, message = FALSE----------------------------------------
-get_population(races = "aian", race_type = "race")[]
+get_population(races = "aian", race_type = "race", group_by = 'race')[]
 
 ## ---- warning = FALSE, message = FALSE----------------------------------------
 get_population(race_type = "race_eth", group_by = "race_eth")[]

@@ -238,7 +238,6 @@ hr {
 <p>There is no need to specify all of the arguments listed above. As you can see in the following example, the <code>calc</code> function simply needs a specified dataset (i.e., <code>ph.data</code>) and at least one <code>what</code> variable to return an intelligible result.</p>
 
 <pre><code class="r">data(mtcars)
-mtcars = dtadmin(mtcars) #make it work with calc.dtsurvey
 calc(ph.data = mtcars, what = c(&quot;mpg&quot;))[]
 </code></pre>
 
@@ -392,15 +391,15 @@ calc(ph.data = birth,
 ##  2:         White    Male birth_weight_grams 3460.298    NA    7.489711
 ##  3:      Hispanic    Male birth_weight_grams 3301.784    NA   14.310447
 ##  4:          AIAN  Female birth_weight_grams 3251.965    NA   79.070604
-##  5:      Multiple    Male birth_weight_grams 3369.178    NA   23.359494
-##  6:         Black  Female birth_weight_grams 3196.872    NA   18.683442
-##  7:      Multiple  Female birth_weight_grams 3251.312    NA   24.365976
+##  5:         Black  Female birth_weight_grams 3196.872    NA   18.683442
+##  6:      Multiple    Male birth_weight_grams 3369.178    NA   23.359494
+##  7:       Oth/unk  Female birth_weight_grams 3223.599    NA   30.670381
 ##  8:         Asian  Female birth_weight_grams 3145.902    NA    9.419157
-##  9:          NHPI    Male birth_weight_grams 3444.178    NA   43.324387
-## 10:         Black    Male birth_weight_grams 3306.213    NA   19.794051
-## 11:         Asian    Male birth_weight_grams 3231.952    NA    9.784437
-## 12:      Hispanic  Female birth_weight_grams 3270.074    NA   13.703835
-## 13:       Oth/unk  Female birth_weight_grams 3223.599    NA   30.670381
+##  9:      Hispanic  Female birth_weight_grams 3270.074    NA   13.703835
+## 10:         Asian    Male birth_weight_grams 3231.952    NA    9.784437
+## 11:         Black    Male birth_weight_grams 3306.213    NA   19.794051
+## 12:      Multiple  Female birth_weight_grams 3251.312    NA   24.365976
+## 13:          NHPI    Male birth_weight_grams 3444.178    NA   43.324387
 ## 14:          NHPI  Female birth_weight_grams 3287.541    NA   49.322668
 ## 15:       Oth/unk    Male birth_weight_grams 3315.557    NA   33.357232
 ## 16:          AIAN    Male birth_weight_grams 3438.641    NA   84.306018
@@ -410,15 +409,15 @@ calc(ph.data = birth,
 ##  2:   3445.618   3474.977  0.2164470
 ##  3:   3273.736   3329.832  0.4334156
 ##  4:   3096.989   3406.940  2.4314716
-##  5:   3323.394   3414.962  0.6933292
-##  6:   3160.253   3233.491  0.5844288
-##  7:   3203.556   3299.069  0.7494198
+##  5:   3160.253   3233.491  0.5844288
+##  6:   3323.394   3414.962  0.6933292
+##  7:   3163.487   3283.712  0.9514328
 ##  8:   3127.441   3164.363  0.2994104
-##  9:   3359.264   3529.092  1.2579021
-## 10:   3267.418   3345.009  0.5986925
-## 11:   3212.775   3251.129  0.3027408
-## 12:   3243.215   3296.933  0.4190681
-## 13:   3163.487   3283.712  0.9514328
+##  9:   3243.215   3296.933  0.4190681
+## 10:   3212.775   3251.129  0.3027408
+## 11:   3267.418   3345.009  0.5986925
+## 12:   3203.556   3299.069  0.7494198
+## 13:   3359.264   3529.092  1.2579021
 ## 14:   3190.871   3384.212  1.5002905
 ## 15:   3250.178   3380.936  1.0060823
 ## 16:   3273.404   3603.877  2.4517252
@@ -523,7 +522,9 @@ load(&quot;//dphcifs/APDE-CDIP/ACS/PUMS_data/2019_1_year/prepped_R_files/2019_1_
       data = person.wa
     )
 
-  #New for version 1.0.0
+  # New for version 1.0.0
+  # This allows for the use of data.table syntax for data cleaning
+  # users who prefer dplyr syntax should review the srvyr package
   pums = dtsurvey::dtrepsurvey(pums)
 </code></pre>
 
@@ -665,24 +666,21 @@ mydt &lt;- data.table(
   grades = as.factor(sample(c(&quot;A&quot;, &quot;B&quot;, &quot;C&quot;, &quot;D&quot;), 2000, replace = T)), 
   year = sample(2016:2021, 2000, replace = T))
 
-#New for version 1.0.0
-mydt = dtsurvey::dtadmin(mydt)
-
 mydt[]
 </code></pre>
 
-<pre><code>##       school grades year  _id
-##    1:  Alpha      A 2017    1
-##    2:  Delta      B 2019    2
-##    3:  Gamma      C 2017    3
-##    4:   Beta      A 2016    4
-##    5:  Delta      C 2018    5
-##   ---                        
-## 1996:  Alpha      C 2018 1996
-## 1997:   Beta      B 2021 1997
-## 1998:  Delta      C 2020 1998
-## 1999:  Delta      D 2019 1999
-## 2000:  Delta      D 2018 2000
+<pre><code>##       school grades year
+##    1:  Alpha      A 2017
+##    2:  Delta      B 2019
+##    3:  Gamma      C 2017
+##    4:   Beta      A 2016
+##    5:  Delta      C 2018
+##   ---                   
+## 1996:  Alpha      C 2018
+## 1997:   Beta      B 2021
+## 1998:  Delta      C 2020
+## 1999:  Delta      D 2019
+## 2000:  Delta      D 2018
 </code></pre>
 
 <p>We see that we created a dataset of 2000 rows with grades in four schools between with 2016 and 2021.</p>
@@ -723,7 +721,10 @@ set.seed(98121)
 mydt[, mywghts := sample(50:1300, 2000, replace = T)]
 
 # survey set the data
-mysvy &lt;-dtsurvey::dtsurvey(data.table(mydt[, `_id` := NULL]), weight = &#39;mywghts&#39;)
+# This uses the dtsurvey package
+# similar logic applies for survey and srvyr package
+mydt[, `_id` := NULL] # remove id to make things play nice
+mysvy &lt;-dtsurvey::dtsurvey(data.table(mydt), weight = &#39;mywghts&#39;)
 </code></pre>
 
 <p><strong>Using the survey information, again calculate the proportion of A&#39;s and B&#39;s in the Alpha and Beta schools</strong></p>
