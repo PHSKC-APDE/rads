@@ -364,8 +364,10 @@ test_that('NAs in what and when do no totally break everything',{
   setDT(r2)
   expect_equal(r1[, .(bin2cpy, V1 = mean)],r2)
 
-  r3 = calc(sur, what = 'bin', by = 'grp')
-  r4 = calc(sur, what = 'binfct', by = 'grp')
+  # Can't generate CI when result is 0/0 or 0/1
+  expect_warning(r3 <- calc(sur, what = 'bin', by = 'grp'))
+  expect_warning(r4 <- calc(sur, what = 'binfct', by = 'grp'))
+
   r5 = calc(sur, what = 'binNA', by = 'grp')
   r6 = calc(sur, what = 'binfctNA', by = 'grp')
 
@@ -387,17 +389,17 @@ test_that('Ndistinct does things', {
 
 test_that('Where elimiates everything', {
   #numeric what, no time var
-  r1 = calc(sur, what = 'api00', where = yyy == -1, metrics = c('mean'), proportion = T, ci = .95)
+  expect_warning(r1 <- calc(sur, what = 'api00', where = yyy == -1, metrics = c('mean'), proportion = T, ci = .95))
   expect_equal(r1,
                data.table(variable = 'api00', mean = NaN, level = NA, mean_se = NA_real_, mean_lower = NA_real_, mean_upper = NA_real_ )[FALSE])
 
   #factor what, no time var
-  r2 = calc(sur, what = 'awardsYes', where = yyy == -1, metrics = c('mean'), proportion = T, ci = .95)
+  expect_warning(r2 <- calc(sur, what = 'awardsYes', where = yyy == -1, metrics = c('mean'), proportion = T, ci = .95))
   expect_equal(r2,
                data.table(variable = 'awardsYes', mean = NaN, level = NA, mean_se = NA_real_, mean_lower = NA_real_, mean_upper = NA_real_ )[FALSE])
 
   #with windows
-  r3 = calc(sur, what = 'awardsYes', where = yyy == -1, metrics = c('mean'), proportion = T, ci = .95, time_var = 'yyy', win = 1)
+  expect_warning(r3 <- calc(sur, what = 'awardsYes', where = yyy == -1, metrics = c('mean'), proportion = T, ci = .95, time_var = 'yyy', win = 1))
   expect_equal(r3[, .(variable, mean, level, mean_se, mean_lower, mean_upper)], #yyy is integer(0)
                data.table(variable = 'awardsYes', mean = NaN, level = NA, mean_se = NA_real_, mean_lower = NA_real_, mean_upper = NA_real_ )[FALSE])
 

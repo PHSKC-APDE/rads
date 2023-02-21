@@ -31,7 +31,7 @@ test_that('get_population queries',{
 
 test_that('get_population',{
 
-  expect_error(get_population(years = c(1999, 2009, 2019))) # should error when < 2000
+  expect_error(get_population(years = c(1999, 2009, 2019), geo_vintage = 2020)) # should error when < 2000
 
   # expect_error(get_population(years = c(2010, 2012), geo_type = "lgd", geo_vintage = 2010, census_vintage = 2010)) # should error when < 2011 & geo_type = lgd
 
@@ -119,7 +119,8 @@ test_that('get_population',{
   expect_true(r1[race == 'AIAN', all(pop1.1 <= pop1.2 & pop1.2 <= pop1.3)])
 
   # make sure hispanic doesn't sneak through
-  r2 = get_population(races = 'aian', group_by = 'race')
+  # This warning expectation will need to be removed when geo_vintage 2020 HRAs and other stuff is available.
+  expect_warning(r2 <- get_population(races = 'aian', group_by = 'race'))
   expect_true(all(r2[, race_eth] == 'AIAN'))
 
 })

@@ -25,7 +25,7 @@ chi_qa(
 }
 \value{
 If there are no problems, a printed statement of success. Otherwise, it will stop and provide informative
-feedback everytime there is an error.
+feedback every time there is an error.
 }
 \description{
 This functions seeks to ensure that the data being assessed meet the detailed CHI
@@ -35,7 +35,7 @@ Tableau Ready standards detailed on our network drive:
 \details{
 This function ensures that the structure of the data matches all CHI Tableau Ready
 specifications. QA for data quality vis-à-vis previous production data, CHAT, or any other source,
-must be performed seperately
+must be performed separately
 }
 \examples{
 

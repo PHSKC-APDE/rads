@@ -19,7 +19,7 @@ test_that('Load data hys', {
   expect_warning(t6 <- get_data_hys(cols = 'year', year = 2021, ar = FALSE), 'Requested staged data only')
 
   # ar = TRUE, by outside of KC
-  expect_warning(t7 <- get_data_hys(ar = TRUE), 'outside of KC')
+  expect_warning(t7 <- get_data_hys(ar = TRUE,kingco = F), 'outside of KC')
 
   # from an alternate version
   t8 = get_data_hys(c('chi_year', 'year'), year = 2021, ar = TRUE, version = 'vdev')
