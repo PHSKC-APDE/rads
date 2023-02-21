@@ -633,7 +633,7 @@ format_time <- function(x){
   breaks = data.table::shift(x, type = 'lead') == (x + 1)
   bps = which(!breaks)
 
-  #seperate
+  #separate
   if(length(bps)>0){
     seper = split(x, cut(x, c(-Inf, x[bps], Inf)))
   }else{
@@ -1096,11 +1096,13 @@ list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
       stop(paste0("invalid year(s) indicated for Health Youth Survey data. Please see department documentation for details on currently correct years."))
       #year <- 2021
     }
-    dat <- suppressWarnings(get_data_hys(year = year, ar = T))
-    var.names.ar <- names(dat)
+    dat <- data.table::fread('//PHDATA01/EPE_Data/HYSdata/hys/2021/best/hys_cols.csv')
+    yyy = year
+    dat = dat[year %in% yyy]
+    var.names.ar <- dat[ar == TRUE, colname]
 
     if(!analytic_only){
-      var.names.stg = names(suppressWarnings(get_data_hys(year = year, ar = FALSE)))
+      var.names.stg = dat[ar == FALSE, colname]
     } else{
       var.names.stg = NULL
     }
