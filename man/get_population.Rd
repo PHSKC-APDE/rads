@@ -2,7 +2,7 @@
 % Please edit documentation in R/get_population.R
 \name{get_population}
 \alias{get_population}
-\title{Get OFM population estimates from SQL}
+\title{Get standard population estimates from SQL}
 \usage{
 get_population(
   kingco = T,
@@ -13,8 +13,13 @@ get_population(
   race_type = c("race_eth"),
   geo_type = c("kc"),
   group_by = NULL,
-  round = T,
-  mykey = "hhsaw"
+  round = FALSE,
+  mykey = "hhsaw",
+  census_vintage = 2020,
+  geo_vintage = 2010,
+  schema = "ref",
+  table_prefix = "pop_geo_",
+  return_query = FALSE
 )
 }
 \arguments{
@@ -27,7 +32,7 @@ Default == TRUE.}
 \item{years}{Numeric vector. Identifies which year(s) of data should be
 pulled.
 
-Default == most recent available year.}
+Default == 2022.}
 
 \item{ages}{Numeric vector. Identifies which age(s) should be pulled.
 
@@ -45,8 +50,8 @@ ethnicity should be pulled. The acceptable values are "aian",
 Default == all the possible values.}
 
 \item{race_type}{Character vector of length 1. Identifies whether to pull
-race data with Hispanic as an ethnicity ("race") or Hispanic as a race
-("race_eth").
+race data with Hispanic as an ethnicity ("race"), Hispanic as a race
+("race_eth"), or each race, including Hispanic, alone and in combination ('race_aic').
 
 Default == c("race_eth").}
 
@@ -57,9 +62,11 @@ for which you want population estimates. The acceptable values are: 'blk',
 
 Default == "kc".}
 
-\item{group_by}{Character vector of length 0 to 7. Identifies how you would
+\item{group_by}{Character vector. Identifies how you would
 like the data 'grouped' (i.e., stratified). Valid options are limited to:
-"years", "ages", "genders", "race", "race_eth", "fips_co", and "geo_id".
+"years", "ages", "genders", "race", "race_eth", or "race_aic".
+If "race" or "race_aic" are the \code{race_type} then they must be included in
+\code{group_by}. Results are always grouped by geo_id.
 
 Default == NULL, i.e., estimates are only grouped / aggregated by
 geography.}
@@ -67,18 +74,46 @@ geography.}
 \item{round}{Logical vector of length 1. Identifies whether or not population
 estimates should be returned as whole numbers.
 
-Default == TRUE.}
+Default == FALSE. As of 02/2023.}
 
-\item{mykey}{Character vector of length 1. Identifies the keyring:: key that
-can be used to access the Health & Human Services Analytic Workspace (HHSAW).
+\item{mykey}{Character vector of length 1 OR a database connection. Identifies
+the keyring:: key that can be used to access the Health & Human Services
+Analytic Workspace (HHSAW).
 
 Default == 'hhsaw'}
+
+\item{census_vintage}{Integer. One of 2010 or 2020. Refers to latest Census
+to influence the set of population estimates
+
+Default == 2020}
+
+\item{geo_vintage}{Integer. One of 2010 or 2020. Refers to the the Census
+that influenced the creation of the geographies. See details for notes.
+
+Default == same as \code{census_vintage}}
+
+\item{schema}{character. Name of the schema in the db where pop data is stored.
+\emph{Unless you know what you are doing, do not change the default!}
+
+Default = 'ref'}
+
+\item{table_prefix}{character. Prefix of the tables in \code{schema} where pop data
+is stored. The table will be selected as {schema}.pop_geo_{geo_type} unless
+geo_type is aggregated on the fly from blocks. \emph{Unless you know what you
+are doing, do not change the default!}
+
+Default = 'pop_geo_'}
+
+\item{return_query}{logical. Instead of computing the results, return the
+query for fetching the results
+
+Default == FALSE}
 }
 \value{
 dataset as a data.table for further analysis/tabulation
 }
 \description{
-Simple front-end for pulling in standard OFM population data
+Simple front-end for pulling in standard population data
 from SQL
 }
 \details{
@@ -90,6 +125,12 @@ Note the following geography limitations:
 
 -- 'blk', 'blkgrp', and 'tract' apply to King, Snohomish, and Pierce counties
 only
+
+Note on geo_vintage:
+ZIP codes and school districts (scd) are unaffected by geo_vintage.
+ZIP codes are year specific when possible and school districts are mostly considered fixed.
+
+For all other geographies, the value should represent the vintage/era of the Census
 }
 \examples{
 \dontrun{
