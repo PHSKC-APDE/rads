@@ -41,6 +41,12 @@ build_getpop_query = function(con,
 
     grp_cols_sql <- append(list(geo_id = group_geo_type), grp_cols_sql)
 
+    if(!inherits(group_geo_type, 'Id')){
+      if(group_geo_type == SQL('')){
+        grp_cols_sql$geo_id = NULL
+      }
+    }
+
     #Standardize into sql
     grp_cols_sql = lapply(grp_cols_sql, function(x){
       if(inherits(x, 'Id')){
@@ -49,6 +55,7 @@ build_getpop_query = function(con,
       x
 
     })
+
     grpz = glue::glue_sql_collapse(grp_cols_sql, sep = ', ')
     if(grpz == SQL('')){
       grp_cols_sql = DBI::SQL('')

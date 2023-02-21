@@ -123,4 +123,8 @@ test_that('get_population',{
   expect_warning(r2 <- get_population(races = 'aian', group_by = 'race'))
   expect_true(all(r2[, race_eth] == 'AIAN'))
 
+  # Things that shouldn't break
+  # warning might need to be removed
+  expect_warning(get_population(geo_type = 'wa', race_type = 'race_eth', group_by = c('ages', 'geo_id'), years = 2016:2020, round = F))
+
 })

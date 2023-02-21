@@ -244,7 +244,7 @@ get_population <- function(kingco = T,
     pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, 'cou'))
     where_geo_type = SQL("")
     group_geo_type = SQL('') # over the whole state
-    select_geo_type = glue::glue_sql('53 as geo_id', .con = con)
+    select_geo_type = glue::glue_sql("'Washington State' as geo_id", .con = con)
   }else if(geo_type == 'kc'){
     pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, 'cou'))
     where_geo_type = SQL("geo_type = 'cou' AND geo_id = '53033'")
