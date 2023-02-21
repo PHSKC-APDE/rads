@@ -56,7 +56,11 @@ build_getpop_query = function(con,
 
     })
 
-    grpz = glue::glue_sql_collapse(grp_cols_sql, sep = ', ')
+    if(length(grp_cols_sql)>0){
+      grpz = glue::glue_sql_collapse(grp_cols_sql, sep = ', ')
+    }else{
+      grpz = SQL('')
+    }
     if(grpz == SQL('')){
       grp_cols_sql = DBI::SQL('')
       group_vars = DBI::SQL('')
