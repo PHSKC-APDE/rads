@@ -677,40 +677,19 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
 
   #compare output of original and new code
+  returnDF <- compare_estimate(mydt = returnDF,
+                           id_vars = c("indicator_key", "year"),
+                           key_where = cat1_group ==  "King County" & tab != "crosstabs",
+                           new_col = "comparison_with_kc",
+                           tidy = TRUE)
 
-  test <- returnDF
-  test2 <- FormatedAnalysisOriginal[tab=="trends",]
-  test$missmatch <- 0
-  test2$missmatch <- 0
 
-  countdif <- 0
-  countsame <- 0
-  for(indicator in unique(test$indicator_key)) {
-    #for each indicator
-    for(categorical in unique(test[indicator_key == indicator,]$cat1_varname)) {
-      #for each bivariate
-      for(group in unique(test[indicator_key == indicator & cat1_varname == categorical,]$cat1_group))
-        #for each bivariate group
-        for(ayear in unique(test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group,]$year)){
-          #for each year
-          if(!is.na(test[indicator_key == indicator & cat1_group == "King County" & year == ayear & tab == "trends",]$result)) {
-            #if not an NA result, append description relative to KC wide
-            if(!identical(test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends", !c("comparison_with_kc", "run_date")], test2[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends", !c("comparison_with_kc", "run_date")])) {
-              #note, the above text ignores run_date and comparison_with_kc. comaprison ignored because the original code seems to implement this incorrectly.
-              countdif <- countdif + 1
 
-              test[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$missmatch <- 1
-              test2[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$missmatch <- 1
-            } else {
-              countsame <- countsame + 1
-            }
-          }
+  ####calculating demgroups tab####
 
-        }
-    }
-  }
-  print(countdif)
-  print(countsame)
+
+  ####calculating crosstabs tab####
+
 
 
   #####calculating _kingcounty" tab#####
@@ -718,12 +697,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
 
 
-  ####calculating demgroups tab####
 
-
-
-
-  ####calculating crosstabs tab####
 
 
 
