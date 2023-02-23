@@ -388,8 +388,35 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
       kc[, chi_year := gyl]
       kc
     }
-    returner <- future.apply::future_lapply(variables, function(v) .internal_kingcounty_calc(v, data))
-    returner
+
+    ListOfDT <- future.apply::future_lapply(variables, function(v) .internal_kingcounty_calc(v, data))
+    for(DT in ListOfDT){
+      formatedOutput <- APDE_TRO_FORMATING(DT,
+                                           "chi_year",
+                                           "variable",
+                                           "mean",
+                                           "numerator",
+                                           "denominator",
+                                           "mean_se",
+                                           "mean_lower",
+                                           "mean_upper",
+                                           "rse",
+                                           "trends",
+                                           tempCat,
+                                           tempCatGroup,
+                                           variableNameLookup,
+                                           tempCatGroupAlias,
+                                           NA,
+                                           NA,
+                                           NA,
+                                           NA,
+                                           "hys",
+                                           Sys.Date(),
+                                           #"no different",
+                                           NA,
+                                           NA)
+    }
+
 
 
 
@@ -540,7 +567,15 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
     #process and add year variable
     if(yearVariable %in% names(DT)) {
-      Tableau_Ready_DT$year <- DT[, ..yearVariable]
+      if(!grepl("&", kc$chi_year)) {
+        #test if dates are default calc output (only commas separating multiple dates) and if so, add "&" after last comma if any
+        Tableau_Ready_DT$year <- sub(",([^,]*)$", ", &\\1", DT[, ..yearVariable])
+      } else {
+        Tableau_Ready_DT$year <- DT[, ..yearVariable]
+      }
+    } else {
+      #if the year is not a variable name, use the passed value to fill in the year
+      Tableau_Ready_DT$year <- yearVariable
     }
     Tableau_Ready_DT$year <- as.character(Tableau_Ready_DT$year)
 
