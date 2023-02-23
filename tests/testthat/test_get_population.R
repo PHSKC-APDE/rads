@@ -127,4 +127,9 @@ test_that('get_population',{
   # warning might need to be removed
   expect_warning(get_population(geo_type = 'wa', race_type = 'race_eth', group_by = c('ages', 'geo_id'), years = 2016:2020, round = F))
 
-})
+  expect_equal(1, nrow(get_population(geo_type = 'wa',
+                                              race_type = 'race_eth',
+                                              group_by = c('ages', 'geo_id'),
+                                              years = 2016:2020,
+                                              round = F)))
+}

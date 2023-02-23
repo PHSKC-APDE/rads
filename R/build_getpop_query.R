@@ -80,7 +80,7 @@ build_getpop_query = function(con,
   ## select clause ----
   ### custom selection for geo_type ----
   if (any(grp_cols %in% 'geo_id')) {
-    if (length(grp_cols_sql) > 1) {
+    if (length(grp_cols_sql) >= 1) {
       grp_cols_sql[['geo_id']] <- select_geo_type
     } else{
       grp_cols_sql = select_geo_type
