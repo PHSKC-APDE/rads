@@ -366,20 +366,119 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   #crosstab batcher
   #tableau formater
 
+  APDE_CHI_TRO_kingcounty_analysis <- function(data, variables) {
+    #return a data structure containing king county wide calc results for a list of variables grouped by dates
+    .internal_kingcounty_calc <- function(v, data) {
+      #identifies latest 2 years in current data set and assumes they are the years to use for our estimates
+      grp_yrs = unique(data[!is.na(get(v)), .SD, .SDcols = c(v, 'chi_year')][, chi_year])
+      grp_yrs = grp_yrs[(length(grp_yrs)-1):length(grp_yrs)]
+      ##create a human readable description of the data range of the current point estimates
+      gyl = paste(grp_yrs, collapse = ' & ')
 
-  APDE_CHI_TRO_time_trend_analysis <- function(data, variables, bivariables) {
+      ##create county wide point estimate of the current variable
+      #calculate point estimate
+      kc = rads::calc(data, what = v, where = chi_year %in% grp_yrs, metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T, time_var = 'chi_year')
+      #assign metadata
+      kc[, tab := '_kingcounty']
+      kc[, cat1 := 'King County']
+      kc[, cat1_group := 'King County']
+      kc[, cat1_varname := 'chi_geo_kc']
+      kc[, cat1_group_alias := 'King County']
+      kc[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(cat1, cat1_group, cat1_varname, cat1_group_alias) ]
+      kc[, chi_year := gyl]
+      kc
+    }
+    returner <- future.apply::future_lapply(variables, function(v) .internal_kingcounty_calc(v, data))
+    returner
+
+
+
+  }
+
+  APDE_CHI_TRO_time_trend_analysis <- function(data, variables, bivariables, meta) {
     #return a data structure containing calc results for each combination of variables and bivariables across range of available timepoints
     #
-    .internal_time_trend_calc <- function(v, bivariables, time_var, data) {
+    .internal_time_trend_calc <- function(v, bivariables, data) {
 
       all_calc_results <- (future.apply::future_lapply(bivariables, function(bivariable) {
-        calc_result = rads::calc(data, what = v, by = c(bivariable, time_var), metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T)
+        calc_result = rads::calc(data, what = v, by = c(bivariable, "chi_year"), metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T)
         calc_result
       }))
       return(all_calc_results)
     }
 
-    returner <- future.apply::future_lapply(variables, function(v) .internal_time_trend_calc(v, bivariables, "chi_year" , data))
+    trend_result_list_of_lists <- future.apply::future_lapply(variables, function(v) .internal_time_trend_calc(v, bivariables, data))
+
+    for(listofDT in trend_result_list_of_lists) {
+
+      for(DT in listofDT) {
+
+        #create temporary DT to work with
+        temp <- DT
+
+        #temp <- trend_resultunlist[[1]][[1]] #working in loop ver
+
+        #get category 1 variable, which is the name of the variable column, which happens to be first variable in calc returned DT
+        variableNameLookup <- names(temp)[1]
+        #remove negation of binary observations
+        if(any(unlist(temp[, 1]) %in% 1)) temp =  temp[get(variableNameLookup) == 1,]
+
+        #remove obvious NA's
+        temp <- temp[!is.na(get(variableNameLookup))]
+
+        #create variables to pass to table function
+        ####### this only works with provided metadata table.
+        variableValueLookup <- unique(unlist(temp[,1]))
+        #if(length(variableValuelookup) !=1) stop("unexpectedly have too many 'indicator key' values")
+
+        for(singleVariableValueLookup in variableValueLookup) {
+          tempCat <- meta[varname == variableNameLookup & gval == singleVariableValueLookup,]$cat
+          tempCatGroup <- meta[varname == variableNameLookup & gval == singleVariableValueLookup,]$group
+
+          tempCatGroupAlias <- meta[varname == variableNameLookup & gval == singleVariableValueLookup]$group_alias
+
+          names(temp)[1] <- "cat1_group"
+
+
+          formatedOutput <- APDE_TRO_FORMATING(temp[cat1_group == singleVariableValueLookup,],
+                                               "chi_year",
+                                               "variable",
+                                               "mean",
+                                               "numerator",
+                                               "denominator",
+                                               "mean_se",
+                                               "mean_lower",
+                                               "mean_upper",
+                                               "rse",
+                                               "trends",
+                                               tempCat,
+                                               tempCatGroup,
+                                               variableNameLookup,
+                                               tempCatGroupAlias,
+                                               NA,
+                                               NA,
+                                               NA,
+                                               NA,
+                                               "hys",
+                                               Sys.Date(),
+                                               #"no different",
+                                               NA,
+                                               NA)
+          #"*")
+          if(nrow(temp[cat1_group == singleVariableValueLookup,]) == 0) {
+            print("input was 0 length")
+            print(temp)
+          }
+
+          if(exists("returner")) {
+            returner <- rbind(returner, formatedOutput)
+          } else {
+            returner <- formatedOutput
+          }
+
+        }
+      }
+    }
     returner
 
   }
@@ -539,40 +638,6 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     return(Tableau_Ready_DT)
   }
 
-  APDE_TRO_KCCompare <- function(DT) {
-    #takes a properly formatted tableau ready data.table
-    #returns the same data.table with comparison to KC for each item
-    #NOTE currently only check cat1 and cat1group, doesn't support bivariates yet
-
-    DT$comparison_with_kc <- "no different"
-    for(indicator in unique(DT$indicator_key)) {
-      #for each indicator
-      for(categorical in unique(DT[indicator_key == indicator,]$cat1_varname)) {
-        #for each bivariate
-        for(group in unique(DT[indicator_key == indicator & cat1_varname == categorical,]$cat1_group))
-          #for each bivariate group
-          for(ayear in unique(DT[indicator_key == indicator & cat1_varname == categorical & cat1_group == group,]$year)){
-            #for each year
-            if(!is.na(DT[indicator_key == indicator & cat1_group == "King County" & year == ayear & tab == "trends",]$result)) {
-              #if not an NA result, append description relative to KC wide
-              if(DT[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$upper_bound <
-                 DT[indicator_key == indicator & cat1_group == "King County" & year == ayear & tab == "trends",]$lower_bound) {
-                DT[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$comparison_with_kc <- "lower"
-              }
-              if(DT[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$lower_bound >
-                 DT[indicator_key == indicator & cat1_group == "King County" & year == ayear & tab == "trends",]$upper_bound) {
-                DT[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$comparison_with_kc <- "higher"
-              }
-
-            } else if(!is.na(DT[indicator_key == indicator & cat1_varname == categorical & cat1_group == group & year == ayear & tab == "trends",]$result)) {
-              print("warning, missing KC but not missing bivariate")
-            }
-          }
-      }
-    }
-    return(DT)
-  }
-
 
   ########################################
   ########################################
@@ -581,128 +646,26 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   ########################################
 
 
-
-  ###################################
-  #test call to trends function to generate list of DT's containing calc output
-  #this returns  calc output for all "trends" that then need to be formated
-  trend_result_list_of_lists <- APDE_CHI_TRO_time_trend_analysis(data, variables, timeTrendBivariables)
-
-  #to format this, we need to walk through the resulting data structure. The structure is 2 dimensional matrix of data frames.
-  #the first dimension is the primary variable, the second dimension is the bivariate
-  #we walk through each data table, clean it as necessary, and the reparameterize it for tableau using the "APDE_TRO_FORMATING()" helper function
-
-
-  #trend_resultunlist_backup <- trend_resultunlist
-
-  #approach for walking through data structure and updating to final format
-  remove(returnDF)
-
-
-  for(listofDT in trend_result_list_of_lists) {
-
-    for(DT in listofDT) {
-
-      #create temporary DT to work with
-      temp <- DT
-
-      #temp <- trend_resultunlist[[1]][[1]] #working in loop ver
-
-      #get category 1 variable, which is the name of the variable column, which happens to be first variable in calc returned DT
-      variableNameLookup <- names(temp)[1]
-      #remove negation of binary observations
-      if(any(unlist(temp[, 1]) %in% 1)) temp =  temp[get(variableNameLookup) == 1,]
-
-      #remove obvious NA's
-      temp <- temp[!is.na(get(variableNameLookup))]
-
-      #create variables to pass to table function
-      ####### this only works with provided metadata table.
-      variableValueLookup <- unique(unlist(temp[,1]))
-      #if(length(variableValuelookup) !=1) stop("unexpectedly have too many 'indicator key' values")
-
-      for(singleVariableValueLookup in variableValueLookup) {
-        tempCat <- meta[varname == variableNameLookup & gval == singleVariableValueLookup,]$cat
-        tempCatGroup <- meta[varname == variableNameLookup & gval == singleVariableValueLookup,]$group
-
-        tempCatGroupAlias <- meta[varname == variableNameLookup & gval == singleVariableValueLookup]$group_alias
-
-        names(temp)[1] <- "cat1_group"
-
-
-        formatedOutput <- APDE_TRO_FORMATING(temp[cat1_group == singleVariableValueLookup,],
-                                             "chi_year",
-                                             "variable",
-                                             "mean",
-                                             "numerator",
-                                             "denominator",
-                                             "mean_se",
-                                             "mean_lower",
-                                             "mean_upper",
-                                             "rse",
-                                             "trends",
-                                             tempCat,
-                                             tempCatGroup,
-                                             variableNameLookup,
-                                             tempCatGroupAlias,
-                                             NA,
-                                             NA,
-                                             NA,
-                                             NA,
-                                             "hys",
-                                             Sys.Date(),
-                                             #"no different",
-                                             NA,
-                                             NA)
-                                             #"*")
-        if(nrow(temp[cat1_group == singleVariableValueLookup,]) == 0) {
-          print("input was 0 length")
-          print(temp)
-        }
-
-        #setnames(temp, names(temp)[1], "cat1_group")
-        if(exists("returnDF")) {
-          returnDF <- rbind(returnDF, formatedOutput)
-        } else {
-          returnDF <- formatedOutput
-        }
-
-      }
-    }
-  }
-
-
-  #assign comparison to KC
-  returnDF <- APDE_TRO_KCCompare(returnDF)
-
-
-
-  #compare output of original and new code
-  returnDF <- compare_estimate(mydt = returnDF,
-                           id_vars = c("indicator_key", "year"),
-                           key_where = cat1_group ==  "King County" & tab != "crosstabs",
-                           new_col = "comparison_with_kc",
-                           tidy = TRUE)
-
-
+  ####calculating time trends######
+  returnDF_TT <- APDE_CHI_TRO_time_trend_analysis(data, variables, timeTrendBivariables, meta)
 
   ####calculating demgroups tab####
 
 
   ####calculating crosstabs tab####
 
+  ####calculating _kingcounty" tab#####
+  returnDF_KC <- APDE_CHI_TRO_kingcounty_analysis(data, variables)
 
 
-  #####calculating _kingcounty" tab#####
+  returnDF <- rbind(returnDF_TT, returnDF_KC)
+  #compare output of original and new code
+  returnDF <- compare_estimate(mydt = returnDF,
+                           id_vars = c("indicator_key", "year"),
+                           key_where = cat1_group ==  "King County" & tab != "crosstabs",
 
-
-
-
-
-
-
-
-
-
+                           new_col = "comparison_with_kc",
+                           tidy = TRUE)
 
 
 
