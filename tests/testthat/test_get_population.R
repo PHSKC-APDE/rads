@@ -131,7 +131,7 @@ test_that('get_population',{
                       race_type = 'race_eth',
                       group_by = c('ages', 'geo_id'),
                       years = 2016:2020,
-                      round = F, geo_vintage = 2010)
+                      round = F, geo_vintage = 2020)
   expect_true(all(0:100 %in% r2[,age]))
 
 })
