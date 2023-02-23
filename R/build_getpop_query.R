@@ -31,47 +31,36 @@ build_getpop_query = function(con,
   grp_cols = cols[coltype %in% group_by, colname]
   grp_cols = setdiff(grp_cols, 'All')
 
-  # Create sql to do groups ----
-  if (length(grp_cols) > 0) {
-    ## default is to group by a column as normal ----
+  # check if there are groups
+  if(length(grp_cols)>0){
+    ## if so, convert the non-geo_ids to DBI::Ids and then to sql
     grp_cols_sql = lapply(setdiff(grp_cols, 'geo_id'), function(x) {
-      DBI::Id(column = x)
+      glue::glue_sql('{`DBI::Id(column = x)`}', .con = con)
     })
+
     if (length(grp_cols_sql) > 0) names(grp_cols_sql) = setdiff(grp_cols, 'geo_id')
 
+    ## add group by geotype
+    if(inherits(group_geo_type, 'Id')) group_geo_type = glue::glue_sql('{`group_geo_type`}', .con = con)
     grp_cols_sql <- append(list(geo_id = group_geo_type), grp_cols_sql)
 
-    if(!inherits(group_geo_type, 'Id')){
-      if(group_geo_type == SQL('')){
-        grp_cols_sql$geo_id = NULL
-      }
-    }
+    # check to see if there are any legit ons
+    blank_grp = sapply(grp_cols_sql, function(x) x == DBI::SQL(''))
 
-    #Standardize into sql
-    grp_cols_sql = lapply(grp_cols_sql, function(x){
-      if(inherits(x, 'Id')){
-        x = glue::glue_sql('{`x`}',.con = con)
-      }
-      x
+    # remove ones that are just nuthin
+    grp_cols_sql = grp_cols_sql[!blank_grp]
+  }else{
+    grp_cols_sql = list()
+  }
 
-    })
-
-    if(length(grp_cols_sql)>0){
-      grpz = glue::glue_sql_collapse(grp_cols_sql, sep = ', ')
-    }else{
-      grpz = SQL('')
-    }
-    if(grpz == SQL('')){
-      grp_cols_sql = DBI::SQL('')
-      group_vars = DBI::SQL('')
-    }else{
-      group_vars = glue::glue_sql('GROUP BY {grpz}', .con = con)
-
-    }
-  } else{
-    grp_cols_sql = DBI::SQL('')
+  if(length(grp_cols_sql) >0){
+    grpz = glue::glue_sql_collapse(grp_cols_sql, sep = ',')
+    group_vars = glue::glue_sql('GROUP BY {grpz}', .con = con)
+  }else{
+    grpz = DBI::SQL('')
     group_vars = DBI::SQL('')
   }
+
 
   # Compute_pop ----
   # all get_population calls should be grouped by geo_id-- even if its redundant
@@ -87,12 +76,18 @@ build_getpop_query = function(con,
     }
   }
 
+  ### make sure everything is sql
+  grp_cols_sql = lapply(grp_cols_sql, function(x){
+    if(inherits(x, 'Id')){
+      x = glue::glue_sql('{`x`}',.con = con)
+    }
+    x
+  })
+
   ### create select_me ----
-  if (length(grp_cols) == 0) {
-    select_me = compute_pop
-  } else{
-    select_me = glue_sql_collapse(c(compute_pop, glue_sql('{`grp_cols_sql`*}', .con = con)), sep = ',')
-  }
+  selects = c(compute_pop,grp_cols_sql)
+  selects = selects[!sapply(selects, function(x) x == SQL(''))]
+  select_me = glue_sql_collapse(c(compute_pop, grp_cols_sql), sep = ',')
 
   ## Subset clauses ----
   ### create clauses ----
