@@ -369,13 +369,13 @@ hr {
 <pre><code class="r">head(get_population(geo_type = c(&quot;zip&quot;), group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
 
-<pre><code>##         pop geo_type geo_id year   age       gender
-## 1: 20781.87      zip  98177 2022 0-100 Female, Male
-## 2: 54830.48      zip  98115 2022 0-100 Female, Male
-## 3: 49713.01      zip  98042 2022 0-100 Female, Male
-## 4: 16164.66      zip  98045 2022 0-100 Female, Male
-## 5: 13399.54      zip  98077 2022 0-100 Female, Male
-## 6: 16443.72      zip  98065 2022 0-100 Female, Male
+<pre><code>##           pop geo_type geo_id year   age       gender
+## 1: 20781.8687      zip  98177 2022 0-100 Female, Male
+## 2: 54830.4750      zip  98115 2022 0-100 Female, Male
+## 3: 49713.0127      zip  98042 2022 0-100 Female, Male
+## 4: 13399.5357      zip  98077 2022 0-100 Female, Male
+## 5: 16164.6587      zip  98045 2022 0-100 Female, Male
+## 6:   295.7078      zip  98288 2022 0-100 Female, Male
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
@@ -390,13 +390,13 @@ hr {
 <pre><code class="r">head(get_population(geo_type = c(&quot;tract&quot;), group_by = c(&quot;geo_id&quot;), ages = 18, census_vintage = 2020, geo_vintage = 2020)[])  
 </code></pre>
 
-<pre><code>##         pop geo_type      geo_id year age       gender
-## 1: 12.55822    tract 53033008003 2022  18 Female, Male
-## 2: 47.36526    tract 53033023603 2022  18 Female, Male
-## 3: 26.09754    tract 53033023902 2022  18 Female, Male
-## 4: 34.36343    tract 53033024001 2022  18 Female, Male
-## 5: 92.52864    tract 53033030005 2022  18 Female, Male
-## 6: 62.54261    tract 53033025806 2022  18 Female, Male
+<pre><code>##          pop geo_type      geo_id year age       gender
+## 1:  50.92631    tract 53033032222 2022  18 Female, Male
+## 2: 100.92107    tract 53033030306 2022  18 Female, Male
+## 3:  69.40429    tract 53033030802 2022  18 Female, Male
+## 4:  26.98390    tract 53033032605 2022  18 Female, Male
+## 5:  71.90381    tract 53033029406 2022  18 Female, Male
+## 6:  45.46794    tract 53033022001 2022  18 Female, Male
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
@@ -411,13 +411,13 @@ hr {
 <pre><code class="r">head(get_population(geo_type = c(&quot;blkgrp&quot;), group_by = c(&quot;geo_id&quot;), ages = 18,census_vintage = 2020, geo_vintage = 2020)[])  
 </code></pre>
 
-<pre><code>##          pop geo_type       geo_id year age       gender
-## 1:  7.275591   blkgrp 530330042012 2022  18 Female, Male
-## 2: 11.302780   blkgrp 530330097014 2022  18 Female, Male
-## 3: 16.683887   blkgrp 530330239021 2022  18 Female, Male
-## 4: 26.405645   blkgrp 530330248002 2022  18 Female, Male
-## 5:  9.797107   blkgrp 530330253031 2022  18 Female, Male
-## 6: 12.914570   blkgrp 530330298031 2022  18 Female, Male
+<pre><code>##         pop geo_type       geo_id year age       gender
+## 1:  5.64486   blkgrp 530330065001 2022  18 Female, Male
+## 2: 38.32421   blkgrp 530330075011 2022  18 Female, Male
+## 3: 19.98388   blkgrp 530330078001 2022  18 Female, Male
+## 4: 13.76607   blkgrp 530330300063 2022  18 Female, Male
+## 5: 12.27083   blkgrp 530330227031 2022  18 Female, Male
+## 6: 16.08342   blkgrp 530330236012 2022  18 Female, Male
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
@@ -434,12 +434,12 @@ head(get_population(geo_type = c(&quot;blk&quot;), group_by = c(&quot;geo_id&quo
 </code></pre>
 
 <pre><code>##           pop geo_type          geo_id year age       gender
-## 1:  0.7782502      blk 530330204024003 2022  18 Female, Male
-## 2:  1.5908622      blk 530330321043002 2022  18 Female, Male
-## 3: 12.9308556      blk 530330300053000 2022  18 Female, Male
-## 4:  1.7645618      blk 530330097023010 2022  18 Female, Male
-## 5:  7.2847884      blk 530330220054001 2022  18 Female, Male
-## 6:  0.2647371      blk 530330222031009 2022  18 Female, Male
+## 1:  0.7788566      blk 530330254023018 2022  18 Female, Male
+## 2:  3.2851772      blk 530330315022006 2022  18 Female, Male
+## 3:  7.4107827      blk 530330290033004 2022  18 Female, Male
+## 4:  1.1120099      blk 530330317081012 2022  18 Female, Male
+## 5: 22.1129812      blk 530330294083001 2022  18 Female, Male
+## 6:  0.4622076      blk 530330258041014 2022  18 Female, Male
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White

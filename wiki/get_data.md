@@ -27,7 +27,7 @@ args(get_data_birth)
 ```
 
 ```
-## function (cols = NA, year = c(2017), kingco = T) 
+## function (cols = NA, year = NA, kingco = T) 
 ## NULL
 ```
 You can see that `get_data_birth` takes three possible arguments:
@@ -52,18 +52,13 @@ ls()
 ```
 
 ```
-##  [1] "birth"                "births"               "ex1.1"               
-##  [4] "ex1.2"                "ex2.1"                "ex2.2"               
-##  [7] "ex3.1"                "ex4.1"                "ex5.1"               
-## [10] "from"                 "grades.distribution"  "grades.distribution2"
-## [13] "household.wa"         "kcbirth"              "kcpop"               
-## [16] "mtcars"               "mydt"                 "mysvy"               
-## [19] "new.standard"         "person.wa"            "pop"                 
-## [22] "pums"                 "rmds"                 "rrr"                 
-## [25] "td"                   "temp1"                "temp2"               
-## [28] "temp3"                "temp4"                "temp5"               
-## [31] "to"                   "towiki"               "wabirth"             
-## [34] "wapop"
+##  [1] "birth"                "births"               "deaths"               "est"                  "ex1.1"                "ex1.2"               
+##  [7] "ex2.1"                "ex2.2"                "ex3.1"                "ex4.1"                "ex5.1"                "grades.distribution" 
+## [13] "grades.distribution2" "household.wa"         "kcbirth"              "kcpop"                "mtcars"               "mydt"                
+## [19] "mysvy"                "new.standard"         "nlines"               "out"                  "person.wa"            "pop"                 
+## [25] "population"           "pums"                 "rl"                   "rmds"                 "rrr"                  "start_dir"           
+## [31] "td"                   "temp1"                "temp2"                "temp3"                "temp4"                "temp5"               
+## [37] "wabirth"              "wapop"                "wiki"                 "xwalk"
 ```
 
 To identify the class of the `birth` object and to confirm that our columns are present, we can type `str(birth)`
@@ -145,7 +140,7 @@ list_apde_data()
 ```
 
 ```
-## [1] "hys"   "birth" "bsk"
+## [1] "hys"   "birth"
 ```
 
 

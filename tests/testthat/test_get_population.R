@@ -134,4 +134,7 @@ test_that('get_population',{
                       round = F, geo_vintage = 2020)
   expect_true(all(0:100 %in% r2[,age]))
 
+  r3 <- get_population(geo_type = 'blk', race_type = 'race_eth', races = 'black', group_by = c('ages', 'geo_id'), years = 2018:2020, round = F)
+  expect_true(all(!is.na(r3[,age])))
+
 })

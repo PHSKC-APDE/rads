@@ -90,7 +90,7 @@ nrow(deaths) # should be ~65,000 based on apriori knowledge
 ## [1] 67260
 ```
 
-We see that the column names and the number of rows are what we expected. Now, let's identify the deaths from falls using the `rads::death_injury_matrix_count` function. To learn about this function, type `?death_injury_matrix_count` in your console. For now, just trust that this is the correct syntax:
+We see that the column names and the number of rows are what we expected. Now, let's identify the deaths from falls using the `rads::death_injury_matrix_count` function. To learn about this function, type `?death_injury_matrix_count` in your console or walk through the [death_functions wiki](https://github.com/PHSKC-APDE/rads/wiki/get_data). For now, just trust that this is the correct syntax:
 
 
 ```r
@@ -98,19 +98,17 @@ deaths <- death_injury_matrix_count(ph.data = deaths,
                                intent = "*", # all five intents
                                mechanism = "fall",
                                icdcol = 'underlying_cod_code',
-                               byage = TRUE,
-                               death_age_col = 'chi_age',
                                kingco = F) # False because already subset
 head(deaths[deaths >9]) # only display non-suppressed data
 ```
 
 ```
-##    mechanism        intent chi_age chi_year chi_geo_seattle deaths rank total_deaths
-## 1:      Fall Unintentional      86     2016           FALSE     12    3          245
-## 2:      Fall Unintentional      86     2018           FALSE     10    2          302
-## 3:      Fall Unintentional      89     2016           FALSE     13    1          265
-## 4:      Fall Unintentional      91     2016           FALSE     12    3          255
-## 5:      Fall Unintentional      93     2018           FALSE     10    2          234
+##    mechanism        intent deaths chi_age chi_geo_seattle chi_year
+## 1:      Fall Unintentional     12      86           FALSE     2016
+## 2:      Fall Unintentional     10      86           FALSE     2018
+## 3:      Fall Unintentional     13      89           FALSE     2016
+## 4:      Fall Unintentional     12      91           FALSE     2016
+## 5:      Fall Unintentional     10      93           FALSE     2018
 ```
 
 Glancing at the output from the `death_injury_matrix_count` function, we see the that we have **aggregated** `deaths` by `chi_age` and stratified by `intent`. This is all we really need. Let's tidy our data set and rename the two essential columns at the same time:
@@ -145,13 +143,13 @@ head(population)
 ```
 
 ```
-##       pop geo_type      geo_id      year age       gender                                            race_eth
-## 1: 128906       kc King County 2016-2020   0 Female, Male aian, asian, black, hispanic, multiple, nhpi, white
-## 2: 126259       kc King County 2016-2020   1 Female, Male aian, asian, black, hispanic, multiple, nhpi, white
-## 3: 128181       kc King County 2016-2020   2 Female, Male aian, asian, black, hispanic, multiple, nhpi, white
-## 4: 125771       kc King County 2016-2020   3 Female, Male aian, asian, black, hispanic, multiple, nhpi, white
-## 5: 121015       kc King County 2016-2020   4 Female, Male aian, asian, black, hispanic, multiple, nhpi, white
-## 6: 131800       kc King County 2016-2020   5 Female, Male aian, asian, black, hispanic, multiple, nhpi, white
+##           pop geo_type      geo_id      year age       gender                                                 race_eth
+## 1:  25298.521       kc King County 2016-2020  86 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 2:   7463.793       kc King County 2016-2020  93 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 3:  87613.046       kc King County 2016-2020  68 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 4: 193406.487       kc King County 2016-2020  33 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 5: 141611.518       kc King County 2016-2020  43 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 6: 130725.965       kc King County 2016-2020   0 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ```
 
 The essential columns of interest are `pop` and `age`, so let's drop the other columns.
@@ -163,13 +161,13 @@ head(population)
 ```
 
 ```
-##    age    pop
-## 1:   0 128906
-## 2:   1 126259
-## 3:   2 128181
-## 4:   3 125771
-## 5:   4 121015
-## 6:   5 131800
+##    age        pop
+## 1:  86  25298.521
+## 2:  93   7463.793
+## 3:  68  87613.046
+## 4:  33 193406.487
+## 5:  43 141611.518
+## 6:   0 130725.965
 ```
 
 Since we are interested in strata (i.e., `intent`), we will need a complete set of population data for each strata.
@@ -184,10 +182,12 @@ population[, .N, intent] # confirm that have 101 rows per intent
 ```
 
 ```
-##           intent   N
-## 1: Unintentional 101
-## 2:       Suicide 101
-## 3:  Undetermined 101
+##                    intent   N
+## 1:               Homicide 101
+## 2: Legal intervention/war 101
+## 3:                Suicide 101
+## 4:           Undetermined 101
+## 5:          Unintentional 101
 ```
 
 ### STEP 3: **Merge** the denominators onto the numerators
@@ -206,12 +206,12 @@ head(deaths[count > 9]) # only display non-suppressed data
 ```
 
 ```
-##    age        intent count   pop
-## 1:  86 Unintentional    12 22044
-## 2:  86 Unintentional    10 22044
-## 3:  89 Unintentional    13 15550
-## 4:  91 Unintentional    12 10621
-## 5:  93 Unintentional    10  6722
+##    age        intent count       pop
+## 1:  86 Unintentional    12 25298.521
+## 2:  86 Unintentional    10 25298.521
+## 3:  89 Unintentional    13 17258.566
+## 4:  91 Unintentional    12 11820.684
+## 5:  93 Unintentional    10  7463.793
 ```
 
 ### STEP 4: Use [rads::age_standardize()](https://github.com/PHSKC-APDE/rads/wiki/age_standardize)
@@ -232,10 +232,12 @@ head(est)
 ```
 
 ```
-##           intent count      pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci                            reference_pop
-## 1:       Suicide    70 15037011       0.47      0.36      0.59     0.42    0.33    0.55 2000 U.S. Std Population (11 age groups)
-## 2:  Undetermined     9 11128975       0.08      0.04      0.15     0.07    0.03    0.15 2000 U.S. Std Population (11 age groups)
-## 3: Unintentional  1209 35580177       3.40      3.21      3.60     1.62    1.51    1.74 2000 U.S. Std Population (11 age groups)
+##                    intent count      pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci                            reference_pop
+## 1:               Homicide     0 92424975       0.00      0.00      0.00     0.00    0.00    0.04 2000 U.S. Std Population (11 age groups)
+## 2: Legal intervention/war     0 92424975       0.00      0.00      0.00     0.00    0.00    0.04 2000 U.S. Std Population (11 age groups)
+## 3:                Suicide    70 92424975       0.08      0.06      0.10     0.07    0.05    0.11 2000 U.S. Std Population (11 age groups)
+## 4:           Undetermined     9 92424975       0.01      0.00      0.02     0.01    0.00    0.05 2000 U.S. Std Population (11 age groups)
+## 5:          Unintentional  1209 92424975       1.31      1.24      1.38     1.10    1.04    1.18 2000 U.S. Std Population (11 age groups)
 ```
 
 Here we see that the King County **crude** and **adjusted** fall death rates can differ substantially (e.g., Unintentional) or slightly (e.g., Undetermined). 
@@ -282,11 +284,11 @@ head(deaths)
 ```
 ##    age underlying_cod_code Region
 ## 1:  66                K703   <NA>
-## 2:  68                C329   <NA>
-## 3:  63                N185   <NA>
-## 4:  65                 N10   <NA>
-## 5:  81                C911   <NA>
-## 6:  85                 R99   <NA>
+## 2:  66                C259   <NA>
+## 3:  93                G309   <NA>
+## 4:  69                C259   <NA>
+## 5:  85                 R99   <NA>
+## 6:  81                C911   <NA>
 ```
 
 As you can see, there are few rows where the death data are missing a Region (due to a missing HRA). For simplicity sake, let's drop these rows.
@@ -307,11 +309,11 @@ head(deaths)
 ```
 ##    age Region count
 ## 1:  69  South    95
-## 2:  30  South    15
+## 2:  95  South    82
 ## 3:  59  South    60
-## 4:  95  South    82
-## 5:  88  South   132
-## 6:  55  South    67
+## 4:  30  South    15
+## 5:  92  South   118
+## 6:  74  South   109
 ```
 
 Finally, let's take a peak at the number of deaths by region:
@@ -344,13 +346,13 @@ head(population)
 ```
 
 ```
-##     pop geo_type  geo_id year age       gender                                            race_eth
-## 1: 2149   region Seattle 2019  80 Female, Male aian, asian, black, hispanic, multiple, nhpi, white
-## 2: 2046   region Seattle 2019  81 Female, Male aian, asian, black, hispanic, multiple, nhpi, white
-## 3: 2067   region Seattle 2019  82 Female, Male aian, asian, black, hispanic, multiple, nhpi, white
-## 4: 2008   region Seattle 2019  83 Female, Male aian, asian, black, hispanic, multiple, nhpi, white
-## 5: 1881   region Seattle 2019  84 Female, Male aian, asian, black, hispanic, multiple, nhpi, white
-## 6: 7447   region Seattle 2019   0 Female, Male aian, asian, black, hispanic, multiple, nhpi, white
+##          pop geo_type  geo_id year age       gender                                                 race_eth geo_id_code
+## 1:  546.5617   region   North 2019  81 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
+## 2: 5998.8750   region Seattle 2019   7 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
+## 3: 7598.2149   region    East 2019  14 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
+## 4: 5822.5106   region    East 2019  66 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
+## 5: 8204.9609   region    East 2019  48 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
+## 6: 1837.0743   region   North 2019  54 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
 ```
 
 The key columns of interest are `pop`, `geo_id` (which has our regions), and `age`. The other columns are all constants, so let's just keep what we need.
@@ -362,13 +364,13 @@ head(population)
 ```
 
 ```
-##     Region age  pop
-## 1: Seattle  80 2149
-## 2: Seattle  81 2046
-## 3: Seattle  82 2067
-## 4: Seattle  83 2008
-## 5: Seattle  84 1881
-## 6: Seattle   0 7447
+##     Region age       pop
+## 1:   North  81  546.5617
+## 2: Seattle   7 5998.8750
+## 3:    East  14 7598.2149
+## 4:    East  66 5822.5106
+## 5:    East  48 8204.9609
+## 6:   North  54 1837.0743
 ```
 
 Note that, unlike in the example above, we already have a complete population data set (ages 0 to 100) for each strata.
@@ -380,10 +382,10 @@ population[, .N, Region]
 
 ```
 ##     Region   N
-## 1: Seattle 101
-## 2:   South 101
-## 3:   North 101
-## 4:    East 101
+## 1:   North 101
+## 2: Seattle 101
+## 3:    East 101
+## 4:   South 101
 ```
 
 ### STEP 3: **Merge** the denominators onto the numerators
@@ -402,13 +404,13 @@ head(deaths)
 ```
 
 ```
-##    Region age count  pop
-## 1:   East   0    16 6753
-## 2:   East   1     1 6703
-## 3:   East   2     0 7042
-## 4:   East   3     2 7088
-## 5:   East   4     1 7122
-## 6:   East   5     0 8079
+##    Region age count      pop
+## 1:   East   0    16 7185.194
+## 2:   East   1     1 7108.263
+## 3:   East   2     0 7328.129
+## 4:   East   3     2 7337.394
+## 5:   East   4     1 7237.943
+## 6:   East   5     0 8492.019
 ```
 
 ### STEP 4: Use [rads::age_standardize()](https://github.com/PHSKC-APDE/rads/wiki/age_standardize)
@@ -427,14 +429,14 @@ head(est)
 ```
 
 ```
-##     Region count    pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci                            reference_pop
-## 1:    East  2853 575033     496.15    478.11    514.69   548.67  528.45  569.53 2000 U.S. Std Population (11 age groups)
-## 2:   North  1095 133761     818.62    770.85    868.59   680.11  639.83  722.63 2000 U.S. Std Population (11 age groups)
-## 3: Seattle  3986 747830     533.01    516.59    549.82   551.07  533.78  568.89 2000 U.S. Std Population (11 age groups)
-## 4:   South  5447 769683     707.69    689.02    726.74   817.16  795.05  839.75 2000 U.S. Std Population (11 age groups)
+##     Region count      pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci                            reference_pop
+## 1:    East  2853 575166.5     496.03    477.99    514.57   512.10  493.22  531.58 2000 U.S. Std Population (11 age groups)
+## 2:   North  1095 135451.6     808.41    761.23    857.74   625.23  587.97  664.67 2000 U.S. Std Population (11 age groups)
+## 3: Seattle  3986 721376.6     552.55    535.53    569.98   531.67  514.96  548.91 2000 U.S. Std Population (11 age groups)
+## 4:   South  5447 802097.6     679.09    661.18    697.37   713.40  694.21  733.01 2000 U.S. Std Population (11 age groups)
 ```
 
-Here we see that the the **crude rate is lower** in South King County (707.69) compared to North King County (818.62). This flips the relationship we saw with the counts (5447 vs 1095), but does not account for differences in the population structure in the two regions. In contrast, the **adjusted rate is higher** in South King County (817.16) vs. North King County(680.11) .
+Here we see that the the **crude rate is lower** in South King County (679.09) compared to North King County (808.41). This flips the relationship we saw with the counts (5447 vs 1095), but does not account for differences in the population structure in the two regions. In contrast, the **adjusted rate is higher** in South King County (713.4) vs. North King County(625.23) .
 
 # Conclusion
 
