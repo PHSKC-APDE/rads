@@ -377,20 +377,8 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
       ##create county wide point estimate of the current variable
       #calculate point estimate
-      kc = rads::calc(data, what = v, where = chi_year %in% grp_yrs, metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T, time_var = 'chi_year')
-      #assign metadata
-      kc[, tab := '_kingcounty']
-      kc[, cat1 := 'King County']
-      kc[, cat1_group := 'King County']
-      kc[, cat1_varname := 'chi_geo_kc']
-      kc[, cat1_group_alias := 'King County']
-      kc[, c('cat2', 'cat2_group', 'cat2_varname', 'cat2_group_alias') := list(cat1, cat1_group, cat1_varname, cat1_group_alias) ]
-      kc[, chi_year := gyl]
-      kc
-    }
+      DT = rads::calc(data, what = v, where = chi_year %in% grp_yrs, metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T, time_var = 'chi_year')
 
-    ListOfDT <- future.apply::future_lapply(variables, function(v) .internal_kingcounty_calc(v, data))
-    for(DT in ListOfDT){
       formatedOutput <- APDE_TRO_FORMATING(DT,
                                            "chi_year",
                                            "variable",
@@ -401,25 +389,28 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
                                            "mean_lower",
                                            "mean_upper",
                                            "rse",
-                                           "trends",
-                                           tempCat,
-                                           tempCatGroup,
-                                           variableNameLookup,
-                                           tempCatGroupAlias,
-                                           NA,
-                                           NA,
-                                           NA,
-                                           NA,
+                                           "_kingcounty",
+                                           "King County",
+                                           "King County",
+                                           "chi_geo_kc",
+                                           "King County",
+                                           "King County",
+                                           "King County",
+                                           "chi_geo_kc",
+                                           "King County",
                                            "hys",
                                            Sys.Date(),
-                                           #"no different",
                                            NA,
                                            NA)
+
     }
 
+    ListOfDT <- future.apply::future_lapply(variables, function(v) .internal_kingcounty_calc(v, data))
+
+    returner <- do.call("rbind", ListOfDT)
 
 
-
+    returner
   }
 
   APDE_CHI_TRO_time_trend_analysis <- function(data, variables, bivariables, meta) {
@@ -488,7 +479,6 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
                                                NA,
                                                "hys",
                                                Sys.Date(),
-                                               #"no different",
                                                NA,
                                                NA)
           #"*")
@@ -689,11 +679,14 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
   ####calculating crosstabs tab####
 
+
   ####calculating _kingcounty" tab#####
   returnDF_KC <- APDE_CHI_TRO_kingcounty_analysis(data, variables)
 
 
   returnDF <- rbind(returnDF_TT, returnDF_KC)
+
+
   #compare output of original and new code
   returnDF <- compare_estimate(mydt = returnDF,
                            id_vars = c("indicator_key", "year"),
