@@ -29,7 +29,7 @@ test_that('Both versions of calc deal with missing in the by var the same',{
 
 test_that('Where with quoted and non-quoted wheres',{
   r1 = calc(sur, what = 'api00', where = stype == 'H', metrics = c('mean', 'numerator', 'denominator'))
-  r2 = calc(sur, what = 'api00', where = "stype == 'H'", metrics = c('mean', 'numerator', 'denominator'))
+  expect_warning(r2 <- calc(sur, what = 'api00', where = "stype == 'H'", metrics = c('mean', 'numerator', 'denominator')))
 
   expect_equal(r1,r2)
 

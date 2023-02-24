@@ -246,9 +246,10 @@ test_that("Check for proper triggering of errors ...", {
 })
 
 test_that("Death counts by cause are accurate ...", {
-  expect_equal(nrow(d113res.default), nrow(d113res.manual) + 2 ) # 2 extra rows in function ... All causes & Other and unspecified infectious ...(which has COVID-19)
+  expect_equal(nrow(d113res.default), nrow(d113res.manual) + 1 ) # 1 extra rows in function (cause.of.death == 'All causes')
   expect_equal(length(intersect(d113res.default$cause.of.death, d113res.manual$cod)), 9) # confirm names of causes of death
-  expect_equal(sum(d113res.default[deaths != 0 & !is.na(causeid)]$deaths), sum(d113res.manual$manual.count)) # confirm count
+  expect_equal(sum(d113res.default[!cause.of.death %in% c('All causes')]$deaths),
+               sum(d113res.manual$manual.count)) # confirm count
 })
 
 test_that("'cause' argument works correctly ...", {
@@ -277,12 +278,12 @@ test_that("'cause' argument works correctly ...", {
 })
 
 test_that("Structure of output table is as expected ...", {
-  expect_equal(nrow(d113res.default), 11) # even though requested all causeids, not all were present
-  expect_equal(sort(names(d113res.default)), c("cause.of.death", "causeid", "deaths", "rank"))
+  expect_equal(nrow(d113res.default), 10) # eight causeids should be present, PLUS COVID, PLUS 'All causes'
+  expect_equal(sort(names(d113res.default)), c("cause.of.death", "causeid", "deaths"))
   expect_equal(nrow(suppressWarnings(death_113_count(ph.data = d113data2, icdcol = "cod.icd10", kingco = FALSE, ypll_age = 65, death_age_col = "ageofdeath"))),
-               11)
+               10) # eight causeids should be present, PLUS COVID, PLUS 'All causes'
   expect_equal(sort(names(suppressWarnings(death_113_count(ph.data = d113data2, icdcol = "cod.icd10", kingco = FALSE, ypll_age = 85, death_age_col = "ageofdeath")))),
-               c("cause.of.death", "causeid", "deaths", "rank", "ypll_85"))
+               c("cause.of.death", "causeid", "deaths", "ypll_85"))
 })
 
 # Check death_injury_matrix_count ----
@@ -363,13 +364,13 @@ test_that("Filtering by intent and mechanism work properly ...", {
                                           mechanism = "firearm",
                                           icdcol = "cod.icd10",
                                           kingco = F)
-  double.none <- death_injury_matrix_count(ph.data = injurydata,
+  double.none <- suppressWarnings(death_injury_matrix_count(ph.data = injurydata,
                                       intent = "none",
                                       mechanism = "none",
                                       icdcol = "cod.icd10",
-                                      kingco = F)
+                                      kingco = F))
   expect_equal(nrow(intent.check), 2) # 1 for Fall/suicide and 1 for All injury/suicide
-  expect_equal(nrow(mechanism.check), 1) # Firearm/Legal intervention/war
+  expect_equal(nrow(mechanism.check), 5) # the '*' gets all five intents
   expect_equal(nrow(double.none), 1) # All injury/Any intent
 })
 
@@ -382,26 +383,21 @@ test_that("YPLL counts are accurate ...", {
   manual5 <- copy(injurydata5)[, AGEz := rads::calc_age(date_of_birth, date_of_death)] # manually calc age
   manual5[AGEz <= 65, ypll_65 := 65 - AGEz]
 
-  # using pre-calculated age vs using dob and dod
-  expect_equal(sum(death_injury_matrix_count(ph.data = injurydata5, icdcol = "cod.icd10", kingco = FALSE, ypll_age = 65)[]$ypll_65),
-               sum(death_injury_matrix_count(ph.data = injurydata4, icdcol = "cod.icd10", kingco = FALSE, ypll_age = 65, death_age_col = "ageofdeath")[]$ypll_65))
-  expect_identical((death_injury_matrix_count(ph.data = injurydata5, icdcol = "cod.icd10", kingco = FALSE, ypll_age = 65)),
-                   (death_injury_matrix_count(ph.data = injurydata4, icdcol = "cod.icd10", kingco = FALSE, ypll_age = 65, death_age_col = "ageofdeath")))
-
   # compare to manually calculated YPLL_65
-  expect_equal(sum(death_injury_matrix_count(ph.data = injurydata4[year == 2020], intent = "none", mechanism = "none", icdcol = "cod.icd10", kingco = FALSE, ypll_age = 65, death_age_col = "ageofdeath")[]$ypll_65),
+  expect_equal(sum(suppressWarnings(death_injury_matrix_count(ph.data = injurydata4[year == 2020],
+                                             intent = "none",
+                                             mechanism = "none",
+                                             icdcol = "cod.icd10",
+                                             kingco = FALSE,
+                                             ypll_age = 65,
+                                             death_age_col = "ageofdeath"))[]$ypll_65),
                sum(manual5[year == 2020]$ypll_65, na.rm = T))
 
 })
 
 test_that("Structure of output table is as expected ...", {
-  expect_equal(nrow(injuries_f), 14) # even though requested all causeids, not all were present
-  expect_equal(sort(names(injuries_f)), c("deaths", "intent", "mechanism", "rank", "total_deaths"))
+  expect_equal(nrow(injuries_f), 50) # there are 10 mechanisms (9 unique + 'All injury') X 5 intents
+  expect_equal(nrow(injuries_f[deaths != 0]), 14) # there are only 14 valid combinations of mechanism and intent in this data
+  expect_equal(sort(names(injuries_f)), c("deaths", "intent", "mechanism"))
 })
-
-
-
-
-
-
 

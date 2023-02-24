@@ -1,6 +1,6 @@
-#' Get OFM population estimates from SQL
+#' Get standard population estimates from SQL
 #'
-#' @description Simple front-end for pulling in standard OFM population data
+#' @description Simple front-end for pulling in standard population data
 #' from SQL
 #'
 #' @param kingco Logical vector of length 1. Identifies whether you want
@@ -11,7 +11,7 @@
 #' @param years Numeric vector. Identifies which year(s) of data should be
 #' pulled.
 #'
-#' Default == most recent available year.
+#' Default == 2022.
 #' @param ages Numeric vector. Identifies which age(s) should be pulled.
 #'
 #' Default == c(0:100), with 100 being the top coded value for 100:120.
@@ -25,8 +25,8 @@
 #'
 #' Default == all the possible values.
 #' @param race_type Character vector of length 1. Identifies whether to pull
-#' race data with Hispanic as an ethnicity ("race") or Hispanic as a race
-#' ("race_eth").
+#' race data with Hispanic as an ethnicity ("race"), Hispanic as a race
+#' ("race_eth"), or each race, including Hispanic, alone and in combination ('race_aic').
 #'
 #' Default == c("race_eth").
 #' @param geo_type Character vector of length 1. Identifies the geographic level
@@ -35,20 +35,50 @@
 #' 'region', 'seattle', 'scd' (school districts), 'tract', 'wa', and 'zip'.
 #'
 #' Default == "kc".
-#' @param group_by Character vector of length 0 to 7. Identifies how you would
+#' @param group_by Character vector. Identifies how you would
 #' like the data 'grouped' (i.e., stratified). Valid options are limited to:
-#' "years", "ages", "genders", "race", "race_eth", "fips_co", and "geo_id".
+#' "years", "ages", "genders", "race", "race_eth", or "race_aic".
+#' If "race" or "race_aic" are the `race_type` then they must be included in
+#' `group_by`. Results are always grouped by geo_id.
 #'
 #' Default == NULL, i.e., estimates are only grouped / aggregated by
 #' geography.
 #' @param round Logical vector of length 1. Identifies whether or not population
 #' estimates should be returned as whole numbers.
 #'
-#' Default == TRUE.
-#' @param mykey Character vector of length 1. Identifies the keyring:: key that
-#' can be used to access the Health & Human Services Analytic Workspace (HHSAW).
+#' Default == FALSE. As of 02/2023.
+#' @param mykey Character vector of length 1 OR a database connection. Identifies
+#' the keyring:: key that can be used to access the Health & Human Services
+#' Analytic Workspace (HHSAW).
 #'
 #' Default == 'hhsaw'
+#'
+#' @param census_vintage Integer. One of 2010 or 2020. Refers to latest Census
+#' to influence the set of population estimates
+#'
+#' Default == 2020
+#'
+#' @param geo_vintage Integer. One of 2010 or 2020. Refers to the the Census
+#' that influenced the creation of the geographies. See details for notes.
+#'
+#' Default == same as `census_vintage`
+#'
+#' @param schema character. Name of the schema in the db where pop data is stored.
+#' \emph{Unless you know what you are doing, do not change the default!}
+#'
+#' Default = 'ref'
+#'
+#' @param table_prefix character. Prefix of the tables in `schema` where pop data
+#' is stored. The table will be selected as {schema}.pop_geo_{geo_type} unless
+#' geo_type is aggregated on the fly from blocks. \emph{Unless you know what you
+#' are doing, do not change the default!}
+#'
+#' Default = 'pop_geo_'
+#'
+#' @param return_query logical. Instead of computing the results, return the
+#' query for fetching the results
+#'
+#' Default == FALSE
 #'
 #' @details Note the following geography limitations:
 #'
@@ -59,11 +89,18 @@
 #' -- 'blk', 'blkgrp', and 'tract' apply to King, Snohomish, and Pierce counties
 #' only
 #'
+#' Note on geo_vintage:
+#' ZIP codes and school districts (scd) are unaffected by geo_vintage.
+#' ZIP codes are year specific when possible and school districts are mostly considered fixed.
+#'
+#' For all other geographies, the value should represent the vintage/era of the Census
+#'
 #' @importFrom data.table data.table copy setDT setnames setcolorder
 #' @import rads.data
 #' @importFrom keyring key_get key_list
 #' @importFrom DBI dbConnect dbDisconnect dbGetQuery
 #' @importFrom odbc odbc
+#' @importFrom stats setNames
 #' @importFrom glue glue_sql_collapse glue_sql
 #' @references \url{https://github.com/PHSKC-APDE/rads/wiki/get_population}
 #' @return dataset as a data.table for further analysis/tabulation
@@ -84,413 +121,504 @@ get_population <- function(kingco = T,
                            race_type = c("race_eth"),
                            geo_type = c("kc"),
                            group_by = NULL,
-                           round = T,
-                           mykey = "hhsaw"){
+                           round = FALSE,
+                           mykey = "hhsaw",
+                           census_vintage = 2020,
+                           geo_vintage = 2010,
+                           schema = 'ref',
+                           table_prefix = 'pop_geo_',
+                           return_query = FALSE){
 
-    # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-    r_type <- short <- race <- name <- race_eth <- gender <- age <- geo_id <- pop <- geo_id_blk <- region <- hra <-
-    server <- varname <- code <- label <- `.` <- cou_id <- cou_name <- vid <- lgd_id <- lgd_name <- scd_id <-
-    scd_name <- geo_id_code <- NULL
+  # visible bindings ----
+  . <- age <-  code <- colname <- coltype <- cou_id <- cou_name <- gender <-  geo_id <- geo_id_code <- NULL
+  hra <- label <- lgd_counties<-  lgd_id<-  lgd_name<-  max_year<-  pop <- region <- region_id<- NULL
+  scd_id <- scd_name <- setNames <- short<-  sql_col <- value<-  varname<-  vid <- NULL
 
-    # Ensure years argument is accounted for
-    if(is.null(years)) years <- NA
+  # valid inputs
+  validate_input = function(varname, vals, allowed_vals, additional = "", convert_to_all = TRUE){
 
-    # Logical for whether running on a server ----
-      server <- grepl('server', tolower(Sys.info()['release']))
+    invalid = setdiff(vals, allowed_vals)
+    if(length(invalid)>0){
+      invalid = glue::glue_collapse(invalid, sep =', ', last = ', and')
+      stop(glue::glue('The following values provided in `{varname}` are invalid: {invalid}.
+                      {additional}'))
+    }
 
-    # KC zips (copied from CHAT for 2019 data on 2021-05-18) ----
-      kczips <- (c(98001, 98002, 98003, 98004, 98005, 98006, 98007, 98008, 98009, 98010, 98011, 98013, 98014, 98015, 98019, 98022,
-                  98023, 98024, 98025, 98027, 98028, 98029, 98030, 98031, 98032, 98033, 98034, 98035, 98038, 98039, 98040, 98041,
-                  98042, 98045, 98047, 98050, 98051, 98052, 98053, 98054, 98055, 98056, 98057, 98058, 98059, 98062, 98063, 98064,
-                  98065, 98070, 98071, 98072, 98073, 98074, 98075, 98077, 98083, 98089, 98092, 98093, 98101, 98102, 98103, 98104,
-                  98105, 98106, 98107, 98108, 98109, 98111, 98112, 98113, 98114, 98115, 98116, 98117, 98118, 98119, 98121, 98122,
-                  98124, 98125, 98126, 98127, 98129, 98130, 98131, 98132, 98133, 98134, 98136, 98138, 98139, 98140, 98141, 98144,
-                  98145, 98146, 98148, 98151, 98154, 98155, 98158, 98160, 98161, 98164, 98165, 98166, 98168, 98170, 98171, 98174,
-                  98175, 98177, 98178, 98181, 98184, 98185, 98188, 98189, 98190, 98191, 98194, 98195, 98198, 98199, 98224, 98288))
+    if(convert_to_all && all(allowed_vals %in% vals)) return('All')
 
-    # KC School districts (copied from https://www5.kingcounty.gov/sdc/Metadata.aspx?Layer=schdst 2022/03/10) ----
-      kcscds <- c(5300001, 5300300, 5300390, 5302820, 5302880, 5303540, 5303750, 5303960, 5304230, 5304560, 5304980, 5305910,
-                  5307230, 5307710, 5307920, 5307980, 5308040, 5308130, 5308760, 5309300)
+    unique(vals)
 
-    # KC WA State House legislative districts (https://en.wikipedia.org/wiki/Washington_(state)_legislative_districts 2022/07/08) ----
-      kclgds <- c(53001, 53005, 53011, 53030, 53031, 53032, 53033, 53034, 53036, 53037, 53039, 53041,
-                  53043, 53045, 53046, 53047, 53048)
-
-    # race/eth reference table ----
-      ref.table <- data.table::copy(rads.data::population_wapop_codebook_values)
-      ref.table <- ref.table[varname %in% c("r1r3", "r2r4", "r3", "r4")]
-      ref.table[varname == "r1r3" | varname == "r3", name := "race"]
-      ref.table[varname == "r2r4" | varname == "r4", name := "race_eth"]
-      ref.table <- ref.table[, .(name, r_type = varname, value = code, label, short)]
-      ref.table[r_type == "r3", r_type := "r1r3"]
-      ref.table[r_type == "r4", r_type := "r2r4"]
-      ref.table <- unique(ref.table)
-
-    # check / clean / prep arguments ----
-      # check if keyring credentials exist for hhsaw ----
-      trykey <- try(keyring::key_get(mykey, keyring::key_list(mykey)[['username']]), silent = T)
-      if (inherits(trykey, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured or you are not connected to the VPN. \n",
-                                                      "Please check your VPN connection and or set your keyring and run the get_population() function again. \n",
-                                                      paste0("e.g., keyring::key_set('hhsaw', username = 'ALastname@kingcounty.gov') \n"),
-                                                      "When prompted, be sure to enter the same password that you use to log into to your laptop. \n",
-                                                      "If you already have an hhsaw key on your keyring with a different name, you can specify it with the 'mykey = ...' argument \n"))
-      rm(trykey)
-
-      # check whether keyring credentials are correct / up to date ----
-      if(server == FALSE){
-        con <- try(con <- DBI::dbConnect(odbc::odbc(),
-                                      driver = getOption('rads.odbc_version'),
-                                      server = 'kcitazrhpasqlprp16.azds.kingcounty.gov',
-                                      database = 'hhs_analytics_workspace',
-                                      uid = keyring::key_list(mykey)[["username"]],
-                                      pwd = keyring::key_get(mykey, keyring::key_list(mykey)[["username"]]),
-                                      Encrypt = 'yes',
-                                      TrustServerCertificate = 'yes',
-                                      Authentication = 'ActiveDirectoryPassword'), silent = T)
-        if (inherits(con, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured and is likely to have an outdated password. \n",
-                                                               "Please reset your keyring and run the get_population() function again. \n",
-                                                               paste0("e.g., keyring::key_set('", mykey, "', username = 'ALastname@kingcounty.gov') \n"),
-                                                               "When prompted, be sure to enter the same password that you use to log into to your laptop."))
-      }else{
-        message(paste0('Please enter the password you use for your laptop into the pop-up window. \n',
-                       'Note that the pop-up may be behind your Rstudio session. \n',
-                       'You will need to use your two factor authentication app to confirm your KC identity.'))
-        con <- DBI::dbConnect(odbc::odbc(),
-                              driver = getOption('rads.odbc_version'),
-                              server = "kcitazrhpasqlprp16.azds.kingcounty.gov",
-                              database = "hhs_analytics_workspace",
-                              uid = keyring::key_list(mykey)[["username"]],
-                              Encrypt = "yes",
-                              TrustServerCertificate = "yes",
-                              Authentication = "ActiveDirectoryInteractive")
-      }
+  }
 
 
+  # Validations ----
 
-      # check kingco ----
-        if( !is.logical(kingco) | length(kingco) != 1){
-          stop(paste0("The `kingco` argument ('", paste(kingco, collapse = ', '), "') you entered is invalid. It must be a logcial vector (i.e., TRUE or FALSE) of length 1"))
-        }
+  ## Validate key ----
+  ## Key should be a character string that can be used to generate a database connection
+  ## Also have to allow for the option of interactive authentication
+  ## TODO: Allow mykey to be a database connection itself
+  is.db = function(x){
+    r = try(dbIsValid(mykey))
+    if(inherits(r, 'try-error')){
+      r = FALSE
+    }
+  }
+  closeserver = TRUE
+  if(is.character(mykey)){
+    server <- grepl('server', tolower(Sys.info()['release']))
+    trykey <- try(keyring::key_get(mykey, keyring::key_list(mykey)[['username']]), silent = T)
+    if (inherits(trykey, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured or you are not connected to the VPN. \n",
+                                                   "Please check your VPN connection and or set your keyring and run the get_population() function again. \n",
+                                                   paste0("e.g., keyring::key_set('hhsaw', username = 'ALastname@kingcounty.gov') \n"),
+                                                   "When prompted, be sure to enter the same password that you use to log into to your laptop. \n",
+                                                   "If you already have an hhsaw key on your keyring with a different name, you can specify it with the 'mykey = ...' argument \n"))
+    rm(trykey)
 
-      # check years ----
-        avail.years <- as.integer(DBI::dbGetQuery(conn = con, "SELECT DISTINCT year from [ref].[pop]")[]$year)
+    if(server == FALSE){
+      con <- try(con <- DBI::dbConnect(odbc::odbc(),
+                                       driver = getOption('rads.odbc_version'),
+                                       server = 'kcitazrhpasqlprp16.azds.kingcounty.gov',
+                                       database = 'hhs_analytics_workspace',
+                                       uid = keyring::key_list(mykey)[["username"]],
+                                       pwd = keyring::key_get(mykey, keyring::key_list(mykey)[["username"]]),
+                                       Encrypt = 'yes',
+                                       TrustServerCertificate = 'yes',
+                                       Authentication = 'ActiveDirectoryPassword'), silent = T)
+      if (inherits(con, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured and is likely to have an outdated password. \n",
+                                                  "Please reset your keyring and run the get_population() function again. \n",
+                                                  paste0("e.g., keyring::key_set('", mykey, "', username = 'ALastname@kingcounty.gov') \n"),
+                                                  "When prompted, be sure to enter the same password that you use to log into to your laptop."))
+    }else{
+      message(paste0('Please enter the password you use for your laptop into the pop-up window. \n',
+                     'Note that the pop-up may be behind your Rstudio session. \n',
+                     'You will need to use your two factor authentication app to confirm your KC identity.'))
+      con <- DBI::dbConnect(odbc::odbc(),
+                            driver = getOption('rads.odbc_version'),
+                            server = "kcitazrhpasqlprp16.azds.kingcounty.gov",
+                            database = "hhs_analytics_workspace",
+                            uid = keyring::key_list(mykey)[["username"]],
+                            Encrypt = "yes",
+                            TrustServerCertificate = "yes",
+                            Authentication = "ActiveDirectoryInteractive")
+    }
 
-        if(all(length(years) == 1 & is.na(years))){
-          years = max(avail.years)
-          message(paste0("You did not specify a year so the most recent available year, ", max(avail.years), ", was selected for you. Available years include ", format_time(avail.years)))
-          }
+    on.exit(DBI::dbDisconnect(con))
 
-        if( !all(sapply(years, function(i) i == as.integer(i))) | min(years) < min(avail.years) | max(years) > max(avail.years)){
-          stop(paste0("The `years` argument ('", paste(unique(years), collapse = ', '), "') you entered is invalid. It must be a vector of at least one 4 digit integer in ",
-                      format_time(avail.years), " (e.g., `c(2017:2019)`)"))
-          }
-        years <- unique(years)
+  }else if(is.db(mykey)){
+    closeserver = FALSE
+    con = mykey
 
-        avail.lgd.years <- setDT(DBI::dbGetQuery(conn = con, "SELECT DISTINCT year from [ref].[pop] where geo_type = 'lgd'"))
-        if(geo_type == 'lgd' & min(years) < min(avail.lgd.years$year)){
-          stop(paste0("The `years` argument ('", paste(unique(years), collapse = ', '), "') you entered is invalid. When geo_type == 'lgd', the minimum year is ", min(avail.lgd.years$year)))}
 
-      # check ages ----
-        if( !all(sapply(ages, function(i) i == as.integer(i))) | max(ages) > 100 | min(ages) < 0 ){
-          stop(paste0("The `ages` argument ('", paste(unique(ages), collapse = ', '), "') you entered is invalid. It must be a vector of at least one age integer between 0 & 100 (e.g., `c(0:17, 65:100)`)"))}
-        ages <- unique(ages)
 
-      # check / clean genders ----
-        if(sum(tolower(genders) %in% c("f", "female", "m", "male")) != length(genders)){stop(paste0("The `genders` argument ('", paste(genders, collapse = "','"), "') is limited to the following: c('f', 'female', 'm', 'male')"))}
+  }else{
+    stop('`mykey` is not a reference to database connection or keyring')
+  }
 
-        genders_orig <- paste(genders, collapse = ', ')
-        genders <- gsub("Female|female|f", "F", genders)
-        genders <- gsub("Male|male|m", "M", genders)
-        genders <- unique(genders)
-        if(sum(genders %in% c("M", "F")) == 0){
-          stop(paste0("The `genders` argument that you entered ('", genders_orig, "') is invalid. It must have one or two of the following values: `c('F', 'M')`"))
-        }
+  ## validate census_vintage ----
+  census_vintage = validate_input('census_vintage', census_vintage, c(2010, 2020))
+  where_census_vintage = glue::glue_sql('census_year = {census_vintage}', .con = con)
 
-      # check / clean races ----
-        races_orig <- paste(races, collapse = ', ')
-        races <- gsub(".*aian.*|.*indian.*", "aian", tolower(races))
-        races <- gsub(".*_as.*|.*asian.*", "asian", tolower(races))
-        races <- gsub(".*blk.*|.*black.*", "black", tolower(races))
-        races <- gsub(".*hisp.*|.*latin.*", "hispanic", tolower(races))
-        races <- gsub(".*mlt.*|.*mult.*", "multiple", tolower(races))
-        races <- gsub(".*nhpi.*|.*pacific.*", "nhpi", tolower(races))
-        races <- gsub(".*wht.*|.*white.*", "white", tolower(races))
+  ## validate geo_type and kingco ----
+  ## if seattle, pull region where seattle
+  valid_geogs = c('blk', 'blkgrp', 'tract', 'county', 'hra', 'kc', 'lgd',
+                  'region', 'seattle', 'scd' , 'tract', 'wa', 'zip')
+  geo_type = match.arg(geo_type, valid_geogs)
+  ## create geo_type selectors and filters ----
+  ## TODO: should we recompute blkgrp and tract? It'll be a lot faster
+  if(geo_type %in% c('blkgrp')){
+    pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, 'blk'))
+    where_geo_type = SQL("")
+    group_geo_type = SQL('LEFT(geo_id,12)')
+    select_geo_type = glue::glue_sql('{group_geo_type} as geo_id', .con = con)
+  }else if(geo_type == 'tract'){
+    pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, 'blk'))
+    where_geo_type = SQL("")
+    group_geo_type = SQL('LEFT(geo_id,11)')
+    select_geo_type = glue::glue_sql('{group_geo_type} as geo_id', .con = con)
+  }else if(geo_type == 'seattle'){
+    pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, 'reg'))
+    where_geo_type = SQL("geo_type = 'reg' AND geo_id = 3")
+    group_geo_type = DBI::Id(column = 'geo_id')
+    select_geo_type = DBI::Id(column = 'geo_id')
+  }else if(geo_type == 'wa'){
+    pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, 'cou'))
+    where_geo_type = SQL("")
+    group_geo_type = SQL('') # over the whole state
+    select_geo_type = glue::glue_sql("'Washington State' as geo_id", .con = con)
+  }else if(geo_type == 'kc'){
+    pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, 'cou'))
+    where_geo_type = SQL("geo_type = 'cou' AND geo_id = '53033'")
+    group_geo_type = DBI::Id(column = 'geo_id')
+    select_geo_type = DBI::Id(column = 'geo_id')
+  }else{
+    pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, tolower(substring(geo_type,1,3))))
+    where_geo_type = SQL('')
+    group_geo_type = SQL('geo_id') # over the whole state
+    select_geo_type = DBI::Id(column = 'geo_id')
+  }
 
-        if(sum(races %in% c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white")) < 1){
-          stop("The `races` argument (", races_orig, ") does not contain any valid races or ethnicities. Please include at least one of the following: `c('aian', 'asian', 'black', 'hispanic', 'multiple', 'nhpi', 'white')`")
-          }
-        races <- unique(races)
+  ## Validate pop_table ----
+  stopifnot(inherits(pop_table, 'Id'))
+  stopifnot('`pop_table` must be specified with a schema and a table name' = all(c('schema', 'table') %in% (names(pop_table@name))))
+  pt_chk = DBI::dbGetQuery(con, glue::glue_sql("
+                 SELECT *
+                 FROM INFORMATION_SCHEMA.TABLES
+                 WHERE TABLE_SCHEMA = {pop_table@name['schema']}
+                 AND  TABLE_NAME = {pop_table@name['table']}", .con = con))
+  if(nrow(pt_chk) != 1) stop('`pop_table` does not exist in the supplied database and/or some how refers to multiple tables. Check the schema and table_prefix argument')
 
-      # check race_type ----
-        if(length(race_type) != 1 | !race_type %in% c("race", "race_eth") ){stop(paste0("The `race_type` argument ('", paste(race_type, collapse = "','"), "') is limited to one the following: c('race', 'race_eth')"))}
 
-      # check geo_type ----
-        if(length(geo_type) != 1 | !geo_type %in% c('kc', 'seattle', 'blk', 'blkgrp', 'county', 'hra', 'lgd', 'region', 'scd', 'tract', 'wa', 'zip')){
-          stop(paste0("The `geo_type` argument (", paste(geo_type, collapse = ", "), ") contains an invalid entry. It must have one of the following values: `c('kc', 'seattle, 'blk', 'blkgrp', 'hra', 'region', 'tract', 'wa', 'zip')`"))
-        }
+  ## validate kingco ----
+  ## TODO: THIS should be precomputed/in ref.pop already
+  kingco = validate_input('kingco', kingco, c(TRUE, FALSE))
+  subset_by_kingco = SQL('')
+  if(kingco && geo_type %in% c('blk', 'blkgrp', 'tract')){
+    subset_by_kingco = SQL("fips_co = '33'")
+  }else if(kingco && geo_type == 'zip'){
+    # TODO: THIS IS A CHANGE FROM PAST PRACTICE
+    subset_by_kingco = make_subset(con, 'geo_id', as.character(rads.data::spatial_zip_city_region_scc$zip))
+  }else if(kingco && geo_type == 'scd'){
+    subset_by_kingco = make_subset(con, 'geo_id', as.character(rads.data::spatial_school_dist_to_region$geo_id))
+  }else if(kingco && geo_type == 'lgd'){
+    subset_by_kingco = make_subset(con, 'geo_id', as.character(rads.data::spatial_legislative_codes_to_names[grep('King', lgd_counties), lgd_id]))
+  }
+  # Per a conversation with Danny, if a user is asking for county and not kc they want all counties
+  # else if(kingco && tolower(substr(geo_type,1,3)) %in% c('cou')){
+  #   subset_by_kingco = SQL("geo_id = '53033'")
+  # }
 
-        if(geo_type == "seattle"){seattle = 1; geo_type = 'region'} # Seattle is just one of four regions, so set to region and then subset results at end
-        if(geo_type == "wa"){wastate = 1; geo_type = 'county'} # WA State is just the sum of all counties
+  ## validate geo_vintage ----
+  geo_vintage = validate_input('geo_vintage', geo_vintage, c(2010, 2020))
 
-        if(kingco == F & !geo_type %in% c('blk', 'blkgrp', 'lgd', 'tract', 'scd', 'zip')){
-          stop("When 'kingco = F', permissible geo_types are limited to 'blk', 'blkgrp', 'scd', 'tract', and 'zip'.")
-        }
+  ## FIXME: A temporary fix for hras until the new ones get released
+  if(geo_vintage == 2020 & geo_type == 'hra'){
+    warning('2020 geo_vintage HRAs are not available yet. If you are getting this message April 2023 try reinstalling rads. geo_vintage changed to 2010')
+    geo_vintage = 2010
+  }
+  if(geo_vintage == 2020 & geo_type == 'region'){
+    stop('2020 geo_vintage region are not available yet. If you are getting this message April 2023 try reinstalling rads, geo_vintage changed to 2010')
+    geo_vintage = 2010
 
-        if(kingco == F & ! geo_type %in% c("lgd", "scd", "zip")){
-          warning("When 'kingco = F', all permissible geo_types except for 'county', 'lgd', 'scd', 'wa', and 'zip' will provide estimates for King, Snohomish, and Pierce counties only.")
-        }
+  }
+  # TODO: REVISIT THIS
+  if(geo_vintage == 2010 & census_vintage == 2020 & geo_type %in% c('kc','county', 'wa')){
+    geo_vintage = 2020
+    warning('geo_vintage changed from 2010 to 2020 since the WA county boundaries did not change between 2010 and 2020')
+  }
 
-      # check group_by ----
-        if(!is.null(group_by)){
-          if( sum(group_by %in% c('years', 'ages', 'genders', 'race', 'race_eth', 'fips_co', 'geo_id')) / length(group_by) != 1 ){
-            stop(paste0("One of the `group_by` variables (", paste(group_by, collapse = ', '), ") is not valid. Valid options are: `c('years', 'ages', 'genders', 'race', 'race_eth', 'fips_co', 'geo_id')`"))
-          }
-          if( sum(unique(group_by) %in% c("race_eth", "race")) == 2 ){
-            stop(paste0("The `group_by` argument can only contain `race_eth` (Hispanic as race) or `race` (Hispanic as ethnicity), not both. If you do not want to group by specific variables, type `group_by = NULL`"))
-          }
-          if(("race_eth" %in% group_by & race_type != "race_eth") | ("race" %in% group_by & race_type != "race") ){
-            stop(paste0("If 'race' or 'race_eth' are specified in the `group_by` argument, it must match the value of `race_type`"))
-          }
-          group_by <- unique(group_by)
-        }
-          group_by_orig <- data.table::copy(group_by)
+  where_geo_vintage = glue_sql('geo_year >= {geo_vintage} AND geo_year<= {geo_vintage + 9}')
+  # geo_vintage is not relevant for ZIPs and school districts
+  if(geo_type %in% c('zip', 'scd')){
+    where_geo_vintage = SQL('')
+  }
 
-      # Top code age ----
-          if(max(ages) == 100){
-            sql_ages <- c(ages, 101:120)
-          } else {sql_ages <- ages}
 
-      # adjust group_by depending on which geo_type specified ----
-          if(geo_type != "kc" & !("geo_id" %in% group_by)) {
-            group_by <- unique(c("geo_id", group_by))
-            group_by_orig <- unique(c("geo_id", group_by))
-          }
-          if(geo_type == "hra") {
-              group_by <- setdiff(c("hra10", group_by), "geo_id")
-              group_by_orig <- data.table::copy(group_by)
-          }
 
-      # adjust group_by for name differences ----
-        if(!is.null(group_by)){
-          group_by <- gsub("^race_eth$", "race_eth = r2r4", group_by)
-          group_by <- gsub("^race$", "race = r1r3", group_by)
-          group_by <- gsub("^years$", "year", group_by)
-          group_by <- gsub("^ages$", "age", group_by)
-          group_by <- gsub("^genders$", "gender", group_by)
-        }
+  ## validate years ----
+  ## integer year between 2000 and 2022
+  gt = substr(pop_table@name['table'],9,nchar(pop_table@name['table']))
+  find_years_where = c(
+    DBI::SQL('r_type = 97'),
+    DBI::SQL('load_ref_datetime is not null'),
+    DBI::SQL('delete_ref_datetime is null'),
+    where_census_vintage,
+    where_geo_vintage,
+    glue::glue_sql('geo_type = {gt}', .con = con)
+  )
+  find_years_where = find_years_where[!sapply(find_years_where, function(x) x == DBI::SQL(''))]
+  find_years_where = glue::glue_sql_collapse(find_years_where, sep = ' AND ')
+  year_q = glue::glue_sql('select max(year) as maxyear from
+                          ref.pop_metadata_etl_log
+                          where {find_years_where}',.con  = con)
+  year_r = dbGetQuery(con, year_q)
+  if(all(is.na(years)) || is.null(years)){
+    years = as.numeric(year_r$maxyear)
+  }
+  if(is.na(year_r$maxyear)) stop('No data for the combination of geo_type, year, geo_vintage, and census_vintage available')
+  years = validate_input('years', years, seq(2000, year_r$maxyear))
 
-      # adjust geo_type as needed ----
-        geo_type_orig <- data.table::copy(geo_type)
-        if(geo_type %in% c("kc", "blkgrp", "hra", "tract", "region")){geo_type <- "blk"} # necessary because kc, blkgrp, tract, hra, region are aggregated up from blk
-        if(geo_type %in% c("county")){geo_type <- "Cou"} #
 
-    # generate SQL query ----
+  ## validate ages ----
+  ## TODO allow age groups-- ideally with database side computation
+  ## it'd probably be a bunch of case_whens. OR at least the
+  ## list could be turned into a bunch of clever case_whens
+  ## Integers between 0 and 100. 100 gets expanded to include 105 and 110 which
+  ## ofm/frankenpop uses to store 100+ stuff
+  ages = validate_input('ages', ages, 0:100)
+  ages = unique(ages)
 
-      if(is.null(group_by)){
-        tmpselect <- glue::glue_sql_collapse("pop=sum(pop)")
-      }else{
-        tmpselect <- glue::glue_sql_collapse(c("pop=sum(pop)", group_by), sep = ', ')
-      }
-      tmpyears <- glue::glue_sql_collapse(years, sep = ', ')
-      tmpgeo_type <- glue::glue_sql("{geo_type}", .con = con)
-      tmpages <- glue::glue_sql_collapse(sql_ages, sep = ', ')
-      tmpgenders <- glue::glue_sql_collapse(paste0("'", genders, "'"), sep = ', ')
-      tmplgds <- glue::glue_sql_collapse(paste0("'", kclgds, "'"), sep = ", ")
-      tmpscds <- glue::glue_sql_collapse(paste0("'", kcscds, "'"), sep = ", ")
-      tmpzips <- glue::glue_sql_collapse(paste0("'", kczips, "'"), sep = ", ")
 
-      if(race_type == "race_eth"){
-        race_type_values <- glue::glue_sql_collapse(ref.table[r_type == "r2r4" & short %in% races]$value, sep = ', ')
-        tmprace_type <- glue::glue_sql("r2r4 IN ({race_type_values})", .con = con)
-      }else{
-          race_type_values <- glue::glue_sql_collapse(ref.table[r_type == "r1r3" & short %in% races]$value, sep = ', ')
-          tmprace_type <- glue::glue_sql("r1r3 IN ({race_type_values})", .con = con)
-      }
-      if(!is.null(group_by)){
-        tmpgroup_by <- glue::glue_sql_collapse(gsub("\\[year]\\, |pop=sum\\(pop\\), |race_eth = |race = ", "", tmpselect), sep = ', ')
-      }
+  ## validate genders ----
+  ## one of m/f.
+  stopifnot('`genders` must be a character vector' = is.character(genders))
+  genders = unique(toupper(substr(genders, 1,1)))
+  if(!all(genders %in% c('M', 'F'))){
+    stop('`genders` should be one or both of "M" and "F".
+            At present, genders outside the binary do not have population estimates.')
+  }
+  genders = which(c('M', 'F') %in% genders)
+  genders = validate_input('genders', genders, 1:2)
 
-      sql_query <- glue::glue_sql("SELECT {tmpselect}
-                         FROM [ref].[pop]
-                         WHERE year IN ({tmpyears})
-                         AND geo_type IN ({tmpgeo_type})
-                         AND age IN ({tmpages})
-                         AND raw_gender IN ({tmpgenders})
-                         AND {tmprace_type} ", .con = con)
-      if(kingco == T & geo_type %in% c("blk", "blkgrp")){sql_query = glue::glue_sql("{sql_query} AND fips_co = 33 ", .con = con)}
-      if(kingco == T & geo_type == "lgd"){sql_query = glue::glue_sql("{sql_query} AND geo_id IN ({tmplgds}) ", .con = con)}
-      if(kingco == T & geo_type == "scd"){sql_query = glue::glue_sql("{sql_query} AND geo_id IN ({tmpscds}) ", .con = con)}
-      if(kingco == T & geo_type == "zip"){sql_query = glue::glue_sql("{sql_query} AND geo_id IN ({tmpzips}) ", .con = con)}
-      if(!is.null(group_by)){sql_query = glue::glue_sql("{sql_query} GROUP BY {tmpgroup_by} ORDER BY {tmpgroup_by}", .con = con)}
+  ## validate race_type ----
+  race_type = match.arg(race_type, c('race', 'race_eth', 'race_aic'))
 
-    # generate supplemental SQL query for Hispanic ethnicity ----
-      # easiest solution is to replace r1r3 with r2r4 (Hispanic as race), then drop all non-Hispanic and append results to those from the main query
-      hisp_eth_flag = F
-      if(race_type == "race" & "hispanic" %in% races & "race" %in% group_by_orig){hisp_eth_flag = T}
-      if(race_type == "race" & identical(races, "hispanic") & is.null(group_by_orig) ){hisp_eth_flag = T}
+  ## validate races ----
+  races = tolower(races)
+  races = validate_input('races', races, c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white"))
+  race_col = 'r2r4'
+  if(race_type == 'race') race_col = 'r1r3'
 
-      if(hisp_eth_flag){sql_query_hisp_eth <- gsub("r1r3", "r2r4", sql_query)}
-      if(hisp_eth_flag & is.null(group_by_orig)){
-        sql_query_hisp_eth <- gsub("pop=sum\\(pop\\)", "pop=sum(pop), race = r2r4", sql_query_hisp_eth)
-        sql_query_hisp_eth <- glue::glue_sql("{sql_query_hisp_eth} GROUP BY r2r4 ORDER BY r2r4")
-        }
+  ### convert to the numeric codes used in the ref table
+  ref.table <- data.table::copy(rads.data::population_wapop_codebook_values)
+  ref.table <- ref.table[varname %in% c("r1r3", "r2r4", "r3", "r4")]
+  ref.table <- unique(ref.table[, .(value = code, label, short)])
+  colnames = data.frame(short = c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white"),
+                        sql_col = c('race_aian', 'race_as', 'race_blk', 'race_hisp', NA, 'race_nhpi', 'race_wht'))
+  stopifnot(nrow(ref.table) == 7)
+  ref.table = merge(ref.table, colnames, all.x = T, by = 'short')
+  if(!all(races == 'All')) races = ref.table[ short %in% races, value]
 
-    # get population labels ----
-      pop.lab <- data.table::setDT(DBI::dbGetQuery(con, "SELECT * FROM [ref].[pop_labels]"))
+  ### race_aic is handled below
 
-    # get population data ----
-      pop.dt <- data.table::setDT(DBI::dbGetQuery(con, sql_query))
+  ## validate group_by ----
+  group_by = validate_input('group_by', group_by, c("years", "ages", "genders", "race", "race_eth", 'race_aic', 'geo_id'), convert_to_all = FALSE)
+  group_by = unique(c('geo_id', group_by))
 
-      # append Hispanic as race if / when needed
-      if(hisp_eth_flag){
-        pop.dt.hisp_eth <- data.table::setDT(DBI::dbGetQuery(con, sql_query_hisp_eth))[race == 6]
-        if(is.null(group_by_orig)){pop.dt = data.table::copy(pop.dt.hisp_eth)}else{
-          pop.dt <- rbind(pop.dt, pop.dt.hisp_eth)
-        }
-      }
+  ## race_type sanity checking ----
+  ## confirm only one of race, race_eth, or race_aic is in the list
+  if(all(c('race', 'race_eth', 'race_aic') %in% group_by)) stop('Only one of race, race_eth, or race_aic can be in `group_by`')
+  ## race and race_aic must be in group by
+  if(any(c('race', 'race_aic') %in% race_type)){
+    if(!race_type %in% group_by){
+      stop(paste('When `race_type` is', race_type, 'it must be included within group_by'))
+    }
+  }
 
-    # Tidy population data ----
-      # add race labels ----
-        if("race" %in% names(pop.dt)){pop.dt[, race := factor(race, levels = ref.table[name == "race"]$value, labels = ref.table[name == "race"]$label)]}
-        if("race_eth" %in% names(pop.dt)){pop.dt[, race_eth := factor(race_eth, levels = ref.table[name == "race_eth"]$value, labels = ref.table[name == "race_eth"]$label)]}
-        if(!"race" %in% names(pop.dt) & !"race_eth" %in% names(pop.dt)){pop.dt[, c(race_type) := paste(races, collapse = ", ")]}
+  ## validate round ----
+  stopifnot(length(round)  == 1 && is.logical(round))
 
-      # add gender labels ----
-        if("gender" %in% names(pop.dt)){pop.dt[, gender := factor(gender, levels = c(2, 1), labels = c("Female", "Male"))]}
-        if(!"gender" %in% names(pop.dt)){pop.dt[, gender := paste0(gsub("F", "Female", gsub("M", "Male", genders)), collapse = ", ")]}
+  # Generate query parts ----
+  ## output columns: c("pop", "geo_type", "geo_id", "year", "age", "gender", "race_eth")
+  ## if race_type == race, then the column name is race
+  ## TODO: race will need to be a bit more complicatd here with race_aic
 
-      # add label of years used in analysis ----
-        if(!c("year") %in% group_by){pop.dt[, year := rads::format_time(years)]}
+  cols = data.table(coltype = c("years", "ages", "genders", race_type, "geo_id"),
+                    colname = c('year', 'age_100', 'gender', race_col, 'geo_id'),
+                    cat = c('year', 'age', 'gender', 'race', 'geo_id'))
 
-      # add label of ages used in analysis ----
-        if(!c("age") %in% group_by){pop.dt[, age := rads::format_time(ages)]}
+  # Assemble query ----
+  ## Query for race/eth ----
+  if(race_type == 'race_eth'){
+    q = build_getpop_query(con = con,
+                           cols = cols,
+                           pop_table = pop_table,
+                           group_by = group_by,
+                           group_geo_type = group_geo_type,
+                           select_geo_type = select_geo_type,
+                           ages = ages,
+                           years = years,
+                           genders = genders,
+                           races = races,
+                           where_geo_type,
+                           where_geo_vintage,
+                           where_census_vintage,
+                           subset_by_kingco)
+  }else if(race_type == 'race'){
+    ## Query for race ----
+    ### The query to data by race (ignoring ethnicity) ----
+    q1 = build_getpop_query(con = con,
+                           cols = cols,
+                           pop_table = pop_table,
+                           group_by = group_by,
+                           group_geo_type = group_geo_type,
+                           select_geo_type = select_geo_type,
+                           ages = ages,
+                           years = years,
+                           genders = genders,
+                           races = races,
+                           where_geo_type,
+                           where_geo_vintage,
+                           where_census_vintage,
+                           subset_by_kingco)
+    q = list(q1)
 
-      # add geo_type ----
-        pop.dt[, geo_type := geo_type_orig]
+    ### A query for the hispanic data ----
+    if('6' %in% races){
+      hcols = data.table::copy(cols)
+      hcols[coltype == race_type, colname := 'race_hisp']
+      q2 = build_getpop_query(con = con,
+                              cols = hcols,
+                              pop_table = pop_table,
+                              group_by = group_by,
+                              group_geo_type = group_geo_type,
+                              select_geo_type = select_geo_type,
+                              ages = ages,
+                              years = years,
+                              genders = genders,
+                              races = 1, # only hispanic
+                              where_geo_type,
+                              where_geo_vintage,
+                              where_census_vintage,
+                              subset_by_kingco)
 
-      # collapse or crosswalk geo_id if necessary ----
-        # kc ----
-          if(geo_type_orig == "kc"){
-            pop.dt[, geo_id := "King County"]
-            nonpopvars <- setdiff(names(pop.dt), "pop")
-            pop.dt <- pop.dt[, .(pop = sum(pop)), by = nonpopvars]
-          }
+      q = list(q1,q2)
+    }
 
-        # blk ----
-          if(geo_type_orig == "blk" & is.null(group_by_orig)){pop.dt[, geo_id := "All blocks"]}
 
-        # blkgrp ----
-          if(geo_type_orig == "blkgrp" & "geo_id" %in% group_by_orig){
-            pop.dt[, geo_id := substr(geo_id, 1, 12)]
-            nonpopvars <- setdiff(names(pop.dt), "pop")
-            pop.dt <- pop.dt[, .(pop = sum(pop)), by = nonpopvars]
-          }
-          if(geo_type_orig == "blkgrp" & is.null(group_by_orig)){pop.dt[, geo_id := "All block groups"]}
+  }else if(race_type == 'race_aic'){
+    ## query for AIC races ----
+    ### figure out what race groups need aic calculated ----
+    if(races[1] == 'All'){
+      aic_flag = seq_len(nrow(ref.table))
+    }else{
+      aic_flag = which(ref.table[, value] %in% races)
+    }
+    aics = ref.table[aic_flag]
+    aics = aics[!is.na(sql_col)] # remove multiple race
 
-        # tract ----
-          if(geo_type_orig == "tract" & "geo_id" %in% group_by_orig){
-            pop.dt[, geo_id := substr(geo_id, 1, 11)]
-            nonpopvars <- setdiff(names(pop.dt), "pop")
-            pop.dt <- pop.dt[, .(pop = sum(pop)), by = nonpopvars]
-          }
-          if(geo_type_orig == "tract" & is.null(group_by_orig)){pop.dt[, geo_id := "All tracts"]}
+    ### for each race, get pop ----
+    q = lapply(aics[,sql_col], function(rcol){
+      hcols = data.table::copy(cols)
+      hcols[coltype == race_type, colname := rcol]
+      build_getpop_query(
+                        con = con,
+                        cols = hcols,
+                        pop_table = pop_table,
+                        group_by = group_by,
+                        group_geo_type = group_geo_type,
+                        select_geo_type = select_geo_type,
+                        ages = ages,
+                        years = years,
+                        genders = genders,
+                        races = 1,
+                        where_geo_type,
+                        where_geo_vintage,
+                        where_census_vintage,
+                        subset_by_kingco
+                      )
 
-        # region ----
-          if(geo_type_orig == "region" & "geo_id" %in% group_by_orig){
-            xwalk <- data.table::copy(rads.data::spatial_blocks10_to_hra_to_region)
-            xwalk <- xwalk[, .(geo_id = as.character(geo_id_blk), region)]
-            pop.dt <- merge(pop.dt, xwalk, by = "geo_id", all.x = T)
-            nonpopvars <- setdiff(names(pop.dt), c("pop", "geo_id"))
-            pop.dt <- pop.dt[, .(pop = sum(pop)), by = nonpopvars]
-            setnames(pop.dt, "region", "geo_id")
-          }
-          if(geo_type_orig == "region" & is.null(group_by_orig)){pop.dt[, geo_id := "All regions"]}
 
-        # seattle ----
-          if(exists("seattle")){
-            if(seattle == 1){
-              pop.dt <- pop.dt[geo_id=="Seattle"]
-              pop.dt[, geo_type := "seattle"]
-            }
-          }
+    })
 
-        # county ----
-          if(geo_type_orig == "county"){
-            xwalk <- data.table::copy(rads.data::spatial_county_codes_to_names)
-            xwalk <- xwalk[, .(geo_id_code = as.character(cou_id), geo_id = cou_name)]
-            setnames(pop.dt, "geo_id", "geo_id_code")
-            pop.dt <- merge(pop.dt, xwalk, by = "geo_id_code", all.x = T, all.y = T)
-          }
+  }else{
+    stop('invalid race_type option snuck through')
+  }
 
-        # hra ----
-          if(geo_type_orig == "hra" & "hra10" %in% group_by_orig){
-            xwalk <- data.table::copy(rads.data::spatial_hra_vid_region)
-            xwalk <- xwalk[, .(geo_id_code = vid, geo_id = hra)]
-            setnames(pop.dt, "hra10", "geo_id_code")
-            pop.dt <- merge(pop.dt, xwalk, by = "geo_id_code", all.x = T, all.y = T)
-          }
+  ## run the query/queries ----
+  ### return query if requested ----
+  if(return_query) return(q)
+  r = lapply(q, function(x){
 
-        # lgd ----
-          if(geo_type_orig == "lgd"){
-            xwalk <- data.table::copy(rads.data::spatial_legislative_codes_to_names)
-            xwalk <- xwalk[, .(geo_id_code = as.character(lgd_id), geo_id = lgd_name)]
-            setnames(pop.dt, "geo_id", "geo_id_code")
-            pop.dt <- merge(pop.dt, xwalk, by = "geo_id_code", all.x = T, all.y = F)
-          }
+    # run the query
+    r = DBI::dbGetQuery(con, x)
+    setDT(r)
 
-        # scd ----
-          if(geo_type_orig == "scd"){
-            xwalk <- data.table::copy(rads.data::spatial_school_codes_to_names)
-            xwalk <- xwalk[, .(geo_id_code = as.character(scd_id), geo_id = scd_name)]
-            setnames(pop.dt, "geo_id", "geo_id_code")
-            pop.dt <- merge(pop.dt, xwalk, by = "geo_id_code", all.x = T, all.y = F)
-          }
+    #rename/relabel the race col
+    rc = ref.table[sql_col %in% names(r), ]
+    stopifnot(nrow(rc)<=1)
+    if(nrow(rc) == 1){
+      r[,(rc[,sql_col]) := NULL]
+      r[, (race_col) := rc[, value]]
+    }
 
-        # wa ----
-          if(exists("wastate")){
-            if(wastate == 1){
-              pop.dt[, geo_type := "wa"]
-              pop.dt[, geo_id := "Washington State"]
-              pop.dt[, geo_id_code := NULL]
-              nonpopvars <- setdiff(names(pop.dt), c("pop"))
-              pop.dt <- pop.dt[, .(pop = sum(pop)), by = nonpopvars]
-            }
-          }
+    r
 
-        # zip ----
-          if(is.null(group_by)){
-            if(geo_type_orig == "zip" & kingco == T ){
-              pop.dt[, geo_id := "All KC zip codes"]
-            }
-            if(geo_type_orig == "zip" & kingco == F ){
-              pop.dt[, geo_id := "All WA zip codes"]
-            }
-            if(geo_type_orig != "zip" & kingco == F){
-              pop.dt[, geo_id := "King, Pierce, & Snohomish counties"]
-            }
-          }else{
-            if(geo_type_orig == "zip" & kingco == F & !"geo_id" %in% group_by_orig ){
-              pop.dt[, geo_id := "WA State"]
-            }
-          }
+  })
 
-      # Collapse ages above 100 ----
-      if(max(ages) == 100 & "ages" %in% group_by_orig){
-        pop.dt[age >= 100, age := 100]
-        if(race_type == "race_eth"){pop.dt <- pop.dt[, .(pop = sum(pop)), by = .(age, gender, race_eth, year, geo_type, geo_id)]}
-        if(race_type == "race"){pop.dt <- pop.dt[, .(pop = sum(pop)), by = .(age, gender, race, year, geo_type, geo_id)]}
-      }
+  r = rbindlist(r)
 
-      # round ----
-        if(round == TRUE){pop.dt[, pop := rads::round2(pop, 0)]}
 
-      # set column order ----
-      ifelse("geo_id_code" %in% names(pop.dt),
-             setcolorder(pop.dt, c("pop", "geo_type", "geo_id", "geo_id_code", "year", "age", "gender")),
-             setcolorder(pop.dt, c("pop", "geo_type", "geo_id", "year", "age", "gender")) )
+  # tidy the result ----
+  ## age ----
+  if('age_100' %in% names(r)){
+    setnames(r,'age_100', 'age')
+  }else{
+    if(all(ages == 'All')) ages = 0:100
+    r[, age := rads::format_time(ages)]
+  }
 
-    # close connection ----
-     DBI::dbDisconnect(con)
+  ## race ----
+  if(race_col %in% names(r)){
+    data.table::setnames(r, race_col, race_type)
+    r[, (race_type) := factor(get(race_type),
+                              ref.table[, value],
+                              ref.table[, label])]
+  }else{
+    if(races == 'All') races = ref.table[, value]
+    r[, (race_type) := ref.table[value %in% races, paste(label, collapse = ', ')]]
+  }
 
-    return(pop.dt)
+
+  ## year ----
+  if(!'year' %in% names(r)){
+    if(all(years == 'all')) years = seq(2000, max_year,1)
+    r[, year := rads::format_time(as.numeric(years))]
+  }
+
+  ## gender ----
+  if(!'gender' %in% names(r)){
+    if(all(genders == 'All')) genders = 1:2
+    r[, gender := c('Female, Male')]
+  }else{
+    r[, gender := c('Female', 'Male')[as.numeric(gender)]]
+  }
+
+  ## geography ----
+  r[, geo_type := geo_type]
+  if(geo_type == 'kc') r[, geo_id := 'King County']
+  if(geo_type == 'region'){
+    rnames = unique(rads.data::spatial_hra_vid_region[,.(region, region_id)])
+    rnames = rnames[, stats::setNames(region, region_id)]
+    r[, geo_id_code := geo_id]
+    r[, geo_id := rnames[as.character(geo_id)]]
+
+  }
+  if(geo_type == 'seattle') r[, geo_id := "Seattle"][,geo_type := 'Seattle']
+
+  if(geo_type == 'county'){
+    cnames = rads.data::spatial_county_codes_to_names
+    cnames = cnames[,.(geo_id_code = as.character(cou_id), geo_id = cou_name)]
+    cnames = stats::setNames(cnames[, geo_id], cnames[, geo_id_code])
+    r[, geo_id_code := geo_id]
+    r[, geo_id := cnames[as.character(geo_id)]]
+  }
+
+  if(geo_type == 'hra'){
+    # FIXME: change to work with 2020 HRAs as well
+    hranames = rads.data::spatial_hra_vid_region[, setNames(hra, vid)]
+    r[, geo_id_code := geo_id]
+    r[, geo_id := hranames[as.character(geo_id)]]
+  }
+
+  if(geo_type == 'lgd'){
+    lnames = rads.data::spatial_legislative_codes_to_names[, setNames(lgd_name, lgd_id)]
+    r[, geo_id_code := geo_id]
+    r[, geo_id := lnames[as.character(geo_id)]]
+
+  }
+
+  if(geo_type == 'scd'){
+    lnames = rads.data::spatial_school_codes_to_names[, setNames(scd_name, scd_id)]
+    r[, geo_id_code := geo_id]
+    r[, geo_id := lnames[as.character(geo_id)]]
+  }
+
+  if(geo_type == 'wa'){
+    r[, geo_id := 'Washington State']
+    r[, geo_id_code := 53]
+  }
+
+  if(round) r[, pop := rads::round2(pop, 0)]
+
+  data.table::setcolorder(r, c("pop", "geo_type", "geo_id", "year", "age", "gender"))
+
+
+  ## Close connection
+  ## Now done with on.exit
+  # if(closeserve) DBI::dbDisconnect(con)
+
+
+  # Return results ----
+  return(r)
+
 }

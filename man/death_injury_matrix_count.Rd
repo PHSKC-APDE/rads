@@ -13,7 +13,6 @@ death_injury_matrix_count(
   mechanism = "*",
   icdcol = "underlying_cod_code",
   kingco = T,
-  byage = F,
   ypll_age = NULL,
   death_age_col = NULL
 )
@@ -64,12 +63,6 @@ imported from the \code{get_data_death()} function.
 
 The default is \code{kingco = TRUE}.}
 
-\item{byage}{a logical vector of length one. It specifies whether you want
-the results stratified by the decedent's age. Please cross-reference the
-the definition for the \code{death_age_col} argument.
-
-The default is \code{byage = FALSE}.}
-
 \item{ypll_age}{an optional numeric vector of length 1. When specified, it
 should be the age (an integer) used for \strong{Years of Potential Life Lost} (YPLL)
 calculations. Valid values are between 1 & 99 (inclusive), though 65 and 85 are the most
@@ -82,28 +75,21 @@ The default is \code{ypll_age = NULL}, which will skip YPLL calculations.}
 
 \item{death_age_col}{an optional character vector of length one that specifies
 the name of the column in ph.data with the decedents' age at death
-in years. It is only needed if \code{byage = TRUE} or \code{ypll_age} is
-specified AND if ph.data lacks columns named \code{date_of_birth} and
-\code{date_of_death} that are of class \code{"Date"}. If the latter two
-columns exist, the code calculates the age at death for you.
+in years. It is only needed if \code{ypll_age} is
+specified AND if ph.data lacks a column named \code{chi_age}.
 
 The default is \code{death_age_col = NULL}.}
 }
 \value{
-The function returns a data.table with a minimum of five columns:
-\code{mechanism}, \code{intent}, \code{deaths}, \code{rank} &
-\code{total_deaths}. Any other
-columns that are in the original data set
-that is submitted to this function will also be returned. E.g., if the
-original data contained gender and race_eth, the returned table would contain
-the five default columns, plus all combinations of gender and race_eth as
-stratification variables.
-
-Please note that \code{total_deaths} refers to the total number of deaths in
-the given strata, ignoring mechanism and intent.
+The function returns a data.table with a minimum of three columns:
+\code{mechanism}, \code{intent}, & \code{deaths}. Any other columns that are
+in the original data set that is submitted to this function will also be
+returned. E.g., if the original data contained gender and race_eth, the
+returned table would contain the five default columns, plus all combinations
+of gender and race_eth as stratification variables.
 }
 \description{
-Generate death counts and the death ranks for a death injury matrix
+Generate death counts for a death injury matrix
 specifying the intent and mechanism of injury. Needs line-level death data
 with a properly formatted ICD10 column.
 }
@@ -159,7 +145,6 @@ eg1 <- death_injury_matrix_count(ph.data = injurydata,
                             mechanism = "*",
                             icdcol = "cod.icd10",
                             kingco = FALSE,
-                            byage = FALSE,
                             ypll_age = NULL,
                             death_age_col = NULL)
 eg1[] # note the data are stratified by year because year was in ph.data
@@ -170,7 +155,6 @@ eg2 <- death_injury_matrix_count(ph.data = injurydata,
                             mechanism = "fall",
                             icdcol = "cod.icd10",
                             kingco = FALSE,
-                            byage = FALSE,
                             ypll_age = NULL,
                             death_age_col = NULL)
 eg2[]
@@ -181,12 +165,11 @@ eg3 <- death_injury_matrix_count(ph.data = injurydata,
                             mechanism = "none",
                             icdcol = "cod.icd10",
                             kingco = FALSE,
-                            byage = FALSE,
                             ypll_age = NULL,
                             death_age_col = NULL)
 eg3[]
 
-# example 4: all intents and mechanisms with YPLL_65 given death_age_col
+# example 4: any intent and mechanism with YPLL_65 given death_age_col
 injurydata4 <- data.table::copy(injurydata)
 set.seed(98104)
 injurydata4[, ageofdeath := rads::round2(rnorm(1, mean = 70, sd = 5 ), 0),
@@ -196,43 +179,22 @@ eg4 <- death_injury_matrix_count(ph.data = injurydata4,
                             mechanism = "none",
                             icdcol = "cod.icd10",
                             kingco = FALSE,
-                            byage = FALSE,
                             ypll_age = 65,
                             death_age_col = "ageofdeath")
 eg4[]
 
-# example 5: all intents and mechanisms with YPLL_65 given dates of birth and death
-injurydata5 <- data.table::copy(injurydata4)
-set.seed(98104)
-injurydata5[, date_of_death := as.Date(paste0(year, "-",
-                                              sample(1:12, 1, replace = TRUE),
-                                              "-",
-                                              sample(1:28, 1, replace = TRUE))),
-                                              1:nrow(injurydata5)] # synthetic date_of_death
-injurydata5[, date_of_birth := date_of_death -
-                                (365*ageofdeath + sample(1:360, 1, replace = TRUE))]
-injurydata5[, c("ageofdeath") := NULL]
-eg5 <- death_injury_matrix_count(ph.data = injurydata5,
-                            intent = "none",
-                            mechanism = "none",
-                            icdcol = "cod.icd10",
-                            kingco = FALSE,
-                            byage = FALSE,
-                            ypll_age = 65,
-                            death_age_col = NULL)
-eg5[]
+# example 5: all suicides, regardless of mechanism, stratified by age
 
-# example 6: all suicides, regardless of mechanism, stratified by age given dob & dod
-injurydata6 <- data.table::copy(injurydata5)
-eg6 <- death_injury_matrix_count(ph.data = injurydata5,
+injurydata5 <- data.table::copy(injurydata4)
+
+eg5 <- death_injury_matrix_count(ph.data = injurydata5,
                             intent = "suicide",
                             mechanism = "none",
                             icdcol = "cod.icd10",
                             kingco = FALSE,
-                            byage = TRUE,
                             ypll_age = NULL,
                             death_age_col = NULL)
-eg6[]
+eg5[]
 }
 \references{
 WA DOH CHAT: \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/CHATInjury(ICE)codes.pdf}

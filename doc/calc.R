@@ -4,7 +4,6 @@ library(dtsurvey)
 
 ## -----------------------------------------------------------------------------
 data(mtcars)
-mtcars = dtadmin(mtcars) #make it work with calc.dtsurvey
 calc(ph.data = mtcars, what = c("mpg"))[]
 
 ## -----------------------------------------------------------------------------
@@ -85,7 +84,7 @@ calc(ph.data = birth,
 ## ---- warning=FALSE, message=FALSE--------------------------------------------
 library(survey)
 
-load("//phshare01/epe_share/WORK/surveys/ACS/PUMS_data/2019_1_year/prepped_R_files/2019_1_year_data.RData")
+load("//dphcifs/APDE-CDIP/ACS/PUMS_data/2019_1_year/prepped_R_files/2019_1_year_data.RData")
 
   pums <-     
     survey::svrepdesign(
@@ -99,7 +98,9 @@ load("//phshare01/epe_share/WORK/surveys/ACS/PUMS_data/2019_1_year/prepped_R_fil
       data = person.wa
     )
   
-  #New for version 1.0.0
+  # New for version 1.0.0
+  # This allows for the use of data.table syntax for data cleaning
+  # users who prefer dplyr syntax should review the srvyr package
   pums = dtsurvey::dtrepsurvey(pums)
 
 ## ---- warning=FALSE-----------------------------------------------------------
@@ -155,9 +156,6 @@ mydt <- data.table(
   grades = as.factor(sample(c("A", "B", "C", "D"), 2000, replace = T)), 
   year = sample(2016:2021, 2000, replace = T))
 
-#New for version 1.0.0
-mydt = dtsurvey::dtadmin(mydt)
-
 mydt[]
 
 ## ---- warning=FALSE, message=FALSE--------------------------------------------
@@ -177,7 +175,10 @@ set.seed(98121)
 mydt[, mywghts := sample(50:1300, 2000, replace = T)]
 
 # survey set the data
-mysvy <-dtsurvey::dtsurvey(data.table(mydt[, `_id` := NULL]), weight = 'mywghts')
+# This uses the dtsurvey package
+# similar logic applies for survey and srvyr package
+mydt[, `_id` := NULL] # remove id to make things play nice
+mysvy <-dtsurvey::dtsurvey(data.table(mydt), weight = 'mywghts')
 
 ## ---- warning=FALSE, message=FALSE--------------------------------------------
 grades.distribution2 <- calc(

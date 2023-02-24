@@ -75,8 +75,7 @@ test_that('When new_label is all NA, no labels get made',{
 })
 
 test_that('improperly specified binned recodes',{
-  r = try(do_recode(1,'[0-1]', 2), silent = TRUE)
-  expect_equal(TRUE, grepl('Error in do_recode', r))
+  expect_error(suppressWarnings(do_recode(1,'[0-1]', 2)))
 })
 
 

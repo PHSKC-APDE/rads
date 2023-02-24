@@ -1,5 +1,5 @@
 ﻿input,output,object,inputvar,outputvar,notes
-blk10,hra10,spatial_geocomp_blk10_kps,geo_id_blk10,hracode_name,
+blk10,hra10,spatial_chi_blocks10_xwalk,geo_id_blk10,chi_geo_hra_short,differs from spatial_geocomp_blk10_kps
 blk10,kc,spatial_geocomp_blk10_kps,geo_id_blk10,cou_name     ,
 blk10,lgd10,spatial_geocomp_blk10_kps,geo_id_blk10,leg_name,
 blk10,region10,spatial_geocomp_blk10_kps,geo_id_blk10,rgn_name,

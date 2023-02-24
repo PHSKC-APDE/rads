@@ -637,32 +637,32 @@ ex4.1[]
 <p><strong>Get the female populations corresponding to the birth counts</strong></p>
 
 <pre><code class="r">  kcpop &lt;- get_population(kingco = T, years = 2019, ages = 13:19, 
-                          genders = &quot;Female&quot;, group_by = &quot;ages&quot;)
+                          genders = &quot;Female&quot;, group_by = &quot;ages&quot;, geo_vintage = 2020, census_vintage = 2020)
   kcpop &lt;- kcpop[, .(age, geo = geo_id, pop)] 
 
   wapop &lt;- get_population(kingco = F, years = 2019, ages = 13:19, 
-                          genders = &quot;Female&quot;, group_by = &quot;ages&quot;, geo_type = &quot;zip&quot;)
+                          genders = &quot;Female&quot;, group_by = &quot;ages&quot;, geo_type = &quot;zip&quot;, geo_vintage = 2020, census_vintage = 2020)
   wapop &lt;- wapop[, .(pop = sum(pop), geo = &quot;WA State&quot;), by = &quot;age&quot;]
 
   pop &lt;- rbind(kcpop, wapop)
   pop[]
 </code></pre>
 
-<pre><code>##     age         geo   pop
-##  1:  13 King County 12180
-##  2:  14 King County 12077
-##  3:  15 King County 11943
-##  4:  16 King County 12292
-##  5:  17 King County 12416
-##  6:  18 King County 12776
-##  7:  19 King County 13166
-##  8:  13    WA State 46590
-##  9:  14    WA State 46446
-## 10:  15    WA State 45120
-## 11:  16    WA State 44849
-## 12:  17    WA State 44562
-## 13:  18    WA State 45809
-## 14:  19    WA State 46540
+<pre><code>##     age         geo      pop
+##  1:  19 King County 13378.52
+##  2:  17 King County 11566.49
+##  3:  14 King County 11991.38
+##  4:  18 King County 12658.91
+##  5:  15 King County 11090.13
+##  6:  13 King County 12506.60
+##  7:  16 King County 11462.55
+##  8:  13    WA State 46647.21
+##  9:  19    WA State 47588.43
+## 10:  17    WA State 43450.77
+## 11:  16    WA State 44501.15
+## 12:  15    WA State 44360.21
+## 13:  18    WA State 46040.50
+## 14:  14    WA State 46092.01
 </code></pre>
 
 <p><strong>Merge population onto to birth counts</strong></p>
@@ -672,21 +672,21 @@ ex4.1[]
   temp5[]
 </code></pre>
 
-<pre><code>##     age         geo births   pop
-##  1:  13 King County      1 12180
-##  2:  13    WA State      6 46590
-##  3:  14 King County      4 12077
-##  4:  14    WA State     16 46446
-##  5:  15 King County     10 11943
-##  6:  15    WA State     69 45120
-##  7:  16 King County     23 12292
-##  8:  16    WA State    190 44849
-##  9:  17 King County     44 12416
-## 10:  17    WA State    348 44562
-## 11:  18 King County    111 12776
-## 12:  18    WA State    751 45809
-## 13:  19 King County    227 13166
-## 14:  19    WA State   1481 46540
+<pre><code>##     age         geo births      pop
+##  1:  13 King County      1 12506.60
+##  2:  13    WA State      6 46647.21
+##  3:  14 King County      4 11991.38
+##  4:  14    WA State     16 46092.01
+##  5:  15 King County     10 11090.13
+##  6:  15    WA State     69 44360.21
+##  7:  16 King County     23 11462.55
+##  8:  16    WA State    190 44501.15
+##  9:  17 King County     44 11566.49
+## 10:  17    WA State    348 43450.77
+## 11:  18 King County    111 12658.91
+## 12:  18    WA State    751 46040.50
+## 13:  19 King County    227 13378.52
+## 14:  19    WA State   1481 47588.43
 </code></pre>
 
 <p><strong>Run <code>age_standardize()</code></strong></p>
@@ -702,15 +702,15 @@ ex4.1[]
   ex5.1[]
 </code></pre>
 
-<pre><code>##            geo count    pop crude.rate crude.lci crude.uci adj.rate adj.lci
-## 1: King County   420  86850       4.84      4.38      5.32     4.61    4.18
-## 2:    WA State  2861 319916       8.94      8.62      9.28     8.82    8.50
+<pre><code>##            geo count       pop crude.rate crude.lci crude.uci adj.rate adj.lci
+## 1: King County   420  84654.57       4.96      4.50      5.46     4.65    4.22
+## 2:    WA State  2861 318680.29       8.98      8.65      9.31     8.74    8.43
 ##    adj.uci                                         reference_pop
-## 1:    5.08 World (WHO 2000-2025) Std Million (single ages to 84)
-## 2:    9.15 World (WHO 2000-2025) Std Million (single ages to 84)
+## 1:    5.12 World (WHO 2000-2025) Std Million (single ages to 84)
+## 2:    9.07 World (WHO 2000-2025) Std Million (single ages to 84)
 </code></pre>
 
-<p>According to your analysis, the crude King County teen birth rate is approximately half (4.84 / 8.94 = 0.541) of the WA State teen birth rate. This relationship remains largely unchanged after age-standardization  (4.61 / 8.82 = 0.523).</p>
+<p>According to your analysis, the crude King County teen birth rate is approximately half (4.96 / 8.98 = 0.552) of the WA State teen birth rate. This relationship remains largely unchanged after age-standardization  (4.65 / 8.74 = 0.532).</p>
 
 <hr/>
 
