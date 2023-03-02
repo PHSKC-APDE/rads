@@ -691,11 +691,11 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     #process and add cat1_group
     Tableau_Ready_DT$cat1_group <- rep(cat1_groupVariable, nrow(DT))
 
-    #process and add cat1_varname
-    Tableau_Ready_DT$cat1_varname <- rep(cat1_varnameVariable, nrow(DT))
-
     #process and add cat1_group_alias
     Tableau_Ready_DT$cat1_group_alias <- rep(cat1_group_aliasVariable, nrow(DT))
+
+    #process and add cat1_varname
+    Tableau_Ready_DT$cat1_varname <- rep(cat1_varnameVariable, nrow(DT))
 
     #process and add cat2
     Tableau_Ready_DT$cat2 <- rep(cat2Variable, nrow(DT))
@@ -705,13 +705,13 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     Tableau_Ready_DT$cat2_group <- rep(cat2_groupVariable, nrow(DT))
     Tableau_Ready_DT$cat2_group <- as.character(Tableau_Ready_DT$cat2_group)
 
-    #process and add cat2_varname
-    Tableau_Ready_DT$cat2_varname <- rep(cat2_varnameVariable, nrow(DT))
-    Tableau_Ready_DT$cat2_varname <- as.character(Tableau_Ready_DT$cat2_varname)
-
     #process and add cat2_group_alias
     Tableau_Ready_DT$cat2_group_alias <- rep(cat2_group_aliasVariable, nrow(DT))
     Tableau_Ready_DT$cat2_group_alias <- as.character(Tableau_Ready_DT$cat2_group_alias)
+
+    #process and add cat2_varname
+    Tableau_Ready_DT$cat2_varname <- rep(cat2_varnameVariable, nrow(DT))
+    Tableau_Ready_DT$cat2_varname <- as.character(Tableau_Ready_DT$cat2_varname)
 
     #process and add data_source
     Tableau_Ready_DT$data_source <- rep(data_sourceVariable, nrow(DT))
@@ -762,4 +762,5 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
                            new_col = "comparison_with_kc",
                            tidy = TRUE)
+}
 
