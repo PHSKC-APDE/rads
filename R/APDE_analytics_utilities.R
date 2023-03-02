@@ -645,7 +645,23 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     colnames(Tableau_Ready_DT) <- outputNames
     Tableau_Ready_DT <- data.table::as.data.table(Tableau_Ready_DT)
 
-    #process and add year variable
+    #process and add data source
+    if(data_sourceVariable %in% names(DT)) {
+      Tableau_Ready_DT$data_source <- DT[, ..data_sourceVariable]
+    }
+    Tableau_Ready_DT[is.nan(data_sourceVariable), data_sourceVariable := NA]
+
+    #process and add indicator_key
+    if(indicatorKeyVariable %in% names(DT)) {
+      Tableau_Ready_DT$indicator_key <- DT[, ..indicatorKeyVariable]
+    }
+    Tableau_Ready_DT$indicator_key <- as.character(Tableau_Ready_DT$indicator_key)
+
+    #process and add tab
+    Tableau_Ready_DT$tab <- rep(tabVariable, nrow(DT))
+    Tableau_Ready_DT$tab <- as.character(Tableau_Ready_DT$tab)
+
+        #process and add year variable
     if(yearVariable %in% names(DT)) {
       if(!grepl("&", kc$chi_year)) {
         #test if dates are default calc output (only commas separating multiple dates) and if so, add "&" after last comma if any
@@ -658,54 +674,6 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
       Tableau_Ready_DT$year <- yearVariable
     }
     Tableau_Ready_DT$year <- as.character(Tableau_Ready_DT$year)
-
-
-    #process and add indicator_key
-    if(indicatorKeyVariable %in% names(DT)) {
-      Tableau_Ready_DT$indicator_key <- DT[, ..indicatorKeyVariable]
-    }
-    Tableau_Ready_DT$indicator_key <- as.character(Tableau_Ready_DT$indicator_key)
-
-    #process and add result
-    if(resultVariable %in% names(DT)) {
-      Tableau_Ready_DT$result <- DT[, ..resultVariable]
-    }
-    Tableau_Ready_DT[is.nan(result), result := NA]
-
-    #process and add numerator
-    if(numeratorVariable %in% names(DT)) {
-      Tableau_Ready_DT$numerator <- DT[, ..numeratorVariable]
-    }
-
-
-    #process and add denominator
-    if(denominatorVariable %in% names(DT)) {
-      Tableau_Ready_DT$denominator <- DT[, ..denominatorVariable]
-    }
-
-    #process and add se
-    if(seVariable %in% names(DT)) {
-      Tableau_Ready_DT$se <- DT[, ..seVariable]
-    }
-
-    #process and add lower_bound
-    if(lowerBoundVariable %in% names(DT)) {
-      Tableau_Ready_DT$lower_bound <- DT[, ..lowerBoundVariable]
-    }
-
-    #process and add upper_bound
-    if(upperBoundVariable %in% names(DT)) {
-      Tableau_Ready_DT$upper_bound <- DT[, ..upperBoundVariable]
-    }
-
-    #process and add rse
-    if(rseVariable %in% names(DT)) {
-      Tableau_Ready_DT$rse <- DT[, ..rseVariable]
-    }
-
-    #process and add tab
-    Tableau_Ready_DT$tab <- rep(tabVariable, nrow(DT))
-    Tableau_Ready_DT$tab <- as.character(Tableau_Ready_DT$tab)
 
     #process and add cat1
     Tableau_Ready_DT$cat1 <- rep(cat1Variable, nrow(DT))
@@ -735,6 +703,56 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     Tableau_Ready_DT$cat2_varname <- rep(cat2_varnameVariable, nrow(DT))
     Tableau_Ready_DT$cat2_varname <- as.character(Tableau_Ready_DT$cat2_varname)
 
+    #process and add result
+    if(resultVariable %in% names(DT)) {
+      Tableau_Ready_DT$result <- DT[, ..resultVariable]
+    }
+    Tableau_Ready_DT[is.nan(result), result := NA]
+
+
+    #process and add lower_bound
+    if(lowerBoundVariable %in% names(DT)) {
+      Tableau_Ready_DT$lower_bound <- DT[, ..lowerBoundVariable]
+    }
+
+    #process and add upper_bound
+    if(upperBoundVariable %in% names(DT)) {
+      Tableau_Ready_DT$upper_bound <- DT[, ..upperBoundVariable]
+    }
+
+    #process and add se
+    if(seVariable %in% names(DT)) {
+      Tableau_Ready_DT$se <- DT[, ..seVariable]
+    }
+
+    #process and add rse
+    if(rseVariable %in% names(DT)) {
+      Tableau_Ready_DT$rse <- DT[, ..rseVariable]
+    }
+
+    #process and add comparison_with_kc
+    Tableau_Ready_DT$comparison_with_kc <- rep(comparison_with_KCVariable, nrow(DT))
+    Tableau_Ready_DT$comparison_with_kc <- as.character(Tableau_Ready_DT$comparison_with_kc)
+
+    #process and add timetrends indicator
+    if(time_trendsVariable %in% names(DT)) {
+
+    } else
+
+
+
+    #process and add numerator
+    if(numeratorVariable %in% names(DT)) {
+      Tableau_Ready_DT$numerator <- DT[, ..numeratorVariable]
+    }
+
+
+    #process and add denominator
+    if(denominatorVariable %in% names(DT)) {
+      Tableau_Ready_DT$denominator <- DT[, ..denominatorVariable]
+    }
+
+
     #process and add data_source
     Tableau_Ready_DT$data_source <- rep(data_sourceVariable, nrow(DT))
     Tableau_Ready_DT$data_source <- as.character(Tableau_Ready_DT$data_source)
@@ -742,9 +760,6 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     #process and add run_date
     Tableau_Ready_DT$run_date <- rep(run_dateVariable, nrow(DT))
 
-    #process and add comparison_with_kc
-    Tableau_Ready_DT$comparison_with_kc <- rep(comparison_with_KCVariable, nrow(DT))
-    Tableau_Ready_DT$comparison_with_kc <- as.character(Tableau_Ready_DT$comparison_with_kc)
 
     #process and add significance
     Tableau_Ready_DT$significance <- rep(significanceVariable, nrow(DT))
