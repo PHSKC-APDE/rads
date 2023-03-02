@@ -414,10 +414,11 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
   }
 
   APDE_CHI_TRO_demgroups_analysis <- function(data, variables, bivariables) {
-    #return a data structure containing king county wide calc results for a list of variables grouped by dates
-    .internal_demgroups_calc <- function(v, data) {
+    #return a data structure containing bivariate analysis
+    .internal_demgroups_calc <- function(v, bivariables, data) {
       #identifies latest 2 years in current data set and assumes they are the years to use for our estimates
       grp_yrs = unique(data[!is.na(get(v)), .SD, .SDcols = c(v, 'chi_year')][, chi_year])
+
       grp_yrs = grp_yrs[(length(grp_yrs)-1):length(grp_yrs)]
       ##create a human readable description of the data range of the current point estimates
       gyl = paste(grp_yrs, collapse = ' & ')
@@ -473,19 +474,34 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     }
 
     .internal_demgroup_calc <- function(v, bivariables, data) {
+
+
       all_calc_results <- (future.apply::future_lapply(bivariables, function(bivariable) {
+        #identifies latest 2 years in current data set and assumes they are the years to use for our estimates
+        grp_yrs = unique(data[!is.na(get(v)), .SD, .SDcols = c(v, 'chi_year')][, chi_year])
+
+        grp_yrs = grp_yrs[(length(grp_yrs)-1):length(grp_yrs)]
+        ##create a human readable description of the data range of the current point estimates
+        gyl = paste(grp_yrs, collapse = ' & ')
+
+        ##create county wide point estimate of the current variable
+        #calculate point estimate
         calc_result = rads::calc(data, what = v, by = bivariables, where = chi_year %in% grp_yrs, metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T, time_var = 'chi_year')
         calc_result
 
       }))
-    }
-    if(timetrend) {
-      trend_result_list_of_lists <- future.apply::future_lapply(variables, function(v) .internal_time_trend_calc(v, bivariables, data))
-    } else {
-      trend_result_list_of_lists <- future.apply::future_lapply(variables, function(v) .internal_demgroup_calc(v, bivariables, data))
+      return(all_calc_results)
     }
 
-    for(listofDT in trend_result_list_of_lists) {
+    if(timetrend) {
+      calc_result_list_of_lists <- future.apply::future_lapply(variables, function(v) .internal_time_trend_calc(v, bivariables, data))
+      tab <- "trends"
+    } else {
+      calc_result_list_of_lists <- future.apply::future_lapply(variables, function(v) .internal_demgroup_calc(v, bivariables, data))
+      tab <- NA
+    }
+
+    for(listofDT in calc_result_list_of_lists) {
 
       for(DT in listofDT) {
 
@@ -506,6 +522,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
         ####### this only works with provided metadata table.
         variableValueLookup <- unique(unlist(temp[,1]))
         #if(length(variableValuelookup) !=1) stop("unexpectedly have too many 'indicator key' values")
+        temp
 
         for(singleVariableValueLookup in variableValueLookup) {
           tempCat <- meta[varname == variableNameLookup & gval == singleVariableValueLookup,]$cat
@@ -517,29 +534,34 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
 
           formatedOutput <- APDE_TRO_FORMATING(temp[cat1_group == singleVariableValueLookup,],
+                                               NA,
+                                               tab,
                                                "chi_year",
+                                               NA,
+                                               "cat1_group",
+                                               NA,
                                                "variable",
+                                               NA,
+                                               NA,
+                                               NA,
+                                               NA,
                                                "mean",
-                                               "numerator",
-                                               "denominator",
-                                               "mean_se",
                                                "mean_lower",
                                                "mean_upper",
+                                               "mean_se",
                                                "rse",
-                                               "trends",
-                                               tempCat,
-                                               tempCatGroup,
-                                               variableNameLookup,
-                                               tempCatGroupAlias,
+                                               NA,
+                                               "NULL",
                                                NA,
                                                NA,
                                                NA,
+                                               "numerator",
+                                               "denominator",
                                                NA,
-                                               "hys",
-                                               Sys.Date(),
                                                NA,
-                                               NA)
-          #"*")
+                                               Sys.Date())
+
+
           if(nrow(temp[cat1_group == singleVariableValueLookup,]) == 0) {
             print("input was 0 length")
             print(temp)
@@ -578,7 +600,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
                                  seVariable = NA,
                                  rseVariable = NA,
                                  comparison_with_KCVariable = NA,
-                                 time_trendsVariable = NULL,
+                                 time_trendsVariable = NA, #be sure this saves as provided string, should be "NULL" to spec.
                                  significanceVariable = NA,
                                  cautionVariable = NA,
                                  supressionVariable = NA,
