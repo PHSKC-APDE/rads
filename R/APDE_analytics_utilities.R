@@ -603,7 +603,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
                                  time_trendsVariable = NA, #be sure this saves as provided string, should be "NULL" to spec.
                                  significanceVariable = NA,
                                  cautionVariable = NA,
-                                 supressionVariable = NA,
+                                 suppressionVariable = NA,
                                  numeratorVariable = NA,
                                  denominatorVariable = NA,
                                  chiVariable = NA,
@@ -737,33 +737,46 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     #process and add timetrends indicator
     if(time_trendsVariable %in% names(DT)) {
 
-    } else
+    } else {
+      Tableau_Ready_DT$time_trends <- rep("NULL", nrow(DT))
+      Tableau_Ready_DT$time_trends <- as.character(Tableau_Ready_DT$time_trends)
+    }
 
+    #process and add significance
+    Tableau_Ready_DT$significance <- rep(significanceVariable, nrow(DT))
+    Tableau_Ready_DT$significance <- as.character(Tableau_Ready_DT$significance)
 
+    #process and add caution var
+    Tableau_Ready_DT$caution <- rep(cautionVariable, nrow(DT))
+    Tableau_Ready_DT$caution <- as.character(Tableau_Ready_DT$caution)
+
+    #process and add suppression indicator var
+    Tableau_Ready_DT$suppression <- rep(suppressionVariable, nrow(DT))
+    Tableau_Ready_DT$suppression <- as.character(Tableau_Ready_DT$suppression)
 
     #process and add numerator
     if(numeratorVariable %in% names(DT)) {
       Tableau_Ready_DT$numerator <- DT[, ..numeratorVariable]
     }
 
-
     #process and add denominator
     if(denominatorVariable %in% names(DT)) {
       Tableau_Ready_DT$denominator <- DT[, ..denominatorVariable]
     }
 
+    #process and add chi indicator
+    Tableau_Ready_DT$chi <- rep(chiVariable, nrow(DT))
+    Tableau_Ready_DT$chi <- as.character(Tableau_Ready_DT$chi)
 
-    #process and add data_source
-    Tableau_Ready_DT$data_source <- rep(data_sourceVariable, nrow(DT))
-    Tableau_Ready_DT$data_source <- as.character(Tableau_Ready_DT$data_source)
+    #process and add date_source
+    Tableau_Ready_DT$date_source <- rep(date_sourceVariable, nrow(DT))
+    Tableau_Ready_DT$date_source <- as.character(Tableau_Ready_DT$date_source)
 
     #process and add run_date
     Tableau_Ready_DT$run_date <- rep(run_dateVariable, nrow(DT))
 
 
-    #process and add significance
-    Tableau_Ready_DT$significance <- rep(significanceVariable, nrow(DT))
-    Tableau_Ready_DT$significance <- as.character(Tableau_Ready_DT$significance)
+
 
     return(Tableau_Ready_DT)
   }
