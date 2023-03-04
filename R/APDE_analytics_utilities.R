@@ -461,12 +461,12 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     returner
   }
 
-  APDE_CHI_TRO_analysis <- function(data, variables, bivariables = NA, meta, type = "") {
+  APDE_CHI_TRO_analysis <- function(data, variables, bivariables = NA, meta, tab = "") {
     analysisOptions <- c("_wastate","_kingcounty","bigcities","demgroups","crosstabs","trends")
-    if(!(type %in% analysisOptions)) {
+    if(!(tab %in% analysisOptions)) {
       stop("analysis type is required. Options are: \"_wastate\",\"kingcounty\",\"bigcities\",\"demgroups\",\"crosstabs\",\"trends\".")
     }
-    if(!(type %in% c("_kingcounty")) & is.na(bivariables)) {
+    if(!(tab %in% c("_kingcounty")) & is.na(bivariables)) {
       stop(" \"_wastate\", \"bigcities\", \"demgroups\", \"crosstabs\", \"trends\" analysees require one or more bivariables.")
     }
 
@@ -501,12 +501,10 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
       return(all_calc_results)
     }
 
-    if(type == "trends") {
+    if(tab == "trends") {
       calc_result_list_of_lists <- future.apply::future_lapply(variables, function(v) .internal_time_trend_calc(v, bivariables, data))
-      tab <- "trends"
-    } else if(type == "demgroups") {
+    } else if(tab == "demgroups") {
       calc_result_list_of_lists <- future.apply::future_lapply(variables, function(v) .internal_demgroup_calc(v, bivariables, data))
-      tab <- "demgroups"
     }
 
     for(listofDT in calc_result_list_of_lists) {
