@@ -461,10 +461,18 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     returner
   }
 
-  APDE_CHI_TRO_time_trend_analysis <- function(data, variables, bivariables, meta, timetrend = FALSE) {
+  APDE_CHI_TRO_analysis <- function(data, variables, bivariables = NA, meta, type = "") {
+    analysisOptions <- c("_wastate","_kingcounty","bigcities","demgroups","crosstabs","trends")
+    if(!(type %in% analysisOptions)) {
+      stop("analysis type is required. Options are: \"_wastate\",\"kingcounty\",\"bigcities\",\"demgroups\",\"crosstabs\",\"trends\".")
+    }
+    if(!(type %in% c("_kingcounty")) & is.na(bivariables)) {
+      stop(" \"_wastate\", \"bigcities\", \"demgroups\", \"crosstabs\", \"trends\" analysees require one or more bivariables.")
+    }
+
     #return a data structure containing calc results for each combination of variables and bivariables across range of available timepoints
     #
-    .internal_time_trend_calc <- function(v, bivariables, data) {
+    .internal_trends_calc <- function(v, bivariables, data) {
 
       all_calc_results <- (future.apply::future_lapply(bivariables, function(bivariable) {
         calc_result = rads::calc(data, what = v, by = c(bivariable, "chi_year"), metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T)
@@ -473,7 +481,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
       return(all_calc_results)
     }
 
-    .internal_demgroup_calc <- function(v, bivariables, data) {
+    .internal_demgroups_calc <- function(v, bivariables, data) {
 
 
       all_calc_results <- (future.apply::future_lapply(bivariables, function(bivariable) {
@@ -493,12 +501,12 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
       return(all_calc_results)
     }
 
-    if(timetrend) {
+    if(type == "trends") {
       calc_result_list_of_lists <- future.apply::future_lapply(variables, function(v) .internal_time_trend_calc(v, bivariables, data))
       tab <- "trends"
-    } else {
+    } else if(type == "demgroups") {
       calc_result_list_of_lists <- future.apply::future_lapply(variables, function(v) .internal_demgroup_calc(v, bivariables, data))
-      tab <- NA
+      tab <- "demgroups"
     }
 
     for(listofDT in calc_result_list_of_lists) {
@@ -557,7 +565,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
                                                NA,
                                                "numerator",
                                                "denominator",
-                                               NA,
+                                               "1",
                                                NA,
                                                Sys.Date())
 
@@ -790,10 +798,10 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
 
   ####calculating time trends######
-  returnDF_TT <- APDE_CHI_TRO_time_trend_analysis(data, variables, timeTrendBivariables, meta, timetrend = TRUE)
+  returnDF_TT <- APDE_CHI_TRO_analysis(data, variables, timeTrendBivariables, meta,type = "trends" )
 
   ####calculating demgroups tab####
-  returnDF_DG <- APDE_CHI_TRO_time_trend_analysis(data, variables, bivariables, meta, timetrend = FALSE)
+  returnDF_DG <- APDE_CHI_TRO_analysis(data, variables, bivariables, meta, type = "demgroups")
 
   ####calculating crosstabs tab####
 
