@@ -461,12 +461,12 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     returner
   }
 
-  APDE_CHI_TRO_analysis <- function(data, variables, bivariables = NA, meta, tab = "") {
-    analysisOptions <- c("_wastate","_kingcounty","bigcities","demgroups","crosstabs","trends")
+  APDE_CHI_TRO_analysis <- function(data, variables, bivariables = NULL, meta, tab = "") {
+    analysisOptions <- c("*_wastate","*_kingcounty","*bigcities","demgroups","*crosstabs","trends")
     if(!(tab %in% analysisOptions)) {
       stop("analysis type is required. Options are: \"_wastate\",\"kingcounty\",\"bigcities\",\"demgroups\",\"crosstabs\",\"trends\".")
     }
-    if(!(tab %in% c("_kingcounty")) & is.na(bivariables)) {
+    if(!(tab %in% c("_kingcounty")) & is.null(bivariables)) {
       stop(" \"_wastate\", \"bigcities\", \"demgroups\", \"crosstabs\", \"trends\" analysees require one or more bivariables.")
     }
 
@@ -476,6 +476,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
       all_calc_results <- (future.apply::future_lapply(bivariables, function(bivariable) {
         calc_result = rads::calc(data, what = v, by = c(bivariable, "chi_year"), metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T)
+        calc_result$formatedYear <- calc_result
         calc_result
       }))
       return(all_calc_results)
@@ -495,6 +496,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
         ##create county wide point estimate of the current variable
         #calculate point estimate
         calc_result = rads::calc(data, what = v, by = bivariables, where = chi_year %in% grp_yrs, metrics = c('mean', 'denominator', 'numerator', 'rse'), proportion = T, time_var = 'chi_year')
+        calc_result$formatedYear <- gyl
         calc_result
 
       }))
@@ -514,72 +516,63 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
         #create temporary DT to work with
         temp <- DT
 
-        #temp <- trend_resultunlist[[1]][[1]] #working in loop ver
-
-        #get category 1 variable, which is the name of the variable column, which happens to be first variable in calc returned DT
-        variableNameLookup <- names(temp)[1]
         #remove negation of binary observations
         if(any(unlist(temp[, 1]) %in% 1)) temp =  temp[get(variableNameLookup) == 1,]
 
         #remove obvious NA's
         temp <- temp[!is.na(get(variableNameLookup))]
 
-        #create variables to pass to table function
-        ####### this only works with provided metadata table.
-        variableValueLookup <- unique(unlist(temp[,1]))
-        #if(length(variableValuelookup) !=1) stop("unexpectedly have too many 'indicator key' values")
-        temp
+        indicatorKey <- temp$variable[1]
+        cat1 <- NA
+        cat1_group <- temp[,1]
+        cat1_group_alias <- NA
+        cat1_varname <- names(temp)[1]
 
-        for(singleVariableValueLookup in variableValueLookup) {
-          tempCat <- meta[varname == variableNameLookup & gval == singleVariableValueLookup,]$cat
-          tempCatGroup <- meta[varname == variableNameLookup & gval == singleVariableValueLookup,]$group
+        cat2 <- NA
+        cat2_group <- NA
+        cat2_group_alias <- NA
+        cat2_varname <- NA
 
-          tempCatGroupAlias <- meta[varname == variableNameLookup & gval == singleVariableValueLookup]$group_alias
+        formatedOutput <- APDE_TRO_FORMATING(temp,
+                                             NA,
+                                             indicatorKey,
+                                             tab,
+                                             "formatedYear",
+                                             cat1,
+                                             cat1_group,
+                                             cat1_group_alias,
+                                             cat1_varname,
+                                             cat2,
+                                             cat2_group,
+                                             cat2_group_alias,
+                                             cat2_varname,
+                                             "mean",
+                                             "mean_lower",
+                                             "mean_upper",
+                                             "mean_se",
+                                             "rse",
+                                             NA,
+                                             "NULL",
+                                             NA,#
+                                             NA,#
+                                             NA,#
+                                             "numerator",
+                                             "denominator",
+                                             "1",
+                                             NA,
+                                             Sys.Date())
 
-          names(temp)[1] <- "cat1_group"
-
-
-          formatedOutput <- APDE_TRO_FORMATING(temp[cat1_group == singleVariableValueLookup,],
-                                               NA,
-                                               tab,
-                                               "chi_year",
-                                               NA,
-                                               "cat1_group",
-                                               NA,
-                                               "variable",
-                                               NA,
-                                               NA,
-                                               NA,
-                                               NA,
-                                               "mean",
-                                               "mean_lower",
-                                               "mean_upper",
-                                               "mean_se",
-                                               "rse",
-                                               NA,
-                                               "NULL",
-                                               NA,
-                                               NA,
-                                               NA,
-                                               "numerator",
-                                               "denominator",
-                                               "1",
-                                               NA,
-                                               Sys.Date())
-
-
-          if(nrow(temp[cat1_group == singleVariableValueLookup,]) == 0) {
-            print("input was 0 length")
-            print(temp)
-          }
-
-          if(exists("returner")) {
-            returner <- rbind(returner, formatedOutput)
-          } else {
-            returner <- formatedOutput
-          }
-
+        if(nrow(temp[cat1_group == singleVariableValueLookup,]) == 0) {
+          print("input was 0 length")
+          print(temp)
         }
+
+        if(exists("returner")) {
+          returner <- rbind(returner, formatedOutput)
+        } else {
+          returner <- formatedOutput
+        }
+
       }
     }
     returner
@@ -667,7 +660,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     Tableau_Ready_DT$tab <- rep(tabVariable, nrow(DT))
     Tableau_Ready_DT$tab <- as.character(Tableau_Ready_DT$tab)
 
-        #process and add year variable
+    #process and add year variable
     if(yearVariable %in% names(DT)) {
       if(!grepl("&", kc$chi_year)) {
         #test if dates are default calc output (only commas separating multiple dates) and if so, add "&" after last comma if any
@@ -685,7 +678,7 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
     Tableau_Ready_DT$cat1 <- rep(cat1Variable, nrow(DT))
 
     #process and add cat1_group
-    Tableau_Ready_DT$cat1_group <- rep(cat1_groupVariable, nrow(DT))
+    Tableau_Ready_DT$cat1_group <- DT[, ..cat1_groupVariable]
 
     #process and add cat1_group_alias
     Tableau_Ready_DT$cat1_group_alias <- rep(cat1_group_aliasVariable, nrow(DT))
@@ -796,10 +789,10 @@ APDE_chi_tableau_ready_output <- function(dataset, chi_meta, generate_crosstabul
 
 
   ####calculating time trends######
-  returnDF_TT <- APDE_CHI_TRO_analysis(data, variables, timeTrendBivariables, meta,type = "trends" )
+  returnDF_TT <- APDE_CHI_TRO_analysis(data, variables, timeTrendBivariables, meta, tab = "trends" )
 
   ####calculating demgroups tab####
-  returnDF_DG <- APDE_CHI_TRO_analysis(data, variables, bivariables, meta, type = "demgroups")
+  returnDF_DG <- APDE_CHI_TRO_analysis(data, variables, bivariables, meta, tab = "demgroups")
 
   ####calculating crosstabs tab####
 
