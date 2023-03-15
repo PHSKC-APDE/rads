@@ -61,7 +61,7 @@
 #' @param geo_vintage Integer. One of 2010 or 2020. Refers to the the Census
 #' that influenced the creation of the geographies. See details for notes.
 #'
-#' Default == same as `census_vintage`
+#' Default == 2020
 #'
 #' @param schema character. Name of the schema in the db where pop data is stored.
 #' \emph{Unless you know what you are doing, do not change the default!}
@@ -124,7 +124,7 @@ get_population <- function(kingco = T,
                            round = FALSE,
                            mykey = "hhsaw",
                            census_vintage = 2020,
-                           geo_vintage = 2010,
+                           geo_vintage = 2020,
                            schema = 'ref',
                            table_prefix = 'pop_geo_',
                            return_query = FALSE){
@@ -133,6 +133,7 @@ get_population <- function(kingco = T,
   . <- age <-  code <- colname <- coltype <- cou_id <- cou_name <- gender <-  geo_id <- geo_id_code <- NULL
   hra <- label <- lgd_counties<-  lgd_id<-  lgd_name<-  max_year<-  pop <- region <- region_id<- NULL
   scd_id <- scd_name <- setNames <- short<-  sql_col <- value<-  varname<-  vid <- NULL
+  hra20_id <- hra20_name <- NULL
 
   # valid inputs
   validate_input = function(varname, vals, allowed_vals, additional = "", convert_to_all = TRUE){
@@ -291,15 +292,15 @@ get_population <- function(kingco = T,
   geo_vintage = validate_input('geo_vintage', geo_vintage, c(2010, 2020))
 
   ## FIXME: A temporary fix for hras until the new ones get released
-  if(geo_vintage == 2020 & geo_type == 'hra'){
-    warning('2020 geo_vintage HRAs are not available yet. If you are getting this message April 2023 try reinstalling rads. geo_vintage changed to 2010')
-    geo_vintage = 2010
-  }
-  if(geo_vintage == 2020 & geo_type == 'region'){
-    stop('2020 geo_vintage region are not available yet. If you are getting this message April 2023 try reinstalling rads, geo_vintage changed to 2010')
-    geo_vintage = 2010
-
-  }
+  # if(geo_vintage == 2020 & geo_type == 'hra'){
+  #   warning('2020 geo_vintage HRAs are not available yet. If you are getting this message April 2023 try reinstalling rads. geo_vintage changed to 2010')
+  #   geo_vintage = 2010
+  # }
+  # if(geo_vintage == 2020 & geo_type == 'region'){
+  #   stop('2020 geo_vintage region are not available yet. If you are getting this message April 2023 try reinstalling rads, geo_vintage changed to 2010')
+  #   geo_vintage = 2010
+  #
+  # }
   # TODO: REVISIT THIS
   if(geo_vintage == 2010 & census_vintage == 2020 & geo_type %in% c('kc','county', 'wa')){
     geo_vintage = 2020
@@ -585,7 +586,8 @@ get_population <- function(kingco = T,
 
   if(geo_type == 'hra'){
     # FIXME: change to work with 2020 HRAs as well
-    hranames = rads.data::spatial_hra_vid_region[, setNames(hra, vid)]
+    if(geo_vintage == 2010) hranames = rads.data::spatial_hra_vid_region[, setNames(hra, vid)]
+    if(geo_vintage == 2020) hranames = rads.data::spatial_hra20_to_region20[, setNames(hra20_name, hra20_id)]
     r[, geo_id_code := geo_id]
     r[, geo_id := hranames[as.character(geo_id)]]
   }

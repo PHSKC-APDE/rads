@@ -120,12 +120,12 @@ test_that('get_population',{
 
   # make sure hispanic doesn't sneak through
   # This warning expectation will need to be removed when geo_vintage 2020 HRAs and other stuff is available.
-  expect_warning(r2 <- get_population(races = 'aian', group_by = 'race'))
+  (r2 <- get_population(races = 'aian', group_by = 'race'))
   expect_true(all(r2[, race_eth] == 'AIAN'))
 
   # Things that shouldn't break
   # warning might need to be removed
-  expect_warning(get_population(geo_type = 'wa', race_type = 'race_eth', group_by = c('ages', 'geo_id'), years = 2016:2020, round = F))
+
 
   r2 = get_population(geo_type = 'wa',
                       race_type = 'race_eth',
@@ -136,5 +136,24 @@ test_that('get_population',{
 
   r3 <- get_population(geo_type = 'blk', race_type = 'race_eth', races = 'black', group_by = c('ages', 'geo_id'), years = 2018:2020, round = F)
   expect_true(all(!is.na(r3[,age])))
+
+  # new HRA
+  r4.1 = get_population(geo_type = 'hra', geo_vintage = 2020, census_vintage = 2020)
+  r4.2 = get_population(geo_type = 'hra', geo_vintage = 2010, census_vintage = 2020)
+  r4.3 = get_population(geo_type = 'hra', geo_vintage = 2010, census_vintage = 2010)
+  expect_error(get_population(geo_type = 'hra', geo_vintage = 2020, census_vintage = 2010))
+  expect_equal(nrow(r4.1), 61)
+  expect_equal(nrow(r4.2), 48)
+  expect_equal(nrow(r4.3), 48)
+  expect_true(!(all(sort(r4.2[, pop]) - sort(r4.3[, pop]) == 0)))
+
+  # new regions
+  r5.1 = get_population(geo_type = 'region', geo_vintage = 2010, census_vintage = 2020)
+  r5.2 = get_population(geo_type = 'region', geo_vintage = 2020, census_vintage = 2020)
+  expect_equal(nrow(r5.1), 4)
+  expect_equal(nrow(r5.2), 4)
+  expect_true(r5.2[,all(geo_id_code %in% 1:4)])
+
+
 
 })
