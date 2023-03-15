@@ -61,7 +61,7 @@
 #' @param geo_vintage Integer. One of 2010 or 2020. Refers to the the Census
 #' that influenced the creation of the geographies. See details for notes.
 #'
-#' Default == same as `census_vintage`
+#' Default == 2020
 #'
 #' @param schema character. Name of the schema in the db where pop data is stored.
 #' \emph{Unless you know what you are doing, do not change the default!}
