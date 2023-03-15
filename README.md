@@ -18,6 +18,9 @@ If you haven't yet installed [`rads`](https://github.com/PHSKC-APDE/rads), follo
 
 4.  Load [`rads`](https://github.com/PHSKC-APDE/rads) ... `library(rads)`
 
+## New for version 1.1.5
+1. `get_population` now defaults to 2020 vintage geographies (e.g. new HRAs)
+
 ## New for version 1.1.4
 
 1.  `get_population` has been overhauled and now is able to access [frankenpop aka Population Interim Estimates (PIE)](https://github.com/PHSKC-APDE/frankenpop_pub)**.** For the most part, existing `get_population` calls should still work-- although the estimates being pulled will differ slightly:
