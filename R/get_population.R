@@ -558,10 +558,14 @@ get_population <- function(kingco = T,
 
   ## gender ----
   if(!'gender' %in% names(r)){
-    if(all(genders == 'All')) genders = 1:2
-    r[, gender := c('Female, Male')]
+    if(all(genders == 'All')){
+      r[, gender := c('Female, Male')]
+    }else{
+      r[, gender := c('Male', 'Female')[as.numeric(genders)]]
+    }
+
   }else{
-    r[, gender := c('Female', 'Male')[as.numeric(gender)]]
+    r[, gender := c('Male', 'Female')[as.numeric(gender)]]
   }
 
   ## geography ----

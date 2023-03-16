@@ -72,10 +72,13 @@ test_that('get_population',{
   expect_gt( nrow(get_population(geo_type = "zip", kingco = F, census_vintage = 2020, geo_vintage = 2020)), nrow(get_population(geo_type = "zip", kingco = T, census_vintage = 2020, geo_vintage = 2020))) # confirm kingco=T works for zip
 
   expect_equal(2153700, sum(get_population(years = 2017, genders = c("female", "male"), geo_vintage = 2010, census_vintage = 2010, round = T)$pop) ) # 2017 KC (by summing both genders)
+  fp = get_population(years = 2017, genders = "female", geo_vintage = 2010, census_vintage = 2010, round = T)
+  expect_equal(1077304, fp$pop ) # KC females 2017
+  expect_equal(fp$gender,'Female')
 
-  expect_equal(1077304, get_population(years = 2017, genders = "female", geo_vintage = 2010, census_vintage = 2010, round = T)$pop ) # KC females 2017
-
-  expect_equal(1076396, get_population(years = 2017, genders = "male", geo_vintage = 2010, census_vintage = 2010, round = T)$pop ) # KC males 2017
+  fp2 = get_population(years = 2017, genders = "male", geo_vintage = 2010, census_vintage = 2010, round = T)
+  expect_equal(1076396, fp2$pop ) # KC males 2017
+  expect_equal(fp2$gender, 'Male')
 
   expect_equal(2153700, sum(get_population(years = 2017, race_type = "race_eth", group_by = "race_eth", geo_vintage = 2010, census_vintage = 2010, round = T)$pop) ) # 2017 KC (by summing all race_eth estimates)
 
@@ -153,6 +156,12 @@ test_that('get_population',{
   expect_equal(nrow(r5.1), 4)
   expect_equal(nrow(r5.2), 4)
   expect_true(r5.2[,all(geo_id_code %in% 1:4)])
+
+  r6.1 = get_population(gender = 'f')
+  r6.2 = get_population()
+  expect_true(r6.1[,pop] < r6.2[,pop])
+  expect_equal(r6.1[, gender], 'Female')
+  expect_equal(r6.2[, gender], 'Female, Male')
 
 
 
