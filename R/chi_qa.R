@@ -229,7 +229,7 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, ignore_trends = T, 
 
   ## Check that core identification variables are all present ----
       for(var in c("indicator_key", "tab", "year", "cat1", "cat1_group",
-                   "cat1_group_alias", "source_date", "run_date")){
+                   "source_date", "run_date")){
         if(nrow(chi_est[is.na(get(var))]) > 0 ){
           stop(glue::glue("There is at least one row where '{var}' is missing.
                           Please fill in the missing value before rerunning chi_qa()"))
@@ -244,7 +244,7 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, ignore_trends = T, 
       }
 
   ## Check that crosstab identification variables are all present ----
-      for(var in c("cat2", "cat2_group", "cat2_group_alias")){
+      for(var in c("cat2", "cat2_group")){
         if(nrow(chi_est[tab=="crosstabs" & is.na(get(var))]) > 0 ){
           stop(glue::glue("There is at least one row where tab=='crosstabs' & where '{var}' is missing.
                           Please fill in the missing value before rerunning chi_qa()"))

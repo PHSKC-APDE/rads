@@ -16,7 +16,7 @@ get_population(
   round = FALSE,
   mykey = "hhsaw",
   census_vintage = 2020,
-  geo_vintage = 2010,
+  geo_vintage = 2020,
   schema = "ref",
   table_prefix = "pop_geo_",
   return_query = FALSE
@@ -90,7 +90,7 @@ Default == 2020}
 \item{geo_vintage}{Integer. One of 2010 or 2020. Refers to the the Census
 that influenced the creation of the geographies. See details for notes.
 
-Default == same as \code{census_vintage}}
+Default == 2020}
 
 \item{schema}{character. Name of the schema in the db where pop data is stored.
 \emph{Unless you know what you are doing, do not change the default!}
