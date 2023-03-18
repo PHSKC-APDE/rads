@@ -283,12 +283,9 @@ calc_age <- function(from, to) {
 #' List of standard CHI / Tableau Ready columns
 #' @export
 chi_cols = function(){
-  c("data_source", "indicator_key", "tab", "year", "cat1", "cat1_group", "cat1_group_alias", "cat1_varname","cat2",
-    "cat2_group", "cat2_group_alias", "cat2_varname", "result", "lower_bound", "upper_bound", "se", "rse",
-    "comparison_with_kc", "time_trends", "significance", "caution", "suppression", "numerator", "denominator", "chi",
-    "source_date", "run_date")
+  chi.yaml <- yaml::yaml.load(httr::GET(url = "https://raw.githubusercontent.com/PHSKC-APDE/rads/main/ref/chi_qa.yaml"))
+  chi_colnames <- names(chi.yaml$vars)
 }
-
 
 #' Compare two data.frames with properly formatted CHI data
 #' @param OLD Character vector of length 1. Identifies the data.table/data.frame that you want to use as a reference
@@ -343,8 +340,8 @@ chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = 
   comp <- merge(copy(OLD[year == OLD.year]),
                 copy(NEW[year == NEW.year]),
                 by = c("indicator_key", "tab",
-                       "cat1", "cat1_group_alias", "cat1_varname",
-                       "cat2", "cat2_group_alias", "cat2_varname"),
+                       "cat1", "cat1_group", "cat1_varname",
+                       "cat2", "cat2_group", "cat2_varname"),
                 all = T)
 
   # calculate percent differences between old (x) and new(y)
@@ -356,8 +353,8 @@ chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = 
   # order variables
   comp <- comp[, c("absolute.diff", "relative.diff", "result_type",
                    "indicator_key", "tab",
-                   "cat1", "cat1_group_alias", "cat1_varname",
-                   "cat2", "cat2_group_alias", "cat2_varname", "year.x", "year.y",
+                   "cat1", "cat1_group", "cat1_varname",
+                   "cat2", "cat2_group", "cat2_varname", "year.x", "year.y",
                    "result.x", "result.y", "lower_bound.x", "lower_bound.y",
                    "upper_bound.x", "upper_bound.y",
                    "numerator.x", "numerator.y", "denominator.x", "denominator.y",
@@ -431,9 +428,10 @@ chi_compare_kc <- function(orig,
 #' List of standard CHI / Tableau Ready metadata columns
 #' @export
 chi_metadata_cols = function(){
-  c("data_source", "indicator_key", "result_type", "valence", "latest_year", "latest_year_result", "latest_year_kc_pop",
-    "latest_year_count", "map_type", "unit", "valid_years", "chi", "run_date")
+  chi.yaml <- yaml::yaml.load(httr::GET(url = "https://raw.githubusercontent.com/PHSKC-APDE/rads/main/ref/chi_qa.yaml"))
+  chi_metanames <- names(chi.yaml$metadata)
 }
+
 
 
 #' Compare aggregated results (proportions or means) for one strata to the rest
