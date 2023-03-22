@@ -102,7 +102,7 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_
   }
   # If both were loaded, merge them
   if(exists('ardat') && exists('sdat')){
-    scols = vars[ar == FALSE, colname] # prevent column duplication
+    scols = unique(vars[ar == FALSE, colname]) # prevent column duplication
     dat = merge(ardat, sdat[, .SD, .SDcols = c('obs_id', scols)], all.x = T, by = 'obs_id')
   }else if(exists('ardat'))(
     dat = ardat
