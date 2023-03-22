@@ -85,6 +85,7 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_
     if(ar) cols = vars[ar == TRUE, colname]
     if(!ar) cols = vars[ar == FALSE, colname]
   }
+  cols = unique(cols)
 
   #figure out whether to load stage, analytic ready or both
   vars = vars[colname %in% cols]
