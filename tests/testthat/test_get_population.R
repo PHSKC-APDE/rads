@@ -163,6 +163,9 @@ test_that('get_population',{
   expect_equal(r6.1[, gender], 'Female')
   expect_equal(r6.2[, gender], 'Female, Male')
 
-
-
 })
+
+if(interactive()){
+
+
+}

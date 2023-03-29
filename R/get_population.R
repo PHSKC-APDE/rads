@@ -317,7 +317,7 @@ get_population <- function(kingco = T,
 
   ## validate years ----
   ## integer year between 2000 and 2022
-  gt = substr(pop_table@name['table'],9,nchar(pop_table@name['table']))
+  gt = gsub(table_prefix, "", pop_table@name['table'], fixed = T)
   find_years_where = c(
     DBI::SQL('r_type = 97'),
     DBI::SQL('load_ref_datetime is not null'),
