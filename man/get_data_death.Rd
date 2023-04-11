@@ -25,7 +25,7 @@ Default = T}
 Default = T}
 }
 \value{
-dataset either data.table (adminstrative data) for further analysis/tabulation
+data.table (adminstrative data) for further analysis/tabulation
 }
 \description{
 Get Death microdata from storage.

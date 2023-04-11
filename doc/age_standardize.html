@@ -649,20 +649,20 @@ ex4.1[]
 </code></pre>
 
 <pre><code>##     age         geo      pop
-##  1:  19 King County 13378.52
-##  2:  17 King County 11566.49
-##  3:  14 King County 11991.38
-##  4:  18 King County 12658.91
-##  5:  15 King County 11090.13
-##  6:  13 King County 12506.60
-##  7:  16 King County 11462.55
-##  8:  13    WA State 46647.21
-##  9:  19    WA State 47588.43
-## 10:  17    WA State 43450.77
-## 11:  16    WA State 44501.15
-## 12:  15    WA State 44360.21
-## 13:  18    WA State 46040.50
-## 14:  14    WA State 46092.01
+##  1:  18 King County 12654.47
+##  2:  19 King County 13401.31
+##  3:  15 King County 11131.42
+##  4:  17 King County 11565.07
+##  5:  14 King County 12208.96
+##  6:  13 King County 12407.25
+##  7:  16 King County 11420.94
+##  8:  18    WA State 45951.20
+##  9:  19    WA State 47390.04
+## 10:  16    WA State 44581.08
+## 11:  15    WA State 44635.30
+## 12:  14    WA State 46476.42
+## 13:  13    WA State 46374.96
+## 14:  17    WA State 43452.42
 </code></pre>
 
 <p><strong>Merge population onto to birth counts</strong></p>
@@ -673,20 +673,20 @@ ex4.1[]
 </code></pre>
 
 <pre><code>##     age         geo births      pop
-##  1:  13 King County      1 12506.60
-##  2:  13    WA State      6 46647.21
-##  3:  14 King County      4 11991.38
-##  4:  14    WA State     16 46092.01
-##  5:  15 King County     10 11090.13
-##  6:  15    WA State     69 44360.21
-##  7:  16 King County     23 11462.55
-##  8:  16    WA State    190 44501.15
-##  9:  17 King County     44 11566.49
-## 10:  17    WA State    348 43450.77
-## 11:  18 King County    111 12658.91
-## 12:  18    WA State    751 46040.50
-## 13:  19 King County    227 13378.52
-## 14:  19    WA State   1481 47588.43
+##  1:  13 King County      1 12407.25
+##  2:  13    WA State      6 46374.96
+##  3:  14 King County      4 12208.96
+##  4:  14    WA State     16 46476.42
+##  5:  15 King County     10 11131.42
+##  6:  15    WA State     69 44635.30
+##  7:  16 King County     23 11420.94
+##  8:  16    WA State    190 44581.08
+##  9:  17 King County     44 11565.07
+## 10:  17    WA State    348 43452.42
+## 11:  18 King County    111 12654.47
+## 12:  18    WA State    751 45951.20
+## 13:  19 King County    227 13401.31
+## 14:  19    WA State   1481 47390.04
 </code></pre>
 
 <p><strong>Run <code>age_standardize()</code></strong></p>
@@ -703,14 +703,14 @@ ex4.1[]
 </code></pre>
 
 <pre><code>##            geo count       pop crude.rate crude.lci crude.uci adj.rate adj.lci
-## 1: King County   420  84654.57       4.96      4.50      5.46     4.65    4.22
-## 2:    WA State  2861 318680.29       8.98      8.65      9.31     8.74    8.43
+## 1: King County   420  84789.41       4.95      4.49      5.45     4.65    4.21
+## 2:    WA State  2861 318861.42       8.97      8.65      9.31     8.76    8.45
 ##    adj.uci                                         reference_pop
 ## 1:    5.12 World (WHO 2000-2025) Std Million (single ages to 84)
-## 2:    9.07 World (WHO 2000-2025) Std Million (single ages to 84)
+## 2:    9.09 World (WHO 2000-2025) Std Million (single ages to 84)
 </code></pre>
 
-<p>According to your analysis, the crude King County teen birth rate is approximately half (4.96 / 8.98 = 0.552) of the WA State teen birth rate. This relationship remains largely unchanged after age-standardization  (4.65 / 8.74 = 0.532).</p>
+<p>According to your analysis, the crude King County teen birth rate is approximately half (4.95 / 8.97 = 0.552) of the WA State teen birth rate. This relationship remains largely unchanged after age-standardization  (4.65 / 8.76 = 0.531).</p>
 
 <hr/>
 

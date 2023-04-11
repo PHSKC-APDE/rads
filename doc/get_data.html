@@ -203,9 +203,9 @@ hr {
 <body>
 <h2>Introduction</h2>
 
-<p>This vignette will provide some examples of ways to explore and load <a href="https://github.com/PHSKC-APDE/DOHdata/tree/master/ETL/birth">birth data</a> using the <code>get_data_birth()</code> functions in <a href="https://github.com/PHSKC-APDE/rads"><code>rads</code></a>, APDE&#39;s &#39;R Automated Data System&#39;. In the future, <code>rads</code> will allow users to load additional datasets (e.g., BRFSS, deaths, hospitalizations, etc.) using the generic <code>get_data()</code> wrapper.</p>
+<p>This vignette will provide some examples of ways to explore and load <a href="https://github.com/PHSKC-APDE/DOHdata/tree/master/ETL/birth">birth data</a> using the <code>get_data_birth()</code> functions in <a href="https://github.com/PHSKC-APDE/rads"><code>rads</code></a>, APDE&#39;s &#39;R Automated Data System&#39;. As of April 2023, <code>get_data_chars()</code>, <code>get_data_deaths()</code>, and <code>get_data_hys()</code> also exist. In the future, <code>rads</code> may allow users to easily load additional datasets (e.g., BRFSS). You are encouraged to read the detailed help files that exist for each data source.</p>
 
-<p><strong>NOTE!!</strong> To get the most out of this vignette, I recommend that you actually type each and every bit of code into R. Doing so will almost definitely help you learn the syntax much faster than just reading the vignette or copying and pasting the code.</p>
+<p><strong>NOTE!!</strong> To get the most out of this vignette, we recommend that you actually type each and every bit of code into R. Doing so will almost definitely help you learn the syntax much faster than just reading the vignette or copying and pasting the code.</p>
 
 <h2>Loading data with get_data_birth()</h2>
 
@@ -225,12 +225,14 @@ hr {
 
 <p>You can see that <code>get_data_birth</code> takes three possible arguments:</p>
 
-<p>1) <code>cols</code> &lt;&lt; a vector of the specific columns that you want to load into memory, e.g., <code>c(&quot;chi_year&quot;, &quot;chi_geo_regions_4&quot;)</code>. If it is not specified, the default is <code>NA</code>, which will pull all available columns. 
-    * In the future, we hope to integrate standardized documentation, including a data dictionary, into <code>rads</code>. For now, manually <a href="https://github.com/PHSKC-APDE/DOHdata/blob/master/ETL/birth/ref/ref_bir_user_dictionary_final.csv">open the data dictionary</a> to see the available variables.</p>
+<p>1)  <code>cols</code> &lt;&lt; a vector of the specific columns that you want to load into memory, e.g., <code>c(&quot;chi_year&quot;, &quot;chi_geo_regions_4&quot;)</code>. If it is not specified, the default is <code>NA</code>, which will pull all available columns.</p>
 
-<p>2) <code>year</code> &lt;&lt; a vector of the year or years of data that you want to load, e.g., c(2011, 2015:2018). Note that the default is to load 2017 data only. </p>
+<pre><code>-   In the future, we hope to integrate standardized documentation, including a data dictionary, into `rads`. For now, manually [open the data dictionary](https://github.com/PHSKC-APDE/DOHdata/blob/master/ETL/birth/ref/ref_bir_user_dictionary_final.csv) to see the available variables.
+</code></pre>
 
-<p>3) <code>kingco</code> &lt;&lt; a logical argument (i.e., <code>T</code> or <code>F</code> only, without quotes) denoting whether or not the data should be limited to King County. The default is King County only. </p>
+<p>2)  <code>year</code> &lt;&lt; a vector of the year or years of data that you want to load, e.g., c(2011, 2015:2018). Note that the default is to load 2017 data only.</p>
+
+<p>3)  <code>kingco</code> &lt;&lt; a logical argument (i.e., <code>T</code> or <code>F</code> only, without quotes) denoting whether or not the data should be limited to King County. The default is King County only.</p>
 
 <p>Let&#39;s try the function to see how it works by loading the year and King County columns for WA State in 2019:</p>
 
@@ -260,27 +262,18 @@ hr {
 <pre><code class="r">str(birth) 
 </code></pre>
 
-<pre><code>## Classes &#39;dtadmin&#39;, &#39;dtsurvey&#39;, &#39;data.table&#39; and &#39;data.frame&#39;:    86154 obs. of  3 variables:
+<pre><code>## Classes &#39;data.table&#39; and &#39;data.frame&#39;:   86154 obs. of  2 variables:
 ##  $ chi_geo_kc: int  0 0 0 0 0 0 0 0 0 0 ...
 ##  $ chi_year  : int  2019 2019 2019 2019 2019 2019 2019 2019 2019 2019 ...
-##  $ _id       : int  1 2 3 4 5 6 7 8 9 10 ...
-##  - attr(*, &quot;.internal.selfref&quot;)=&lt;externalptr&gt; 
-##  - attr(*, &quot;sdes&quot;)=Classes &#39;data.table&#39; and &#39;data.frame&#39;:    86154 obs. of  5 variables:
-##   ..$ psu     : int [1:86154] 1 2 3 4 5 6 7 8 9 10 ...
-##   ..$ weight  : num [1:86154] 1 1 1 1 1 1 1 1 1 1 ...
-##   ..$ strata  : num [1:86154] 1 1 1 1 1 1 1 1 1 1 ...
-##   ..$ _id     : int [1:86154] 1 2 3 4 5 6 7 8 9 10 ...
-##   ..$ sampsize: int [1:86154] 86154 86154 86154 86154 86154 86154 86154 86154 86154 86154 ...
-##   ..- attr(*, &quot;.internal.selfref&quot;)=&lt;externalptr&gt; 
-##  - attr(*, &quot;stype&quot;)= chr &quot;admin&quot;
+##  - attr(*, &quot;.internal.selfref&quot;)=&lt;externalptr&gt;
 </code></pre>
 
-<p>We can see that &#39;birth&#39; is a data.table and a data.frame and has our columns of interest. Also, in case you missed it when using <code>str()</code>, the <code>dim()</code> function tells us the dimensions of the <code>birth</code> table. In this case, it has 86154 rows and 3 columns</p>
+<p>We can see that &#39;birth&#39; is a data.table and a data.frame and has our columns of interest. Also, in case you missed it when using <code>str()</code>, the <code>dim()</code> function tells us the dimensions of the <code>birth</code> table. In this case, it has 86154 rows and 2 columns</p>
 
 <pre><code class="r">dim(birth) 
 </code></pre>
 
-<pre><code>## [1] 86154     3
+<pre><code>## [1] 86154     2
 </code></pre>
 
 <p>Use the <code>head()</code> command to take a peak at the first 6 lines of the <code>birth</code> table</p>
@@ -288,13 +281,29 @@ hr {
 <pre><code class="r">head(birth) 
 </code></pre>
 
-<pre><code>##    chi_geo_kc chi_year _id
-## 1:          0     2019   1
-## 2:          0     2019   2
-## 3:          0     2019   3
-## 4:          0     2019   4
-## 5:          0     2019   5
-## 6:          0     2019   6
+<pre><code>##    chi_geo_kc chi_year
+## 1:          0     2019
+## 2:          0     2019
+## 3:          0     2019
+## 4:          0     2019
+## 5:          0     2019
+## 6:          0     2019
+</code></pre>
+
+<h2>Save time by identifying columns of interest</h2>
+
+<p>As mentioned and demonstrated above, you can use the <code>cols</code> argument to save time by downloading a limited data set from the SQL servers. However, to do so, you need to know the column names. This is why we&#39;ve created the<code>list_dataset_columns()</code> function. The sole argument is the name of the dataset (e.g., &#39;birth&#39;, &#39;chars&#39;, etc.) and the output is a table with all of the variable names. </p>
+
+<pre><code class="r">head(list_dataset_columns(&#39;birth&#39;))
+</code></pre>
+
+<pre><code>##              var.names analytic_ready
+## 1:  birth_cert_encrypt           TRUE
+## 2:     birth_cert_type           TRUE
+## 3:                 sex           TRUE
+## 4: date_of_birth_month           TRUE
+## 5:  date_of_birth_year           TRUE
+## 6:       time_of_birth           TRUE
 </code></pre>
 
 <h2>Loading data with get_data()</h2>
@@ -305,15 +314,15 @@ hr {
 dim(birth2)
 </code></pre>
 
-<pre><code>## [1] 86154     3
+<pre><code>## [1] 86154     2
 </code></pre>
 
-<p>We can confirm that the birth and birth2 data.tables are the same using data.table&#39;s <code>fsetequal()</code> function </p>
+<p>We can confirm that the birth and birth2 data.tables are the same using data.table&#39;s <code>fsetequal()</code> function</p>
 
 <pre><code class="r">data.table::fsetequal(birth, birth2)
 </code></pre>
 
-<pre><code>## [1] FALSE
+<pre><code>## [1] TRUE
 </code></pre>
 
 <p><code>get_data()</code> is generic and provides a shortcut for loading datasets that have been cleaned and compiled. You will be able to identify these datasets with <code>list_apde_data()</code></p>
@@ -321,7 +330,7 @@ dim(birth2)
 <pre><code class="r">list_apde_data()
 </code></pre>
 
-<pre><code>## [1] &quot;hys&quot;   &quot;birth&quot;
+<pre><code>## [1] &quot;hys&quot;   &quot;birth&quot; &quot;chars&quot; &quot;death&quot;
 </code></pre>
 
 </body>

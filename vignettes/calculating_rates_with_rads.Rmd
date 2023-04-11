@@ -1,26 +1,28 @@
 ---
 title: "Calculating rates with rads"
 output:
-  pdf_document: default
+  html_document:
+    df_print: paged
   rmarkdown::html_vignette: default
   github_document: default
   urlcolor: blue
+  pdf_document: default
 vignette: |
   %\VignetteEngine{knitr::knitr} %\VignetteIndexEntry{calculating_rates_with_rads}
 ---
 
-```{r, echo = F, message=FALSE}
+```{r, echo = F, message=FALSE, warning=FALSE}
 library(rads)
 library(data.table)
 ```
 
 # Introduction
 
-Many PHSKC metrics are simple counts or means/proportions/fractions. The `rads::calc()` function was created to calculate these metrics from survey and line-level data. However, there are certain metrics (e.g., [adolescent birth rate](https://kingcounty.gov/depts/health/data/community-health-indicators/washington-state-vital-statistics-birth.aspx?shortname=Adolescent%20birth%20rate)) and datasets (e.g., death, CHARS, etc.) where **true rates --** **with a population denominator** -- are of interest. Most of the time these rates need to be [age-adjusted](https://github.com/PHSKC-APDE/rads/wiki/age_standardize) and most of the time DOH and APDE adjust to the US 2000 Standard Population with 11 age groups (see `rads.data::population_reference_pop_11_age_groups`). The [rads package](https://github.com/PHSKC-APDE/rads/) has a suite of tools that were developed to facilitate these types of analyses. This vignette explains how to use these tools in **four steps**.
+Many PHSKC metrics are simple counts or means/proportions/fractions. The `rads::calc()` function was created to calculate these metrics from survey and line-level data. However, there are certain metrics and datasets (e.g., death & CHARS) where **true rates --** **with a population denominator** -- are of interest. Most of the time these rates need to be [age-adjusted](https://github.com/PHSKC-APDE/rads/wiki/age_standardize) and most of the time DOH and APDE adjust to the US 2000 Standard Population with 11 age groups (see `rads.data::population_reference_pop_11_age_groups`). The [rads package](https://github.com/PHSKC-APDE/rads/) has a suite of tools that were developed to facilitate these types of analyses. This vignette explains how to use these tools in **four steps**.
 
 # The four steps: an overview
 
-**STEP 1:** Create a **summary table of event counts** (deaths, hospitalizations, etc.) by single year age groups and the strata of interest. For example, part of your your table might look like this:
+**STEP 1:** Create a **summary table of event counts** (deaths, hospitalizations, etc.) **by single year age groups and strata** of interest. For example, part of your your table might look like this:
 
 | event_name | counts | age | year | region  |
 |:-----------|:-------|:----|:-----|:--------|
@@ -76,20 +78,19 @@ deaths <- get_data_death(cols = c('chi_age', 'chi_year', 'chi_geo_seattle',
                                   'underlying_cod_code'), 
                                year = c(2016:2020), 
                                kingco = T)
-deaths[, `_id` := NULL] # delete _id, a column created by / for the rads package 
 names(deaths) 
 nrow(deaths) # should be ~65,000 based on apriori knowledge
-
 ```
 
-We see that the column names and the number of rows are what we expected. Now, let's identify the deaths from falls using the `rads::death_injury_matrix_count` function. To learn about this function, type `?death_injury_matrix_count` in your console or walk through the [death_functions wiki](https://github.com/PHSKC-APDE/rads/wiki/get_data). For now, just trust that this is the correct syntax:
+We see that the column names and the number of rows are what we expected. Now, let's identify the deaths from falls using the `rads::death_injury_matrix_count` function. To learn about this function, type `?death_injury_matrix_count` in your console or walk through the [death_functions wiki](https://github.com/PHSKC-APDE/rads/wiki). For now, just trust that this is the correct syntax:
 
 ```{r message=FALSE, warning=FALSE}
 deaths <- death_injury_matrix_count(ph.data = deaths,
                                intent = "*", # all five intents
                                mechanism = "fall",
                                icdcol = 'underlying_cod_code',
-                               kingco = F) # False because already subset
+                               kingco = F, # False because already subset
+                               group_by = 'chi_age') 
 head(deaths[deaths >9]) # only display non-suppressed data
 
 ```

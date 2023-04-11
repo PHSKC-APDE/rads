@@ -15,7 +15,7 @@ A data.table with 88 rows and two columns: \code{mechanism} & \code{intent}.
 \description{
 Function to view the ICD10 Death Injury Matrix (ICE: International
 Collaborative Effort on Injury Statistics) combinations of mechanism and
-intent availble in rads.
+intent available in rads.
 
 Generates a table with two columns, \code{mechanism} & \code{intent}.
 Use it to identify the combinations of \code{mechanism} & \code{intent} that

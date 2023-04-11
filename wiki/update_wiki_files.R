@@ -2,7 +2,7 @@ library('knitr')
 
 #start in the rads directory
 start_dir = getwd()
-rmds = list.files('vignettes', '\\.Rmd$', full.names = T)
+rmds = list.files('vignettes', '\\.Rmd$|\\.qmd$', full.names = T)
 rmds = file.path(start_dir, rmds)
 
 td = tempdir()

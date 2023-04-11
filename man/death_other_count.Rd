@@ -9,6 +9,7 @@ death_other_count(
   cause = NULL,
   icdcol = "underlying_cod_code",
   kingco = T,
+  group_by = NULL,
   ypll_age = NULL,
   death_age_col = NULL
 )
@@ -38,6 +39,14 @@ this only works with data imported with the \code{get_data_death()} function.
 
 The default is kingco = TRUE.}
 
+\item{group_by}{a character vector of indeterminate length. This is used to
+specify all the variables by which you want to group (a.k.a. stratify) the
+results. For example, if you specified \code{group_by = c('chi_sex',
+'chi_race_6')}, the results would be stratified by each combination of sex
+and race.
+
+The default is \code{group_by = NULL}}
+
 \item{ypll_age}{an optional numeric vector of length 1. When specified, it
 should be the age (an integer) used for \strong{Years of Potential Life Lost} (YPLL)
 calculations. Valid values are between 1 & 99 (inclusive), though 65 and 85 are the most
@@ -60,10 +69,7 @@ The default is \code{death_age_col = NULL}.'}
 \value{
 Generates a table with two columns: \code{cause.of.death} and \code{deaths}.
 If \code{ypll_age} is specified, a \code{ypll_##} column will also be added to the
-table. Any other columns that are in the original data set that is submitted to this
-function will also be returned. E.g., if the original data contained gender
-and race_eth, the returned table would contain the two default columns, plus
-all combinations of gender and race_eth as stratification variables.
+table. Columns in the \code{group_by} argument will also be returned.
 }
 \description{
 Generate death counts for causes of death that are \strong{NOT} included in the NCHS
@@ -77,12 +83,6 @@ obtain death counts.
 }
 \details{
 None
-}
-\note{
-Provide the function with the minimum necessary number of columns since all
-extraneous columns will be used to stratify the data. For example, if you
-included 'year', 'race_eth', and 'gender', the results would be stratified
-by every combination of year_x_race_eth_x_gender.
 }
 \examples{
 # example 1: death count only

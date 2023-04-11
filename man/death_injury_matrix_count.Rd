@@ -13,6 +13,7 @@ death_injury_matrix_count(
   mechanism = "*",
   icdcol = "underlying_cod_code",
   kingco = T,
+  group_by = NULL,
   ypll_age = NULL,
   death_age_col = NULL
 )
@@ -63,6 +64,14 @@ imported from the \code{get_data_death()} function.
 
 The default is \code{kingco = TRUE}.}
 
+\item{group_by}{a character vector of indeterminate length. This is used to
+specify all the variables by which you want to group (a.k.a. stratify) the
+results. For example, if you specified \code{group_by = c('chi_sex',
+'chi_race_6')}, the results would be stratified by each combination of sex
+and race.
+
+The default is \code{group_by = NULL}}
+
 \item{ypll_age}{an optional numeric vector of length 1. When specified, it
 should be the age (an integer) used for \strong{Years of Potential Life Lost} (YPLL)
 calculations. Valid values are between 1 & 99 (inclusive), though 65 and 85 are the most
@@ -82,11 +91,8 @@ The default is \code{death_age_col = NULL}.}
 }
 \value{
 The function returns a data.table with a minimum of three columns:
-\code{mechanism}, \code{intent}, & \code{deaths}. Any other columns that are
-in the original data set that is submitted to this function will also be
-returned. E.g., if the original data contained gender and race_eth, the
-returned table would contain the five default columns, plus all combinations
-of gender and race_eth as stratification variables.
+\code{mechanism}, \code{intent}, & \code{deaths}. \code{ypll_##} and
+\code{group_by} columns will also be returned if specified in the arguments.
 }
 \description{
 Generate death counts for a death injury matrix
@@ -98,11 +104,6 @@ The matrix coding is based on the ICE (International Collaborative Effort on
 Injury Statistics) standard.
 }
 \note{
-Provide the function with the minimum necessary number of columns since all
-extraneous columns will be used to stratify the data. For example, if you
-included 'year', 'race_eth', and 'gender', the results would be stratified
-by every combination of year_x_race_eth_x_gender.
-
 The function default is to return the matrix of all intents and mechanisms
 of death. You can choose to only return the intent or only return the
 mechanism. If you set both to "none", you will receive a summary of all
@@ -192,6 +193,7 @@ eg5 <- death_injury_matrix_count(ph.data = injurydata5,
                             mechanism = "none",
                             icdcol = "cod.icd10",
                             kingco = FALSE,
+                            group_by = 'ageofdeath',
                             ypll_age = NULL,
                             death_age_col = NULL)
 eg5[]
