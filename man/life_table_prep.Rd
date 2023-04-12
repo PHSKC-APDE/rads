@@ -60,20 +60,20 @@ onto the returned data.table before running it through
 \code{\link{life_table}}.
 }
 \examples{
-# create data set ----
-set.seed(98104)
-eg1 <- data.table::data.table(
-  date_of_death = rep(as.Date("2020-01-01"), 10000) + sample(0:365, 10000, replace = TRUE),
-  days_lived = round2(rnorm(10000, mean = 29930, sd = 11000), 0),
-  race_eth = rep_len(c("AIAN", "Asian", "Black", "Hispanic", "NHPI", "White"), 1000),
-  year = 2020
-)
-eg1[days_lived <0, days_lived := 0] # can't live negative days
-eg1[days_lived >43800, days_lived := 365*sample(35:100, 1)] # cap lifespan at 120 years
-eg1[, date_of_birth := date_of_death - days_lived]
-eg1[, days_lived := NULL]
-# process with life_table_prep ----
-eg1_output <- life_table_prep(DTx = eg1)
-eg1_output[]
+ # create data set ----
+ set.seed(98104)
+ eg1 <- data.table::data.table(
+   date_of_death = rep(as.Date("2020-01-01"), 10000) + sample(0:365, 10000, replace = TRUE),
+   days_lived = round2(rnorm(10000, mean = 29930, sd = 11000), 0),
+   race_eth = rep_len(c("AIAN", "Asian", "Black", "Hispanic", "NHPI", "White"), 1000),
+   year = 2020
+ )
+ eg1[days_lived <0, days_lived := 0] # can't live negative days
+ eg1[days_lived >43800, days_lived := 365*sample(35:100, 1)] # cap lifespan at 120 years
+ eg1[, date_of_birth := date_of_death - days_lived]
+ eg1[, days_lived := NULL]
+ # process with life_table_prep ----
+ eg1_output <- life_table_prep(DTx = eg1)
+ eg1_output[]
 
 }

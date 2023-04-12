@@ -20,6 +20,9 @@ dim(birth)
 head(birth) 
 
 ## -----------------------------------------------------------------------------
+head(list_dataset_columns('birth'))
+
+## -----------------------------------------------------------------------------
 birth2 <- get_data(dataset = "birth", c("chi_year", "chi_geo_kc"), year = c(2019), kingco = F)
 dim(birth2)
 
