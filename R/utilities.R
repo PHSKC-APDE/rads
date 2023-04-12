@@ -388,7 +388,7 @@ chi_compare_kc <- function(orig,
                            new.col.name = "comparison_with_kc"){
 
   #Deprecation warning
-  .Deprecated("comparison")
+  .Deprecated("compare_estimate")
 
   #Bindings for data.table/check global variables
   cat1 <- cat1_varname <- result <- comp.result <- lower_bound <- comp.upper_bound <- upper_bound <- comp.lower_bound <- significance <- tab <- comparator_vars <- NULL
@@ -1040,7 +1040,7 @@ get_ref_pop <- function(ref_name = NULL){
 #' }
 list_apde_data <- function(){
 
-  ret <- c('hys', 'birth')
+  ret <- c('hys', 'birth', 'chars', 'death')
 
   return(ret)
 
@@ -1057,6 +1057,7 @@ list_apde_data <- function(){
 #'
 #' @return Data.frame with two columns. First column is the variable name, while the second identifies whether or not it is in the analytic ready dataset
 #' @export
+#' @importFrom data.table data.table
 #' @name list_dataset_columns
 #' @examples
 #' \dontrun{
@@ -1066,7 +1067,7 @@ list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
   colname <- NULL
   # create a negate function of %in% for readability
   '%!in%' = Negate('%in%')
-  opts = c('birth', 'hys')
+  opts = list_apde_data()
 
   stopifnot('dataset must be a character vector of length 1' = length(dataset) == 1)
   if(dataset %!in% opts){
@@ -1089,7 +1090,40 @@ list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
                            encoding = 'latin1')
     var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[final].[bir_wa]"))
     ar = rep(TRUE, length(var.names))
-  } else if(dataset =="hys") {
+  }
+  if(dataset == "chars") {
+    #message("Column names for birth data are taken from all available years.")
+    # get list of all colnames from SQL
+    con <- odbc::dbConnect(odbc::odbc(),
+                           driver = getOption('rads.odbc_version'),
+                           server = "KCITSQLUTPDBH51",
+                           database = "PH_APDEStore",
+                           Encrypt = 'yes',
+                           TrustServerCertificate = 'yes',
+                           Authentication = 'ActiveDirectoryIntegrated',
+                           encoding = 'latin1')
+    var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[chars].[final_analytic]"))
+    bonus.CHI.names <- c('wastate', 'yage4', 'age6', 'pov200grp', 'race3', 'race4')
+    var.names <- tolower(sort(c(var.names, bonus.CHI.names)))
+    ar = rep(TRUE, length(var.names))
+  }
+  if(dataset == "death") {
+    #message("Column names for birth data are taken from all available years.")
+    # get list of all colnames from SQL
+    con <- odbc::dbConnect(odbc::odbc(),
+                           driver = getOption('rads.odbc_version'),
+                           server = "KCITSQLUTPDBH51",
+                           database = "PH_APDEStore",
+                           Encrypt = 'yes',
+                           TrustServerCertificate = 'yes',
+                           Authentication = 'ActiveDirectoryIntegrated',
+                           encoding = 'latin1')
+    var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[death].[final_analytic]"))
+    bonus.CHI.names <- c('wastate', 'age6', 'pov200grp', 'race3', 'race4', 'bigcities')
+    var.names <- tolower(sort(c(var.names, bonus.CHI.names)))
+    ar = rep(TRUE, length(var.names))
+  }
+  if(dataset =="hys") {
     if(!all(year %in% c(seq(2004,2018,2), 2021))) {
       stop(paste0("invalid year(s) indicated for Health Youth Survey data. Please see department documentation for details on currently correct years."))
       #year <- 2021
@@ -1110,7 +1144,7 @@ list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
 
   }
 
-  Variable_Descriptions = unique(data.frame(var.names = var.names, analytic_ready = ar))
+  Variable_Descriptions = unique(data.table(var.names = var.names, analytic_ready = ar))
 
   return(Variable_Descriptions)
 
@@ -1403,7 +1437,10 @@ substrRight <- function(x, x.start, x.stop){
 #' @return A simple printed statement, either identifying incompatible column types or a statement of success
 validate_yaml_data <- function(DF = NULL, YML = NULL, VARS = "vars"){
   ## Global variables used by data.table declared as NULL here to play nice with devtools::check()
-  DF.class <- yamlcols <- yamlnames <- yamlextra <- dfcols <- dfnames <- NULL
+  DF.class <- orig.DFname <- yamlcols <- yamlnames <- yamlextra <- dfcols <- dfnames <- NULL
+
+  # Get the name of of the data.frame/data.table passed to to the function ----
+  orig.DFname <- deparse(substitute(DF))
 
   # Check that DT is a data.frame/data.table ----
   if(is.data.frame(DF) == FALSE){
@@ -1475,12 +1512,12 @@ validate_yaml_data <- function(DF = NULL, YML = NULL, VARS = "vars"){
   }
 
   # use function convert R column types if possible / needed ----
-  DF[, (make.char) := lapply(.SD, lossless_convert, class = 'character'), .SDcols = make.char]
-  DF[, (make.num) := lapply(.SD, lossless_convert, class = 'numeric'), .SDcols = make.num]
-  DF[, (make.int) := lapply(.SD, lossless_convert, class = 'integer'), .SDcols = make.int]
-  DF[, (make.logical) := lapply(.SD, lossless_convert, class = 'logical'), .SDcols = make.logical]
-  DF[, (make.Date) := lapply(.SD, lossless_convert, class = 'Date'), .SDcols = make.Date]
-  DF[, (make.POSIXct) := lapply(.SD, lossless_convert, class = 'POSIXct'), .SDcols = make.POSIXct]
+  suppressWarnings(DF[, (make.char) := lapply(.SD, lossless_convert, class = 'character'), .SDcols = make.char])
+  suppressWarnings(DF[, (make.num) := lapply(.SD, lossless_convert, class = 'numeric'), .SDcols = make.num])
+  suppressWarnings(DF[, (make.int) := lapply(.SD, lossless_convert, class = 'integer'), .SDcols = make.int])
+  suppressWarnings(DF[, (make.logical) := lapply(.SD, lossless_convert, class = 'logical'), .SDcols = make.logical])
+  suppressWarnings(DF[, (make.Date) := lapply(.SD, lossless_convert, class = 'Date'), .SDcols = make.Date])
+  suppressWarnings(DF[, (make.POSIXct) := lapply(.SD, lossless_convert, class = 'POSIXct'), .SDcols = make.POSIXct])
 
   # check if there are variables that could not be coerced to proper type ----
   class.compare <- merge(data.table::data.table(name = names(sapply(DF, class)), DF.class = tolower(sapply(DF, class))),
@@ -1494,9 +1531,9 @@ validate_yaml_data <- function(DF = NULL, YML = NULL, VARS = "vars"){
     yaml.name <- class.compare[DF.class != yaml.class]$name
     yaml.class <- class.compare[DF.class != yaml.class]$yaml.class
     class.problems <- paste(paste0(yaml.name, " (", yaml.class, ")"), collapse = ", ")
-    stop(glue::glue("The following variables could not be coerced to their proper class (which is specified in parentheses):
+    stop(glue::glue("\n\U0001f47f The following variables could not be coerced to their proper class (which is specified in parentheses):
                               {class.problems}"))
-  }else{success <- message("All column classes in your R dataset are compatible with the YAML reference standard.")}
+  }else{success <- message(paste0("\U0001f642 All column classes in `", orig.DFname,"` are compatible with the YAML reference standard."))}
 
   return(success)
 

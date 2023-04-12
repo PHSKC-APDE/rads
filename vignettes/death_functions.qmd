@@ -1,6 +1,8 @@
 ---
 title: "Death Functions"
-format: html
+format: gfm
+prefer-html: false
+self-contained: true
 editor: visual
 ---
 
@@ -11,18 +13,18 @@ The [rads package](https://github.com/PHSKC-APDE/rads/) has a suite of tools des
 The core `rads` death function are:
 
 -   `get_data_death()`: easily download standardized death data from SQL into R
--   `death_113_count()`: generate death counts for the CDC's 113 Selected Causes of Death (+ COVID-19)
--   `death_injury_matrix_count()`: generate counts of injury related deaths by intent and mechanism
--   `death_other_count()`: generate counts for select causes of death that are NOT included in `death_113_count()` & `death_injury_matrix_count()`
+-   `death_113_count()`: generate death counts for the CDC's 113 Selected Causes of Death (PLUS COVID-19)
+-   `death_130_count()`: generate death counts for the CDC's 130 Selected Causes of **infant** Death (PLUS COVID-19)
+-   `death_injury_matrix_count()`: generate counts of external cause (a.k.a., injury related) deaths by intent and mechanism
+-   `death_other_count()`: generate counts for select causes of death that are **not** **included** in `death_113_count()`, `death_130_count()`, & `death_injury_matrix_count()`, but are of interest to APDE.
 -   `life_table()`: generate a standard life table, where the first row is the life expectancy (aka 'expectation of life') at birth
 
 All of these functions have detailed help files that are accessible by typing `?function_name`, e.g. `?get_data_death`. Some examples for how to use these functions are given below.
 
 ***A few quick notes before we begin ...***
 
--   `death_113_count()`, `death_injury_matrix_count()`, & `death_other_count()` only work with ICD-10 cause of death codes (i.e., those used since 1999).
+-   `death_113_count()`, `death_130_count()`, `death_injury_matrix_count()`, & `death_other_count()` only work with ICD-10 cause of death codes (i.e., those used since 1999).
 -   If you want to create age-adjusted rates, we recommend you read the [age_standardize](https://github.com/PHSKC-APDE/rads/wiki/age_standardize) and [calculating_rates_with_rads](https://github.com/PHSKC-APDE/rads/wiki/calculating_rates_with_rads) vignettes after reading through this one.
--   `kable` and `kable_styling` are use to beautify the tables in this document. Typically, you would only use them if you are creating table for publication in a markdown, PDF, html, or similar file.
 
 # Set up the environment
 
@@ -32,6 +34,10 @@ All of these functions have detailed help files that are accessible by typing `?
 rm(list=ls())
 library(rads)
 library(data.table)
+```
+
+```{r}
+#| echo: FALSE
 library(kableExtra)
 ```
 
@@ -61,18 +67,22 @@ max(ex0$chi_age, na.rm = T) # check top coding
 
 `death_113_count()` allows the user to get death counts following the CDC's National Center for Health Statistics (NCHS) National Vital Statistics System's (NVSS) list of 113 selected causes of death ([see Table B](https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf)). To review this list, simply type `death_113()` into your R console. You can use this information to select information for either the `causeids` or `cause` arguments of `death_113_count()`.
 
+Here is a snapshot of the top 10 rows from `death_113()`
+
 ```{r}
-  nchs113 <- death_113()
-  kable(head(nchs113)) %>% kable_styling() # view top six rows
+#| echo: FALSE
+  nchs113 <- death_113()[1:10]
+  kable((nchs113), format = "markdown") 
 ```
 
-`death_113_count()` takes seven potential arguments:
+`death_113_count()` takes eight potential arguments:
 
 -   `ph.data`: the name of a person level data.table/data.frame of death data with ICD codes
 -   `causeids`: specifies the causeid(s) for NCHS 113 Causes of Death (1:113)
 -   `cause`: optional. A character vector specifying the causes of death of interest. When specified, it is used in lieu of the `causeids`. It is case insensitive and matches partial strings.
 -   `icdcol`: name of the column with the ICD codes of interest. Defaults to "underlying_cod_code", which is used in APDE's data.
 -   `kingco`: logical (T\|F) specifying whether to limit the data analysis to King County. Only works if ph.data still has the `chi_geo_kc` column.
+-   `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
 -   `ypll_age`: optional. The age in years (an integer) used for calculating Years of Potential Life Lost.
 -   `death_age_col`: optional. Name of the age column used if `ypll_age` is specified.
 
@@ -86,8 +96,20 @@ Get the 2020 data from SQL
 ex1 <- get_data_death(year = 2020, 
                       cols = c('chi_year', 'chi_geo_kc',
                                'underlying_cod_code'))
-ex1[, `_id` := NULL] # drop unique row identifier
-kable(head(ex1)) %>% kable_styling() # view top 6 rows
+```
+
+Check the dimensions and column names
+
+```{r}
+dim(ex1)
+names(ex1)
+```
+
+Lets take a peak at the first 10 rows where the underlying cause of death is not missing to see the data structure.
+
+```{r}
+#| echo: FALSE
+kable((ex1[!is.na(underlying_cod_code)][1:10]), format = "markdown") 
 ```
 
 Count deaths due to COVID-19 or viral hepatitis
@@ -97,19 +119,29 @@ Count deaths due to COVID-19 or viral hepatitis
 #| message: false
 dt1 <- death_113_count(ph.data = ex1, 
                        cause = 'viral hep|covid')
-kable(head(dt1)) %>% kable_styling()
 ```
 
-Glancing at the table above, you'll see that you have the two causes of death of interest, PLUS the total of death from any cause ('All causes') PLUS any rows where the ICD code did not match the selected causes of death ('Missing/Unknown'). Missing/Unknown = All causes - Viral hepatitis - COVID-19.
+```{r}
+#| echo: false
+dt1[, deaths := format(deaths, big.mark = ',')]
+kable(head(dt1), format = "markdown")
+```
 
-We could have specified 'Viral hepatitis' using `causeids` rather than the `cause` text string for the same result. We don't have to specify COVID-19, in fact we can't, because it is not on the list 113 causes of death so it does not have a code. It's returned automatically.
+Glancing at the table above, you'll see that you have the two causes of death of interest, PLUS the total of death from any cause ('All causes') PLUS any rows where the ICD code did not match the selected causes of death ('Missing/Unknown'). *Missing/Unknown = All causes - Viral hepatitis - COVID-19.*
+
+We could have specified 'Viral hepatitis' using `causeids` rather than the `cause` text string for the same result. Also, we really can't specify COVID-19. Since COVID-19 is not on the official 113 causes of death list, it does not have a code. It is however returned automatically by this function.
 
 ```{r}
 #| warning: false
 #| message: false
 dt1.alt <- death_113_count(ph.data = ex1, 
                        causeids = 14)
-kable(head(dt1.alt)) %>% kable_styling()
+```
+
+```{r}
+#| echo: false
+dt1.alt[, deaths := format(deaths, big.mark = ',')]
+kable(head(dt1.alt), format = "markdown")
 ```
 
 ### example #2: 2019 & 2020 top five causes of death
@@ -122,38 +154,42 @@ First, let's get 2019 & 2020 data from SQL ...
 ex2 <- get_data_death(year = 2019:2020, 
                       cols = c('chi_year', 'chi_geo_kc', 
                                'underlying_cod_code'))
-ex2[, `_id` := NULL] # drop unique row identifier
 ```
 
-Now, let's get all causes of death for each year
+Now, let's use `group_by` to get counts by year
 
 ```{r}
 #| warning: false
 #| message: false
-dt113_2019 <- death_113_count(ph.data = ex2[chi_year == 2019])
-dt113_2020 <- death_113_count(ph.data = ex2[chi_year == 2020])
+dt113_19_20 <- death_113_count(ph.data = ex2, 
+                               group_by = 'chi_year')
 ```
 
-Finally, let's sort & show the top 5 causes of death for each year.
+Finally, let's select the top five causes of death by year using data.table
 
 ```{r}
-setorder(dt113_2019, -deaths)
-dt113_2019 <- dt113_2019[cause.of.death != 'All causes']
-kable(dt113_2019[1:5]) %>% kable_styling()
-
-setorder(dt113_2020, -deaths)
-dt113_2020 <- dt113_2020[cause.of.death != 'All causes']
-kable(dt113_2020[1:5]) %>% kable_styling()
+#| warning: false
+#| message: false
+dt113_19_20[cause.of.death != 'All causes', 
+            rank := frank(-deaths), 
+            by = 'chi_year']
+dt113_19_20 <- dt113_19_20[rank <=5 ]
+setorder(dt113_19_20, chi_year, rank)
 ```
 
-### example #3: Calculating years of potential life lost due to COVID-19 assuming age of death at 65 as the standard
+```{r}
+#| echo: false
+dt113_19_20[, deaths := format(deaths, big.mark = ',')]
+kable(dt113_19_20, format = "markdown")
+```
+
+### example #3: Calculating years of potential life lost due to COVID-19, assuming age of death at 65 as the standard
 
 Again, let's load 2020 death data.
 
 ```{r}
 ex3 <- get_data_death(year = 2020, 
                       cols = c('chi_age', 'underlying_cod_code'))
-ex3[, `_id` := NULL] # drop unique row identifier
 ```
 
 Now, identify deaths due to COVID-19. Remember COVID-19 is not a one of the official 113 causes of death, so let's arbitrarily get causeid #1 (Salmonella infections), knowing that it will also give us COVID-19.
@@ -166,18 +202,32 @@ dt3 <- death_113_count(ph.data = ex3,
                        kingco = FALSE,
                        ypll_age = 65)
 dt3 <- dt3[cause.of.death == 'COVID-19 (U07.1)'] # limit output to COVID-19
-kable(head(dt3)) %>% kable_styling()
+```
+
+```{r}
+#| echo: false
+dt3[, deaths := format(deaths, big.mark = ',')]
+dt3[, ypll_65 := format(ypll_65, big.mark = ',')]
+kable(head(dt3), format = "markdown")
 ```
 
 The table above tells us that, if everyone who died from COVID-19 in 2020 had lived to at least age 65, they would have lived a total of `r dt3$ypll_65` additional years.
 
+# death_130_count()
+
+`death_130()` and `death_130_count()` work in exactly the same way as `death_113()` and `death_113_count()` and will therefore not be described in detail.
+
 # death_injury_matrix_count()
 
-`death_injury_matrix_count()` allows the user to get injury related death counts by intent and mechanism. To review a table of all available combinations of mechanism and intent, simply type `death_injury_matrix()` into your R console.
+`death_injury_matrix_count()` allows the user to get injury related death counts by intent and mechanism. To review a table of all available combinations of mechanism and intent, simply type `death_injury_matrix()` into your R console. Here are the first six lines ...
 
 ```{r}
-  mech.n.intent <- death_injury_matrix()
-  kable(head(mech.n.intent)) %>% kable_styling()
+  mech.n.intent <- death_injury_matrix()[1:6]
+```
+
+```{r}
+#| echo: false
+  kable(head(mech.n.intent), format = "markdown")
 ```
 
 `death_injury_matrix_count()` takes eight potential arguments:
@@ -187,9 +237,9 @@ The table above tells us that, if everyone who died from COVID-19 in 2020 had li
 -   `mechanism`: specifies the mechanism(s) of interest as per options available in `death_injury_matrix`. 'none' will ignore mechanism and return 'Any mechansim'. '\*' is a wildcard for all possible mechanisms.
 -   `icdcol`: name of the column with the ICD codes of interest. Defaults to "underlying_cod_code", which is used in APDE's data.
 -   `kingco`: logical (T\|F) specifying whether to limit the data analysis to King County. Only works if ph.data still has the `chi_geo_kc` column.
--   `byage`: logical (T\|F) specifying whether to stratify by the decadents' age.
+-   `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
 -   `ypll_age`: optional. The age in years (an integer) used for calculating Years of Potential Life Lost.
--   `death_age_col`: optional. Name of the age column used if `ypll_age` is specified or `byage=T`.
+-   `death_age_col`: optional. Name of the age column used if `ypll_age` is specified.
 
 Please refer to the help file for more details.
 
@@ -200,10 +250,9 @@ Get the data
 ```{r}
 ex4 <- get_data_death(year = 2020, 
                       cols = c('chi_sex', 'underlying_cod_code'))
-ex4[, `_id` := NULL] # drop unique row identifier
 ```
 
-Run death_injury_matrix_count
+Run death_injury_matrix_count and show the first six rows
 
 ```{r}
 #| message: false
@@ -211,8 +260,14 @@ Run death_injury_matrix_count
 dt4 <- death_injury_matrix_count(ph.data = ex4, 
                                  intent = "*", 
                                  mechanism = "*",
-                                 kingco = FALSE)
-kable(head(dt4)) %>% kable_styling()
+                                 kingco = FALSE, 
+                                 group_by = 'chi_sex')[1:6]
+```
+
+```{r}
+#| echo: false
+dt4[, deaths := format(deaths, big.mark = ',')]
+kable(dt4, format = "markdown")
 ```
 
 Notice that you did not have to specify that you wanted the results stratified by sex. The function will automatically stratify by whatever extra columns are contained in `ph.data`. Be mindful of this and be sure that you submit `ph.data` with the minimum necessary number of columns.
@@ -225,8 +280,14 @@ Notice that you did not have to specify that you wanted the results stratified b
 dt4.alt <- death_injury_matrix_count(ph.data = ex4, 
                                  intent = "none", 
                                  mechanism = "none",
-                                 kingco = FALSE)
-kable(head(dt4.alt)) %>% kable_styling()
+                                 kingco = FALSE, 
+                                 group_by = 'chi_sex')
+```
+
+```{r}
+#| echo: false
+dt4.alt[, deaths := format(deaths, big.mark = ',')]
+kable(head(dt4.alt), format = "markdown")
 ```
 
 ### example #5: 2016-2020 King County homicides (intent) by firearms (mechanism), stratified by sex
@@ -236,7 +297,6 @@ Get the data
 ```{r}
 ex5 <- get_data_death(year = 2016:2020, 
                       cols = c('chi_sex', 'underlying_cod_code'))
-ex5[, `_id` := NULL] # drop unique row identifier
 ```
 
 Run death_injury_matrix_count
@@ -247,8 +307,13 @@ Run death_injury_matrix_count
 dt5 <- death_injury_matrix_count(ph.data = ex5, 
                                  intent = "homicide", 
                                  mechanism = "firearm", 
-                                 kingco = FALSE)
-kable(head(dt5)) %>% kable_styling()
+                                 kingco = FALSE, 
+                                 group_by = 'chi_sex')
+```
+
+```{r}
+#| echo: false
+kable(dt5, format = "markdown")
 ```
 
 ### example #6: years of potential life lost due to firearm homicides 2016-2020
@@ -258,7 +323,6 @@ Get the data
 ```{r}
 ex6 <- get_data_death(year = 2016:2020, 
                       cols = c('chi_age', 'underlying_cod_code'))
-ex6[, `_id` := NULL] # drop unique row identifier
 ```
 
 Run death_injury_matrix_count
@@ -271,23 +335,29 @@ dt6 <- death_injury_matrix_count(ph.data = ex6,
                                  mechanism = "firearm", 
                                  kingco = FALSE, 
                                  ypll_age = 65)
-kable(head(dt6)) %>% kable_styling()
+```
+
+```{r}
+#| echo: false
+dt6[, ypll_65 := format(ypll_65, big.mark = ',')]
+kable(dt6, format = "markdown")
 ```
 
 # death_other_count()
 
-`death_other_count()` allows the user to get death counts for cause of death that are NOT included in `death_113_count()` and `death_injury_matrix_count()`, but that are still of general interest to APDE. To review a list of all available 'other' causes of death, simply type `death_other()` into your R console. If you want to add additional causes of death to this list, [please submit a GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new).
+`death_other_count()` allows the user to get death counts for cause of death that are NOT included in `death_113_count()`, `death_130_count()`, and `death_injury_matrix_count()`, but that are still of general interest to APDE. To review a list of all available 'other' causes of death, simply type `death_other()` into your R console. If you want to add additional causes of death to this list, [please submit a GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new).
 
 ```{r}
 death_other()
 ```
 
-`death_other_count()` takes six potential arguments:
+`death_other_count()` takes seven potential arguments:
 
 -   `ph.data`: the name of a person level data.table/data.frame of death data with ICD codes
 -   `cause`: a character vector specifying the cause(s) of death of interest taken from the list provided by `death_other()`. It is case insensitive and matches partial strings
 -   `icdcol`: name of the column with the ICD codes of interest. Defaults to "underlying_cod_code", which is used in APDE's data
 -   `kingco`: logical (T\|F) specifying whether to limit the data analysis to King County. Only works if ph.data still has the `chi_geo_kc` column.
+-   `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
 -   `ypll_age`: optional. The age in years (an integer) used for calculating Years of Potential Life Lost.
 -   `death_age_col`: optional. Name of the age column used if `ypll_age` is specified.
 
@@ -300,7 +370,6 @@ Get the data
 ```{r}
 ex7 <- get_data_death(year = 2017:2021, 
                       cols = c('chi_year', 'underlying_cod_code'))
-ex7[, `_id` := NULL] # drop unique row identifier
 ```
 
 Run `death_other_count`
@@ -310,9 +379,16 @@ Run `death_other_count`
 #| warning: false
 dt7 <- death_other_count(ph.data = ex7, 
                                  cause = "heat", 
-                                 kingco = FALSE)
+                                 kingco = FALSE, 
+                                 group_by = "chi_year")
+dt7 <- dt7[cause.of.death != 'All causes']
 setorder(dt7, chi_year, cause.of.death)
-kable(dt7) %>% kable_styling()
+```
+
+```{r}
+#| echo: false
+dt7[, deaths := format(deaths, big.mark = ',')]
+kable(dt7, format = "markdown")
 ```
 
 ### example #8: Count the number of cancer and heart disease deaths in 2021
@@ -321,8 +397,7 @@ Get the data
 
 ```{r}
 ex8 <- get_data_death(year = 2021, 
-                      cols = c('chi_year', 'chi_age', 'underlying_cod_code'))
-ex8[, `_id` := NULL] # drop unique row identifier
+                      cols = c('chi_age', 'underlying_cod_code'))
 ```
 
 Run `death_other_count`
@@ -334,7 +409,13 @@ dt8 <- death_other_count(ph.data = ex8,
                                  cause = "cancer|heart", 
                                  kingco = FALSE, 
                                  ypll_age = 65)
-kable(dt8) %>% kable_styling()
+```
+
+```{r}
+#| echo: false
+dt8[, deaths := format(deaths, big.mark = ',')]
+dt8[, ypll_65 := format(ypll_65, big.mark = ',')]
+kable(dt8, format = "markdown")
 ```
 
 # life_table()
@@ -361,7 +442,6 @@ Get the critical death data
 #| warning: false
 ex9 <- get_data_death(year = 2016:2020, 
                         cols = c('date_of_birth', 'date_of_death', 'chi_sex'))
-ex9[, `_id` := NULL] # drop unique row identifier
 ```
 
 To preserve privacy, lets look at a summary of the table rather than the actual table
@@ -372,13 +452,17 @@ To preserve privacy, lets look at a summary of the table rather than the actual 
 summary(ex9)
 ```
 
-Use `life_table_prep()` to aggregate the age interval specific count of deaths and the average fraction of the interval lived by those who died in that interval, stratified by sex. **Note**, by default `life_table_prep()` uses the standard age intervals used by the CDC and WA DOH. These intervals can easily be customized if desired.
+Use `life_table_prep()` to aggregate the age interval specific count of deaths and the average fraction of the interval lived by those who died in that interval, stratified by sex. **Note**, by default `life_table_prep()` uses the standard age intervals used by the CDC and WA DOH. These intervals can easily be customized if desired. Here we show just the top six rows so you can see the data structure.
 
 ```{r}
 #| message: false
 #| warning: false
 dt9 = life_table_prep(DTx = ex9)
-kable(head(dt9)) %>% kable_styling()
+```
+
+```{r}
+#| echo: false
+kable(head(dt9), format = "markdown")
 ```
 
 Filter/delete rows with missing ages or non-binary sex because neither would have a corresponding population.
@@ -386,18 +470,20 @@ Filter/delete rows with missing ages or non-binary sex because neither would hav
 ```{r}
 #| message: false
 #| warning: false
-dt9 <- dt9[chi_sex %in% c(0, 1) & !is.na(ages)]
-kable(head(dt9)) %>% kable_styling()
+dt9 <- dt9[!is.na(chi_sex) & !is.na(ages)]
 ```
 
-Ascribe labels to sex to match those in the population data.
+Rename `chi_sex` to `gender` so that it plays nicely with the population data below.
 
 ```{r}
 #| message: false
 #| warning: false
-dt9[, gender := as.character(factor(chi_sex, levels = 0:1, labels = c('Female', 'Male')))]
-dt9[, chi_sex := NULL]
-kable(head(dt9)) %>% kable_styling()
+setnames(dt9, "chi_sex", "gender")
+```
+
+```{r}
+#| echo: false
+kable(head(dt9), format = "markdown")
 ```
 
 The death data is now ready for `life_table`, but we still need to merge on the corresponding populations. Let's start by getting the raw population for the same time period (2016-2020) by gender and age.
@@ -409,7 +495,12 @@ pop <- get_population(kingco = T,
                       years = 2016:2020, 
                       group_by = c('genders', 'ages'))
 pop <- pop[, .(gender, age, pop)]
-kable(head(pop)) %>% kable_styling()
+```
+
+```{r}
+#| echo: false
+setorder(pop, age)
+kable(head(pop), format = "markdown")
 ```
 
 Now we need to aggregate the population data to use the same age intervals as the death data.
@@ -423,7 +514,11 @@ pop[, ages := gsub("\\[|\\]|\\)", "", ages)] # tidy
 pop[, ages := gsub("\\,", "-", ages)] #tidy
 pop[age >= max(my.cuts), ages := paste0(max(my.cuts), "+")] # tidy
 pop <- pop[, .(pop = sum(pop)), .(gender, ages)] #tidy
-kable(head(pop)) %>% kable_styling()
+```
+
+```{r}
+#| echo: false
+kable(head(pop), format = "markdown")
 ```
 
 Merge the properly formatted death and population data together.
@@ -435,7 +530,11 @@ dt9 <- merge(dt9,
              pop, 
              by = c('gender', 'ages'), 
              all = T)
-kable(head(dt9)) %>% kable_styling()
+```
+
+```{r}
+#| echo: false
+kable(head(dt9), format = "markdown")
 ```
 
 Run `life_table()` function to create life tables for males and females.
@@ -450,14 +549,13 @@ dt9.female <- life_table(ph.data = dt9[gender == 'Female'])
 Display the first row of the life table, which is for children under 1. The `ex` column is the life expectancy at birth. To see a detailed key of what all the columns mean, type `?life_table` in your R console and read the 'Details' section.
 
 ```{r}
-#| message: false
-#| warning: false
-kable(head(dt9.male[1,])) %>% kable_styling()
-kable(head(dt9.female[1,])) %>% kable_styling()
+#| echo: false
+kable(dt9.male[1,], format = "markdown")
+kable(dt9.female[1,], format = "markdown")
 ```
 
 # Conclusion
 
-We know this was a lot to process. The good news is that this wiki isn't going anywhere. If you remeber (a) that this vignette exists and (b) where to find it, you'll be in good shape to take on standard mortality analyses in the future.
+We know this was a lot to process. The good news is that this vignette isn't going anywhere. If you remember (a) that this vignette exists and (b) where to find it, you'll be in good shape to take on standard mortality analyses in the future.
 
 If you've read through this vignette and the corresponding help files and are still confused, please feel free to reach out for assistance. You may have found a bug, who knows? Good luck!

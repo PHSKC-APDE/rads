@@ -115,8 +115,8 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, ignore_trends = T, 
                                                             "Fix the error and run this QA script again."))}
           }
 
-          for(mycol in c("result", "lower_bound", "upper_bound", "se", "rse", "numerator", "denominator", "chi", "source_date", "run_date", "suppression", "caution", "comparison_with_kc", "significance")){
-            if(nrow(chi_est[is.na(get(mycol))]) > 0){warning("'", mycol, "' is missing in at least one row of the CHI data.")}
+          for(mycol in c("result", "lower_bound", "upper_bound", "se", "rse", "numerator", "denominator", "chi", "source_date", "run_date", "comparison_with_kc")){
+            if(nrow(chi_est[is.na(get(mycol))]) > 0){message(paste0("\U00026A0 Warning: '", mycol, "' is missing in at least one row of the CHI data."))}
           }
 
           for(mycol in setdiff(names(chi.yaml$metadata), c("latest_year_kc_pop", "latest_year_count"))){
@@ -125,7 +125,7 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, ignore_trends = T, 
           }
 
           for(mycol in c("latest_year_kc_pop", "latest_year_count")){
-            if(nrow(chi_meta[is.na(get(mycol))]) > 0){warning("'", mycol, "' is missing in at least one row of the metadata.")}
+            if(nrow(chi_meta[is.na(get(mycol))]) > 0){message(paste0("\U00026A0 Warning: '", mycol, "' is missing in at least one row of the metadata."))}
           }
 
   ## Set the columns in standard order ----
@@ -181,8 +181,7 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, ignore_trends = T, 
       # RSE should always be between 0 and 100 ----
           # confirmed with Abby 2/7/2020 that want RSE * 100
           if(nrow(chi_est[!rse %between% c(0, 100)]) > 0 ){
-            if(verbose) message(paste("Warning: ",
-                "There is at least one row where the RSE (relative standard error) is outside the range of (0, 100].",
+            message(paste("\U00026A0 Warning: There is at least one row where the RSE (relative standard error) is outside the range of (0, 100].",
                  "This is not necessarily an error, but you should examine the data to make sure it makes sense.",
                  "You can view the data in question by typing something like: View(chi_est[!rse %between% c(0, 100)])", sep = "\n"))
           }
@@ -286,14 +285,9 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, ignore_trends = T, 
       # actual comparison code should be the same as when comparing to a previous year, so write a small funcion to do this
 
   ## Print success statement!!!!!!!! ####
-    if(verbose) message(paste("",
-          "Congratulations!",
-          "",
-          "Your data has passed all CHI Tableau Ready formatting, style, and logic checks.",
-          "",
-          "Please note that these tests did NOT include assessing whether your data was",
-          "similar to the data extracted in previous years or that found in CHAT.",
-          sep = "\n"))
+    if(verbose) message(paste("\n\U0001f389Congratulations!\U0001f973\n",
+          "Your data has passed all CHI Tableau Ready formatting, style, and logic checks.\n",
+          "However, you are encouraged to read any warnings and consider whether you need to revise the data."))
 
 } # close function
 
