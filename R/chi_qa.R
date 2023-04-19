@@ -57,7 +57,7 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, ignore_trends = T, 
     chi_meta <- data.table::setDT(copy(chi_meta))
 
   ## Load reference YAML ----
-    chi.yaml <- yaml::yaml.load(httr::GET(url = "https://raw.githubusercontent.com/PHSKC-APDE/chi/master/ref/chi_generic.yaml", httr::authenticate(Sys.getenv("GITHUB_TOKEN"), "")))
+    chi.yaml <- yaml::yaml.load(httr::GET(url = "https://raw.githubusercontent.com/PHSKC-APDE/rads/main/ref/chi_qa.yaml", httr::authenticate(Sys.getenv("GITHUB_TOKEN"), "")))
 
 
   ## Check columns ----
@@ -116,7 +116,7 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, ignore_trends = T, 
           }
 
           for(mycol in c("result", "lower_bound", "upper_bound", "se", "rse", "numerator", "denominator", "chi", "source_date", "run_date", "comparison_with_kc")){
-            if(nrow(chi_est[is.na(get(mycol))]) > 0){message(paste0("\U00026A0 Warning: '", mycol, "' is missing in at least one row of the CHI data."))}
+            if(nrow(chi_est[is.na(get(mycol)) & is.na(suppression)]) > 0){message(paste0("\U00026A0 Warning: '", mycol, "' is missing in at least one row of the CHI data."))}
           }
 
           for(mycol in setdiff(names(chi.yaml$metadata), c("latest_year_kc_pop", "latest_year_count"))){
