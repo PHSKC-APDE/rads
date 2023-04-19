@@ -1,17 +1,17 @@
-schema: 
-table: 
+schema: APDE_WIP
+table:
 years:
-    
+
 vars:
     data_source: varchar(255)
     indicator_key: varchar(255)
     tab: varchar(255)
     year: varchar(255)
     cat1: varchar(255)
-    cat1_group: varchar(255)
+    cat1_group: nvarchar(2000)
     cat1_varname: varchar(255)
     cat2: varchar(255)
-    cat2_group: varchar(255)
+    cat2_group: nvarchar(2000)
     cat2_varname: varchar(255)
     result: float
     lower_bound: float
@@ -49,7 +49,7 @@ toc:
     indicator_key: varchar(255)
     topic_chi: varchar(255)
     topic_bsk: varchar(255)
-    topic_bskhs: varchar(255) 
+    topic_bskhs: varchar(255)
     title_toc: varchar(255)
     description: varchar(1000)
     url_backup: varchar(500)
@@ -59,3 +59,4 @@ toc:
     toc_bskhs: float
     toc_chi: float
     toc_cc: float
+
