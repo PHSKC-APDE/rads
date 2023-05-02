@@ -211,7 +211,8 @@ get_data_birth <- function(cols = NA,
   query.string <- glue:: glue_sql ("SELECT ",  cols, " FROM [PH_APDEStore].[final].[bir_wa]
                                    WHERE chi_year IN (",  paste(year, collapse=", "), ")")
 
-  if(kingco == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 1")}
+  if(kingco == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 'King County'")}
+
 
   dat <- data.table::setDT(DBI::dbGetQuery(con, query.string))
   odbc::dbDisconnect(con)
