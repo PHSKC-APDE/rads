@@ -34,7 +34,7 @@ metadata:
     indicator_key: varchar(255)
     result_type: varchar(255)
     valence: varchar(255)
-    latest_year: varchar(255)
+    latest_year: int
     latest_year_result: float
     latest_year_kc_pop: int
     latest_year_count: int
