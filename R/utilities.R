@@ -1119,7 +1119,7 @@ list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
                            Authentication = 'ActiveDirectoryIntegrated',
                            encoding = 'latin1')
     var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[death].[final_analytic]"))
-    bonus.CHI.names <- c('wastate', 'age6', 'pov200grp', 'race3', 'race4', 'bigcities')
+    bonus.CHI.names <- c('wastate', 'age6', 'pov200grp', 'race3', 'race4', 'bigcities', 'hra20_name', 'chi_geo_region')
     var.names <- tolower(sort(c(var.names, bonus.CHI.names)))
     ar = rep(TRUE, length(var.names))
   }
