@@ -270,7 +270,8 @@ get_data_death <- function(cols = NA,
   chi_age <- date_of_birth <- date_of_death <- age_years <- chi_race_eth7 <- NULL
   chi_race_6 <- chi_race_eth8 <- chi_race_7 <- geo_id_code <- chi_sex <-  NULL
   age6 <- chi_geo_kc <- chi_geo_wastate <- chi_race_hisp <- geo_id <- geo_type <- NULL
-  pov200grp <- race3 <- race3_hispanic <- race4 <- wastate <- NULL
+  pov200grp <- race3 <- race3_hispanic <- race4 <- wastate <- bigcities <- chi_geo_bigcities <- NULL
+  hra20_name <- chi_geo_hra2020_long <- chi_geo_region <- chi_geo_reg2020_name <- NULL
 
   # validate arguments ----
     if(!(length(cols) == 1 && is.na(cols))){
@@ -300,7 +301,9 @@ get_data_death <- function(cols = NA,
         original.cols <- copy(cols)
         var.2.calc <- c()
         if('age6' %in% cols){cols <- c(cols, 'chi_age'); var.2.calc=c(var.2.calc, 'age6')}
-        # if('bigcities' %in% cols){cols <- c(cols, 'chi_geo_bigcities'); var.2.calc=c(var.2.calc, 'bigcities')}
+        if('bigcities' %in% cols){cols <- c(cols, 'chi_geo_bigcities'); var.2.calc=c(var.2.calc, 'bigcities')}
+        if('chi_geo_region' %in% cols){cols <- c(cols, 'chi_geo_reg2020_name'); var.2.calc=c(var.2.calc, 'chi_geo_region')}
+        if('hra20_name' %in% cols){cols <- c(cols, 'chi_geo_hra2020_long'); var.2.calc=c(var.2.calc, 'hra20_name')}
         if('pov200grp' %in% cols){cols <- c(cols, 'geo_tract2020'); var.2.calc=c(var.2.calc, 'pov200grp')}
         if('race3' %in% cols){cols <- c(cols, 'chi_race_6', 'chi_race_hisp'); var.2.calc=c(var.2.calc, 'race3')}
         if('race4' %in% cols){cols <- c(cols, 'chi_race_eth7'); var.2.calc=c(var.2.calc, 'race4')}
@@ -390,13 +393,19 @@ get_data_death <- function(cols = NA,
       }
 
   # Create custom CHI vars if requested ----
-      if('bigcities' %in% names(dat)){
-        # dat[, bigcities := chi_geo_bigcities]
+      if('bigcities' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
+        dat[, bigcities := chi_geo_bigcities]
       }
-      if('chi_geo_kc' %in% names(dat)){
+      if('chi_geo_kc' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
         dat[, chi_geo_kc := as.character(chi_geo_kc)]
         dat[, chi_geo_kc := fcase(chi_geo_kc=='TRUE', 'King County',
                                   default = NA_character_)]
+      }
+      if('hra20_name' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
+        dat[, hra20_name := chi_geo_hra2020_long]
+      }
+      if('chi_geo_region' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
+        dat[, chi_geo_region := chi_geo_reg2020_name]
       }
       if('wastate' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
         dat[chi_geo_wastate == TRUE, wastate := 'Washington State']
@@ -411,8 +420,8 @@ get_data_death <- function(cols = NA,
                             default = NA_character_)]
       }
       if('pov200grp' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
-        # pov.xwalk <- rads.data::misc_poverty_groups[geo_type=='Tract'][, list(geo_tract2020 = geo_id, pov200grp)]
-        # dat <- merge(dat, pov.xwalk, by = 'geo_tract2020', all.x = T, all.y = F)
+        pov.xwalk <- rads.data::misc_poverty_groups[geo_type=='Tract'][, list(geo_tract2020 = geo_id, pov200grp)]
+        dat <- merge(dat, pov.xwalk, by = 'geo_tract2020', all.x = T, all.y = F)
       }
       if('race4' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
         dat[, race4 := chi_race_eth7]
