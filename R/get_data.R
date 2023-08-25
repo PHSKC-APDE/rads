@@ -68,7 +68,7 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_
   stopifnot(all(year %in% c(seq(2004,2018,2), 2021)))
 
   # pull the list of vars
-  vars = file.path('//PHDATA01/EPE_Data/HYSdata/hys/2021/',version, 'hys_cols.csv')
+  vars = file.path('//dphcifs/APDE-CDIP/HYS/releases/2021/',version, 'hys_cols.csv')
   vars = data.table::fread(vars)
 
   # subset by year
@@ -94,12 +94,12 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_
   arfp = c()
   sfp = c()
   if(any(vars[, ar])){
-    arfp = file.path('//PHDATA01/EPE_Data/HYSdata/hys/2021/',version, '/', paste0('hys_ar_', year, '.rds'))
+    arfp = file.path('//dphcifs/APDE-CDIP/HYS/releases/2021/',version, '/', paste0('hys_ar_', year, '.rds'))
     ardat = data.table::rbindlist(lapply(arfp, readRDS), use.names = T, fill = T)
 
   }
   if(any(!vars[, ar])){
-    sfp = file.path('//PHDATA01/EPE_Data/HYSdata/hys/2021/',version, '/', paste0('hys_stage_', year, '.rds'))
+    sfp = file.path('//dphcifs/APDE-CDIP/HYS/releases/2021/',version, '/', paste0('hys_stage_', year, '.rds'))
     sdat = data.table::rbindlist(lapply(sfp, readRDS), use.names = T, fill = T)
 
   }
