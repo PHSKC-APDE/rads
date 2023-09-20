@@ -22,29 +22,29 @@ This vignette will provide some examples to introduce the `calc()` function by w
 
 Arguments are the values that we send to a function when it is called. The standard arguments for `calc()` are:
 
-1\) `ph.data` \<- the name of the data.table/data.frame or survey object that you want to analyze.
+1)  `ph.data` \<- the name of the data.table/data.frame or survey object that you want to analyze.
 
-2\) `what` \<- a character vector of the variable(s) for which you want to calculate the metrics. E.g., `what = c("uninsured")`
+2)  `what` \<- a character vector of the variable(s) for which you want to calculate the metrics. E.g., `what = c("uninsured")`
 
-3\) `where` \<- think of this as a SQL `WHERE` clause, i.e., a filtering or subsetting of data. E.g., `ages %in% c(0:17) & gender == "Female"`
+3)  `where` \<- think of this as a SQL `WHERE` clause, i.e., a filtering or subsetting of data. E.g., `ages %in% c(0:17) & gender == "Female"`
 
-4\) `by` \<- a character vector of the variables that you want to computer the `what` by, i.e., the cross-tab variable(s). E.g., `by = c("gender")` would stratify results by gender
+4)  `by` \<- a character vector of the variables that you want to computer the `what` by, i.e., the cross-tab variable(s). E.g., `by = c("gender")` would stratify results by gender
 
-5\) `metrics` \<- a character vector of the metrics that you want returned. E.g., `metrics = c("mean", "rse")`. You can see a complete list of available metrics by typing `metrics()` and get detailed descriptions of what each metric means by typing `?metrics()`.
+5)  `metrics` \<- a character vector of the metrics that you want returned. E.g., `metrics = c("mean", "rse")`. You can see a complete list of available metrics by typing `metrics()` and get detailed descriptions of what each metric means by typing `?metrics()`.
 
-6\) `per` \<- an integer, which is the denominator when `rate` is selected as a metric. Metrics will be multiplied by this value. E.g., `per = 1000`. **NOTE** this is just a scalar. At present this does not calculate a true rate (i.e., the relevant population denominator is not used).
+6)  `per` \<- an integer, which is the denominator when `rate` is selected as a metric. Metrics will be multiplied by this value. E.g., `per = 1000`. **NOTE** this is just a scalar. At present this does not calculate a true rate (i.e., the relevant population denominator is not used).
 
-7\) `win` \<- an integer, which is the number of consecutive units of time (e.g., years, months, etc.) over which the metrics will be calculated, i.e., the 'window' for a rolling average, sum, etc. E.g. `win = 5` will perform calculations over every 5 time unit window.
+7)  `win` \<- an integer, which is the number of consecutive units of time (e.g., years, months, etc.) over which the metrics will be calculated, i.e., the 'window' for a rolling average, sum, etc. E.g. `win = 5` will perform calculations over every 5 time unit window.
 
-8\) `time_var` \<- a character, which is the name of the time variable in the dataset. Used in combination with the `win` argument to generate time windowed calculations.
+8)  `time_var` \<- a character, which is the name of the time variable in the dataset. Used in combination with the `win` argument to generate time windowed calculations.
 
-9\) `fancy_time` \<- a logical (i.e., `T` or `F`) flag. If TRUE, a record of all the years going into the data is returned. If FALSE, just a simple range (where certain years within the range might not be represented in your data).
+9)  `fancy_time` \<- a logical (i.e., `T` or `F`) flag. If TRUE, a record of all the years going into the data is returned. If FALSE, just a simple range (where certain years within the range might not be represented in your data).
 
-10\) `proportion` \<- a logical (i.e., `T` or `F`) flag determining whether the metrics should be calculated as a proportion. Currently only relevant for survey data. The default is FALSE.
+10) `proportion` \<- a logical (i.e., `T` or `F`) flag determining whether the metrics should be calculated as a proportion. Currently only relevant for survey data. The default is FALSE.
 
-11\) `ci` \<- a numeric value between 0 & 1 for the confidence level returned in the estimates. E.g., 0.95 == 95% confidence interval
+11) `ci` \<- a numeric value between 0 & 1 for the confidence level returned in the estimates. E.g., 0.95 == 95% confidence interval
 
-12\) `verbose` \<- a logical used to toggle on/off printed warnings
+12) `verbose` \<- a logical used to toggle on/off printed warnings
 
 There is no need to specify all of the arguments listed above. As you can see in the following example, the `calc` function simply needs a specified dataset (i.e., `ph.data`) and at least one `what` variable to return an intelligible result.
 
@@ -198,23 +198,23 @@ calc(ph.data = birth,
 
 ```
 ##     chi_race_eth8 chi_sex           variable     mean level     mean_se mean_lower mean_upper        rse
-##  1:         White  Female birth_weight_grams 3340.295    NA    7.280580   3326.026   3354.565  0.2179622
-##  2:         White    Male birth_weight_grams 3460.298    NA    7.489711   3445.618   3474.977  0.2164470
-##  3:      Hispanic  Female birth_weight_grams 3270.074    NA   13.703835   3243.215   3296.933  0.4190681
-##  4:      Hispanic    Male birth_weight_grams 3301.784    NA   14.310447   3273.736   3329.832  0.4334156
-##  5:      Multiple    Male birth_weight_grams 3369.178    NA   23.359494   3323.394   3414.962  0.6933292
-##  6:         Black  Female birth_weight_grams 3196.872    NA   18.683442   3160.253   3233.491  0.5844288
-##  7:         Asian    Male birth_weight_grams 3231.952    NA    9.784437   3212.775   3251.129  0.3027408
-##  8:         Black    Male birth_weight_grams 3306.213    NA   19.794051   3267.418   3345.009  0.5986925
-##  9:         Asian  Female birth_weight_grams 3145.902    NA    9.419157   3127.441   3164.363  0.2994104
-## 10:      Multiple  Female birth_weight_grams 3251.312    NA   24.365976   3203.556   3299.069  0.7494198
-## 11:       Oth/unk  Female birth_weight_grams 3223.599    NA   30.670381   3163.487   3283.712  0.9514328
-## 12:          NHPI    Male birth_weight_grams 3444.178    NA   43.324387   3359.264   3529.092  1.2579021
-## 13:          NHPI  Female birth_weight_grams 3287.541    NA   49.322668   3190.871   3384.212  1.5002905
-## 14:          AIAN  Female birth_weight_grams 3251.965    NA   79.070604   3096.989   3406.940  2.4314716
-## 15:       Oth/unk    Male birth_weight_grams 3315.557    NA   33.357232   3250.178   3380.936  1.0060823
-## 16:          AIAN    Male birth_weight_grams 3438.641    NA   84.306018   3273.404   3603.877  2.4517252
-## 17:         White    <NA> birth_weight_grams 1873.500    NA 1321.500000 -14917.750  18664.750 70.5364291
+##  1:       Oth/unk  Female birth_weight_grams 3223.599    NA   30.670381   3163.487   3283.712  0.9514328
+##  2:       Oth/unk    Male birth_weight_grams 3315.557    NA   33.357232   3250.178   3380.936  1.0060823
+##  3:         Black  Female birth_weight_grams 3196.872    NA   18.683442   3160.253   3233.491  0.5844288
+##  4:         White  Female birth_weight_grams 3340.295    NA    7.280580   3326.026   3354.565  0.2179622
+##  5:         White    Male birth_weight_grams 3460.298    NA    7.489711   3445.618   3474.977  0.2164470
+##  6:         Asian    Male birth_weight_grams 3231.952    NA    9.784437   3212.775   3251.129  0.3027408
+##  7:         Black    Male birth_weight_grams 3306.213    NA   19.794051   3267.418   3345.009  0.5986925
+##  8:         Asian  Female birth_weight_grams 3145.902    NA    9.419157   3127.441   3164.363  0.2994104
+##  9:      Hispanic    Male birth_weight_grams 3301.784    NA   14.310447   3273.736   3329.832  0.4334156
+## 10:      Multiple    Male birth_weight_grams 3369.178    NA   23.359494   3323.394   3414.962  0.6933292
+## 11:      Multiple  Female birth_weight_grams 3251.312    NA   24.365976   3203.556   3299.069  0.7494198
+## 12:      Hispanic  Female birth_weight_grams 3270.074    NA   13.703835   3243.215   3296.933  0.4190681
+## 13:          NHPI    Male birth_weight_grams 3444.178    NA   43.324387   3359.264   3529.092  1.2579021
+## 14:          NHPI  Female birth_weight_grams 3287.541    NA   49.322668   3190.871   3384.212  1.5002905
+## 15:          AIAN  Female birth_weight_grams 3251.965    NA   79.070604   3096.989   3406.940  2.4314716
+## 16:         White    <NA> birth_weight_grams 1873.500    NA 1321.500000 -14917.750  18664.750 70.5364291
+## 17:          AIAN    Male birth_weight_grams 3438.641    NA   84.306018   3273.404   3603.877  2.4517252
 ```
 
 **Proportion of 2017-2019 births among each race/eth group**
@@ -252,14 +252,14 @@ calc(ph.data = birth,
 
 ```
 ##       level      variable denominator   obs numerator      rate   rate_se rate_lower rate_upper rate_per
-## 1:     AIAN chi_race_eth8       73701 73701       391   530.522  26.75857   480.5929   585.6077   100000
-## 2:    Asian chi_race_eth8       73701 73701     16886 22911.494 154.80599 22609.4981 23216.3131   100000
-## 3:    Black chi_race_eth8       73701 73701      6660  9036.512 105.60883  8831.6537  9245.6411   100000
-## 4: Hispanic chi_race_eth8       73701 73701      9587 13007.965 123.91123 12767.0314 13252.7538   100000
-## 5: Multiple chi_race_eth8       73701 73701      3098  4203.471  73.91714  4060.9678  4350.7475   100000
-## 6:     NHPI chi_race_eth8       73701 73701      1201  1629.557  46.63730  1540.6391  1723.5175   100000
-## 7:  Oth/unk chi_race_eth8       73701 73701      1376  1867.003  49.85932  1771.7604  1967.2633   100000
-## 8:    White chi_race_eth8       73701 73701     34502 46813.476 183.80296 46453.4068 47173.8775   100000
+## 1:     AIAN chi_race_eth8       73701 73701       391   530.522  26.75857   480.5929   585.6077    1e+05
+## 2:    Asian chi_race_eth8       73701 73701     16886 22911.494 154.80599 22609.4981 23216.3131    1e+05
+## 3:    Black chi_race_eth8       73701 73701      6660  9036.512 105.60883  8831.6537  9245.6411    1e+05
+## 4: Hispanic chi_race_eth8       73701 73701      9587 13007.965 123.91123 12767.0314 13252.7538    1e+05
+## 5: Multiple chi_race_eth8       73701 73701      3098  4203.471  73.91714  4060.9678  4350.7475    1e+05
+## 6:     NHPI chi_race_eth8       73701 73701      1201  1629.557  46.63730  1540.6391  1723.5175    1e+05
+## 7:  Oth/unk chi_race_eth8       73701 73701      1376  1867.003  49.85932  1771.7604  1967.2633    1e+05
+## 8:    White chi_race_eth8       73701 73701     34502 46813.476 183.80296 46453.4068 47173.8775    1e+05
 ```
 
 **Number and proportion of missing gender by year**
@@ -275,13 +275,13 @@ calc(ph.data = birth,
 
 ```
 ##    chi_year variable   obs missing missing.prop  level
-## 1:     2017  chi_sex 25274       0  0.000000000 Female
-## 2:     2017  chi_sex 25274       0  0.000000000   Male
-## 3:     2018  chi_sex 24337       0  0.000000000   Male
-## 4:     2018  chi_sex 24337       0  0.000000000 Female
-## 5:     2019  chi_sex 24090       2  0.000083022 Female
-## 6:     2019  chi_sex 24090       2  0.000083022   Male
-## 7:     2019  chi_sex 24090       2  0.000083022   <NA>
+## 1:     2017  chi_sex 25274       0   0.0000e+00   Male
+## 2:     2017  chi_sex 25274       0   0.0000e+00 Female
+## 3:     2018  chi_sex 24337       0   0.0000e+00   Male
+## 4:     2018  chi_sex 24337       0   0.0000e+00 Female
+## 5:     2019  chi_sex 24090       2   8.3022e-05 Female
+## 6:     2019  chi_sex 24090       2   8.3022e-05   Male
+## 7:     2019  chi_sex 24090       2   8.3022e-05   <NA>
 ```
 
 ------------------------------------------------------------------------
@@ -293,8 +293,9 @@ Before using `calc()` with survey data, the user must survey set the data while 
 
 ```r
 library(survey)
+library(data.table)
 
-load("//dphcifs/APDE-CDIP/ACS/PUMS_data/2019_1_year/prepped_R_files/2019_1_year_data.RData")
+load("//dphcifs/APDE-CDIP/ACS/PUMS_data/2021_1_year/prepped_R_files/2021_1_year_data.RData")
 
   pums <-     
     survey::svrepdesign(
@@ -316,54 +317,90 @@ load("//dphcifs/APDE-CDIP/ACS/PUMS_data/2019_1_year/prepped_R_files/2019_1_year_
 
 Once the data has been set as a survey, we can use the `calc()` function the same way that we used it for vital statistics (birth) data.
 
-**Quick sanity check before proceeding.**
+**Let's get on the same page re: the meaning of the columns from `calc()`**
 
-To confirm that the data has been survey set properly, it would be wise to check if the survey weighted population is more or less what you would expect.
-
-When `calc` analyzes survey data, the `numerator` is the number of observations in that category and the `total` is the survey weighted value for those observations. We know that the approximate 2019 populations of WA State, King County, and Seattle were \~7.6 million, \~2.2 million, and 750,000, respectively. How do the following 2019 ACS estimates (i.e., `total` values) compare?
+First, create a simple tabulation of the population of Seattle after sub-setting PUMS to King County.
 
 
 ```r
-pums[, constant :=1]
+test1 <- calc(ph.data = pums, 
+             what = "chi_geo_seattle", 
+             metrics = c('mean', 'numerator', 'denominator', 'obs', 'total'), 
+             where = chi_geo_kc == 1)
+print(test1)
+```
 
+```
+##           variable      mean  total numerator denominator   obs level      mean_se mean_lower mean_upper total_se total_lower total_upper
+## 1: chi_geo_seattle 0.3257413 733714      6544       21506 21506    NA 0.0002685174  0.3252068  0.3262758 783.3842    732154.7    735273.3
+```
+
+-   `mean`: The proportion of the total population (i.e., King County) that lives in Seattle
+-   `total`: The survey weighted population of King County
+-   `numerator`: The number of rows with people living in Seattle, compare to `nrow(pums[chi_geo_seattle == 1])`
+-   `denominator`: The number of rows in the the dataset where the 'what' variable can be assessed because it is not missing, compare to `nrow(pums[!is.na(chi_geo_seattle)])`
+-   `obs`: The number of rows in the dataset after filtering by the 'where' argument.
+
+To highlight the difference between `denominator` and `total`, in this next example we introduce 100 missing values to our 'what' variable (chi_geo_seattle), thereby lowering the denominator by 100 but leaving the obs the same as above.
+
+
+```r
+pums2 <- copy(pums)
+pums2 <- pums2[chi_geo_seattle == 1, chi_geo_seattle := ifelse(rowid(chi_geo_seattle) <= 100, NA, chi_geo_seattle)]
+test2 <- calc(ph.data = pums2, 
+             what = "chi_geo_seattle", 
+             metrics = c('mean', 'numerator', 'denominator', 'obs', 'total'), 
+             where = chi_geo_kc == 1)
+print(test2)
+```
+
+```
+##           variable      mean  total numerator denominator   obs level      mean_se mean_lower mean_upper total_se total_lower total_upper
+## 1: chi_geo_seattle 0.3245334 729686      6444       21406 21506    NA 0.0002911538  0.3239538  0.3251129 876.1572    727942.1    731429.9
+```
+
+You can use this `total` value to perform sanity checks to make sure that your survey weighted population is more or less what you would expect.
+
+We know that the approximate 2021 populations of WA State, King County, and Seattle were \~7.7 million, \~2.3 million, and 750,000, respectively. How do the following 2021 ACS estimates (i.e., `total` values) compare?
+
+
+```r
 # WA State
 calc(ph.data = pums, 
-     what = c("constant"), 
+     what = c('chi_geo_wastate'), 
      metrics = c("numerator", "total"), 
      proportion = F)[]
 ```
 
 ```
-##    variable   total numerator level total_se total_lower total_upper
-## 1: constant 7614893     77879    NA        0     7614893     7614893
+##           variable   total numerator level total_se total_lower total_upper
+## 1: chi_geo_wastate 7738692     78528    NA        0     7738692     7738692
 ```
 
 ```r
 # King County
 calc(ph.data = pums, 
-     what = c("constant"), 
-     chi_geo_kc ==1,
+     what = c("chi_geo_kc"), 
      metrics = c("numerator", "total"), 
      proportion = F)[]
 ```
 
 ```
-##    variable   total numerator level total_se total_lower total_upper
-## 1: constant 2252619     20767    NA  1102.38     2250425     2254813
+##      variable   total numerator level total_se total_lower total_upper
+## 1: chi_geo_kc 2252444     21506    NA 806.0868     2250840     2254048
 ```
 
 ```r
 # Seattle
 calc(ph.data = pums, 
-     what = c("constant"), 
-     chi_geo_seattle ==1,
+     what = c("chi_geo_seattle"), 
      metrics = c("numerator", "total"), 
      proportion = F)[]
 ```
 
 ```
-##    variable  total numerator level total_se total_lower total_upper
-## 1: constant 752953      6526    NA 1077.184    750808.9    755097.1
+##           variable  total numerator level total_se total_lower total_upper
+## 1: chi_geo_seattle 733714      6544    NA 783.3842    732154.7    735273.3
 ```
 
 Now that we've established that our survey data is reasonable, we can continue with our analyses.
@@ -380,11 +417,13 @@ calc(ph.data = pums,
 ```
 
 ```
-##    chi_geo_kc   variable       mean numerator denominator   obs level     mean_se mean_lower mean_upper       rse
-## 1:          0 disability 0.14337089      9038       57112 57112    NA 0.001839847 0.13974757  0.1470721 1.2832777
-## 2:          1 disability 0.09965467      2310       20767 20767    NA 0.002899820 0.09402953  0.1055771 2.9098684
-## 3:          0   GEpov200 0.73832042     41951       55069 57112    NA 0.004032853 0.73021413  0.7462678 0.5462199
-## 4:          1   GEpov200 0.83492701     17250       20149 20767    NA 0.004949186 0.82483869  0.8445438 0.5927687
+##    chi_geo_kc                level   variable denominator   obs       mean     mean_se mean_lower mean_upper numerator       rse
+## 1:          0    With a disability disability       57022 57022 0.14747784 0.001891511 0.14375249  0.1512827      9374 1.2825730
+## 2:          0 Without a disability disability       57022 57022 0.85252216 0.001891511 0.84871732  0.8562475     47648 0.2218723
+## 3:          1    With a disability disability       21506 21506 0.09669408 0.002422061 0.09197924  0.1016236      2404 2.5048703
+## 4:          1 Without a disability disability       21506 21506 0.90330592 0.002422061 0.89837645  0.9080208     19102 0.2681330
+## 5:          0                 <NA>   GEpov200       55189 57022 0.75367067 0.003509537 0.74661863  0.7605894     42256 0.4656592
+## 6:          1                 <NA>   GEpov200       20903 21506 0.81720067 0.005045638 0.80694268  0.8270304     17450 0.6174295
 ```
 
 **Proportion in each CHNA age group, by disability status**
@@ -392,26 +431,26 @@ calc(ph.data = pums,
 
 ```r
 calc(ph.data = pums, 
-     what = c("agechna"), 
+     what = c("age6"), 
      metrics = c("mean", "rse", "obs", "numerator", "denominator"), 
      proportion = F, 
      by = "disability")[]
 ```
 
 ```
-##     disability level variable denominator   obs       mean      mean_se mean_lower mean_upper numerator       rse
-##  1:          0 18-24  agechna       66531 66531 0.09226661 0.0007193595 0.09083477 0.09369846      5771 0.7796531
-##  2:          0 25-44  agechna       66531 66531 0.30776057 0.0011119388 0.30554731 0.30997383     18128 0.3613000
-##  3:          0 45-64  agechna       66531 66531 0.24204020 0.0008892628 0.24027016 0.24381023     17535 0.3674029
-##  4:          0 65-74  agechna       66531 66531 0.08320689 0.0006653204 0.08188260 0.08453118      7137 0.7995977
-##  5:          0   75+  agechna       66531 66531 0.03492094 0.0005877849 0.03375098 0.03609089      2996 1.6831876
-##  6:          0   <18  agechna       66531 66531 0.23980479 0.0006282212 0.23855435 0.24105523     14964 0.2619719
-##  7:          1 18-24  agechna       11348 11348 0.04838122 0.0030271433 0.04235584 0.05440660       482 6.2568562
-##  8:          1 25-44  agechna       11348 11348 0.16410713 0.0048231944 0.15450680 0.17370746      1592 2.9390524
-##  9:          1 45-64  agechna       11348 11348 0.28470479 0.0042658589 0.27621381 0.29319577      3089 1.4983446
-## 10:          1 65-74  agechna       11348 11348 0.18640300 0.0041475334 0.17814754 0.19465846      2338 2.2250358
-## 11:          1   75+  agechna       11348 11348 0.24249002 0.0040969128 0.23433532 0.25064472      3173 1.6895181
-## 12:          1   <18  agechna       11348 11348 0.07391385 0.0034421598 0.06706240 0.08076530       674 4.6569890
+##               disability level variable denominator   obs       mean      mean_se mean_lower mean_upper numerator       rse
+##  1: Without a disability 18-24     age6       66750 66750 0.09003360 0.0006471355 0.08874551 0.09132169      5545 0.7187710
+##  2: Without a disability 25-44     age6       66750 66750 0.30849010 0.0011385162 0.30622394 0.31075626     18734 0.3690608
+##  3: Without a disability 45-64     age6       66750 66750 0.23985748 0.0009444442 0.23797761 0.24173735     16968 0.3937522
+##  4: Without a disability 65-74     age6       66750 66750 0.08861491 0.0006455150 0.08733004 0.08989977      7519 0.7284496
+##  5: Without a disability   75+     age6       66750 66750 0.03488903 0.0005355253 0.03382310 0.03595497      3197 1.5349388
+##  6: Without a disability   <18     age6       66750 66750 0.23811488 0.0006944167 0.23673267 0.23949708     14787 0.2916310
+##  7:    With a disability 18-24     age6       11778 11778 0.06026304 0.0025721168 0.05514337 0.06538271       610 4.2681494
+##  8:    With a disability 25-44     age6       11778 11778 0.18713056 0.0056229482 0.17593836 0.19832276      1760 3.0048262
+##  9:    With a disability 45-64     age6       11778 11778 0.26687071 0.0053801195 0.25616185 0.27757957      2959 2.0160022
+## 10:    With a disability 65-74     age6       11778 11778 0.18508946 0.0040474656 0.17703318 0.19314574      2390 2.1867618
+## 11:    With a disability   75+     age6       11778 11778 0.22731664 0.0033096096 0.22072902 0.23390425      3342 1.4559469
+## 12:    With a disability   <18     age6       11778 11778 0.07332958 0.0037292750 0.06590664 0.08075252       717 5.0856353
 ```
 
 **Mean & median age in King County, by disability status**
@@ -426,9 +465,9 @@ calc(ph.data = pums,
 ```
 
 ```
-##    disability variable     mean median numerator denominator   obs level    mean_se mean_lower mean_upper       rse
-## 1:          1     agep 57.92030     65    139502        2310  2310    NA 0.66318899   56.60026   59.24035 1.1450027
-## 2:          0     agep 36.04553     37    694645       18457 18457    NA 0.08386155   35.87861   36.21246 0.2326545
+##              disability variable     mean median numerator denominator   obs level    mean_se mean_lower mean_upper       rse
+## 1:    With a disability     agep 56.32190     64    142658        2404  2404    NA 0.66249953   55.00323   57.64057 1.1762734
+## 2: Without a disability     agep 36.57783     38    727379       19102 19102    NA 0.06941677   36.43966   36.71600 0.1897783
 ```
 
 ------------------------------------------------------------------------
