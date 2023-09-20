@@ -15,9 +15,9 @@ library(rads)
 
 ## Introduction
 
-This vignette will provide some examples of ways to pull population data into R from the Azure cloud (thank you Jeremy!). 
+This vignette will provide some examples of ways to pull population data into R from the Azure cloud (thank you Jeremy!).
 
-As of 02/2023, there are two sets of population estimates. 
+As of 02/2023, there are two sets of population estimates.
 
 The first, [frankenpop/Population Interim Estimates (PIE)](https://github.com/PHSKC-APDE/frankenpop) were created by APDE. They are based on 2020 geographies for 2000 - 2022+.
 
@@ -35,23 +35,23 @@ args(get_population)
 
 The standard arguments for get_population() are:
 
-1) `kingco` \<\< Logical vector of length 1. Identifies whether you want population estimates limited to King County. Only impacts results for geo_type in c('blk', blkgrp', 'lgd', 'scd', 'tract', 'zip'). Default == TRUE.
+1)  `kingco` \<\< Logical vector of length 1. Identifies whether you want population estimates limited to King County. Only impacts results for geo_type in c('blk', blkgrp', 'lgd', 'scd', 'tract', 'zip'). Default == TRUE.
 
-2) `years` \<\< Numeric vector. Identifies which year(s) of data should be pulled. Default == 2022.
+2)  `years` \<\< Numeric vector. Identifies which year(s) of data should be pulled. Default == 2022.
 
-3) `ages` \<\< Numeric vector. Identifies which age(s) should be pulled. Default == c(0:100), with 100 being the top coded value for 100:120.
+3)  `ages` \<\< Numeric vector. Identifies which age(s) should be pulled. Default == c(0:100), with 100 being the top coded value for 100:120.
 
-4) `genders` \<\< Character vector of length 1 or 2. Identifies gender(s) should be pulled. The acceptable values are 'f', 'female', 'm', and 'male'. Default == c('f', 'm').
+4)  `genders` \<\< Character vector of length 1 or 2. Identifies gender(s) should be pulled. The acceptable values are 'f', 'female', 'm', and 'male'. Default == c('f', 'm').
 
-5) `races` \<\< Character vector of length 1 to 7. Identifies which race(s) or ethnicity should be pulled. The acceptable values are "aian", "asian", "black", "hispanic", "multiple", "nhpi", and "white". Default == all the possible values.
+5)  `races` \<\< Character vector of length 1 to 7. Identifies which race(s) or ethnicity should be pulled. The acceptable values are "aian", "asian", "black", "hispanic", "multiple", "nhpi", and "white". Default == all the possible values.
 
-6) `race_type` \<\< Character vector of length 1. Identifies whether to pull race data with Hispanic as an ethnicity ("race") or Hispanic as a race ("race_eth"). Default == c("race_eth").
+6)  `race_type` \<\< Character vector of length 1. Identifies whether to pull race data with Hispanic as an ethnicity ("race") or Hispanic as a race ("race_eth"). Default == c("race_eth").
 
-7) `geo_type` \<\< Character vector of length 1. Identifies the geographic level for which you want population estimates. The acceptable values are: 'blk', 'blkgrp', 'county', 'hra', 'kc', 'lgd' (WA State legislative districts), 'region', 'seattle', 'scd' (school districts), 'tract', and 'zip'. Default == "kc".
+7)  `geo_type` \<\< Character vector of length 1. Identifies the geographic level for which you want population estimates. The acceptable values are: 'blk', 'blkgrp', 'county', 'hra', 'kc', 'lgd' (WA State legislative districts), 'region', 'seattle', 'scd' (school districts), 'tract', and 'zip'. Default == "kc".
 
-8) `group_by` \<\< Character vector of length 0 to 7. Identifies how you would like the data 'grouped' (i.e., stratified). Valid options are limited to: "years", "ages", "genders", "race", "race_eth", "fips_co", and "geo_id". Default == NULL, i.e., estimates are only grouped / aggregated by geography (e.g. geo_id is always included).
+8)  `group_by` \<\< Character vector of length 0 to 7. Identifies how you would like the data 'grouped' (i.e., stratified). Valid options are limited to: "years", "ages", "genders", "race", "race_eth", "fips_co", and "geo_id". Default == NULL, i.e., estimates are only grouped / aggregated by geography (e.g. geo_id is always included).
 
-9) `round` \<\< Logical vector of length 1. Identifies whether or not population estimates should be returned as whole numbers. Default == FALSE.
+9)  `round` \<\< Logical vector of length 1. Identifies whether or not population estimates should be returned as whole numbers. Default == FALSE.
 
 10) `mykey` \<\< a character vector with the name of the `keyring::` key that provides access to the Health and Human Services Analytic Workspace (HHSAW). If you have never set your keyring before and or do not know what this is referring to, just type `keyring::key_set('hhsaw', username = 'ALastname@kingcounty.gov')` into your R console (making sure to replace the username). The default is 'hhsaw'.
 
@@ -206,8 +206,20 @@ get_population(race_type = "race", group_by = "race")[]
 
 ### Complex arguments
 
-**King County regions stratified by year and gender**
+**King County regions stratified by Hispanic/Non-Hispanic**
+```{r, warning = FALSE, message = FALSE}
+# pull in data stratified by race/eth and region
+reg_hisp_nonhisp <- get_population(geo_type = 'region', group_by = c('race_eth'))
 
+# explicitly label all non-Hispanic individuals as 'Non-Hispanic'
+reg_hisp_nonhisp[race_eth != 'Hispanic', race_eth := 'Non-Hispanic']
+
+# aggregate the population by region and race_eth
+reg_hisp_nonhisp <- reg_hisp_nonhisp[, .(pop = sum(pop)), .(region = geo_id, race_eth)]
+print(reg_hisp_nonhisp)
+```
+
+**King County regions stratified by year and gender**
 ```{r, warning = FALSE, message = FALSE}
 get_population(geo_type = "region", 
                years = 2017:2019, 
@@ -215,6 +227,7 @@ get_population(geo_type = "region",
 ```
 
 **King County regions stratified by year -- Female Hispanic and Asian-NH residents aged 16-25 only -- not rounded**
+
 ```{r, warning = FALSE, message = FALSE}
 get_population(ages = 16:25, 
                genders = "F", 
