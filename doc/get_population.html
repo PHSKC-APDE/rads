@@ -1,225 +1,162 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-<title>Introduction</title>
-
-<script type="text/javascript">
-window.onload = function() {
-  var imgs = document.getElementsByTagName('img'), i, img;
-  for (i = 0; i < imgs.length; i++) {
-    img = imgs[i];
-    // center an image if it is the only element of its parent
-    if (img.parentElement.childElementCount === 1)
-      img.parentElement.style.textAlign = 'center';
-  }
-};
-</script>
-
-<!-- Styles for R syntax highlighter -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>get_population()</title>
 <style type="text/css">
-   pre .operator,
-   pre .paren {
-     color: rgb(104, 118, 135)
-   }
-
-   pre .literal {
-     color: #990073
-   }
-
-   pre .number {
-     color: #099;
-   }
-
-   pre .comment {
-     color: #998;
-     font-style: italic
-   }
-
-   pre .keyword {
-     color: #900;
-     font-weight: bold
-   }
-
-   pre .identifier {
-     color: rgb(0, 0, 0);
-   }
-
-   pre .string {
-     color: #d14;
-   }
-</style>
-
-<!-- R syntax highlighter -->
-<script type="text/javascript">
-var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
-hljs.initHighlightingOnLoad();
-</script>
-
-
-
-<style type="text/css">
-body, td {
-   font-family: sans-serif;
-   background-color: white;
-   font-size: 13px;
+/**
+ * Prism.s theme ported from highlight.js's xcode style
+ */
+pre code {
+  padding: 1em;
 }
-
+.token.comment {
+  color: #007400;
+}
+.token.punctuation {
+  color: #999;
+}
+.token.tag,
+.token.selector {
+  color: #aa0d91;
+}
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol {
+  color: #1c00cf;
+}
+.token.property,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin {
+  color: #c41a16;
+}
+.token.inserted {
+  background-color: #ccffd8;
+}
+.token.deleted {
+  background-color: #ffebe9;
+}
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #9a6e3a;
+}
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: #836c28;
+}
+.token.function,
+.token.class-name {
+  color: #DD4A68;
+}
+.token.regex,
+.token.important,
+.token.variable {
+  color: #5c2699;
+}
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+.token.italic {
+  font-style: italic;
+}
+</style>
+<style type="text/css">
 body {
+  font-family: sans-serif;
   max-width: 800px;
   margin: auto;
   padding: 1em;
-  line-height: 20px;
+  line-height: 1.5;
+  box-sizing: border-box;
 }
-
-tt, code, pre {
-   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+body, .footnotes, code { font-size: .9em; }
+li li { font-size: .95em; }
+*, *:before, *:after {
+  box-sizing: inherit;
 }
-
-h1 {
-   font-size:2.2em;
-}
-
-h2 {
-   font-size:1.8em;
-}
-
-h3 {
-   font-size:1.4em;
-}
-
-h4 {
-   font-size:1.0em;
-}
-
-h5 {
-   font-size:0.9em;
-}
-
-h6 {
-   font-size:0.8em;
-}
-
-a:visited {
-   color: rgb(50%, 0%, 50%);
-}
-
-pre, img {
-  max-width: 100%;
-}
-pre {
-  overflow-x: auto;
+pre, img { max-width: 100%; }
+pre, pre:hover {
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 pre code {
-   display: block; padding: 0.5em;
+  display: block;
+  overflow-x: auto;
 }
-
-code {
-  font-size: 92%;
-  border: 1px solid #ccc;
+code { font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace; }
+:not(pre) > code, code[class] { background-color: #F8F8F8; }
+code.language-undefined, pre > code:not([class]) {
+  background-color: inherit;
+  border: 1px solid #eee;
 }
-
-code[class] {
-  background-color: #F8F8F8;
+table {
+  margin: auto;
+  border-top: 1px solid #666;
 }
-
-table, td, th {
-  border: none;
-}
-
+table thead th { border-bottom: 1px solid #ddd; }
+th, td { padding: 5px; }
+thead, tfoot, tr:nth-child(even) { background: #eee; }
 blockquote {
-   color:#666666;
-   margin:0;
-   padding-left: 1em;
-   border-left: 0.5em #EEE solid;
+  color: #666;
+  margin: 0;
+  padding-left: 1em;
+  border-left: 0.5em solid #eee;
 }
-
-hr {
-   height: 0px;
-   border-bottom: none;
-   border-top-width: thin;
-   border-top-style: dotted;
-   border-top-color: #999999;
+hr, .footnotes::before { border: 1px dashed #ddd; }
+.frontmatter { text-align: center; }
+#TOC .numbered li { list-style: none; }
+#TOC .numbered { padding-left: 0; }
+#TOC .numbered ul { padding-left: 1em; }
+table, .body h2 { border-bottom: 1px solid #666; }
+.body .appendix, .appendix ~ h2 { border-bottom-style: dashed; }
+.footnote-ref a::before { content: "["; }
+.footnote-ref a::after { content: "]"; }
+.footnotes::before {
+  content: "";
+  display: block;
+  max-width: 20em;
 }
 
 @media print {
-   * {
-      background: transparent !important;
-      color: black !important;
-      filter:none !important;
-      -ms-filter: none !important;
-   }
-
-   body {
-      font-size:12pt;
-      max-width:100%;
-   }
-
-   a, a:visited {
-      text-decoration: underline;
-   }
-
-   hr {
-      visibility: hidden;
-      page-break-before: always;
-   }
-
-   pre, blockquote {
-      padding-right: 1em;
-      page-break-inside: avoid;
-   }
-
-   tr, img {
-      page-break-inside: avoid;
-   }
-
-   img {
-      max-width: 100% !important;
-   }
-
-   @page :left {
-      margin: 15mm 20mm 15mm 10mm;
-   }
-
-   @page :right {
-      margin: 15mm 10mm 15mm 20mm;
-   }
-
-   p, h2, h3 {
-      orphans: 3; widows: 3;
-   }
-
-   h2, h3 {
-      page-break-after: avoid;
-   }
+  body {
+    font-size: 12pt;
+    max-width: 100%;
+  }
+  tr, img { page-break-inside: avoid; }
+}
+@media only screen and (min-width: 992px) {
+  pre { white-space: pre; }
 }
 </style>
-
-
-
 </head>
-
 <body>
-<h2>Introduction</h2>
-
-<p>This vignette will provide some examples of ways to pull population data into R from the Azure cloud (thank you Jeremy!). </p>
-
-<p>As of 02/2023, there are two sets of population estimates. </p>
-
+<div class="include-before">
+</div>
+<div class="frontmatter">
+<div class="title"><h1>get_population()</h1></div>
+<div class="author"><h2></h2></div>
+<div class="date"><h3></h3></div>
+</div>
+<div class="body">
+<h2 id="introduction">Introduction</h2>
+<p>This vignette will provide some examples of ways to pull population data into R from the Azure cloud (thank you Jeremy!).</p>
+<p>As of 02/2023, there are two sets of population estimates.</p>
 <p>The first, <a href="https://github.com/PHSKC-APDE/frankenpop">frankenpop/Population Interim Estimates (PIE)</a> were created by APDE. They are based on 2020 geographies for 2000 - 2022+.</p>
-
 <p>The second (and older/outdated ones), between 2000 and 2020 derive are Population numbers are estimated by the <a href="https://ofm.wa.gov/washington-data-research/population-demographics">WA Office of Financial Management (OFM) population unit</a>. OFM produces two sets of estimates: (1) <a href="https://ofm.wa.gov/washington-data-research/population-demographics/population-estimates/april-1-official-population-estimates">April 1 official population estimates</a> for cities and towns and (2) <a href="https://ofm.wa.gov/washington-data-research/population-demographics/population-estimates/small-area-estimates-program">Small Area Estimates (SAE)</a> for smaller geographies. The <code>get_population()</code> function pulls the SAE numbers and, when <code>round = T</code>, should be the same as those in <a href="https://secureaccess.wa.gov/doh/chat/Entry.mvc">CHAT</a>.</p>
-
 <p><strong>NOTE!!</strong> To get the most out of this vignette, I highly recommend that you actually type each and every bit of code into R. Doing so will almost definitely help you learn the syntax much faster than just reading the vignette or copying and pasting the code.</p>
-
-<h2><code>get_population</code> arguments</h2>
-
+<h2 id="get-population-arguments"><code>get_population</code> arguments</h2>
 <p>Arguments are the values that we send to a function when it is called. Generally, typing <code>args(my_function_of_interest)</code> will return the possible arguments including any defaults. For example,</p>
-
-<pre><code class="r">args(get_population)
+<pre><code class="language-r">args(get_population)
 </code></pre>
-
 <pre><code>## function (kingco = T, years = NA, ages = c(0:100), genders = c(&quot;f&quot;, 
 ##     &quot;m&quot;), races = c(&quot;aian&quot;, &quot;asian&quot;, &quot;black&quot;, &quot;hispanic&quot;, &quot;multiple&quot;, 
 ##     &quot;nhpi&quot;, &quot;white&quot;), race_type = c(&quot;race_eth&quot;), geo_type = c(&quot;kc&quot;), 
@@ -228,161 +165,150 @@ hr {
 ##     return_query = FALSE) 
 ## NULL
 </code></pre>
-
 <p>The standard arguments for get_population() are:</p>
-
-<p>1) <code>kingco</code> &lt;&lt; Logical vector of length 1. Identifies whether you want population estimates limited to King County. Only impacts results for geo_type in c(&#39;blk&#39;, blkgrp&#39;, &#39;lgd&#39;, &#39;scd&#39;, &#39;tract&#39;, &#39;zip&#39;). Default == TRUE.</p>
-
-<p>2) <code>years</code> &lt;&lt; Numeric vector. Identifies which year(s) of data should be pulled. Default == 2022.</p>
-
-<p>3) <code>ages</code> &lt;&lt; Numeric vector. Identifies which age(s) should be pulled. Default == c(0:100), with 100 being the top coded value for 100:120.</p>
-
-<p>4) <code>genders</code> &lt;&lt; Character vector of length 1 or 2. Identifies gender(s) should be pulled. The acceptable values are &#39;f&#39;, &#39;female&#39;, &#39;m&#39;, and &#39;male&#39;. Default == c(&#39;f&#39;, &#39;m&#39;).</p>
-
-<p>5) <code>races</code> &lt;&lt; Character vector of length 1 to 7. Identifies which race(s) or ethnicity should be pulled. The acceptable values are &ldquo;aian&rdquo;, &ldquo;asian&rdquo;, &ldquo;black&rdquo;, &ldquo;hispanic&rdquo;, &ldquo;multiple&rdquo;, &ldquo;nhpi&rdquo;, and &ldquo;white&rdquo;. Default == all the possible values.</p>
-
-<p>6) <code>race_type</code> &lt;&lt; Character vector of length 1. Identifies whether to pull race data with Hispanic as an ethnicity (&ldquo;race&rdquo;) or Hispanic as a race (&ldquo;race_eth&rdquo;). Default == c(&ldquo;race_eth&rdquo;).</p>
-
-<p>7) <code>geo_type</code> &lt;&lt; Character vector of length 1. Identifies the geographic level for which you want population estimates. The acceptable values are: &#39;blk&#39;, &#39;blkgrp&#39;, &#39;county&#39;, &#39;hra&#39;, &#39;kc&#39;, &#39;lgd&#39; (WA State legislative districts), &#39;region&#39;, &#39;seattle&#39;, &#39;scd&#39; (school districts), &#39;tract&#39;, and &#39;zip&#39;. Default == &ldquo;kc&rdquo;.</p>
-
-<p>8) <code>group_by</code> &lt;&lt; Character vector of length 0 to 7. Identifies how you would like the data &#39;grouped&#39; (i.e., stratified). Valid options are limited to: &ldquo;years&rdquo;, &ldquo;ages&rdquo;, &ldquo;genders&rdquo;, &ldquo;race&rdquo;, &ldquo;race_eth&rdquo;, &ldquo;fips_co&rdquo;, and &ldquo;geo_id&rdquo;. Default == NULL, i.e., estimates are only grouped / aggregated by geography (e.g. geo_id is always included).</p>
-
-<p>9) <code>round</code> &lt;&lt; Logical vector of length 1. Identifies whether or not population estimates should be returned as whole numbers. Default == FALSE.</p>
-
-<p>10) <code>mykey</code> &lt;&lt; a character vector with the name of the <code>keyring::</code> key that provides access to the Health and Human Services Analytic Workspace (HHSAW). If you have never set your keyring before and or do not know what this is referring to, just type <code>keyring::key_set(&#39;hhsaw&#39;, username = &#39;ALastname@kingcounty.gov&#39;)</code> into your R console (making sure to replace the username). The default is &#39;hhsaw&#39;.</p>
-
-<p>11) census_vintage &lt;&lt; Either 2010 or 2020. Specifies the anchor census of the desired estimates. Default is 2020</p>
-
-<p>12) geo_vintage &lt;&lt; Either 2010 or 2020. Specifies the anchor census for geographies. For example, 2020 will return geographies based on 2020 blocks. Default is 2020</p>
-
-<p>13) schema &lt;&lt; Unless you are a power user, don&#39;t mess with this</p>
-
-<p>14) table_prefix &lt;&lt; unless you are a power user, don&#39;t mess with this</p>
-
-<p>15) return_query &lt;&lt; logical. Rather than returning results, the query/queries used to fetch the results are provided</p>
-
-<p>There is no need to specify any or all of the arguments listed above. As the following example shows, the default arguments for <code>get_population</code> provide the overall most recent year&#39;s estimated King County population.</p>
-
-<pre><code class="r">get_population()[]
+<ol>
+<li>
+<p><code>kingco</code> &lt;&lt; Logical vector of length 1. Identifies whether you want population estimates limited to King County. Only impacts results for geo_type in c(‘blk’, blkgrp’, ‘lgd’, ‘scd’, ‘tract’, ‘zip’). Default == TRUE.</p>
+</li>
+<li>
+<p><code>years</code> &lt;&lt; Numeric vector. Identifies which year(s) of data should be pulled. Default == 2022.</p>
+</li>
+<li>
+<p><code>ages</code> &lt;&lt; Numeric vector. Identifies which age(s) should be pulled. Default == c(0:100), with 100 being the top coded value for 100:120.</p>
+</li>
+<li>
+<p><code>genders</code> &lt;&lt; Character vector of length 1 or 2. Identifies gender(s) should be pulled. The acceptable values are ‘f’, ‘female’, ‘m’, and ‘male’. Default == c(‘f’, ‘m’).</p>
+</li>
+<li>
+<p><code>races</code> &lt;&lt; Character vector of length 1 to 7. Identifies which race(s) or ethnicity should be pulled. The acceptable values are “aian”, “asian”, “black”, “hispanic”, “multiple”, “nhpi”, and “white”. Default == all the possible values.</p>
+</li>
+<li>
+<p><code>race_type</code> &lt;&lt; Character vector of length 1. Identifies whether to pull race data with Hispanic as an ethnicity (“race”) or Hispanic as a race (“race_eth”). Default == c(“race_eth”).</p>
+</li>
+<li>
+<p><code>geo_type</code> &lt;&lt; Character vector of length 1. Identifies the geographic level for which you want population estimates. The acceptable values are: ‘blk’, ‘blkgrp’, ‘county’, ‘hra’, ‘kc’, ‘lgd’ (WA State legislative districts), ‘region’, ‘seattle’, ‘scd’ (school districts), ‘tract’, and ‘zip’. Default == “kc”.</p>
+</li>
+<li>
+<p><code>group_by</code> &lt;&lt; Character vector of length 0 to 7. Identifies how you would like the data ‘grouped’ (i.e., stratified). Valid options are limited to: “years”, “ages”, “genders”, “race”, “race_eth”, “fips_co”, and “geo_id”. Default == NULL, i.e., estimates are only grouped / aggregated by geography (e.g. geo_id is always included).</p>
+</li>
+<li>
+<p><code>round</code> &lt;&lt; Logical vector of length 1. Identifies whether or not population estimates should be returned as whole numbers. Default == FALSE.</p>
+</li>
+<li>
+<p><code>mykey</code> &lt;&lt; a character vector with the name of the <code>keyring::</code> key that provides access to the Health and Human Services Analytic Workspace (HHSAW). If you have never set your keyring before and or do not know what this is referring to, just type <code>keyring::key_set('hhsaw', username = 'ALastname@kingcounty.gov')</code> into your R console (making sure to replace the username). The default is ‘hhsaw’.</p>
+</li>
+<li>
+<p>census_vintage &lt;&lt; Either 2010 or 2020. Specifies the anchor census of the desired estimates. Default is 2020</p>
+</li>
+<li>
+<p>geo_vintage &lt;&lt; Either 2010 or 2020. Specifies the anchor census for geographies. For example, 2020 will return geographies based on 2020 blocks. Default is 2020</p>
+</li>
+<li>
+<p>schema &lt;&lt; Unless you are a power user, don’t mess with this</p>
+</li>
+<li>
+<p>table_prefix &lt;&lt; unless you are a power user, don’t mess with this</p>
+</li>
+<li>
+<p>return_query &lt;&lt; logical. Rather than returning results, the query/queries used to fetch the results are provided</p>
+</li>
+</ol>
+<p>There is no need to specify any or all of the arguments listed above. As the following example shows, the default arguments for <code>get_population</code> provide the overall most recent year’s estimated King County population.</p>
+<pre><code class="language-r">get_population()[]
 </code></pre>
-
 <pre><code>##        pop geo_type      geo_id year   age       gender
 ## 1: 2317700       kc King County 2022 0-100 Female, Male
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 </code></pre>
-
-<hr/>
-
-<h2>Example analyses</h2>
-
-<p><em>**Note 1</em><em>: The use of <code>head()</code> below is not necessary. It is a convenience function that displays the first 6 rows of data and was used to keep the output in this vignette tidy.</em></p>
-
-<p><em>**Note 2</em><em>: The use of <code>[]</code> after get_population() is used to print the output to the console. Typically, you would not print the results but would save them as an object. E.g., <code>my.pop.est &lt;- get_population()</code>.</em></p>
-
-<h3>Geographic estimates</h3>
-
+<hr />
+<h2 id="example-analyses">Example analyses</h2>
+<p><em><strong>Note 1</strong>: The use of <code>head()</code> below is not necessary. It is a convenience function that displays the first 6 rows of data and was used to keep the output in this vignette tidy.</em></p>
+<p><em><strong>Note 2</strong>: The use of <code>[]</code> after get_population() is used to print the output to the console. Typically, you would not print the results but would save them as an object. E.g., <code>my.pop.est &lt;- get_population()</code>.</em></p>
+<h3 id="geographic-estimates">Geographic estimates</h3>
 <p><strong>WA</strong></p>
-
-<pre><code class="r">get_population(geo_type = &#39;wa&#39;, round = TRUE)[]
+<pre><code class="language-r">get_population(geo_type = 'wa', round = TRUE)[]
 </code></pre>
-
 <pre><code>##        pop geo_type           geo_id year   age       gender
 ## 1: 7864400       wa Washington State 2022 0-100 Female, Male
 ##                                                    race_eth geo_id_code
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White          53
 </code></pre>
-
 <p><strong>King County</strong></p>
-
-<pre><code class="r">get_population(round = T)[]
+<pre><code class="language-r">get_population(round = T)[]
 </code></pre>
-
 <pre><code>##        pop geo_type      geo_id year   age       gender
 ## 1: 2317700       kc King County 2022 0-100 Female, Male
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 </code></pre>
-
 <p><strong>King County Regions</strong></p>
-
-<pre><code class="r">get_population(geo_type = c(&quot;region&quot;),
+<pre><code class="language-r">get_population(geo_type = c(&quot;region&quot;),
                group_by = c(&quot;geo_id&quot;),
                round = TRUE)[]
 </code></pre>
-
 <pre><code>##       pop geo_type  geo_id year   age       gender
 ## 1: 604181   region    East 2022 0-100 Female, Male
-## 2: 758964   region Seattle 2022 0-100 Female, Male
-## 3: 813899   region   South 2022 0-100 Female, Male
+## 2: 813899   region   South 2022 0-100 Female, Male
+## 3: 758964   region Seattle 2022 0-100 Female, Male
 ## 4: 140656   region   North 2022 0-100 Female, Male
 ##                                                    race_eth geo_id_code
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
-## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
-## 3: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
+## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
+## 3: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
 ## 4: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
 </code></pre>
-
 <p><strong>King County Regions with <code>round=FALSE</code></strong></p>
-
 <p>Turn off rounding to get the exact (fractional) number of people estimated.</p>
-
-<pre><code class="r">rads::get_population(geo_type = &#39;region&#39;, 
+<pre><code class="language-r">rads::get_population(geo_type = 'region', 
                      round = F)[]
 </code></pre>
-
 <pre><code>##         pop geo_type  geo_id year   age       gender
 ## 1: 604181.4   region    East 2022 0-100 Female, Male
-## 2: 758963.9   region Seattle 2022 0-100 Female, Male
-## 3: 813898.8   region   South 2022 0-100 Female, Male
+## 2: 813898.8   region   South 2022 0-100 Female, Male
+## 3: 758963.9   region Seattle 2022 0-100 Female, Male
 ## 4: 140656.0   region   North 2022 0-100 Female, Male
 ##                                                    race_eth geo_id_code
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
-## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
-## 3: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
+## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
+## 3: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
 ## 4: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
 </code></pre>
-
 <p><strong>King County HRAs</strong></p>
-
-<pre><code class="r">head(get_population(geo_type = c(&quot;hra&quot;), group_by = c(&quot;geo_id&quot;))[])  
+<pre><code class="language-r">head(get_population(geo_type = c(&quot;hra&quot;), group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
-
-<pre><code>##         pop geo_type                                                  geo_id
-## 1: 40643.61      hra                                    Bellevue - Northeast
-## 2: 40730.46      hra                                      Bellevue - Central
-## 3: 34799.45      hra Seattle - South Beacon Hill, Georgetown, and South Park
-## 4: 50169.19      hra                        Bear Creek and Greater Sammamish
-## 5: 60406.00      hra                                               Shoreline
-## 6: 63422.03      hra                                  Seattle - West Seattle
-##    year   age       gender
-## 1: 2022 0-100 Female, Male
-## 2: 2022 0-100 Female, Male
-## 3: 2022 0-100 Female, Male
-## 4: 2022 0-100 Female, Male
-## 5: 2022 0-100 Female, Male
-## 6: 2022 0-100 Female, Male
-##                                                    race_eth geo_id_code
-## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White          40
-## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White          36
-## 3: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White          30
-## 4: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White          54
-## 5: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White          61
-## 6: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White          32
+<pre><code>##         pop geo_type                                               geo_id year
+## 1: 21183.65      hra                                            Covington 2022
+## 2: 60406.00      hra                                            Shoreline 2022
+## 3: 50169.19      hra                     Bear Creek and Greater Sammamish 2022
+## 4: 45842.21      hra               Seattle - Green Lake and Phinney Ridge 2022
+## 5: 37251.02      hra Seattle - Broadview, Haller Lake, and Licton Springs 2022
+## 6: 39352.12      hra                    Seattle - Fremont and Wallingford 2022
+##      age       gender                                                 race_eth
+## 1: 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 2: 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 3: 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 4: 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 5: 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 6: 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+##    geo_id_code
+## 1:          11
+## 2:          61
+## 3:          54
+## 4:          52
+## 5:          58
+## 6:          46
 </code></pre>
-
 <p><strong>King County Zip codes</strong></p>
-
-<pre><code class="r">head(get_population(geo_type = c(&quot;zip&quot;), group_by = c(&quot;geo_id&quot;))[])  
+<pre><code class="language-r">head(get_population(geo_type = c(&quot;zip&quot;), group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
-
-<pre><code>##          pop geo_type geo_id year   age       gender
-## 1: 50882.408      zip  98105 2022 0-100 Female, Male
-## 2:  4454.007      zip  98195 2022 0-100 Female, Male
-## 3: 30522.296      zip  98007 2022 0-100 Female, Male
-## 4: 25863.062      zip  98040 2022 0-100 Female, Male
-## 5: 11076.345      zip  98070 2022 0-100 Female, Male
-## 6: 43622.179      zip  98125 2022 0-100 Female, Male
+<pre><code>##           pop geo_type geo_id year   age       gender
+## 1:   295.7274      zip  98288 2022 0-100 Female, Male
+## 2: 20783.0719      zip  98177 2022 0-100 Female, Male
+## 3: 54830.3567      zip  98115 2022 0-100 Female, Male
+## 4: 49718.9525      zip  98042 2022 0-100 Female, Male
+## 5: 16165.7131      zip  98045 2022 0-100 Female, Male
+## 6: 16440.6417      zip  98065 2022 0-100 Female, Male
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
@@ -391,19 +317,16 @@ hr {
 ## 5: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 6: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 </code></pre>
-
 <p><strong>King County Census Tracts</strong></p>
-
-<pre><code class="r">head(get_population(geo_type = c(&quot;tract&quot;), group_by = c(&quot;geo_id&quot;), ages = 18, census_vintage = 2020, geo_vintage = 2020)[])  
+<pre><code class="language-r">head(get_population(geo_type = c(&quot;tract&quot;), group_by = c(&quot;geo_id&quot;), ages = 18, census_vintage = 2020, geo_vintage = 2020)[])  
 </code></pre>
-
-<pre><code>##          pop geo_type      geo_id year age       gender
-## 1:  46.30214    tract 53033022001 2022  18 Female, Male
-## 2:  41.51019    tract 53033025402 2022  18 Female, Male
-## 3:  38.43116    tract 53033027800 2022  18 Female, Male
-## 4:  72.57559    tract 53033029406 2022  18 Female, Male
-## 5: 100.55546    tract 53033030306 2022  18 Female, Male
-## 6:  68.77500    tract 53033030802 2022  18 Female, Male
+<pre><code>##         pop geo_type      geo_id year age       gender
+## 1: 96.24008    tract 53033030005 2022  18 Female, Male
+## 2: 99.32560    tract 53033032704 2022  18 Female, Male
+## 3: 48.44064    tract 53033001300 2022  18 Female, Male
+## 4: 24.66547    tract 53033008700 2022  18 Female, Male
+## 5: 59.85365    tract 53033011901 2022  18 Female, Male
+## 6: 42.63655    tract 53033020301 2022  18 Female, Male
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
@@ -412,19 +335,16 @@ hr {
 ## 5: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 6: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 </code></pre>
-
 <p><strong>King County Census Block Groups</strong></p>
-
-<pre><code class="r">head(get_population(geo_type = c(&quot;blkgrp&quot;), group_by = c(&quot;geo_id&quot;), ages = 18,census_vintage = 2020, geo_vintage = 2020)[])  
+<pre><code class="language-r">head(get_population(geo_type = c(&quot;blkgrp&quot;), group_by = c(&quot;geo_id&quot;), ages = 18,census_vintage = 2020, geo_vintage = 2020)[])  
 </code></pre>
-
-<pre><code>##         pop geo_type       geo_id year age       gender
-## 1: 30.99587   blkgrp 530330268023 2022  18 Female, Male
-## 2: 10.46737   blkgrp 530330291012 2022  18 Female, Male
-## 3: 28.90932   blkgrp 530330294033 2022  18 Female, Male
-## 4: 20.40089   blkgrp 530330298052 2022  18 Female, Male
-## 5: 17.07929   blkgrp 530330302012 2022  18 Female, Male
-## 6: 29.41954   blkgrp 530330303101 2022  18 Female, Male
+<pre><code>##          pop geo_type       geo_id year age       gender
+## 1:  7.227292   blkgrp 530330229024 2022  18 Female, Male
+## 2: 24.204427   blkgrp 530330075011 2022  18 Female, Male
+## 3: 19.494452   blkgrp 530330078001 2022  18 Female, Male
+## 4: 11.616670   blkgrp 530330106011 2022  18 Female, Male
+## 5: 13.386648   blkgrp 530330252012 2022  18 Female, Male
+## 6: 16.352810   blkgrp 530330255003 2022  18 Female, Male
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
@@ -433,20 +353,17 @@ hr {
 ## 5: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 6: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 </code></pre>
-
 <p><strong>King County Census Blocks</strong></p>
-
-<pre><code class="r">#ages added to make things go faster
+<pre><code class="language-r">#ages added to make things go faster
 head(get_population(geo_type = c(&quot;blk&quot;), group_by = c(&quot;geo_id&quot;), ages = 18, census_vintage = 2020, geo_vintage = 2020)[])  
 </code></pre>
-
-<pre><code>##             pop geo_type          geo_id year age       gender
-## 1: 379.25979633      blk 530330053031002 2022  18 Female, Male
-## 2:   0.57794270      blk 530330019001010 2022  18 Female, Male
-## 3:   6.80216006      blk 530330044013006 2022  18 Female, Male
-## 4:   1.64323106      blk 530330240021012 2022  18 Female, Male
-## 5:   2.64121323      blk 530330245002001 2022  18 Female, Male
-## 6:   0.02947384      blk 530330289012005 2022  18 Female, Male
+<pre><code>##           pop geo_type          geo_id year age       gender
+## 1:  3.1766492      blk 530330315022006 2022  18 Female, Male
+## 2:  1.7691562      blk 530330316032001 2022  18 Female, Male
+## 3:  0.6850862      blk 530330327053020 2022  18 Female, Male
+## 4: 21.5900791      blk 530330294083001 2022  18 Female, Male
+## 5:  3.4370966      blk 530330298041003 2022  18 Female, Male
+## 6:  1.1119714      blk 530330317081012 2022  18 Female, Male
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
@@ -455,26 +372,19 @@ head(get_population(geo_type = c(&quot;blk&quot;), group_by = c(&quot;geo_id&quo
 ## 5: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 6: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 </code></pre>
-
-<h3>Other simple arguments</h3>
-
+<h3 id="other-simple-arguments">Other simple arguments</h3>
 <p><strong>King County multiple years combined</strong></p>
-
-<pre><code class="r">get_population(years = 2017:2019)[]
+<pre><code class="language-r">get_population(years = 2017:2019)[]
 </code></pre>
-
 <pre><code>##        pop geo_type      geo_id      year   age       gender
 ## 1: 6593269       kc King County 2017-2019 0-100 Female, Male
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 </code></pre>
-
 <p><strong>King County multiple years stratified</strong></p>
-
-<pre><code class="r">get_population(years = 2017:2019, 
+<pre><code class="language-r">get_population(years = 2017:2019, 
                group_by = &quot;years&quot;)[]
 </code></pre>
-
 <pre><code>##        pop geo_type      geo_id year   age       gender
 ## 1: 2160624       kc King County 2017 0-100 Female, Male
 ## 2: 2234581       kc King County 2019 0-100 Female, Male
@@ -484,23 +394,17 @@ head(get_population(geo_type = c(&quot;blk&quot;), group_by = c(&quot;geo_id&quo
 ## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 3: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 </code></pre>
-
 <p><strong>King County multiple ages combined</strong></p>
-
-<pre><code class="r">get_population(ages = 65:70)[]
+<pre><code class="language-r">get_population(ages = 65:70)[]
 </code></pre>
-
 <pre><code>##         pop geo_type      geo_id year   age       gender
 ## 1: 127562.7       kc King County 2022 65-70 Female, Male
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 </code></pre>
-
 <p><strong>King County multiple ages stratified</strong></p>
-
-<pre><code class="r">get_population(ages = 65:70, group_by = &quot;ages&quot;)[]
+<pre><code class="language-r">get_population(ages = 65:70, group_by = &quot;ages&quot;)[]
 </code></pre>
-
 <pre><code>##         pop geo_type      geo_id year age       gender
 ## 1: 19021.57       kc King County 2022  68 Female, Male
 ## 2: 23769.82       kc King County 2022  66 Female, Male
@@ -516,23 +420,17 @@ head(get_population(geo_type = c(&quot;blk&quot;), group_by = c(&quot;geo_id&quo
 ## 5: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 6: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 </code></pre>
-
 <p><strong>King County female only</strong></p>
-
-<pre><code class="r">get_population(genders = &quot;F&quot;)[]
+<pre><code class="language-r">get_population(genders = &quot;F&quot;)[]
 </code></pre>
-
 <pre><code>##        pop geo_type      geo_id year   age gender
 ## 1: 1149276       kc King County 2022 0-100 Female
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 </code></pre>
-
 <p><strong>King County gender stratified</strong></p>
-
-<pre><code class="r">get_population(group_by = &quot;genders&quot;)[]
+<pre><code class="language-r">get_population(group_by = &quot;genders&quot;)[]
 </code></pre>
-
 <pre><code>##        pop geo_type      geo_id year   age gender
 ## 1: 1168424       kc King County 2022 0-100   Male
 ## 2: 1149276       kc King County 2022 0-100 Female
@@ -540,30 +438,21 @@ head(get_population(geo_type = c(&quot;blk&quot;), group_by = c(&quot;geo_id&quo
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 </code></pre>
-
 <p><strong>King County AIAN (not Hispanic)</strong></p>
-
-<pre><code class="r">get_population(races = &quot;aian&quot;, race_type = &quot;race_eth&quot;)[]
+<pre><code class="language-r">get_population(races = &quot;aian&quot;, race_type = &quot;race_eth&quot;)[]
 </code></pre>
-
 <pre><code>##      pop geo_type      geo_id year   age       gender race_eth
 ## 1: 11936       kc King County 2022 0-100 Female, Male     AIAN
 </code></pre>
-
 <p><strong>King County AIAN (regardless of Hispanic ethnicity)</strong></p>
-
-<pre><code class="r">get_population(races = &quot;aian&quot;, race_type = &quot;race&quot;, group_by = &#39;race&#39;)[]
+<pre><code class="language-r">get_population(races = &quot;aian&quot;, race_type = &quot;race&quot;, group_by = 'race')[]
 </code></pre>
-
 <pre><code>##      pop geo_type      geo_id year   age       gender race
 ## 1: 26637       kc King County 2022 0-100 Female, Male AIAN
 </code></pre>
-
 <p><strong>King County stratified by Hispanic as race</strong></p>
-
-<pre><code class="r">get_population(race_type = &quot;race_eth&quot;, group_by = &quot;race_eth&quot;)[]
+<pre><code class="language-r">get_population(race_type = &quot;race_eth&quot;, group_by = &quot;race_eth&quot;)[]
 </code></pre>
-
 <pre><code>##        pop geo_type      geo_id year   age       gender      race_eth
 ## 1: 1229997       kc King County 2022 0-100 Female, Male         White
 ## 2:   11936       kc King County 2022 0-100 Female, Male          AIAN
@@ -573,12 +462,9 @@ head(get_population(geo_type = c(&quot;blk&quot;), group_by = c(&quot;geo_id&quo
 ## 6:  259077       kc King County 2022 0-100 Female, Male      Hispanic
 ## 7:  487762       kc King County 2022 0-100 Female, Male         Asian
 </code></pre>
-
 <p><strong>King County stratified by race (Hispanic as ethnicity)</strong></p>
-
-<pre><code class="r">get_population(race_type = &quot;race&quot;, group_by = &quot;race&quot;)[]
+<pre><code class="language-r">get_population(race_type = &quot;race&quot;, group_by = &quot;race&quot;)[]
 </code></pre>
-
 <pre><code>##        pop geo_type      geo_id year   age       gender          race
 ## 1: 1383396       kc King County 2022 0-100 Female, Male         White
 ## 2:   26637       kc King County 2022 0-100 Female, Male          AIAN
@@ -587,58 +473,75 @@ head(get_population(geo_type = c(&quot;blk&quot;), group_by = c(&quot;geo_id&quo
 ## 5:   22518       kc King County 2022 0-100 Female, Male          NHPI
 ## 6:  494636       kc King County 2022 0-100 Female, Male         Asian
 </code></pre>
+<h3 id="complex-arguments">Complex arguments</h3>
+<p><strong>King County regions stratified by Hispanic/Non-Hispanic</strong></p>
+<pre><code class="language-r"># pull in data stratified by race/eth and region
+reg_hisp_nonhisp &lt;- get_population(geo_type = 'region', group_by = c('race_eth'))
 
-<h3>Complex arguments</h3>
+# explicitly label all non-Hispanic individuals as 'Non-Hispanic'
+reg_hisp_nonhisp[race_eth != 'Hispanic', race_eth := 'Non-Hispanic']
 
+# aggregate the population by region and race_eth
+reg_hisp_nonhisp &lt;- reg_hisp_nonhisp[, .(pop = sum(pop)), .(region = geo_id, race_eth)]
+print(reg_hisp_nonhisp)
+</code></pre>
+<pre><code>##     region     race_eth       pop
+## 1:   South Non-Hispanic 697731.77
+## 2: Seattle Non-Hispanic 676204.23
+## 3:    East Non-Hispanic 558536.48
+## 4:   North Non-Hispanic 126150.56
+## 5:   North     Hispanic  14505.45
+## 6: Seattle     Hispanic  82759.69
+## 7:   South     Hispanic 116166.99
+## 8:    East     Hispanic  45644.87
+</code></pre>
 <p><strong>King County regions stratified by year and gender</strong></p>
-
-<pre><code class="r">get_population(geo_type = &quot;region&quot;, 
+<pre><code class="language-r">get_population(geo_type = &quot;region&quot;, 
                years = 2017:2019, 
                group_by = c(&quot;geo_id&quot;, &quot;years&quot;, &quot;genders&quot;))[]
 </code></pre>
-
 <pre><code>##           pop geo_type  geo_id year   age gender
-##  1: 365622.39   region Seattle 2019 0-100   Male
-##  2:  67314.55   region   North 2019 0-100   Male
+##  1:  67314.55   region   North 2019 0-100   Male
+##  2: 365622.39   region Seattle 2019 0-100   Male
 ##  3: 344547.37   region Seattle 2017 0-100 Female
 ##  4: 274982.55   region    East 2017 0-100 Female
 ##  5: 357861.08   region Seattle 2018 0-100   Male
-##  6:  68811.32   region   North 2019 0-100 Female
+##  6: 392519.12   region   South 2017 0-100   Male
 ##  7: 399115.18   region   South 2018 0-100   Male
-##  8: 392519.12   region   South 2017 0-100   Male
+##  8:  68811.32   region   North 2019 0-100 Female
 ##  9:  65876.75   region   North 2018 0-100   Male
 ## 10: 282024.51   region    East 2018 0-100   Male
 ## 11: 389861.40   region   South 2017 0-100 Female
 ## 12: 350226.78   region Seattle 2017 0-100   Male
 ## 13: 279199.69   region    East 2018 0-100 Female
-## 14:  64750.70   region   North 2017 0-100   Male
-## 15: 395539.42   region   South 2018 0-100 Female
-## 16: 400099.14   region   South 2019 0-100 Female
+## 14: 400099.14   region   South 2019 0-100 Female
+## 15:  64750.70   region   North 2017 0-100   Male
+## 16: 395539.42   region   South 2018 0-100 Female
 ## 17: 351051.04   region Seattle 2018 0-100 Female
 ## 18:  67395.89   region   North 2018 0-100 Female
 ## 19: 357591.89   region Seattle 2019 0-100 Female
 ## 20: 404573.25   region   South 2019 0-100   Male
 ## 21: 286928.22   region    East 2019 0-100   Male
 ## 22:  66448.40   region   North 2017 0-100 Female
-## 23: 283640.64   region    East 2019 0-100 Female
-## 24: 277288.06   region    East 2017 0-100   Male
+## 23: 277288.06   region    East 2017 0-100   Male
+## 24: 283640.64   region    East 2019 0-100 Female
 ##           pop geo_type  geo_id year   age gender
 ##                                                     race_eth geo_id_code
-##  1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
-##  2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
+##  1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
+##  2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
 ##  3: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
 ##  4: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
 ##  5: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
-##  6: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
+##  6: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
 ##  7: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
-##  8: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
+##  8: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
 ##  9: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
 ## 10: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
 ## 11: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
 ## 12: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
 ## 13: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
-## 14: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
-## 15: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
+## 14: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
+## 15: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
 ## 16: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
 ## 17: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
 ## 18: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
@@ -650,10 +553,8 @@ head(get_population(geo_type = c(&quot;blk&quot;), group_by = c(&quot;geo_id&quo
 ## 24: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
 ##                                                     race_eth geo_id_code
 </code></pre>
-
-<p><strong>King County regions stratified by year &ndash; Female Hispanic and Asian-NH residents aged 16-25 only &ndash; not rounded</strong></p>
-
-<pre><code class="r">get_population(ages = 16:25, 
+<p><strong>King County regions stratified by year – Female Hispanic and Asian-NH residents aged 16-25 only – not rounded</strong></p>
+<pre><code class="language-r">get_population(ages = 16:25, 
                genders = &quot;F&quot;, 
                years = 2017:2019, 
                races = c(&quot;hispanic&quot;, &quot;asian&quot;), 
@@ -662,10 +563,9 @@ head(get_population(geo_type = c(&quot;blk&quot;), group_by = c(&quot;geo_id&quo
                group_by = c(&quot;geo_id&quot;, &quot;years&quot;, &quot;race_eth&quot;), 
                round = F)[]
 </code></pre>
-
 <pre><code>##            pop geo_type  geo_id year   age gender race_eth geo_id_code
-##  1:  2823.1282   region    East 2018 16-25 Female Hispanic           1
-##  2:  2885.5149   region    East 2019 16-25 Female Hispanic           1
+##  1:  2885.5149   region    East 2019 16-25 Female Hispanic           1
+##  2:  2823.1282   region    East 2018 16-25 Female Hispanic           1
 ##  3:  7538.3639   region   South 2017 16-25 Female    Asian           4
 ##  4:  1172.9659   region   North 2017 16-25 Female    Asian           2
 ##  5:  5648.5303   region    East 2017 16-25 Female    Asian           1
@@ -690,7 +590,10 @@ head(get_population(geo_type = c(&quot;blk&quot;), group_by = c(&quot;geo_id&quo
 ## 24:   956.3879   region   North 2017 16-25 Female Hispanic           2
 ##            pop geo_type  geo_id year   age gender race_eth geo_id_code
 </code></pre>
-
+</div>
+<div class="include-after">
+</div>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>
 </body>
-
 </html>

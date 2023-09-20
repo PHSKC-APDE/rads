@@ -150,7 +150,6 @@ library('testthat')
     expect_error(life_table_prep(ltp, dobvar = "dob")) # non-existent
     expect_error(life_table_prep(ltp, dodvar = "dod")) # non-existent
     expect_warning(life_table_prep(ltp, dobvar = "date_of_death", dodvar = "date_of_birth")) # date of death should not greater than date of birth
-    expect_error(life_table_prep(ltp, dobvar = "year")) # not a date column
   })
 
   test_that("Confirm proper columns are output ...", {

@@ -70,6 +70,17 @@ get_population(race_type = "race_eth", group_by = "race_eth")[]
 get_population(race_type = "race", group_by = "race")[]
 
 ## ---- warning = FALSE, message = FALSE----------------------------------------
+# pull in data stratified by race/eth and region
+reg_hisp_nonhisp <- get_population(geo_type = 'region', group_by = c('race_eth'))
+
+# explicitly label all non-Hispanic individuals as 'Non-Hispanic'
+reg_hisp_nonhisp[race_eth != 'Hispanic', race_eth := 'Non-Hispanic']
+
+# aggregate the population by region and race_eth
+reg_hisp_nonhisp <- reg_hisp_nonhisp[, .(pop = sum(pop)), .(region = geo_id, race_eth)]
+print(reg_hisp_nonhisp)
+
+## ---- warning = FALSE, message = FALSE----------------------------------------
 get_population(geo_type = "region", 
                years = 2017:2019, 
                group_by = c("geo_id", "years", "genders"))[]

@@ -25,29 +25,29 @@ This vignette will provide some examples to introduce the `calc()` function by w
 
 Arguments are the values that we send to a function when it is called. The standard arguments for `calc()` are:
 
-1\) `ph.data` \<- the name of the data.table/data.frame or survey object that you want to analyze.
+1)  `ph.data` \<- the name of the data.table/data.frame or survey object that you want to analyze.
 
-2\) `what` \<- a character vector of the variable(s) for which you want to calculate the metrics. E.g., `what = c("uninsured")`
+2)  `what` \<- a character vector of the variable(s) for which you want to calculate the metrics. E.g., `what = c("uninsured")`
 
-3\) `where` \<- think of this as a SQL `WHERE` clause, i.e., a filtering or subsetting of data. E.g., `ages %in% c(0:17) & gender == "Female"`
+3)  `where` \<- think of this as a SQL `WHERE` clause, i.e., a filtering or subsetting of data. E.g., `ages %in% c(0:17) & gender == "Female"`
 
-4\) `by` \<- a character vector of the variables that you want to computer the `what` by, i.e., the cross-tab variable(s). E.g., `by = c("gender")` would stratify results by gender
+4)  `by` \<- a character vector of the variables that you want to computer the `what` by, i.e., the cross-tab variable(s). E.g., `by = c("gender")` would stratify results by gender
 
-5\) `metrics` \<- a character vector of the metrics that you want returned. E.g., `metrics = c("mean", "rse")`. You can see a complete list of available metrics by typing `metrics()` and get detailed descriptions of what each metric means by typing `?metrics()`.
+5)  `metrics` \<- a character vector of the metrics that you want returned. E.g., `metrics = c("mean", "rse")`. You can see a complete list of available metrics by typing `metrics()` and get detailed descriptions of what each metric means by typing `?metrics()`.
 
-6\) `per` \<- an integer, which is the denominator when `rate` is selected as a metric. Metrics will be multiplied by this value. E.g., `per = 1000`. **NOTE** this is just a scalar. At present this does not calculate a true rate (i.e., the relevant population denominator is not used).
+6)  `per` \<- an integer, which is the denominator when `rate` is selected as a metric. Metrics will be multiplied by this value. E.g., `per = 1000`. **NOTE** this is just a scalar. At present this does not calculate a true rate (i.e., the relevant population denominator is not used).
 
-7\) `win` \<- an integer, which is the number of consecutive units of time (e.g., years, months, etc.) over which the metrics will be calculated, i.e., the 'window' for a rolling average, sum, etc. E.g. `win = 5` will perform calculations over every 5 time unit window.
+7)  `win` \<- an integer, which is the number of consecutive units of time (e.g., years, months, etc.) over which the metrics will be calculated, i.e., the 'window' for a rolling average, sum, etc. E.g. `win = 5` will perform calculations over every 5 time unit window.
 
-8\) `time_var` \<- a character, which is the name of the time variable in the dataset. Used in combination with the `win` argument to generate time windowed calculations.
+8)  `time_var` \<- a character, which is the name of the time variable in the dataset. Used in combination with the `win` argument to generate time windowed calculations.
 
-9\) `fancy_time` \<- a logical (i.e., `T` or `F`) flag. If TRUE, a record of all the years going into the data is returned. If FALSE, just a simple range (where certain years within the range might not be represented in your data).
+9)  `fancy_time` \<- a logical (i.e., `T` or `F`) flag. If TRUE, a record of all the years going into the data is returned. If FALSE, just a simple range (where certain years within the range might not be represented in your data).
 
-10\) `proportion` \<- a logical (i.e., `T` or `F`) flag determining whether the metrics should be calculated as a proportion. Currently only relevant for survey data. The default is FALSE.
+10) `proportion` \<- a logical (i.e., `T` or `F`) flag determining whether the metrics should be calculated as a proportion. Currently only relevant for survey data. The default is FALSE.
 
-11\) `ci` \<- a numeric value between 0 & 1 for the confidence level returned in the estimates. E.g., 0.95 == 95% confidence interval
+11) `ci` \<- a numeric value between 0 & 1 for the confidence level returned in the estimates. E.g., 0.95 == 95% confidence interval
 
-12\) `verbose` \<- a logical used to toggle on/off printed warnings
+12) `verbose` \<- a logical used to toggle on/off printed warnings
 
 There is no need to specify all of the arguments listed above. As you can see in the following example, the `calc` function simply needs a specified dataset (i.e., `ph.data`) and at least one `what` variable to return an intelligible result.
 
@@ -178,8 +178,9 @@ Before using `calc()` with survey data, the user must survey set the data while 
 
 ```{r, warning=FALSE, message=FALSE}
 library(survey)
+library(data.table)
 
-load("//dphcifs/APDE-CDIP/ACS/PUMS_data/2019_1_year/prepped_R_files/2019_1_year_data.RData")
+load("//dphcifs/APDE-CDIP/ACS/PUMS_data/2021_1_year/prepped_R_files/2021_1_year_data.RData")
 
   pums <-     
     survey::svrepdesign(
@@ -201,32 +202,56 @@ load("//dphcifs/APDE-CDIP/ACS/PUMS_data/2019_1_year/prepped_R_files/2019_1_year_
 
 Once the data has been set as a survey, we can use the `calc()` function the same way that we used it for vital statistics (birth) data.
 
-**Quick sanity check before proceeding.**
+**Let's get on the same page re: the meaning of the columns from `calc()`**
 
-To confirm that the data has been survey set properly, it would be wise to check if the survey weighted population is more or less what you would expect.
-
-When `calc` analyzes survey data, the `numerator` is the number of observations in that category and the `total` is the survey weighted value for those observations. We know that the approximate 2019 populations of WA State, King County, and Seattle were \~7.6 million, \~2.2 million, and 750,000, respectively. How do the following 2019 ACS estimates (i.e., `total` values) compare?
+First, create a simple tabulation of the population of Seattle after sub-setting PUMS to King County.
 
 ```{r, warning=FALSE}
-pums[, constant :=1]
+test1 <- calc(ph.data = pums, 
+             what = "chi_geo_seattle", 
+             metrics = c('mean', 'numerator', 'denominator', 'obs', 'total'), 
+             where = chi_geo_kc == 1)
+print(test1)
+```
 
+-   `mean`: The proportion of the total population (i.e., King County) that lives in Seattle
+-   `total`: The survey weighted population of King County
+-   `numerator`: The number of rows with people living in Seattle, compare to `nrow(pums[chi_geo_seattle == 1])`
+-   `denominator`: The number of rows in the the dataset where the 'what' variable can be assessed because it is not missing, compare to `nrow(pums[!is.na(chi_geo_seattle)])`
+-   `obs`: The number of rows in the dataset after filtering by the 'where' argument.
+
+To highlight the difference between `denominator` and `obs`, in this next example we introduce 100 missing values to our 'what' variable (chi_geo_seattle), thereby lowering the denominator by 100 but leaving the obs the same as above.
+
+```{r, warning=FALSE}
+pums2 <- copy(pums)
+pums2 <- pums2[chi_geo_seattle == 1, chi_geo_seattle := ifelse(rowid(chi_geo_seattle) <= 100, NA, chi_geo_seattle)]
+test2 <- calc(ph.data = pums2, 
+             what = "chi_geo_seattle", 
+             metrics = c('mean', 'numerator', 'denominator', 'obs', 'total'), 
+             where = chi_geo_kc == 1)
+print(test2)
+```
+
+You can use this `total` value to perform sanity checks to make sure that your survey weighted population is more or less what you would expect.
+
+We know that the approximate 2021 populations of WA State, King County, and Seattle were \~7.7 million, \~2.3 million, and 750,000, respectively. How do the following 2021 ACS estimates (i.e., `total` values) compare?
+
+```{r, warning=FALSE}
 # WA State
 calc(ph.data = pums, 
-     what = c("constant"), 
+     what = c('chi_geo_wastate'), 
      metrics = c("numerator", "total"), 
      proportion = F)[]
 
 # King County
 calc(ph.data = pums, 
-     what = c("constant"), 
-     chi_geo_kc ==1,
+     what = c("chi_geo_kc"), 
      metrics = c("numerator", "total"), 
      proportion = F)[]
 
 # Seattle
 calc(ph.data = pums, 
-     what = c("constant"), 
-     chi_geo_seattle ==1,
+     what = c("chi_geo_seattle"), 
      metrics = c("numerator", "total"), 
      proportion = F)[]
 ```
@@ -247,7 +272,7 @@ calc(ph.data = pums,
 
 ```{r, warning=FALSE}
 calc(ph.data = pums, 
-     what = c("agechna"), 
+     what = c("age6"), 
      metrics = c("mean", "rse", "obs", "numerator", "denominator"), 
      proportion = F, 
      by = "disability")[]

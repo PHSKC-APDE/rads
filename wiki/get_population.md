@@ -13,9 +13,9 @@ vignette: |
 
 ## Introduction
 
-This vignette will provide some examples of ways to pull population data into R from the Azure cloud (thank you Jeremy!). 
+This vignette will provide some examples of ways to pull population data into R from the Azure cloud (thank you Jeremy!).
 
-As of 02/2023, there are two sets of population estimates. 
+As of 02/2023, there are two sets of population estimates.
 
 The first, [frankenpop/Population Interim Estimates (PIE)](https://github.com/PHSKC-APDE/frankenpop) were created by APDE. They are based on 2020 geographies for 2000 - 2022+.
 
@@ -37,36 +37,36 @@ args(get_population)
 ##     "m"), races = c("aian", "asian", "black", "hispanic", "multiple", 
 ##     "nhpi", "white"), race_type = c("race_eth"), geo_type = c("kc"), 
 ##     group_by = NULL, round = FALSE, mykey = "hhsaw", census_vintage = 2020, 
-##     geo_vintage = 2010, schema = "ref", table_prefix = "pop_geo_", 
+##     geo_vintage = 2020, schema = "ref", table_prefix = "pop_geo_", 
 ##     return_query = FALSE) 
 ## NULL
 ```
 
 The standard arguments for get_population() are:
 
-1) `kingco` \<\< Logical vector of length 1. Identifies whether you want population estimates limited to King County. Only impacts results for geo_type in c('blk', blkgrp', 'lgd', 'scd', 'tract', 'zip'). Default == TRUE.
+1)  `kingco` \<\< Logical vector of length 1. Identifies whether you want population estimates limited to King County. Only impacts results for geo_type in c('blk', blkgrp', 'lgd', 'scd', 'tract', 'zip'). Default == TRUE.
 
-2) `years` \<\< Numeric vector. Identifies which year(s) of data should be pulled. Default == c(2020).
+2)  `years` \<\< Numeric vector. Identifies which year(s) of data should be pulled. Default == 2022.
 
-3) `ages` \<\< Numeric vector. Identifies which age(s) should be pulled. Default == c(0:100), with 100 being the top coded value for 100:120.
+3)  `ages` \<\< Numeric vector. Identifies which age(s) should be pulled. Default == c(0:100), with 100 being the top coded value for 100:120.
 
-4) `genders` \<\< Character vector of length 1 or 2. Identifies gender(s) should be pulled. The acceptable values are 'f', 'female', 'm', and 'male'. Default == c('f', 'm').
+4)  `genders` \<\< Character vector of length 1 or 2. Identifies gender(s) should be pulled. The acceptable values are 'f', 'female', 'm', and 'male'. Default == c('f', 'm').
 
-5) `races` \<\< Character vector of length 1 to 7. Identifies which race(s) or ethnicity should be pulled. The acceptable values are "aian", "asian", "black", "hispanic", "multiple", "nhpi", and "white". Default == all the possible values.
+5)  `races` \<\< Character vector of length 1 to 7. Identifies which race(s) or ethnicity should be pulled. The acceptable values are "aian", "asian", "black", "hispanic", "multiple", "nhpi", and "white". Default == all the possible values.
 
-6) `race_type` \<\< Character vector of length 1. Identifies whether to pull race data with Hispanic as an ethnicity ("race") or Hispanic as a race ("race_eth"). Default == c("race_eth").
+6)  `race_type` \<\< Character vector of length 1. Identifies whether to pull race data with Hispanic as an ethnicity ("race") or Hispanic as a race ("race_eth"). Default == c("race_eth").
 
-7) `geo_type` \<\< Character vector of length 1. Identifies the geographic level for which you want population estimates. The acceptable values are: 'blk', 'blkgrp', 'county', 'hra', 'kc', 'lgd' (WA State legislative districts), 'region', 'seattle', 'scd' (school districts), 'tract', and 'zip'. Default == "kc".
+7)  `geo_type` \<\< Character vector of length 1. Identifies the geographic level for which you want population estimates. The acceptable values are: 'blk', 'blkgrp', 'county', 'hra', 'kc', 'lgd' (WA State legislative districts), 'region', 'seattle', 'scd' (school districts), 'tract', and 'zip'. Default == "kc".
 
-8) `group_by` \<\< Character vector of length 0 to 7. Identifies how you would like the data 'grouped' (i.e., stratified). Valid options are limited to: "years", "ages", "genders", "race", "race_eth", "fips_co", and "geo_id". Default == NULL, i.e., estimates are only grouped / aggregated by geography.
+8)  `group_by` \<\< Character vector of length 0 to 7. Identifies how you would like the data 'grouped' (i.e., stratified). Valid options are limited to: "years", "ages", "genders", "race", "race_eth", "fips_co", and "geo_id". Default == NULL, i.e., estimates are only grouped / aggregated by geography (e.g. geo_id is always included).
 
-9) `round` \<\< Logical vector of length 1. Identifies whether or not population estimates should be returned as whole numbers. Default == TRUE.
+9)  `round` \<\< Logical vector of length 1. Identifies whether or not population estimates should be returned as whole numbers. Default == FALSE.
 
-10) `mykey` \<\< a character vector with the name of the `keyring::` key that provides access to the Health and Human Services Analytic Workspace (HHSAW). If you have never set your keyring before and or do not know what this is refering to, just type `keyring::key_set('hhsaw', username = 'ALastname@kingcounty.gov')` into your R console (making sure to replace the username). The default is 'hhsaw'.
+10) `mykey` \<\< a character vector with the name of the `keyring::` key that provides access to the Health and Human Services Analytic Workspace (HHSAW). If you have never set your keyring before and or do not know what this is referring to, just type `keyring::key_set('hhsaw', username = 'ALastname@kingcounty.gov')` into your R console (making sure to replace the username). The default is 'hhsaw'.
 
-11) census_vintage \<\< Either 2010 or 2020. Specifies the anchor census of the desired estimates. 
+11) census_vintage \<\< Either 2010 or 2020. Specifies the anchor census of the desired estimates. Default is 2020
 
-12) geo_vintage \<\< Either 2010 or 2020. Specifies the anchor census for geographies. For example, 2020 will return geographies based on 2020 blocks.
+12) geo_vintage \<\< Either 2010 or 2020. Specifies the anchor census for geographies. For example, 2020 will return geographies based on 2020 blocks. Default is 2020
 
 13) schema \<\< Unless you are a power user, don't mess with this
 
@@ -131,10 +131,10 @@ get_population(geo_type = c("region"),
 
 ```
 ##       pop geo_type  geo_id year   age       gender                                                 race_eth geo_id_code
-## 1: 609680   region    East 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
-## 2: 808130   region   South 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
-## 3: 759393   region Seattle 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
-## 4: 140498   region   North 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
+## 1: 604181   region    East 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
+## 2: 813899   region   South 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
+## 3: 758964   region Seattle 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
+## 4: 140656   region   North 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
 ```
 
 **King County Regions with `round=FALSE`**
@@ -149,10 +149,10 @@ rads::get_population(geo_type = 'region',
 
 ```
 ##         pop geo_type  geo_id year   age       gender                                                 race_eth geo_id_code
-## 1: 609679.7   region    East 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
-## 2: 808129.6   region   South 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
-## 3: 759392.8   region Seattle 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
-## 4: 140497.9   region   North 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
+## 1: 604181.4   region    East 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
+## 2: 813898.8   region   South 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
+## 3: 758963.9   region Seattle 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
+## 4: 140656.0   region   North 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
 ```
 
 **King County HRAs**
@@ -163,13 +163,20 @@ head(get_population(geo_type = c("hra"), group_by = c("geo_id"))[])
 ```
 
 ```
-##         pop geo_type         geo_id year   age       gender                                                 race_eth geo_id_code
-## 1: 35903.43      hra    Renton-East 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White       20000
-## 2: 58272.26      hra   Renton-South 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White       20200
-## 3: 26382.31      hra       Fairwood 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White       11000
-## 4: 75916.72      hra       Downtown 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White        2500
-## 5: 11075.33      hra  Vashon Island 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White       25000
-## 6: 36069.47      hra Bellevue-South 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White        4200
+##         pop geo_type                                             geo_id year   age       gender
+## 1: 21183.65      hra                                          Covington 2022 0-100 Female, Male
+## 2: 63422.03      hra                             Seattle - West Seattle 2022 0-100 Female, Male
+## 3: 44389.52      hra                                        Kent - East 2022 0-100 Female, Male
+## 4: 33110.31      hra                                        Kent - West 2022 0-100 Female, Male
+## 5: 48050.80      hra Enumclaw, Black Diamond, and Southeast King County 2022 0-100 Female, Male
+## 6: 32325.58      hra                                             Seatac 2022 0-100 Female, Male
+##                                                    race_eth geo_id_code
+## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White          11
+## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White          32
+## 3: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White          14
+## 4: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White          13
+## 5: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
+## 6: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White          18
 ```
 
 **King County Zip codes**
@@ -180,13 +187,13 @@ head(get_population(geo_type = c("zip"), group_by = c("geo_id"))[])
 ```
 
 ```
-##           pop geo_type geo_id year   age       gender                                                 race_eth
-## 1: 20781.8687      zip  98177 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 2: 54830.4750      zip  98115 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 3: 49713.0127      zip  98042 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 4: 13399.5357      zip  98077 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 5: 16164.6587      zip  98045 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 6:   295.7078      zip  98288 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+##         pop geo_type geo_id year   age       gender                                                 race_eth
+## 1: 54830.36      zip  98115 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 2: 20783.07      zip  98177 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 3: 49718.95      zip  98042 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 4: 13398.45      zip  98077 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 5: 16440.64      zip  98065 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 6: 16165.71      zip  98045 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ```
 
 **King County Census Tracts**
@@ -197,13 +204,13 @@ head(get_population(geo_type = c("tract"), group_by = c("geo_id"), ages = 18, ce
 ```
 
 ```
-##         pop geo_type      geo_id year age       gender                                                 race_eth
-## 1: 92.52864    tract 53033030005 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 2: 44.59747    tract 53033004301 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 3: 56.32746    tract 53033027600 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 4: 74.62527    tract 53033028500 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 5: 12.55822    tract 53033008003 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 6: 47.36526    tract 53033023603 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+##          pop geo_type      geo_id year age       gender                                                 race_eth
+## 1:  76.26101    tract 53033023300 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 2: 119.88795    tract 53033028802 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 3:  42.16241    tract 53033001600 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 4:  30.30190    tract 53033002100 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 5:  77.72998    tract 53033011700 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 6: 125.31436    tract 53033031207 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ```
 
 **King County Census Block Groups**
@@ -214,13 +221,13 @@ head(get_population(geo_type = c("blkgrp"), group_by = c("geo_id"), ages = 18,ce
 ```
 
 ```
-##         pop geo_type       geo_id year age       gender                                                 race_eth
-## 1: 11.30792   blkgrp 530330222041 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 2: 22.45077   blkgrp 530330308013 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 3: 18.96018   blkgrp 530330117001 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 4: 10.75898   blkgrp 530330231001 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 5: 20.78780   blkgrp 530330217011 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 6: 17.38798   blkgrp 530330243013 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+##          pop geo_type       geo_id year age       gender                                                 race_eth
+## 1: 28.158430   blkgrp 530330323113 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 2: 16.352810   blkgrp 530330255003 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 3: 16.130074   blkgrp 530330236012 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 4: 12.283464   blkgrp 530330250073 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 5:  7.502539   blkgrp 530330323303 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 6: 14.085645   blkgrp 530330110012 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ```
 
 **King County Census Blocks**
@@ -233,12 +240,12 @@ head(get_population(geo_type = c("blk"), group_by = c("geo_id"), ages = 18, cens
 
 ```
 ##           pop geo_type          geo_id year age       gender                                                 race_eth
-## 1: 0.06800519      blk 530330069003029 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 2: 4.30892860      blk 530330323244000 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 3: 0.87651670      blk 530330226063003 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 4: 0.15797633      blk 530330324011004 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 5: 0.02169579      blk 530330059023002 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 6: 0.08496733      blk 530330319062019 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 1:  3.1766492      blk 530330315022006 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 2:  1.7691562      blk 530330316032001 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 3:  0.6850862      blk 530330327053020 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 4: 21.5900791      blk 530330294083001 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 5:  1.1119714      blk 530330317081012 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 6:  3.4370966      blk 530330298041003 2022  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ```
 
 ### Other simple arguments
@@ -252,7 +259,7 @@ get_population(years = 2017:2019)[]
 
 ```
 ##        pop geo_type      geo_id      year   age       gender                                                 race_eth
-## 1: 6590714       kc King County 2017-2019 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 1: 6593269       kc King County 2017-2019 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ```
 
 **King County multiple years stratified**
@@ -265,9 +272,9 @@ get_population(years = 2017:2019,
 
 ```
 ##        pop geo_type      geo_id year   age       gender                                                 race_eth
-## 1: 2159597       kc King County 2017 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 2: 2234092       kc King County 2019 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 3: 2197025       kc King County 2018 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 1: 2160624       kc King County 2017 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 2: 2234581       kc King County 2019 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 3: 2198064       kc King County 2018 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ```
 
 **King County multiple ages combined**
@@ -279,7 +286,7 @@ get_population(ages = 65:70)[]
 
 ```
 ##         pop geo_type      geo_id year   age       gender                                                 race_eth
-## 1: 127610.9       kc King County 2022 65-70 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 1: 127562.7       kc King County 2022 65-70 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ```
 
 **King County multiple ages stratified**
@@ -291,12 +298,12 @@ get_population(ages = 65:70, group_by = "ages")[]
 
 ```
 ##         pop geo_type      geo_id year age       gender                                                 race_eth
-## 1: 19089.56       kc King County 2022  68 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 2: 23812.15       kc King County 2022  66 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 3: 25375.36       kc King County 2022  65 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 4: 17479.23       kc King County 2022  69 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 5: 19311.89       kc King County 2022  70 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 6: 22542.67       kc King County 2022  67 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 1: 19021.57       kc King County 2022  68 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 2: 23769.82       kc King County 2022  66 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 3: 25441.42       kc King County 2022  65 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 4: 17518.13       kc King County 2022  69 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 5: 19263.77       kc King County 2022  70 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 6: 22548.02       kc King County 2022  67 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ```
 
 **King County female only**
@@ -307,8 +314,8 @@ get_population(genders = "F")[]
 ```
 
 ```
-##        pop geo_type      geo_id year   age       gender                                                 race_eth
-## 1: 1149276       kc King County 2022 0-100 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+##        pop geo_type      geo_id year   age gender                                                 race_eth
+## 1: 1149276       kc King County 2022 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ```
 
 **King County gender stratified**
@@ -320,8 +327,8 @@ get_population(group_by = "genders")[]
 
 ```
 ##        pop geo_type      geo_id year   age gender                                                 race_eth
-## 1: 1168424       kc King County 2022 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 2: 1149276       kc King County 2022 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 1: 1168424       kc King County 2022 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 2: 1149276       kc King County 2022 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ```
 
 **King County AIAN (not Hispanic)**
@@ -344,8 +351,8 @@ get_population(races = "aian", race_type = "race", group_by = 'race')[]
 ```
 
 ```
-##         pop geo_type      geo_id year   age       gender race
-## 1: 44829.39       kc King County 2022 0-100 Female, Male AIAN
+##      pop geo_type      geo_id year   age       gender race
+## 1: 26637       kc King County 2022 0-100 Female, Male AIAN
 ```
 
 **King County stratified by Hispanic as race**
@@ -374,19 +381,44 @@ get_population(race_type = "race", group_by = "race")[]
 ```
 
 ```
-##           pop geo_type      geo_id year   age       gender          race
-## 1: 1396462.08       kc King County 2022 0-100 Female, Male         White
-## 2:   44829.39       kc King County 2022 0-100 Female, Male          AIAN
-## 3:  181480.94       kc King County 2022 0-100 Female, Male Multiple race
-## 4:  172776.59       kc King County 2022 0-100 Female, Male         Black
-## 5:   23542.04       kc King County 2022 0-100 Female, Male          NHPI
-## 6:  498609.00       kc King County 2022 0-100 Female, Male         Asian
+##        pop geo_type      geo_id year   age       gender          race
+## 1: 1383396       kc King County 2022 0-100 Female, Male         White
+## 2:   26637       kc King County 2022 0-100 Female, Male          AIAN
+## 3:  221561       kc King County 2022 0-100 Female, Male Multiple race
+## 4:  168952       kc King County 2022 0-100 Female, Male         Black
+## 5:   22518       kc King County 2022 0-100 Female, Male          NHPI
+## 6:  494636       kc King County 2022 0-100 Female, Male         Asian
 ```
 
 ### Complex arguments
 
-**King County regions stratified by year and gender**
+**King County regions stratified by Hispanic/Non-Hispanic**
 
+```r
+# pull in data stratified by race/eth and region
+reg_hisp_nonhisp <- get_population(geo_type = 'region', group_by = c('race_eth'))
+
+# explicitly label all non-Hispanic individuals as 'Non-Hispanic'
+reg_hisp_nonhisp[race_eth != 'Hispanic', race_eth := 'Non-Hispanic']
+
+# aggregate the population by region and race_eth
+reg_hisp_nonhisp <- reg_hisp_nonhisp[, .(pop = sum(pop)), .(region = geo_id, race_eth)]
+print(reg_hisp_nonhisp)
+```
+
+```
+##     region     race_eth       pop
+## 1:   South Non-Hispanic 697731.77
+## 2: Seattle Non-Hispanic 676204.23
+## 3:    East Non-Hispanic 558536.48
+## 4:   North Non-Hispanic 126150.56
+## 5:   North     Hispanic  14505.45
+## 6: Seattle     Hispanic  82759.69
+## 7:   South     Hispanic 116166.99
+## 8:    East     Hispanic  45644.87
+```
+
+**King County regions stratified by year and gender**
 
 ```r
 get_population(geo_type = "region", 
@@ -396,34 +428,35 @@ get_population(geo_type = "region",
 
 ```
 ##           pop geo_type  geo_id year   age gender                                                 race_eth geo_id_code
-##  1: 364571.19   region Seattle 2019 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
-##  2:  66887.49   region   North 2019 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
-##  3: 343862.72   region Seattle 2017 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
-##  4: 277311.28   region    East 2017 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
-##  5: 356830.04   region Seattle 2018 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
-##  6: 397742.98   region   South 2018 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
-##  7: 390957.46   region   South 2017 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
-##  8:  68564.12   region   North 2019 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
-##  9:  65460.59   region   North 2018 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
-## 10: 284277.76   region    East 2018 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
-## 11: 387960.01   region   South 2017 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
-## 12: 281510.87   region    East 2018 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
-## 13: 349335.78   region Seattle 2017 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
-## 14: 398585.93   region   South 2019 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
-## 15:  64375.15   region   North 2017 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
-## 16: 393787.33   region   South 2018 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
-## 17:  67145.06   region   North 2018 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
-## 18: 350270.60   region Seattle 2018 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
-## 19: 356805.39   region Seattle 2019 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
-## 20: 403511.62   region   South 2019 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
-## 21: 289201.81   region    East 2019 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
-## 22:  66206.60   region   North 2017 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
-## 23: 285964.66   region    East 2019 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
-## 24: 279587.96   region    East 2017 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
+##  1:  67314.55   region   North 2019 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
+##  2: 365622.39   region Seattle 2019 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
+##  3: 344547.37   region Seattle 2017 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
+##  4: 274982.55   region    East 2017 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
+##  5: 357861.08   region Seattle 2018 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
+##  6: 392519.12   region   South 2017 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
+##  7: 399115.18   region   South 2018 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
+##  8:  68811.32   region   North 2019 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
+##  9:  65876.75   region   North 2018 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
+## 10: 282024.51   region    East 2018 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
+## 11: 389861.40   region   South 2017 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
+## 12: 350226.78   region Seattle 2017 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
+## 13: 279199.69   region    East 2018 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
+## 14: 400099.14   region   South 2019 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
+## 15:  64750.70   region   North 2017 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
+## 16: 395539.42   region   South 2018 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
+## 17: 351051.04   region Seattle 2018 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
+## 18:  67395.89   region   North 2018 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
+## 19: 357591.89   region Seattle 2019 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
+## 20: 404573.25   region   South 2019 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           4
+## 21: 286928.22   region    East 2019 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
+## 22:  66448.40   region   North 2017 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
+## 23: 277288.06   region    East 2017 0-100   Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
+## 24: 283640.64   region    East 2019 0-100 Female AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
 ##           pop geo_type  geo_id year   age gender                                                 race_eth geo_id_code
 ```
 
 **King County regions stratified by year -- Female Hispanic and Asian-NH residents aged 16-25 only -- not rounded**
+
 
 ```r
 get_population(ages = 16:25, 
@@ -437,30 +470,30 @@ get_population(ages = 16:25,
 ```
 
 ```
-##            pop geo_type  geo_id year   age       gender race_eth geo_id_code
-##  1:  2646.1429   region    East 2018 16-25 Female, Male Hispanic           1
-##  2:  2690.0698   region    East 2019 16-25 Female, Male Hispanic           1
-##  3:  7538.5131   region   South 2017 16-25 Female, Male    Asian           4
-##  4:  5669.8845   region    East 2017 16-25 Female, Male    Asian           1
-##  5:  1175.0308   region   North 2017 16-25 Female, Male    Asian           2
-##  6:  6596.0261   region Seattle 2017 16-25 Female, Male Hispanic           3
-##  7:  2583.8136   region    East 2017 16-25 Female, Male Hispanic           1
-##  8: 12111.4091   region Seattle 2019 16-25 Female, Male    Asian           3
-##  9: 11465.2493   region Seattle 2018 16-25 Female, Male    Asian           3
-## 10:   937.2483   region   North 2019 16-25 Female, Male Hispanic           2
-## 11:  7800.0988   region   South 2018 16-25 Female, Male    Asian           4
-## 12:   911.7558   region   North 2018 16-25 Female, Male Hispanic           2
-## 13:  5978.1064   region    East 2018 16-25 Female, Male    Asian           1
-## 14:  8858.9849   region   South 2017 16-25 Female, Male Hispanic           4
-## 15:  8832.6460   region   South 2019 16-25 Female, Male Hispanic           4
-## 16:  8040.1918   region   South 2019 16-25 Female, Male    Asian           4
-## 17:  8872.2499   region   South 2018 16-25 Female, Male Hispanic           4
-## 18:  6344.4286   region    East 2019 16-25 Female, Male    Asian           1
-## 19:  1292.0299   region   North 2019 16-25 Female, Male    Asian           2
-## 20:  1221.6790   region   North 2018 16-25 Female, Male    Asian           2
-## 21:  7321.8006   region Seattle 2019 16-25 Female, Male Hispanic           3
-## 22:  6923.3890   region Seattle 2018 16-25 Female, Male Hispanic           3
-## 23: 10845.6264   region Seattle 2017 16-25 Female, Male    Asian           3
-## 24:   887.0854   region   North 2017 16-25 Female, Male Hispanic           2
-##            pop geo_type  geo_id year   age       gender race_eth geo_id_code
+##            pop geo_type  geo_id year   age gender race_eth geo_id_code
+##  1:  2885.5149   region    East 2019 16-25 Female Hispanic           1
+##  2:  2823.1282   region    East 2018 16-25 Female Hispanic           1
+##  3:  7538.3639   region   South 2017 16-25 Female    Asian           4
+##  4:  1172.9659   region   North 2017 16-25 Female    Asian           2
+##  5:  5648.5303   region    East 2017 16-25 Female    Asian           1
+##  6:  2738.7459   region    East 2017 16-25 Female Hispanic           1
+##  7:  6785.1092   region Seattle 2017 16-25 Female Hispanic           3
+##  8: 11430.2769   region Seattle 2018 16-25 Female    Asian           3
+##  9: 12072.5280   region Seattle 2019 16-25 Female    Asian           3
+## 10:  1018.6905   region   North 2019 16-25 Female Hispanic           2
+## 11:  7797.9899   region   South 2018 16-25 Female    Asian           4
+## 12:   987.4472   region   North 2018 16-25 Female Hispanic           2
+## 13:  5954.4712   region    East 2018 16-25 Female    Asian           1
+## 14:  8708.3286   region   South 2017 16-25 Female Hispanic           4
+## 15:  8620.5008   region   South 2019 16-25 Female Hispanic           4
+## 16:  8036.6150   region   South 2019 16-25 Female    Asian           4
+## 17:  8695.6219   region   South 2018 16-25 Female Hispanic           4
+## 18:  6317.8227   region    East 2019 16-25 Female    Asian           1
+## 19:  1288.9033   region   North 2019 16-25 Female    Asian           2
+## 20:  1219.1058   region   North 2018 16-25 Female    Asian           2
+## 21:  7536.7464   region Seattle 2019 16-25 Female Hispanic           3
+## 22:  7132.7085   region Seattle 2018 16-25 Female Hispanic           3
+## 23: 10814.5848   region Seattle 2017 16-25 Female    Asian           3
+## 24:   956.3879   region   North 2017 16-25 Female Hispanic           2
+##            pop geo_type  geo_id year   age gender race_eth geo_id_code
 ```
