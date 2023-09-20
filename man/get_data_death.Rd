@@ -4,7 +4,7 @@
 \alias{get_data_death}
 \title{Get Death microdata from storage.}
 \usage{
-get_data_death(cols = NA, year = NA, kingco = T, topcode = T)
+get_data_death(cols = NA, year = NA, kingco = T, topcode = T, mykey = "hhsaw")
 }
 \arguments{
 \item{cols}{Character vector of length >=1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
@@ -23,6 +23,12 @@ Default = T}
 \item{topcode}{logical. Do you want to top code chi_age at 100 to match population data?
 
 Default = T}
+
+\item{mykey}{Character vector of length 1 OR a database connection. Identifies
+the keyring:: key that can be used to access the Health & Human Services
+Analytic Workspace (HHSAW).
+
+Default == 'hhsaw'}
 }
 \value{
 data.table (adminstrative data) for further analysis/tabulation
@@ -33,6 +39,6 @@ Get Death microdata from storage.
 \examples{
 
 \dontrun{
- get_data_death(cols = NA, year = c(2019), kingco = T, topcode = F)
+ get_data_death(cols = NA, year = c(2019), kingco = T, topcode = F, mykey = 'hhsaw')
 }
 }

@@ -1,8 +1,8 @@
 ---
 title: "get_data()"
 output:
-  github_document: default
   rmarkdown::html_vignette: default
+  github_document: default
 vignette: >
   %\VignetteIndexEntry{get_data}
   %\VignetteEngine{knitr::knitr}
@@ -10,7 +10,7 @@ vignette: >
 
 ## Introduction
 
-This vignette will provide some examples of ways to explore and load [birth data](https://github.com/PHSKC-APDE/DOHdata/tree/master/ETL/birth) using the `get_data_birth()` functions in [`rads`](https://github.com/PHSKC-APDE/rads), APDE's 'R Automated Data System'. As of April 2023, `get_data_chars()`, `get_data_deaths()`, and `get_data_hys()` also exist. In the future, `rads` may allow users to easily load additional datasets (e.g., BRFSS). You are encouraged to read the detailed help files that exist for each data source.
+This vignette will provide some examples of ways to explore and load [birth data](https://github.com/PHSKC-APDE/DOHdata/tree/master/ETL/birth) using the `get_data_birth()` functions in [`rads`](https://github.com/PHSKC-APDE/rads), APDE's 'R Automated Data System'. As of April 2023, `get_data_chars()`, `get_data_death()`, and `get_data_hys()` also exist. In the future, `rads` may allow users to easily load additional datasets (e.g., BRFSS). You are encouraged to read the detailed help files that exist for each data source.
 
 **NOTE!!** To get the most out of this vignette, we recommend that you actually type each and every bit of code into R. Doing so will almost definitely help you learn the syntax much faster than just reading the vignette or copying and pasting the code.
 
