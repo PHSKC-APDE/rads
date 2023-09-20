@@ -249,6 +249,12 @@ get_data_birth <- function(cols = NA,
 #'
 #' Default = T
 #'
+#' @param mykey Character vector of length 1 OR a database connection. Identifies
+#' the keyring:: key that can be used to access the Health & Human Services
+#' Analytic Workspace (HHSAW).
+#'
+#' Default == 'hhsaw'
+#'
 #' @return data.table (adminstrative data) for further analysis/tabulation
 #'
 #' @import data.table
@@ -260,20 +266,21 @@ get_data_birth <- function(cols = NA,
 #' @examples
 #'
 #' \dontrun{
-#'  get_data_death(cols = NA, year = c(2019), kingco = T, topcode = F)
+#'  get_data_death(cols = NA, year = c(2019), kingco = T, topcode = F, mykey = 'hhsaw')
 #' }
 get_data_death <- function(cols = NA,
                            year = NA,
                            kingco = T,
-                           topcode = T){
+                           topcode = T,
+                           mykey = 'hhsaw'){
 
   chi_age <- date_of_birth <- date_of_death <- age_years <- chi_race_eth7 <- NULL
   chi_race_6 <- chi_race_eth8 <- chi_race_7 <- geo_id_code <- chi_sex <-  NULL
   age6 <- chi_geo_kc <- chi_geo_wastate <- chi_race_hisp <- geo_id <- geo_type <- NULL
-  pov200grp <- race3 <- race3_hispanic <- race4 <- wastate <- bigcities <- chi_geo_bigcities <- NULL
+  race3 <- race3_hispanic <- race4 <- wastate <- bigcities <- chi_geo_bigcities <- NULL
   hra20_name <- chi_geo_hra2020_long <- chi_geo_region <- chi_geo_reg2020_name <- NULL
 
-  # validate arguments ----
+  # Validate arguments other than mykey ----
     if(!(length(cols) == 1 && is.na(cols))){
       if(!is.character(cols)){stop('\n\U0001f6d1 `cols` must specify a vector of variables or be NA (to get all possible columns).')}
     }
@@ -283,17 +290,68 @@ get_data_death <- function(cols = NA,
     if((length(kingco) == 1 && is.na(kingco)) | !is.logical(kingco)){stop('\n\U0001f6d1 `kingco` must be a logical (TRUE | FALSE, or equivalently, T | F).')}
     if((length(topcode) == 1 && is.na(topcode)) | !is.logical(topcode)){stop('\n\U0001f6d1 `topcode` must be a logical (TRUE | FALSE, or equivalently, T | F).')}
 
+  # Validate mykey ----
+    # Key should be a character string that can be used to generate a database connection
+    # Also have to allow for the option of interactive authentication
+    # TODO: Allow mykey to be a database connection itself
+      is.db = function(x){
+        r = try(dbIsValid(mykey))
+        if(inherits(r, 'try-error')){
+          r = FALSE
+        }
+      }
+      closeserver = TRUE
+      if(is.character(mykey)){
+        server <- grepl('server', tolower(Sys.info()['release']))
+        trykey <- try(keyring::key_get(mykey, keyring::key_list(mykey)[['username']]), silent = T)
+        if (inherits(trykey, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured or you are not connected to the VPN. \n",
+                                                       "Please check your VPN connection and or set your keyring and run the get_population() function again. \n",
+                                                       paste0("e.g., keyring::key_set('hhsaw', username = 'ALastname@kingcounty.gov') \n"),
+                                                       "When prompted, be sure to enter the same password that you use to log into to your laptop. \n",
+                                                       "If you already have an hhsaw key on your keyring with a different name, you can specify it with the 'mykey = ...' argument \n"))
+        rm(trykey)
+
+        if(server == FALSE){
+          con <- try(con <- DBI::dbConnect(odbc::odbc(),
+                                           driver = getOption('rads.odbc_version'),
+                                           server = 'kcitazrhpasqlprp16.azds.kingcounty.gov',
+                                           database = 'hhs_analytics_workspace',
+                                           uid = keyring::key_list(mykey)[["username"]],
+                                           pwd = keyring::key_get(mykey, keyring::key_list(mykey)[["username"]]),
+                                           Encrypt = 'yes',
+                                           TrustServerCertificate = 'yes',
+                                           Authentication = 'ActiveDirectoryPassword'), silent = T)
+          if (inherits(con, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured and is likely to have an outdated password. \n",
+                                                      "Please reset your keyring and run the get_population() function again. \n",
+                                                      paste0("e.g., keyring::key_set('", mykey, "', username = 'ALastname@kingcounty.gov') \n"),
+                                                      "When prompted, be sure to enter the same password that you use to log into to your laptop."))
+        }else{
+          message(paste0('Please enter the password you use for your laptop into the pop-up window. \n',
+                         'Note that the pop-up may be behind your Rstudio session. \n',
+                         'You will need to use your two factor authentication app to confirm your KC identity.'))
+          con <- DBI::dbConnect(odbc::odbc(),
+                                driver = getOption('rads.odbc_version'),
+                                server = "kcitazrhpasqlprp16.azds.kingcounty.gov",
+                                database = "hhs_analytics_workspace",
+                                uid = keyring::key_list(mykey)[["username"]],
+                                Encrypt = "yes",
+                                TrustServerCertificate = "yes",
+                                Authentication = "ActiveDirectoryInteractive")
+        }
+
+        on.exit(DBI::dbDisconnect(con))
+
+      }else if(is.db(mykey)){
+        closeserver = FALSE
+        con = mykey
+
+      }else{
+        stop('`mykey` is not a reference to database connection or keyring')
+      }
+
   # Get list of all colnames from SQL ----
-      con <- odbc::dbConnect(odbc::odbc(),
-                             driver = getOption('rads.odbc_version'),
-                             server = "KCITSQLUTPDBH51",
-                             database = "PH_APDEStore",
-                             Encrypt = 'yes',
-                             TrustServerCertificate = 'yes',
-                             Authentication = 'ActiveDirectoryIntegrated',
-                             encoding = 'latin1')
-      death.names <- names(DBI::dbGetQuery(con, "SELECT TOP (0) * FROM [PH_APDEStore].[death].[final_analytic]"))
-      death.years <- sort(unique(DBI::dbGetQuery(con, "SELECT DISTINCT chi_year FROM [PH_APDEStore].[death].[final_analytic]")$chi_year))
+      death.names <- names(DBI::dbGetQuery(con, "SELECT TOP (0) * FROM [death].[final_analytic]"))
+      death.years <- sort(unique(DBI::dbGetQuery(con, "SELECT DISTINCT chi_year FROM [death].[final_analytic]")$chi_year))
 
   # Identify columns and years to pull from SQL ----
       if(!all(is.na(cols))){
@@ -304,7 +362,6 @@ get_data_death <- function(cols = NA,
         if('bigcities' %in% cols){cols <- c(cols, 'chi_geo_bigcities'); var.2.calc=c(var.2.calc, 'bigcities')}
         if('chi_geo_region' %in% cols){cols <- c(cols, 'chi_geo_reg2020_name'); var.2.calc=c(var.2.calc, 'chi_geo_region')}
         if('hra20_name' %in% cols){cols <- c(cols, 'chi_geo_hra2020_long'); var.2.calc=c(var.2.calc, 'hra20_name')}
-        if('pov200grp' %in% cols){cols <- c(cols, 'geo_tract2020'); var.2.calc=c(var.2.calc, 'pov200grp')}
         if('race3' %in% cols){cols <- c(cols, 'chi_race_6', 'chi_race_hisp'); var.2.calc=c(var.2.calc, 'race3')}
         if('race4' %in% cols){cols <- c(cols, 'chi_race_eth7'); var.2.calc=c(var.2.calc, 'race4')}
         if('wastate' %in% cols){cols <- c(cols, 'chi_geo_wastate'); var.2.calc=c(var.2.calc, 'wastate')}
@@ -333,17 +390,17 @@ get_data_death <- function(cols = NA,
 
   # Pull columns and years from SQL ----
       validyears <- glue::glue_sql_collapse(year, sep=", ")
-      query.string <- glue:: glue_sql ("SELECT {cols} FROM [PH_APDEStore].[death].[final_analytic]
+      query.string <- glue:: glue_sql ("SELECT {cols} FROM [death].[final_analytic]
                                        WHERE chi_year IN ({validyears})", .con = con)
 
       if(kingco == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 1")}
 
       dat <- data.table::setDT(DBI::dbGetQuery(con, query.string))
 
-      datevars <- DBI::dbGetQuery(con, "SELECT ColumnName FROM [PH_APDEStore].[death].[crosswalk_fields] WHERE ColumnType = 'Date'")[]$ColumnName
+      datevars <- DBI::dbGetQuery(con, "SELECT ColumnName FROM [death].[crosswalk_fields] WHERE ColumnType = 'Date'")[]$ColumnName
       datevars <- intersect(datevars, names(dat)) # names of all date variables that are in actual dataset
 
-      odbc::dbDisconnect(con)
+      # odbc::dbDisconnect(con)
 
   # Top code age (if wanted) ----
       if( 'chi_age' %in% cols | 'chi_age' %in% names(dat) ){
@@ -418,10 +475,6 @@ get_data_death <- function(cols = NA,
                             chi_age %in% 65:74, '65-74',
                             chi_age >= 75, '75+',
                             default = NA_character_)]
-      }
-      if('pov200grp' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
-        pov.xwalk <- rads.data::misc_poverty_groups[geo_type=='Tract'][, list(geo_tract2020 = geo_id, pov200grp)]
-        dat <- merge(dat, pov.xwalk, by = 'geo_tract2020', all.x = T, all.y = F)
       }
       if('race4' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
         dat[, race4 := chi_race_eth7]

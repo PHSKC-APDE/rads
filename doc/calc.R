@@ -83,8 +83,9 @@ calc(ph.data = birth,
 
 ## ---- warning=FALSE, message=FALSE--------------------------------------------
 library(survey)
+library(data.table)
 
-load("//dphcifs/APDE-CDIP/ACS/PUMS_data/2019_1_year/prepped_R_files/2019_1_year_data.RData")
+load("//dphcifs/APDE-CDIP/ACS/PUMS_data/2021_1_year/prepped_R_files/2021_1_year_data.RData")
 
   pums <-     
     survey::svrepdesign(
@@ -104,25 +105,37 @@ load("//dphcifs/APDE-CDIP/ACS/PUMS_data/2019_1_year/prepped_R_files/2019_1_year_
   pums = dtsurvey::dtrepsurvey(pums)
 
 ## ---- warning=FALSE-----------------------------------------------------------
-pums[, constant :=1]
+test1 <- calc(ph.data = pums, 
+             what = "chi_geo_seattle", 
+             metrics = c('mean', 'numerator', 'denominator', 'obs', 'total'), 
+             where = chi_geo_kc == 1)
+print(test1)
 
+## ---- warning=FALSE-----------------------------------------------------------
+pums2 <- copy(pums)
+pums2 <- pums2[chi_geo_seattle == 1, chi_geo_seattle := ifelse(rowid(chi_geo_seattle) <= 100, NA, chi_geo_seattle)]
+test2 <- calc(ph.data = pums2, 
+             what = "chi_geo_seattle", 
+             metrics = c('mean', 'numerator', 'denominator', 'obs', 'total'), 
+             where = chi_geo_kc == 1)
+print(test2)
+
+## ---- warning=FALSE-----------------------------------------------------------
 # WA State
 calc(ph.data = pums, 
-     what = c("constant"), 
+     what = c('chi_geo_wastate'), 
      metrics = c("numerator", "total"), 
      proportion = F)[]
 
 # King County
 calc(ph.data = pums, 
-     what = c("constant"), 
-     chi_geo_kc ==1,
+     what = c("chi_geo_kc"), 
      metrics = c("numerator", "total"), 
      proportion = F)[]
 
 # Seattle
 calc(ph.data = pums, 
-     what = c("constant"), 
-     chi_geo_seattle ==1,
+     what = c("chi_geo_seattle"), 
      metrics = c("numerator", "total"), 
      proportion = F)[]
 
@@ -135,7 +148,7 @@ calc(ph.data = pums,
 
 ## ---- warning=FALSE-----------------------------------------------------------
 calc(ph.data = pums, 
-     what = c("agechna"), 
+     what = c("age6"), 
      metrics = c("mean", "rse", "obs", "numerator", "denominator"), 
      proportion = F, 
      by = "disability")[]

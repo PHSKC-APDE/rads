@@ -1,4 +1,5 @@
 library('knitr')
+library('quarto')
 
 #start in the rads directory
 start_dir = getwd()
@@ -17,7 +18,8 @@ setwd(wiki)
 for(rrr in rmds){
   print(rrr)
   out = paste0(tools::file_path_sans_ext(basename(rrr)), '.md')
-  knitr::knit(rrr, out)
+  if(grepl('\\.Rmd$', rrr)){knitr::knit(rrr, out)}
+  if(grepl('\\.qmd$', rrr)){quarto::quarto_render(input = rrr, output_format = "md")}
   file.copy(out, file.path(start_dir, 'wiki', basename(out)))
 
   #clear out the headers

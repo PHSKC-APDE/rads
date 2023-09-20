@@ -1,229 +1,167 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-
-<title>Introduction</title>
-
-<script type="text/javascript">
-window.onload = function() {
-  var imgs = document.getElementsByTagName('img'), i, img;
-  for (i = 0; i < imgs.length; i++) {
-    img = imgs[i];
-    // center an image if it is the only element of its parent
-    if (img.parentElement.childElementCount === 1)
-      img.parentElement.style.textAlign = 'center';
-  }
-};
-</script>
-
-<!-- Styles for R syntax highlighter -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>age_standardize()</title>
 <style type="text/css">
-   pre .operator,
-   pre .paren {
-     color: rgb(104, 118, 135)
-   }
-
-   pre .literal {
-     color: #990073
-   }
-
-   pre .number {
-     color: #099;
-   }
-
-   pre .comment {
-     color: #998;
-     font-style: italic
-   }
-
-   pre .keyword {
-     color: #900;
-     font-weight: bold
-   }
-
-   pre .identifier {
-     color: rgb(0, 0, 0);
-   }
-
-   pre .string {
-     color: #d14;
-   }
-</style>
-
-<!-- R syntax highlighter -->
-<script type="text/javascript">
-var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
-hljs.initHighlightingOnLoad();
-</script>
-
-
-
-<style type="text/css">
-body, td {
-   font-family: sans-serif;
-   background-color: white;
-   font-size: 13px;
+/**
+ * Prism.s theme ported from highlight.js's xcode style
+ */
+pre code {
+  padding: 1em;
 }
-
+.token.comment {
+  color: #007400;
+}
+.token.punctuation {
+  color: #999;
+}
+.token.tag,
+.token.selector {
+  color: #aa0d91;
+}
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol {
+  color: #1c00cf;
+}
+.token.property,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin {
+  color: #c41a16;
+}
+.token.inserted {
+  background-color: #ccffd8;
+}
+.token.deleted {
+  background-color: #ffebe9;
+}
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: #9a6e3a;
+}
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: #836c28;
+}
+.token.function,
+.token.class-name {
+  color: #DD4A68;
+}
+.token.regex,
+.token.important,
+.token.variable {
+  color: #5c2699;
+}
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+.token.italic {
+  font-style: italic;
+}
+</style>
+<style type="text/css">
 body {
+  font-family: sans-serif;
   max-width: 800px;
   margin: auto;
   padding: 1em;
-  line-height: 20px;
+  line-height: 1.5;
+  box-sizing: border-box;
 }
-
-tt, code, pre {
-   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+body, .footnotes, code { font-size: .9em; }
+li li { font-size: .95em; }
+*, *:before, *:after {
+  box-sizing: inherit;
 }
-
-h1 {
-   font-size:2.2em;
-}
-
-h2 {
-   font-size:1.8em;
-}
-
-h3 {
-   font-size:1.4em;
-}
-
-h4 {
-   font-size:1.0em;
-}
-
-h5 {
-   font-size:0.9em;
-}
-
-h6 {
-   font-size:0.8em;
-}
-
-a:visited {
-   color: rgb(50%, 0%, 50%);
-}
-
-pre, img {
-  max-width: 100%;
-}
-pre {
-  overflow-x: auto;
+pre, img { max-width: 100%; }
+pre, pre:hover {
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 pre code {
-   display: block; padding: 0.5em;
+  display: block;
+  overflow-x: auto;
 }
-
-code {
-  font-size: 92%;
-  border: 1px solid #ccc;
+code { font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace; }
+:not(pre) > code, code[class] { background-color: #F8F8F8; }
+code.language-undefined, pre > code:not([class]) {
+  background-color: inherit;
+  border: 1px solid #eee;
 }
-
-code[class] {
-  background-color: #F8F8F8;
+table {
+  margin: auto;
+  border-top: 1px solid #666;
 }
-
-table, td, th {
-  border: none;
-}
-
+table thead th { border-bottom: 1px solid #ddd; }
+th, td { padding: 5px; }
+thead, tfoot, tr:nth-child(even) { background: #eee; }
 blockquote {
-   color:#666666;
-   margin:0;
-   padding-left: 1em;
-   border-left: 0.5em #EEE solid;
+  color: #666;
+  margin: 0;
+  padding-left: 1em;
+  border-left: 0.5em solid #eee;
 }
-
-hr {
-   height: 0px;
-   border-bottom: none;
-   border-top-width: thin;
-   border-top-style: dotted;
-   border-top-color: #999999;
+hr, .footnotes::before { border: 1px dashed #ddd; }
+.frontmatter { text-align: center; }
+#TOC .numbered li { list-style: none; }
+#TOC .numbered { padding-left: 0; }
+#TOC .numbered ul { padding-left: 1em; }
+table, .body h2 { border-bottom: 1px solid #666; }
+.body .appendix, .appendix ~ h2 { border-bottom-style: dashed; }
+.footnote-ref a::before { content: "["; }
+.footnote-ref a::after { content: "]"; }
+.footnotes::before {
+  content: "";
+  display: block;
+  max-width: 20em;
 }
 
 @media print {
-   * {
-      background: transparent !important;
-      color: black !important;
-      filter:none !important;
-      -ms-filter: none !important;
-   }
-
-   body {
-      font-size:12pt;
-      max-width:100%;
-   }
-
-   a, a:visited {
-      text-decoration: underline;
-   }
-
-   hr {
-      visibility: hidden;
-      page-break-before: always;
-   }
-
-   pre, blockquote {
-      padding-right: 1em;
-      page-break-inside: avoid;
-   }
-
-   tr, img {
-      page-break-inside: avoid;
-   }
-
-   img {
-      max-width: 100% !important;
-   }
-
-   @page :left {
-      margin: 15mm 20mm 15mm 10mm;
-   }
-
-   @page :right {
-      margin: 15mm 10mm 15mm 20mm;
-   }
-
-   p, h2, h3 {
-      orphans: 3; widows: 3;
-   }
-
-   h2, h3 {
-      page-break-after: avoid;
-   }
+  body {
+    font-size: 12pt;
+    max-width: 100%;
+  }
+  tr, img { page-break-inside: avoid; }
+}
+@media only screen and (min-width: 992px) {
+  pre { white-space: pre; }
 }
 </style>
-
-
-
 </head>
-
 <body>
-<h2>Introduction</h2>
-
-<p>The comparison of crude health indicator rates across populations is often confounded by different age structures. For example, in 2019 the mean age of Hispanic King County residents was ~12.5 years younger than that of white residents (27.5 vs 40). Given this age discrepancy, we should expect higher mortality rates among white residents. However, you might be thinking, <em>“Is there a way to compare Hispanic and white mortality rates while fully accounting for their different age structures? I.e., is there a way to standardize or adjust for age?”</em> </p>
-
-<p>While you can use Poisson regression or other advanced statistical techniques to calculate age adjusted rates, for simplicity and broader comparison with the work of others, it is often beneficial to adjust your data using a standard reference population. This process is called <strong><em>age standardization</em></strong>. Age standardization answers the question, <em>“What rates would I observe if my data had the same age structure as a different population?”</em></p>
-
-<p>There are 35 reference populations baked into <code>rads</code> (via it&#39;s dependency on <a href="https://github.com/PHSKC-APDE/rads.data"><code>rads.data</code></a>). Their names are visible when you type <code>list_ref_pop()</code>. Here are the first five as an example:</p>
-
-<pre><code class="r">list_ref_pop()[1:5]
+<div class="include-before">
+</div>
+<div class="frontmatter">
+<div class="title"><h1>age_standardize()</h1></div>
+<div class="author"><h2></h2></div>
+<div class="date"><h3></h3></div>
+</div>
+<div class="body">
+<h2 id="introduction">Introduction</h2>
+<p>The comparison of crude health indicator rates across populations is often confounded by different age structures. For example, in 2019 the mean age of Hispanic King County residents was ~12.5 years younger than that of white residents (27.5 vs 40). Given this age discrepancy, we should expect higher mortality rates among white residents. However, you might be thinking, <em>“Is there a way to compare Hispanic and white mortality rates while fully accounting for their different age structures? I.e., is there a way to standardize or adjust for age?”</em></p>
+<p>While you can use Poisson regression or other advanced statistical techniques to calculate age adjusted rates, for simplicity and broader comparison with the work of others, it is often beneficial to adjust your data using a standard reference population. This process is called <em><strong>age standardization</strong></em>. Age standardization answers the question, <em>“What rates would I observe if my data had the same age structure as a different population?”</em></p>
+<p>There are 35 reference populations baked into <code>rads</code> (via it’s dependency on <a href="https://github.com/PHSKC-APDE/rads.data"><code>rads.data</code></a>). Their names are visible when you type <code>list_ref_pop()</code>. Here are the first five as an example:</p>
+<pre><code class="language-r">list_ref_pop()[1:5]
 </code></pre>
-
 <pre><code>## [1] &quot;2000 U.S. Std Population (11 age groups)&quot;                      
 ## [2] &quot;2000 U.S. Std Population (18 age groups - Census P25-1130)&quot;    
 ## [3] &quot;2000 U.S. Std Population (19 age groups - Census P25-1130)&quot;    
 ## [4] &quot;2000 U.S. Std Population (single ages to 84 - Census P25-1130)&quot;
 ## [5] &quot;2000 U.S. Std Population (single ages to 99 - Census P25-1130)&quot;
 </code></pre>
-
-<p>The first one is the default reference population used by APDE and WA DOH. Taking a peek behind the curtain shows that each reference standard is a simple table of age ranges with their corresponding populations. </p>
-
-<pre><code class="r">get_ref_pop(&quot;2000 U.S. Std Population (11 age groups)&quot;)[, 1:4]
+<p>The first one is the default reference population used by APDE and WA DOH. Taking a peek behind the curtain shows that each reference standard is a simple table of age ranges with their corresponding populations.</p>
+<pre><code class="language-r">get_ref_pop(&quot;2000 U.S. Std Population (11 age groups)&quot;)[, 1:4]
 </code></pre>
-
 <pre><code>##          agecat age_start age_end      pop
 ##  1:           0         0       0  3795000
 ##  2:   1-4 years         1       4 15192000
@@ -237,46 +175,52 @@ hr {
 ## 10: 75-84 years        75      84 12315000
 ## 11:   85+ years        85     120  4259000
 </code></pre>
-
-<p>The <code>age_standardize()</code> function provides a simple way to use reference populations to calculate age standardized rates. This vignette will provide some examples of how to use <code>age_standardize()</code> and how to understand its output. To get the most out of this vignette, we recommend that you type each and every bit of code into R. Doing so will almost definitely help you learn the syntax much faster than just reading the vignette or copying and pasting the code.</p>
-
-<h2><code>age_standardize()</code> arguments</h2>
-
+<p>The <code> age_standardize()</code> function provides a simple way to use reference populations to calculate age standardized rates. This vignette will provide some examples of how to use <code> age_standardize()</code> and how to understand its output. To get the most out of this vignette, we recommend that you type each and every bit of code into R. Doing so will almost definitely help you learn the syntax much faster than just reading the vignette or copying and pasting the code.</p>
+<h2 id="age-standardize-arguments"><code>age_standardize()</code> arguments</h2>
 <p>Arguments are the values that we send to a function when it is called. The standard arguments for <code>age_standardize()</code> are:</p>
-
-<p>1) <code>ph.data</code> &lt;- the name of the data.table/data.frame with the data that you want to age standardize. <strong>Note:</strong> <em>ph.data must contain a numeric column named &#39;age&#39;. The sole exception is if it already has a standard population merged onto the dataset, in which case it must contain a numeric column named &#39;stdpop&#39;.</em></p>
-
-<p>2) <code>ref.popname</code> &lt;- a character vector whose only valid options are &ldquo;none&rdquo; (used when ph.data has a &#39;stdpop&#39; column) or one of the reference standarards contained in <code>list_ref_pop()</code></p>
-
-<p>3) <code>collapse</code> &lt;- a logical vector (T|F), determines whether or not to to collapse the &#39;age&#39; column in ph.data to match those in ref.popname. If your data is already collapsed / aggregated into the same age bins as your reference population, and if that variable is named &ldquo;agecat&rdquo;, then you can set collapse to F. The default is T</p>
-
-<p>4) <code>my.count</code> &lt;- a character vector, identifies the column name for the <strong>aggregated</strong> count data in ph.data. The default is &ldquo;count&rdquo;</p>
-
-<p>5) <code>my.pop</code> &lt;- a character vector, identifies the column name for the population number corresponding to the count. The default is &ldquo;pop&rdquo;</p>
-
-<p>6) <code>per</code> &lt;- an integer, used as multiplier for all rates and CI, e.g., when per = 1000, the rates are per 1000 persons. The default is 100,000</p>
-
-<p>7) <code>conf.level</code> &lt;- a numeric value between 0.00 &amp; 0.99, designates the confidence level (i.e., 1 - alpha) to be used in the calculations. The default is 0.95 </p>
-
-<p>8) <code>group_by</code> &lt;- a character, specifies the variable(s) by which to stratify the rate results (if any). The default is NULL (i.e., no stratification)</p>
-
-<h2>Preparing your datset</h2>
-
-<p>Your dataset must have the following three columns &hellip; </p>
-
-<p>1) &#39;age&#39; or &#39;agecat&#39;: &#39;age&#39; in single years (if collapse = T) or &#39;agecat&#39; with the same age bins as your selected reference population (if collapse = F).</p>
-
-<p>2) a count for the event (e.g., disease) for which you want to find an age standardized rate.</p>
-
-<p>3) the population corresponding to the age or agecat in your original data</p>
-
-<hr/>
-
-<h2>Example #1: The Basics</h2>
-
+<ol>
+<li>
+<p><code>ph.data</code> &lt;- the name of the data.table/data.frame with the data that you want to age standardize. <strong>Note:</strong> <em>ph.data must contain a numeric column named ‘age’. The sole exception is if it already has a standard population merged onto the dataset, in which case it must contain a numeric column named ‘stdpop’.</em></p>
+</li>
+<li>
+<p><code>ref.popname</code> &lt;- a character vector whose only valid options are “none” (used when ph.data has a ‘stdpop’ column) or one of the reference standarards contained in <code>list_ref_pop()</code></p>
+</li>
+<li>
+<p><code>collapse</code> &lt;- a logical vector (T|F), determines whether or not to to collapse the ‘age’ column in ph.data to match those in ref.popname. If your data is already collapsed / aggregated into the same age bins as your reference population, and if that variable is named “agecat”, then you can set collapse to F. The default is T</p>
+</li>
+<li>
+<p><code>my.count</code> &lt;- a character vector, identifies the column name for the <strong>aggregated</strong> count data in ph.data. The default is “count”</p>
+</li>
+<li>
+<p><code>my.pop</code> &lt;- a character vector, identifies the column name for the population number corresponding to the count. The default is “pop”</p>
+</li>
+<li>
+<p><code>per</code> &lt;- an integer, used as multiplier for all rates and CI, e.g., when per = 1000, the rates are per 1000 persons. The default is 100,000</p>
+</li>
+<li>
+<p><code>conf.level</code> &lt;- a numeric value between 0.00 &amp; 0.99, designates the confidence level (i.e., 1 - alpha) to be used in the calculations. The default is 0.95</p>
+</li>
+<li>
+<p><code>group_by</code> &lt;- a character, specifies the variable(s) by which to stratify the rate results (if any). The default is NULL (i.e., no stratification)</p>
+</li>
+</ol>
+<h2 id="preparing-your-datset">Preparing your datset</h2>
+<p>Your dataset must have the following three columns …</p>
+<ol>
+<li>
+<p>‘age’ or ‘agecat’: ‘age’ in single years (if collapse = T) or ‘agecat’ with the same age bins as your selected reference population (if collapse = F).</p>
+</li>
+<li>
+<p>a count for the event (e.g., disease) for which you want to find an age standardized rate.</p>
+</li>
+<li>
+<p>the population corresponding to the age or agecat in your original data</p>
+</li>
+</ol>
+<hr />
+<h2 id="example-1-the-basics">Example #1: The Basics</h2>
 <p><strong>Create synthetic line level data for a cohort 51 to 60 years of age with a binary indicator for disease status</strong></p>
-
-<pre><code class="r">library(data.table)
+<pre><code class="language-r">library(data.table)
 set.seed(98121)
 
 temp1 &lt;- data.table(
@@ -286,7 +230,6 @@ temp1 &lt;- data.table(
 
 temp1[]
 </code></pre>
-
 <pre><code>##       age disease  pop
 ##    1:  51       0 1000
 ##    2:  52       1  990
@@ -300,10 +243,8 @@ temp1[]
 ##  999:  59       1  920
 ## 1000:  60       0  910
 </code></pre>
-
-<p><strong>Run age_standardize with APDE&#39;s default reference population</strong></p>
-
-<pre><code class="r">age_standardize(ph.data = temp1,
+<p><strong>Run age_standardize with APDE’s default reference population</strong></p>
+<pre><code class="language-r">age_standardize(ph.data = temp1,
                 ref.popname = &quot;2000 U.S. Std Population (11 age groups)&quot;, 
                 collapse = T,
                 my.count = &quot;disease&quot;, 
@@ -311,32 +252,32 @@ temp1[]
                 per = 1000, 
                 conf.level = 0.95)[]
 </code></pre>
-
 <pre><code>##    count    pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci
 ## 1:   511 955000       0.54      0.49      0.58     0.52    0.47    0.57
 ##                               reference_pop
 ## 1: 2000 U.S. Std Population (11 age groups)
 </code></pre>
-
-<p><em>Does anything seem fishy? Think for a moment &hellip;</em> </p>
-
+<p><em>Does anything seem fishy? Think for a moment …</em></p>
 <ul>
-<li><p><strong>count</strong> is the number of events that occured (i.e., the numerator)</p></li>
-<li><p><strong>pop</strong> is the population corresponding to the count (i.e., the denominator)</p></li>
-<li><p><strong>crude.rate, crude.lci, &amp; crude.uci</strong> are the crude (i.e., observed) rate and CI</p></li>
-<li><p><strong>adj.rate, adj.lci, &amp; adj.uci</strong> are the age standardized rate and CI</p></li>
+<li>
+<p><strong>count</strong> is the number of events that occured (i.e., the numerator)</p>
+</li>
+<li>
+<p><strong>pop</strong> is the population corresponding to the count (i.e., the denominator)</p>
+</li>
+<li>
+<p><strong>crude.rate, crude.lci, &amp; crude.uci</strong> are the crude (i.e., observed) rate and CI</p>
+</li>
+<li>
+<p><strong>adj.rate, adj.lci, &amp; adj.uci</strong> are the age standardized rate and CI</p>
+</li>
 </ul>
-
 <p><em>Did you find the problem?</em></p>
-
 <p>The problem is that the population is too big. Eyeballing the output when we created the dataset above, we see that the total population for those 51 to 60 would have to be less than 10,000 (10 age groups with max 1,000 population for each). In this case it is almost 1 million! In the description of the arguments above, it specifies that we need to <em>use aggregated count data</em>. Now you see why. Ignoring that detail caused us to inflate the population (and therefore deflate the rate and CI) 1000x.</p>
-
 <p><strong>Aggregate (collapse) the line level data</strong></p>
-
-<pre><code class="r">temp1 &lt;- temp1[, .(disease = sum(disease)), by = c(&quot;age&quot;, &quot;pop&quot;)]
+<pre><code class="language-r">temp1 &lt;- temp1[, .(disease = sum(disease)), by = c(&quot;age&quot;, &quot;pop&quot;)]
 temp1[]
 </code></pre>
-
 <pre><code>##     age  pop disease
 ##  1:  51 1000      49
 ##  2:  52  990      46
@@ -349,10 +290,8 @@ temp1[]
 ##  9:  59  920      52
 ## 10:  60  910      46
 </code></pre>
-
 <p><strong>Run age_standardize again &lt;&lt; this time with aggregated disease events</strong></p>
-
-<pre><code class="r">ex1.1 &lt;- age_standardize(ph.data = temp1,
+<pre><code class="language-r">ex1.1 &lt;- age_standardize(ph.data = temp1,
                       ref.popname = &quot;2000 U.S. Std Population (11 age groups)&quot;, 
                       collapse = T,
                       my.count = &quot;disease&quot;, 
@@ -361,16 +300,13 @@ temp1[]
                       conf.level = 0.95)
 ex1.1[]
 </code></pre>
-
 <pre><code>##    count  pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci
 ## 1:   511 9550      53.51     48.97     58.35    51.93   47.19   57.05
 ##                               reference_pop
 ## 1: 2000 U.S. Std Population (11 age groups)
 </code></pre>
-
-<p>Now that count, pop, and rates seem reasonable, let&#39;s see what happens if we change the reference population. We&#39;ll arbitrarily set the references population to the 36th in the list provided by <code>list_ref_pop()</code> (i.e., &#39;World (WHO 2000-2025) Std Million (single ages to 99)&#39;). </p>
-
-<pre><code class="r">ex1.2 &lt;- age_standardize(ph.data = temp1,
+<p>Now that count, pop, and rates seem reasonable, let’s see what happens if we change the reference population. We’ll arbitrarily set the references population to the 36th in the list provided by <code>list_ref_pop()</code> (i.e., ‘World (WHO 2000-2025) Std Million (single ages to 99)’).</p>
+<pre><code class="language-r">ex1.2 &lt;- age_standardize(ph.data = temp1,
                       ref.popname = list_ref_pop()[36], 
                       collapse = T,
                       my.count = &quot;disease&quot;, 
@@ -379,22 +315,16 @@ ex1.1[]
                       conf.level = 0.95)
 ex1.2[]
 </code></pre>
-
 <pre><code>##    count  pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci
 ## 1:   511 9550      53.51     48.97     58.35    53.34   48.81    58.2
 ##                                            reference_pop
 ## 1: World (WHO 2000-2025) Std Million (single ages to 99)
 </code></pre>
-
-<p>As we&#39;d expect, the crude rates are identical since the reference population is irrelevant for those calculations (53.51 vs 53.51). However, the age-standardized rates changed from 51.93 to 53.34. Remember, if you want to compare your age-adjusted rates to those published by other health jurisdictions, it&#39;s important that you use the same reference population.</p>
-
-<hr/>
-
-<h2>Example #2: Stratifcation</h2>
-
-<p><strong>Let&#39;s create a new dataset with disease counts aggregated by age (46 to 64) and gender (F|M)</strong></p>
-
-<pre><code class="r">set.seed(98121)
+<p>As we’d expect, the crude rates are identical since the reference population is irrelevant for those calculations (53.51 vs 53.51). However, the age-standardized rates changed from 51.93 to 53.34. Remember, if you want to compare your age-adjusted rates to those published by other health jurisdictions, it’s important that you use the same reference population.</p>
+<hr />
+<h2 id="example-2-stratifcation">Example #2: Stratifcation</h2>
+<p><strong>Let’s create a new dataset with disease counts aggregated by age (46 to 64) and gender (F|M)</strong></p>
+<pre><code class="language-r">set.seed(98121)
 temp2 &lt;- data.table(
   gender = c(rep(&quot;F&quot;, 20), rep(&quot;M&quot;, 20)), 
   age = rep(46:65, 2),
@@ -403,7 +333,6 @@ temp2 &lt;- data.table(
 
 head(temp2)
 </code></pre>
-
 <pre><code>##    gender age disease  pop
 ## 1:      F  46      32 3134
 ## 2:      F  47      36 2930
@@ -412,10 +341,8 @@ head(temp2)
 ## 5:      F  50      27 3480
 ## 6:      F  51      33 2679
 </code></pre>
-
-<p><strong>Let&#39;s examine the overall rates</strong></p>
-
-<pre><code class="r">ex2.1 &lt;- age_standardize(ph.data = temp2,
+<p><strong>Let’s examine the overall rates</strong></p>
+<pre><code class="language-r">ex2.1 &lt;- age_standardize(ph.data = temp2,
                        collapse = T,
                        my.count = &quot;disease&quot;, 
                        my.pop = &quot;pop&quot;, 
@@ -424,20 +351,15 @@ head(temp2)
 
 ex2.1[]
 </code></pre>
-
 <pre><code>##    count    pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci
 ## 1:  1333 115448      11.55     10.93     12.18    11.68   10.87   12.57
 ##                               reference_pop
 ## 1: 2000 U.S. Std Population (11 age groups)
 </code></pre>
-
-<p>In this case, the crude rate and age standardized rate are the same. This doesn&#39;t mean there is a mistake. Notice that the confidence intervals differ &ndash; as would be expected. </p>
-
-<p>Also notice that we didn&#39;t include the <code>ref.popname</code> argument. When it is not specified, <code>age_standardize()</code> uses the default which is <code>list_ref_pop()[1]</code> (i.e, 2000 U.S. Std Population (11 age groups)).</p>
-
-<p><strong>Now let&#39;s run the same analysis, but stratified by gender</strong></p>
-
-<pre><code class="r">ex2.2 &lt;- age_standardize(ph.data = temp2,
+<p>In this case, the crude rate and age standardized rate are the same. This doesn’t mean there is a mistake. Notice that the confidence intervals differ – as would be expected.</p>
+<p>Also notice that we didn’t include the <code>ref.popname</code> argument. When it is not specified, <code>age_standardize()</code> uses the default which is <code>list_ref_pop()[1]</code> (i.e, 2000 U.S. Std Population (11 age groups)).</p>
+<p><strong>Now let’s run the same analysis, but stratified by gender</strong></p>
+<pre><code class="language-r">ex2.2 &lt;- age_standardize(ph.data = temp2,
                        collapse = T,
                        my.count = &quot;disease&quot;, 
                        my.pop = &quot;pop&quot;, 
@@ -447,7 +369,6 @@ ex2.1[]
 
 ex2.2[]
 </code></pre>
-
 <pre><code>##    gender count   pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci
 ## 1:      F   731 60827      12.02     11.16     12.92    12.22   11.07   13.50
 ## 2:      M   602 54621      11.02     10.16     11.94    11.09    9.97   12.36
@@ -455,18 +376,12 @@ ex2.2[]
 ## 1: 2000 U.S. Std Population (11 age groups)
 ## 2: 2000 U.S. Std Population (11 age groups)
 </code></pre>
-
-<p>Here we see that the crude and age standardized rates are higher among females when compared to males. </p>
-
-<hr/>
-
-<h2>Example #3: Using your own standard population</h2>
-
+<p>Here we see that the crude and age standardized rates are higher among females when compared to males.</p>
+<hr />
+<h2 id="example-3-using-your-own-standard-population">Example #3: Using your own standard population</h2>
 <p><strong>Create a reference population for the gendered dataset above</strong></p>
-
-<p>To keep things simple, we will create a reference population based on single ages rather than age bins. As specified in the arguments description above, we will name the standard population column &#39;stdpop&#39;.</p>
-
-<pre><code class="r">set.seed(98121)
+<p>To keep things simple, we will create a reference population based on single ages rather than age bins. As specified in the arguments description above, we will name the standard population column ‘stdpop’.</p>
+<pre><code class="language-r">set.seed(98121)
 new.standard &lt;- data.table(
   gender = c(rep(&quot;M&quot;, 20), rep(&quot;F&quot;, 20)), 
   age = rep(46:65, 2),
@@ -474,7 +389,6 @@ new.standard &lt;- data.table(
 
 head(new.standard)
 </code></pre>
-
 <pre><code>##    gender age stdpop
 ## 1:      M  46  10160
 ## 2:      M  47   8515
@@ -483,14 +397,11 @@ head(new.standard)
 ## 5:      M  50   9756
 ## 6:      M  51   9178
 </code></pre>
-
 <p><strong>Merge the standard population onto the data</strong></p>
-
-<pre><code class="r">temp3 &lt;- merge(temp2, new.standard, by = c(&quot;age&quot;, &quot;gender&quot;), all = T)
+<pre><code class="language-r">temp3 &lt;- merge(temp2, new.standard, by = c(&quot;age&quot;, &quot;gender&quot;), all = T)
 
 head(temp3)
 </code></pre>
-
 <pre><code>##    age gender disease  pop stdpop
 ## 1:  46      F      32 3134  14506
 ## 2:  46      M      26 3055  10160
@@ -499,12 +410,9 @@ head(temp3)
 ## 5:  48      F      29 3289  17813
 ## 6:  48      M      35 2268   9204
 </code></pre>
-
 <p><strong>Calculate the rates when <code>ref.pop = &quot;none&quot;</code></strong></p>
-
 <p>Note that I need to specify <code>collapse = F</code> because the function expects data to be pre-aggregated for the custom reference population contained in <code>stdpop</code>.</p>
-
-<pre><code class="r">ex3.1 &lt;- age_standardize(ph.data = temp3,
+<pre><code class="language-r">ex3.1 &lt;- age_standardize(ph.data = temp3,
                        ref.popname = &quot;none&quot;,
                        collapse = F,
                        my.count = &quot;disease&quot;, 
@@ -515,7 +423,6 @@ head(temp3)
 
 ex3.1[]
 </code></pre>
-
 <pre><code>##    gender count   pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci
 ## 1:      F   731 60827      12.02     11.16     12.92    12.02   11.15   12.95
 ## 2:      M   602 54621      11.02     10.16     11.94    11.15   10.25   12.12
@@ -523,16 +430,11 @@ ex3.1[]
 ## 1: stdpop column in `temp3`
 ## 2: stdpop column in `temp3`
 </code></pre>
-
-<hr/>
-
-<h2>Example #4: When to specify <code>collapse = F</code></h2>
-
-<p>In example #3 above, we specified <code>collapse = F</code> because <code>age_standardardize()</code> expects the data to be pre-aggregated when you provide a <code>stdpop</code> column. The other time when you will want to set <code>collapse = F</code> is if you have data that has already been collapsed down to the reference population&#39;s age bins along with the proper labels in a column called <code>agecat</code>. <strong>This is uncommon.</strong> It isn&#39;t worth your time and energy to manually collapse the data &ndash; so don&#39;t do it! This functionality is here just in case you receive data that has already been structured this way.</p>
-
-<p><strong>Let&#39;s recreate the dataset used in example 2 above</strong></p>
-
-<pre><code class="r">set.seed(98121)
+<hr />
+<h2 id="example-4-when-to-specify-collapse-f">Example #4: When to specify <code>collapse = F</code></h2>
+<p>In example #3 above, we specified <code>collapse = F</code> because <code>age_standardardize()</code> expects the data to be pre-aggregated when you provide a <code>stdpop</code> column. The other time when you will want to set <code>collapse = F</code> is if you have data that has already been collapsed down to the reference population’s age bins along with the proper labels in a column called <code>agecat</code>. <strong>This is uncommon.</strong> It isn’t worth your time and energy to manually collapse the data – so don’t do it! This functionality is here just in case you receive data that has already been structured this way.</p>
+<p><strong>Let’s recreate the dataset used in example 2 above</strong></p>
+<pre><code class="language-r">set.seed(98121)
 temp4 &lt;- data.table(
   gender = c(rep(&quot;M&quot;, 20), rep(&quot;F&quot;, 20)), 
   age = rep(46:65, 2),
@@ -541,7 +443,6 @@ temp4 &lt;- data.table(
 
 head(temp4)
 </code></pre>
-
 <pre><code>##    gender age disease  pop
 ## 1:      M  46      32 3134
 ## 2:      M  47      36 2930
@@ -550,10 +451,8 @@ head(temp4)
 ## 5:      M  50      27 3480
 ## 6:      M  51      33 2679
 </code></pre>
-
 <p><strong>Collapse the data down to the same age bins as those used in the APDE standard reference population</strong></p>
-
-<pre><code class="r">temp4[age %in% 45:49, agecat := &quot;45-49 years&quot;]
+<pre><code class="language-r">temp4[age %in% 45:49, agecat := &quot;45-49 years&quot;]
 temp4[age %in% 50:54, agecat := &quot;50-54 years&quot;]
 temp4[age %in% 55:59, agecat := &quot;55-59 years&quot;]
 temp4[age %in% 60:64, agecat := &quot;60-64 years&quot;]
@@ -562,7 +461,6 @@ temp4 &lt;- temp4[, .(pop = sum(pop), disease = sum(disease)), by = c(&quot;agec
 
 temp4[]
 </code></pre>
-
 <pre><code>##          agecat gender   pop disease
 ##  1: 45-49 years      M 12551     124
 ##  2: 50-54 years      M 15192     169
@@ -575,10 +473,8 @@ temp4[]
 ##  9: 60-64 years      F 14498     133
 ## 10: 65-69 years      F  2798      31
 </code></pre>
-
 <p><strong>Now you are able to run age_standardize with <code>collapse = F</code></strong></p>
-
-<pre><code class="r">ex4.1 &lt;- age_standardize(ph.data = temp4,
+<pre><code class="language-r">ex4.1 &lt;- age_standardize(ph.data = temp4,
                        collapse = F,
                        my.count = &quot;disease&quot;, 
                        my.pop = &quot;pop&quot;, 
@@ -588,110 +484,93 @@ temp4[]
 
 ex4.1[]
 </code></pre>
-
 <pre><code>## Empty data.table (0 rows and 10 cols): gender,count,pop,crude.rate,crude.lci,crude.uci...
 </code></pre>
-
 <p>Note the results in ex4.1 are exactly the same as those in ex2.2. This makes sense since <code>age_standardize()</code> collapsed the data in a similar (but more efficient manner) when creating ex2.2.</p>
-
-<hr/>
-
-<h2>Example #5: Real world analysis</h2>
-
-<p>You&#39;re staffing data requests today and receive the following message: &ldquo;<em>Hi! For a class, I&#39;d like to get the 2019 teen (13 to 19) birth rate for King County and WA State as a whole. Since the age distribution in the county may differ from the rest of the state, it would be appreciated if you could provide crude and age-standardized rates. If you could standardize to &quot;World (WHO 2000-2025) Std Million (single ages to 84)&rdquo;, that would be great! Thank you, S. Capstone</em>&ldquo; </p>
-
-<p>You quickly pull up <a href="https://www.doh.wa.gov/ForPublicHealthandHealthcareProviders/PublicHealthSystemResourcesandServices/CommunityHealthAssessmentandImprovement/CHAT">CHAT</a> only to find that this specific indicator doesn&#39;t exist. You remember that <a href="https://kingcounty.gov/chi/">CHI</a> has an adolescent birth rate indicator, but are downcast when you find that it applies to those 15 to 17. In desperation, you resign yourself to using <code>rads</code>. </p>
-
+<hr />
+<h2 id="example-5-real-world-analysis">Example #5: Real world analysis</h2>
+<p>You’re staffing data requests today and receive the following message: “<em>Hi! For a class, I’d like to get the 2019 teen (13 to 19) birth rate for King County and WA State as a whole. Since the age distribution in the county may differ from the rest of the state, it would be appreciated if you could provide crude and age-standardized rates. If you could standardize to “World (WHO 2000-2025) Std Million (single ages to 84)”, that would be great! Thank you, S. Capstone</em>”</p>
+<p>You quickly pull up <a href="https://www.doh.wa.gov/ForPublicHealthandHealthcareProviders/PublicHealthSystemResourcesandServices/CommunityHealthAssessmentandImprovement/CHAT">CHAT</a> only to find that this specific indicator doesn’t exist. You remember that <a href="https://kingcounty.gov/chi/">CHI</a> has an adolescent birth rate indicator, but are downcast when you find that it applies to those 15 to 17. In desperation, you resign yourself to using <code>rads</code>.</p>
 <p><strong>Get birth counts for 13 to 19 year olds in 2019</strong></p>
-
-<pre><code class="r">  kcbirth &lt;- get_data_birth(cols = c(&quot;chi_age&quot;, &quot;chi_year&quot;), year = 2019, kingco = T)
+<pre><code class="language-r">  kcbirth &lt;- get_data_birth(cols = c(&quot;chi_age&quot;, &quot;chi_year&quot;), year = 2019, kingco = T)
   wabirth &lt;- get_data_birth(cols = c(&quot;chi_age&quot;, &quot;chi_year&quot;), year = 2019, kingco = F)
-
+  
   births &lt;- rbind(kcbirth[, geo := &quot;King County&quot;], wabirth[, geo := &quot;WA State&quot;])
   births &lt;- births[chi_age %in% 13:19]
-
+  
   # collapse / aggregate
   births &lt;- births[, .(births = .N), by = c(&quot;chi_age&quot;, &quot;geo&quot;)] 
   setorder(births, geo, chi_age)
   setnames(births, &quot;chi_age&quot;, &quot;age&quot;)
   births[]
 </code></pre>
-
 <pre><code>##     age         geo births
 ##  1:  13 King County      1
 ##  2:  14 King County      4
 ##  3:  15 King County     10
 ##  4:  16 King County     23
-##  5:  17 King County     44
-##  6:  18 King County    111
-##  7:  19 King County    227
+##  5:  17 King County     45
+##  6:  18 King County    107
+##  7:  19 King County    230
 ##  8:  13    WA State      6
 ##  9:  14    WA State     16
-## 10:  15    WA State     69
-## 11:  16    WA State    190
-## 12:  17    WA State    348
-## 13:  18    WA State    751
-## 14:  19    WA State   1481
+## 10:  15    WA State     70
+## 11:  16    WA State    193
+## 12:  17    WA State    346
+## 13:  18    WA State    745
+## 14:  19    WA State   1488
 </code></pre>
-
 <p><strong>Get the female populations corresponding to the birth counts</strong></p>
-
-<pre><code class="r">  kcpop &lt;- get_population(kingco = T, years = 2019, ages = 13:19, 
+<pre><code class="language-r">  kcpop &lt;- get_population(kingco = T, years = 2019, ages = 13:19, 
                           genders = &quot;Female&quot;, group_by = &quot;ages&quot;, geo_vintage = 2020, census_vintage = 2020)
   kcpop &lt;- kcpop[, .(age, geo = geo_id, pop)] 
-
+  
   wapop &lt;- get_population(kingco = F, years = 2019, ages = 13:19, 
                           genders = &quot;Female&quot;, group_by = &quot;ages&quot;, geo_type = &quot;zip&quot;, geo_vintage = 2020, census_vintage = 2020)
   wapop &lt;- wapop[, .(pop = sum(pop), geo = &quot;WA State&quot;), by = &quot;age&quot;]
-
+  
   pop &lt;- rbind(kcpop, wapop)
   pop[]
 </code></pre>
-
 <pre><code>##     age         geo      pop
 ##  1:  18 King County 12654.47
 ##  2:  19 King County 13401.31
-##  3:  15 King County 11131.42
-##  4:  17 King County 11565.07
-##  5:  14 King County 12208.96
-##  6:  13 King County 12407.25
-##  7:  16 King County 11420.94
+##  3:  13 King County 12407.25
+##  4:  15 King County 11131.42
+##  5:  16 King County 11420.94
+##  6:  17 King County 11565.07
+##  7:  14 King County 12208.96
 ##  8:  18    WA State 45951.20
-##  9:  19    WA State 47390.04
-## 10:  16    WA State 44581.08
-## 11:  15    WA State 44635.30
-## 12:  14    WA State 46476.42
-## 13:  13    WA State 46374.96
-## 14:  17    WA State 43452.42
+##  9:  16    WA State 44581.08
+## 10:  17    WA State 43452.42
+## 11:  14    WA State 46476.42
+## 12:  13    WA State 46374.96
+## 13:  19    WA State 47390.04
+## 14:  15    WA State 44635.30
 </code></pre>
-
 <p><strong>Merge population onto to birth counts</strong></p>
-
-<pre><code class="r">  temp5 &lt;- merge(births, pop, by = c(&quot;age&quot;, &quot;geo&quot;), all = T)
-
+<pre><code class="language-r">  temp5 &lt;- merge(births, pop, by = c(&quot;age&quot;, &quot;geo&quot;), all = T)
+  
   temp5[]
 </code></pre>
-
 <pre><code>##     age         geo births      pop
 ##  1:  13 King County      1 12407.25
 ##  2:  13    WA State      6 46374.96
 ##  3:  14 King County      4 12208.96
 ##  4:  14    WA State     16 46476.42
 ##  5:  15 King County     10 11131.42
-##  6:  15    WA State     69 44635.30
+##  6:  15    WA State     70 44635.30
 ##  7:  16 King County     23 11420.94
-##  8:  16    WA State    190 44581.08
-##  9:  17 King County     44 11565.07
-## 10:  17    WA State    348 43452.42
-## 11:  18 King County    111 12654.47
-## 12:  18    WA State    751 45951.20
-## 13:  19 King County    227 13401.31
-## 14:  19    WA State   1481 47390.04
+##  8:  16    WA State    193 44581.08
+##  9:  17 King County     45 11565.07
+## 10:  17    WA State    346 43452.42
+## 11:  18 King County    107 12654.47
+## 12:  18    WA State    745 45951.20
+## 13:  19 King County    230 13401.31
+## 14:  19    WA State   1488 47390.04
 </code></pre>
-
 <p><strong>Run <code>age_standardize()</code></strong></p>
-
-<pre><code class="r">  ex5.1 &lt;- age_standardize(ph.data = temp5,
+<pre><code class="language-r">  ex5.1 &lt;- age_standardize(ph.data = temp5,
                            ref.popname = &quot;World (WHO 2000-2025) Std Million (single ages to 84)&quot;, 
                            collapse = T,
                            my.count = &quot;births&quot;, 
@@ -701,23 +580,21 @@ ex4.1[]
                            group_by = &quot;geo&quot;)
   ex5.1[]
 </code></pre>
-
 <pre><code>##            geo count       pop crude.rate crude.lci crude.uci adj.rate adj.lci
 ## 1: King County   420  84789.41       4.95      4.49      5.45     4.65    4.21
-## 2:    WA State  2861 318861.42       8.97      8.65      9.31     8.76    8.45
+## 2:    WA State  2864 318861.42       8.98      8.66      9.32     8.77    8.45
 ##    adj.uci                                         reference_pop
 ## 1:    5.12 World (WHO 2000-2025) Std Million (single ages to 84)
-## 2:    9.09 World (WHO 2000-2025) Std Million (single ages to 84)
+## 2:    9.10 World (WHO 2000-2025) Std Million (single ages to 84)
 </code></pre>
-
-<p>According to your analysis, the crude King County teen birth rate is approximately half (4.95 / 8.97 = 0.552) of the WA State teen birth rate. This relationship remains largely unchanged after age-standardization  (4.65 / 8.76 = 0.531).</p>
-
-<hr/>
-
-<h2>Conclusion</h2>
-
-<p>If you&#39;ve walked through this vignette and more or less understood what&#39;s going on, you&#39;re in good shape! If you&#39;re still confused, please walk through it again and then reach out if you still have questions. Good luck!</p>
-
+<p>According to your analysis, the crude King County teen birth rate is approximately half (4.95 / 8.98 = 0.551) of the WA State teen birth rate. This relationship remains largely unchanged after age-standardization  (4.65 / 8.77 = 0.53).</p>
+<hr />
+<h2 id="conclusion">Conclusion</h2>
+<p>If you’ve walked through this vignette and more or less understood what’s going on, you’re in good shape! If you’re still confused, please walk through it again and then reach out if you still have questions. Good luck!</p>
+</div>
+<div class="include-after">
+</div>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>
 </body>
-
 </html>
