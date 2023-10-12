@@ -11,7 +11,8 @@ get_data_chars(
   wastate = T,
   inpatient = T,
   deaths = T,
-  topcode = T
+  topcode = T,
+  mykey = "hhsaw"
 )
 }
 \arguments{
@@ -48,6 +49,12 @@ Default = T}
 \item{topcode}{logical. Do you want to top code chi_age at 100 to match population data?
 
 Default = T}
+
+\item{mykey}{Character vector of length 1 OR a database connection. Identifies
+the keyring:: key that can be used to access the Health & Human Services
+Analytic Workspace (HHSAW).
+
+Default == 'hhsaw'}
 }
 \value{
 data.table (adminstrative data) for further analysis/tabulation
@@ -64,6 +71,7 @@ Get CHARS (Comprehensive Hospital Abstract Reporting System) microdata from stor
                 wastate = T,
                 inpatient = T,
                 deaths = F,
-                topcode = F)
+                topcode = F,
+                mykey = 'hhsaw')
 }
 }
