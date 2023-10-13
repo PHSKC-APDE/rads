@@ -155,65 +155,7 @@ get_population <- function(kingco = T,
   # Validations ----
 
   ## Validate key ----
-  ## Key should be a character string that can be used to generate a database connection
-  ## Also have to allow for the option of interactive authentication
-  ## TODO: Allow mykey to be a database connection itself
-  is.db = function(x){
-    r = try(dbIsValid(mykey))
-    if(inherits(r, 'try-error')){
-      r = FALSE
-    }
-  }
-  closeserver = TRUE
-  if(is.character(mykey)){
-    server <- grepl('server', tolower(Sys.info()['release']))
-    trykey <- try(keyring::key_get(mykey, keyring::key_list(mykey)[['username']]), silent = T)
-    if (inherits(trykey, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured or you are not connected to the VPN. \n",
-                                                   "Please check your VPN connection and or set your keyring and run the get_population() function again. \n",
-                                                   paste0("e.g., keyring::key_set('hhsaw', username = 'ALastname@kingcounty.gov') \n"),
-                                                   "When prompted, be sure to enter the same password that you use to log into to your laptop. \n",
-                                                   "If you already have an hhsaw key on your keyring with a different name, you can specify it with the 'mykey = ...' argument \n"))
-    rm(trykey)
-
-    if(server == FALSE){
-      con <- try(con <- DBI::dbConnect(odbc::odbc(),
-                                       driver = getOption('rads.odbc_version'),
-                                       server = 'kcitazrhpasqlprp16.azds.kingcounty.gov',
-                                       database = 'hhs_analytics_workspace',
-                                       uid = keyring::key_list(mykey)[["username"]],
-                                       pwd = keyring::key_get(mykey, keyring::key_list(mykey)[["username"]]),
-                                       Encrypt = 'yes',
-                                       TrustServerCertificate = 'yes',
-                                       Authentication = 'ActiveDirectoryPassword'), silent = T)
-      if (inherits(con, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured and is likely to have an outdated password. \n",
-                                                  "Please reset your keyring and run the get_population() function again. \n",
-                                                  paste0("e.g., keyring::key_set('", mykey, "', username = 'ALastname@kingcounty.gov') \n"),
-                                                  "When prompted, be sure to enter the same password that you use to log into to your laptop."))
-    }else{
-      message(paste0('Please enter the password you use for your laptop into the pop-up window. \n',
-                     'Note that the pop-up may be behind your Rstudio session. \n',
-                     'You will need to use your two factor authentication app to confirm your KC identity.'))
-      con <- DBI::dbConnect(odbc::odbc(),
-                            driver = getOption('rads.odbc_version'),
-                            server = "kcitazrhpasqlprp16.azds.kingcounty.gov",
-                            database = "hhs_analytics_workspace",
-                            uid = keyring::key_list(mykey)[["username"]],
-                            Encrypt = "yes",
-                            TrustServerCertificate = "yes",
-                            Authentication = "ActiveDirectoryInteractive")
-    }
-
-    on.exit(DBI::dbDisconnect(con))
-
-  }else if(is.db(mykey)){
-    closeserver = FALSE
-    con = mykey
-
-
-
-  }else{
-    stop('`mykey` is not a reference to database connection or keyring')
-  }
+    con <- validate_hhsaw_key(hhsaw_key = mykey)
 
   ## validate census_vintage ----
   census_vintage = validate_input('census_vintage', census_vintage, c(2010, 2020))
