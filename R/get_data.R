@@ -150,6 +150,11 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_
 #'     See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.
 #' @param year Numeric vector. Identifies which year(s) of data should be pulled. Defaults to the most recent year.
 #' @param kingco logical. Return dataset for analyses where mother's residence is in King County only.
+#' @param mykey Character vector of length 1 OR a database connection. Identifies
+#' the keyring:: key that can be used to access the Health & Human Services
+#' Analytic Workspace (HHSAW).
+#'
+#' Default == 'hhsaw'
 #'
 #' @return dataset either data.table (adminstrative data) for further analysis/tabulation
 #'
@@ -159,75 +164,70 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_
 #' @examples
 #'
 #' \dontrun{
-#'  get_data_birth(cols = NA, year = c(2015, 2016, 2017), kingco = F)
+#'  get_data_birth(cols = NA, year = c(2015, 2016, 2017), kingco = F, mykey = 'hhsaw')
 #' }
 get_data_birth <- function(cols = NA,
                            year = NA,
-                           kingco = T){
+                           kingco = T,
+                           mykey = 'hhsaw'){
   if(is.null(cols)) cols <- NA
   if(is.null(year)) year <- NA
 
-  # validate arguments
-  if(!(length(cols) == 1 && is.na(cols))){
-    if(!is.character(cols)){stop('\n\U0001f6d1 `cols` must specify a vector of variables or be NA (to get all possible columns).')}
-  }
-  if(!(length(year) == 1 && is.na(year))){
-    if( (!is.numeric(year)) | sum(year%%1) != 0 ) {stop('\n\U0001f6d1 `year` must specify a vector of integers (e.g., c(2017, 2019)) or be NA (to get the most recent year).')}
-  }
-  if((length(kingco) == 1 && is.na(kingco)) | !is.logical(kingco)){stop('\n\U0001f6d1 `kingco` must be a logical (TRUE | FALSE, or equivalently, T | F).')}
+  # validate arguments other than mykey ----
+    if(!(length(cols) == 1 && is.na(cols))){
+      if(!is.character(cols)){stop('\n\U0001f6d1 `cols` must specify a vector of variables or be NA (to get all possible columns).')}
+    }
+    if(!(length(year) == 1 && is.na(year))){
+      if( (!is.numeric(year)) | sum(year%%1) != 0 ) {stop('\n\U0001f6d1 `year` must specify a vector of integers (e.g., c(2017, 2019)) or be NA (to get the most recent year).')}
+    }
+    if((length(kingco) == 1 && is.na(kingco)) | !is.logical(kingco)){stop('\n\U0001f6d1 `kingco` must be a logical (TRUE | FALSE, or equivalently, T | F).')}
 
+  # validate mykey ----
+    con <- validate_hhsaw_key(hhsaw_key = mykey)
 
-  # get list of all colnames from SQL
-  con <- odbc::dbConnect(odbc::odbc(),
-                         Driver = getOption('rads.odbc_version'),
-                         Server = "KCITSQLPRPDBM50",
-                         Database = "PH_APDEStore",
-                         Encrypt = 'yes',
-                         TrustServerCertificate = 'yes',
-                         Authentication = 'ActiveDirectoryIntegrated',
-                         encoding = 'latin1')
-  birth.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[final].[bir_wa]"))
-  birth.years <- unique(DBI::dbGetQuery(con, "SELECT DISTINCT chi_year FROM [PH_APDEStore].[final].[bir_wa]")$chi_year)
+  # get list of all colnames from SQL ----
+    birth.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [birth].[final_analytic]"))
+    birth.years <- unique(DBI::dbGetQuery(con, "SELECT DISTINCT chi_year FROM [birth].[final_analytic]")$chi_year)
 
-  # identify columns and years to pull from SQL
-  if(!all(is.na(cols))){
-    invalid.cols <- setdiff(cols, birth.names)
-    valid.cols <- intersect(birth.names, cols)
-    if(length(valid.cols) > 0){cols <- paste(valid.cols, collapse=", ")}
-    if(length(valid.cols) == 0){stop("Birth data cannot be extracted because no valid column names have been submitted. To get all columns, use the argument 'cols = NA'")}
-    if(length(invalid.cols) > 0){message(paste0("The following column names do not exist in the birth data and have not been extracted: ", paste0(invalid.cols, collapse = ", ")))}
-  }
-  if(all(is.na(cols))){cols <- "*"}
+  # identify columns and years to pull from SQL ----
+    if(!all(is.na(cols))){
+      invalid.cols <- setdiff(cols, birth.names)
+      valid.cols <- intersect(birth.names, cols)
+      if(length(valid.cols) > 0){cols <- glue::glue_sql_collapse(valid.cols, sep=", ")}
+      if(length(valid.cols) == 0){stop("Birth data cannot be extracted because no valid column names have been submitted. To get all columns, use the argument 'cols = NA'")}
+      if(length(invalid.cols) > 0){message(paste0("The following column names do not exist in the birth data and have not been extracted: ", paste0(invalid.cols, collapse = ", ")))}
+    }
+    if(all(is.na(cols))){cols <- "*"}
 
-    if(length(year) == 1 && is.na(year)){
-      year = max(birth.years)
-      message(paste0("You did not specify a year so the most recent available year, ", max(birth.years), ", was selected for you. Available years include ", format_time(birth.years)))}
-    invalid.year <- setdiff(year, birth.years)
-    year <- intersect(year, birth.years)
-    if(length(year) == 0){stop(paste0("Birth data cannot be extracted because no valid years have been provided. Valid years include: ", format_time(birth.years)))}
-    if(length(invalid.year)>0){message(paste0("The following years do not exist in the birth data and have not been extracted: ", format_time(invalid.year)))}
+      if(length(year) == 1 && is.na(year)){
+        year = max(birth.years)
+        message(paste0("You did not specify a year so the most recent available year, ", max(birth.years), ", was selected for you. Available years include ", format_time(birth.years)))}
+      invalid.year <- setdiff(year, birth.years)
+      year <- intersect(year, birth.years)
+      if(length(year) == 0){stop(paste0("Birth data cannot be extracted because no valid years have been provided. Valid years include: ", format_time(birth.years)))}
+      if(length(invalid.year)>0){message(paste0("The following years do not exist in the birth data and have not been extracted: ", format_time(invalid.year)))}
 
-  # pull columns and years from SQL
-  query.string <- glue:: glue_sql ("SELECT ",  cols, " FROM [PH_APDEStore].[final].[bir_wa]
-                                   WHERE chi_year IN (",  paste(year, collapse=", "), ")")
+  # pull columns and years from SQL ----
+    validyears <- glue::glue_sql_collapse(year, sep=", ")
 
-  if(kingco == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 'King County'")}
+    query.string <- glue:: glue_sql ("SELECT {cols} FROM [birth].[final_analytic]
+                                       WHERE chi_year IN ({validyears})", .con = con)
 
+    if(kingco == T){query.string <- glue::glue_sql(query.string, " AND chi_geo_kc = 'King County'")}
 
-  dat <- data.table::setDT(DBI::dbGetQuery(con, query.string))
-  odbc::dbDisconnect(con)
+    dat <- data.table::setDT(DBI::dbGetQuery(con, query.string))
 
-  # Format string variables due to SQL import quirks
-  original.order <- names(dat)
-  sql_clean(dat, stringsAsFactors = TRUE) # clean random white spaces and change strings to factors
+  # Format string variables due to SQL import quirks ----
+    original.order <- names(dat)
+    sql_clean(dat, stringsAsFactors = TRUE) # clean random white spaces and change strings to factors
 
+  # reorder table----
+    setcolorder(dat, original.order)
 
-  # reorder table
-  setcolorder(dat, original.order)
+    setDT(dat) # set it as a data.table again b/c otherwise, ascribing the new class above makes a copy
 
-  setDT(dat) # set it as a data.table again b/c otherwise, ascribing the new class above makes a copy
-
-  return(dat)
+  # return object ----
+    return(dat)
 }
 
 
@@ -343,8 +343,6 @@ get_data_death <- function(cols = NA,
 
       datevars <- DBI::dbGetQuery(con, "SELECT ColumnName FROM [death].[crosswalk_fields] WHERE ColumnType = 'Date'")[]$ColumnName
       datevars <- intersect(datevars, names(dat)) # names of all date variables that are in actual dataset
-
-      # odbc::dbDisconnect(con)
 
   # Top code age (if wanted) ----
       if( 'chi_age' %in% cols | 'chi_age' %in% names(dat) ){

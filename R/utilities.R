@@ -1085,15 +1085,8 @@ list_dataset_columns <- function(dataset, year = 2021, mykey = 'hhsaw', analytic
   if(dataset == "birth") {
     #message("Column names for birth data are taken from all available years.")
     # get list of all colnames from SQL
-    con <- odbc::dbConnect(odbc::odbc(),
-                           driver = getOption('rads.odbc_version'),
-                           server = "KCITSQLPRPDBM50",
-                           database = "PH_APDEStore",
-                           Encrypt = 'yes',
-                           TrustServerCertificate = 'yes',
-                           Authentication = 'ActiveDirectoryIntegrated',
-                           encoding = 'latin1')
-    var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[final].[bir_wa]"))
+    con <- validate_hhsaw_key(hhsaw_key = mykey)
+    var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [birth].[final_analytic]"))
     ar = rep(TRUE, length(var.names))
   }
   if(dataset == "chars") {
