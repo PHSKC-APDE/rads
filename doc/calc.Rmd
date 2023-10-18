@@ -220,7 +220,7 @@ print(test1)
 -   `denominator`: The number of rows in the the dataset where the 'what' variable can be assessed because it is not missing, compare to `nrow(pums[!is.na(chi_geo_seattle)])`
 -   `obs`: The number of rows in the dataset after filtering by the 'where' argument.
 
-To highlight the difference between `denominator` and `total`, in this next example we introduce 100 missing values to our 'what' variable (chi_geo_seattle), thereby lowering the denominator by 100 but leaving the obs the same as above.
+To highlight the difference between `denominator` and `obs`, in this next example we introduce 100 missing values to our 'what' variable (chi_geo_seattle), thereby lowering the denominator by 100 but leaving the obs the same as above.
 
 ```{r, warning=FALSE}
 pums2 <- copy(pums)

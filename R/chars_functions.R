@@ -23,8 +23,8 @@
 #'
 #' @source
 #' Derived from columns beginning with `mechanism_` and `intent_` in
-#' KCITSQLUTPDBH51.PH_APDEStore.chars.final_analytic that were
-#' created during the CHARS ETL process.
+#' Azure Server 16 (chars.final_analytic) that were created during the CHARS
+#' ETL process.
 #'
 #' @return
 #' A data.table with two columns: \code{mechanism} & \code{intent}. The number
@@ -49,11 +49,8 @@ chars_injury_matrix<- function(){
   chars_injury_matrix_list <- mechanism <- intent <-  NULL
 
   # get column names from SQL table
-  con <- odbc::dbConnect(odbc::odbc(),
-                         Driver = "SQL Server",
-                         Server = "KCITSQLUTPDBH51",
-                         Database = "PH_APDEStore")
-  chars.names <- names(DBI::dbGetQuery(con, "SELECT TOP (0) * FROM [PH_APDEStore].[chars].[final_analytic]"))
+  con <- validate_hhsaw_key('hhsaw')
+  chars.names <- names(DBI::dbGetQuery(con, "SELECT TOP (0) * FROM [chars].[final_analytic]"))
 
   # create a matrix of every possible mechanism and intent
   chars_injury_matrix_list = unique(data.table::setDT(expand.grid(
@@ -284,8 +281,8 @@ chars_injury_matrix_count<- function(ph.data = NULL,
         if (isTRUE(kingco)){ph.data <- ph.data[chi_geo_kc == "King County"]}
 
   # Apply narrow or broad definition ----
-      if(def == 'narrow'){ph.data <- ph.data[injury_nature_narrow == T & !is.na(injury_ecode)]}
-      if(def == 'broad'){ph.data <- ph.data[injury_nature_broad == T & !is.na(injury_ecode)]}
+      if(def == 'narrow'){ph.data <- ph.data[injury_nature_narrow == T & !is.na(injury_intent) & !is.na(injury_mechanism)]}
+      if(def == 'broad'){ph.data <- ph.data[injury_nature_broad == T & !is.na(injury_intent) & !is.na(injury_mechanism)]}
 
   # Get complete list of all possible mechanisms and intents ----
       possible.intents <- c(as.character(unique(chars_injury_matrix()$intent)), 'ignore')

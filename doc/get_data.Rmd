@@ -22,7 +22,7 @@ Begin by loading the [`rads`](https://github.com/PHSKC-APDE/rads) package/librar
 library(rads)
 ```
 
-The analytic ready birth data is stored in on KCIT SQL Server 50 (`[PH_APDEStore].[final].[bir_wa]`). The `get_data_birth()` function will allow you to pull data from the SQL server with minimal fuss. To see the possible arguments that you can pass, use the `args()` function by typing the following:
+The analytic ready birth data is stored in on Azure Server 16 (`[birth].[final_analytic]`). The `get_data_birth()` function will allow you to pull data from the SQL server with minimal fuss. To see the possible arguments that you can pass, use the `args()` function by typing the following:
 
 ```{r}
 args(get_data_birth)

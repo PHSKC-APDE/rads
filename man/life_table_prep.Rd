@@ -34,15 +34,15 @@ The default == c(0, 1, 5, 10, 15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65,
 the decedents date of birth. The referenced column must be of class
 'date' or class 'character' in the format "YYYY-MM-DD" or "YYYY/MM/DD."
 
-The default == "date_of_birth", which is the dob variable in SQL (PH_APDEStore.
-death.final_stat).}
+The default == "date_of_birth", which is the dob variable in Azure server 16
+(death.final_analytic).}
 
 \item{dodvar}{character vector of length one identifying a column with the
 the decedents date of death. The referenced column must be of class
 'date' or class 'character' in the format "YYYY-MM-DD" or "YYYY/MM/DD."
 
-The default == "date_of_death", which is the dod variable in SQL (PH_APDEStore.
-death.final_stat).}
+The default == "date_of_death", which is the dod variable in Azure server 16
+((death.final_analytic)).}
 }
 \value{
 a data.table with deaths aggregated by any demographics included in
