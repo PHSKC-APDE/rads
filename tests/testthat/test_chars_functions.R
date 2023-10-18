@@ -179,7 +179,7 @@ library('testthat')
   # test primary_ecode argument ----
     # when TRUE, total of any intent & any mechanism should be same as total of all specific mechanisms and causes
     chars10 <- chars_injury_matrix_count(ph.data = charsdt, mechanism = '*', intent = '*', def = 'narrow', primary_ecode = T)
-    chars10 <- chars10[mechanism!='motor_vehicle_traffic']
+    chars10 <- chars10[mechanism!='motor_vehicle_traffic'] # remove motor_vehcicle_traffic b/c created by RADS based on other vars
     expect_equal(sum(chars10[intent == 'Any intent' & mechanism == 'Any mechanism']$hospitalizations),
                  sum(chars10[intent != 'Any intent' & mechanism != 'Any mechanism']$hospitalizations) )
 
