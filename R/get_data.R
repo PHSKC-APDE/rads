@@ -148,15 +148,28 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_
 #'
 #' @param cols Character vector of length >=1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
 #'     See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.
+#'
+#' Default = NA
+#'
 #' @param year Numeric vector. Identifies which year(s) of data should be pulled. Defaults to the most recent year.
-#' @param kingco logical. Return dataset for analyses where mother's residence is in King County only.
-#' @param mykey Character vector of length 1 OR a database connection. Identifies
-#' the keyring:: key that can be used to access the Health & Human Services
+#'
+#' Default = most recent year only
+#'
+#' @param kingco Logical. Return dataset for analyses where mother's residence is in King County only.
+#'
+#' Default = T
+#'
+#' @param version Character vector of length 1. Either 'final' or 'stage'.
+#'
+#' Default = 'final'
+#'
+#' @param mykey Character vector of length 1. Identifies
+#' the keyring:: 'service' name that can be used to access the Health & Human Services
 #' Analytic Workspace (HHSAW).
 #'
 #' Default == 'hhsaw'
 #'
-#' @return dataset either data.table (adminstrative data) for further analysis/tabulation
+#' @return a single data.table
 #'
 #' @import data.table
 #' @export
@@ -164,11 +177,16 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_
 #' @examples
 #'
 #' \dontrun{
-#'  get_data_birth(cols = NA, year = c(2015, 2016, 2017), kingco = F, mykey = 'hhsaw')
+#'  get_data_birth(cols = NA,
+#'  year = c(2015, 2016, 2017),
+#'  kingco = F,
+#'  version = 'final',
+#'  mykey = 'hhsaw')
 #' }
 get_data_birth <- function(cols = NA,
                            year = NA,
                            kingco = T,
+                           version = 'final',
                            mykey = 'hhsaw'){
   if(is.null(cols)) cols <- NA
   if(is.null(year)) year <- NA
@@ -181,15 +199,21 @@ get_data_birth <- function(cols = NA,
       if( (!is.numeric(year)) | sum(year%%1) != 0 ) {stop('\n\U0001f6d1 `year` must specify a vector of integers (e.g., c(2017, 2019)) or be NA (to get the most recent year).')}
     }
     if((length(kingco) == 1 && is.na(kingco)) | !is.logical(kingco)){stop('\n\U0001f6d1 `kingco` must be a logical (TRUE | FALSE, or equivalently, T | F).')}
+    if(length(version) != 1){stop("\n\U0001f6d1 `version` must have a single value, either 'final' or 'stage'.")}
+    if((length(version) == 1 && is.na(version)) | !version %in% c('final', 'stage')){stop("\n\U0001f6d1 `version` must have the value 'final' or 'stage'.")}
 
   # validate mykey ----
     con <- validate_hhsaw_key(hhsaw_key = mykey)
 
+  # create SQL table name ----
+    mysqltable <- glue::glue_sql('[birth].[', {version}, '_analytic]')
+
   # get list of all colnames from SQL ----
-    birth.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [birth].[final_analytic]"))
-    birth.years <- unique(DBI::dbGetQuery(con, "SELECT DISTINCT chi_year FROM [birth].[final_analytic]")$chi_year)
+    birth.names <- tolower(names(DBI::dbGetQuery(con, glue::glue_sql("SELECT top (0) * FROM  {mysqltable}"))))
+    birth.years <- unique(DBI::dbGetQuery(con, glue::glue_sql("SELECT DISTINCT chi_year FROM {mysqltable}"))$chi_year)
 
   # identify columns and years to pull from SQL ----
+    cols <- tolower(cols)
     if(!all(is.na(cols))){
       invalid.cols <- setdiff(cols, birth.names)
       valid.cols <- intersect(birth.names, cols)
@@ -210,10 +234,9 @@ get_data_birth <- function(cols = NA,
   # pull columns and years from SQL ----
     validyears <- glue::glue_sql_collapse(year, sep=", ")
 
-    query.string <- glue:: glue_sql ("SELECT {cols} FROM [birth].[final_analytic]
-                                       WHERE chi_year IN ({validyears})", .con = con)
+    query.string <- paste0("SELECT ", paste0(cols, collapse = ', '), " FROM ", mysqltable, " WHERE chi_year IN (", paste0(validyears, collapse = ', '), ")")
 
-    if(kingco == T){query.string <- glue::glue_sql(query.string, " AND chi_geo_kc = 'King County'")}
+    if(kingco == T){query.string <- paste0(query.string, " AND chi_geo_kc = 'King County'")}
 
     dat <- data.table::setDT(DBI::dbGetQuery(con, query.string))
 
@@ -241,21 +264,26 @@ get_data_birth <- function(cols = NA,
 #' @param year Numeric vector. Identifies which years of data should be pulled. Defaults to the most recent year.
 #'
 #' Default = most recent year only
+#'
 #' @param kingco logical. Return dataset for analyses where county of decedent's residence is King County.
 #'
 #' Default = T
+#'
+#' @param version Character vector of length 1. Either 'final' or 'stage'.
+#'
+#' Default = 'final'
 #'
 #' @param topcode logical. Do you want to top code chi_age at 100 to match population data?
 #'
 #' Default = T
 #'
-#' @param mykey Character vector of length 1 OR a database connection. Identifies
-#' the keyring:: key that can be used to access the Health & Human Services
+#' @param mykey Character vector of length 1. Identifies
+#' the keyring:: 'service' name that can be used to access the Health & Human Services
 #' Analytic Workspace (HHSAW).
 #'
 #' Default == 'hhsaw'
 #'
-#' @return data.table (adminstrative data) for further analysis/tabulation
+#' @return a single data.table
 #'
 #' @import data.table
 #' @import DBI
@@ -266,11 +294,17 @@ get_data_birth <- function(cols = NA,
 #' @examples
 #'
 #' \dontrun{
-#'  get_data_death(cols = NA, year = c(2019), kingco = T, topcode = F, mykey = 'hhsaw')
+#'  get_data_death(cols = NA,
+#'  year = c(2019),
+#'  kingco = T,
+#'  version = 'final',
+#'  topcode = F,
+#'  mykey = 'hhsaw')
 #' }
 get_data_death <- function(cols = NA,
                            year = NA,
                            kingco = T,
+                           version = 'final',
                            topcode = T,
                            mykey = 'hhsaw'){
 
@@ -293,11 +327,15 @@ get_data_death <- function(cols = NA,
   # Validate mykey ----
       con <- validate_hhsaw_key(hhsaw_key = mykey)
 
+  # create SQL table name
+    mysqltable <- glue::glue_sql('[death].[', {version}, '_analytic]')
+
   # Get list of all colnames from SQL ----
-      death.names <- names(DBI::dbGetQuery(con, "SELECT TOP (0) * FROM [death].[final_analytic]"))
-      death.years <- sort(unique(DBI::dbGetQuery(con, "SELECT DISTINCT chi_year FROM [death].[final_analytic]")$chi_year))
+      death.names <- tolower(names(DBI::dbGetQuery(con, glue::glue_sql("SELECT TOP (0) * FROM {mysqltable}"))))
+      death.years <- sort(unique(DBI::dbGetQuery(con, glue::glue_sql("SELECT DISTINCT chi_year FROM {mysqltable}"))$chi_year))
 
   # Identify columns and years to pull from SQL ----
+      cols <- tolower(cols)
       if(!all(is.na(cols))){
         # for custom CHI/CHNA vars
         original.cols <- copy(cols)
@@ -334,10 +372,9 @@ get_data_death <- function(cols = NA,
 
   # Pull columns and years from SQL ----
       validyears <- glue::glue_sql_collapse(year, sep=", ")
-      query.string <- glue:: glue_sql ("SELECT {cols} FROM [death].[final_analytic]
-                                       WHERE chi_year IN ({validyears})", .con = con)
+      query.string <- paste0("SELECT ", paste0(cols, collapse = ', '), " FROM ", mysqltable, " WHERE chi_year IN (", paste0(validyears, collapse = ', '), ")")
 
-      if(kingco == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 1")}
+      if(kingco == T){query.string <- paste0(query.string, " AND chi_geo_kc = 1")}
 
       dat <- data.table::setDT(DBI::dbGetQuery(con, query.string))
 
@@ -464,6 +501,10 @@ get_data_death <- function(cols = NA,
 #'
 #' Default = T
 #'
+#' @param version Character vector of length 1. Either 'final' or 'stage'.
+#'
+#' Default = 'final'
+#'
 #' @param inpatient logical. Return dataset for inpatients only. When FALSE includes observation patients.
 #'
 #' Default = T
@@ -477,13 +518,13 @@ get_data_death <- function(cols = NA,
 #'
 #' Default = T
 #'
-#' @param mykey Character vector of length 1 OR a database connection. Identifies
-#' the keyring:: key that can be used to access the Health & Human Services
+#' @param mykey Character vector of length 1. Identifies
+#' the keyring:: 'service' name that can be used to access the Health & Human Services
 #' Analytic Workspace (HHSAW).
 #'
 #' Default == 'hhsaw'
 #'
-#' @return data.table (adminstrative data) for further analysis/tabulation
+#' @return a single data.table
 #'
 #' @import data.table
 #' @import DBI
@@ -498,6 +539,7 @@ get_data_death <- function(cols = NA,
 #'                 year = c(2020),
 #'                 kingco = T,
 #'                 wastate = T,
+#'                 version = 'final',
 #'                 inpatient = T,
 #'                 deaths = F,
 #'                 topcode = F,
@@ -506,6 +548,7 @@ get_data_death <- function(cols = NA,
 get_data_chars <- function(cols = NA,
                            year = NA,
                            kingco = T,
+                           version = 'final',
                            wastate = T,
                            inpatient = T,
                            deaths = T,
@@ -533,11 +576,15 @@ get_data_chars <- function(cols = NA,
   # Validate mykey ----
     con <- validate_hhsaw_key(hhsaw_key = mykey)
 
+  # create SQL table name ----
+    mysqltable <- glue::glue_sql('[chars].[', {version}, '_analytic]')
+
   # Get list of all colnames from SQL ----
-      chars.names <- names(DBI::dbGetQuery(con, "SELECT TOP (0) * FROM [chars].[final_analytic]"))
-      chars.years <- sort(unique(DBI::dbGetQuery(con, "SELECT DISTINCT chi_year FROM [chars].[final_analytic]")$chi_year))
+      chars.names <- tolower(names(DBI::dbGetQuery(con, glue::glue_sql("SELECT TOP (0) * FROM {mysqltable}"))))
+      chars.years <- sort(unique(DBI::dbGetQuery(con, glue::glue_sql("SELECT DISTINCT chi_year FROM {mysqltable}"))$chi_year))
 
   # Identify columns and years to pull from SQL ----
+      cols <- tolower(cols)
       if(!all(is.na(cols))){
         # for custom CHI/CHNA vars
           original.cols <- copy(cols)
@@ -572,8 +619,7 @@ get_data_chars <- function(cols = NA,
 
   # Pull columns and years from SQL ----
       validyears <- glue::glue_sql_collapse(year, sep=", ")
-      query.string <- glue:: glue_sql ("SELECT {cols} FROM [PH_APDEStore].[chars].[final_analytic]
-                                       WHERE chi_year IN ({validyears})", .con = con)
+      query.string <- paste0("SELECT ", paste0(cols, collapse = ', '), " FROM ", mysqltable, " WHERE chi_year IN (", paste0(validyears, collapse = ', '), ")")
 
       if(inpatient == T){query.string <- glue:: glue_sql (query.string, " AND STAYTYPE = 1")}
       if(deaths == F){query.string <- glue:: glue_sql (query.string, " AND STATUS != 20")} # 20 means Expired / did not recover

@@ -8,6 +8,7 @@ get_data_chars(
   cols = NA,
   year = NA,
   kingco = T,
+  version = "final",
   wastate = T,
   inpatient = T,
   deaths = T,
@@ -33,6 +34,10 @@ When \code{kingco = 'zip'}, returns a dataset where the patient county is King C
 
 Default = T}
 
+\item{version}{Character vector of length 1. Either 'final' or 'stage'.
+
+Default = 'final'}
+
 \item{wastate}{logical. Return dataset for Washington State CHARS data only. When FALSE includes Oregon.
 
 Default = T}
@@ -50,14 +55,14 @@ Default = T}
 
 Default = T}
 
-\item{mykey}{Character vector of length 1 OR a database connection. Identifies
-the keyring:: key that can be used to access the Health & Human Services
+\item{mykey}{Character vector of length 1. Identifies
+the keyring:: 'service' name that can be used to access the Health & Human Services
 Analytic Workspace (HHSAW).
 
 Default == 'hhsaw'}
 }
 \value{
-data.table (adminstrative data) for further analysis/tabulation
+a single data.table
 }
 \description{
 Get CHARS (Comprehensive Hospital Abstract Reporting System) microdata from storage.
@@ -69,6 +74,7 @@ Get CHARS (Comprehensive Hospital Abstract Reporting System) microdata from stor
                 year = c(2020),
                 kingco = T,
                 wastate = T,
+                version = 'final',
                 inpatient = T,
                 deaths = F,
                 topcode = F,

@@ -4,18 +4,40 @@
 \alias{get_data_birth}
 \title{Get Birth microdata from storage.}
 \usage{
-get_data_birth(cols = NA, year = NA, kingco = T)
+get_data_birth(
+  cols = NA,
+  year = NA,
+  kingco = T,
+  version = "final",
+  mykey = "hhsaw"
+)
 }
 \arguments{
 \item{cols}{Character vector of length >=1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
-See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.}
+See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.
 
-\item{year}{Numeric vector. Identifies which year(s) of data should be pulled. Defaults to the most recent year.}
+Default = NA}
 
-\item{kingco}{logical. Return dataset for analyses where mother's residence is in King County only.}
+\item{year}{Numeric vector. Identifies which year(s) of data should be pulled. Defaults to the most recent year.
+
+Default = most recent year only}
+
+\item{kingco}{Logical. Return dataset for analyses where mother's residence is in King County only.
+
+Default = T}
+
+\item{version}{Character vector of length 1. Either 'final' or 'stage'.
+
+Default = 'final'}
+
+\item{mykey}{Character vector of length 1. Identifies
+the keyring:: 'service' name that can be used to access the Health & Human Services
+Analytic Workspace (HHSAW).
+
+Default == 'hhsaw'}
 }
 \value{
-dataset either data.table (adminstrative data) for further analysis/tabulation
+a single data.table
 }
 \description{
 Get Birth microdata from storage.
@@ -23,6 +45,10 @@ Get Birth microdata from storage.
 \examples{
 
 \dontrun{
- get_data_birth(cols = NA, year = c(2015, 2016, 2017), kingco = F)
+ get_data_birth(cols = NA,
+ year = c(2015, 2016, 2017),
+ kingco = F,
+ version = 'final',
+ mykey = 'hhsaw')
 }
 }
