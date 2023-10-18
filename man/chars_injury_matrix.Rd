@@ -5,8 +5,8 @@
 \title{View available combinations of CHARS injury mechanisms and intents}
 \source{
 Derived from columns beginning with \code{mechanism_} and \code{intent_} in
-KCITSQLUTPDBH51.PH_APDEStore.chars.final_analytic that were
-created during the CHARS ETL process.
+Azure Server 16 (chars.final_analytic) that were created during the CHARS
+ETL process.
 }
 \usage{
 chars_injury_matrix()
