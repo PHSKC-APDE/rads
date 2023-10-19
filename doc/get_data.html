@@ -175,6 +175,12 @@ table, .body h2 { border-bottom: 1px solid #666; }
 <li>
 <p><code>kingco</code> &lt;&lt; a logical argument (i.e., <code>T</code> or <code>F</code> only, without quotes) denoting whether or not the data should be limited to King County. The default is King County only.</p>
 </li>
+<li>
+<p><code>version</code> &lt;&lt; a character vector (either ‘final’ or ‘stage’). The default is ‘final’.</p>
+</li>
+<li>
+<p><code>mykey</code> &lt;&lt; a character vector of length 1. Identifies the keyring:: ‘service’ name that can be used to access the Health &amp; Human Services Analytic Workspace (HHSAW). The default is ‘hhsaw’.</p>
+</li>
 </ol>
 <p>Let’s try the function to see how it works by loading the year and King County columns for WA State in 2019:</p>
 <pre><code class="language-r">birth &lt;- get_data_birth(cols = c(&quot;chi_year&quot;, &quot;chi_geo_kc&quot;), year = c(2019), kingco = F)
