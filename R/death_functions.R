@@ -2116,15 +2116,15 @@ life_table <- function(ph.data = NULL,
 #' the decedents date of birth. The referenced column must be of class
 #' 'date' or class 'character' in the format "YYYY-MM-DD" or "YYYY/MM/DD."
 #'
-#' The default == "date_of_birth", which is the dob variable in SQL (PH_APDEStore.
-#' death.final_stat).
+#' The default == "date_of_birth", which is the dob variable in Azure server 16
+#' (death.final_analytic).
 #'
 #' @param dodvar character vector of length one identifying a column with the
 #' the decedents date of death. The referenced column must be of class
 #' 'date' or class 'character' in the format "YYYY-MM-DD" or "YYYY/MM/DD."
 #'
-#' The default == "date_of_death", which is the dod variable in SQL (PH_APDEStore.
-#' death.final_stat).
+#' The default == "date_of_death", which is the dod variable in Azure server 16
+#' ((death.final_analytic)).
 #'
 #' @return a data.table with deaths aggregated by any demographics included in
 #' DTx as well as `ages` (age strata), `deaths` (deaths per demographic group

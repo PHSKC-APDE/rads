@@ -1052,6 +1052,11 @@ list_apde_data <- function(){
 #'
 #' @param dataset Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options
 #' @param year Year of dataset to check.
+#' @param mykey Character vector of length 1 OR a database connection. Identifies
+#' the keyring:: key that can be used to access the Health & Human Services
+#' Analytic Workspace (HHSAW).
+#'
+#' Default == 'hhsaw'
 #' @param analytic_only logical. Controls whether columns outside the analytic dataset should be returned.
 #'
 #'
@@ -1063,7 +1068,7 @@ list_apde_data <- function(){
 #' \dontrun{
 #'  list_dataset_columns('hys', T)
 #' }
-list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
+list_dataset_columns <- function(dataset, year = 2021, mykey = 'hhsaw', analytic_only = F){
   colname <- NULL
   # create a negate function of %in% for readability
   '%!in%' = Negate('%in%')
@@ -1080,46 +1085,25 @@ list_dataset_columns <- function(dataset, year = 2021, analytic_only = F){
   if(dataset == "birth") {
     #message("Column names for birth data are taken from all available years.")
     # get list of all colnames from SQL
-    con <- odbc::dbConnect(odbc::odbc(),
-                           driver = getOption('rads.odbc_version'),
-                           server = "KCITSQLPRPDBM50",
-                           database = "PH_APDEStore",
-                           Encrypt = 'yes',
-                           TrustServerCertificate = 'yes',
-                           Authentication = 'ActiveDirectoryIntegrated',
-                           encoding = 'latin1')
-    var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[final].[bir_wa]"))
+    con <- validate_hhsaw_key(hhsaw_key = mykey)
+    var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [birth].[final_analytic]"))
     ar = rep(TRUE, length(var.names))
   }
   if(dataset == "chars") {
     #message("Column names for birth data are taken from all available years.")
     # get list of all colnames from SQL
-    con <- odbc::dbConnect(odbc::odbc(),
-                           driver = getOption('rads.odbc_version'),
-                           server = "KCITSQLUTPDBH51",
-                           database = "PH_APDEStore",
-                           Encrypt = 'yes',
-                           TrustServerCertificate = 'yes',
-                           Authentication = 'ActiveDirectoryIntegrated',
-                           encoding = 'latin1')
-    var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[chars].[final_analytic]"))
-    bonus.CHI.names <- c('wastate', 'yage4', 'age6', 'pov200grp', 'race3', 'race4')
+    con <- validate_hhsaw_key(hhsaw_key = mykey)
+    var.names <- names(DBI::dbGetQuery(con, "SELECT TOP (0) * FROM [chars].[final_analytic]"))
+    bonus.CHI.names <- c('wastate', 'yage4', 'age6', 'race3', 'race4')
     var.names <- tolower(sort(c(var.names, bonus.CHI.names)))
     ar = rep(TRUE, length(var.names))
   }
   if(dataset == "death") {
     #message("Column names for birth data are taken from all available years.")
     # get list of all colnames from SQL
-    con <- odbc::dbConnect(odbc::odbc(),
-                           driver = getOption('rads.odbc_version'),
-                           server = "KCITSQLUTPDBH51",
-                           database = "PH_APDEStore",
-                           Encrypt = 'yes',
-                           TrustServerCertificate = 'yes',
-                           Authentication = 'ActiveDirectoryIntegrated',
-                           encoding = 'latin1')
-    var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[death].[final_analytic]"))
-    bonus.CHI.names <- c('wastate', 'age6', 'pov200grp', 'race3', 'race4', 'bigcities', 'hra20_name', 'chi_geo_region')
+    con <- validate_hhsaw_key(hhsaw_key = mykey)
+    var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [death].[final_analytic]"))
+    bonus.CHI.names <- c('wastate', 'age6', 'race3', 'race4', 'bigcities', 'hra20_name', 'chi_geo_region')
     var.names <- tolower(sort(c(var.names, bonus.CHI.names)))
     ar = rep(TRUE, length(var.names))
   }
@@ -1571,4 +1555,95 @@ quiet <- function(myf) {
   sink(tempfile())
   on.exit(sink())
   invisible(force(myf))
+}
+
+
+# validate_hhsaw_key() ----
+#' Validate HHSAW keys and connect (if possible)
+#'
+#' @description
+#' Validates keyring:: `service` name and the corresponding password. If they
+#' are valid, it creates a database connection.
+#'
+#' @param hhsaw_key Character vector of length 1.
+#'
+#' Identifies the name of the keyring:: `service` that will be used to connect
+#' to HHSAW (dbname = hhs_analytics_workspace on server = kcitazrhpasqlprp16).
+#'
+#' To see the `service` options  you have on your local machine type `keyring::key_list()`
+#'
+#' Default = 'hhsaw'
+#'
+#' @return a database connection
+#'
+#' @import DBI
+#' @import keyring
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#'  myConnection <- validate_hhsaw_key(hhsaw_key = 'hhsaw')
+#' }
+
+validate_hhsaw_key <- function(hhsaw_key = 'hhsaw'){
+  # Key should be a character string that can be used to generate a database connection
+  # Also have to allow for the option of interactive authentication
+  # TODO: Allow hhsaw_key to be a database connection itself
+  is.db = function(x){
+    r = try(dbIsValid(hhsaw_key))
+    if(inherits(r, 'try-error')){
+      r = FALSE
+    }
+  }
+  closeserver = TRUE
+  if(is.character(hhsaw_key)){
+    server <- grepl('server', tolower(Sys.info()['release']))
+    trykey <- try(keyring::key_get(hhsaw_key, keyring::key_list(hhsaw_key)[['username']]), silent = T)
+    if (inherits(trykey, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured or you are not connected to the VPN. \n",
+                                                   "Please check your VPN connection and or set your keyring and run the function again. \n",
+                                                   paste0("e.g., keyring::key_set('hhsaw', username = 'ALastname@kingcounty.gov') \n"),
+                                                   "When prompted, be sure to enter the same password that you use to log into to your laptop. \n",
+                                                   "If you already have an hhsaw key on your keyring with a different name, you can specify it with the 'hhsaw_key = ...' argument \n"))
+    rm(trykey)
+
+    if(server == FALSE){
+      con <- try(con <- DBI::dbConnect(odbc::odbc(),
+                                       driver = getOption('rads.odbc_version'),
+                                       server = 'kcitazrhpasqlprp16.azds.kingcounty.gov',
+                                       database = 'hhs_analytics_workspace',
+                                       uid = keyring::key_list(hhsaw_key)[["username"]],
+                                       pwd = keyring::key_get(hhsaw_key, keyring::key_list(hhsaw_key)[["username"]]),
+                                       Encrypt = 'yes',
+                                       TrustServerCertificate = 'yes',
+                                       Authentication = 'ActiveDirectoryPassword'), silent = T)
+      if (inherits(con, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured and is likely to have an outdated password. \n",
+                                                  "Please reset your keyring and run the function again. \n",
+                                                  paste0("e.g., keyring::key_set('", hhsaw_key, "', username = 'ALastname@kingcounty.gov') \n"),
+                                                  "When prompted, be sure to enter the same password that you use to log into to your laptop."))
+    }else{
+      message(paste0('Please enter the password you use for your laptop into the pop-up window. \n',
+                     'Note that the pop-up may be behind your Rstudio session. \n',
+                     'You will need to use your two factor authentication app to confirm your KC identity.'))
+      con <- DBI::dbConnect(odbc::odbc(),
+                            driver = getOption('rads.odbc_version'),
+                            server = "kcitazrhpasqlprp16.azds.kingcounty.gov",
+                            database = "hhs_analytics_workspace",
+                            uid = keyring::key_list(hhsaw_key)[["username"]],
+                            Encrypt = "yes",
+                            TrustServerCertificate = "yes",
+                            Authentication = "ActiveDirectoryInteractive")
+    }
+
+    # on.exit(DBI::dbDisconnect(con))
+
+  }else if(is.db(hhsaw_key)){
+    closeserver = FALSE
+    con = hhsaw_key
+
+  }else{
+    stop('`hhsaw_key` is not a reference to database connection or keyring')
+  }
+
+  return(con)
+
 }

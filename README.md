@@ -12,11 +12,21 @@ If you haven't yet installed [`rads`](https://github.com/PHSKC-APDE/rads), follo
 
 2.  RADS depends on version 17 of [Microsoft ODBC Driver for SQL Server](https://docs.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver15). You can download it [here](https://go.microsoft.com/fwlink/?linkid=2187214)
 
-3.  Install [`rads`](https://github.com/PHSKC-APDE/rads) ... `remotes::install_github("PHSKC-APDE/rads", auth_token = NULL)`
+3.  Install a keyring:: 'service' for accessing HHSAW. 
+    -   `install.packages("keyring")`
+    
+    -   `keyring::key_set(service = 'azure', username = 'Your.KCUsername@kingcounty.gov')`
+    
+    -   In the pop-up window type in your standard King County password (the one you use to log into your laptop) and click `OK`
+
+4.  Install [`rads`](https://github.com/PHSKC-APDE/rads) ... `remotes::install_github("PHSKC-APDE/rads", auth_token = NULL)`
 
     -   To install github from a particular branch, specify it with the 'ref' argument, e.g., `remotes::install_github("PHSKC-APDE/rads", ref = "dev", auth_token = NULL)`
 
-4.  Load [`rads`](https://github.com/PHSKC-APDE/rads) ... `library(rads)`
+5.  Load [`rads`](https://github.com/PHSKC-APDE/rads) ... `library(rads)`
+
+## New for version 1.1.7.7
+1. You must create a keyring:: 'service' key for HHSAW as described above. If you do not do this, you will not be able to use `get_population`, `get_data*`, and `list_dataset_columns()` functions.
 
 ## New for version 1.1.5
 1. `get_population` now defaults to 2020 vintage geographies (e.g. new HRAs)

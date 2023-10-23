@@ -148,10 +148,28 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_
 #'
 #' @param cols Character vector of length >=1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
 #'     See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.
-#' @param year Numeric vector. Identifies which year(s) of data should be pulled. Defaults to the most recent year.
-#' @param kingco logical. Return dataset for analyses where mother's residence is in King County only.
 #'
-#' @return dataset either data.table (adminstrative data) for further analysis/tabulation
+#' Default = NA
+#'
+#' @param year Numeric vector. Identifies which year(s) of data should be pulled. Defaults to the most recent year.
+#'
+#' Default = most recent year only
+#'
+#' @param kingco Logical. Return dataset for analyses where mother's residence is in King County only.
+#'
+#' Default = T
+#'
+#' @param version Character vector of length 1. Either 'final' or 'stage'.
+#'
+#' Default = 'final'
+#'
+#' @param mykey Character vector of length 1. Identifies
+#' the keyring:: 'service' name that can be used to access the Health & Human Services
+#' Analytic Workspace (HHSAW).
+#'
+#' Default == 'hhsaw'
+#'
+#' @return a single data.table
 #'
 #' @import data.table
 #' @export
@@ -159,75 +177,80 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_
 #' @examples
 #'
 #' \dontrun{
-#'  get_data_birth(cols = NA, year = c(2015, 2016, 2017), kingco = F)
+#'  get_data_birth(cols = NA,
+#'  year = c(2015, 2016, 2017),
+#'  kingco = F,
+#'  version = 'final',
+#'  mykey = 'hhsaw')
 #' }
 get_data_birth <- function(cols = NA,
                            year = NA,
-                           kingco = T){
+                           kingco = T,
+                           version = 'final',
+                           mykey = 'hhsaw'){
   if(is.null(cols)) cols <- NA
   if(is.null(year)) year <- NA
 
-  # validate arguments
-  if(!(length(cols) == 1 && is.na(cols))){
-    if(!is.character(cols)){stop('\n\U0001f6d1 `cols` must specify a vector of variables or be NA (to get all possible columns).')}
-  }
-  if(!(length(year) == 1 && is.na(year))){
-    if( (!is.numeric(year)) | sum(year%%1) != 0 ) {stop('\n\U0001f6d1 `year` must specify a vector of integers (e.g., c(2017, 2019)) or be NA (to get the most recent year).')}
-  }
-  if((length(kingco) == 1 && is.na(kingco)) | !is.logical(kingco)){stop('\n\U0001f6d1 `kingco` must be a logical (TRUE | FALSE, or equivalently, T | F).')}
+  # validate arguments other than mykey ----
+    if(!(length(cols) == 1 && is.na(cols))){
+      if(!is.character(cols)){stop('\n\U0001f6d1 `cols` must specify a vector of variables or be NA (to get all possible columns).')}
+    }
+    if(!(length(year) == 1 && is.na(year))){
+      if( (!is.numeric(year)) | sum(year%%1) != 0 ) {stop('\n\U0001f6d1 `year` must specify a vector of integers (e.g., c(2017, 2019)) or be NA (to get the most recent year).')}
+    }
+    if((length(kingco) == 1 && is.na(kingco)) | !is.logical(kingco)){stop('\n\U0001f6d1 `kingco` must be a logical (TRUE | FALSE, or equivalently, T | F).')}
+    if(length(version) != 1){stop("\n\U0001f6d1 `version` must have a single value, either 'final' or 'stage'.")}
+    if((length(version) == 1 && is.na(version)) | !version %in% c('final', 'stage')){stop("\n\U0001f6d1 `version` must have the value 'final' or 'stage'.")}
 
+  # validate mykey ----
+    con <- validate_hhsaw_key(hhsaw_key = mykey)
 
-  # get list of all colnames from SQL
-  con <- odbc::dbConnect(odbc::odbc(),
-                         Driver = getOption('rads.odbc_version'),
-                         Server = "KCITSQLPRPDBM50",
-                         Database = "PH_APDEStore",
-                         Encrypt = 'yes',
-                         TrustServerCertificate = 'yes',
-                         Authentication = 'ActiveDirectoryIntegrated',
-                         encoding = 'latin1')
-  birth.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [PH_APDEStore].[final].[bir_wa]"))
-  birth.years <- unique(DBI::dbGetQuery(con, "SELECT DISTINCT chi_year FROM [PH_APDEStore].[final].[bir_wa]")$chi_year)
+  # create SQL table name ----
+    mysqltable <- glue::glue_sql('[birth].[', {version}, '_analytic]')
 
-  # identify columns and years to pull from SQL
-  if(!all(is.na(cols))){
-    invalid.cols <- setdiff(cols, birth.names)
-    valid.cols <- intersect(birth.names, cols)
-    if(length(valid.cols) > 0){cols <- paste(valid.cols, collapse=", ")}
-    if(length(valid.cols) == 0){stop("Birth data cannot be extracted because no valid column names have been submitted. To get all columns, use the argument 'cols = NA'")}
-    if(length(invalid.cols) > 0){message(paste0("The following column names do not exist in the birth data and have not been extracted: ", paste0(invalid.cols, collapse = ", ")))}
-  }
-  if(all(is.na(cols))){cols <- "*"}
+  # get list of all colnames from SQL ----
+    birth.names <- tolower(names(DBI::dbGetQuery(con, glue::glue_sql("SELECT top (0) * FROM  {mysqltable}"))))
+    birth.years <- unique(DBI::dbGetQuery(con, glue::glue_sql("SELECT DISTINCT chi_year FROM {mysqltable}"))$chi_year)
 
-    if(length(year) == 1 && is.na(year)){
-      year = max(birth.years)
-      message(paste0("You did not specify a year so the most recent available year, ", max(birth.years), ", was selected for you. Available years include ", format_time(birth.years)))}
-    invalid.year <- setdiff(year, birth.years)
-    year <- intersect(year, birth.years)
-    if(length(year) == 0){stop(paste0("Birth data cannot be extracted because no valid years have been provided. Valid years include: ", format_time(birth.years)))}
-    if(length(invalid.year)>0){message(paste0("The following years do not exist in the birth data and have not been extracted: ", format_time(invalid.year)))}
+  # identify columns and years to pull from SQL ----
+    cols <- tolower(cols)
+    if(!all(is.na(cols))){
+      invalid.cols <- setdiff(cols, birth.names)
+      valid.cols <- intersect(birth.names, cols)
+      if(length(valid.cols) > 0){cols <- glue::glue_sql_collapse(valid.cols, sep=", ")}
+      if(length(valid.cols) == 0){stop("Birth data cannot be extracted because no valid column names have been submitted. To get all columns, use the argument 'cols = NA'")}
+      if(length(invalid.cols) > 0){message(paste0("The following column names do not exist in the birth data and have not been extracted: ", paste0(invalid.cols, collapse = ", ")))}
+    }
+    if(all(is.na(cols))){cols <- "*"}
 
-  # pull columns and years from SQL
-  query.string <- glue:: glue_sql ("SELECT ",  cols, " FROM [PH_APDEStore].[final].[bir_wa]
-                                   WHERE chi_year IN (",  paste(year, collapse=", "), ")")
+      if(length(year) == 1 && is.na(year)){
+        year = max(birth.years)
+        message(paste0("You did not specify a year so the most recent available year, ", max(birth.years), ", was selected for you. Available years include ", format_time(birth.years)))}
+      invalid.year <- setdiff(year, birth.years)
+      year <- intersect(year, birth.years)
+      if(length(year) == 0){stop(paste0("Birth data cannot be extracted because no valid years have been provided. Valid years include: ", format_time(birth.years)))}
+      if(length(invalid.year)>0){message(paste0("The following years do not exist in the birth data and have not been extracted: ", format_time(invalid.year)))}
 
-  if(kingco == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 'King County'")}
+  # pull columns and years from SQL ----
+    validyears <- glue::glue_sql_collapse(year, sep=", ")
 
+    query.string <- paste0("SELECT ", paste0(cols, collapse = ', '), " FROM ", mysqltable, " WHERE chi_year IN (", paste0(validyears, collapse = ', '), ")")
 
-  dat <- data.table::setDT(DBI::dbGetQuery(con, query.string))
-  odbc::dbDisconnect(con)
+    if(kingco == T){query.string <- paste0(query.string, " AND chi_geo_kc = 'King County'")}
 
-  # Format string variables due to SQL import quirks
-  original.order <- names(dat)
-  sql_clean(dat, stringsAsFactors = TRUE) # clean random white spaces and change strings to factors
+    dat <- data.table::setDT(DBI::dbGetQuery(con, query.string))
 
+  # Format string variables due to SQL import quirks ----
+    original.order <- names(dat)
+    sql_clean(dat, stringsAsFactors = TRUE) # clean random white spaces and change strings to factors
 
-  # reorder table
-  setcolorder(dat, original.order)
+  # reorder table----
+    setcolorder(dat, original.order)
 
-  setDT(dat) # set it as a data.table again b/c otherwise, ascribing the new class above makes a copy
+    setDT(dat) # set it as a data.table again b/c otherwise, ascribing the new class above makes a copy
 
-  return(dat)
+  # return object ----
+    return(dat)
 }
 
 
@@ -241,21 +264,26 @@ get_data_birth <- function(cols = NA,
 #' @param year Numeric vector. Identifies which years of data should be pulled. Defaults to the most recent year.
 #'
 #' Default = most recent year only
+#'
 #' @param kingco logical. Return dataset for analyses where county of decedent's residence is King County.
 #'
 #' Default = T
+#'
+#' @param version Character vector of length 1. Either 'final' or 'stage'.
+#'
+#' Default = 'final'
 #'
 #' @param topcode logical. Do you want to top code chi_age at 100 to match population data?
 #'
 #' Default = T
 #'
-#' @param mykey Character vector of length 1 OR a database connection. Identifies
-#' the keyring:: key that can be used to access the Health & Human Services
+#' @param mykey Character vector of length 1. Identifies
+#' the keyring:: 'service' name that can be used to access the Health & Human Services
 #' Analytic Workspace (HHSAW).
 #'
 #' Default == 'hhsaw'
 #'
-#' @return data.table (adminstrative data) for further analysis/tabulation
+#' @return a single data.table
 #'
 #' @import data.table
 #' @import DBI
@@ -266,11 +294,17 @@ get_data_birth <- function(cols = NA,
 #' @examples
 #'
 #' \dontrun{
-#'  get_data_death(cols = NA, year = c(2019), kingco = T, topcode = F, mykey = 'hhsaw')
+#'  get_data_death(cols = NA,
+#'  year = c(2019),
+#'  kingco = T,
+#'  version = 'final',
+#'  topcode = F,
+#'  mykey = 'hhsaw')
 #' }
 get_data_death <- function(cols = NA,
                            year = NA,
                            kingco = T,
+                           version = 'final',
                            topcode = T,
                            mykey = 'hhsaw'){
 
@@ -291,69 +325,17 @@ get_data_death <- function(cols = NA,
     if((length(topcode) == 1 && is.na(topcode)) | !is.logical(topcode)){stop('\n\U0001f6d1 `topcode` must be a logical (TRUE | FALSE, or equivalently, T | F).')}
 
   # Validate mykey ----
-    # Key should be a character string that can be used to generate a database connection
-    # Also have to allow for the option of interactive authentication
-    # TODO: Allow mykey to be a database connection itself
-      is.db = function(x){
-        r = try(dbIsValid(mykey))
-        if(inherits(r, 'try-error')){
-          r = FALSE
-        }
-      }
-      closeserver = TRUE
-      if(is.character(mykey)){
-        server <- grepl('server', tolower(Sys.info()['release']))
-        trykey <- try(keyring::key_get(mykey, keyring::key_list(mykey)[['username']]), silent = T)
-        if (inherits(trykey, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured or you are not connected to the VPN. \n",
-                                                       "Please check your VPN connection and or set your keyring and run the get_population() function again. \n",
-                                                       paste0("e.g., keyring::key_set('hhsaw', username = 'ALastname@kingcounty.gov') \n"),
-                                                       "When prompted, be sure to enter the same password that you use to log into to your laptop. \n",
-                                                       "If you already have an hhsaw key on your keyring with a different name, you can specify it with the 'mykey = ...' argument \n"))
-        rm(trykey)
+      con <- validate_hhsaw_key(hhsaw_key = mykey)
 
-        if(server == FALSE){
-          con <- try(con <- DBI::dbConnect(odbc::odbc(),
-                                           driver = getOption('rads.odbc_version'),
-                                           server = 'kcitazrhpasqlprp16.azds.kingcounty.gov',
-                                           database = 'hhs_analytics_workspace',
-                                           uid = keyring::key_list(mykey)[["username"]],
-                                           pwd = keyring::key_get(mykey, keyring::key_list(mykey)[["username"]]),
-                                           Encrypt = 'yes',
-                                           TrustServerCertificate = 'yes',
-                                           Authentication = 'ActiveDirectoryPassword'), silent = T)
-          if (inherits(con, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured and is likely to have an outdated password. \n",
-                                                      "Please reset your keyring and run the get_population() function again. \n",
-                                                      paste0("e.g., keyring::key_set('", mykey, "', username = 'ALastname@kingcounty.gov') \n"),
-                                                      "When prompted, be sure to enter the same password that you use to log into to your laptop."))
-        }else{
-          message(paste0('Please enter the password you use for your laptop into the pop-up window. \n',
-                         'Note that the pop-up may be behind your Rstudio session. \n',
-                         'You will need to use your two factor authentication app to confirm your KC identity.'))
-          con <- DBI::dbConnect(odbc::odbc(),
-                                driver = getOption('rads.odbc_version'),
-                                server = "kcitazrhpasqlprp16.azds.kingcounty.gov",
-                                database = "hhs_analytics_workspace",
-                                uid = keyring::key_list(mykey)[["username"]],
-                                Encrypt = "yes",
-                                TrustServerCertificate = "yes",
-                                Authentication = "ActiveDirectoryInteractive")
-        }
-
-        on.exit(DBI::dbDisconnect(con))
-
-      }else if(is.db(mykey)){
-        closeserver = FALSE
-        con = mykey
-
-      }else{
-        stop('`mykey` is not a reference to database connection or keyring')
-      }
+  # create SQL table name
+    mysqltable <- glue::glue_sql('[death].[', {version}, '_analytic]')
 
   # Get list of all colnames from SQL ----
-      death.names <- names(DBI::dbGetQuery(con, "SELECT TOP (0) * FROM [death].[final_analytic]"))
-      death.years <- sort(unique(DBI::dbGetQuery(con, "SELECT DISTINCT chi_year FROM [death].[final_analytic]")$chi_year))
+      death.names <- tolower(names(DBI::dbGetQuery(con, glue::glue_sql("SELECT TOP (0) * FROM {mysqltable}"))))
+      death.years <- sort(unique(DBI::dbGetQuery(con, glue::glue_sql("SELECT DISTINCT chi_year FROM {mysqltable}"))$chi_year))
 
   # Identify columns and years to pull from SQL ----
+      cols <- tolower(cols)
       if(!all(is.na(cols))){
         # for custom CHI/CHNA vars
         original.cols <- copy(cols)
@@ -390,17 +372,14 @@ get_data_death <- function(cols = NA,
 
   # Pull columns and years from SQL ----
       validyears <- glue::glue_sql_collapse(year, sep=", ")
-      query.string <- glue:: glue_sql ("SELECT {cols} FROM [death].[final_analytic]
-                                       WHERE chi_year IN ({validyears})", .con = con)
+      query.string <- paste0("SELECT ", paste0(cols, collapse = ', '), " FROM ", mysqltable, " WHERE chi_year IN (", paste0(validyears, collapse = ', '), ")")
 
-      if(kingco == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 1")}
+      if(kingco == T){query.string <- paste0(query.string, " AND chi_geo_kc = 1")}
 
       dat <- data.table::setDT(DBI::dbGetQuery(con, query.string))
 
       datevars <- DBI::dbGetQuery(con, "SELECT ColumnName FROM [death].[crosswalk_fields] WHERE ColumnType = 'Date'")[]$ColumnName
       datevars <- intersect(datevars, names(dat)) # names of all date variables that are in actual dataset
-
-      # odbc::dbDisconnect(con)
 
   # Top code age (if wanted) ----
       if( 'chi_age' %in% cols | 'chi_age' %in% names(dat) ){
@@ -522,6 +501,10 @@ get_data_death <- function(cols = NA,
 #'
 #' Default = T
 #'
+#' @param version Character vector of length 1. Either 'final' or 'stage'.
+#'
+#' Default = 'final'
+#'
 #' @param inpatient logical. Return dataset for inpatients only. When FALSE includes observation patients.
 #'
 #' Default = T
@@ -535,7 +518,13 @@ get_data_death <- function(cols = NA,
 #'
 #' Default = T
 #'
-#' @return data.table (adminstrative data) for further analysis/tabulation
+#' @param mykey Character vector of length 1. Identifies
+#' the keyring:: 'service' name that can be used to access the Health & Human Services
+#' Analytic Workspace (HHSAW).
+#'
+#' Default == 'hhsaw'
+#'
+#' @return a single data.table
 #'
 #' @import data.table
 #' @import DBI
@@ -550,24 +539,28 @@ get_data_death <- function(cols = NA,
 #'                 year = c(2020),
 #'                 kingco = T,
 #'                 wastate = T,
+#'                 version = 'final',
 #'                 inpatient = T,
 #'                 deaths = F,
-#'                 topcode = F)
+#'                 topcode = F,
+#'                 mykey = 'hhsaw')
 #' }
 get_data_chars <- function(cols = NA,
                            year = NA,
                            kingco = T,
+                           version = 'final',
                            wastate = T,
                            inpatient = T,
                            deaths = T,
-                           topcode = T){
+                           topcode = T,
+                           mykey = 'hhsaw'){
 
   chi_age <- date_of_birth <- date_of_chars <- age_years <- chi_race_eth7 <- NULL
   chi_race_6 <- chi_race_eth8 <- chi_race_7 <- geo_id_code <- chi_geo_wastate <- NULL
   chi_sex <- chi_geo_kc <- chi_race_aic_hisp <- yage4 <- age <- age6 <- NULL
-  geo_type <- geo_id <- pov200grp <- race4 <- race3 <- race3_hispanic <- NULL
+  geo_type <- geo_id <- race4 <- race3 <- race3_hispanic <- NULL
 
-  # validate arguments ----
+  # validate arguments other than mykey ----
     if(!(length(cols) == 1 && is.na(cols))){
       if(!is.character(cols)){stop('\n\U0001f6d1 `cols` must specify a vector of variables or be NA (to get all possible columns).')}
     }
@@ -580,19 +573,18 @@ get_data_chars <- function(cols = NA,
   if((length(deaths) == 1 && is.na(deaths)) | !is.logical(deaths)){stop('\n\U0001f6d1 `deaths` must be a logical (TRUE | FALSE, or equivalently, T | F).')}
   if((length(topcode) == 1 && is.na(topcode)) | !is.logical(topcode)){stop('\n\U0001f6d1 `topcode` must be a logical (TRUE | FALSE, or equivalently, T | F).')}
 
+  # Validate mykey ----
+    con <- validate_hhsaw_key(hhsaw_key = mykey)
+
+  # create SQL table name ----
+    mysqltable <- glue::glue_sql('[chars].[', {version}, '_analytic]')
+
   # Get list of all colnames from SQL ----
-  con <- odbc::dbConnect(odbc::odbc(),
-                         driver = getOption('rads.odbc_version'),
-                         server = "KCITSQLUTPDBH51",
-                         database = "PH_APDEStore",
-                         Encrypt = 'yes',
-                         TrustServerCertificate = 'yes',
-                         Authentication = 'ActiveDirectoryIntegrated',
-                         encoding = 'latin1')
-      chars.names <- list_dataset_columns(dataset = 'chars')[]$var.names
-      chars.years <- sort(unique(DBI::dbGetQuery(con, "SELECT DISTINCT chi_year FROM [PH_APDEStore].[chars].[final_analytic]")$chi_year))
+      chars.names <- tolower(names(DBI::dbGetQuery(con, glue::glue_sql("SELECT TOP (0) * FROM {mysqltable}"))))
+      chars.years <- sort(unique(DBI::dbGetQuery(con, glue::glue_sql("SELECT DISTINCT chi_year FROM {mysqltable}"))$chi_year))
 
   # Identify columns and years to pull from SQL ----
+      cols <- tolower(cols)
       if(!all(is.na(cols))){
         # for custom CHI/CHNA vars
           original.cols <- copy(cols)
@@ -600,7 +592,6 @@ get_data_chars <- function(cols = NA,
           if('wastate' %in% cols){cols <- c(cols, 'chi_geo_wastate'); var.2.calc=c(var.2.calc, 'wastate')}
           if('yage4' %in% cols){cols <- c(cols, 'age'); var.2.calc=c(var.2.calc, 'yage4')}
           if('age6' %in% cols){cols <- c(cols, 'age'); var.2.calc=c(var.2.calc, 'age6')}
-          if('pov200grp' %in% cols){cols <- c(cols, 'zipcode'); var.2.calc=c(var.2.calc, 'pov200grp')}
           if('race3' %in% cols){cols <- c(cols, 'chi_race_6', 'chi_race_aic_hisp'); var.2.calc=c(var.2.calc, 'race3')}
           if('race4' %in% cols){cols <- c(cols, 'chi_race_eth7'); var.2.calc=c(var.2.calc, 'race4')}
           cols <-  unique(setdiff(cols, var.2.calc))
@@ -628,8 +619,7 @@ get_data_chars <- function(cols = NA,
 
   # Pull columns and years from SQL ----
       validyears <- glue::glue_sql_collapse(year, sep=", ")
-      query.string <- glue:: glue_sql ("SELECT {cols} FROM [PH_APDEStore].[chars].[final_analytic]
-                                       WHERE chi_year IN ({validyears})", .con = con)
+      query.string <- paste0("SELECT ", paste0(cols, collapse = ', '), " FROM ", mysqltable, " WHERE chi_year IN (", paste0(validyears, collapse = ', '), ")")
 
       if(inpatient == T){query.string <- glue:: glue_sql (query.string, " AND STAYTYPE = 1")}
       if(deaths == F){query.string <- glue:: glue_sql (query.string, " AND STATUS != 20")} # 20 means Expired / did not recover
@@ -708,10 +698,6 @@ get_data_chars <- function(cols = NA,
                           age %in% 65:74, '65-74',
                           age >= 75, '75+',
                           default = NA_character_)]
-    }
-    if('pov200grp' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
-      pov.xwalk <- rads.data::misc_poverty_groups[geo_type=='ZCTA'][, list(zipcode = geo_id, pov200grp)]
-      dat <- merge(dat, pov.xwalk, by = 'zipcode', all.x = T, all.y = F)
     }
     if('race4' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
       dat[, race4 := chi_race_eth7]

@@ -4,12 +4,18 @@
 \alias{list_dataset_columns}
 \title{List columns available for analysis for a particular dataset in RADS}
 \usage{
-list_dataset_columns(dataset, year = 2021, analytic_only = F)
+list_dataset_columns(dataset, year = 2021, mykey = "hhsaw", analytic_only = F)
 }
 \arguments{
 \item{dataset}{Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options}
 
 \item{year}{Year of dataset to check.}
+
+\item{mykey}{Character vector of length 1 OR a database connection. Identifies
+the keyring:: key that can be used to access the Health & Human Services
+Analytic Workspace (HHSAW).
+
+Default == 'hhsaw'}
 
 \item{analytic_only}{logical. Controls whether columns outside the analytic dataset should be returned.}
 }

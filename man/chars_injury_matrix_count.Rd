@@ -78,8 +78,10 @@ The default is \code{def = 'narrow'}}
 \item{primary_ecode}{a logical vector of length one. It specifies whether you
 want to limit the analysis to using just the primary ecode (i.e., the
 \code{injury_ecode} variable), rather than all available ecodes.
-Unless you are performing a specialized analysis, please keep the default
-setting!
+
+As of RADS 1.1.7.7, the only valid argument is TRUE (T). Those wanting to perform
+an analysis with other ecodes would need to perform a custom analysis in SQL using
+the \code{chars.stage_diag} & \code{chars.stage_ecode} tables.
 
 The default is \code{primary_ecode = TRUE}}
 
