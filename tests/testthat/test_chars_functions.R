@@ -182,12 +182,6 @@ library('testthat')
     chars10 <- chars10[mechanism!='motor_vehicle_traffic'] # remove motor_vehcicle_traffic b/c created by RADS based on other vars
     expect_equal(sum(chars10[intent == 'Any intent' & mechanism == 'Any mechanism']$hospitalizations),
                  sum(chars10[intent != 'Any intent' & mechanism != 'Any mechanism']$hospitalizations) )
-
-    # when FALSE, total of any intent & any mechanism should be LESS THAN total of all specific mechanisms and causes
-    chars11 <- chars_injury_matrix_count(ph.data = charsdt, mechanism = '*', intent = '*', def = 'narrow', primary_ecode = F)
-    chars11 <- chars11[mechanism!='motor_vehicle_traffic']
-    expect_lt(sum(chars11[intent == 'Any intent' & mechanism == 'Any mechanism']$hospitalizations),
-              sum(chars11[intent != 'Any intent' & mechanism != 'Any mechanism']$hospitalizations) )
   })
 
   test_that("Function gives errors as appropriate...", {
@@ -217,6 +211,9 @@ library('testthat')
     # should error when kingco is not T|F
     expect_error(chars_injury_matrix_count(ph.data = charsdt, kingco = "F"))
     expect_error(chars_injury_matrix_count(ph.data = charsdt, kingco = 1))
+
+    # should error when primary_ecode == F
+    expect_error(chars_injury_matrix_count(ph.data = charsdt, mechanism = '*', intent = '*', def = 'narrow', primary_ecode = F))
 
   })
 
