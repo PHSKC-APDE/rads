@@ -133,8 +133,10 @@ chars_injury_matrix<- function(){
 #' @param primary_ecode a logical vector of length one. It specifies whether you
 #' want to limit the analysis to using just the primary ecode (i.e., the
 #' \code{injury_ecode} variable), rather than all available ecodes.
-#' Unless you are performing a specialized analysis, please keep the default
-#' setting!
+#'
+#' As of RADS 1.1.7.7, the only valid argument is TRUE (T). Those wanting to perform
+#' an analysis with other ecodes would need to perform a custom analysis in SQL using
+#' the `chars.stage_diag` & `chars.stage_ecode` tables.
 #'
 #' The default is \code{primary_ecode = TRUE}
 #'
@@ -196,10 +198,10 @@ chars_injury_matrix_count<- function(ph.data = NULL,
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
     chi_geo_kc <- icd10 <- bingo <- hospitalizations <- icd10cm <- icd10cm_desc <- NULL
     var.names <- injury_nature_narrow <- injury_ecode <- injury_nature_broad <- NULL
-    injury_intent <- rads_intent_ignore <- injury_mechanism <- NULL
-    rads_mechanism_ignore <- rads_mechanism_motor_vehicle_traffic <- chi_geo_kc <- NULL
+    injury_intent <- injury_mechanism <- NULL
+    chi_geo_kc <- NULL
     yage4 <- age <- age6 <- geo_type <- geo_id <- pov200grp <- race4 <- race3 <- NULL
-    chi_race_aic_hisp <- race3_hispanic <- intent_ignore <- mechanism_ignore <- NULL
+    chi_race_aic_hisp <- race3_hispanic <- NULL
     mechanism_motor_vehicle_traffic <- NULL
 
   # Check arguments ----
@@ -271,6 +273,9 @@ chars_injury_matrix_count<- function(ph.data = NULL,
 
     # primary_ecode ----
         if(!is.logical(primary_ecode)){stop("\n\U0001f47f `primary_ecode` must be a logical vector of length 1, i.e,. TRUE or FALSE.")}
+        if(isFALSE(primary_ecode)){stop(paste0("\n\U1F6D1 \U2620 \U0001f47f\n",
+                                        " You set 'primary_ecode = F'. This is no longer a valid option. If you want to use other ecodes\n",
+                                        " you will have to perform a custom analysis using [chars].[stage_diag] & [chars].[stage_ecode]."))}
 
     # kingco ----
         if(!is.logical(kingco)){stop("\n\U0001f47f `kingco` must be a logical vector of length 1, i.e,. TRUE or FALSE.")}
@@ -281,33 +286,18 @@ chars_injury_matrix_count<- function(ph.data = NULL,
         if (isTRUE(kingco)){ph.data <- ph.data[chi_geo_kc == "King County"]}
 
   # Apply narrow or broad definition ----
-      if(def == 'narrow'){ph.data <- ph.data[injury_nature_narrow == T & !is.na(injury_intent) & !is.na(injury_mechanism)]}
-      if(def == 'broad'){ph.data <- ph.data[injury_nature_broad == T & !is.na(injury_intent) & !is.na(injury_mechanism)]}
+      if(def == 'narrow'){ph.data <- ph.data[injury_nature_narrow == T & !is.na(injury_intent)]}
+      if(def == 'broad'){ph.data <- ph.data[injury_nature_broad == T & !is.na(injury_intent)]}
 
   # Get complete list of all possible mechanisms and intents ----
-      possible.intents <- c(as.character(unique(chars_injury_matrix()$intent)), 'ignore')
-      possible.mechanisms <- c(as.character(unique(chars_injury_matrix()$mechanism)), 'ignore')
-
-  # Create binary columns with individual primary intent / mechanism ----
-      for(rads.intent in possible.intents){
-        ph.data[, paste0("rads_intent_", rads.intent) := 0]
-        ph.data[injury_intent == rads.intent, paste0("rads_intent_", rads.intent) := 1]
-      }
-      ph.data[, rads_intent_ignore := 1] # so code will be able to truly ignore (i.e., allow for 'any') intent when need be
-      ph.data[, intent_ignore := 1] # so code will be able to truly ignore (i.e., allow for 'any') intent when need be
-
-      for(rads.mechanism in possible.mechanisms){
-        ph.data[, paste0("rads_mechanism_", rads.mechanism) := 0]
-        ph.data[injury_mechanism == rads.mechanism, paste0("rads_mechanism_", rads.mechanism) := 1]
-      }
-      ph.data[, rads_mechanism_ignore := 1] # so code will be able to truly ignore (i.e., allow for 'any') mechanism when need be
-      ph.data[, mechanism_ignore := 1] # so code will be able to truly ignore (i.e., allow for 'any') mechanism when need be
+      possible.intents <- as.character(unique(chars_injury_matrix()$intent))
+      possible.mechanisms <- as.character(unique(chars_injury_matrix()$mechanism))
 
   # Identify intent of interest ----
       intent = tolower(intent)
 
       if("none" %in% intent){ # none means 'any intent', i.e., 'ignore' the intent
-        x_intent = "ignore"
+        x_intent = "any"
       }
 
       if("*" %in% intent){x_intent = possible.intents}
@@ -325,7 +315,7 @@ chars_injury_matrix_count<- function(ph.data = NULL,
       mechanism = tolower(mechanism)
 
       if("none" %in% mechanism){ # none means 'any mechanism', i.e., 'ignore' the mechanism
-        x_mechanism = "ignore"
+        x_mechanism = "any"
       }
 
       if("*" %in% mechanism){x_mechanism = possible.mechanisms}
@@ -343,35 +333,26 @@ chars_injury_matrix_count<- function(ph.data = NULL,
   # Create motor_vehicle_traffic column when needed ----
       if('motor_vehicle_traffic' %in% x_mechanism){
         # Matt Dowle's suggestion ... https://stackoverflow.com/questions/7885147/efficient-row-wise-operations-on-a-data-table
-          # for injury_mechanism
-            ph.data[, rads_mechanism_motor_vehicle_traffic := do.call(pmax, c(.SD, na.rm = T)),
-                    .SDcols = paste0('rads_mechanism_', grep('mvt_', possible.mechanisms, value = T))]
-          # for any injury
-            ph.data[, mechanism_motor_vehicle_traffic := do.call(pmax, c(.SD, na.rm = T)),
-                    .SDcols = paste0('mechanism_', grep('mvt_', possible.mechanisms, value = T))]
+        ph.data[, mechanism_motor_vehicle_traffic := do.call(pmax, c(.SD, na.rm = T)),
+                .SDcols = paste0('mechanism_', grep('mvt_', possible.mechanisms, value = T))]
       }
 
   # Count hospitalizations for each intent_x_mechanism of interest ----
-      x_combo <- data.table()
-        # create matrix of all mechanisms and intents of interest
+      x_combo <- data.table() # table to hold results of all combinations of mech & intent specified by the arguments
+        # create matrix of all mechanisms and intents of interest ----
         x_grid <- data.table::setDT(expand.grid(mechanism = x_mechanism, intent = x_intent))
 
-        # count number of hospitalizations (i.e., rows) when def == 'narrow'
+        # count number of hospitalizations (i.e., rows) when def == 'narrow' ----
         for(ii in 1:nrow(x_grid)){
           temp.ph.data <- copy(ph.data)
 
-        # Identify whether the combination of mech & intent in x_grid has any hospitalizations in person level data
-          if(isTRUE(primary_ecode)){
-            temp.ph.data[, bingo := 0] # By default, assume the row does not have the given combination of mech and intent
-            temp.ph.data[get(paste0("rads_mechanism_", as.character(x_grid[ii]$mechanism))) >= 1 &
-                           get(paste0("rads_intent_", as.character(x_grid[ii]$intent))) >= 1, bingo := 1]
-          } else {
+        # Identify whether the combination of mech & intent in x_grid has any hospitalizations in person level data ----
+            # could theoretically use injury_mechanism & injury_intent, but would need extra coding to address when either has value 'any'
             temp.ph.data[, bingo := 0] # By default, assume the row does not have the given combination of mech and intent
             temp.ph.data[get(paste0("mechanism_", as.character(x_grid[ii]$mechanism))) >= 1 &
                            get(paste0("intent_", as.character(x_grid[ii]$intent))) >= 1, bingo := 1]
-          }
 
-        # Aggregate (sum) the number of hospitalizations for the mech / intent combination from x_grid
+        # Aggregate (sum) the number of hospitalizations for the mech / intent combination from x_grid ----
             if(!is.null(group_by)){
               temp.ph.data <- temp.ph.data[, list(mechanism = as.character(x_grid[ii]$mechanism),
                                                   intent = as.character(x_grid[ii]$intent),
@@ -382,7 +363,7 @@ chars_injury_matrix_count<- function(ph.data = NULL,
                                                   intent = as.character(x_grid[ii]$intent),
                                                   hospitalizations = sum(bingo))]}
 
-          # create grid of all possible combinations of group_by vars
+          # create grid of all possible combinations of group_by vars ----
             gridvars <- setdiff(names(temp.ph.data), 'hospitalizations')
             for(mygridvar in gridvars){
               assign(paste0("xtemp_", mygridvar), unique(temp.ph.data[[mygridvar]]))
@@ -390,11 +371,11 @@ chars_injury_matrix_count<- function(ph.data = NULL,
             complete.grid <- data.table(setDT(expand.grid(mget(paste0("xtemp_", gridvars)))))
             setnames(complete.grid, gsub("^xtemp_", "", names(complete.grid)))
 
-          # merge temp.ph.data onto complete.grid
+          # merge temp.ph.data onto complete.grid ----
             temp.ph.data <- merge(complete.grid, temp.ph.data, all = T)
             temp.ph.data[is.na(hospitalizations), hospitalizations := 0]
 
-          # append onto x_combo
+          # append onto x_combo ----
             x_combo <- rbind(x_combo, temp.ph.data)
         }
 
@@ -405,7 +386,7 @@ chars_injury_matrix_count<- function(ph.data = NULL,
         x_combo <- x_combo[, list(hospitalizations = sum(hospitalizations)), by = setdiff(names(x_combo), "hospitalizations")]
       }
 
-      x_combo[mechanism == 'ignore', mechanism := "Any mechanism"]
+      x_combo[mechanism == 'any', mechanism := "Any mechanism"]
 
     # Additional collapse/aggregate if intent == 'none' ----
       if("none" %in% intent){
@@ -413,14 +394,14 @@ chars_injury_matrix_count<- function(ph.data = NULL,
         x_combo <- x_combo[, list(hospitalizations = sum(hospitalizations)), by = setdiff(names(x_combo), "hospitalizations")]
       }
 
-      x_combo[intent == 'ignore', intent := "Any intent"]
+      x_combo[intent == 'any', intent := "Any intent"]
 
     # Sort columns and rows ----
         setcolorder(x_combo, c("mechanism", "intent", "hospitalizations"))
         setorderv(x_combo, c("mechanism", "intent", setdiff(names(x_combo), c("hospitalizations", "mechanism", "intent")) ))
 
   # Return data ----
-  return(x_combo)
+    return(x_combo)
 }
 
 # chars_icd_ccs() ----

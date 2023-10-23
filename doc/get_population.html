@@ -277,45 +277,38 @@ table, .body h2 { border-bottom: 1px solid #666; }
 <p><strong>King County HRAs</strong></p>
 <pre><code class="language-r">head(get_population(geo_type = c(&quot;hra&quot;), group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
-<pre><code>##         pop geo_type
-## 1: 34799.45      hra
-## 2: 63422.03      hra
-## 3: 32325.58      hra
-## 4: 48050.80      hra
-## 5: 17833.65      hra
-## 6: 50771.96      hra
-##                                                                                          geo_id
-## 1:                                      Seattle - South Beacon Hill, Georgetown, and South Park
-## 2:                                                                       Seattle - West Seattle
-## 3:                                                                                       Seatac
-## 4:                                           Enumclaw, Black Diamond, and Southeast King County
-## 5:                                                                                       Skyway
-## 6: Seattle - Central District, Chinatown-International District, Judkins, and North Beacon Hill
-##    year   age       gender
-## 1: 2022 0-100 Female, Male
-## 2: 2022 0-100 Female, Male
-## 3: 2022 0-100 Female, Male
-## 4: 2022 0-100 Female, Male
-## 5: 2022 0-100 Female, Male
-## 6: 2022 0-100 Female, Male
-##                                                    race_eth geo_id_code
-## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White          30
-## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White          32
-## 3: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White          18
-## 4: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
-## 5: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White          24
-## 6: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White          34
+<pre><code>##         pop geo_type                                       geo_id year   age
+## 1: 38246.05      hra                              Redmond - South 2022 0-100
+## 2: 28803.18      hra                                 Maple Valley 2022 0-100
+## 3: 39498.12      hra        Lakeland, Algona, Pacific, and Milton 2022 0-100
+## 4: 35545.77      hra    Federal Way - Dash Point and Southern Rim 2022 0-100
+## 5: 22905.68      hra                                      Tukwila 2022 0-100
+## 6: 39098.33      hra Seattle - Downtown, Belltown, and First Hill 2022 0-100
+##          gender                                                 race_eth
+## 1: Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 2: Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 3: Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 4: Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 5: Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 6: Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+##    geo_id_code
+## 1:          48
+## 2:          10
+## 3:           4
+## 4:           3
+## 5:          21
+## 6:          39
 </code></pre>
 <p><strong>King County Zip codes</strong></p>
 <pre><code class="language-r">head(get_population(geo_type = c(&quot;zip&quot;), group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
-<pre><code>##         pop geo_type geo_id year   age       gender
-## 1: 20783.07      zip  98177 2022 0-100 Female, Male
-## 2: 54830.36      zip  98115 2022 0-100 Female, Male
-## 3: 49718.95      zip  98042 2022 0-100 Female, Male
-## 4: 13398.45      zip  98077 2022 0-100 Female, Male
-## 5: 16440.64      zip  98065 2022 0-100 Female, Male
-## 6: 16165.71      zip  98045 2022 0-100 Female, Male
+<pre><code>##             pop geo_type geo_id year   age       gender
+## 1: 3.003720e+04      zip  98027 2022 0-100 Female, Male
+## 2: 2.241798e+04      zip  98112 2022 0-100 Female, Male
+## 3: 2.132755e-02      zip  98158 2022 0-100 Female, Male
+## 4: 3.774003e+04      zip  98038 2022 0-100 Female, Male
+## 5: 2.283809e+04      zip  98053 2022 0-100 Female, Male
+## 6: 2.472811e+04      zip  98055 2022 0-100 Female, Male
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
@@ -328,12 +321,12 @@ table, .body h2 { border-bottom: 1px solid #666; }
 <pre><code class="language-r">head(get_population(geo_type = c(&quot;tract&quot;), group_by = c(&quot;geo_id&quot;), ages = 18, census_vintage = 2020, geo_vintage = 2020)[])  
 </code></pre>
 <pre><code>##         pop geo_type      geo_id year age       gender
-## 1: 61.28889    tract 53033025806 2022  18 Female, Male
-## 2: 51.54287    tract 53033023603 2022  18 Female, Male
-## 3: 26.18290    tract 53033023902 2022  18 Female, Male
-## 4: 41.83393    tract 53033004301 2022  18 Female, Male
-## 5: 24.66547    tract 53033008700 2022  18 Female, Male
-## 6: 58.47586    tract 53033027600 2022  18 Female, Male
+## 1: 41.83393    tract 53033004301 2022  18 Female, Male
+## 2: 13.67018    tract 53033008003 2022  18 Female, Male
+## 3: 24.66547    tract 53033008700 2022  18 Female, Male
+## 4: 51.54287    tract 53033023603 2022  18 Female, Male
+## 5: 26.18290    tract 53033023902 2022  18 Female, Male
+## 6: 35.49646    tract 53033024001 2022  18 Female, Male
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
@@ -346,12 +339,12 @@ table, .body h2 { border-bottom: 1px solid #666; }
 <pre><code class="language-r">head(get_population(geo_type = c(&quot;blkgrp&quot;), group_by = c(&quot;geo_id&quot;), ages = 18,census_vintage = 2020, geo_vintage = 2020)[])  
 </code></pre>
 <pre><code>##          pop geo_type       geo_id year age       gender
-## 1:  6.852520   blkgrp 530330027004 2022  18 Female, Male
-## 2: 13.081136   blkgrp 530330050001 2022  18 Female, Male
-## 3:  9.974165   blkgrp 530330004023 2022  18 Female, Male
-## 4: 21.406372   blkgrp 530330007002 2022  18 Female, Male
-## 5: 21.904927   blkgrp 530330074051 2022  18 Female, Male
-## 6:  2.742543   blkgrp 530330081013 2022  18 Female, Male
+## 1: 15.562107   blkgrp 530330022003 2022  18 Female, Male
+## 2:  8.789951   blkgrp 530330030001 2022  18 Female, Male
+## 3:  9.006994   blkgrp 530330232014 2022  18 Female, Male
+## 4: 24.854687   blkgrp 530330273003 2022  18 Female, Male
+## 5: 19.677736   blkgrp 530330280001 2022  18 Female, Male
+## 6: 19.555334   blkgrp 530330290033 2022  18 Female, Male
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
@@ -366,11 +359,11 @@ head(get_population(geo_type = c(&quot;blk&quot;), group_by = c(&quot;geo_id&quo
 </code></pre>
 <pre><code>##           pop geo_type          geo_id year age       gender
 ## 1:  3.1766492      blk 530330315022006 2022  18 Female, Male
-## 2:  1.7691562      blk 530330316032001 2022  18 Female, Male
-## 3:  0.6850862      blk 530330327053020 2022  18 Female, Male
-## 4: 21.5900791      blk 530330294083001 2022  18 Female, Male
+## 2: 21.5900791      blk 530330294083001 2022  18 Female, Male
+## 3:  3.4370966      blk 530330298041003 2022  18 Female, Male
+## 4:  0.0837521      blk 530330098011012 2022  18 Female, Male
 ## 5:  1.1119714      blk 530330317081012 2022  18 Female, Male
-## 6:  3.4370966      blk 530330298041003 2022  18 Female, Male
+## 6:  0.9562015      blk 530330102004007 2022  18 Female, Male
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
