@@ -1594,7 +1594,9 @@ validate_hhsaw_key <- function(hhsaw_key = 'hhsaw'){
     if(inherits(r, 'try-error')){
       r = FALSE
     }
+    r
   }
+
   closeserver = TRUE
   if(is.character(hhsaw_key)){
     server <- grepl('server', tolower(Sys.info()['release']))
@@ -1616,10 +1618,9 @@ validate_hhsaw_key <- function(hhsaw_key = 'hhsaw'){
                                        Encrypt = 'yes',
                                        TrustServerCertificate = 'yes',
                                        Authentication = 'ActiveDirectoryPassword'), silent = T)
-      if (inherits(con, "try-error")) stop(paste0("Your hhsaw keyring is not properly configured and is likely to have an outdated password. \n",
-                                                  "Please reset your keyring and run the function again. \n",
-                                                  paste0("e.g., keyring::key_set('", hhsaw_key, "', username = 'ALastname@kingcounty.gov') \n"),
-                                                  "When prompted, be sure to enter the same password that you use to log into to your laptop."))
+      if (inherits(con, "try-error")) stop(paste("Either your computer is not connected to KC systems (e.g. VPN is not connected), your hhsaw key is not properly configured, and/or your key value is outdated.",
+                                                  "To (re)set your hhsaw key use keyring::key_set('", hhsaw_key, "', username = 'ALastname@kingcounty.gov')"),
+                                                  "When prompted, be sure to enter the same password that you use to log into to your laptop.")
     }else{
       message(paste0('Please enter the password you use for your laptop into the pop-up window. \n',
                      'Note that the pop-up may be behind your Rstudio session. \n',
