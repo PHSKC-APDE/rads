@@ -8,23 +8,23 @@ library('testthat')
     expect_identical(ccstable, chars_icd_ccs(ref_type = 'all'))
 
     expect_true(inherits(ccstable, 'data.table')) # confirm data.table
-    expect_equal(sort(names(ccstable)), sort(c('icd10cm_code', 'icd10cm', 'level1', 'level2', 'level3')))
-    expect_gt(nrow(ccstable), 71000)
+    expect_equal(sort(names(ccstable)), sort(c('broad', 'detailed', 'icdcm', 'icdcm_code', 'icdcm_version')))
+    expect_gt(nrow(ccstable), 80000) # realistically over 100K, so checking for gross errors
+    expect_gt(nrow(ccstable), nrow(chars_icd_ccs(icdcm_version = 9))) # should have many more rows for ICD-10-CM
 
     expect_equal(chars_icd_ccs(), chars_icd_ccs(ref_type = 'all'))
-    expect_true(inherits(chars_icd_ccs(ref_type = 'icd10'), 'data.table'))
-    expect_equal(sort(names(chars_icd_ccs(ref_type = 'icd10'))), c('icd10cm', 'icd10cm_code'))
+    expect_true(inherits(chars_icd_ccs(ref_type = 'icdcm'), 'data.table'))
+    expect_equal(sort(names(chars_icd_ccs(ref_type = 'icdcm'))), c('icdcm', 'icdcm_code', 'icdcm_version'))
 
-    expect_true(inherits(chars_icd_ccs(ref_type = 'level1'), 'data.table'))
-    expect_equal(names(chars_icd_ccs(ref_type = 'level1')), 'level1')
+    expect_true(inherits(chars_icd_ccs(ref_type = 'broad'), 'data.table'))
+    expect_equal(names(chars_icd_ccs(ref_type = 'broad')), c('broad', 'icdcm_version'))
 
-    expect_true(inherits(chars_icd_ccs(ref_type = 'level2'), 'data.table'))
-    expect_equal(names(chars_icd_ccs(ref_type = 'level2')), 'level2')
+    expect_true(inherits(chars_icd_ccs(ref_type = 'detailed'), 'data.table'))
+    expect_equal(names(chars_icd_ccs(ref_type = 'detailed')), c('detailed', 'icdcm_version'))
 
-    expect_true(inherits(chars_icd_ccs(ref_type = 'level3'), 'data.table'))
-    expect_equal(names(chars_icd_ccs(ref_type = 'level3')), 'level3')
-
-    expect_error(chars_icd_ccs(ref_type = 'blah'))
+    expect_error(chars_icd_ccs(ref_type = 'blah')) # this isn't a legit ref_type
+    expect_error(chars_icd_ccs(mykey = NULL)) # need to use a legit keyring:: service for HHSAW
+    expect_error(chars_icd_ccs(icdcm_version = 8)) # Only ICD-CM-9 & ICD-CM-10 are legit
 
   })
 
@@ -32,94 +32,98 @@ library('testthat')
   charsdata <- get_data_chars(year = 2019, cols = c("seq_no", "diag1", "chi_sex"), kingco = T)
 
   test_that("Function returns expected rows, columns, and values...", {
-    # test icd10 argument ----
+    # test icd argument ----
       icd.result <- chars_icd_ccs_count(ph.data = charsdata,
-                                        level1 = NULL,
-                                        level2 = NULL,
-                                        level3 = NULL,
-                                        icd10cm = '^Kidney transplant',
+                                        icdcm_version = 10,
+                                        broad = NULL,
+                                        detailed = NULL,
+                                        icdcm = '^kidney transplant',
                                         icdcol = 'diag1',
                                         group_by = NULL,
-                                        kingco = F)
+                                        kingco = F,
+                                        mykey = 'hhsaw')
       expect_equal(nrow(icd.result), 4)
-      expect_equal(sort(names(icd.result)), sort(c('icd10cm_desc', 'hospitalizations')))
-      expect_equal(sum(icd.result$hospitalizations), nrow(charsdata[grepl("T8611|T8612|T8613|Z940", x= diag1)]))
+      expect_equal(sort(names(icd.result)), sort(c('icdcm_desc', 'hospitalizations')))
+      expect_equal(sum(icd.result$hospitalizations), nrow(charsdata[grepl("T8611|T8612|T8613|Z940", x = diag1)]))
 
-    # test level3 argument ----
-      level3.result <- chars_icd_ccs_count(ph.data = charsdata, level3 = 'Chronic kidney disease', kingco = F)
-      expect_equal(nrow(level3.result), 1)
-      expect_equal(sort(names(level3.result)), sort(c('level3_desc', 'hospitalizations')))
-      expect_equal(sum(level3.result$hospitalizations), 82) # confirmed vs CHAT
+    # test detailed argument ----
+      detailed.result <- chars_icd_ccs_count(ph.data = charsdata,
+                                             detailed = 'Cystic fibrosis',
+                                             kingco = F)
+      expect_equal(nrow(detailed.result), 1)
+      expect_equal(sort(names(detailed.result)), sort(c('detailed_desc', 'hospitalizations')))
+      expect_equal(sum(detailed.result$hospitalizations), 63) # confirmed vs CHAT
 
-    # test level2 argument ----
-      level2.result <- chars_icd_ccs_count(ph.data = charsdata, level2 = 'Cystic fibrosis', kingco = F)
-      expect_equal(nrow(level2.result), 1)
-      expect_equal(sort(names(level2.result)), sort(c('level2_desc', 'hospitalizations')))
-      expect_equal(sum(level2.result$hospitalizations), 63) # confirmed vs CHAT
-
-    # test level1 argument ----
-      level1.result <- chars_icd_ccs_count(ph.data = charsdata, level1 = 'Diseases of the blood', kingco = F)
-      expect_equal(nrow(level1.result), 1)
-      expect_equal(sort(names(level1.result)), sort(c('level1_desc', 'hospitalizations')))
-      expect_equal(sum(level1.result$hospitalizations), 1601) # confirmed vs CHAT
+    # test broad argument ----
+      broad.result <- chars_icd_ccs_count(ph.data = charsdata,
+                                          broad = 'Diseases of the blood',
+                                          kingco = F)
+      expect_equal(nrow(broad.result), 1)
+      expect_equal(sort(names(broad.result)), sort(c('broad_desc', 'hospitalizations')))
 
     # test group_by argument ----
       group_by.result <- chars_icd_ccs_count(ph.data = charsdata[chi_sex %in% c("Male", "Female")],
-                                             level3 = 'Chronic kidney disease',
+                                             detailed = 'chronic kidney disease',
                                              kingco = F,
                                              group_by = 'chi_sex')
       expect_equal(nrow(group_by.result), 2)
-      expect_equal(sort(names(group_by.result)), sort(c('chi_sex', 'level3_desc', 'hospitalizations')))
+      expect_equal(sort(names(group_by.result)), sort(c('chi_sex', 'detailed_desc', 'hospitalizations')))
       expect_equal(sum(group_by.result$hospitalizations), 82) # confirmed vs CHAT
 
-    # test value combination of search terms (and confirm search is case insensitive) ----
+    # test valid combination of search terms (and confirm search is case insensitive) ----
       multi.result <- chars_icd_ccs_count(ph.data = charsdata,
-                                          icd10 = '^kidney transplant',
-                                          level1 = '^injury and poisoning',
-                                          level2 = '^complication',
-                                          level3 = '^complication',
+                                          icdcm = 'polyp',
+                                          broad = 'neo',
+                                          detailed = 'benign',
                                           kingco = F)
-      expect_equal(nrow(multi.result), 3)
+      expect_equal(nrow(multi.result), 1)
       expect_equal(sort(names(multi.result)),
-                   sort(c('icd10cm_desc', 'level1_desc', 'level2_desc', 'level3_desc', 'hospitalizations')))
-      expect_equal(sum(multi.result$hospitalizations), 86) # confirmed vs CHAT
+                   sort(c('icdcm_desc', 'broad_desc', 'detailed_desc', 'hospitalizations')))
+
+    # test that works for ICD9 (pre 2016) ----
+      icd9data <- get_data_chars(year = 2015, cols = c('seq_no', 'diag1', 'chi_geo_kc'))
+      icd9counts <- chars_icd_ccs_count(ph.data = icd9data,
+                                        icdcm_version = 9,
+                                        broad = 'neo',
+                                        kingco = T)
+      expect_equal(nrow(icd9counts), 2)
+      expect_equal(sort(names(icd9counts)),
+                   sort(c('broad_desc', 'hospitalizations')))
   })
 
   test_that("Function gives errors as appropriate...", {
     # should error when no search strings given
-    expect_error(chars_icd_ccs_count(ph.data = charsdata, icd10 = NULL, kingco = T))
+    expect_error(chars_icd_ccs_count(ph.data = charsdata, icd = NULL, kingco = T))
 
     # should error when mis-specify the name of ph.data
-    expect_error(chars_icd_ccs_count(ph.data = 'charsdata', icd10 = '^Kidney transplant', kingco = F))
-    expect_error(chars_icd_ccs_count(ph.data = NULL, icd10 = '^Kidney transplant', kingco = F))
-    expect_error(chars_icd_ccs_count(ph.data = charsdata2, icd10 = '^Kidney transplant', kingco = F))
+    expect_error(chars_icd_ccs_count(ph.data = 'charsdata', icd = '^Kidney transplant', kingco = F))
+    expect_error(chars_icd_ccs_count(ph.data = NULL, icd = '^Kidney transplant', kingco = F))
+    expect_error(chars_icd_ccs_count(ph.data = charsdata2, icd = '^Kidney transplant', kingco = F))
 
     # should error because missing chi_geo_kc
-    expect_error(chars_icd_ccs_count(ph.data = charsdata, icd10 = '^Kidney transplant', kingco = T))
+    expect_error(chars_icd_ccs_count(ph.data = charsdata, icd = '^Kidney transplant', kingco = T))
 
     # should error because 'blah' is not a medical diagnosis!
-    expect_error(chars_icd_ccs_count(ph.data = charsdata, icd10 = 'blah', kingco = F))
-    expect_error(chars_icd_ccs_count(ph.data = charsdata, level1 = 'blah', kingco = F))
-    expect_error(chars_icd_ccs_count(ph.data = charsdata, level2 = 'blah', kingco = F))
-    expect_error(chars_icd_ccs_count(ph.data = charsdata, level3 = 'blah', kingco = F))
+    expect_error(chars_icd_ccs_count(ph.data = charsdata, icd = 'blah', kingco = F))
+    expect_error(chars_icd_ccs_count(ph.data = charsdata, broad = 'blah', kingco = F))
+    expect_error(chars_icd_ccs_count(ph.data = charsdata, detailed = 'blah', kingco = F))
 
-    # should error when mis-specify the column containing icd10cm data
-    expect_error(chars_icd_ccs_count(ph.data = charsdata, icd10 = '^Kidney transplant', kingco = F, icdcol = NULL))
-    expect_error(chars_icd_ccs_count(ph.data = charsdata, icd10 = '^Kidney transplant', kingco = F, icdcol = 'mycolumn'))
+    # should error when mis-specify the column containing icdcm data
+    expect_error(chars_icd_ccs_count(ph.data = charsdata, icd = '^Kidney transplant', kingco = F, icdcol = NULL))
+    expect_error(chars_icd_ccs_count(ph.data = charsdata, icd = '^Kidney transplant', kingco = F, icdcol = 'mycolumn'))
 
     # should error due to group_by because 'blah' is not a column in the dataset
-    expect_error(chars_icd_ccs_count(ph.data = charsdata, level3 = 'Chronic kidney disease', kingco = F, group_by = 'blah'))
+    expect_error(chars_icd_ccs_count(ph.data = charsdata, broad = 'Chronic kidney disease', kingco = F, group_by = 'blah'))
 
     # should error message when filter out all values at more granular level
     expect_error(chars_icd_ccs_count(ph.data = charsdata,
-                                     icd10 = '^Kidney transplant',
-                                     level1 = 'Injury and poisoning',
-                                     level2 = 'Complication',
-                                     level3 = 'Hernia',
+                                     icdcm = 'polyp',
+                                     broad = 'neo',
+                                     detailed = 'mangoes',
                                      kingco = F))
 
     # should give warning when pass an icdcol that has non-standard values
-    expect_warning(chars_icd_ccs_count(ph.data = charsdata, icd10 = '^Kidney transplant', kingco = F, icdcol = 'chi_sex'))
+    expect_warning(chars_icd_ccs_count(ph.data = charsdata, icdcm = '^Kidney transplant', kingco = F, icdcol = 'chi_sex'))
     })
 
 
