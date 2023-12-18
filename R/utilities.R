@@ -1605,7 +1605,7 @@ validate_hhsaw_key <- function(hhsaw_key = 'hhsaw'){
                                                    "Please check your VPN connection and or set your keyring and run the function again. \n",
                                                    paste0("e.g., keyring::key_set('hhsaw', username = 'ALastname@kingcounty.gov') \n"),
                                                    "When prompted, be sure to enter the same password that you use to log into to your laptop. \n",
-                                                   "If you already have an hhsaw key on your keyring with a different name, you can specify it with the 'hhsaw_key = ...' argument \n"))
+                                                   "If you already have an hhsaw key on your keyring with a different name, you can specify it with the 'mykey = ...' or 'hhsaw_key = ...' argument \n"))
     rm(trykey)
 
     if(server == FALSE){

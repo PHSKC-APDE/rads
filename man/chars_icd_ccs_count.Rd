@@ -7,47 +7,50 @@
 \usage{
 chars_icd_ccs_count(
   ph.data = NULL,
-  icd10cm = NULL,
-  level1 = NULL,
-  level2 = NULL,
-  level3 = NULL,
+  icdcm_version = 10,
+  icdcm = NULL,
+  broad = NULL,
+  detailed = NULL,
   icdcol = "diag1",
   group_by = NULL,
-  kingco = T
+  kingco = T,
+  mykey = "hhsaw"
 )
 }
 \arguments{
 \item{ph.data}{a data.table or data.frame. Must contain CHARS data structured
-with one person per row and with at least one column of ICD10-cm codes.
+with one person per row and with at least one column of ICD CM codes.
 
 \strong{NOTE!} ph.data must have a column named \code{seq_no}, which is a unique patient
 level identifier.
 
 The default is \code{ph.data = NULL}}
 
-\item{icd10cm}{a character vector of length 1. An ICD10-CM description OR code.
+\item{icdcm_version}{an integer vector of length one specifying the ICD CM
+version that you want to reference. Acceptable options include: \code{9}
+& \code{10}.
+
+The default is \code{icdcm_version = 10}.}
+
+\item{icdcm}{a character vector of length 1. An ICD CM description OR code.
 It is case agnostic and works with partial strings. For example, both
-'rotavira' & 'A080' would provide the results for 'Rotaviral enteritis'. You
-can also combine multiple search terms. For example, 'rotavira|choler' would
-count all Rotaviral enteritis and cholera hospitalizations. View
-available options with \code{View(chars_icd_ccs()[, .(icd10_code, icd10)])}.
+'rotavira' & 'A080' would provide the results for 'Rotaviral enteritis' for
+ICD-10-CM. You can also combine multiple search terms. For example,
+'rotavira|choler' would count all Rotaviral enteritis AND cholera
+hospitalizations. View available options with
+\code{chars_icd_ccs(ref_type = 'icdcm', icdcm_version = 10)}.
 
-The default is \code{icd10 = NULL}}
+The default is \code{icdcm = NULL}}
 
-\item{level1}{a character vector of length 1. View available options with
-\code{chars_icd_ccs('level1')}.
+\item{broad}{a character vector of length 1. View available options with
+\code{chars_icd_ccs(ref_type = 'broad', icdcm_version = 10)}.
 
-The default is \code{level1 = NULL}}
+The default is \code{broad = NULL}}
 
-\item{level2}{a character vector of length 1. View available options with
-\code{chars_icd_ccs('level2')}.
+\item{detailed}{a character vector of length 1. View available options with
+\code{chars_icd_ccs(ref_type = 'detailed', icdcm_version = 10)}.
 
-The default is \code{level2 = NULL}}
-
-\item{level3}{a character vector of length 1. View available options with
-\code{chars_icd_ccs('level3')}.
-
-The default is \code{level3 = NULL}}
+The default is \code{detailed = NULL}}
 
 \item{icdcol}{a character vector of length one that specifies the name of the
 column in ph.data that contains the ICD10-cm codes of interest.
@@ -64,45 +67,62 @@ and race.
 The default is \code{group_by = NULL}}
 
 \item{kingco}{a logical vector of length one. It specifies whether you want to
-limit the analysis to King County. \strong{NOTE} this only works with data imported
-with the \code{get_data_chars()} function because it needs the logical variable
+limit the analysis to King County.
+
+\strong{NOTE} this only works with data imported
+with the \code{get_data_chars()} function because it needs the variable
 \code{chi_geo_kc}.
 
 The default is \code{kingco = TRUE}.}
+
+\item{mykey}{Character vector of length 1. Identifies the keyring:: service
+that can be used to access the Health & Human Services Analytic Workspace
+(HHSAW).
+
+The default is \code{mykey = 'hhsaw'}}
 }
 \value{
 Generates a table with columns for each of the search terms you entered (e.g.,
-\code{icd10}, \code{level1}, \code{level2}, and/or \code{level3}) as well as
+\code{icdcm}, \code{broad}, and/or \code{detailed}) as well as
 any \code{group_by} variables and a column named \code{hospitalizations} that
 contains the relevant counts.
 }
 \description{
 Generate hospitalization counts from WA State Comprehensive Hospital
-Abstract Reporting System (CHARS) data using partial strings from the ICD10-cm
-or CCS (levels 1 - 3) descriptions. Needs line-level CHARS data with a
-properly formatted ICD10-cm column (e.g., the data available from
-\code{get_data_chars()}).
+Abstract Reporting System (CHARS) data using partial strings from the ICD-10-CM
+or ICD-9-CM descriptions or AHRQ HCUP's CCSR based 'broad' and 'detailed'
+classifications. Needs line-level CHARS data with a properly formatted
+ICD-CM column (e.g., the data available from \code{get_data_chars()}).
 
-See \code{chars_icd_ccs()} for a complete list of available ICD10-cm and CCS
-descriptions.
+See \code{chars_icd_ccs()} for a complete list of available ICD-10-CM,
+ICD-9-CM, and broad and narrow classifications.
+
+\strong{¡¡¡REMEMBER!!!} ICD-10-CM started in 2016! Be sure to use the correct
+\strong{\code{icdcm_version}}.
 }
 \details{
 This function needs the user to enter a search string in one or more of the
 following arguments in order to search the CHARS data for the corresponding
-ICD10-cm codes: \code{icd10}, \code{level1}, \code{level2}, or \code{level3}.
+ICD CM codes: \code{icdcm}, \code{broad}, or \code{detailed}.
 Partial search terms are acceptable and they are case-insensitive. For
-example, if you set \code{level1 = 'ous'}, the function would return counts
-for three categories of hospitalization: "Diseases of the nervOUS system and
-sense organs", "InfectiOUS and parasitic diseases", "Diseases of the skin and
-subcutaneOUS tissue". It also understands simple regex syntax, including '^',
-'$', and '|'.
+example, if you set \code{broad = 'ex'} with \code{icdcm_version = 10}, the
+function would return counts for "Diseases of the eye and adnEXa" as well as
+"EXternal causes of morbidity". It also understands simple regex syntax,
+including \strong{\code{^}}, \strong{\code{$}}, and \strong{\code{|}}.
+
+\strong{Note:} If you submit values for more than one of \code{icdcm},
+\code{broad}, or \code{detailed} they must be nested. For example,
+\code{broad = 'neoplasms', detailed = 'sarcoma'} will give results because
+sarcomas are type of cancers. However, \code{broad = 'neoplasms',
+detailed = 'intestinal infection'} will return an error because your resulting
+table will have zero rows.
 }
 \examples{
 # example: 2019 King County hospitalizations for chemotherapy, by sex
 \dontrun{
 blah = get_data_chars(year = 2019, kingco = TRUE)
 myresult <- chars_icd_ccs_count(ph.data = blah,
-                                level3 = 'chemotherapy',
+                                detailed = 'chemotherapy',
                                 group_by = c('chi_sex'))
 print(myresult)
 }

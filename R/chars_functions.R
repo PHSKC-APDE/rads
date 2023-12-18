@@ -405,33 +405,49 @@ chars_injury_matrix_count<- function(ph.data = NULL,
 }
 
 # chars_icd_ccs() ----
-#' View available CHARS ICD10-cm (diagnosis) and CCS (HCUP Clinical Classification
-#' Software) descriptions that can be used with \code{chars_icd_ccs_count}
+#' View available CHARS ICD-9-CM OR ICD-10-CM (diagnosis) codes, descriptions,
+#'  and summary 'broad' and 'detailed' classifications that can be used with
+#' \code{chars_icd_ccs_count}
 #'
 #' @description
-#' Function to view the complete list of ICD10-cm descriptions (n > 71K!)
-#' as well as level 1 (n=18), level 2 (n=136), and level 3 (n=283) CCS code descriptions.
+#' A function to view the complete list of ICD-9-CM OR ICD-10-CM codes and
+#' descriptions as well as corresponding 'broad' and 'detailed' classifications.
+#' The 'broad' and 'detailed' classifications broadly follow AHRQ's HCUP Clinical
+#' Classifications Software Refined (CCSR) standards for ICD-10-CM. ICD-9-CM
+#' codes were then mapped to the same 'broad' and 'detailed' categories to maximize
+#' comparability across time.
 #'
 #' Output is provided in the form of a table. Use this table to inform your
 #' arguments in the  \code{chars_icd_ccs_count} function.
 #'
 #' @note
 #' If you do not specify any arguments, the function will return a table with
-#' all ICD10-cm codes as well ICD10 and CCS descriptions.
+#' all ICD-10-CM codes as well ICD-10-CM, broad, and detailed descriptions.
 #'
 #' @source
-#' \code{rads.data::icd_icd10cm_CHAT_2023}
+#' \code{kcitazrhpasqlprp16.azds.kingcounty.gov >> hhs_analytics_workspace >>
+#' ref.icdcm_codes}
 #'
 #' @references
-#' \url{https://icd10cmtool.cdc.gov/}
-#' \url{https://www.cdc.gov/nchs/icd/Comprehensive-Listing-of-ICD10-CM-Files.htm}
-#' \url{https://www.hcup-us.ahrq.gov/tools_software.jsp}
+#' \url{https://hcup-us.ahrq.gov/toolssoftware/ccsr/ccs_refined.jsp}
 #'
 #' @param ref_type a character vector of length one specifying the hospital diagnosis
-#' descriptions that are of interest to you. Acceptable options include: \code{'icd10'},
-#' \code{'level1'}, \code{'level2'}, \code{'level3'}, & \code{'all'}.
+#' descriptions that are of interest to you. Acceptable options include: \code{'all'},
+#' \code{'icdcm'}, \code{'broad'}, & \code{'detailed'}.
 #'
 #' The default is \code{ref_type = 'all'}.
+#'
+#' @param mykey Character vector of length 1. Identifies
+#' the keyring:: service that can be used to access the Health & Human Services
+#' Analytic Workspace (HHSAW).
+#'
+#' The default is \code{mykey = 'hhsaw'}
+#'
+#' @param icdcm_version an integer vector of length one specifying the ICD CM
+#' version that you want to reference. Acceptable options include: \code{9}
+#' & \code{10}.
+#'
+#' The default is \code{icdcm_version = 10}.
 #'
 #' @return
 #' A data.table. The number of rows and columns are dependent upon the arguments
@@ -443,26 +459,45 @@ chars_injury_matrix_count<- function(ph.data = NULL,
 #'
 #' @examples
 #' # Save and view table as a data.table named 'blah'
-#' blah <- chars_icd_ccs(ref_type = 'level1')
+#' blah <- chars_icd_ccs(ref_type = 'all')
 #' head(blah)
 #'
 #' @import data.table rads.data
 #'
-chars_icd_ccs <- function(ref_type = 'all'){
+chars_icd_ccs <- function(ref_type = 'all',
+                          mykey = "hhsaw",
+                          icdcm_version = 10){
+
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-  chars_list <- icd10cm <- icd10cm_desc <- ccs_lvl_1_desc <- ccs_lvl_2_desc <- ccs_lvl_3_desc  <- NULL
+  chars_list <- icdcm <- icdcm_code <- broad <- detailed  <- NULL
 
+  # check arguments ----
   if(length(ref_type) != 1){
-    stop("\n \U0001f47f the `ref_type` must have a single value. Valid options are 'all', 'icd10', 'level1', 'level2', & 'level3'")}
-  if(!ref_type %in% c('all', 'icd10', 'level1', 'level2', 'level3')){
-    stop(paste0("\n \U0001f47f'", ref_type, "' is not a valid option for the `ref_type` argument. Valid options are 'all', 'icd10', 'level1', 'level2', & 'level3'."))}
+    stop("\n \U0001f47f the `ref_type` must have a single value. Valid options are 'all', 'icdcm', 'broad', & 'detailed'")}
+  if(!ref_type %in% c('all', 'icdcm', 'broad', 'detailed')){
+    stop(paste0("\n \U0001f47f'", ref_type, "' is not a valid option for the `ref_type` argument. \nValid options are 'all', 'icdcm', 'broad', & 'detailed'."))}
 
-  chars_list <- copy(rads.data::icd_icd10cm_CHAT_2023)
-  if(ref_type == 'all'){chars_list <- chars_list[, list(icd10cm_code = icd10cm, icd10cm = icd10cm_desc, level1 = ccs_lvl_1_desc, level2 = ccs_lvl_2_desc, level3 = ccs_lvl_3_desc)]}
-  if(ref_type == 'icd10'){chars_list <- chars_list[, list(icd10cm_code = icd10cm, icd10cm = icd10cm_desc)]}
-  if(ref_type == 'level1'){chars_list <- chars_list[, list(level1 = ccs_lvl_1_desc)]}
-  if(ref_type == 'level2'){chars_list <- chars_list[, list(level2 = ccs_lvl_2_desc)]}
-  if(ref_type == 'level3'){chars_list <- chars_list[, list(level3 = ccs_lvl_3_desc)]}
+  if(length(mykey) != 1 | !is.character(mykey)){
+    stop("\n \U0001f47f the `mykey` argument must be a string of length == 1, \nwhich is the name of your keyring:: service providing the \npassword for connecting to HHSAW, it is typically 'hhsaw'.")}
+  if(!mykey %in% keyring::key_list()[]$service){
+    stop("\n \U0001f47f the `mykey` value passed to this function ('", mykey, "') is not in your `keyring::key_list`.\nPlease create it using `keyring::key_set` and try again.")
+  }
+  if(!icdcm_version %in% c(9, 10) | length(icdcm_version) != 1){stop("\n \U0001f47f the `icdcm_version` argument is limited to the integers '9' OR '10'")}
+
+  # get data ----
+  con <- validate_hhsaw_key(hhsaw_key = mykey)
+  chars_list <- setDT(DBI::dbGetQuery(conn = con,
+                                   paste0("SELECT icdcm_version,
+                                   icdcm_code = icdcm,
+                                   icdcm = icdcm_description,
+                                   broad = ccs_broad_desc,
+                                   detailed = ccs_detail_desc
+                                   FROM [ref].[icdcm_codes] WHERE icdcm_version = ", icdcm_version )))
+
+  if(ref_type == 'all'){chars_list <- chars_list[, list(icdcm_code, icdcm, broad, detailed, icdcm_version)]}
+  if(ref_type == 'icdcm'){chars_list <- chars_list[, list(icdcm_code, icdcm, icdcm_version)]}
+  if(ref_type == 'broad'){chars_list <- chars_list[, list(broad, icdcm_version)]}
+  if(ref_type == 'detailed'){chars_list <- chars_list[, list(detailed, icdcm_version)]}
 
   return(unique(chars_list))
 }
@@ -474,56 +509,68 @@ chars_icd_ccs <- function(ref_type = 'all'){
 #'
 #' @description
 #' Generate hospitalization counts from WA State Comprehensive Hospital
-#' Abstract Reporting System (CHARS) data using partial strings from the ICD10-cm
-#' or CCS (levels 1 - 3) descriptions. Needs line-level CHARS data with a
-#' properly formatted ICD10-cm column (e.g., the data available from
-#' \code{get_data_chars()}).
+#' Abstract Reporting System (CHARS) data using partial strings from the ICD-10-CM
+#' or ICD-9-CM descriptions or AHRQ HCUP's CCSR based 'broad' and 'detailed'
+#' classifications. Needs line-level CHARS data with a properly formatted
+#' ICD-CM column (e.g., the data available from \code{get_data_chars()}).
 #'
-#' See \code{chars_icd_ccs()} for a complete list of available ICD10-cm and CCS
-#' descriptions.
+#' See \code{chars_icd_ccs()} for a complete list of available ICD-10-CM,
+#' ICD-9-CM, and broad and narrow classifications.
+#'
+#' \strong{¡¡¡REMEMBER!!!} ICD-10-CM started in 2016! Be sure to use the correct
+#' **\code{icdcm_version}**.
+#'
 #'
 #' @details
 #' This function needs the user to enter a search string in one or more of the
 #' following arguments in order to search the CHARS data for the corresponding
-#' ICD10-cm codes: \code{icd10}, \code{level1}, \code{level2}, or \code{level3}.
+#' ICD CM codes: \code{icdcm}, \code{broad}, or \code{detailed}.
 #' Partial search terms are acceptable and they are case-insensitive. For
-#' example, if you set \code{level1 = 'ous'}, the function would return counts
-#' for three categories of hospitalization: "Diseases of the nervOUS system and
-#' sense organs", "InfectiOUS and parasitic diseases", "Diseases of the skin and
-#' subcutaneOUS tissue". It also understands simple regex syntax, including '^',
-#' '$', and '|'.
+#' example, if you set \code{broad = 'ex'} with \code{icdcm_version = 10}, the
+#' function would return counts for "Diseases of the eye and adnEXa" as well as
+#' "EXternal causes of morbidity". It also understands simple regex syntax,
+#' including **\code{^}**, **\code{$}**, and **\code{|}**.
+#'
+#' **Note:** If you submit values for more than one of \code{icdcm},
+#' \code{broad}, or \code{detailed} they must be nested. For example,
+#' \code{broad = 'neoplasms', detailed = 'sarcoma'} will give results because
+#' sarcomas are type of cancers. However, \code{broad = 'neoplasms',
+#' detailed = 'intestinal infection'} will return an error because your resulting
+#' table will have zero rows.
 #'
 #' @param ph.data a data.table or data.frame. Must contain CHARS data structured
-#' with one person per row and with at least one column of ICD10-cm codes.
+#' with one person per row and with at least one column of ICD CM codes.
 #'
 #' **NOTE!** ph.data must have a column named `seq_no`, which is a unique patient
 #' level identifier.
 #'
 #' The default is \code{ph.data = NULL}
 #'
-#' @param icd10cm a character vector of length 1. An ICD10-CM description OR code.
+#' @param icdcm_version an integer vector of length one specifying the ICD CM
+#' version that you want to reference. Acceptable options include: \code{9}
+#' & \code{10}.
+#'
+#' The default is \code{icdcm_version = 10}.
+#'
+#' @param icdcm a character vector of length 1. An ICD CM description OR code.
 #' It is case agnostic and works with partial strings. For example, both
-#' 'rotavira' & 'A080' would provide the results for 'Rotaviral enteritis'. You
-#' can also combine multiple search terms. For example, 'rotavira|choler' would
-#' count all Rotaviral enteritis and cholera hospitalizations. View
-#' available options with \code{View(chars_icd_ccs()[, .(icd10_code, icd10)])}.
+#' 'rotavira' & 'A080' would provide the results for 'Rotaviral enteritis' for
+#' ICD-10-CM. You can also combine multiple search terms. For example,
+#' 'rotavira|choler' would count all Rotaviral enteritis AND cholera
+#' hospitalizations. View available options with
+#' \code{chars_icd_ccs(ref_type = 'icdcm', icdcm_version = 10)}.
 #'
-#' The default is \code{icd10 = NULL}
+#' The default is \code{icdcm = NULL}
 #'
-#' @param level1 a character vector of length 1. View available options with
-#' \code{chars_icd_ccs('level1')}.
+#' @param broad a character vector of length 1. View available options with
+#' \code{chars_icd_ccs(ref_type = 'broad', icdcm_version = 10)}.
 #'
-#' The default is \code{level1 = NULL}
+#' The default is \code{broad = NULL}
 #'
-#' @param level2 a character vector of length 1. View available options with
-#' \code{chars_icd_ccs('level2')}.
+#' @param detailed a character vector of length 1. View available options with
+#' \code{chars_icd_ccs(ref_type = 'detailed', icdcm_version = 10)}.
 #'
-#' The default is \code{level2 = NULL}
-#'
-#' @param level3 a character vector of length 1. View available options with
-#' \code{chars_icd_ccs('level3')}.
-#'
-#' The default is \code{level3 = NULL}
+#' The default is \code{detailed = NULL}
 #'
 #' @param icdcol a character vector of length one that specifies the name of the
 #' column in ph.data that contains the ICD10-cm codes of interest.
@@ -540,15 +587,23 @@ chars_icd_ccs <- function(ref_type = 'all'){
 #' The default is \code{group_by = NULL}
 #'
 #' @param kingco a logical vector of length one. It specifies whether you want to
-#' limit the analysis to King County. **NOTE** this only works with data imported
-#' with the \code{get_data_chars()} function because it needs the logical variable
+#' limit the analysis to King County.
+#'
+#' **NOTE** this only works with data imported
+#' with the \code{get_data_chars()} function because it needs the variable
 #' \code{chi_geo_kc}.
 #'
 #' The default is \code{kingco = TRUE}.
 #'
+#' @param mykey Character vector of length 1. Identifies the keyring:: service
+#' that can be used to access the Health & Human Services Analytic Workspace
+#' (HHSAW).
+#'
+#' The default is \code{mykey = 'hhsaw'}
+#'
 #' @return
 #' Generates a table with columns for each of the search terms you entered (e.g.,
-#' \code{icd10}, \code{level1}, \code{level2}, and/or \code{level3}) as well as
+#' \code{icdcm}, \code{broad}, and/or \code{detailed}) as well as
 #' any \code{group_by} variables and a column named \code{hospitalizations} that
 #' contains the relevant counts.
 #'
@@ -561,7 +616,7 @@ chars_icd_ccs <- function(ref_type = 'all'){
 #' \dontrun{
 #' blah = get_data_chars(year = 2019, kingco = TRUE)
 #' myresult <- chars_icd_ccs_count(ph.data = blah,
-#'                                 level3 = 'chemotherapy',
+#'                                 detailed = 'chemotherapy',
 #'                                 group_by = c('chi_sex'))
 #' print(myresult)
 #' }
@@ -569,21 +624,22 @@ chars_icd_ccs <- function(ref_type = 'all'){
 #' @import data.table rads.data
 #'
 chars_icd_ccs_count <- function(ph.data = NULL,
-                                icd10cm = NULL,
-                                level1 = NULL,
-                                level2 = NULL,
-                                level3 = NULL,
+                                icdcm_version = 10,
+                                icdcm = NULL,
+                                broad = NULL,
+                                detailed = NULL,
                                 icdcol = 'diag1',
                                 group_by = NULL,
-                                kingco = T){
+                                kingco = T,
+                                mykey = 'hhsaw'){
 
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-    CMtable <- CMtable.expanded <- filter.count <- problem.icds <- icd10_desc <- level1_desc <-
-      level2_desc <- level3_desc <- chi_geo_kc <- hospitalizations <- icd10_code <- KeepMe <-
-      icd10 <- icd10cm_desc <- icd10cm_code <- query.group <- diag1 <- intent_ignore <-
+    CMtable <- CMtable.expanded <- filter.count <- problem.icds <- broad_desc <-
+      detailed_desc <- chi_geo_kc <- hospitalizations <- icdcm_code <- KeepMe <-
+      icdcm_desc <- icdcm_code <- query.group <- diag1 <- intent_ignore <-
       chars_injury_matrix_count <- mechanism_ignore <- NULL
 
-  # Check arguments & filter reference table of all ICD10-cm (CMtable) ----
+  # Check arguments & filter reference table of all ICD CM (CMtable) ----
     # ph.data ----
         ph.data.name <- deparse(substitute(ph.data))
         if(!is.null(ph.data)){
@@ -597,78 +653,65 @@ chars_icd_ccs_count <- function(ph.data = NULL,
 
         ph.data <- data.table::setDT(data.table::copy(ph.data)) # to prevent changing of original by reference
 
+    # icdcm_version ----
+        if(!icdcm_version %in% c(9, 10) | length(icdcm_version) != 1){stop("\n \U0001f47f the `icdcm_version` argument is limited to the integers '9' OR '10'")}
+
     # seq_no (unique identifier) ----
         if(!'seq_no' %in% names(ph.data)){
           stop("\U2620\U0001f47f\U2620\nph.data must contain the 'seq_no' column, which is the unique identifier.")}
         if('seq_no' %in% names(ph.data) & length(unique(ph.data$seq_no)) != nrow(ph.data)){
           stop("\U2620\U0001f47f\U2620\nThe 'seq_no' is a unique patient identifier and should not be repeated across rows.")}
 
-    # icd10cm + level1 + level2 + level3 ----
-        if(is.null(icd10cm) & is.null(level1) & is.null(level2) & is.null(level3)){
-          stop("\n\U0001f47f `icd10cm`, `level1`, `level2`, and `level3` are all NULL. This doesn't make sense! Specify a value for at least one of these arguments.")
+    # icdcm + broad + detailed ----
+        if(is.null(icdcm) & is.null(broad) & is.null(detailed)){
+          stop("\n\U0001f47f `icdcm`, `broad`, and `detailed` are all NULL. This doesn't make sense! Specify a value for at least one of these arguments.")
         }
 
-        CMtable <- chars_icd_ccs() # reference table of all potential search terms for this function
-        CMtable <- CMtable[, list(icd10cm_code, icd10cm_desc = icd10cm, level1_desc = level1, level2_desc = level2, level3_desc = level3)]
+        CMtable <- chars_icd_ccs(icdcm_version = icdcm_version) # reference table of all potential search terms for this function
+        CMtable <- CMtable[, list(icdcm_code, icdcm_desc = icdcm, broad_desc = broad, detailed_desc = detailed)]
 
 
-        filter.count <- sum(!is.null(icd10cm), !is.null(level1), !is.null(level2), !is.null(level3))
+        filter.count <- sum(!is.null(icdcm), !is.null(broad), !is.null(detailed))
 
-    # icd10 ----
-        if(!is.null(icd10cm)){
-          if(length(icd10cm) != 1){
-            stop("\n\U0001f47f When specified, `icd10` must be a character vector of length one.")
+    # icdcm ----
+        if(!is.null(icdcm)){
+          if(length(icdcm) != 1){
+            stop("\n\U0001f47f When specified, `icdcm` must be a character vector of length one.")
             }
-          CMtable <- CMtable[grepl(icd10cm, icd10cm_desc, ignore.case = T) | grepl(icd10cm, icd10cm_code, ignore.case = T)]
+          CMtable <- CMtable[grepl(icdcm, icdcm_desc, ignore.case = T) | grepl(icdcm, icdcm_code, ignore.case = T)]
           if(nrow(CMtable) < 1){
-            stop(paste0("\n\U0001f47f Setting the argument <icd10='", icd10cm, "'> filtered out all possible ICD10-cm codes in the reference table. Please change your argument(s)."))
+            stop(paste0("\n\U0001f47f Setting the argument <icdcm='", icdcm, "'> filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
           }
         }
 
-    # level1 ----
-        if(!is.null(level1)){
-          if(length(level1) != 1){
-            stop("\n\U0001f47f When specified, `level1` must be a character vector of length one.")
+    # broad ----
+        if(!is.null(broad)){
+          if(length(broad) != 1){
+            stop("\n\U0001f47f When specified, `broad` must be a character vector of length one.")
           }
-          CMtable <- CMtable[grepl(level1, level1_desc, ignore.case = T)]
+          CMtable <- CMtable[grepl(broad, broad_desc, ignore.case = T)]
           if(nrow(CMtable) < 1){
             if(filter.count == 1){
-              stop(paste0("\n\U0001f47f Setting the argument <level1='", level1, "'> filtered out all possible ICD10-cm codes in the reference table. Please change your argument(s)."))
+              stop(paste0("\n\U0001f47f Setting the argument <broad='", broad, "'> filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
             }
             if(filter.count > 1){
-              stop(paste0("\n\U0001f47f Setting the argument <level1='", level1, "'>, either alone or in combinaton with the values of icd10cm, level2, and level3, filtered out all possible ICD10-cm codes in the reference table. Please change your argument(s)."))
+              stop(paste0("\n\U0001f47f Setting the argument <broad='", broad, "'>, either alone or in combinaton with the values of icdcm and detailed, filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
             }
           }
         }
 
-    # level2 ----
-        if(!is.null(level2)){
-          if(length(level2) != 1){
-            stop("\n\U0001f47f When specified, `level2` must be a character vector of length one.")
+    # detailed ----
+        if(!is.null(detailed)){
+          if(length(detailed) != 1){
+            stop("\n\U0001f47f When specified, `detailed` must be a character vector of length one.")
           }
-          CMtable <- CMtable[grepl(level2, level2_desc, ignore.case = T)]
+          CMtable <- CMtable[grepl(detailed, detailed_desc, ignore.case = T)]
           if(nrow(CMtable) < 1){
             if(filter.count == 1){
-              stop(paste0("\n\U0001f47f Setting the argument <level2='", level2, "'> filtered out all possible ICD10-cm codes in the reference table. Please change your argument(s)."))
+              stop(paste0("\n\U0001f47f Setting the argument <detailed='", detailed, "'> filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
             }
             if(filter.count > 1){
-              stop(paste0("\n\U0001f47f Setting the argument <level2='", level2, "'>, either alone or in combinaton with the values of icd10cm, level1, and level3, filtered out all possible ICD10-cm codes in the reference table. Please change your argument(s)."))
-            }
-          }
-        }
-
-    # level3 ----
-        if(!is.null(level3)){
-          if(length(level3) != 1){
-            stop("\n\U0001f47f When specified, `level3` must be a character vector of length one.")
-          }
-          CMtable <- CMtable[grepl(level3, level3_desc, ignore.case = T)]
-          if(nrow(CMtable) < 1){
-            if(filter.count == 1){
-              stop(paste0("\n\U0001f47f Setting the argument <level3='", level3, "'> filtered out all possible ICD10-cm codes in the reference table. Please change your argument(s)."))
-            }
-            if(filter.count >1){
-              stop(paste0("\n\U0001f47f Setting the argument <level3='", level3, "'>, either alone or in combinaton with the values of icd10cm, level1, and level2, filtered out all possible ICD10-cm codes in the reference table. Please change your argument(s)."))
+              stop(paste0("\n\U0001f47f Setting the argument <detailed='", detailed, "'>, either alone or in combinaton with the values of icdcm and broad, filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
             }
           }
         }
@@ -686,17 +729,19 @@ chars_icd_ccs_count <- function(ph.data = NULL,
           icdcol, ") contains a hyphen (-), period (.), space or some other ",
           "non alpha-numeric character. These characters will be deleted, e.g., ",
           "A85.2 will become A852. This is necessary because causeids in ",
-          "rads.data::icd_icd10cm_CHAT_2023 contains no hyphens or periods."
+          "rads::chars_icd_ccs contains no hyphens or periods."
           ))
           ph.data[, paste0(icdcol) := gsub("[[:space:].]+", "", gsub("([^A-Za-z0-9 ])+", "", x = get(icdcol)))]
         }
 
-        if(nrow(ph.data[is.na(get(icdcol)) | !grepl("^[A-Z][0-9]", get(icdcol))]) > 0){
-          problem.icds <- ph.data[is.na(get(icdcol)) | !grepl("^[A-Z][0-9]", get(icdcol)), ][[icdcol]]
-          warning(paste0("\U00026A0 There is/are ", length(problem.icds), " row(s) where `icdcol` (",
-          icdcol, ") does not follow the proper ICD10-cm pattern. All ICDs that do not begin with a ",
-          "single capital letter followed by a number have been replaced with NA."))
-          ph.data[!grepl("^[A-Z][0-9]", get(icdcol)) , paste0(icdcol) := NA]
+        if(icdcm_version == 10){
+          if(nrow(ph.data[is.na(get(icdcol)) | !grepl("^[A-Z][0-9]", get(icdcol))]) > 0){
+            problem.icds <- ph.data[is.na(get(icdcol)) | !grepl("^[A-Z][0-9]", get(icdcol)), ][[icdcol]]
+            warning(paste0("\U00026A0 There is/are ", length(problem.icds), " row(s) where `icdcol` (",
+            icdcol, ") does not follow the proper ICD-10-CM pattern. All ICD-10-CMs that do not begin with a ",
+            "single capital letter followed by a number have been replaced with NA."))
+            ph.data[!grepl("^[A-Z][0-9]", get(icdcol)) , paste0(icdcol) := NA]
+          }
         }
 
     # group_by ----
@@ -717,9 +762,17 @@ chars_icd_ccs_count <- function(ph.data = NULL,
         }
         if (isTRUE(kingco)){ph.data <- ph.data[chi_geo_kc == 'King County']}
 
+    # mykey ----
+        if(length(mykey) != 1 | !is.character(mykey)){
+          stop("\n \U0001f47f the `mykey` argument must be a string of length == 1, \nwhich is the name of your keyring:: service providing the \npassword for connecting to HHSAW, it is typically 'hhsaw'.")
+        }
+        if(!mykey %in% keyring::key_list()[]$service){
+          stop("\n \U0001f47f the `mykey` value passed to this function ('", mykey, "') is not in your `keyring::key_list`.\nPlease create it using `keyring::key_set` and try again.")
+        }
+
   # Drop unnecessary columns from reference table (CMtable) ----
-    KeepMe <- c("icd10cm_code")
-    for(grr in c('icd10cm', 'level1', 'level2', 'level3')){
+    KeepMe <- c("icdcm_code")
+    for(grr in c('icdcm', 'broad', 'detailed')){
      if(!is.null(get(grr))){
        KeepMe <- c(KeepMe, paste0(grr, "_desc"))
      }
@@ -727,30 +780,30 @@ chars_icd_ccs_count <- function(ph.data = NULL,
 
     CMtable <- CMtable[, KeepMe, with = FALSE]
 
-  # Get counts of hospitalizations for each group of search terms in CMtable (search term referece table) ----
+  # Get counts of hospitalizations for each group of search terms in CMtable (search term reference table) ----
     # flatten CMtable for regex search ----
-      CMtable = CMtable[, list(icd10cm_code = list(icd10cm_code)), by = setdiff(names(CMtable), c("icd10cm_code"))]
+      CMtable = CMtable[, list(icdcm_code = list(icdcm_code)), by = setdiff(names(CMtable), c("icdcm_code"))]
 
-    # Create a 'query.group' for each combination of levels/icd10cm ----
-      CMtable[, query.group := .GRP, by = setdiff(names(CMtable), "icd10cm_code")]
+    # Create a 'query.group' for each combination of levels/icdcm ----
+      CMtable[, query.group := .GRP, by = setdiff(names(CMtable), "icdcm_code")]
 
     # generate counts for each query.group ----
       HospCounts <- data.table()
       for(QG in unique(CMtable$query.group)){
         if(is.null(group_by)){
-          tempHospCounts <- ph.data[diag1 %in% unlist(CMtable[query.group == QG]$icd10cm_code), list(hospitalizations = .N)]
+          tempHospCounts <- ph.data[diag1 %in% unlist(CMtable[query.group == QG]$icdcm_code), list(hospitalizations = .N)]
         }
         if(!is.null(group_by)){
-          tempHospCounts <- ph.data[diag1 %in% unlist(CMtable[query.group == QG]$icd10cm_code), list(hospitalizations = .N), by = group_by]
+          tempHospCounts <- ph.data[diag1 %in% unlist(CMtable[query.group == QG]$icdcm_code), list(hospitalizations = .N), by = group_by]
         }
         tempHospCounts[, query.group := QG]
         tempHospCounts <- merge(tempHospCounts, CMtable, by = "query.group")
-        tempHospCounts[, c('icd10cm_code') := NULL]
+        tempHospCounts[, c('icdcm_code') := NULL]
         HospCounts <- rbind(HospCounts, tempHospCounts, fill = T)
       }
 
   # Expand reference table for each combination of group_by variables ----
-      CMtable[, icd10cm_code := NULL]
+      CMtable[, icdcm_code := NULL]
       if(is.null(group_by)){CMtable.expanded <- CMtable}
       if(!is.null(group_by)){
           for(nombre in group_by){
