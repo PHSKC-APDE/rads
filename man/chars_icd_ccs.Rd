@@ -2,44 +2,60 @@
 % Please edit documentation in R/chars_functions.R
 \name{chars_icd_ccs}
 \alias{chars_icd_ccs}
-\title{View available CHARS ICD10-cm (diagnosis) and CCS (HCUP Clinical Classification
-Software) descriptions that can be used with \code{chars_icd_ccs_count}}
+\title{View available CHARS ICD-9-CM OR ICD-10-CM (diagnosis) codes, descriptions,
+and summary 'broad' and 'detailed' classifications that can be used with
+\code{chars_icd_ccs_count}}
 \source{
-\code{rads.data::icd_icd10cm_CHAT_2023}
+\code{kcitazrhpasqlprp16.azds.kingcounty.gov >> hhs_analytics_workspace >>
+ref.icdcm_codes}
 }
 \usage{
-chars_icd_ccs(ref_type = "all")
+chars_icd_ccs(ref_type = "all", mykey = "hhsaw", icdcm_version = 10)
 }
 \arguments{
 \item{ref_type}{a character vector of length one specifying the hospital diagnosis
-descriptions that are of interest to you. Acceptable options include: \code{'icd10'},
-\code{'level1'}, \code{'level2'}, \code{'level3'}, & \code{'all'}.
+descriptions that are of interest to you. Acceptable options include: \code{'all'},
+\code{'icdcm'}, \code{'broad'}, & \code{'detailed'}.
 
 The default is \code{ref_type = 'all'}.}
+
+\item{mykey}{Character vector of length 1. Identifies
+the keyring:: service that can be used to access the Health & Human Services
+Analytic Workspace (HHSAW).
+
+The default is \code{mykey = 'hhsaw'}}
+
+\item{icdcm_version}{an integer vector of length one specifying the ICD CM
+version that you want to reference. Acceptable options include: \code{9}
+& \code{10}.
+
+The default is \code{icdcm_version = 10}.}
 }
 \value{
 A data.table. The number of rows and columns are dependent upon the arguments
 submitted to the function.
 }
 \description{
-Function to view the complete list of ICD10-cm descriptions (n > 71K!)
-as well as level 1 (n=18), level 2 (n=136), and level 3 (n=283) CCS code descriptions.
+A function to view the complete list of ICD-9-CM OR ICD-10-CM codes and
+descriptions as well as corresponding 'broad' and 'detailed' classifications.
+The 'broad' and 'detailed' classifications broadly follow AHRQ's HCUP Clinical
+Classifications Software Refined (CCSR) standards for ICD-10-CM. ICD-9-CM
+codes were then mapped to the same 'broad' and 'detailed' categories to maximize
+comparability across time.
 
 Output is provided in the form of a table. Use this table to inform your
 arguments in the  \code{chars_icd_ccs_count} function.
 }
 \note{
 If you do not specify any arguments, the function will return a table with
-all ICD10-cm codes as well ICD10 and CCS descriptions.
+all ICD-10-CM codes as well ICD-10-CM, broad, and detailed descriptions.
 }
 \examples{
 # Save and view table as a data.table named 'blah'
-blah <- chars_icd_ccs(ref_type = 'level1')
+blah <- chars_icd_ccs(ref_type = 'all')
 head(blah)
 
 }
 \references{
-\url{https://icd10cmtool.cdc.gov/}
-\url{https://www.cdc.gov/nchs/icd/Comprehensive-Listing-of-ICD10-CM-Files.htm}
-\url{https://www.hcup-us.ahrq.gov/tools_software.jsp}
+\url{https://hcup-us.ahrq.gov/toolssoftware/ccsr/ccs_refined.jsp}
 }

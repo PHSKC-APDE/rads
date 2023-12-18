@@ -11,8 +11,8 @@ editor: visual
 The [rads package](https://github.com/PHSKC-APDE/rads/) has a suite of tools designed to facilitate and accelerate the analysis of standardized CHARS (Comprehensive Hospital Abstract Reporting System) data. Combining the `rads` functions below with the clean CHARS data on our servers should allow APDE analysts to conduct custom analyses with relative ease. The core `rads` CHARS function are:
 
 -   `get_data_chars()`: easily download standardized CHARS data from SQL into R (2012+)
--   `chars_icd_ccs()`: view available CHARS ICD10-cm and [CCS (HCUP Clinical Classification Software)](https://hcup-us.ahrq.gov/toolssoftware/ccsr/ccs_refined.jsp) descriptions that can be used with `chars_icd_ccs_count()` (2016+ only)
--   `chars_icd_ccs_count()`: generate counts of CHARS hospitalizations using ICD10-cm codes, descriptions, or CCS levels (2016+ only)
+-   `chars_icd_ccs()`: view available CHARS ICD-9-CM and ICD-10-CM descriptions as well as 'broad' and 'detailed' aggregations derived from [AHRQ's HCUP CCSR](https://hcup-us.ahrq.gov/toolssoftware/ccsr/ccs_refined.jsp) that can be used with `chars_icd_ccs_count()`
+-   `chars_icd_ccs_count()`: generate counts of CHARS hospitalizations using ICD-9-CM or ICD-10-CM descriptions or 'broad' or 'detailed' categories.
 -   `chars_injury_matrix()`: view all available intents and mechanisms that can be used with `chars_injury_matrix_count` (2012+)
 -   `chars_injury_matrix_count()`: generate counts of injury related hospitalizations by intent and mechanism (2012+)
 
@@ -20,7 +20,9 @@ All of these functions have detailed help files that are accessible by typing `?
 
 ***A few quick notes before we begin ...***
 
--   CHARS data switched from ICD9-cm to ICD10-cm diagnosis coding in 2016. While `get_data_chars()` can provide you with ICD9-cm data (2012-2015), `chars_icd_ccs()`, `chars_icd_ccs_count()` only work with ICD10-cm hospitalization codes (those used since 2016).
+-   `get_data_chars()` can provide you with ICD-9-CM data (2012-2015) as well as ICD-10-CM data (2016+).
+-   `chars_injury_matrix()` and `chars_injury_matrix_count()` are agnostic as to whether the underlying data are ICD-9-CM or ICD-10-CM.
+-   `chars_icd_ccs()` & `chars_icd_ccs_count()` need you to specify which ICD-CM version you have in your data. This means you can analyse 2012-2015 data or 2016+ data, but not both at the same time in a single command.
 -   If you want to create age-adjusted rates, we recommend you read the [age_standardize](https://github.com/PHSKC-APDE/rads/wiki/age_standardize) and [calculating_rates_with_rads](https://github.com/PHSKC-APDE/rads/wiki/calculating_rates_with_rads) vignettes after working through this one.
 
 # Set up the environment
@@ -65,44 +67,52 @@ max(charsDT$chi_age, na.rm = T) # check top coding
 
 # chars_icd_ccs()
 
-Do not attempt to manually browse through `chars_icd_ccs()` ... you will lose your mind because it has more than 70,000 rows! Rather, use it to identify the type of non-injury hospitalization of interest. The structure is simple and (hopefully!) self-explanatory. Let's take a look at the first three rows as an example by typing `chars_icd_ccs()[1:3]`:
+`chars_icd_ccs()` takes three arguments:
+
+-   `ref_typ`: specifies the hospital diagnosis descriptions that are of interest to you. Acceptable options include: 'all', 'icdcm', 'broad', & 'detailed'.
+-   `mykey`: Identifies the keyring:: service that you use to access the Health & Human Services Analytic Workspace (HHSAW). To see the keyring:: services you currently have in your R installation, type `keyring::key_list()`.
+-   `icdcm_version`: specifies the ICD-CM version that you want to reference. Acceptable options include: 9 & 10, with 10 being the default.
+
+Do not attempt to manually browse through `chars_icd_ccs()` ... you will lose your mind because it has more than 100,000 rows! Rather, use it to identify the type of non-injury hospitalization of interest. The structure is simple and (hopefully!) self-explanatory. Let's take a look at the first three rows as an example by typing `chars_icd_ccs()[1:3]`:
 
 ```{r}
 #| echo: false
   kable(chars_icd_ccs()[1:3], format = "markdown") 
 ```
 
-Teaching about [regular expression, a.k.a. *regex*](https://stat.ethz.ch/R-manual/R-devel/library/base/html/regex.html) and filtering is outside the bounds of this vignette. However, I imagine you will usually want to use aggregated hospitalization data so I encourage you to look at the unique values of level1, level2, and level3 data. For example, let's examine the CCS Level 1 categories.
+Teaching about [regular expression, a.k.a. *regex*](https://stat.ethz.ch/R-manual/R-devel/library/base/html/regex.html) and filtering is outside the bounds of this vignette. However, I imagine you will usually want to use aggregated hospitalization data so I encourage you to look at the unique values of broad and detailed data. For example, let's examine the CCSR broad categories with `chars_icd_ccs(ref_type = 'broad')`:
 
 ```{r}
-  unique(chars_icd_ccs()$level1)
+#| echo: false
+  kable(chars_icd_ccs(ref_type = 'broad'), format = 'markdown')
 ```
 
 # chars_icd_ccs_count()
 
-`chars_icd_ccs_count()` allows the user to get CHARS counts by ICD10-cm code, ICD10-cm description, or any of the three CCS levels. I provide examples of each of these below, in order of decreasing granularity / specificity using hypertensive heart disease as a case study.
+`chars_icd_ccs_count()` allows the user to get CHARS counts by ICD-CM code, ICD-cm description, or the CSSR broad and detailed categories. I provide examples of each of these below, in order of decreasing granularity / specificity using hypertensive heart disease as a case study.
 
 ```{r}
 #| echo: FALSE
-kable(chars_icd_ccs()[grep('I110', icd10cm_code)], format = "markdown")
+kable(chars_icd_ccs()[grep('I110', icdcm_code)], format = "markdown")
 ```
 
-However, before we begin, let's review the eight possible arguments used by `chrs_icd_ccs_count()`:
+However, before we begin, let's review the possible arguments used by `chrs_icd_ccs_count()`:
 
 -   `ph.data`: the name of a person level data.table/data.frame of CHARS data with ICD10-cm codes
--   `icd10cm`: the ICD10-cm code of interest OR its description. Partial strings are allowed.
--   `level1`: the level 1 CCS code of interest. Partial strings are allowed.
--   `level2`: the level 2 CCS code of interest. Partial strings are allowed.
--   `level3`: the level 3 CCS code of interest. Partial strings are allowed.
+-   `icdcm_version`: specifies the ICD-CM version that you want to reference. Acceptable options include: 9 & 10, with 10 being the default.
+-   `icdcm`: the ICD-CM code of interest OR its description. It is case insensivitive and partial strings are allowed.
+-   `broad`: CCSR derived 'broad' level descriptions that are of interest. It is case insensivitive and partial strings are allowed.
+-   `detailed`: CCSR derived 'detailed' level descriptions that are of interest. It is case insensivitive and partial strings are allowed.
 -   `icdcol`: the name of the column in `ph.data` that contains the ICD10-cm codes. Default is `diag1`, which is provided when you use `get_data_chars()`.
 -   `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
 -   `kingco`: logical (T\|F) specifying whether to limit the data analysis to King County. Only works if ph.data still has the `chi_geo_kc` column.
+-   `mykey`: Identifies the keyring:: service that you use to access the Health & Human Services Analytic Workspace (HHSAW). To see the keyring:: services you currently have in your R installation, type `keyring::key_list()`.
 
-## getting CHARS counts by ICD10-cm code
+## getting CHARS counts by ICD-10-CM code
 
 ```{r}
   mycode <- chars_icd_ccs_count(ph.data = charsDT, 
-                                icd10cm = 'I110')
+                                icdcm = 'I110')
 ```
 
 ```{r}
@@ -111,11 +121,11 @@ However, before we begin, let's review the eight possible arguments used by `chr
   kable(mycode, format = "markdown") 
 ```
 
-## getting CHARS counts by ICD10-cm description
+## getting CHARS counts by ICD-10-CM description
 
 ```{r}
   mydesc <- chars_icd_ccs_count(ph.data = charsDT, 
-                                icd10cm = 'hypertensive heart disease')
+                                icdcm = 'hypertensive heart disease')
 ```
 
 ```{r}
@@ -128,7 +138,7 @@ Note that, since the strings matches are not case sensitive and find partial mat
 
 ```{r}
   mydesc <- chars_icd_ccs_count(ph.data = charsDT, 
-                                icd10cm = 'hypertensive heart disease with heart failure')
+                                icdcm = 'hypertensive heart disease with heart failure')
 ```
 
 ```{r}
@@ -137,50 +147,35 @@ Note that, since the strings matches are not case sensitive and find partial mat
   kable(mydesc, format = "markdown")
 ```
 
-## getting CHARS counts by CCS Level 3 description
+## getting CHARS counts by CCSR detailed description
 
 ```{r}
-  mylevel3 <- chars_icd_ccs_count(ph.data = charsDT, 
-                                level3 = 'hypertension with complications and secondary hypertension')
+  detailed <- chars_icd_ccs_count(ph.data = charsDT, 
+                                detailed = 'hypertension with complications and secondary hypertension')
 ```
 
 ```{r}
 #| echo: FALSE
-  mylevel3[, hospitalizations := format(hospitalizations, big.mark = ',')]
-  kable(mylevel3, format = "markdown")
+  detailed[, hospitalizations := format(hospitalizations, big.mark = ',')]
+  kable(detailed, format = "markdown")
 ```
 
-Note that the number of hospitalizations has increased (`r mylevel3$hospitalizations` \>\> `r mydesc$hospitalizations`). This is because the `r length(unique(chars_icd_ccs()[]$level3))` Level 3 CCS categories aggregate many individual causes of hospitalization.
+Note that the number of hospitalizations has increased (`r detailed$hospitalizations` \>\> `r mydesc$hospitalizations`). This is because the `r nrow(chars_icd_ccs(ref_type = 'detailed'))` CCSR detailed categories aggregate many individual causes of hospitalization.
 
-## getting CHARS counts by CCS Level 2 description
-
-```{r}
-  mylevel2 <- chars_icd_ccs_count(ph.data = charsDT, 
-                                level2 = 'hypertension')
-```
+## getting CHARS counts by CCSR broad description
 
 ```{r}
-#| echo: FALSE
-  mylevel2[, hospitalizations := format(hospitalizations, big.mark = ',')]
-  kable(mylevel2, format = "markdown")
-```
-
-Since there are even fewer Level 2 CCS categories (`r length(unique(chars_icd_ccs()[]$level2))`), it further aggregates individual causes of hospitalization.
-
-## getting CHARS counts by CCS Level 2 description
-
-```{r}
-  mylevel1 <- chars_icd_ccs_count(ph.data = charsDT, 
-                                level1 = 'diseases of the circulatory system')
+  broad <- chars_icd_ccs_count(ph.data = charsDT, 
+                                broad = 'Diseases of the circulatory system')
 ```
 
 ```{r}
 #| echo: FALSE
-  mylevel1[, hospitalizations := format(hospitalizations, big.mark = ',')]
-  kable(mylevel1, format = "markdown") 
+  broad[, hospitalizations := format(hospitalizations, big.mark = ',')]
+  kable(broad, format = "markdown")
 ```
 
-There are only `r length(unique(chars_icd_ccs()[]$level1))` Level 1 CCS categories, so there is a great deal of aggregation and the substantial increase in hospitalizations should not surprise us.
+Since there are even fewer CCSR broad categories (`r nrow(chars_icd_ccs(ref_type = 'broad'))`), it further aggregates individual causes of hospitalization.
 
 # chars_injury_matrix()
 
