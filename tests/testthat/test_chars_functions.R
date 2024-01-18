@@ -8,7 +8,7 @@ library('testthat')
     expect_identical(ccstable, chars_icd_ccs(ref_type = 'all'))
 
     expect_true(inherits(ccstable, 'data.table')) # confirm data.table
-    expect_equal(sort(names(ccstable)), sort(c('broad', 'detailed', 'icdcm', 'icdcm_code', 'icdcm_version')))
+    expect_equal(sort(names(ccstable)), sort(c('superlevel', 'broad', 'midlevel', 'detailed', 'icdcm', 'icdcm_code', 'icdcm_version')))
     expect_gt(nrow(ccstable), 80000) # realistically over 100K, so checking for gross errors
     expect_gt(nrow(ccstable), nrow(chars_icd_ccs(icdcm_version = 9))) # should have many more rows for ICD-10-CM
 
@@ -16,8 +16,14 @@ library('testthat')
     expect_true(inherits(chars_icd_ccs(ref_type = 'icdcm'), 'data.table'))
     expect_equal(sort(names(chars_icd_ccs(ref_type = 'icdcm'))), c('icdcm', 'icdcm_code', 'icdcm_version'))
 
+    expect_true(inherits(chars_icd_ccs(ref_type = 'superlevel'), 'data.table'))
+    expect_equal(names(chars_icd_ccs(ref_type = 'superlevel')), c('superlevel', 'icdcm_version'))
+
     expect_true(inherits(chars_icd_ccs(ref_type = 'broad'), 'data.table'))
     expect_equal(names(chars_icd_ccs(ref_type = 'broad')), c('broad', 'icdcm_version'))
+
+    expect_true(inherits(chars_icd_ccs(ref_type = 'midlevel'), 'data.table'))
+    expect_equal(names(chars_icd_ccs(ref_type = 'midlevel')), c('midlevel', 'icdcm_version'))
 
     expect_true(inherits(chars_icd_ccs(ref_type = 'detailed'), 'data.table'))
     expect_equal(names(chars_icd_ccs(ref_type = 'detailed')), c('detailed', 'icdcm_version'))
@@ -54,12 +60,26 @@ library('testthat')
       expect_equal(sort(names(detailed.result)), sort(c('detailed_desc', 'hospitalizations')))
       expect_equal(sum(detailed.result$hospitalizations), 63) # confirmed vs CHAT
 
+    # test midlevel argument ----
+      midlevel.result <- chars_icd_ccs_count(ph.data = charsdata,
+                                          midlevel = 'septic',
+                                          kingco = F)
+      expect_equal(nrow(midlevel.result), 1)
+      expect_equal(sort(names(midlevel.result)), sort(c('midlevel_desc', 'hospitalizations')))
+
     # test broad argument ----
       broad.result <- chars_icd_ccs_count(ph.data = charsdata,
                                           broad = 'Diseases of the blood',
                                           kingco = F)
       expect_equal(nrow(broad.result), 1)
       expect_equal(sort(names(broad.result)), sort(c('broad_desc', 'hospitalizations')))
+
+    # test superlevel argument ----
+      superlevel.result <- chars_icd_ccs_count(ph.data = charsdata,
+                                          superlevel = 'Disease',
+                                          kingco = F)
+      expect_equal(nrow(superlevel.result), 2) # 2 b/c infectious and chronic
+      expect_equal(sort(names(superlevel.result)), sort(c('superlevel_desc', 'hospitalizations')))
 
     # test group_by argument ----
       group_by.result <- chars_icd_ccs_count(ph.data = charsdata[chi_sex %in% c("Male", "Female")],
@@ -105,7 +125,9 @@ library('testthat')
 
     # should error because 'blah' is not a medical diagnosis!
     expect_error(chars_icd_ccs_count(ph.data = charsdata, icd = 'blah', kingco = F))
+    expect_error(chars_icd_ccs_count(ph.data = charsdata, superlevel = 'blah', kingco = F))
     expect_error(chars_icd_ccs_count(ph.data = charsdata, broad = 'blah', kingco = F))
+    expect_error(chars_icd_ccs_count(ph.data = charsdata, midlevel = 'blah', kingco = F))
     expect_error(chars_icd_ccs_count(ph.data = charsdata, detailed = 'blah', kingco = F))
 
     # should error when mis-specify the column containing icdcm data

@@ -9,7 +9,9 @@ chars_icd_ccs_count(
   ph.data = NULL,
   icdcm_version = 10,
   icdcm = NULL,
+  superlevel = NULL,
   broad = NULL,
+  midlevel = NULL,
   detailed = NULL,
   icdcol = "diag1",
   group_by = NULL,
@@ -42,12 +44,26 @@ hospitalizations. View available options with
 
 The default is \code{icdcm = NULL}}
 
-\item{broad}{a character vector of length 1. View available options with
+\item{superlevel}{a character vector of length 1. Case agnostic and works
+with partial strings. View available options with
+\code{chars_icd_ccs(ref_type = 'superlevel', icdcm_version = 10)}.
+
+The default is \code{superlevel = NULL}}
+
+\item{broad}{a character vector of length 1. Case agnostic and works with
+partial strings. View available options with
 \code{chars_icd_ccs(ref_type = 'broad', icdcm_version = 10)}.
 
 The default is \code{broad = NULL}}
 
-\item{detailed}{a character vector of length 1. View available options with
+\item{midlevel}{a character vector of length 1. Case agnostic and works with
+partial strings. View available options with
+\code{chars_icd_ccs(ref_type = 'midlevel', icdcm_version = 10)}.
+
+The default is \code{midlevel = NULL}}
+
+\item{detailed}{a character vector of length 1. Case agnostic and works with
+partial strings. View available options with
 \code{chars_icd_ccs(ref_type = 'detailed', icdcm_version = 10)}.
 
 The default is \code{detailed = NULL}}
@@ -95,7 +111,7 @@ classifications. Needs line-level CHARS data with a properly formatted
 ICD-CM column (e.g., the data available from \code{get_data_chars()}).
 
 See \code{chars_icd_ccs()} for a complete list of available ICD-10-CM,
-ICD-9-CM, and broad and narrow classifications.
+ICD-9-CM, and superlevel, broad, midlevel, and narrow classifications.
 
 \strong{¡¡¡REMEMBER!!!} ICD-10-CM started in 2016! Be sure to use the correct
 \strong{\code{icdcm_version}}.
@@ -103,7 +119,8 @@ ICD-9-CM, and broad and narrow classifications.
 \details{
 This function needs the user to enter a search string in one or more of the
 following arguments in order to search the CHARS data for the corresponding
-ICD CM codes: \code{icdcm}, \code{broad}, or \code{detailed}.
+ICD CM codes: \code{icdcm}, \code{superlevel}, \code{broad}, \code{midlevel},
+or \code{detailed}.
 Partial search terms are acceptable and they are case-insensitive. For
 example, if you set \code{broad = 'ex'} with \code{icdcm_version = 10}, the
 function would return counts for "Diseases of the eye and adnEXa" as well as
@@ -111,18 +128,18 @@ function would return counts for "Diseases of the eye and adnEXa" as well as
 including \strong{\code{^}}, \strong{\code{$}}, and \strong{\code{|}}.
 
 \strong{Note:} If you submit values for more than one of \code{icdcm},
-\code{broad}, or \code{detailed} they must be nested. For example,
-\code{broad = 'neoplasms', detailed = 'sarcoma'} will give results because
-sarcomas are type of cancers. However, \code{broad = 'neoplasms',
-detailed = 'intestinal infection'} will return an error because your resulting
-table will have zero rows.
+\code{superlevel}, \code{broad}, \code{midlevel}, or \code{detailed} they must
+be nested. For example, \code{broad = 'neoplasms', detailed = 'sarcoma'} will
+give results because sarcomas are type of cancers. However,
+\code{broad = 'neoplasms', detailed = 'intestinal infection'} will return an
+error because your resulting table will have zero rows.
 }
 \examples{
 # example: 2019 King County hospitalizations for chemotherapy, by sex
 \dontrun{
 blah = get_data_chars(year = 2019, kingco = TRUE)
 myresult <- chars_icd_ccs_count(ph.data = blah,
-                                detailed = 'chemotherapy',
+                                detailed = 'headache',
                                 group_by = c('chi_sex'))
 print(myresult)
 }
