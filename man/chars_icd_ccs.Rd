@@ -15,7 +15,7 @@ chars_icd_ccs(ref_type = "all", mykey = "hhsaw", icdcm_version = 10)
 \arguments{
 \item{ref_type}{a character vector of length one specifying the hospital diagnosis
 descriptions that are of interest to you. Acceptable options include: \code{'all'},
-\code{'icdcm'}, \code{'broad'}, & \code{'detailed'}.
+\code{'icdcm'}, \code{'superlevel'}, \code{'broad'}, \code{'midlevel'}, & \code{'detailed'}.
 
 The default is \code{ref_type = 'all'}.}
 
@@ -41,14 +41,17 @@ descriptions as well as corresponding 'broad' and 'detailed' classifications.
 The 'broad' and 'detailed' classifications broadly follow AHRQ's HCUP Clinical
 Classifications Software Refined (CCSR) standards for ICD-10-CM. ICD-9-CM
 codes were then mapped to the same 'broad' and 'detailed' categories to maximize
-comparability across time.
+comparability across time. The 'superlevel' and 'midlevel' categorizations
+were developed by APDE, based in large part on the 'broad' and 'detailed'
+classifications.
 
 Output is provided in the form of a table. Use this table to inform your
 arguments in the  \code{chars_icd_ccs_count} function.
 }
 \note{
 If you do not specify any arguments, the function will return a table with
-all ICD-10-CM codes as well ICD-10-CM, broad, and detailed descriptions.
+all ICD-10-CM codes as well ICD-10-CM, superlevel, broad, midlevel, and
+detailed descriptions.
 }
 \examples{
 # Save and view table as a data.table named 'blah'
