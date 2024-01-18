@@ -415,14 +415,17 @@ chars_injury_matrix_count<- function(ph.data = NULL,
 #' The 'broad' and 'detailed' classifications broadly follow AHRQ's HCUP Clinical
 #' Classifications Software Refined (CCSR) standards for ICD-10-CM. ICD-9-CM
 #' codes were then mapped to the same 'broad' and 'detailed' categories to maximize
-#' comparability across time.
+#' comparability across time. The 'superlevel' and 'midlevel' categorizations
+#' were developed by APDE, based in large part on the 'broad' and 'detailed'
+#' classifications.
 #'
 #' Output is provided in the form of a table. Use this table to inform your
 #' arguments in the  \code{chars_icd_ccs_count} function.
 #'
 #' @note
 #' If you do not specify any arguments, the function will return a table with
-#' all ICD-10-CM codes as well ICD-10-CM, broad, and detailed descriptions.
+#' all ICD-10-CM codes as well ICD-10-CM, superlevel, broad, midlevel, and
+#' detailed descriptions.
 #'
 #' @source
 #' \code{kcitazrhpasqlprp16.azds.kingcounty.gov >> hhs_analytics_workspace >>
@@ -433,7 +436,7 @@ chars_injury_matrix_count<- function(ph.data = NULL,
 #'
 #' @param ref_type a character vector of length one specifying the hospital diagnosis
 #' descriptions that are of interest to you. Acceptable options include: \code{'all'},
-#' \code{'icdcm'}, \code{'broad'}, & \code{'detailed'}.
+#' \code{'icdcm'}, \code{'superlevel'}, \code{'broad'}, \code{'midlevel'}, & \code{'detailed'}.
 #'
 #' The default is \code{ref_type = 'all'}.
 #'
@@ -469,13 +472,13 @@ chars_icd_ccs <- function(ref_type = 'all',
                           icdcm_version = 10){
 
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-  chars_list <- icdcm <- icdcm_code <- broad <- detailed  <- NULL
+  chars_list <- icdcm <- icdcm_code <- superlevel <- broad <- midlevel <- detailed  <- NULL
 
   # check arguments ----
   if(length(ref_type) != 1){
-    stop("\n \U0001f47f the `ref_type` must have a single value. Valid options are 'all', 'icdcm', 'broad', & 'detailed'")}
-  if(!ref_type %in% c('all', 'icdcm', 'broad', 'detailed')){
-    stop(paste0("\n \U0001f47f'", ref_type, "' is not a valid option for the `ref_type` argument. \nValid options are 'all', 'icdcm', 'broad', & 'detailed'."))}
+    stop("\n \U0001f47f the `ref_type` must have a single value. Valid options are 'all', 'icdcm', 'superlevel, 'broad', 'midlevel', & 'detailed'")}
+  if(!ref_type %in% c('all', 'icdcm', 'superlevel', 'broad', 'midlevel', 'detailed')){
+    stop(paste0("\n \U0001f47f'", ref_type, "' is not a valid option for the `ref_type` argument. \nValid options are 'all', 'icdcm', 'broad', 'midlevel', & 'detailed'."))}
 
   if(length(mykey) != 1 | !is.character(mykey)){
     stop("\n \U0001f47f the `mykey` argument must be a string of length == 1, \nwhich is the name of your keyring:: service providing the \npassword for connecting to HHSAW, it is typically 'hhsaw'.")}
@@ -490,13 +493,17 @@ chars_icd_ccs <- function(ref_type = 'all',
                                    paste0("SELECT icdcm_version,
                                    icdcm_code = icdcm,
                                    icdcm = icdcm_description,
+                                   superlevel = ccs_superlevel_desc,
                                    broad = ccs_broad_desc,
-                                   detailed = ccs_detail_desc
+                                   detailed = ccs_detail_desc,
+                                   midlevel = ccs_midlevel_desc
                                    FROM [ref].[icdcm_codes] WHERE icdcm_version = ", icdcm_version )))
 
-  if(ref_type == 'all'){chars_list <- chars_list[, list(icdcm_code, icdcm, broad, detailed, icdcm_version)]}
+  if(ref_type == 'all'){chars_list <- chars_list[, list(icdcm_code, icdcm, superlevel, broad, midlevel, detailed, icdcm_version)]}
   if(ref_type == 'icdcm'){chars_list <- chars_list[, list(icdcm_code, icdcm, icdcm_version)]}
+  if(ref_type == 'superlevel'){chars_list <- chars_list[, list(superlevel, icdcm_version)]}
   if(ref_type == 'broad'){chars_list <- chars_list[, list(broad, icdcm_version)]}
+  if(ref_type == 'midlevel'){chars_list <- chars_list[, list(midlevel, icdcm_version)]}
   if(ref_type == 'detailed'){chars_list <- chars_list[, list(detailed, icdcm_version)]}
 
   return(unique(chars_list))
@@ -515,7 +522,7 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' ICD-CM column (e.g., the data available from \code{get_data_chars()}).
 #'
 #' See \code{chars_icd_ccs()} for a complete list of available ICD-10-CM,
-#' ICD-9-CM, and broad and narrow classifications.
+#' ICD-9-CM, and superlevel, broad, midlevel, and narrow classifications.
 #'
 #' \strong{¡¡¡REMEMBER!!!} ICD-10-CM started in 2016! Be sure to use the correct
 #' **\code{icdcm_version}**.
@@ -524,7 +531,8 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' @details
 #' This function needs the user to enter a search string in one or more of the
 #' following arguments in order to search the CHARS data for the corresponding
-#' ICD CM codes: \code{icdcm}, \code{broad}, or \code{detailed}.
+#' ICD CM codes: \code{icdcm}, \code{superlevel}, \code{broad}, \code{midlevel},
+#' or \code{detailed}.
 #' Partial search terms are acceptable and they are case-insensitive. For
 #' example, if you set \code{broad = 'ex'} with \code{icdcm_version = 10}, the
 #' function would return counts for "Diseases of the eye and adnEXa" as well as
@@ -532,11 +540,11 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' including **\code{^}**, **\code{$}**, and **\code{|}**.
 #'
 #' **Note:** If you submit values for more than one of \code{icdcm},
-#' \code{broad}, or \code{detailed} they must be nested. For example,
-#' \code{broad = 'neoplasms', detailed = 'sarcoma'} will give results because
-#' sarcomas are type of cancers. However, \code{broad = 'neoplasms',
-#' detailed = 'intestinal infection'} will return an error because your resulting
-#' table will have zero rows.
+#' \code{superlevel}, \code{broad}, \code{midlevel}, or \code{detailed} they must
+#' be nested. For example, \code{broad = 'neoplasms', detailed = 'sarcoma'} will
+#' give results because sarcomas are type of cancers. However,
+#' \code{broad = 'neoplasms', detailed = 'intestinal infection'} will return an
+#' error because your resulting table will have zero rows.
 #'
 #' @param ph.data a data.table or data.frame. Must contain CHARS data structured
 #' with one person per row and with at least one column of ICD CM codes.
@@ -562,12 +570,26 @@ chars_icd_ccs <- function(ref_type = 'all',
 #'
 #' The default is \code{icdcm = NULL}
 #'
-#' @param broad a character vector of length 1. View available options with
+#' @param superlevel a character vector of length 1. Case agnostic and works
+#' with partial strings. View available options with
+#' \code{chars_icd_ccs(ref_type = 'superlevel', icdcm_version = 10)}.
+#'
+#' The default is \code{superlevel = NULL}
+#'
+#' @param broad a character vector of length 1. Case agnostic and works with
+#' partial strings. View available options with
 #' \code{chars_icd_ccs(ref_type = 'broad', icdcm_version = 10)}.
 #'
 #' The default is \code{broad = NULL}
 #'
-#' @param detailed a character vector of length 1. View available options with
+#' @param midlevel a character vector of length 1. Case agnostic and works with
+#' partial strings. View available options with
+#' \code{chars_icd_ccs(ref_type = 'midlevel', icdcm_version = 10)}.
+#'
+#' The default is \code{midlevel = NULL}
+#'
+#' @param detailed a character vector of length 1. Case agnostic and works with
+#' partial strings. View available options with
 #' \code{chars_icd_ccs(ref_type = 'detailed', icdcm_version = 10)}.
 #'
 #' The default is \code{detailed = NULL}
@@ -616,7 +638,7 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' \dontrun{
 #' blah = get_data_chars(year = 2019, kingco = TRUE)
 #' myresult <- chars_icd_ccs_count(ph.data = blah,
-#'                                 detailed = 'chemotherapy',
+#'                                 detailed = 'headache',
 #'                                 group_by = c('chi_sex'))
 #' print(myresult)
 #' }
@@ -626,7 +648,9 @@ chars_icd_ccs <- function(ref_type = 'all',
 chars_icd_ccs_count <- function(ph.data = NULL,
                                 icdcm_version = 10,
                                 icdcm = NULL,
+                                superlevel = NULL,
                                 broad = NULL,
+                                midlevel = NULL,
                                 detailed = NULL,
                                 icdcol = 'diag1',
                                 group_by = NULL,
@@ -634,8 +658,8 @@ chars_icd_ccs_count <- function(ph.data = NULL,
                                 mykey = 'hhsaw'){
 
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-    CMtable <- CMtable.expanded <- filter.count <- problem.icds <- broad_desc <-
-      detailed_desc <- chi_geo_kc <- hospitalizations <- icdcm_code <- KeepMe <-
+    CMtable <- CMtable.expanded <- filter.count <- problem.icds <- superlevel_desc <- broad_desc <-
+      midlevel_desc <- detailed_desc <- chi_geo_kc <- hospitalizations <- icdcm_code <- KeepMe <-
       icdcm_desc <- icdcm_code <- query.group <- diag1 <- intent_ignore <-
       chars_injury_matrix_count <- mechanism_ignore <- NULL
 
@@ -662,16 +686,15 @@ chars_icd_ccs_count <- function(ph.data = NULL,
         if('seq_no' %in% names(ph.data) & length(unique(ph.data$seq_no)) != nrow(ph.data)){
           stop("\U2620\U0001f47f\U2620\nThe 'seq_no' is a unique patient identifier and should not be repeated across rows.")}
 
-    # icdcm + broad + detailed ----
-        if(is.null(icdcm) & is.null(broad) & is.null(detailed)){
-          stop("\n\U0001f47f `icdcm`, `broad`, and `detailed` are all NULL. This doesn't make sense! Specify a value for at least one of these arguments.")
+    # icdcm + superlevel + broad + midlevel + detailed ----
+        if(is.null(icdcm) & is.null(superlevel) & is.null(broad) & is.null(midlevel) & is.null(detailed)){
+          stop("\n\U0001f47f `icdcm`, `superlevel`, `broad`, `midlevel`, and `detailed` are all NULL. This doesn't make sense! Specify a value for at least one of these arguments.")
         }
 
         CMtable <- chars_icd_ccs(icdcm_version = icdcm_version) # reference table of all potential search terms for this function
-        CMtable <- CMtable[, list(icdcm_code, icdcm_desc = icdcm, broad_desc = broad, detailed_desc = detailed)]
+        CMtable <- CMtable[, list(icdcm_code, icdcm_desc = icdcm, superlevel_desc = superlevel, broad_desc = broad, midlevel_desc = midlevel, detailed_desc = detailed)]
 
-
-        filter.count <- sum(!is.null(icdcm), !is.null(broad), !is.null(detailed))
+        filter.count <- sum(!is.null(icdcm), !is.null(superlevel), !is.null(broad), !is.null(midlevel), !is.null(detailed))
 
     # icdcm ----
         if(!is.null(icdcm)){
@@ -681,6 +704,22 @@ chars_icd_ccs_count <- function(ph.data = NULL,
           CMtable <- CMtable[grepl(icdcm, icdcm_desc, ignore.case = T) | grepl(icdcm, icdcm_code, ignore.case = T)]
           if(nrow(CMtable) < 1){
             stop(paste0("\n\U0001f47f Setting the argument <icdcm='", icdcm, "'> filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
+          }
+        }
+
+    # superlevel ----
+        if(!is.null(superlevel)){
+          if(length(superlevel) != 1){
+            stop("\n\U0001f47f When specified, `superlevel` must be a character vector of length one.")
+          }
+          CMtable <- CMtable[grepl(superlevel, superlevel_desc, ignore.case = T)]
+          if(nrow(CMtable) < 1){
+            if(filter.count == 1){
+              stop(paste0("\n\U0001f47f Setting the argument <superlevel='", superlevel, "'> filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
+            }
+            if(filter.count > 1){
+              stop(paste0("\n\U0001f47f Setting the argument <superlevel='", superlevel, "'>, either alone or in combinaton with other arguments, filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
+            }
           }
         }
 
@@ -695,7 +734,23 @@ chars_icd_ccs_count <- function(ph.data = NULL,
               stop(paste0("\n\U0001f47f Setting the argument <broad='", broad, "'> filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
             }
             if(filter.count > 1){
-              stop(paste0("\n\U0001f47f Setting the argument <broad='", broad, "'>, either alone or in combinaton with the values of icdcm and detailed, filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
+              stop(paste0("\n\U0001f47f Setting the argument <broad='", broad, "'>, either alone or in combinaton with other arguments, filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
+            }
+          }
+        }
+
+    # midlevel ----
+        if(!is.null(midlevel)){
+          if(length(midlevel) != 1){
+            stop("\n\U0001f47f When specified, `midlevel` must be a character vector of length one.")
+          }
+          CMtable <- CMtable[grepl(midlevel, midlevel_desc, ignore.case = T)]
+          if(nrow(CMtable) < 1){
+            if(filter.count == 1){
+              stop(paste0("\n\U0001f47f Setting the argument <midlevel='", midlevel, "'> filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
+            }
+            if(filter.count > 1){
+              stop(paste0("\n\U0001f47f Setting the argument <midlevel='", midlevel, "'>, either alone or in combinaton with other arguments, filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
             }
           }
         }
@@ -711,7 +766,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
               stop(paste0("\n\U0001f47f Setting the argument <detailed='", detailed, "'> filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
             }
             if(filter.count > 1){
-              stop(paste0("\n\U0001f47f Setting the argument <detailed='", detailed, "'>, either alone or in combinaton with the values of icdcm and broad, filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
+              stop(paste0("\n\U0001f47f Setting the argument <detailed='", detailed, "'>, either alone or in combinaton with other arguments, filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
             }
           }
         }
@@ -772,7 +827,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
 
   # Drop unnecessary columns from reference table (CMtable) ----
     KeepMe <- c("icdcm_code")
-    for(grr in c('icdcm', 'broad', 'detailed')){
+    for(grr in c('icdcm', 'superlevel', 'broad', 'midlevel', 'detailed')){
      if(!is.null(get(grr))){
        KeepMe <- c(KeepMe, paste0(grr, "_desc"))
      }
