@@ -207,6 +207,7 @@ get_population(race_type = "race", group_by = "race")[]
 ### Complex arguments
 
 **King County regions stratified by Hispanic/Non-Hispanic**
+
 ```{r, warning = FALSE, message = FALSE}
 # pull in data stratified by race/eth and region
 reg_hisp_nonhisp <- get_population(geo_type = 'region', group_by = c('race_eth'))
@@ -220,6 +221,7 @@ print(reg_hisp_nonhisp)
 ```
 
 **King County regions stratified by year and gender**
+
 ```{r, warning = FALSE, message = FALSE}
 get_population(geo_type = "region", 
                years = 2017:2019, 
@@ -237,4 +239,30 @@ get_population(ages = 16:25,
                race_type = "race_eth", 
                group_by = c("geo_id", "years", "race_eth"), 
                round = F)[]
+```
+
+## **Using get_population with a pre-existing connection to hhsaw**
+
+Some users may not need/want to rely on `get_population`'s auto-connection to HHSAW via keyring. Users can instead pass an existing database connection through the mykey argument. The example below still uses keyring (since most `get_population` users are on the PH domain), but it can be replaced by `ActiveDirectoryIntegrated` type authentications to HHSAW for the KC lucky ducks.
+
+```{r, warning = FALSE, message = FALSE}
+
+# Via autoconnect
+r1 = get_population()
+
+mycon <- DBI::dbConnect(
+  odbc::odbc(), 
+  driver = getOption("rads.odbc_version"), 
+  server = "kcitazrhpasqlprp16.azds.kingcounty.gov", 
+  database = "hhs_analytics_workspace",
+  uid = keyring::key_list('hhsaw')[["username"]], 
+  pwd = keyring::key_get('hhsaw', keyring::key_list('hhsaw')[["username"]]), 
+  Encrypt = "yes", 
+  TrustServerCertificate = "yes", 
+  Authentication = "ActiveDirectoryPassword")
+
+r2 = get_population(mykey = mycon)
+
+print(all.equal(r1,r2))
+
 ```
