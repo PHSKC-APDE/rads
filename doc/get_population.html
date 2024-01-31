@@ -120,7 +120,7 @@ table, .body h2 { border-bottom: 1px solid #666; }
 .body .appendix, .appendix ~ h2 { border-bottom-style: dashed; }
 .footnote-ref a::before { content: "["; }
 .footnote-ref a::after { content: "]"; }
-.footnotes::before {
+section.footnotes::before {
   content: "";
   display: block;
   max-width: 20em;
@@ -139,8 +139,6 @@ table, .body h2 { border-bottom: 1px solid #666; }
 </style>
 </head>
 <body>
-<div class="include-before">
-</div>
 <div class="frontmatter">
 <div class="title"><h1>get_population()</h1></div>
 <div class="author"><h2></h2></div>
@@ -277,13 +275,13 @@ table, .body h2 { border-bottom: 1px solid #666; }
 <p><strong>King County HRAs</strong></p>
 <pre><code class="language-r">head(get_population(geo_type = c(&quot;hra&quot;), group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
-<pre><code>##         pop geo_type                                       geo_id year   age
-## 1: 38246.05      hra                              Redmond - South 2022 0-100
-## 2: 28803.18      hra                                 Maple Valley 2022 0-100
-## 3: 39498.12      hra        Lakeland, Algona, Pacific, and Milton 2022 0-100
-## 4: 35545.77      hra    Federal Way - Dash Point and Southern Rim 2022 0-100
-## 5: 22905.68      hra                                      Tukwila 2022 0-100
-## 6: 39098.33      hra Seattle - Downtown, Belltown, and First Hill 2022 0-100
+<pre><code>##         pop geo_type                                 geo_id year   age
+## 1: 21183.65      hra                              Covington 2022 0-100
+## 2: 60406.00      hra                              Shoreline 2022 0-100
+## 3: 50169.19      hra       Bear Creek and Greater Sammamish 2022 0-100
+## 4: 45842.21      hra Seattle - Green Lake and Phinney Ridge 2022 0-100
+## 5: 54856.25      hra                      Seattle - Ballard 2022 0-100
+## 6: 39352.12      hra      Seattle - Fremont and Wallingford 2022 0-100
 ##          gender                                                 race_eth
 ## 1: Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 2: Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
@@ -292,23 +290,23 @@ table, .body h2 { border-bottom: 1px solid #666; }
 ## 5: Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 6: Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ##    geo_id_code
-## 1:          48
-## 2:          10
-## 3:           4
-## 4:           3
-## 5:          21
-## 6:          39
+## 1:          11
+## 2:          61
+## 3:          54
+## 4:          52
+## 5:          55
+## 6:          46
 </code></pre>
 <p><strong>King County Zip codes</strong></p>
 <pre><code class="language-r">head(get_population(geo_type = c(&quot;zip&quot;), group_by = c(&quot;geo_id&quot;))[])  
 </code></pre>
-<pre><code>##             pop geo_type geo_id year   age       gender
-## 1: 3.003720e+04      zip  98027 2022 0-100 Female, Male
-## 2: 2.241798e+04      zip  98112 2022 0-100 Female, Male
-## 3: 2.132755e-02      zip  98158 2022 0-100 Female, Male
-## 4: 3.774003e+04      zip  98038 2022 0-100 Female, Male
-## 5: 2.283809e+04      zip  98053 2022 0-100 Female, Male
-## 6: 2.472811e+04      zip  98055 2022 0-100 Female, Male
+<pre><code>##          pop geo_type geo_id year   age       gender
+## 1: 43622.179      zip  98125 2022 0-100 Female, Male
+## 2: 26742.065      zip  98102 2022 0-100 Female, Male
+## 3: 24916.896      zip  98178 2022 0-100 Female, Male
+## 4: 27956.961      zip  98011 2022 0-100 Female, Male
+## 5:  3865.978      zip  98051 2022 0-100 Female, Male
+## 6: 26203.606      zip  98075 2022 0-100 Female, Male
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
@@ -321,11 +319,11 @@ table, .body h2 { border-bottom: 1px solid #666; }
 <pre><code class="language-r">head(get_population(geo_type = c(&quot;tract&quot;), group_by = c(&quot;geo_id&quot;), ages = 18, census_vintage = 2020, geo_vintage = 2020)[])  
 </code></pre>
 <pre><code>##         pop geo_type      geo_id year age       gender
-## 1: 41.83393    tract 53033004301 2022  18 Female, Male
-## 2: 13.67018    tract 53033008003 2022  18 Female, Male
-## 3: 24.66547    tract 53033008700 2022  18 Female, Male
-## 4: 51.54287    tract 53033023603 2022  18 Female, Male
-## 5: 26.18290    tract 53033023902 2022  18 Female, Male
+## 1: 61.28889    tract 53033025806 2022  18 Female, Male
+## 2: 51.54287    tract 53033023603 2022  18 Female, Male
+## 3: 41.83393    tract 53033004301 2022  18 Female, Male
+## 4: 96.24008    tract 53033030005 2022  18 Female, Male
+## 5: 24.66547    tract 53033008700 2022  18 Female, Male
 ## 6: 35.49646    tract 53033024001 2022  18 Female, Male
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
@@ -338,13 +336,13 @@ table, .body h2 { border-bottom: 1px solid #666; }
 <p><strong>King County Census Block Groups</strong></p>
 <pre><code class="language-r">head(get_population(geo_type = c(&quot;blkgrp&quot;), group_by = c(&quot;geo_id&quot;), ages = 18,census_vintage = 2020, geo_vintage = 2020)[])  
 </code></pre>
-<pre><code>##          pop geo_type       geo_id year age       gender
-## 1: 15.562107   blkgrp 530330022003 2022  18 Female, Male
-## 2:  8.789951   blkgrp 530330030001 2022  18 Female, Male
-## 3:  9.006994   blkgrp 530330232014 2022  18 Female, Male
-## 4: 24.854687   blkgrp 530330273003 2022  18 Female, Male
-## 5: 19.677736   blkgrp 530330280001 2022  18 Female, Male
-## 6: 19.555334   blkgrp 530330290033 2022  18 Female, Male
+<pre><code>##         pop geo_type       geo_id year age       gender
+## 1: 23.51045   blkgrp 530330323111 2022  18 Female, Male
+## 2: 38.18083   blkgrp 530330323112 2022  18 Female, Male
+## 3: 21.40637   blkgrp 530330007002 2022  18 Female, Male
+## 4: 11.81991   blkgrp 530330284022 2022  18 Female, Male
+## 5: 21.90493   blkgrp 530330074051 2022  18 Female, Male
+## 6: 22.26961   blkgrp 530330292033 2022  18 Female, Male
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
@@ -357,13 +355,13 @@ table, .body h2 { border-bottom: 1px solid #666; }
 <pre><code class="language-r">#ages added to make things go faster
 head(get_population(geo_type = c(&quot;blk&quot;), group_by = c(&quot;geo_id&quot;), ages = 18, census_vintage = 2020, geo_vintage = 2020)[])  
 </code></pre>
-<pre><code>##           pop geo_type          geo_id year age       gender
-## 1:  3.1766492      blk 530330315022006 2022  18 Female, Male
-## 2: 21.5900791      blk 530330294083001 2022  18 Female, Male
-## 3:  3.4370966      blk 530330298041003 2022  18 Female, Male
-## 4:  0.0837521      blk 530330098011012 2022  18 Female, Male
-## 5:  1.1119714      blk 530330317081012 2022  18 Female, Male
-## 6:  0.9562015      blk 530330102004007 2022  18 Female, Male
+<pre><code>##            pop geo_type          geo_id year age       gender
+## 1:  3.17664919      blk 530330315022006 2022  18 Female, Male
+## 2: 21.59007906      blk 530330294083001 2022  18 Female, Male
+## 3:  0.06892186      blk 530330017024003 2022  18 Female, Male
+## 4:  0.08375210      blk 530330098011012 2022  18 Female, Male
+## 5:  7.29274490      blk 530330290033004 2022  18 Female, Male
+## 6:  3.43709657      blk 530330298041003 2022  18 Female, Male
 ##                                                    race_eth
 ## 1: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ## 2: AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
@@ -590,8 +588,28 @@ print(reg_hisp_nonhisp)
 ## 24:   956.3879   region   North 2017 16-25 Female Hispanic           2
 ##            pop geo_type  geo_id year   age gender race_eth geo_id_code
 </code></pre>
-</div>
-<div class="include-after">
+<h2 id="using-get-population-with-a-pre-existing-connection-to-hhsaw"><strong>Using get_population with a pre-existing connection to hhsaw</strong></h2>
+<p>Some users may not need/want to rely on <code>get_population</code>’s auto-connection to HHSAW via keyring. Users can instead pass an existing database connection through the mykey argument. The example below still uses keyring (since most <code>get_population</code> users are on the PH domain), but it can be replaced by <code>ActiveDirectoryIntegrated</code> type authentications to HHSAW for the KC lucky ducks.</p>
+<pre><code class="language-r"># Via autoconnect
+r1 = get_population()
+
+mycon &lt;- DBI::dbConnect(
+  odbc::odbc(), 
+  driver = getOption(&quot;rads.odbc_version&quot;), 
+  server = &quot;kcitazrhpasqlprp16.azds.kingcounty.gov&quot;, 
+  database = &quot;hhs_analytics_workspace&quot;,
+  uid = keyring::key_list('hhsaw')[[&quot;username&quot;]], 
+  pwd = keyring::key_get('hhsaw', keyring::key_list('hhsaw')[[&quot;username&quot;]]), 
+  Encrypt = &quot;yes&quot;, 
+  TrustServerCertificate = &quot;yes&quot;, 
+  Authentication = &quot;ActiveDirectoryPassword&quot;)
+
+r2 = get_population(mykey = mycon)
+
+print(all.equal(r1,r2))
+</code></pre>
+<pre><code>## [1] TRUE
+</code></pre>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>
