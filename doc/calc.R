@@ -1,4 +1,4 @@
-## ---- echo = F, message=FALSE-------------------------------------------------
+## ----echo = F, message=FALSE--------------------------------------------------
 library(rads)
 library(dtsurvey)
 
@@ -61,27 +61,27 @@ calc(ph.data = birth,
      metrics = c("mean", "rse"), 
      by = c("chi_race_eth8", "chi_sex"))[]
 
-## ---- warning=FALSE-----------------------------------------------------------
+## ----warning=FALSE------------------------------------------------------------
 calc(ph.data = birth, 
      what = c("chi_race_eth8"), 
      chi_year %in% 2017:2019,
      metrics = c("mean", "rse", "obs", "numerator", "denominator"))[]
 
-## ---- warning=FALSE-----------------------------------------------------------
+## ----warning=FALSE------------------------------------------------------------
 calc(ph.data = birth, 
      what = c("chi_race_eth8"), 
      chi_year %in% 2017:2019,
      metrics = c("obs", "numerator", "denominator", "rate"), 
      per = 100000)[]
 
-## ---- warning=FALSE-----------------------------------------------------------
+## ----warning=FALSE------------------------------------------------------------
 calc(ph.data = birth, 
      what = c("chi_sex"), 
      chi_year %in% 2017:2019,
      metrics = c("obs", "missing", "missing.prop"), 
      by = "chi_year")[]
 
-## ---- warning=FALSE, message=FALSE--------------------------------------------
+## ----warning=FALSE, message=FALSE---------------------------------------------
 library(survey)
 library(data.table)
 
@@ -104,14 +104,14 @@ load("//dphcifs/APDE-CDIP/ACS/PUMS_data/2021_1_year/prepped_R_files/2021_1_year_
   # users who prefer dplyr syntax should review the srvyr package
   pums = dtsurvey::dtrepsurvey(pums)
 
-## ---- warning=FALSE-----------------------------------------------------------
+## ----warning=FALSE------------------------------------------------------------
 test1 <- calc(ph.data = pums, 
              what = "chi_geo_seattle", 
              metrics = c('mean', 'numerator', 'denominator', 'obs', 'total'), 
              where = chi_geo_kc == 1)
 print(test1)
 
-## ---- warning=FALSE-----------------------------------------------------------
+## ----warning=FALSE------------------------------------------------------------
 pums2 <- copy(pums)
 pums2 <- pums2[chi_geo_seattle == 1, chi_geo_seattle := ifelse(rowid(chi_geo_seattle) <= 100, NA, chi_geo_seattle)]
 test2 <- calc(ph.data = pums2, 
@@ -120,7 +120,7 @@ test2 <- calc(ph.data = pums2,
              where = chi_geo_kc == 1)
 print(test2)
 
-## ---- warning=FALSE-----------------------------------------------------------
+## ----warning=FALSE------------------------------------------------------------
 # WA State
 calc(ph.data = pums, 
      what = c('chi_geo_wastate'), 
@@ -139,28 +139,28 @@ calc(ph.data = pums,
      metrics = c("numerator", "total"), 
      proportion = F)[]
 
-## ---- warning=FALSE-----------------------------------------------------------
+## ----warning=FALSE------------------------------------------------------------
 calc(ph.data = pums, 
      what = c("disability", "GEpov200"), 
      metrics = c("mean", "rse", "obs", "numerator", "denominator"), 
      proportion = T, 
      by = "chi_geo_kc")[]
 
-## ---- warning=FALSE-----------------------------------------------------------
+## ----warning=FALSE------------------------------------------------------------
 calc(ph.data = pums, 
      what = c("age6"), 
      metrics = c("mean", "rse", "obs", "numerator", "denominator"), 
      proportion = F, 
      by = "disability")[]
 
-## ---- warning=FALSE-----------------------------------------------------------
+## ----warning=FALSE------------------------------------------------------------
 calc(ph.data = pums, 
      what = c("agep"),
      chi_geo_kc == 1,
      metrics = c("mean", "median", "rse", "obs", "numerator", "denominator"), 
      by = "disability")[]
 
-## ---- warning=FALSE, message=FALSE--------------------------------------------
+## ----warning=FALSE, message=FALSE---------------------------------------------
 library(data.table)
 set.seed(98121) 
 
@@ -171,7 +171,7 @@ mydt <- data.table(
 
 mydt[]
 
-## ---- warning=FALSE, message=FALSE--------------------------------------------
+## ----warning=FALSE, message=FALSE---------------------------------------------
 grades.distribution <- calc(
   ph.data = mydt, 
   school %in% c("Alpha", "Beta"), 
@@ -182,7 +182,7 @@ grades.distribution <- calc(
 
 grades.distribution[level %in% c("A", "B")]
 
-## ---- warning=FALSE, message=FALSE--------------------------------------------
+## ----warning=FALSE, message=FALSE---------------------------------------------
 # create weights
 set.seed(98121)
 mydt[, mywghts := sample(50:1300, 2000, replace = T)]
@@ -193,7 +193,7 @@ mydt[, mywghts := sample(50:1300, 2000, replace = T)]
 mydt[, `_id` := NULL] # remove id to make things play nice
 mysvy <-dtsurvey::dtsurvey(data.table(mydt), weight = 'mywghts')
 
-## ---- warning=FALSE, message=FALSE--------------------------------------------
+## ----warning=FALSE, message=FALSE---------------------------------------------
 grades.distribution2 <- calc(
   ph.data = mysvy, 
   school %in% c("Alpha", "Beta"), 

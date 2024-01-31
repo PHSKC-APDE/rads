@@ -1464,16 +1464,16 @@ validate_yaml_data <- function(DF = NULL, YML = NULL, VARS = "vars"){
   class.compare[tolower(yaml.class) %in% c("tinyint", "smallint", "int"), yaml.class := "integer"]
   class.compare[grepl("bigint|decimal|float|money|numeric|real", tolower(yaml.class)), yaml.class := "numeric"]
   class.compare[grepl("bit", tolower(yaml.class)), yaml.class := "logical"]
-  class.compare[grepl("date", tolower(yaml.class)), yaml.class := "date"]
   class.compare[grepl("time", tolower(yaml.class)), yaml.class := "POSIXct"]
+  class.compare[grepl("date", tolower(yaml.class)), yaml.class := "date"]
 
   # identify which VARS should be of which class (assuming YAML is correct) ----
   make.char <- class.compare[yaml.class == "character"]$name
   make.num  <- class.compare[yaml.class == "numeric"]$name
   make.int  <- class.compare[yaml.class == "integer"]$name
   make.logical  <- class.compare[yaml.class == "logical"]$name
-  make.Date  <- class.compare[yaml.class == "Date"]$name
   make.POSIXct  <- class.compare[yaml.class == "POSIXct"]$name
+  make.Date  <- class.compare[yaml.class == "Date"]$name
 
   # create function to convert column classes if it can be done without introducing NA's ----
   lossless_convert <- function(x, class){
@@ -1506,6 +1506,7 @@ validate_yaml_data <- function(DF = NULL, YML = NULL, VARS = "vars"){
   # check if there are variables that could not be coerced to proper type ----
   class.compare <- merge(data.table::data.table(name = names(sapply(DF, class)), DF.class = tolower(sapply(DF, class))),
                          class.compare, by = "name")
+  class.compare[DF.class == 'c("posixct", "posixt")', DF.class := 'POSIXct']
 
   # allow R to be more strict than YAML with numbers ----
   class.compare[yaml.class=="numeric" & DF.class == "integer", DF.class := "numeric"]

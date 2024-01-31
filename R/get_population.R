@@ -47,9 +47,9 @@
 #' estimates should be returned as whole numbers.
 #'
 #' Default == FALSE. As of 02/2023.
-#' @param mykey Character vector of length 1 OR a database connection. Identifies
-#' the keyring:: key that can be used to access the Health & Human Services
-#' Analytic Workspace (HHSAW).
+#' @param mykey Character vector of length 1 OR a database connection (via DBI::dbConnect()).
+#' If the former, it should identify the keyring:: key that can be used to access the
+#' Health & Human Services Analytic Workspace (HHSAW).
 #'
 #' Default == 'hhsaw'
 #'
@@ -155,7 +155,7 @@ get_population <- function(kingco = T,
   # Validations ----
 
   ## Validate key ----
-    con <- validate_hhsaw_key(hhsaw_key = mykey)
+  con <- validate_hhsaw_key(hhsaw_key = mykey)
 
   ## validate census_vintage ----
   census_vintage = validate_input('census_vintage', census_vintage, c(2010, 2020))
@@ -249,7 +249,7 @@ get_population <- function(kingco = T,
     warning('geo_vintage changed from 2010 to 2020 since the WA county boundaries did not change between 2010 and 2020')
   }
 
-  where_geo_vintage = glue_sql('geo_year >= {geo_vintage} AND geo_year<= {geo_vintage + 9}')
+  where_geo_vintage = glue_sql('geo_year >= {geo_vintage} AND geo_year<= {geo_vintage + 9}', .con = con)
   # geo_vintage is not relevant for ZIPs and school districts
   if(geo_type %in% c('zip', 'scd')){
     where_geo_vintage = SQL('')

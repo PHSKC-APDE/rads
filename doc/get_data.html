@@ -120,7 +120,7 @@ table, .body h2 { border-bottom: 1px solid #666; }
 .body .appendix, .appendix ~ h2 { border-bottom-style: dashed; }
 .footnote-ref a::before { content: "["; }
 .footnote-ref a::after { content: "]"; }
-.footnotes::before {
+section.footnotes::before {
   content: "";
   display: block;
   max-width: 20em;
@@ -139,8 +139,6 @@ table, .body h2 { border-bottom: 1px solid #666; }
 </style>
 </head>
 <body>
-<div class="include-before">
-</div>
 <div class="frontmatter">
 <div class="title"><h1>get_data()</h1></div>
 <div class="author"><h2></h2></div>
@@ -205,7 +203,7 @@ table, .body h2 { border-bottom: 1px solid #666; }
 <pre><code class="language-r">str(birth) 
 </code></pre>
 <pre><code>## Classes 'data.table' and 'data.frame':	86154 obs. of  2 variables:
-##  $ chi_geo_kc: Factor w/ 1 level &quot;King County&quot;: NA NA 1 1 NA NA 1 1 NA NA ...
+##  $ chi_geo_kc: Factor w/ 1 level &quot;King County&quot;: NA NA NA NA NA NA NA NA NA NA ...
 ##  $ chi_year  : int  2019 2019 2019 2019 2019 2019 2019 2019 2019 2019 ...
 ##  - attr(*, &quot;.internal.selfref&quot;)=&lt;externalptr&gt;
 </code></pre>
@@ -217,13 +215,13 @@ table, .body h2 { border-bottom: 1px solid #666; }
 <p>Use the <code>head()</code> command to take a peak at the first 6 lines of the <code>birth</code> table</p>
 <pre><code class="language-r">head(birth) 
 </code></pre>
-<pre><code>##     chi_geo_kc chi_year
-## 1:        &lt;NA&gt;     2019
-## 2:        &lt;NA&gt;     2019
-## 3: King County     2019
-## 4: King County     2019
-## 5:        &lt;NA&gt;     2019
-## 6:        &lt;NA&gt;     2019
+<pre><code>##    chi_geo_kc chi_year
+## 1:       &lt;NA&gt;     2019
+## 2:       &lt;NA&gt;     2019
+## 3:       &lt;NA&gt;     2019
+## 4:       &lt;NA&gt;     2019
+## 5:       &lt;NA&gt;     2019
+## 6:       &lt;NA&gt;     2019
 </code></pre>
 <h2 id="save-time-by-identifying-columns-of-interest">Save time by identifying columns of interest</h2>
 <p>As mentioned and demonstrated above, you can use the <code>cols</code> argument to save time by downloading a limited data set from the SQL servers. However, to do so, you need to know the column names. This is why we’ve created the<code>list_dataset_columns()</code> function. The sole argument is the name of the dataset (e.g., ‘birth’, ‘chars’, etc.) and the output is a table with all of the variable names.</p>
@@ -254,8 +252,6 @@ dim(birth2)
 </code></pre>
 <pre><code>## [1] &quot;hys&quot;   &quot;birth&quot; &quot;chars&quot; &quot;death&quot;
 </code></pre>
-</div>
-<div class="include-after">
 </div>
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>
