@@ -165,7 +165,7 @@ test_that('get_population',{
 
 })
 
-test_that('get_population works with passed db connection'.{
+test_that('get_population works with passed db connection',{
   r1 = get_population()
 
   mycon <- DBI::dbConnect(

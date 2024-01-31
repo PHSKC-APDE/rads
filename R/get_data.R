@@ -240,7 +240,7 @@ get_data_birth <- function(cols = NA,
         kco_sub = SQL('')
       }
 
-    query.string <- glue_sql('select {DBI::SQL(cols)} from {`mysqltable`} where chi_year in ({`validyears`*} {kco_sub})', .con = con)
+    query.string <- glue_sql('select {DBI::SQL(cols)} from {`mysqltable`} where chi_year in ({`validyears`*}) {kco_sub}', .con = con)
 
 
 
