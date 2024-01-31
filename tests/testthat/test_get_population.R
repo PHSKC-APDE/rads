@@ -163,6 +163,22 @@ test_that('get_population',{
   expect_equal(r6.1[, gender], 'Female')
   expect_equal(r6.2[, gender], 'Female, Male')
 
+})
 
+test_that('get_population works with passed db connection'.{
+  r1 = get_population()
 
+  mycon <- DBI::dbConnect(
+    odbc::odbc(),
+    driver = getOption("rads.odbc_version"),
+    server = "kcitazrhpasqlprp16.azds.kingcounty.gov",
+    database = "hhs_analytics_workspace",
+    uid = keyring::key_list('hhsaw')[["username"]],
+    pwd = keyring::key_get('hhsaw', keyring::key_list('hhsaw')[["username"]]),
+    Encrypt = "yes",
+    TrustServerCertificate = "yes",
+    Authentication = "ActiveDirectoryPassword")
+
+  r2 = get_population(mykey = mycon)
+  expect_equal(r1,r2)
 })
