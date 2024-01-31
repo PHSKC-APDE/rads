@@ -206,11 +206,11 @@ get_data_birth <- function(cols = NA,
     con <- validate_hhsaw_key(hhsaw_key = mykey)
 
   # create SQL table name ----
-    mysqltable <- glue::glue_sql('[birth].[', {version}, '_analytic]')
+    mysqltable <- DBI::Id(schema = 'birth', table = paste0(version, '_analytic'))
 
   # get list of all colnames from SQL ----
-    birth.names <- tolower(names(DBI::dbGetQuery(con, glue::glue_sql("SELECT top (0) * FROM  {mysqltable}"))))
-    birth.years <- unique(DBI::dbGetQuery(con, glue::glue_sql("SELECT DISTINCT chi_year FROM {mysqltable}"))$chi_year)
+    birth.names <- tolower(names(DBI::dbGetQuery(con, glue::glue_sql("SELECT top (0) * FROM  {`mysqltable`}", .con = con))))
+    birth.years <- unique(DBI::dbGetQuery(con, glue::glue_sql("SELECT DISTINCT chi_year FROM {`mysqltable`}", .con = con))$chi_year)
 
   # identify columns and years to pull from SQL ----
     cols <- tolower(cols)
@@ -234,9 +234,15 @@ get_data_birth <- function(cols = NA,
   # pull columns and years from SQL ----
     validyears <- glue::glue_sql_collapse(year, sep=", ")
 
-    query.string <- paste0("SELECT ", paste0(cols, collapse = ', '), " FROM ", mysqltable, " WHERE chi_year IN (", paste0(validyears, collapse = ', '), ")")
+    if(kingco == T){
+        kco_sub <- SQL(" AND chi_geo_kc = 'King County'")
+    }else{
+        kco_sub = SQL('')
+      }
 
-    if(kingco == T){query.string <- paste0(query.string, " AND chi_geo_kc = 'King County'")}
+    query.string <- glue_sql('select {DBI::SQL(cols)} from {`mysqltable`} where chi_year in ({`validyears`*}) {kco_sub}', .con = con)
+
+
 
     dat <- data.table::setDT(DBI::dbGetQuery(con, query.string))
 
@@ -328,11 +334,11 @@ get_data_death <- function(cols = NA,
       con <- validate_hhsaw_key(hhsaw_key = mykey)
 
   # create SQL table name
-    mysqltable <- glue::glue_sql('[death].[', {version}, '_analytic]')
+    mysqltable <- DBI::Id(schema = 'death', table = paste0(version, '_analytic'))
 
   # Get list of all colnames from SQL ----
-      death.names <- tolower(names(DBI::dbGetQuery(con, glue::glue_sql("SELECT TOP (0) * FROM {mysqltable}"))))
-      death.years <- sort(unique(DBI::dbGetQuery(con, glue::glue_sql("SELECT DISTINCT chi_year FROM {mysqltable}"))$chi_year))
+      death.names <- tolower(names(DBI::dbGetQuery(con, glue::glue_sql("SELECT TOP (0) * FROM {`mysqltable`}", .con = con))))
+      death.years <- sort(unique(DBI::dbGetQuery(con, glue::glue_sql("SELECT DISTINCT chi_year FROM {`mysqltable`}",.con = con))$chi_year))
 
   # Identify columns and years to pull from SQL ----
       cols <- tolower(cols)
@@ -372,7 +378,7 @@ get_data_death <- function(cols = NA,
 
   # Pull columns and years from SQL ----
       validyears <- glue::glue_sql_collapse(year, sep=", ")
-      query.string <- paste0("SELECT ", paste0(cols, collapse = ', '), " FROM ", mysqltable, " WHERE chi_year IN (", paste0(validyears, collapse = ', '), ")")
+      query.string <- glue_sql('select {DBI::SQL(cols)} from {`mysqltable`} where chi_year in ({`validyears`*})', .con = con)
 
       if(kingco == T){query.string <- paste0(query.string, " AND chi_geo_kc = 1")}
 
@@ -577,11 +583,11 @@ get_data_chars <- function(cols = NA,
     con <- validate_hhsaw_key(hhsaw_key = mykey)
 
   # create SQL table name ----
-    mysqltable <- glue::glue_sql('[chars].[', {version}, '_analytic]')
+    mysqltable <- DBI::Id(schema = 'chars', table = paste0(version, '_analytic'))
 
   # Get list of all colnames from SQL ----
-      chars.names <- tolower(names(DBI::dbGetQuery(con, glue::glue_sql("SELECT TOP (0) * FROM {mysqltable}"))))
-      chars.years <- sort(unique(DBI::dbGetQuery(con, glue::glue_sql("SELECT DISTINCT chi_year FROM {mysqltable}"))$chi_year))
+      chars.names <- tolower(names(DBI::dbGetQuery(con, glue::glue_sql("SELECT TOP (0) * FROM {`mysqltable`}", .con = con))))
+      chars.years <- sort(unique(DBI::dbGetQuery(con, glue::glue_sql("SELECT DISTINCT chi_year FROM {`mysqltable`}", .con = con))$chi_year))
 
   # Identify columns and years to pull from SQL ----
       cols <- tolower(cols)
@@ -619,13 +625,13 @@ get_data_chars <- function(cols = NA,
 
   # Pull columns and years from SQL ----
       validyears <- glue::glue_sql_collapse(year, sep=", ")
-      query.string <- paste0("SELECT ", paste0(cols, collapse = ', '), " FROM ", mysqltable, " WHERE chi_year IN (", paste0(validyears, collapse = ', '), ")")
+      query.string <- glue_sql('select {DBI::SQL(cols)} from {`mysqltable`} where chi_year in ({`validyears`*})', .con = con)
 
-      if(inpatient == T){query.string <- glue:: glue_sql (query.string, " AND STAYTYPE = 1")}
-      if(deaths == F){query.string <- glue:: glue_sql (query.string, " AND STATUS != 20")} # 20 means Expired / did not recover
-      if(wastate == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_wastate = 1")}
-      if(kingco == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 1")}
-      if(kingco == 'zip'){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kczip = 1")}
+      if(inpatient == T){query.string <- glue:: glue_sql (query.string, " AND STAYTYPE = 1", .con = con)}
+      if(deaths == F){query.string <- glue:: glue_sql (query.string, " AND STATUS != 20", .con = con)} # 20 means Expired / did not recover
+      if(wastate == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_wastate = 1", .con = con)}
+      if(kingco == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 1", .con = con)}
+      if(kingco == 'zip'){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kczip = 1", .con = con)}
 
       dat <- data.table::setDT(DBI::dbGetQuery(con, query.string))
       setnames(dat, tolower(names(dat)))

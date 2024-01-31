@@ -76,9 +76,9 @@ estimates should be returned as whole numbers.
 
 Default == FALSE. As of 02/2023.}
 
-\item{mykey}{Character vector of length 1 OR a database connection. Identifies
-the keyring:: key that can be used to access the Health & Human Services
-Analytic Workspace (HHSAW).
+\item{mykey}{Character vector of length 1 OR a database connection (via DBI::dbConnect()).
+If the former, it should identify the keyring:: key that can be used to access the
+Health & Human Services Analytic Workspace (HHSAW).
 
 Default == 'hhsaw'}
 

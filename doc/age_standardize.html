@@ -120,7 +120,7 @@ table, .body h2 { border-bottom: 1px solid #666; }
 .body .appendix, .appendix ~ h2 { border-bottom-style: dashed; }
 .footnote-ref a::before { content: "["; }
 .footnote-ref a::after { content: "]"; }
-.footnotes::before {
+section.footnotes::before {
   content: "";
   display: block;
   max-width: 20em;
@@ -139,8 +139,6 @@ table, .body h2 { border-bottom: 1px solid #666; }
 </style>
 </head>
 <body>
-<div class="include-before">
-</div>
 <div class="frontmatter">
 <div class="title"><h1>age_standardize()</h1></div>
 <div class="author"><h2></h2></div>
@@ -542,10 +540,10 @@ ex4.1[]
 ##  7:  14 King County 12208.96
 ##  8:  14    WA State 46476.42
 ##  9:  13    WA State 46374.96
-## 10:  15    WA State 44635.30
-## 11:  16    WA State 44581.08
-## 12:  17    WA State 43452.42
-## 13:  19    WA State 47390.04
+## 10:  16    WA State 44581.08
+## 11:  17    WA State 43452.42
+## 12:  19    WA State 47390.04
+## 13:  15    WA State 44635.30
 ## 14:  18    WA State 45951.20
 </code></pre>
 <p><strong>Merge population onto to birth counts</strong></p>
@@ -591,8 +589,6 @@ ex4.1[]
 <hr />
 <h2 id="conclusion">Conclusion</h2>
 <p>If you’ve walked through this vignette and more or less understood what’s going on, you’re in good shape! If you’re still confused, please walk through it again and then reach out if you still have questions. Good luck!</p>
-</div>
-<div class="include-after">
 </div>
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>
