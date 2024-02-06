@@ -64,7 +64,9 @@ Default == "kc".}
 
 \item{group_by}{Character vector. Identifies how you would
 like the data 'grouped' (i.e., stratified). Valid options are limited to:
-"years", "ages", "genders", "race", "race_eth", or "race_aic".
+"years", "ages", "genders", "race", "race_eth", "race_aic", and/or "hispanic".
+"Hispanic can only be specified when \code{race_type} is race_eth. This returns rows
+for Race-non hispanic and Race-hispanic. It can be combined with "race_eth".
 If "race" or "race_aic" are the \code{race_type} then they must be included in
 \code{group_by}. Results are always grouped by geo_id.
 

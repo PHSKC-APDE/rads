@@ -37,7 +37,9 @@
 #' Default == "kc".
 #' @param group_by Character vector. Identifies how you would
 #' like the data 'grouped' (i.e., stratified). Valid options are limited to:
-#' "years", "ages", "genders", "race", "race_eth", or "race_aic".
+#' "years", "ages", "genders", "race", "race_eth", "race_aic", and/or "hispanic".
+#' "Hispanic can only be specified when `race_type` is race_eth. This returns rows
+#' for Race-non hispanic and Race-hispanic. It can be combined with "race_eth".
 #' If "race" or "race_aic" are the `race_type` then they must be included in
 #' `group_by`. Results are always grouped by geo_id.
 #'
@@ -309,7 +311,7 @@ get_population <- function(kingco = T,
   races = tolower(races)
   races = validate_input('races', races, c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white"))
   race_col = 'r2r4'
-  if(race_type == 'race') race_col = 'r1r3'
+  if(race_type == 'race' || 'hispanic' %in% group_by) race_col = 'r1r3'
 
   ### convert to the numeric codes used in the ref table
   ref.table <- data.table::copy(rads.data::population_wapop_codebook_values)
@@ -324,12 +326,15 @@ get_population <- function(kingco = T,
   ### race_aic is handled below
 
   ## validate group_by ----
-  group_by = validate_input('group_by', group_by, c("years", "ages", "genders", "race", "race_eth", 'race_aic', 'geo_id'), convert_to_all = FALSE)
+  group_by = validate_input('group_by', group_by, c("years", "ages", "genders", "race", "race_eth", 'race_aic', 'geo_id', 'hispanic'), convert_to_all = FALSE)
   group_by = unique(c('geo_id', group_by))
 
+  if('hispanic' %in% group_by){
+    if(race_type != 'race_eth') stop('`hispanic` group_by only works when race_type = "race_eth"')
+  }
   ## race_type sanity checking ----
   ## confirm only one of race, race_eth, or race_aic is in the list
-  if(all(c('race', 'race_eth', 'race_aic') %in% group_by)) stop('Only one of race, race_eth, or race_aic can be in `group_by`')
+  if(sum(c('race', 'race_eth', 'race_aic') %in% group_by)>1) stop('Only one of race, race_eth, or race_aic can be in `group_by`')
   ## race and race_aic must be in group by
   if(any(c('race', 'race_aic') %in% race_type)){
     if(!race_type %in% group_by){
@@ -345,27 +350,45 @@ get_population <- function(kingco = T,
   ## if race_type == race, then the column name is race
   ## TODO: race will need to be a bit more complicatd here with race_aic
 
-  cols = data.table(coltype = c("years", "ages", "genders", race_type, "geo_id"),
-                    colname = c('year', 'age_100', 'gender', race_col, 'geo_id'),
-                    cat = c('year', 'age', 'gender', 'race', 'geo_id'))
+  cols = data.table(coltype = c("years", "ages", "genders", race_type, "geo_id", 'hispanic'),
+                    colname = c('year', 'age_100', 'gender', race_col, 'geo_id', 'race_hisp'),
+                    cat = c('year', 'age', 'gender', 'race', 'geo_id', 'hispanic'))
 
   # Assemble query ----
   ## Query for race/eth ----
   if(race_type == 'race_eth'){
-    q = build_getpop_query(con = con,
-                           cols = cols,
-                           pop_table = pop_table,
-                           group_by = group_by,
-                           group_geo_type = group_geo_type,
-                           select_geo_type = select_geo_type,
-                           ages = ages,
-                           years = years,
-                           genders = genders,
-                           races = races,
-                           where_geo_type,
-                           where_geo_vintage,
-                           where_census_vintage,
-                           subset_by_kingco)
+    if(!'hispanic' %in% group_by){
+      q = build_getpop_query(con = con,
+                             cols = cols,
+                             pop_table = pop_table,
+                             group_by = group_by,
+                             group_geo_type = group_geo_type,
+                             select_geo_type = select_geo_type,
+                             ages = ages,
+                             years = years,
+                             genders = genders,
+                             races = races,
+                             where_geo_type,
+                             where_geo_vintage,
+                             where_census_vintage,
+                             subset_by_kingco)
+    }else{
+      q = build_getpop_query(con = con,
+                             cols = cols,
+                             pop_table = pop_table,
+                             group_by = group_by,
+                             group_geo_type = group_geo_type,
+                             select_geo_type = select_geo_type,
+                             ages = ages,
+                             years = years,
+                             genders = genders,
+                             races = races,
+                             where_geo_type,
+                             where_geo_vintage,
+                             where_census_vintage,
+                             subset_by_kingco)
+    }
+
   }else if(race_type == 'race'){
     ## Query for race ----
     ### The query to data by race (ignoring ethnicity) ----
@@ -459,7 +482,7 @@ get_population <- function(kingco = T,
     #rename/relabel the race col
     rc = ref.table[sql_col %in% names(r), ]
     stopifnot(nrow(rc)<=1)
-    if(nrow(rc) == 1){
+    if(nrow(rc) == 1 & race_type != 'race_eth'){
       r[,(rc[,sql_col]) := NULL]
       r[, (race_col) := rc[, value]]
     }
@@ -469,7 +492,6 @@ get_population <- function(kingco = T,
   })
 
   r = rbindlist(r)
-
 
   # tidy the result ----
   ## age ----
@@ -488,8 +510,16 @@ get_population <- function(kingco = T,
                               ref.table[, label])]
   }else{
     if(races == 'All') races = ref.table[, value]
+    if('hispanic' %in% group_by) races = setdiff(races, 6)
     r[, (race_type) := ref.table[value %in% races, paste(label, collapse = ', ')]]
   }
+
+  if(race_type == 'race_eth' & 'hispanic' %in% group_by){
+    setnames(r, 'race_hisp', 'hispanic')
+    r[, hispanic := as.character(factor(hispanic, c(F,T), c('Not Hispanic', 'Hispanic')))]
+
+  }
+
 
 
   ## year ----
