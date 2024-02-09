@@ -311,7 +311,12 @@ get_population <- function(kingco = T,
   races = tolower(races)
   races = validate_input('races', races, c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white"))
   race_col = 'r2r4'
+  if('hispanic' %in% group_by && all(races %in% 'hispanic')){
+    warning('Asking for only hispanic as race grouped by hispanic does not make sense. Removing hispanic from group_by')
+    group_by = setdiff(group_by, 'hispanic')
+  }
   if(race_type == 'race' || 'hispanic' %in% group_by) race_col = 'r1r3'
+
 
   ### convert to the numeric codes used in the ref table
   ref.table <- data.table::copy(rads.data::population_wapop_codebook_values)
@@ -357,37 +362,22 @@ get_population <- function(kingco = T,
   # Assemble query ----
   ## Query for race/eth ----
   if(race_type == 'race_eth'){
-    if(!'hispanic' %in% group_by){
-      q = build_getpop_query(con = con,
-                             cols = cols,
-                             pop_table = pop_table,
-                             group_by = group_by,
-                             group_geo_type = group_geo_type,
-                             select_geo_type = select_geo_type,
-                             ages = ages,
-                             years = years,
-                             genders = genders,
-                             races = races,
-                             where_geo_type,
-                             where_geo_vintage,
-                             where_census_vintage,
-                             subset_by_kingco)
-    }else{
-      q = build_getpop_query(con = con,
-                             cols = cols,
-                             pop_table = pop_table,
-                             group_by = group_by,
-                             group_geo_type = group_geo_type,
-                             select_geo_type = select_geo_type,
-                             ages = ages,
-                             years = years,
-                             genders = genders,
-                             races = races,
-                             where_geo_type,
-                             where_geo_vintage,
-                             where_census_vintage,
-                             subset_by_kingco)
-    }
+
+    q = build_getpop_query(con = con,
+                           cols = cols,
+                           pop_table = pop_table,
+                           group_by = group_by,
+                           group_geo_type = group_geo_type,
+                           select_geo_type = select_geo_type,
+                           ages = ages,
+                           years = years,
+                           genders = genders,
+                           races = races,
+                           where_geo_type,
+                           where_geo_vintage,
+                           where_census_vintage,
+                           subset_by_kingco)
+
 
   }else if(race_type == 'race'){
     ## Query for race ----

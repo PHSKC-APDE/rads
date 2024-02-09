@@ -191,4 +191,9 @@ test_that('hispanic option for group by',{
   expect_equal(t1[hispanic == 'Not Hispanic', pop], t2[hispanic != 'Hispanic', sum(pop)])
   expect_equal(t2[hispanic == 'Hispanic' & race_eth == 'White', pop], t2[hispanic == 'Hispanic' & race_eth == 'White', sum(pop)])
   expect_equal(t1[1, race_eth], 'AIAN, Asian, Black, Multiple race, NHPI, White')
+
+  expect_equal(
+    get_population(race_type = 'race_eth', races = 'hispanic', group_by = c('hispanic'))$pop,
+    get_population(race_type = 'race_eth', group_by = c('hispanic'))[hispanic == 'Hispanic', pop]
+  )
 })
