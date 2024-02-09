@@ -311,9 +311,15 @@ get_population <- function(kingco = T,
   races = tolower(races)
   races = validate_input('races', races, c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white"))
   race_col = 'r2r4'
-  if('hispanic' %in% group_by && all(races %in% 'hispanic')){
-    warning('Asking for only hispanic as race grouped by hispanic does not make sense. Removing hispanic from group_by')
-    group_by = setdiff(group_by, 'hispanic')
+  if('hispanic' %in% group_by && any(races %in% 'hispanic')){
+    if(all(races %in% 'hispanic')){
+      warning('Asking for only hispanic as race grouped by hispanic does not make sense. Removing hispanic from group_by')
+      group_by = setdiff(group_by, 'hispanic')
+    }else{
+      stop('Asking for hispanic as a race grouped by hispanic status along with other race groups does not make sense.
+            If you want the population of hispanic as race, please make a seperate get_population() call.')
+    }
+
   }
   if(race_type == 'race' || 'hispanic' %in% group_by) race_col = 'r1r3'
 
