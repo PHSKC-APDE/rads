@@ -1,0 +1,364 @@
+---
+title: "Leading Causes of Death"
+format: html
+editor: visual
+---
+
+## **Six Steps to Identifying the Leading Causes of Death**
+
+### Some important notes before we begin
+
+-   The CDC's [National Center for Health Statistics (NCHS)](https://www.cdc.gov/nchs/index.htm) collects death certificate data from state vital statistics offices. NCHS performs extensive quality assurance, codes the causes of death using the 10th revision of the International Classification of Diseases (ICD-10), and sends the standardized death data back to state vital statistics offices. They also compile the data to form a comprehensive national database of mortality statistics. Each year they publish an instruction manual with ICD-10 cause of death lists for tabulating mortality statistics, [like this one from 2020](https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf). The two key tables for the purposes of PHSKC analyses (including leading causes of death analyses) are:
+
+    -   **113 Selected Causes of Death, Enterocolitis due to *Clostridium difficile*, and COVID-19,** which is used for the general analysis of mortality and for ranking leading causes of death. APDE uses this list for individuals aged 1 year and older.. You can view this list with `rads::death_113()` and can generate counts using `rads::death_113_count()`.
+
+    -   **130 Selected Causes of Infant Death**, which is used for the analysis of infant mortality and for ranking leading causes of infant death. APDE uses this list for infants, i.e., those who are under 1 year old. You can view this list with `rads::death_130()` and can generate counts using `rads::death_130_count()`.
+
+-   By default, [rads death functions](https://github.com/PHSKC-APDE/rads/wiki/death_functions) use the ICD-10 codes in the `underlying_cod_code` column available through `rads::get_data_death()`. This is the column that you will want to use for an *underlying cause of death* analysis, which is almost certainly what you will want to do. If you want to change this default, think deeply about your rationale while holding your breath for 2 minutes and 30 seconds.
+
+-   Additional relevant information regarding analysis of death data may be available in the [APDE Analysis Guide](https://kc1.sharepoint.com/:w:/r/teams/DPH-APDEData/_layouts/15/Doc.aspx?sourcedoc=%7BA49D6E2C-6FF4-49E9-95D4-7AE7B2C34E5D%7D&file=APDE_Analysis_Guide.docx&action=default&mobileredirect=true).
+
+-   The [death directory in the CHI repo](https://github.com/PHSKC-APDE/chi/tree/main/death) has the code used to create the leading causes of death for CHNA / CHI. It is somewhat complex because of the various iterations needed for these projects. However, underneath the complexity, it ***should*** follow the structure described above.
+
+### Overview
+
+The code below provides an example of how to conduct a leading causes of death analysis using RADS. For the sake of simplicity, we limit the stratification to gender (female & male) for the years 2018 to 2022.
+
+This protocol has six steps:
+
+1.  Set up R
+
+2.  Get data
+
+3.  Get counts
+
+4.  Merge population data onto counts
+
+5.  Calculate age standardized rates
+
+6.  Identify top 10 leading causes based on counts
+
+## (1) Set up R
+
+```{r}
+#| warning: false
+rm(list=ls())
+library(rads)
+library(data.table)
+```
+
+## (2) Get data
+
+Get the necessary death data.
+
+```{r}
+#| warning: false
+death <- get_data_death(year = 2018:2022, 
+                        cols = c('chi_geo_kc', 'chi_year', 'chi_sex', 
+                                 'chi_age', 'underlying_cod_code'), 
+                        kingco = TRUE)
+```
+
+:warning: Infants must be separated from the the rest of the population for the entirety of this analysis.
+
+```{r}
+#| warning: false
+# Infant deaths (will use NCHS 130 Selected Causes of Infant Death)
+infdeath <- death[chi_age <1, ]  
+
+# Non-infant deaths (will use NCHS 113 Selected Causes of Death)
+death <- death[chi_age != 0] 
+```
+
+Get *reference tables* with `cause`, `causeid`, and `cause_category` values for infant and non-infant causes of death. These will be used to aggregate causes of death into more meaningful categories.
+
+```{r}
+#| warning: false
+
+# Categories of non-infant deaths
+death_groups <- rads.data::icd_nchs113causes_raw[, .(cause = leading.cause.group.alias, 
+                                                     causeid, 
+                                                     cause_category = cause.category)]
+
+# Categories of infant deaths
+infdeath_groups <- rads.data::icd_nchs130causes_raw[, .(cause = leading.cause.group.alias, 
+                                                        causeid, 
+                                                        cause_category = cause.category)]
+```
+
+Take a peek at one of the reference tables you just created ...
+
+```{r}
+#| warning: false
+#| echo: true
+head(death_groups)
+```
+
+As you can see with Tuberculosis in rows 4 & 5, multiple `causeid`s will sometimes be rolled up into one of the `r uniqueN(death_groups$cause)` `cause` values. Therefore the `cause` values allow us to aggregate the `causeid` values into fewer categories.
+
+## (3) Get counts
+
+### Non-infant deaths
+
+```{r}
+#| warning: false
+#| message: false
+# Do not specify`cause` or `causeids` arguments in order to get all causes of death
+death_count <- death_113_count(
+  ph.data = death, 
+  icdcol = 'underlying_cod_code',
+  group_by = c('chi_sex', 'chi_age'),
+  kingco = TRUE 
+)
+```
+
+Take a peek at the table of non-infant death counts
+
+```{r}
+#| warning: false
+#| echo: true
+head(death_count)
+```
+
+Tidy the table of non-infant death counts
+
+```{r}
+#| warning: false
+# Ensure all rows have a causeid (will be missing when there was a zero count)
+death_count <- merge(death_count[, causeid := NULL], 
+                     rads::death_113(), 
+                     by = 'cause.of.death', 
+                     all.x= TRUE, all.y= FALSE)
+
+# Add on the leading cause of death group identifier ----
+death_count <- merge(death_count, 
+                     death_groups, 
+                     by = 'causeid', 
+                     all.x= TRUE, all.y= FALSE)
+
+# Fill in values for 'All causes' and COVID-19
+death_count[cause.of.death %in% c('All causes', 'COVID-19 (U07.1)'), 
+            cause := cause.of.death]
+death_count[cause.of.death == 'All causes', cause_category := cause.of.death]
+death_count[cause.of.death == 'COVID-19 (U07.1)', cause_category := 'Infectious disease']
+
+# Delete if missing cause (these are cause.of.death == 'Missing/Unknown')
+death_count <- death_count[!is.na(cause)]
+
+# Delete if 'unspecified', 'not elsewhere classified', etc. 
+death_count <- death_count[cause != '999']
+
+# Sum deaths for each unique strata and keep select columns 
+# This is necessary because a single `cause` can map to more than one `cause.of.death`
+death_count <- death_count[ ,
+                            .(deaths = sum(deaths)),
+                            .(age = chi_age,
+                              gender = chi_sex, 
+                              cause, 
+                              cause_category)]
+
+# Delete if missing gender because cannot merge with population
+death_count <- death_count[!is.na(gender)]
+
+# Ensure age is an integer for merging with population
+death_count[, age := as.integer(age)] 
+```
+
+Take a peek at the tidied table of non-infant death counts
+
+```{r}
+#| warning: false
+#| echo: true
+head(death_count)
+```
+
+### :baby_symbol: Infant deaths
+
+```{r}
+#| warning: false
+# Do not specify`cause` or `causeids` arguments in order to get all causes of death
+infdeath_count <- death_130_count(
+  ph.data = infdeath, 
+  icdcol = 'underlying_cod_code',
+  group_by = c('chi_sex', 'chi_age'),
+  kingco = TRUE 
+)
+```
+
+Take a peek at the table of non-infant death counts
+
+```{r}
+#| warning: false
+#| echo: true
+head(infdeath_count)
+```
+
+Tidy the table of infant death counts
+
+```{r}
+#| warning: false
+# Ensure all rows have a causeid (will be missing when there was a zero count)
+infdeath_count <- merge(infdeath_count[, causeid := NULL], 
+                     rads::death_130(), 
+                     by = 'cause.of.death', 
+                     all.x= TRUE, all.y= FALSE)
+
+# Add on the leading cause of death group identifier ----
+infdeath_count <- merge(infdeath_count, 
+                     infdeath_groups, 
+                     by = 'causeid', 
+                     all.x= TRUE, all.y= FALSE)
+
+# Fill in values for 'All causes' and COVID-19
+infdeath_count[cause.of.death %in% c('All causes', 'COVID-19 (U07.1)'), 
+            cause := cause.of.death]
+infdeath_count[cause.of.death == 'All causes', cause_category := cause.of.death]
+infdeath_count[cause.of.death == 'COVID-19 (U07.1)', cause_category := 'Infectious disease']
+
+# Delete if missing cause (these are cause.of.death == 'Missing/Unknown')
+infdeath_count <- infdeath_count[!is.na(cause)]
+
+# Delete if 'unspecified', 'not elsewhere classified', etc. 
+infdeath_count <- infdeath_count[cause != '999']
+
+# Sum deaths for each unique strata and keep select columns 
+infdeath_count <- infdeath_count[ , 
+                                  .(deaths = sum(deaths)), 
+                                  .(age = chi_age, 
+                                    gender = chi_sex, 
+                                    cause, 
+                                    cause_category)]
+
+# Delete if missing gender because cannot merge with population
+infdeath_count <- infdeath_count[!is.na(gender)]
+
+# Ensure age is an integer for merging with population
+infdeath_count[, age := as.integer(age)] 
+```
+
+Take a peek at the tidied table of infant death counts
+
+```{r}
+#| warning: false
+#| echo: true
+head(infdeath_count)
+```
+
+## (4) Merge corresponding population onto the count data
+
+Be sure that your call to `rads::get_population` provides the same years and demographic strata that you have in your death counts!
+
+```{r}
+#| warning: false
+# Get population for the years and demographic strata corresponding to your death counts
+pop <- get_population(years = 2017:2021, group_by = c('genders', 'ages'))
+pop <- pop[, .(pop, age, gender)]
+
+# Merge the population data onto the non-infant death count data
+combo <- merge(death_count, 
+               pop, 
+               by = c('age', 'gender'), 
+               all.x= TRUE, all.y= FALSE)
+
+# Merge the population data onto the infant death count data
+infcombo <- merge(infdeath_count,
+                  pop,
+                  by = c('age', 'gender'),
+                  all.x= TRUE, all.y= FALSE)
+
+```
+
+## (5) Calculate age standardized rates
+
+```{r}
+#| warning: false
+# Non-infant deaths are age standardized
+rates <- rads::age_standardize(
+  ph.data = combo, 
+  my.count = 'deaths', 
+  my.pop = 'pop', 
+  group_by = c('gender', 'cause', 'cause_category')
+)
+
+rates <- rates[, .(gender, 
+                   ranking = NA_integer_, 
+                   cause_category, 
+                   cause, 
+                   count, 
+                   rate = adj.rate,
+                   rate_lower = adj.lci,
+                   rate_upper = adj.uci)]
+
+# Infant deaths are NOT age standardized because there is only one age
+infrates <- rads::age_standardize(
+  ph.data = infcombo, 
+  my.count = 'deaths', 
+  my.pop = 'pop', 
+  group_by = c('gender', 'cause', 'cause_category')
+)
+
+infrates <- infrates[, .(gender, 
+                         ranking = NA_integer_, 
+                         cause_category, 
+                         cause, 
+                         count, 
+                         rate = crude.rate,
+                         rate_lower = crude.lci,
+                         rate_upper = crude.uci)]
+```
+
+Take a peek at the non-infant rates ...
+
+```{r}
+#| warning: false
+#| echo: true
+head(rates)
+```
+
+## (6) Identify leading causes based on COUNTS (using random ties method)
+
+Rank non-infant causes of death
+
+```{r}
+#| warning: false
+# Create ranking (minus one, because want 'All causes' to have a rank of zero)
+ranking <- rates[, ranking := frank(-count, ties.method = 'dense')-1, .(gender)]
+
+# Keep top 10 rankings
+ranking <- ranking[ranking %in% 0:10]
+
+# Sort the data by gender and ranking
+setorder(ranking, gender, ranking)
+
+```
+
+Rank infant causes of death
+
+```{r}
+#| warning: false
+# Create ranking
+infranking <- infrates[, ranking := frank(-rate, ties.method = 'dense')-1, .(gender)]
+
+# Keep top 10 rankings
+infranking <- infranking[ranking %in% 0:10]
+
+# Sort the data by gender and ranking
+setorder(infranking, gender, ranking)
+
+```
+
+View the top three leading causes of death by gender ...
+
+```{r}
+#| warning: false
+#| echo: true
+# Non-infant causes of death
+print(ranking[, .SD[1:4], gender])
+
+# Infant causes of death
+print(infranking[, .SD[1:4], gender])
+```
+
+## :star2: Finished!
+
+-- *`r paste0("Updated by ", Sys.getenv("USERNAME"), ", ", Sys.Date())`*
