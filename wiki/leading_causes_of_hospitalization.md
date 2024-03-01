@@ -21,7 +21,7 @@
     ICD-10-CM diagnoses, which aggregates more than 70,000 ICD-10-CM
     diagnosis codes into over 530 clinically meaningful categories.’ The
     CCSR is the inspiration for the ‘CCS’ table available through
-    `rads::chars_icd_ccs()` / `[ref].[icdcm_codes]`. As of February 29,
+    `rads::chars_icd_ccs()` / `[ref].[icdcm_codes]`. As of March 01,
     2024, the CCS table provides the aggregation of 15,016 ICD-9-CM
     codes and 100,666 ICD-10-CM codes into 7 `superlevel`, 22 `broad`
     level, 176 `midlevel`, and 515 `detailed` level categories.
@@ -241,7 +241,7 @@ counts[, age := as.integer(age)]
 Take a peek at the final counts table …
 
 ``` r
-head(counts); tail(counts)
+head(counts[hospitalizations >= 10]); tail(counts[hospitalizations >= 10])
 ```
 
        cause_category      cause gender   age hospitalizations
@@ -324,33 +324,25 @@ rates <- rates[, reference_pop := NULL]
 Take a peek at the rates …
 
 ``` r
-head(rates)
+head(rates[count >= 10])
 ```
 
-       gender                                      cause
-       <char>                                     <char>
-    1: Female                                 All causes
-    2: Female Abnormal findings related to substance use
-    3: Female                  Alcohol-related disorders
-    4: Female         Anxiety and fear-related disorders
-    5: Female              Bipolar and related disorders
-    6: Female                 Cannabis-related disorders
-                    cause_category  count     pop crude.rate crude.lci crude.uci
-                            <char>  <num>   <num>      <num>     <num>     <num>
-    1:                  All causes 457945 5540281    8265.74   8241.81   8289.71
-    2: Behavioral health disorders      0 5540281       0.00      0.00      0.07
-    3: Behavioral health disorders   3170 5540281      57.22     55.24     59.24
-    4: Behavioral health disorders    361 5540281       6.52      5.86      7.22
-    5: Behavioral health disorders   4700 5540281      84.83     82.43     87.29
-    6: Behavioral health disorders     68 5540281       1.23      0.95      1.56
-       adj.rate adj.lci adj.uci
-          <num>   <num>   <num>
-    1:  7841.68 7818.54 7864.88
-    2:     0.00    0.00    0.09
-    3:    52.76   50.91   54.67
-    4:     7.00    6.28    7.77
-    5:    82.57   80.18   85.01
-    6:     1.25    0.97    1.60
+       gender                              cause              cause_category  count
+       <char>                             <char>                      <char>  <num>
+    1: Female                         All causes                  All causes 457945
+    2: Female          Alcohol-related disorders Behavioral health disorders   3170
+    3: Female Anxiety and fear-related disorders Behavioral health disorders    361
+    4: Female      Bipolar and related disorders Behavioral health disorders   4700
+    5: Female         Cannabis-related disorders Behavioral health disorders     68
+    6: Female               Depressive disorders Behavioral health disorders   7886
+           pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci
+         <num>      <num>     <num>     <num>    <num>   <num>   <num>
+    1: 5540281    8265.74   8241.81   8289.71  7841.68 7818.54 7864.88
+    2: 5540281      57.22     55.24     59.24    52.76   50.91   54.67
+    3: 5540281       6.52      5.86      7.22     7.00    6.28    7.77
+    4: 5540281      84.83     82.43     87.29    82.57   80.18   85.01
+    5: 5540281       1.23      0.95      1.56     1.25    0.97    1.60
+    6: 5540281     142.34    139.21    145.52   150.51  147.15  153.93
 
 ## (6) Identify leading causes based on COUNTS (using random ties method)
 
@@ -378,7 +370,7 @@ ranking <- ranking[, .(gender,
 View the top three leading causes of hospitalization by gender …
 
 ``` r
-print(ranking[, .SD[1:4], gender])
+print(ranking[count >= 10, .SD[1:4], gender])
 ```
 
        gender ranking      cause_category         cause  count    rate rate_lower
@@ -404,4 +396,4 @@ print(ranking[, .SD[1:4], gender])
 
 ## :star2: Finished!
 
-– *Updated by dcolombara, February 29, 2024*
+– *Updated by dcolombara, March 01, 2024*

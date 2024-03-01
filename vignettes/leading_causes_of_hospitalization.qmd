@@ -56,6 +56,7 @@ library(data.table)
 ## (2) Get data
 
 Pull the relevant years of inpatient data from SQL ...
+
 ```{r}
 #| warning: false
 
@@ -63,6 +64,7 @@ chars <- get_data_chars(year = 2017:2021, kingco = TRUE)
 ```
 
 Split off the the chars data that will be used with `rads::chars_injury_matrix_count()`
+
 ```{r}
 #| warning: false
 # Identify and save the external cause data
@@ -72,6 +74,7 @@ chars_injury <- chars[injury_nature_narrow == 1 &
 ```
 
 Split off the the chars data that will be used with `rads::chars_icd_ccs_count`
+
 ```{r}
 #| warning: false
 # Identify and save the non-external cause data
@@ -81,6 +84,7 @@ chars_non_injury <- chars[!(injury_nature_narrow == 1 &
 ```
 
 ## (3) Get counts
+
 ### Get counts irrespective of cause
 
 ```{r}
@@ -112,6 +116,7 @@ counts_intent <- rads::chars_injury_matrix_count(
 ```
 
 Let's confirm that we accounted for every external injury ...
+
 ```{r}
 identical(
   as.integer(sum(counts_intent[mechanism == 'Any mechanism' & intent == 'Any intent']$hospitalizations)), 
@@ -119,10 +124,10 @@ identical(
 )
 ```
 
-
 ### Get counts of CCS `detailed` causes
 
 First, generate the actual CCS `detailed` counts.
+
 ```{r}
 #| warning: false
 
@@ -139,6 +144,7 @@ counts_ccs <- rads::chars_icd_ccs_count(
 ```
 
 Let's confirm that we accounted for every non-injury hospitalization ...
+
 ```{r}
 identical(
   as.integer(sum(counts_ccs$hospitalizations)), 
@@ -166,7 +172,6 @@ Finally, subset the CCS counts to the `detailed` causes of interest
 #| warning: false
 counts_ccs <- counts_ccs[detailed_desc %in% detailed.causes]
 ```
-
 
 ### Combine counts
 
@@ -210,7 +215,7 @@ Take a peek at the final counts table ...
 #| echo: true
 #| warning: false
 
-head(counts); tail(counts)
+head(counts[hospitalizations >= 10]); tail(counts[hospitalizations >= 10])
 ```
 
 ### Ensure the count table has a row for every permutation of factors
@@ -279,7 +284,7 @@ Take a peek at the rates ...
 #| echo: true
 #| warning: false
 
-head(rates)
+head(rates[count >= 10])
 ```
 
 ## (6) Identify leading causes based on COUNTS (using random ties method)
@@ -313,7 +318,7 @@ View the top three leading causes of hospitalization by gender ...
 #| echo: true
 #| warning: false
 
-print(ranking[, .SD[1:4], gender])
+print(ranking[count >= 10, .SD[1:4], gender])
 ```
 
 ## :star2: Finished!
