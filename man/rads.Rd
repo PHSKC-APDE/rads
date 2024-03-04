@@ -2,6 +2,7 @@
 % Please edit documentation in R/rads.R
 \docType{package}
 \name{rads}
+\alias{rads-package}
 \alias{rads}
 \title{rads: A package to facilitate the analysis of datasets for PHSKC}
 \description{

@@ -13,7 +13,7 @@ check_names(arg_name, dataset_name, var_names, vars_to_check)
 
 \item{var_names}{character. Vector of variable names}
 
-\item{vars_to_check}{character. Vector of variables that presumably exist in `var_names` to be confirmed}
+\item{vars_to_check}{character. Vector of variables that presumably exist in \code{var_names} to be confirmed}
 }
 \description{
 Check to see if a vector of variable names do indeed exist in a set of dataset names

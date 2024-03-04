@@ -16,16 +16,16 @@ create_recode(
 \arguments{
 \item{old_var}{character. Column in the dataset containing the values to be recoded}
 
-\item{new_var}{character. Column where the recoded values will be placed. If `new_var` doesn't exist, than it will be created. Otherwise it will be overwritten.}
+\item{new_var}{character. Column where the recoded values will be placed. If \code{new_var} doesn't exist, than it will be created. Otherwise it will be overwritten.}
 
-\item{old}{character (or coercible). value in the column `old_var` to be translated into a new value by recoding. If left blank/NA/""/NULL or otherwise missing, the recode operation
-will essentially take the form of a rename of `old_var` -> `new_var`.
+\item{old}{character (or coercible). value in the column \code{old_var} to be translated into a new value by recoding. If left blank/NA/""/NULL or otherwise missing, the recode operation
+will essentially take the form of a rename of \code{old_var} -> \code{new_var}.
 Except for renaming type situations, nothing of old_var is kept (e.g. all relevant values must have a recode row)}
 
-\item{new}{character (or coercible). Column indicating where the new values for the recoding process exist. It is positionally (e.g. row) tied to a particular `old`.
+\item{new}{character (or coercible). Column indicating where the new values for the recoding process exist. It is positionally (e.g. row) tied to a particular \code{old}.
 If blank, it helps identify a simpler rename operation.}
 
-\item{new_label}{character (or convertable to character). The factor label that `old` will be recoded to in conjunction with the position of `new`}
+\item{new_label}{character (or convertable to character). The factor label that \code{old} will be recoded to in conjunction with the position of \code{new}}
 
 \item{simplify_to_numeric}{logical. Converts old and new into numerics if it can be done loselessly. Otherwise, a warning will be thrown.}
 }

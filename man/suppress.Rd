@@ -9,7 +9,7 @@ suppress(
   suppress_range = c(0, 9),
   secondary = FALSE,
   secondary_ids = c("tab", "indicator_key", "cat1", "cat2_group", "year"),
-  secondary_where,
+  secondary_exclude,
   flag_only = FALSE
 )
 }
@@ -26,7 +26,7 @@ Note, this should not include the most granular level. For example, if you wante
 where category == race/ethnicity and group == AIAN, Asian, Black, etc., you should have
 secondary_ids = c("geography", "category") rather than secondary_ids = c("geography", "category", "group")}
 
-\item{secondary_where}{an expression identifying the rows to be filtered / excluded from secondary suppression because
+\item{secondary_exclude}{an expression identifying the rows to be filtered / excluded from secondary suppression because
 the categories are not mutually exclusive (e.g., race3)}
 
 \item{flag_only}{logical (T, TRUE, F, or FALSE) indicating whether data to be suppressed should be flagged without setting estimates to NA}
