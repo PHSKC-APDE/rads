@@ -196,4 +196,5 @@ test_that('hispanic option for group by',{
     get_population(race_type = 'race_eth', races = 'hispanic', group_by = c('hispanic'))$pop,
     get_population(race_type = 'race_eth', group_by = c('hispanic'))[hispanic == 'Hispanic', pop]
   )
+  expect_error(get_population(race_type = 'race_eth', races = c('white', 'hispanic'), group_by = c('hispanic'))[])
 })
