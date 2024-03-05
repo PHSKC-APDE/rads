@@ -3,7 +3,7 @@
 #' @importFrom stats median na.omit
 #' @importFrom utils capture.output
 calc.dtsurvey = function(ph.data,
-                         what,
+                         what = NULL,
                          where, #this is a change from the main calc framework
                          by = NULL,
                          metrics = c('mean', 'numerator', 'denominator'),
@@ -27,7 +27,7 @@ calc.dtsurvey = function(ph.data,
          to a survey like object and then do your dplyr-ing. After the data is ready, use dtsurvey::as.dtsurvey (or as.dtrepsurvey) to convert it into the right format.')
   }
 
-  call = match.call()
+  call = match.call() # get 'call' object containing function name plus every argument
 
   #filter the dataset
   if(!missing(where)){
@@ -52,13 +52,36 @@ calc.dtsurvey = function(ph.data,
 
   #validate other inputs
   #validate what
-  stopifnot('what must be a character value and a column in `ph.data`' =
-              is.character(what) && all(what %in% names(ph.data)))
+  # Check if `what` does not exist or is NULL
+      if (missing(what) || is.null(what)) {
+        stop("\n\U0001F92C The `what` argument must be provided!")
+      }
+
+      # Check if `what` is not a character vector
+      if (!is.character(what)) {
+        stop("\n\U0001F92C The `what` argument must be a character vector.")
+      }
+
+      # Check if `what` values are not names in `ph.data`
+      missing_columns <- setdiff(what, names(ph.data))
+      if (length(missing_columns) > 0) {
+        stop(paste0("\n\U0001F92C The following `what` values are not names of columns in `ph.data`: ",
+                     paste(missing_columns, collapse = ", "), "."))
+      }
+
   #validate by
-  if(!is.null(by)){
-    stopifnot('`by` must be a chatacter vector and represent (a) column(s) in `ph.data`'=
-                is.character(by) && all(by %in% names(ph.data)))
-  }
+      # Check if `by` is not a character vector
+      if (!is.null(by) & !is.character(by)) {
+        stop("\n\U0001F92C The `by` argument must be a character vector.")
+      }
+
+      # Check if `by` values are not names in `ph.data`
+      missing_columns <- setdiff(by, names(ph.data))
+      if (length(missing_columns) > 0) {
+        stop(paste0("\n\U0001F92C The following `by` values are not names of columns in `ph.data`: ",
+                     paste(missing_columns, collapse = ", "), "."))
+      }
+
   #validate 'metrics'
   # pull list of standard available metrics
   opts <- metrics()

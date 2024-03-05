@@ -2,6 +2,5 @@
 #'
 #' Current datasets: birth, HYS
 #'
-#' @docType package
 #' @name rads
 NULL
