@@ -803,37 +803,33 @@ death_xxx_count <- function(ph.data = NULL,
             )
           }
 
+  # Import reference table once ----
+      if(nchsnum == 113){
+        nchsref <- unique(rads.data::icd_nchs113causes[, .(cause.of.death, causeid)])} else {
+          nchsref <- unique(rads.data::icd_nchs130causes[, .(cause.of.death, causeid)])
+        }
+
   # Identify cause(s) of interest ----
       if (isFALSE(is.null(cause))) {
         cause = tolower(cause)
         x_cause = c()
         for (i in cause) {
-          if(nchsnum == 113){
-            x_cause <-
-              unique(c(x_cause, grep(i,
-                                     unique(rads.data::icd_nchs113causes[]$cause.of.death),
-                                     value = TRUE,
-                                     ignore.case = TRUE
-            )))
-          }
-          if(nchsnum == 130){
-            x_cause <-
-              unique(c(x_cause, grep(i,
-                                     unique(rads.data::icd_nchs130causes[]$cause.of.death),
-                                     value = TRUE,
-                                     ignore.case = TRUE
-            )))
-          }
+          x_cause <- unique(c(x_cause,
+                              grep(i,
+                                   nchsref$cause.of.death,
+                                   value = TRUE,
+                                   ignore.case = TRUE)))
         }
       }
       if (isFALSE(is.null(cause)) & length(x_cause) == 0) {
         stop(
           paste0(
-            "\nYour `cause` value (",
-            cause,
-            ") has filtered out all of the available causes of death.
+            "\nYour `cause` value(s) (",
+            paste0("'", paste0(cause, collapse= "', '"), "'"),
+            ") filtered out all of the available causes of death.
             Please enter a new keyword or keywords and try again.
-            To view all available cause of death, type the following in your console: unique(rads.data::icd_nchs", nchsnum, "causes$cause.of.death)"
+            To view all available cause of death, type the following in your console:
+            rads::death_", nchsnum, "()"
           )
         )
       }
@@ -946,6 +942,9 @@ death_xxx_count <- function(ph.data = NULL,
         ypll_name = grep('^ypll_[0-9]', names(x_combo), value = T)
         x_combo[is.na(get(ypll_name)), paste0(ypll_name) := 0]
       }
+
+      # Fill causeid if needed
+      x_combo[is.na(causeid), causeid := nchsref[x_combo[is.na(causeid)], on = .(cause.of.death), x.causeid]]
 
     # Sort columns and rows ----
       if (!is.null(ypll_age)) {
@@ -1177,6 +1176,7 @@ death_113_count <- function(ph.data = NULL,
                             ypll_age = NULL,
                             death_age_col = NULL){
 
+  # use the generalized function death_xxx_count()
   nchs113_countz <- death_xxx_count(ph.data = ph.data,
                                     causeids = causeids,
                                     cause = cause,
@@ -1367,6 +1367,7 @@ death_130_count <- function(ph.data = NULL,
                             ypll_age = NULL,
                             death_age_col = NULL){
 
+  # use generalized function death_xxx_count()
   nchs130_countz <- death_xxx_count(ph.data = ph.data,
                                     causeids = causeids,
                                     cause = cause,
