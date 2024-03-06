@@ -1,10 +1,10 @@
 #' CHI Generate Template
 #'
 #' @description
-#' This function function generates one or more Tableau ready CHI analytic outputs.
+#' This function generates a data.table with individual rows for one or more Tableau ready CHI analytic outputs.
 #'
 #' @details
-#' It takes in a compacy list of variables, byvariables, and analysis types, and returns a table with one row corrosponding to each row in the Tableau ready output. This should largely corrospond with
+#' It takes in a compact list of variables, byvariables, and analysis types, and returns a table with one row corrosponding to each row in the Tableau ready output. This should largely corrospond with
 #' "//phshare01/epe_share/WORK/CHI Visualizations/Tableau Ready Output Format_v2.xlsx"
 #'
 #' @param ph.analysis_set
