@@ -61,6 +61,7 @@
 #' Returns rate, rate_se, rate_lower, rate_upper.
 #' Default ci (e.g. upper and lower) is 95 percent.
 #'
+#' 12) vcov: variance-covariance matrix
 #'
 #' For survey data, use the \code{proportion} argument where relevant to ensure metrics are calculated using special proportion (e.g \code{svyciprop})
 #' methods. That is, when you want to find the fraction of ____, toggle \code{proportion} to \code{TRUE}.
@@ -118,4 +119,66 @@ calc.svyrep.design <- function(ph.data, ...){
 calc.grouped_df <- function(ph.data, ...){
   stop("calc doesn't know how to handle `grouped_df` objects. Likely, you have a dplyr::group_by somewhere higher up in the code.
        Instead of grouping before running calc, use the `by` argument in calc")
+}
+
+#' @noRd
+#' @export
+calc.imputationList = function(ph.data, ...){
+
+  call = match.call()
+
+  # make sure metrics is specified
+  dot_nms = ...names()
+  if(!'metrics' %in% dot_nms){
+    stop('metrics argument must be specified and include `vcov`')
+  }else{
+    metn = which(dot_nms %in% 'metrics')
+    mets = ...elt(metn)
+    if(!'vcov' %in% c(mets)) stop('metrics argument must include `vcov`')
+  }
+
+  #if('' %in% dot_nms) stop('all arguments must be named when ph.data is an imputationList')
+
+
+  dots = list(...)
+
+  res = lapply(ph.data[[1]], function(x){
+    do.call(calc, args = append(list(ph.data = x), dots[names(dots) != 'ph.data']), quote = T)
+  })
+
+  # combine with MIcombine
+  ans = res[[1]]
+  for(vvv in intersect(c('mean', 'total'), names(res[[1]]))){
+    # means
+    # Probably needs to be changed for factor means
+    ests = lapply(res, `[[`, vvv )
+    varz = lapply(res, function(x){
+      d = unlist(x[[paste0(vvv,'_vcov')]])
+      m = matrix(0, length(d), length(d))
+      diag(m)<-d
+
+      m
+    })
+
+    mi = mitools::MIcombine(ests, varz)
+
+    # Update ans
+    ans[, paste0(vvv,'_vcov') := NULL]
+    # new mean and se
+    ans[, (vvv) := coef(mi)]
+    ans[, paste0(vvv,'_se') := SE(mi)]
+
+    # Borrowed from mitools::summary
+    if('ci' %in% dot_nms){
+      alpha = 1 - ...elt(which(dot_nms %in% 'ci'))
+    } else{
+      alpha = .05
+    }
+    crit <- qt(alpha/2, mi$df, lower.tail = FALSE)
+    ans[, paste0(vvv, '_lower') := get(vvv) - crit * get(paste0(vvv,'_se'))]
+    ans[, paste0(vvv, '_upper') := get(vvv) + crit * get(paste0(vvv,'_se'))]
+  }
+
+  ans
+
 }
