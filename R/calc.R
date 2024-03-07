@@ -123,6 +123,7 @@ calc.grouped_df <- function(ph.data, ...){
 
 #' @noRd
 #' @export
+#' @importFrom mitools MIcombine
 calc.imputationList = function(ph.data, ...){
 
   call = match.call()
