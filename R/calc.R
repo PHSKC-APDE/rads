@@ -219,7 +219,7 @@ calc.imputationList = function(ph.data, ...){
 
     ans = merge(ans, mi, all.x = T, by = c(dots$by, 'level'))
 
-    if(!is.null(by)) data.table::setorderv(res, cols = c(by, 'level'))
+    if(!is.null(dots$by)) data.table::setorderv(ans, cols = c(dots$by, 'level'))
 
     # Update ans
     ans[, paste0(vvv,'_vcov') := NULL]
