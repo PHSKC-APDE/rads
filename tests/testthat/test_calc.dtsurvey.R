@@ -59,13 +59,13 @@ test_that('Defaults (mostly) work: svy',{
 test_that('Grouping without filtering',{
   expect_equal(
     calc(sur, 'api00', by = c('stype'), metrics = 'denominator', time_var = NULL)[, denominator],
-    sur[, .(denominator = .N), stype][, denominator]
+    sur[, .(denominator = .N), keyby = stype][, denominator]
   )
 })
 
 test_that('Multi Grouping with filtering',{
           st = calc(sur, 'api00', cname == 'Los Angeles', by = c('stype', 'cname'), metrics = 'denominator', time_var = NULL)[, .(stype, cname, denominator)]
-          man = sur[cname == 'Los Angeles', .(denominator = .N), .(stype, cname)]
+          man = sur[cname == 'Los Angeles', .(denominator = .N), keyby = .(stype, cname)]
           expect_equal(st, as.data.table(man))
 })
 
