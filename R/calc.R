@@ -139,6 +139,12 @@ calc.imputationList = function(ph.data, ...){
 
   #if('' %in% dot_nms) stop('all arguments must be named when ph.data is an imputationList')
 
+  # Borrowed from mitools::summary
+  if('ci' %in% dot_nms){
+    alpha = 1 - ...elt(which(dot_nms %in% 'ci'))
+  } else{
+    alpha = .05
+  }
 
   dots = list(...)
 
@@ -148,35 +154,76 @@ calc.imputationList = function(ph.data, ...){
 
   # combine with MIcombine
   ans = res[[1]]
-  for(vvv in intersect(c('mean', 'total'), names(res[[1]]))){
-    # means
-    # Probably needs to be changed for factor means
-    ests = lapply(res, `[[`, vvv )
-    varz = lapply(res, function(x){
-      d = unlist(x[[paste0(vvv,'_vcov')]])
-      m = matrix(0, length(d), length(d))
-      diag(m)<-d
+  isfactor = !all(is.na(ans[,level]))
 
-      m
+  make_vcov = function(v){
+
+    # For factors, return the first one. The rest are duplicates
+    if(ncol(v[[1]][[1]])>1) return(v[[1]][[1]])
+
+    # Otherwise they need to be constructed
+    d = unlist(v)
+    m = matrix(0, length(d), length(d))
+    diag(m)<-d
+
+    m
+  }
+
+  for(vvv in intersect(c('mean', 'total'), names(res[[1]]))){
+
+    # extract and organize the estimates and their variances
+    r = lapply(res, function(x){
+
+      if(isfactor){
+        y = x[, list(ests = list(get(vvv)),
+                     varz = list(make_vcov(get(paste0(vvv, '_vcov')))),
+                     levels = list(level)), keyby = c(dots$by) ]
+      }else{
+        y = x[, list(ests = list(get(vvv)),
+                     varz = list(make_vcov(get(paste0(vvv, '_vcov')))),
+                     levels = list(level))]
+      }
+
+      y
     })
 
-    mi = mitools::MIcombine(ests, varz)
+    # organize them by "by variables"
+     r = rbindlist(r)
+     if(isfactor){
+      r = split(r, by = dots$by)
+     }else{
+       r = list(r)
+     }
+
+    # compute estimates
+    mi = lapply(r, function(a){
+      # if(!isfactor) a = list(ests = list(a$ests[[1]]), varz = list(a$varz[[1]]))
+      m = mitools::MIcombine(a$ests, a$varz)
+      mdt = data.table(coef = coef(m), se = SE(m))
+      crit <- qt(alpha/2, m$df, lower.tail = FALSE)
+      mdt[, lower := coef - crit * se]
+      mdt[, upper := coef + crit * se]
+      mdt[, level := a$levels[1]]
+      if(isfactor) mdt = cbind(mdt, a[1,.SD,.SDcols = dots$by])
+      mdt
+    })
+    mi = rbindlist(mi)
+    updateme = c(vvv, paste0(vvv,'_se'), paste0(vvv, '_lower'), paste0(vvv, '_upper'))
+    setnames(mi,
+             c('coef', 'se', 'lower', 'upper'),
+             updateme
+             )
+
+    ans[, (updateme) := NULL]
+    if(!isfactor) mi[, (dots$by) := ans[, .SD, .SDcols = c(dots$by)]]
+
+    ans = merge(ans, mi, all.x = T, by = c(dots$by, 'level'))
+
+    if(!is.null(by)) data.table::setorderv(res, cols = c(by, 'level'))
 
     # Update ans
     ans[, paste0(vvv,'_vcov') := NULL]
-    # new mean and se
-    ans[, (vvv) := coef(mi)]
-    ans[, paste0(vvv,'_se') := SE(mi)]
 
-    # Borrowed from mitools::summary
-    if('ci' %in% dot_nms){
-      alpha = 1 - ...elt(which(dot_nms %in% 'ci'))
-    } else{
-      alpha = .05
-    }
-    crit <- qt(alpha/2, mi$df, lower.tail = FALSE)
-    ans[, paste0(vvv, '_lower') := get(vvv) - crit * get(paste0(vvv,'_se'))]
-    ans[, paste0(vvv, '_upper') := get(vvv) + crit * get(paste0(vvv,'_se'))]
   }
 
   ans
