@@ -248,7 +248,7 @@ get_data_birth <- function(cols = NA,
 
   # Format string variables due to SQL import quirks ----
     original.order <- names(dat)
-    sql_clean(dat, stringsAsFactors = TRUE) # clean random white spaces and change strings to factors
+    string_clean(dat, stringsAsFactors = TRUE) # clean random white spaces and change strings to factors
 
   # reorder table----
     setcolorder(dat, original.order)
@@ -405,7 +405,7 @@ get_data_death <- function(cols = NA,
         }
       }
 
-      sql_clean(dat, stringsAsFactors = FALSE) # clean random white spaces and change strings to factors
+      string_clean(dat, stringsAsFactors = FALSE) # clean random white spaces and change strings to factors
 
   # Label race_ethnicity data ----
       if( 'chi_race_eth7' %in% cols | 'chi_race_eth7' %in% names(dat) ){
@@ -649,7 +649,7 @@ get_data_chars <- function(cols = NA,
   # Format string variables due to SQL import quirks ----
       original.order <- names(dat)
 
-      sql_clean(dat, stringsAsFactors = F) # clean random white spaces and ensure all factors are strings
+      string_clean(dat, stringsAsFactors = F) # clean random white spaces and ensure all factors are strings
       string.vars <- setdiff(names(dat)[sapply(dat, is.character)], c('diag1', 'proc1', 'ecode1'))
       if(length(string.vars) > 0){dat[, (string.vars) := lapply(.SD, tolower), .SDcols = string.vars]}
 

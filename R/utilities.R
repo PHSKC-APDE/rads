@@ -931,7 +931,7 @@ get_xwalk <- function(geo1 = NA, geo2 = NA){
   # load xwalk table ----
   data("ref_get_xwalk", envir=environment()) # import ref_get_xwalk from /data as a promise
   geodt <- copy(ref_get_xwalk) # evaluate / import the promise
-  geodt <- sql_clean(geodt)
+  geodt <- string_clean(geodt)
 
   # validate input and output ----
   if(is.null(geo1)){geo1 <- NA}
@@ -958,7 +958,7 @@ get_xwalk <- function(geo1 = NA, geo2 = NA){
   # xwalkdt <- copy(eval(parse(text=paste0('rads.data::', geodt$object))))
   neo <- geodt$object
   xwalkdt = eval(substitute(rads.data::x, list(x = as.name(neo))))
-  sql_clean(xwalkdt)
+  string_clean(xwalkdt)
   keepers <- c(geodt$inputvar, geodt$outputvar)
   xwalkdt <- xwalkdt[, (keepers), with = FALSE] # alternative to xwalkdt[, ..keepers]
   setnames(xwalkdt, c(geodt$inputvar, geodt$outputvar), c(geodt$input, geodt$output))
@@ -1179,7 +1179,7 @@ list_ref_xwalk <- function(){
   ref_get_xwalk <- input <- output <- '.' <-  NULL
   data("ref_get_xwalk", envir=environment()) # import ref_get_xwalk from /data as a promise
   geodt <- copy(ref_get_xwalk) # evaluate / import the promise
-  geodt <- sql_clean(geodt)
+  geodt <- string_clean(geodt)
   geodt <- geodt[, .(geo1 = input, geo2 = output)]
   return(geodt)
 }
@@ -1312,42 +1312,108 @@ round2 = function(x, n = 0) {
   z*posneg
 }
 
+#' Clean string & factor columns
+#' @param dat name of data.frame or data.table
+#' @param stringsAsFactors logical. Specifies whether to convert strings to
+#' factors (TRUE) or not (FALSE). Note that columns that were originally factors
+#' will always be returned as factors.
+#' @description
+#' `string_clean` is designed to clean and preprocess strings and factors within a
+#' data.frame or data.table after importing from SQL, text files, CSVs, etc. It
+#' encodes text to UTF-8, trims and replaces multiple whitespaces, converts blank
+#' strings to true NA values, and optionally converts strings factors. The function
+#' maintains the original order of columns and leaves numeric and logical columns
+#' as they were.
+#'
+#' @details
+#' Depending on the size of the data.frame/data.table, the cleaning
+#' process can take a long time.
+#'
+#' The `string_clean` function modifies objects in place due to the use
+#' of data.table's by-reference assignment (e.g., :=). In other words, there is
+#' *no need to assign the output*, just
+#' type `string_clean(myTable)`.
+#' @export
+#' @importFrom utf8 utf8_encode
+#' @return data.table
+#' @examples
+#' \dontrun{
+#' myTable <- data.table::data.table(
+#' intcol = as.integer(1, 2, 3),
+#' county = c(' King  County ', 'Pierce County', '  Snohomish  county '))
+#' myTable[, county_factor := factor(county)]
+#' string_clean(myTable, stringsAsFactors = TRUE)
+#' print(myTable)
+#' }
+
+string_clean <- function(dat = NULL,
+                         stringsAsFactors = FALSE) {
+
+  # check date.frame
+    if(!is.null(dat)){
+      if(!is.data.frame(dat)){
+        stop("'dat' must be the name of a data.frame or data.table")
+      }
+      if(is.data.frame(dat) && !data.table::is.data.table(dat)){
+        data.table::setDT(dat)
+      }
+    } else {stop("'dat' (the name of a data.frame or data.table) must be specified")}
+
+  original.order <- names(dat)
+
+  # convert factors to strings
+    factor.columns <- names(dat)[sapply(dat, is.factor)] # Identify factor columns
+    dat[, (factor.columns) := lapply(.SD, as.character), .SDcols = factor.columns]
+
+  string.columns <- which(vapply(dat, is.character, FUN.VALUE = logical(1))) # Identify string columns
+  if (length(string.columns) > 0) {
+    # Define a custom cleaning function
+    clean_string <- function(x) {
+      x <- utf8::utf8_encode(x) # Convert encoding to UTF-8
+      x <- gsub("[[:space:]]+", " ", x) # Replace common unconventional white spaces to a true white space
+      x <- trimws(x, which = "both") # Trim white space to right or left
+      x <- gsub("\\s+", " ", x) # Collapse multiple consecutive white spaces into one
+      x <- ifelse(nzchar(trimws(x)), x, NA) # Replace blanks (or strings that become blanks after trim) with NA
+      return(x)
+    }
+
+    # Apply the custom cleaning function to all string columns at once
+      dat[, (string.columns) := lapply(.SD, clean_string), .SDcols = string.columns]
+
+    # convert strings to factors
+      if (stringsAsFactors == TRUE) {
+        dat[, (string.columns) := lapply(.SD, factor), .SDcols = string.columns]
+      } else {
+        dat[, (factor.columns) := lapply(.SD, factor), .SDcols = factor.columns] # original factors back to factors
+      }
+  }
+
+  # Reorder table to original column order
+  setcolorder(dat, original.order)
+
+  return(dat) # Return cleaned data.table
+}
 
 #' Clean string columns read from SQL
-#' @param dat character vector of length one. Name of data.frame or data.table
+#' @param dat name of data.frame or data.table
 #' @param stringsAsFactors logical. Specifies whether to convert strings to factors (TRUE) or not (FALSE)
+#' @description
+#' `sql_clean` has been deprecated. Please use `string_clean` instead.
 #' @export
 #' @importFrom utf8 utf8_encode
 #' @return data.table
 sql_clean <- function(dat = NULL, stringsAsFactors = FALSE){
+  #.Deprecated("string_clean", package = "yourPackageName")
+  # message('\U00026A0`sql_clean` has been deprecated and replaced by `string_clean`. \nAs a courtesy, it remains operational for the time being, but please update your code.')
+  # call = match.call()
+  # string_clean(dat = call[['dat']], stringsAsFactors = call[['stringsAsFactors']])
+  .Deprecated("string_clean", package = "yourPackageName")
 
-  # check date.frame
-  if(!is.null(dat)){
-    if(!is.data.frame(dat)){
-      stop("'dat' must be the name of a data.frame or data.table")
-    }
-    if(is.data.frame(dat) && !data.table::is.data.table(dat)){
-      data.table::setDT(dat)
-    }
-  } else {stop("'dat' (the name of a data.frame or data.table) must be specified")}
+  warning("\n\U00026A0 As a courtesy, `sql_clean` remains operational for the time being.\n",
+          "Good things don't last forever. \nPlease update your code.",
+          immediate. = FALSE)
 
-  original.order <- names(dat)
-  factor.columns <- which(vapply(dat,is.factor, FUN.VALUE=logical(1) )) # identify factor columns
-  if(length(factor.columns)>0) {
-    dat[, (factor.columns) := lapply(.SD, as.character), .SDcols = factor.columns] # convert factor to string
-  }
-  string.columns <- which(vapply(dat,is.character, FUN.VALUE=logical(1) )) # identify string columns
-  if(length(string.columns)>0) {
-    dat[, (string.columns) := lapply(.SD, utf8::utf8_encode), .SDcols = string.columns] # ensure encoding is UTF8
-    dat[, (string.columns) := lapply(.SD, trimws, which="both"), .SDcols = string.columns] # trim white space to right or left
-    dat[, (string.columns) := lapply(.SD, function(x){gsub("^ *|(?<= ) | *$", "", x, perl = TRUE)}), .SDcols = string.columns] # collapse multiple consecutive white spaces into one
-    dat[, (string.columns) := lapply(.SD, function(x){gsub("^$|^ $", NA, x)}), .SDcols = string.columns] # replace blanks with NA
-    if(stringsAsFactors==TRUE){
-      dat <- dat[, (string.columns) := lapply(.SD, factor), .SDcols = string.columns] # convert strings to factors
-    }
-  }
-  # reorder table
-  data.table::setcolorder(dat, original.order)
+  string_clean(dat = dat, stringsAsFactors = stringsAsFactors)
 }
 
 
