@@ -176,9 +176,10 @@ calc.imputationList = function(ph.data, ...){
     r = lapply(res, function(x){
 
       if(isfactor){
+        byme = c(dots$by)
         y = x[, list(ests = list(get(vvv)),
                      varz = list(make_vcov(get(paste0(vvv, '_vcov')))),
-                     levels = list(level)), keyby = c(dots$by) ]
+                     levels = list(level)), keyby = byme]
       }else{
         y = x[, list(ests = list(get(vvv)),
                      varz = list(make_vcov(get(paste0(vvv, '_vcov')))),
@@ -190,7 +191,7 @@ calc.imputationList = function(ph.data, ...){
 
     # organize them by "by variables"
      r = rbindlist(r)
-     if(isfactor){
+     if(isfactor && !is.null(dots$by)){
       r = split(r, by = dots$by)
      }else{
        r = list(r)
@@ -205,7 +206,7 @@ calc.imputationList = function(ph.data, ...){
       mdt[, lower := coef - crit * se]
       mdt[, upper := coef + crit * se]
       mdt[, level := a$levels[1]]
-      if(isfactor) mdt = cbind(mdt, a[1,.SD,.SDcols = dots$by])
+      if(isfactor & !is.null(dots$by)) mdt = cbind(mdt, a[1,.SD,.SDcols = dots$by])
       mdt
     })
     mi = rbindlist(mi)
@@ -216,7 +217,7 @@ calc.imputationList = function(ph.data, ...){
              )
 
     ans[, (updateme) := NULL]
-    if(!isfactor) mi[, (dots$by) := ans[, .SD, .SDcols = c(dots$by)]]
+    if(!isfactor && !is.null(dots$by)) mi[, (dots$by) := ans[, .SD, .SDcols = c(dots$by)]]
 
     ans = merge(ans, mi, all.x = T, by = c(dots$by, 'level'))
 

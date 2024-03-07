@@ -315,6 +315,9 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
     }else{
       total_vcov_fun = NULL
     }
+  }else{
+    mean_vcov_fun = NULL
+    total_vcov_fun = NULL
   }
   #use something like a = DT[, .(list(a), list(b)), env = list(a = mean_fun, b = total_fun), by = byvar]
   #to capture the se and ci returns and then break out post hoc

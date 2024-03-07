@@ -410,3 +410,93 @@ test_that('Where elimiates everything', {
 
 })
 
+test_that('MI approach', {
+
+  midat = lapply(1:10, function(x){
+    r = apiclus1
+    r$random = sample(1:5, nrow(r), T)
+    r$random3 = sample(1:3, nrow(r), T)
+    r$random_fact = factor(r$random)
+    dtsurvey(r, 'dnum', weight = 'pw')
+
+  })
+
+  midat = mitools::imputationList(midat)
+  misur = svydesign(id=~dnum, weights=~pw, data=midat)
+
+  # Numeric variable unrelated
+  r1.1 = mitools::MIcombine(with(misur, svymean(~api00,design = misur)))
+  r1.2 = calc(midat, 'api00', metrics = c('mean', 'vcov'))
+  r1.3 = calc(midat$imputations[[1]], 'api00')
+
+  expect_equal(unname(coef(r1.1)), r1.2$mean)
+  expect_equal(r1.2$mean, r1.3$mean)
+  expect_equal(unname(SE(r1.1)), r1.2$mean_se)
+  # The confidence intervals are not the same because of different ways of calculating it. I think it probably has to do with degrees of freedom primarily)
+
+  # Imputed variable as  metric
+  r2.1 = mitools::MIcombine(with(misur, svymean(~random,design = misur)))
+  r2.2 = calc(midat, 'random', metrics = c('mean', 'vcov'))
+  r2.1sum = summary(r2.1)
+
+  expect_equal(unname(coef(r2.1)), r2.2$mean)
+  expect_equal(unname(SE(r2.1)), r2.2$mean_se)
+  expect_equal(r2.1sum$`(lower`, r2.2$mean_lower)
+  expect_equal(r2.1sum$`upper)`, r2.2$mean_upper)
+
+  # imputed variable as factor metric
+  r3.1 = mitools::MIcombine(with(misur, svymean(~random_fact,design = misur)))
+  r3.2 = calc(midat, 'random_fact', metrics = c('mean', 'vcov'))
+  r3.1sum = summary(r3.1)
+
+  expect_equal(unname(coef(r3.1)), r3.2$mean)
+  expect_equal(unname(SE(r3.1)), r3.2$mean_se)
+  expect_equal(r3.1sum$`(lower`, r3.2$mean_lower)
+  expect_equal(r3.1sum$`upper)`, r3.2$mean_upper)
+
+  # imputed variable as factor metric with non imputed by
+  r4.1 = mitools::MIcombine(with(misur, svyby(~random_fact, ~stype, svymean, design = misur)))
+  r4.2 = calc(midat, 'random_fact', metrics = c('mean', 'vcov'), by = 'stype')
+  setorder(r4.2, level, stype)
+  r4.1sum = summary(r4.1)
+
+  expect_equal(unname(coef(r4.1)), r4.2$mean)
+  expect_equal(unname(SE(r4.1)), r4.2$mean_se)
+  expect_equal(r4.1sum$`(lower`, r4.2$mean_lower)
+  expect_equal(r4.1sum$`upper)`, r4.2$mean_upper)
+
+  # imputed variable as factor metric with imputed by
+  r5.1 = mitools::MIcombine(with(misur, svyby(~random_fact, ~random3, svymean, design = misur)))
+  r5.2 = calc(midat, 'random_fact', metrics = c('mean', 'vcov'), by = 'random3')
+  setorder(r5.2, level, random3)
+  r5.1sum = summary(r5.1)
+
+  expect_equal(unname(coef(r5.1)), r5.2$mean)
+  expect_equal(unname(SE(r5.1)), r5.2$mean_se)
+  expect_equal(r5.1sum$`(lower`, r5.2$mean_lower)
+  expect_equal(r5.1sum$`upper)`, r5.2$mean_upper)
+
+  # imputed variable as factor metric with imputed by and non imputed by
+  r6.1 = mitools::MIcombine(with(misur, svyby(~random_fact, ~random3+stype, svymean, design = misur)))
+  r6.2 = calc(midat, 'random_fact', metrics = c('mean', 'vcov'), by = c('random3', 'stype'))
+  setorder(r6.2, level, stype,random3)
+  r6.1sum = summary(r6.1)
+
+  expect_equal(unname(coef(r6.1)), r6.2$mean)
+  expect_equal(unname(SE(r6.1)), r6.2$mean_se)
+  expect_equal(r6.1sum$`(lower`, r6.2$mean_lower)
+  expect_equal(r6.1sum$`upper)`, r6.2$mean_upper)
+
+  # imputed variable as numeric metric with imputed by and non imputed by
+  r7.1 = mitools::MIcombine(with(misur, svyby(~random, ~random3+stype, svymean, design = misur)))
+  r7.2 = calc(midat, 'random', metrics = c('mean', 'vcov'), by = c('random3', 'stype'))
+  setorder(r7.2, level, stype,random3)
+  r7.1sum = summary(r7.1)
+
+  expect_equal(unname(coef(r7.1)), r7.2$mean)
+  expect_equal(unname(SE(r7.1)), r7.2$mean_se)
+  expect_equal(r7.1sum$`(lower`, r7.2$mean_lower)
+  expect_equal(r7.1sum$`upper)`, r7.2$mean_upper)
+
+})
+
