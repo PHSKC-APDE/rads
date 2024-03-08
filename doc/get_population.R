@@ -96,6 +96,14 @@ get_population(ages = 16:25,
                round = F)[]
 
 ## ----warning = FALSE, message = FALSE-----------------------------------------
+# Return all race X eth combos
+get_population(race_type = 'race_eth', group_by = c('race_eth', 'hispanic'))
+
+# Population of white people, by ethnicity
+get_population(race_type = 'race_eth', races = 'white', group_by = c('race_eth', 'hispanic'))
+
+
+## ----warning = FALSE, message = FALSE-----------------------------------------
 
 # Via autoconnect
 r1 = get_population()

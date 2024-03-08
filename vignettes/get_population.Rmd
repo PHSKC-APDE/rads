@@ -241,7 +241,21 @@ get_population(ages = 16:25,
                round = F)[]
 ```
 
-## **Using get_population with a pre-existing connection to hhsaw**
+## hispanic as a group by
+Sometimes a user might want to access population data by Hispanic ethnicity. To get population values by race X ethnicity, users should include 'hispanic' in the `group_by` argument. This option only works in conjunction when `race_type = 'raceeth'`. Several combinations (e.g. adding 'hispanic' to the `races` argument) will not work and will throw some (hopefully) informative errors. Other options (as demonstrated above) will continue to work.
+
+```{r, warning = FALSE, message = FALSE}
+# Return all race X eth combos
+get_population(race_type = 'race_eth', group_by = c('race_eth', 'hispanic'))
+
+# Population of white people, by ethnicity
+get_population(race_type = 'race_eth', races = 'white', group_by = c('race_eth', 'hispanic'))
+
+```
+
+
+
+## Using get_population with a pre-existing connection to hhsaw
 
 Some users may not need/want to rely on `get_population`'s auto-connection to HHSAW via keyring. Users can instead pass an existing database connection through the mykey argument. The example below still uses keyring (since most `get_population` users are on the PH domain), but it can be replaced by `ActiveDirectoryIntegrated` type authentications to HHSAW for the KC lucky ducks.
 
