@@ -1068,51 +1068,48 @@ list_apde_data <- function(){
 #' \dontrun{
 #'  list_dataset_columns('hys', T)
 #' }
-list_dataset_columns <- function(dataset, year = 2021, mykey = 'hhsaw', analytic_only = F){
+list_dataset_columns <- function(dataset = NULL, year = 2021, mykey = 'hhsaw', analytic_only = F){
   colname <- NULL
-  # create a negate function of %in% for readability
-  '%!in%' = Negate('%in%')
   opts = list_apde_data()
 
-  stopifnot('dataset must be a character vector of length 1' = length(dataset) == 1)
-  if(dataset %!in% opts){
-    stop(paste0('list_dataset_columns functionality for dataset "', dataset, '" not currently available/implemented. ',
-                "Only the following datasets are implemented: ", paste(opts, collapse = ', ')))
+  if(is.null(dataset)){stop("\n\U0001f47f The 'dataset' argument cannot be missing. Available options are in `list_apde_data()`.")}
 
+  stopifnot('dataset must be a character vector of length 1' = length(dataset) == 1)
+  if(!dataset %in% opts){
+    stop(paste0('\n\U0001f47f list_dataset_columns functionality for dataset "', dataset, '" not currently available/implemented. ',
+                "Only the following datasets are implemented: ", paste(opts, collapse = ', '), "."))
+  }
+
+  if(dataset %in% c('birth', 'death', 'chars')){ # vital stats on Azure is relatively standard
+    con <- validate_hhsaw_key(hhsaw_key = mykey)
+    message(paste0("Column names for '", dataset, "' data are taken from all available years."))
+    if(analytic_only == T){
+        message(paste0("The `analytic_only` argument does not apply to the '", dataset, "' data and will be ignored."))
+    }
   }
 
   # The below code would ideally be replaced by a single call to a generic interface configured by the user
   if(dataset == "birth") {
-    #message("Column names for birth data are taken from all available years.")
     # get list of all colnames from SQL
-    con <- validate_hhsaw_key(hhsaw_key = mykey)
     var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [birth].[final_analytic]"))
-    ar = rep(TRUE, length(var.names))
   }
   if(dataset == "chars") {
-    #message("Column names for birth data are taken from all available years.")
     # get list of all colnames from SQL
-    con <- validate_hhsaw_key(hhsaw_key = mykey)
     var.names <- names(DBI::dbGetQuery(con, "SELECT TOP (0) * FROM [chars].[final_analytic]"))
-    bonus.CHI.names <- c('wastate', 'yage4', 'age6', 'race3', 'race4')
+    bonus.CHI.names <- c('wastate', 'yage4', 'age6', 'race3', 'race4') # made on the fly by rads
     var.names <- tolower(sort(c(var.names, bonus.CHI.names)))
-    ar = rep(TRUE, length(var.names))
   }
   if(dataset == "death") {
-    #message("Column names for birth data are taken from all available years.")
     # get list of all colnames from SQL
-    con <- validate_hhsaw_key(hhsaw_key = mykey)
     var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [death].[final_analytic]"))
-    bonus.CHI.names <- c('wastate', 'age6', 'race3', 'race4', 'bigcities', 'hra20_name', 'chi_geo_region')
+    bonus.CHI.names <- c('wastate', 'age6', 'race3', 'race4', 'bigcities', 'hra20_name', 'chi_geo_region') # made on the fly by rads
     var.names <- tolower(sort(c(var.names, bonus.CHI.names)))
-    ar = rep(TRUE, length(var.names))
   }
   if(dataset =="hys") {
     if(!all(year %in% c(seq(2004,2018,2), 2021))) {
       stop(paste0("invalid year(s) indicated for Health Youth Survey data. Please see department documentation for details on currently correct years."))
-      #year <- 2021
     }
-    dat <- data.table::fread('//PHDATA01/EPE_Data/HYSdata/hys/2021/best/hys_cols.csv')
+    dat <- data.table::fread('//dphcifs/APDE-CDIP/HYS/releases/2021/best/hys_cols.csv')
     yyy = year
     dat = dat[year %in% yyy]
     var.names.ar <- dat[ar == TRUE, colname]
@@ -1124,14 +1121,15 @@ list_dataset_columns <- function(dataset, year = 2021, mykey = 'hhsaw', analytic
     }
 
     var.names = c(var.names.ar, var.names.stg)
-    ar = c(rep(TRUE, length(var.names.ar)), rep(FALSE, length(var.names.stg)))
+    a_r = c(rep(TRUE, length(var.names.ar)), rep(FALSE, length(var.names.stg)))
 
   }
 
-  Variable_Descriptions = unique(data.table(var.names = var.names, analytic_ready = ar))
+  if(exists('a_r')){
+      Variable_Descriptions = unique(data.table(var.names = var.names, analytic_ready = a_r))
+  } else {Variable_Descriptions = unique(data.table(var.names = var.names))}
 
   return(Variable_Descriptions)
-
 }
 
 
@@ -1464,16 +1462,16 @@ validate_yaml_data <- function(DF = NULL, YML = NULL, VARS = "vars"){
   class.compare[tolower(yaml.class) %in% c("tinyint", "smallint", "int"), yaml.class := "integer"]
   class.compare[grepl("bigint|decimal|float|money|numeric|real", tolower(yaml.class)), yaml.class := "numeric"]
   class.compare[grepl("bit", tolower(yaml.class)), yaml.class := "logical"]
-  class.compare[grepl("date", tolower(yaml.class)), yaml.class := "date"]
   class.compare[grepl("time", tolower(yaml.class)), yaml.class := "POSIXct"]
+  class.compare[grepl("date", tolower(yaml.class)), yaml.class := "date"]
 
   # identify which VARS should be of which class (assuming YAML is correct) ----
   make.char <- class.compare[yaml.class == "character"]$name
   make.num  <- class.compare[yaml.class == "numeric"]$name
   make.int  <- class.compare[yaml.class == "integer"]$name
   make.logical  <- class.compare[yaml.class == "logical"]$name
-  make.Date  <- class.compare[yaml.class == "Date"]$name
   make.POSIXct  <- class.compare[yaml.class == "POSIXct"]$name
+  make.Date  <- class.compare[yaml.class == "Date"]$name
 
   # create function to convert column classes if it can be done without introducing NA's ----
   lossless_convert <- function(x, class){
@@ -1506,6 +1504,7 @@ validate_yaml_data <- function(DF = NULL, YML = NULL, VARS = "vars"){
   # check if there are variables that could not be coerced to proper type ----
   class.compare <- merge(data.table::data.table(name = names(sapply(DF, class)), DF.class = tolower(sapply(DF, class))),
                          class.compare, by = "name")
+  class.compare[DF.class == 'c("posixct", "posixt")', DF.class := 'POSIXct']
 
   # allow R to be more strict than YAML with numbers ----
   class.compare[yaml.class=="numeric" & DF.class == "integer", DF.class := "numeric"]
