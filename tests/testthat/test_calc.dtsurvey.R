@@ -66,6 +66,7 @@ test_that('Grouping without filtering',{
 test_that('Multi Grouping with filtering',{
           st = calc(sur, 'api00', cname == 'Los Angeles', by = c('stype', 'cname'), metrics = 'denominator', time_var = NULL)[, .(stype, cname, denominator)]
           man = sur[cname == 'Los Angeles', .(denominator = .N), keyby = .(stype, cname)]
+          data.table::setkeyv(man, NULL)
           expect_equal(st, as.data.table(man))
 })
 
@@ -194,7 +195,7 @@ test_that('Time var without window',{
 
 #
 test_that('Invalid input for what',{
-  expect_error(calc(sur, 'thisvarnoexists', time_var = NULL), 'column in `ph.data`')
+  expect_error(calc(sur, 'thisvarnoexists', time_var = NULL), 'columns in `ph.data`: thisvarnoexists')
 })
 #
 test_that('Invalid input for ... filters',{
@@ -202,7 +203,7 @@ test_that('Invalid input for ... filters',{
 })
 
 test_that('Invalid input for by',{
-  expect_error(calc(sur, 'api00', by = 'turtles', time_var = NULL), '`by` must be a')
+  expect_error(calc(sur, 'api00', by = 'turtles', time_var = NULL), 'columns in `ph.data`: turtles')
 })
 #
 test_that('Invalid input for metric',{
@@ -381,7 +382,7 @@ test_that('Ndistinct does things', {
 
   expect_equal(r1[, unique(ndistinct)], sur[, length(unique(awards))])
   expect_equal(r2[, unique(ndistinct)], 1)
-  expect_equal(r3[, ndistinct], sur[, length(unique(enroll)), stype][, V1])
+  expect_equal(r3[, ndistinct], sur[, length(unique(enroll)), keyby = stype][, V1])
 
 
 })
