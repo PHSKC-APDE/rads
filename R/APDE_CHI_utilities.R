@@ -942,16 +942,17 @@ CHI_generate_metadata <- function(meta.old = NULL,
 #' function to update (or replace) results and metadata in SQL 51 (dev/WIP) or 50 (prod)
 #'
 #'
-#' @param CHIestimates
-#' @param CHImetadata
-#' @param table_name
-#' @param server
-#' @param replace_table
+#' @param CHIestimates DT or DF containing CHI analytic results
+#' @param CHImetadata DT or DF containing CHI metadata
+#' @param table_name name of SQL Server table to update
+#' @param server name of serverto access
+#' @param replace_table If T, drop existing table and insert data, if F update matching rows and insert new data
 #'
 #' @return
 #' @export
 #'
 #' @examples
+#'
 CHI_sql_update <- function(CHIestimates = NULL,
                            CHImetadata = NULL,
                            table_name = NULL,
