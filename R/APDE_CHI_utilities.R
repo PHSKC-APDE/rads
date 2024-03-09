@@ -65,7 +65,26 @@ CHI_generate_template <- function(ph.analysis_set = NULL,
 }
 
 
-
+#' CHI Generate Trend Years
+#'
+#' @param indicator_key
+#' @param span
+#' @param begin.year
+#' @param final.year
+#'
+#' @description
+#' !!! What does this do !!!
+#'
+#' @details
+#' uuuuu
+#'
+#' @returns figure this out
+#' @keywords CHI, Tableau, Production
+#'
+#' @export
+#'
+#' @import dtsurvey
+#'
 CHI_generate_trend_years <- function(indicator_key = NULL,
                                      span = NULL,
                                      begin.year = NULL,
@@ -79,6 +98,23 @@ CHI_generate_trend_years <- function(indicator_key = NULL,
 }
 
 
+#' CHI Generate Instructions
+#'
+#' @description
+#' Applies CHI Generate Template across multiple rows of an instruction file
+#'
+#' @details
+#' This should be better unpacked
+#'
+#' @param ph.analysis_set
+#' @param end.year
+#' @param year.span
+#' @param trend.span
+#'
+#' @return
+#' @export
+#'
+#' @examples
 CHI_generate_instructions <- function(ph.analysis_set = NULL,
                                       end.year = 2021,
                                       year.span = 5,
@@ -111,6 +147,22 @@ CHI_generate_instructions <- function(ph.analysis_set = NULL,
   return(template)
 }
 
+#' Title
+#'
+#' @param ph.data
+#' @param ph.instructions
+#' @param rate
+#' @param rate_per
+#' @param small_num_suppress
+#' @param suppress_low
+#' @param suppress_high
+#' @param source_name
+#' @param source_date
+#'
+#' @return
+#' @export
+#'
+#' @examples
 CHI_calc <- function(ph.data = NULL,
                      ph.instructions = NULL,
                      rate = F,
@@ -337,6 +389,16 @@ CHI_calc <- function(ph.data = NULL,
 }
 
 
+#' Title
+#'
+#' @param ph.data
+#' @param ph.instructions
+#' @param source_date
+#'
+#' @return
+#' @export
+#'
+#' @examples
 CHI_count_by_age <- function(ph.data = NULL,
                              ph.instructions = NULL,
                              source_date = NULL){
@@ -454,6 +516,15 @@ CHI_count_by_age <- function(ph.data = NULL,
 
 # Get populations that correspond with standard counts ----
 # CHI_generate_instructions_pop() - function to generate instructions for get_population based on structure of count data----
+#' Title
+#'
+#' @param mycount.data
+#' @param povgeo
+#'
+#' @return
+#' @export
+#'
+#' @examples
 CHI_generate_instructions_pop <- function(mycount.data, povgeo = NA){
   pop.template <- copy(mycount.data)
   pop.template <- unique(copy(pop.template)[, .(year, cat1, cat1_varname, cat2, cat2_varname, tab)])
@@ -788,6 +859,15 @@ CHI_get_proper_pop <- function(pop.template = NULL, pop.genders = NULL, pop.ages
 
 ## Misc functions ----
 # CHI_drop_illogical_ages() - drop rows that don't make sense (e.g., 50 year old in <18) ----
+#' Title
+#'
+#' @param DTx
+#' @param agevar
+#'
+#' @return
+#' @export
+#'
+#' @examples
 CHI_drop_illogical_ages <- function(DTx, agevar = 'chi_age'){
   DTx = copy(DTx)
   for(CatNum in c("cat1", "cat2")){
@@ -801,7 +881,20 @@ CHI_drop_illogical_ages <- function(DTx, agevar = 'chi_age'){
   return(DTx)
 }
 
-# CHI_generate_metadata() - function to generate metadata table combining existing metadata and latest estimates ----
+
+#' CHI Generate Metadata
+#'
+#' @description
+#' function to generate metadata table combining existing metadata and latest estimates ----
+#'
+#'
+#' @param meta.old
+#' @param est.current
+#'
+#' @return
+#' @export
+#'
+#' @examples
 CHI_generate_metadata <- function(meta.old = NULL,
                                   est.current = NULL){
   # get new metadata ----
@@ -842,7 +935,23 @@ CHI_generate_metadata <- function(meta.old = NULL,
   return(meta.new)
 }
 
-# CHI_sql_update() - function to update (or replace) results and metadata in SQL 51 (dev/WIP) or 50 (prod) ----
+
+#' CHI SQL Update
+#'
+#' @description
+#' function to update (or replace) results and metadata in SQL 51 (dev/WIP) or 50 (prod)
+#'
+#'
+#' @param CHIestimates
+#' @param CHImetadata
+#' @param table_name
+#' @param server
+#' @param replace_table
+#'
+#' @return
+#' @export
+#'
+#' @examples
 CHI_sql_update <- function(CHIestimates = NULL,
                            CHImetadata = NULL,
                            table_name = NULL,
