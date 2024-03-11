@@ -21,7 +21,8 @@
 #' Default == c('f', 'm').
 #' @param races Character vector of length 1 to 7. Identifies which race(s) or
 #' ethnicity should be pulled. The acceptable values are "aian",
-#' "asian", "black", "hispanic", "multiple", "nhpi", and "white".
+#' "asian", "black", "hispanic", "multiple", "nhpi", and "white". Note that
+#' "hispanic' is only valid when `race_type = 'race_eth'`.
 #'
 #' Default == all the possible values.
 #' @param race_type Character vector of length 1. Identifies whether to pull
@@ -38,10 +39,11 @@
 #' @param group_by Character vector. Identifies how you would
 #' like the data 'grouped' (i.e., stratified). Valid options are limited to:
 #' "years", "ages", "genders", "race", "race_eth", "race_aic", and/or "hispanic".
-#' "Hispanic can only be specified when `race_type` is race_eth. This returns rows
-#' for Race-non hispanic and Race-hispanic. It can be combined with "race_eth".
-#' If "race" or "race_aic" are the `race_type` then they must be included in
-#' `group_by`. Results are always grouped by geo_id.
+#' "hispanic" can only be specified when `race_type = 'race_eth'`, which returns
+#' rows for Race-non Hispanic and Race-Hispanic. It can be combined with
+#' "race_eth". If `race_type = 'race'` or `race_type = 'race_aic'`, then 'race'
+#' or 'race_aic' must be included in `group_by`, respectively. Results are
+#' always grouped by geo_id.
 #'
 #' Default == NULL, i.e., estimates are only grouped / aggregated by
 #' geography.
