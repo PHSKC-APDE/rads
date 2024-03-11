@@ -67,8 +67,9 @@ Default == "kc".}
 like the data 'grouped' (i.e., stratified). Valid options are limited to:
 "years", "ages", "genders", "race", "race_eth", "race_aic", and/or "hispanic".
 "hispanic" can only be specified when \code{race_type = 'race_eth'}, which returns
-rows for Race-non Hispanic and Race-Hispanic. It can be combined with
-"race_eth". If \code{race_type = 'race'} or \code{race_type = 'race_aic'}, then 'race'
+rows for Race-non Hispanic and Race-Hispanic.
+Both \code{race_eth} and \code{hispanic} can be included in the \code{group_by} argument at the same time.
+If \code{race_type = 'race'} or \code{race_type = 'race_aic'}, then 'race'
 or 'race_aic' must be included in \code{group_by}, respectively. Results are
 always grouped by geo_id.
 
