@@ -1,7 +1,7 @@
 Package: rads
 Type: Package
 Title: Assisted computation of King County public health data
-Version: 1.1.8.0
+Version: 1.1.8.1
 Author: PHSKC-APDE
 Maintainer: Daniel Casey <Data.Request@kingcounty.gov>
 Description: Fetch and analyze data from Public Health Seattle & King County.
