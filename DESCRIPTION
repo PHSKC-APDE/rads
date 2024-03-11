@@ -18,6 +18,7 @@ Imports:
     keyring (>= 1.2.0),
     lubridate (>= 1.6.0),
     methods,
+    mitools(>= 2.4),
     odbc (>= 1.2.2),
     rads.data (>= 1.0.7.5),
     stats,
