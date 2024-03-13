@@ -1,5 +1,6 @@
 options("scipen"=999) # turn off scientific notation
 
+# adjust_direct() ----
 #' Calculate crude and directly adjusted rates
 #'
 #' @param count Numeric vector of indeterminate length. The # of events of interest (e.g., deaths, births, etc.)
@@ -51,7 +52,7 @@ adjust_direct <- function (count, pop, stdpop, per = 100000, conf.level = 0.95)
   adjusted <- c(count = sum(count), pop = sum(pop), adjusted)
 }
 
-
+# age_standardize() ----
 #' Calculate age standardized rates from a data.table with age, counts, and population columns. (Built on adjust_direct())
 #'
 #' @description
@@ -254,7 +255,7 @@ age_standardize <- function (ph.data, ref.popname = NULL, collapse = T, my.count
   return(my.rates)
 }
 
-
+# calc_age() ----
 #' Proper calculation of age in years
 #'
 #' @param from Vector of dates or characters ("YYYY-MM-DD") of indeterminate length.  vector of length 1.
@@ -279,7 +280,8 @@ calc_age <- function(from, to) {
          age - 1, age)
 }
 
-
+# chi_compare_est() ----
+#
 #' List of standard CHI / Tableau Ready columns
 #' @export
 chi_cols = function(){
@@ -372,7 +374,7 @@ chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = 
 
 }
 
-
+# chi_compare_kc() ----
 #' Compare CHI standard tabular results to the King County average for the same year within a given data set
 #' @param orig Character vector of length 1. Identifies the data.table/data.frame to be fetched. Note the table must have the following columns:
 #' 'result', 'lower_bound', & 'upper_bound' and all three must be numeric
@@ -424,7 +426,7 @@ chi_compare_kc <- function(orig,
   return(orig)
 }
 
-
+# chi_metadata_cols() ----
 #' List of standard CHI / Tableau Ready metadata columns
 #' @export
 chi_metadata_cols = function(){
@@ -432,8 +434,7 @@ chi_metadata_cols = function(){
   chi_metanames <- names(chi.yaml$metadata)
 }
 
-
-
+# compare_estimate() ----
 #' Compare aggregated results (proportions or means) for one strata to the rest
 #' of the strata in the summary table.
 #' @param mydt Unquoted name of a data.table or data.frame to be processed. Note
@@ -580,7 +581,7 @@ compare_estimate <- function (mydt,
   return(mydt)
 }
 
-
+# dumb_convert() ----
 #' Convert from one type to another type
 #'
 #' @param x factor
@@ -613,7 +614,7 @@ dumb_convert <- function(x, target = 'character'){
   stop(paste0('Target class of ', target, ' is invalid'))
 }
 
-
+# format_time() ----
 #' Format a vector of time into a series of human readable chunks
 #' @param x numeric
 #' @export
@@ -655,7 +656,7 @@ format_time <- function(x){
 
 }
 
-
+# format_time_simple() ----
 #' Format a vector of time into a simple human readable chunk
 #' @param x numeric
 #' @export
@@ -680,7 +681,7 @@ format_time_simple <- function(x){
 
 }
 
-
+# generate_yaml() ----
 #' Generate a YAML file for SQL loading based on in a data.frame or data.table
 #'
 #' @description
@@ -850,7 +851,7 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
 
 }
 
-
+# get_xwalk ----
 #' Load clean geographic crosswalk tables
 #' @description
 #' This function provides a curated assortment of standardized geographic crosswalks.
@@ -993,6 +994,7 @@ get_xwalk <- function(geo1 = NA, geo2 = NA){
   return(xwalkdt)
 }
 
+# get_ref_pop() ----
 #' Load a reference population as a data.table object in memory
 #'
 #' @param ref_name Character vector of length 1. Loads a reference population identified by list_ref_pop()
@@ -1028,7 +1030,7 @@ get_ref_pop <- function(ref_name = NULL){
   return(ref_pop_table)
 }
 
-
+# list_apde_data() ----
 #' Returns the list of datasets currently available for analysis in RADS
 #'
 #' @return Character vector of available datasets.
@@ -1047,7 +1049,7 @@ list_apde_data <- function(){
 
 }
 
-
+# list_dataset_columns() ----
 #' List columns available for analysis for a particular dataset in RADS
 #'
 #' @param dataset Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options
@@ -1132,7 +1134,7 @@ list_dataset_columns <- function(dataset = NULL, year = 2021, mykey = 'hhsaw', a
   return(Variable_Descriptions)
 }
 
-
+# list_ref_xwalk() ----
 #' View table of geographic pairs usable in the get_xwalk() function
 #' @description
 #' Displays a table of geographic pairings that can be submitted to \code{get_xwalk()}
@@ -1184,7 +1186,7 @@ list_ref_xwalk <- function(){
   return(geodt)
 }
 
-
+# list_ref_pop() ----
 #' Return vector of all reference populations available in RADS
 #'
 #' @return Character vector of available reference populations
@@ -1216,7 +1218,7 @@ list_ref_pop <- function(){
   return(ref_pop_table$standard)
 }
 
-
+# lossless_convert() ----
 #' Convert the class of a vector to another class is possible without introducing additional NAs
 #' @param x vector of indeterminate length and type
 #' @param class character vector of length one specifying the preferred new column type (i.e.,
@@ -1242,7 +1244,7 @@ lossless_convert <- function(x = NULL, class = NULL){
   return(x)
 }
 
-
+# metrics() ----
 #' List of available metric for `calc`
 #' @return character vector. A vector of the available metrics for `calc`
 #' @name metrics
@@ -1297,7 +1299,7 @@ metrics = function(){
     'rate', 'ndistinct')
 }
 
-
+# round2() ----
 #' Improved rounding function
 #' @param x values to be rounded
 #' @param n number of digits
@@ -1312,6 +1314,7 @@ round2 = function(x, n = 0) {
   z*posneg
 }
 
+# string_clean() ----
 #' Clean string & factor columns
 #' @param dat name of data.frame or data.table
 #' @param stringsAsFactors logical. Specifies whether to convert strings to
@@ -1394,6 +1397,7 @@ string_clean <- function(dat = NULL,
   return(dat) # Return cleaned data.table
 }
 
+# sql_clean() ----
 #' Clean string columns read from SQL
 #' @param dat name of data.frame or data.table
 #' @param stringsAsFactors logical. Specifies whether to convert strings to factors (TRUE) or not (FALSE)
@@ -1403,10 +1407,6 @@ string_clean <- function(dat = NULL,
 #' @importFrom utf8 utf8_encode
 #' @return data.table
 sql_clean <- function(dat = NULL, stringsAsFactors = FALSE){
-  #.Deprecated("string_clean", package = "yourPackageName")
-  # message('\U00026A0`sql_clean` has been deprecated and replaced by `string_clean`. \nAs a courtesy, it remains operational for the time being, but please update your code.')
-  # call = match.call()
-  # string_clean(dat = call[['dat']], stringsAsFactors = call[['stringsAsFactors']])
   .Deprecated("string_clean", package = "yourPackageName")
 
   warning("\n\U00026A0 As a courtesy, `sql_clean` remains operational for the time being.\n",
@@ -1416,7 +1416,7 @@ sql_clean <- function(dat = NULL, stringsAsFactors = FALSE){
   string_clean(dat = dat, stringsAsFactors = stringsAsFactors)
 }
 
-
+# std_error() ----
 #' Calculate standard error of the mean
 #' @param x name of a column in a data.frame/data.table or a vector
 #' @export
@@ -1455,7 +1455,7 @@ std_error<-function(x) {
   return(stderr/sqrt(vnx))
 }
 
-
+# substrRight() ----
 #' Substring selection from the right to complement base R substr
 #' @param x character
 #' @param x.start digit to start (counting from the right)
@@ -1471,7 +1471,7 @@ substrRight <- function(x, x.start, x.stop){
   substr(x, nchar(x)-x.stop+1, nchar(x)-x.start+1)
 }
 
-
+# validate_yaml_data() ----
 #' Compare the expected column types in YAML with the actual column types in R
 #' @param DF Character vector of length 1. Identifies the data.table/data.frame that you want to assess vis-à-vis the YAML file
 #'
@@ -1588,7 +1588,7 @@ validate_yaml_data <- function(DF = NULL, YML = NULL, VARS = "vars"){
 
 }
 
-
+# quiet() ----
 #' Silence (i.e., suppress or mute) printed messages from functions
 #'
 #' @description
