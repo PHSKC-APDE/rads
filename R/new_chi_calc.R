@@ -24,6 +24,8 @@ chi_calc <- function(ph.data = NULL,
                      source_name = 'blahblah',
                      source_date = NULL){
 
+
+
   # Error if ph.instructions has no data ----
   if(nrow(ph.instructions) == 0){
     stop("\n\U0001f47f the table ph.instructions does not have any rows.")

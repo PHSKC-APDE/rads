@@ -1040,11 +1040,9 @@ get_ref_pop <- function(ref_name = NULL){
 #' }
 list_apde_data <- function(){
 
-<<<<<<< HEAD
-  ret <- c('hys', 'birth')
-=======
+
   ret <- c('hys', 'birth', 'chars', 'death')
->>>>>>> origin/dev
+
 
   return(ret)
 

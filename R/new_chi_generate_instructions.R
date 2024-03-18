@@ -22,7 +22,7 @@ chi_generate_instructions <- function(ph.analysis_set = NULL,
   # apply the template generating function
   template <- rbindlist(
     lapply(X = seq(1, length(unique(ph.analysis_set$set))),
-           FUN = CHI_generate_template, ph.analysis_set = ph.analysis_set))
+           FUN = chi_generate_template, ph.analysis_set = ph.analysis_set))
 
   # split trends from other tabs because processed for multiple years
   template.trends <- template[tab=='trends']
