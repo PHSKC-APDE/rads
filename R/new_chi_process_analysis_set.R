@@ -1,25 +1,32 @@
-#' CHI Generate Template
+#' CHI Process Analysis Set
 #'
 #' @description
-#' This function generates a data.table with individual rows for one or more Tableau ready CHI analytic outputs.
+#' This function takes an analysis set file and indicator of which set should be processed. It returns a skeleton of CHI Tableau Ready Output. Hidden and ment to be called by CHI generate instructions
 #'
 #' @details
-#' It takes in a compact list of variables, byvariables, and analysis types, and returns a table with one row corrosponding to each row in the Tableau ready output. This should largely corrospond with
-#' "//phshare01/epe_share/WORK/CHI Visualizations/Tableau Ready Output Format_v2.xlsx"
+#' It takes in a data.table containing a compact list of variables, byvariables, and analysis types, and returns a shell table of the rows and columns expected in a CHI Tableau ready output. For details on TRO format, review here: https://kc1.sharepoint.com/:x:/r/teams/DPH-CommunityHealthIndicators/CHIVizes/CHI-Standards-TableauReady%20Output.xlsx?d=wbed2f507b8344d288658c5724f64c001&csf=1&web=1&e=qEIPcc&nav=MTVfezAwMDAwMDAwLTAwMDEtMDAwMC0wMjAwLTAwMDAwMDAwMDAwMH0
 #'
-#' @param ph.analysis_set
-#' @param myset
+#' the expected format of the analysis file is:
+#' set: numeric integer 1...x, indicates set the observations are calcualted as part of (why are sets valueable? should this be discarded?)
+#' cat1: character, the name expected in CHI TRO for cat1
+#' cat1_varname: character, the name expected in CHI TRO for cat1_varname
+#' _kingcounty: character "":"X", indicator of if analysis is king county specific (could be removed, this is imputable by variable name)
+#' _wastate: character "":"x", indicator of if analysis is of wa state
+#' demgroups: character "":"x", indicator of if analysis includes single demographic
+#' crosstabs: character "":"x", indicator of if analysis includes crosstabulations
+#' trands: character "":"x", indicator of if analysis includes trends
+#' set_idictaor_keys character comma sep list, list of indicators variables expected from data source
+#'
+#' @param ph.analysis_set name of data.table to parse
+#' @param myset chosen set number from table
 #' @returns data table with a single row for each calculation to be performed in generating Tableau Ready Output for CHI reporting
 #' @keywords CHI, Tableau, Production
-#'
-#' @export
 #'
 #' @import dtsurvey
 #' @import future
 #' @import future.apply
 #'
-
-chi_generate_template <- function(ph.analysis_set = NULL,
+chi_process_analysis_set <- function(ph.analysis_set = NULL,
                                   myset = NULL){
 
   subsets <- ph.analysis_set[set == myset] # process a single analysis set
