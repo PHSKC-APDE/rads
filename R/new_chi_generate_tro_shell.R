@@ -18,7 +18,10 @@
 #' set_idictaor_keys character comma sep list, list of indicators variables expected from data source
 #'
 #' @param ph.analysis_set name of data.table to parse
-#' @param myset chosen set number from table
+#' @param start.year the earliest year to be used for aggregate estimates
+#' @param end.year the latest year to be used for aggregate estimates
+#' @param trend.span the number of years to be included in a single trend period
+#' @param trend.periods the number of periods to be included in a trend
 #' @returns data table with a single row for each calculation to be performed in generating Tableau Ready Output for CHI reporting
 #' @keywords CHI, Tableau, Production
 #' @import dtsurvey
@@ -26,9 +29,12 @@
 #' @import future.apply
 #'
 chi_generate_tro_shell <- function(ph.analysis_set = NULL,
-                                      end.year = 2021,
-                                      year.span = 5,
-                                      trend.span = 3){
+                                      start.year = NA,
+                                      end.year = NA,
+                                      trend.span = NA,
+                                      trend.periods = NA){
+  message("Note: trend.span applies trendds backwards from end.year")
+
   # apply the template generating function
   template <- rbindlist(
     lapply(X = seq(1, length(unique(ph.analysis_set$set))),
