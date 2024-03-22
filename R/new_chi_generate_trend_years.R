@@ -13,9 +13,6 @@
 #'
 #' @returns figure this out
 #' @keywords CHI, Tableau, Production
-#'
-#' @export
-#'
 #' @import dtsurvey
 
 chi_generate_trend_years <- function(indicator_key = NULL,
