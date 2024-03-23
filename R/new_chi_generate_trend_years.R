@@ -2,8 +2,8 @@
 #'
 #' @param indicator_key
 #' @param span
-#' @param begin.year
-#' @param final.year
+#' @param end.year
+#' @param trend.periods
 #'
 #' @description
 #' !!! What does this do !!!
@@ -16,12 +16,12 @@
 #' @import dtsurvey
 
 chi_generate_trend_years <- function(indicator_key = NULL,
-                                     span = NULL,
-                                     begin.year = NULL,
-                                     final.year = NULL){
-  last.possible.begin.year <- final.year - (span-1)
-  all.start.years <- begin.year:last.possible.begin.year
-  all.end.years <- all.start.years + (span-1)
+                                     trend.span = NULL,
+                                     end.year = NULL,
+                                     trend.periods = NULL){
+  last.start <- end.year-(span-1)
+  all.start.years <- last.start:(last.start-(trend.periods-1))
+  all.end.years <- end.year:(end.year-(trend.periods-1))
   spandt <- data.table(end = all.end.years, start = all.start.years)
   spandt <- setorder(setDT(tidyr::crossing(data.table(indicator_key), spandt)), indicator_key, -end)
   return(spandt)

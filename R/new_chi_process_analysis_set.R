@@ -1,7 +1,7 @@
-#' CHI Process Analysis Set
+#' CHI generate_nontrend_years
 #'
 #' @description
-#' This function takes an analysis set file and indicator of which set should be processed. It returns a skeleton of CHI Tableau Ready Output. Hidden and ment to be called by CHI generate instructions
+#' This function takes an analysis set file and indicator of which set should be processed. It returns a skeleton of CHI Tableau Ready Output. Hidden and ment to be called by CHI generate instructions. Not exported, but called by chi_generate_tro_shell().
 #'
 #' @details
 #' It takes in a data.table containing a compact list of variables, byvariables, and analysis types, and returns a shell table of the rows and columns expected in a CHI Tableau ready output. For details on TRO format, review here: https://kc1.sharepoint.com/:x:/r/teams/DPH-CommunityHealthIndicators/CHIVizes/CHI-Standards-TableauReady%20Output.xlsx?d=wbed2f507b8344d288658c5724f64c001&csf=1&web=1&e=qEIPcc&nav=MTVfezAwMDAwMDAwLTAwMDEtMDAwMC0wMjAwLTAwMDAwMDAwMDAwMH0
@@ -21,12 +21,10 @@
 #' @param myset chosen set number from table
 #' @returns data table with a single row for each calculation to be performed in generating Tableau Ready Output for CHI reporting
 #' @keywords CHI, Tableau, Production
-#'
 #' @import dtsurvey
 #' @import future
 #' @import future.apply
-#'
-chi_process_analysis_set <- function(ph.analysis_set = NULL,
+chi_generate_nontrend_years <- function(ph.analysis_set = NULL,
                                   myset = NULL){
 
   subsets <- ph.analysis_set[set == myset] # process a single analysis set

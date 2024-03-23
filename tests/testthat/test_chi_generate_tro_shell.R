@@ -20,5 +20,5 @@ test_that("chi_generate_template injest template format") {
                          crosstabs,
                          trends,
                          set_indicator_keys)
-  chi_generate_tro_shell(ph.analysis_set = template)
+  DT <- chi_generate_tro_shell(ph.analysis_set, 2021, 2022, 3, 5)
 }

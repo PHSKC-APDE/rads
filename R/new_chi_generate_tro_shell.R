@@ -10,16 +10,16 @@
 #' set: numeric integer 1...x, indicates set the observations are calcualted as part of (why are sets valueable? should this be discarded?)
 #' cat1: character, the name expected in CHI TRO for cat1
 #' cat1_varname: character, the name expected in CHI TRO for cat1_varname
-#' _kingcounty: character "":"X", indicator of if analysis is king county specific (could be removed, this is imputable by variable name)
-#' _wastate: character "":"x", indicator of if analysis is of wa state
+#' kingcounty: character "":"X", indicator of if analysis is king county specific (could be removed, this is imputable by variable name)
+#' wastate: character "":"x", indicator of if analysis is of wa state
 #' demgroups: character "":"x", indicator of if analysis includes single demographic
 #' crosstabs: character "":"x", indicator of if analysis includes crosstabulations
 #' trands: character "":"x", indicator of if analysis includes trends
 #' set_idictaor_keys character comma sep list, list of indicators variables expected from data source
 #'
 #' @param ph.analysis_set name of data.table to parse
-#' @param start.year the earliest year to be used for aggregate estimates
-#' @param end.year the latest year to be used for aggregate estimates
+#' @param start.year the earliest year to be used for estimates
+#' @param end.year the latest year to be used for aggregate estimates (note, the earliest year for trends estimates is calculated from from the span and number of periods)
 #' @param trend.span the number of years to be included in a single trend period
 #' @param trend.periods the number of periods to be included in a trend
 #' @returns data table with a single row for each calculation to be performed in generating Tableau Ready Output for CHI reporting
@@ -28,17 +28,26 @@
 #' @import future
 #' @import future.apply
 #'
-chi_generate_tro_shell <- function(ph.analysis_set = NULL,
-                                      start.year = NA,
-                                      end.year = NA,
-                                      trend.span = NA,
-                                      trend.periods = NA){
-  message("Note: trend.span applies trendds backwards from end.year")
+chi_generate_tro_shell <- function(ph.analysis_set,
+                                      start.year,
+                                      end.year,
+                                      trend.span = NULL,
+                                      trend.periods = NULL){
+  #parameterizaiton checks
+  if("x" %in% ph.analysis_set$trends & (is.null(trend.span) | is.null(trend.periods))) {stop("you have indicated that a trends analysis is to be conducted, but have not indicated both the span and number of periods for this analysis.")}
+
+  #ph.analysis_set checks
+
+
+  #advisory messages
+  if("x" %in% ph.analysis_set$trends) {message("Note: trend.span applies trends backwards from end.year")}
+
+
 
   # apply the template generating function
   template <- rbindlist(
     lapply(X = seq(1, length(unique(ph.analysis_set$set))),
-           FUN = chi_process_analysis_set, ph.analysis_set = ph.analysis_set))
+           FUN = chi_generate_nontrend_years, ph.analysis_set = ph.analysis_set))
 
   # split trends from other tabs because processed for multiple years
   template.trends <- template[tab=='trends']
@@ -52,9 +61,9 @@ chi_generate_tro_shell <- function(ph.analysis_set = NULL,
 
   # add years to template (trends)
   trend.years <- chi_generate_trend_years(indicator_key = unique(template$indicator_key),
-                                          span = trend.span,
-                                          begin.year = end.year - 9,
-                                          final.year = end.year)
+                                          trend.span = trend.span,
+                                          end.year = end.year,
+                                          trend.periods = trend.periods)
   template.trends <- merge(template.trends, trend.years, by = 'indicator_key', all = T, allow.cartesian = T)
 
   # append trends template to main template
