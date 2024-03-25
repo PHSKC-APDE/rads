@@ -59,9 +59,9 @@ get_data <- function(dataset, cols = NULL, year = 2018, ...){
 #' @examples
 #'
 #' \dontrun{
-#'  get_data_hys(cols = NULL, year = c(2016, 2018), weight_variable = 'wt_sex_grade_kc')
+#'  get_data_hys(cols = NULL, year = c(2016, 2018), weight_variable = 'wt_grade_kc')
 #' }
-get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_grade_kc', kingco = TRUE, version = 'best', ar = TRUE){
+get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_grade_kc', kingco = TRUE, version = 'best', ar = TRUE){
 
   colname <- chi_geo_kc <- weight1 <- psu <- chi_year <- NULL
 
