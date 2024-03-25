@@ -322,7 +322,8 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
   #use something like a = DT[, .(list(a), list(b)), env = list(a = mean_fun, b = total_fun), by = byvar]
   #to capture the se and ci returns and then break out post hoc
   #if it is a factor, compute some things separately
-  # browser()
+  # Following bit creates the call taht will be executed within the data.table DT
+  # This construction is used for flexibility (build the whole call and take out the null bits)
   the_call = substitute(list(
     time = time_fun,
     variable = X,

@@ -411,8 +411,11 @@ test_that('Where elimiates everything', {
 
 })
 
-test_that('MI approach', {
+test_that('Resample approach', {
 
+  # "Imputed" is used below -- but resampling also works
+
+  # Create several iterations of an "imputed" or resampled dataset
   midat = lapply(1:10, function(x){
     r = apiclus1
     r$random = sample(1:5, nrow(r), T)
@@ -422,20 +425,27 @@ test_that('MI approach', {
 
   })
 
+  # store them in a imputationList (so the s3 calc method will be called)
   midat = mitools::imputationList(midat)
+
+  # use base survey as the "truth"
   misur = svydesign(id=~dnum, weights=~pw, data=midat)
 
-  # Numeric variable unrelated
+  # Numeric variable unrelated to the resampling
+  # r1.1 tests micombine with base survey package
   r1.1 = mitools::MIcombine(with(misur, svymean(~api00,design = misur)))
+  #r1.2 is calc routine for imputationList
   r1.2 = calc(midat, 'api00', metrics = c('mean', 'vcov'))
+  #r1.3 is the normal way of using calc with a dtsurvey
   r1.3 = calc(midat$imputations[[1]], 'api00')
 
   expect_equal(unname(coef(r1.1)), r1.2$mean)
   expect_equal(r1.2$mean, r1.3$mean)
   expect_equal(unname(SE(r1.1)), r1.2$mean_se)
-  # The confidence intervals are not the same because of different ways of calculating it. I think it probably has to do with degrees of freedom primarily)
+  expect_equal(r1.2$mean_se, r1.3$mean_se)
+  # The confidence intervals are not the same because of different ways of calculating it. I think it probably has to do with degrees of freedom)
 
-  # Imputed variable as  metric
+  # Imputed variable as metric
   r2.1 = mitools::MIcombine(with(misur, svymean(~random,design = misur)))
   r2.2 = calc(midat, 'random', metrics = c('mean', 'vcov'))
   r2.1sum = summary(r2.1)

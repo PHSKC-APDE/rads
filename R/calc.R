@@ -61,7 +61,6 @@
 #' Returns rate, rate_se, rate_lower, rate_upper.
 #' Default ci (e.g. upper and lower) is 95 percent.
 #'
-#' 12) vcov: variance-covariance matrix
 #'
 #' For survey data, use the \code{proportion} argument where relevant to ensure metrics are calculated using special proportion (e.g \code{svyciprop})
 #' methods. That is, when you want to find the fraction of ____, toggle \code{proportion} to \code{TRUE}.
@@ -127,28 +126,28 @@ calc.grouped_df <- function(ph.data, ...){
 calc.imputationList = function(ph.data, ...){
 
   call = match.call()
+  dots = list(...)
+  dot_nms = names(dots)
 
   # make sure metrics is specified
-  dot_nms = ...names()
   if(!'metrics' %in% dot_nms){
-    stop('metrics argument must be specified and include `vcov`')
+    stop('metrics argument must be explictly specified')
   }else{
-    metn = which(dot_nms %in% 'metrics')
-    mets = ...elt(metn)
-    if(!'vcov' %in% c(mets)) stop('metrics argument must include `vcov`')
+    if(any(c('mean', 'total') %in% dots$metrics) && !'vcov' %in% dots$metrics){
+      dots$metrics = c(dots$metrics, 'vcov')
+    }
+
   }
 
-  #if('' %in% dot_nms) stop('all arguments must be named when ph.data is an imputationList')
-
   # Borrowed from mitools::summary
+  # Set the CI boundary
   if('ci' %in% dot_nms){
-    alpha = 1 - ...elt(which(dot_nms %in% 'ci'))
+    alpha = 1 - dots$ci
   } else{
     alpha = .05
   }
 
-  dots = list(...)
-
+  # For each imputation realization, run calc
   res = lapply(ph.data[[1]], function(x){
     do.call(calc, args = append(list(ph.data = x), dots[names(dots) != 'ph.data']), quote = T)
   })
@@ -157,6 +156,7 @@ calc.imputationList = function(ph.data, ...){
   ans = res[[1]]
   isfactor = !all(is.na(ans[,level]))
 
+  # Organizes the vcov
   make_vcov = function(v){
 
     # For factors, return the first one. The rest are duplicates
@@ -170,6 +170,7 @@ calc.imputationList = function(ph.data, ...){
     m
   }
 
+  # For each possible thing that gets combined
   for(vvv in intersect(c('mean', 'total'), names(res[[1]]))){
 
     # extract and organize the estimates and their variances
@@ -201,7 +202,7 @@ calc.imputationList = function(ph.data, ...){
     mi = lapply(r, function(a){
       # if(!isfactor) a = list(ests = list(a$ests[[1]]), varz = list(a$varz[[1]]))
       m = mitools::MIcombine(a$ests, a$varz)
-      mdt = data.table(coef = coef(m), se = SE(m))
+      mdt = data.table(coef = coef(m), se = survey::SE(m))
       crit <- qt(alpha/2, m$df, lower.tail = FALSE)
       mdt[, lower := coef - crit * se]
       mdt[, upper := coef + crit * se]
@@ -209,6 +210,8 @@ calc.imputationList = function(ph.data, ...){
       if(isfactor & !is.null(dots$by)) mdt = cbind(mdt, a[1,.SD,.SDcols = dots$by])
       mdt
     })
+
+    # combine results
     mi = rbindlist(mi)
     updateme = c(vvv, paste0(vvv,'_se'), paste0(vvv, '_lower'), paste0(vvv, '_upper'))
     setnames(mi,
@@ -217,6 +220,8 @@ calc.imputationList = function(ph.data, ...){
              )
 
     ans[, (updateme) := NULL]
+
+    # Clean up
     if(!isfactor && !is.null(dots$by)) mi[, (dots$by) := ans[, .SD, .SDcols = c(dots$by)]]
 
     ans = merge(ans, mi, all.x = T, by = c(dots$by, 'level'))
