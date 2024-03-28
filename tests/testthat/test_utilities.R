@@ -1,4 +1,7 @@
 library('testthat')
+library(DBI)
+
+# format_time() ----
 test_that('format_time',{
 
   expect_equal('2010', format_time(2010))
@@ -10,12 +13,14 @@ test_that('format_time',{
 
 })
 
+# list_ref_pop() ----
 test_that('list_ref_pop',{
 
   expect_equal(36, length(list_ref_pop()))
 
 })
 
+# get_ref_pop() ----
 test_that('get_ref_pop',{
 
   temp.pop <- get_ref_pop("2000 U.S. Std Population (19 age groups - Census P25-1130)")
@@ -28,6 +33,7 @@ test_that('get_ref_pop',{
 
 })
 
+# adjust_direct() ----
 test_that('adjust_direct',{
 
   temp.direct <- adjust_direct(count = c(11, 9), pop = c(500, 500), stdpop = c(640, 720), per = 100, conf.level = 0.95)
@@ -48,7 +54,7 @@ test_that('adjust_direct',{
 
 })
 
-
+# age_standardize() ----
 test_that('age_standardize',{
   temp.dt1 <- data.table(age = c(50:60), count = c(25:35), pop = c(seq(1000, 800, -20)) )
   temp.agestd1 <- suppressWarnings(age_standardize(ph.data = temp.dt1, ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)", collapse = T,
@@ -118,6 +124,7 @@ test_that('age_standardize',{
 
   })
 
+# std_error() ----
 test_that('std_error',{
   expect_equal(std_error(c(seq(0, 400, 100), NA)), sd(c(seq(0, 400, 100), NA), na.rm = T) / sqrt(5))
 })
@@ -126,3 +133,139 @@ test_that('std_error',{
   expect_equal(std_error(c(seq(0, 400, 100), NA)), sd(c(seq(0, 400, 100), NA), na.rm = T) / sqrt(5))
 })
 
+# tsql_chunk_loader() ----
+# set up tsql_chunk_loader test data
+mydt = data.table(col1 = 1:10000L,  # create integer
+                  col2 = 1:10000/3) # create float
+mydt[, col3 := as.Date(Sys.Date()) - col1] # create date
+mydt[, col4 := as.character(col3)] # create string
+myconn = validate_hhsaw_key()
+
+test_that("tsql_chunk_loader works correctly and congratulates on success", {
+  expect_message(
+    tsql_chunk_loader(
+      ph.data = mydt,
+      db_conn = myconn,
+      chunk_size = 3333,
+      schema_name = Sys.getenv("USERNAME"),
+      table_name = 'justTesting',
+      overwrite = TRUE,
+      append = FALSE,
+      field_types = c(col1 = 'int', col2 = 'float', col3 = 'date', col4 = 'nvarchar(255)'),
+      validate_field_types = TRUE,
+      validate_upload = TRUE
+    ),
+    regexp = "Congratulations"
+  )
+  expect_message(
+    tsql_chunk_loader(
+      ph.data = mydt,
+      db_conn = myconn,
+      chunk_size = 3333,
+      schema_name = Sys.getenv("USERNAME"),
+      table_name = 'justTesting',
+      overwrite = FALSE,
+      append = TRUE,
+      field_types = c(col1 = 'int', col2 = 'float', col3 = 'date', col4 = 'nvarchar(255)'),
+      validate_field_types = TRUE,
+      validate_upload = TRUE
+    ),
+    regexp = "Congratulations"
+  )
+})
+
+test_that("error if ph.data is NULL", {
+  expect_error(tsql_chunk_loader(ph.data = NULL), "must specify a dataset")
+})
+
+test_that("error if ph.data is not a data.frame or data.table", {
+  expect_error(tsql_chunk_loader(ph.data = list()), "must be the name of a data.frame or data.table.")
+})
+
+test_that("error if db_conn is NULL", {
+  expect_error(tsql_chunk_loader(ph.data = mydt, db_conn = NULL), "must be specified")
+})
+
+test_that("error if db_conn is not a MS SQL Server object", {
+  expect_error(tsql_chunk_loader(ph.data = mydt, db_conn = mydt), 'not a "Microsoft SQL Server" object')
+})
+
+test_that("error if chunk_size is not an integer between 100 and 20,000", {
+  expect_error(tsql_chunk_loader(ph.data = mydt, db_conn = myconn, chunk_size = 50), "must be an integer between 100 and 20,000")
+})
+
+test_that("error if schema_name is not a single quoted name", {
+  expect_error(tsql_chunk_loader(ph.data = mydt, db_conn = myconn, schema_name = c("invalid", "name")), "must be a quoted name of a single schema")
+})
+
+test_that("error if table_name is not a single quoted name", {
+  expect_error(tsql_chunk_loader(ph.data = mydt, db_conn = myconn, schema = Sys.getenv("USERNAME"),
+                                table_name = c("invalid", "name")), "must be a quoted name of a single table")
+})
+
+test_that("error if overwrite and append are both TRUE or FALSE", {
+  expect_error(tsql_chunk_loader(ph.data = mydt, db_conn = myconn, schema = Sys.getenv("USERNAME"),
+                                table_name = c("JustTesting"), overwrite = TRUE, append = TRUE), "cannot both be set to the same value")
+})
+
+test_that("error if field_types do not match column names in ph.data", {
+  expect_error(tsql_chunk_loader(ph.data = mydt, db_conn = myconn, schema = Sys.getenv("USERNAME"),
+                                table_name = c("JustTesting"), overwrite = TRUE, append = FALSE,
+                                field_types = c(wrong = 'int')), "must match the column names")
+})
+
+test_that("error if field_types are not compatible with classes in ph.data", {
+  expect_error(tsql_chunk_loader(ph.data = mydt, db_conn = myconn, schema = Sys.getenv("USERNAME"),
+                                 table_name = c("JustTesting"), overwrite = TRUE, append = FALSE,
+                                 field_types =  c(col1 = 'date', col2 = 'float', col3 = 'date', col4 = 'nvarchar(255)'),
+                                 validate_field_types = TRUE), "did not align with the proposed TSQL datatypes")
+})
+
+test_that("error if validate_upload is not logical", {
+  expect_error(tsql_chunk_loader(ph.data = mydt, db_conn = myconn, chunk_size = 180, schema = Sys.getenv("USERNAME"),
+                                table_name = c("JustTesting"), overwrite = TRUE, append = FALSE,
+                                c(col1 = 'int', col2 = 'float', col3 = 'date', col4 = 'nvarchar(255)'),
+                                validate_upload = NULL), "must be specified as a logical")
+})
+
+# tsql_validate_field_types ----
+test_that("function succeeds with compatible data.table and field types", {
+  mydt <- data.table(col1 = 1:10, col2 = runif(10))
+  my_field_types <- c(col1 = 'int', col2 = 'float')
+  expect_message(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types), "Success")
+})
+
+test_that("function fails with incompatible field types", {
+  mydt <- data.table(col1 = 1:10, col2 = as.Date('2023-01-01'))
+  my_field_types <- c(col1 = 'int', col2 = 'nvarchar(12)')
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types))
+})
+
+test_that("function handles NULL arguments appropriately", {
+  mydt <- data.table(col1 = 1:10, col2 = runif(10))
+  my_field_types <- c(col1 = 'int', col2 = 'float')
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = NULL))
+  expect_error(tsql_validate_field_types(ph.data = NULL, field_types = my_field_types))
+})
+
+test_that("function converts data.frame to data.table and succeeds", {
+  mydf <- data.frame(col1 = 1:10, col2 = runif(10))
+  my_field_types <- c(col1 = 'int', col2 = 'float')
+  expect_message(tsql_validate_field_types(ph.data = mydf, field_types = my_field_types), "Success")
+})
+
+test_that("function fails when field types and data.table column names do not match", {
+  mydt <- data.table(col1 = 1:10, col3 = runif(10))
+  my_field_types <- c(col1 = 'int', col2 = 'float')
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types))
+})
+
+test_that("function handles unsupported R data types gracefully", {
+  mydt <- data.table(col1 = 1:10, col2 = list(1:10))
+  my_field_types <- c(col1 = 'int', col2 = 'int')
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types))
+
+  mydt <- data.table(col1 = 1:10, col2 = as.character(1:10))
+  my_field_types <- c(col1 = 'int', col2 = 'unsupported')
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types))
+})

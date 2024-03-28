@@ -1622,6 +1622,405 @@ quiet <- function(myf) {
   invisible(force(myf))
 }
 
+# tsql_validate_field_types() ----
+#' Validates whether a named vector of TSQL data types is compatible with a data.table
+#'
+#' \code{tsql_validate_field_types} checks whether a named vector of TSQL data types is
+#' compatible with a given data.table that you wish to upload to Microsoft SQL Server.
+#' The function does not cover every possible situation! For example, you might
+#' want to push your R '`POSIXct`' column to a SQL Server table as an '`nvarchar()`' datatype,
+#' but this function will expect you to map it to a more typical data type such
+#' as '`date`' or '`datetime`'. Think of this function as a second set of eyes
+#' to make sure you didn't do something careless.
+#'
+#' @param ph.data The name of a single data.table/data.frame to be loaded to SQL Server.
+#' @param field_types A named character vector with the desired TSQL
+#' datatypes for your upload. For example, `c(col1 = 'int', col2 = 'float', col3 = 'date')`.
+#' Note that the names in `field_types` must be the same as the names in `ph.data`. This
+#' is often read into memory from a *.yaml file, but can also be manually created.
+#'
+#' @name tsql_validate_field_types
+#'
+#' @details
+#' Note that this function does not evaluate if the allocated length for
+#' character strings, i.e., `nvarchar()` and `varchar()`, is sufficient.
+#'
+#' @examples
+#' \dontrun{
+#' # example of a success
+#'  mydt = data.table(col1 = 1:10000L,  # creates integers
+#'                    col2 = 1:10000/3) # creates floats
+#'  mydt[, col3 := as.Date(Sys.Date()) - col1] # creates dates
+#'  mydt[, col4 := as.character(col3)] # create strings
+#'
+#'  myfieldtypes <- c(col1 = 'int', col2 = 'float', col3 = 'date', col4 = 'nvarchar(255)')
+#'
+#'  tsql_validate_field_types(ph.data = mydt, field_types = myfieldtypes)
+#'
+#'  # example of a failure
+#'  myfieldtypes <- c(col1 = 'int', col2 = 'float', col3 = 'nvarchar(12)', col4 = 'nvarchar(255)')
+#'
+#'  tsql_validate_field_types(ph.data = mydt, field_types = myfieldtypes)
+#' }
+#'
+#' @export
+#' @rdname tsql_validate_field_types
+#'
+
+tsql_validate_field_types <- function(ph.data = NULL, # R data.frame/data.table
+                                field_types = NULL ){ # named vector of tsql data types
+# Declare local variables used by data.table as NULL here to play nice with devtools::check() ----
+    Rtypes <- RtypesDT <- TSQLtypesDT <- combotypesDT <- NULL
+
+# Validate arguments ----
+  # ph.data
+    if(is.null(ph.data)){
+      stop("\n\U1F6D1 You must specify a dataset (i.e., {ph.data} must be defined)")
+    }
+    if(!is.data.table(ph.data)){
+      if(is.data.frame(ph.data)){
+        setDT(ph.data)
+      } else {
+        stop(paste0("\n\U1F6D1 {ph.data} must be the name of a data.frame or data.table."))
+      }
+    }
+
+  # field_types
+    if(is.null(field_types) | !(is.character(field_types) &&
+                                   !is.null(names(field_types)) &&
+                                   all(nzchar(names(field_types))))){
+                                     stop('\n\U1F6D1 {field_types} must specify a named character vector of TSQL data types.')
+                                   }
+
+    if(!identical(sort(names(ph.data)), sort(names(field_types)))){
+      stop('\n\U1F6D1 Validation of TSQL data types necessitates exactly one TSQL datatype per column name in {ph.data}.')
+    }
+
+# Standardize the data.types from data.table ----
+  # extract R data types from data.table
+    Rtypes <- sapply(ph.data, class)
+    RtypesDT <- data.table::data.table(colname = tolower(names(Rtypes)),
+                                       r_type = Rtypes)
+
+  # Generate standard data type equivalents to those in R
+    RtypesDT[, std_type := fcase(
+      r_type %in% c("logical"), "logical",
+      r_type %in% c("integer"), "integer",
+      r_type %in% c("numeric", "double"), "numeric",
+      r_type %in% c("character", "factor"), "character",
+      r_type %in% c("POSIXct", "Date"), "POSIXct",
+      r_type %in% c("raw"), "raw",
+      default = NA_character_
+    )]
+
+    if(nrow(RtypesDT[is.na(std_type)]) > 0){
+      stop(paste0("\n\U1F6D1 ", RtypesDT[is.na(std_type)]$colname, " in {ph.data} is of class '", RtypesDT[is.na(std_type)]$r_type, "', which is not recognized by rads::tsql_validate_field_types.\n",
+            "If you think this is a mistake, please submit a GitHub issue."))
+    }
+
+# Standardize the data types from SQL data type vector ----
+  # convert named vector to a table
+    TSQLtypesDT <- data.table::data.table(colname = tolower(names(field_types)),
+                                          tsql_type = field_types)
+
+  # keep only the core name of the tsql_type
+    TSQLtypesDT[, tsql_type := gsub("\\(.*$", "", tsql_type)]
+
+  # Generate standard data type equivalents to those in TSQL
+    TSQLtypesDT[, std_type := fcase(
+      tsql_type %in% c("bit"), "logical",
+      tsql_type %in% c("tinyint", "int"), "integer",
+      tsql_type %in% c("bigint"), "numeric", # bigint as numeric to avoid overflow for 32bit R integer
+      tsql_type %in% c("smallmoney", "money", "numeric", "decimal", "real", "float"), "numeric",
+      tsql_type %in% c("char", "varchar", "nchar", "nvarchar", "text", "ntext"), "character",
+      tsql_type %in% c("date", "time", "datetime", "datetime2", "smalldatetime", "datetimeoffset"), "POSIXct",
+      tsql_type %in% c("uniqueidentifier"), "character",
+      tsql_type %in% c("binary", "varbinary", "image"), "raw",
+      default = NA_character_
+    )]
+
+    if(nrow(TSQLtypesDT[is.na(std_type)]) > 0){
+      stop(paste0("\n\U1F6D1 ", TSQLtypesDT[is.na(std_type)]$colname, " in {field_types} has the data type '", TSQLtypesDT[is.na(std_type)]$tsql_type, "', which is not recognized by rads::tsql_validate_field_types.\n",
+                  "If you think this is a mistake, please submit a GitHub issue."))
+    }
+
+# Combine the standardized data types from R and SQL into one table ----
+    combotypesDT <- merge(RtypesDT,
+                          TSQLtypesDT,
+                          by = c('colname', 'std_type'),
+                          all.x = F, all.y = F)
+
+# Give feedback to user ----
+    if(length(Rtypes) == nrow(combotypesDT[!is.na(std_type)])){
+      message('\U0001f642 Success! Your desired TSQL data types appear to be suitable for your dataset.')
+    } else {stop(paste0('\n\U1F6D1\U0001f47f The following columns in your dataset did not align with the proposed TSQL datatypes: ',
+                        paste(setdiff(names(Rtypes), combotypesDT$colname), collapse = ', '), '.\n',
+                        'Please manually check the class() and proposed TSQL data types for these columns.\n',
+                        'If you are certain that the data type pairings are logical AND should be a default, please submit a GitHub Issue.'))}
+
+}
+
+# tsql_chunk_loader() ----
+#' Loads large data sets to Microsoft SQL Server (TSQL) in 'chunks'
+#'
+#' \code{tsql_chunk_loader} divides a data.frame/data.table into smaller tables
+#' so it can be easily loaded into SQL. Experience has shown that loading large
+#' tables in 'chunks' is less likely to cause errors. It is not needed for small
+#' tables which load quickly. For **extremely large** datasets, you will likely
+#' want to use another method, perhaps something like
+#' [bcp](https://learn.microsoft.com/en-us/sql/tools/bcp-utility?view=sql-server-ver16).
+#'
+#'
+#' @param ph.data The name of a single data.table/data.frame to be loaded to SQL Server
+#' @param db_conn The name of the relevant open database connection to SQL Server
+#' @param chunk_size The number of rows that you desire to have per upload 'chunk'
+#' @param schema_name The name of the schema where you want to write the data
+#' @param table_name The name of the table where you want to write the data
+#' @param overwrite Do you want to overwrite an existing table? Logical (T|F).
+#' Default `overwrite = FALSE`.
+#' @param append Do you want to append to an existing table? Logical (T|F).
+#' Default `append = TRUE`.
+#' @param field_types *Optional!* A named character vector
+#' with the desired TSQL datatypes for your upload. For example,
+#' `c(col1 = 'int', col2 = 'float', col3 = 'date')`
+#' @param validate_field_types Do you want to validate TSQL field types using
+#' `rads::tsql_validate_field_types`? Logical (T|F).
+#' Default `validate_field_types = TRUE`.
+#' @param validate_upload Do you want to validate that all rows have been
+#' uploaded? Logical (T|F).
+#' Default `validate_upload = TRUE`.
+#'
+#' @details
+#' `overwrite` & `append` are intentionally redundant in order to reduce the risk
+#' of accidentally overwriting a table. Note that it is illogical for `overwrite`
+#' & `append` to have the same value.
+#'
+#' The names in `field_types` must be the same as the names in `ph.data`. Also
+#' note that `field_types` is only processed when `append = FALSE`. This prevents
+#' conflicts with data types in pre-existing SQL tables.
+#'
+#' `validate_field_types = TRUE` is ignored if the `field_types` argument is not
+#' provided.
+#'
+#' @name tsql_chunk_loader
+#'
+#' @examples
+#' \dontrun{
+#'  mydt = data.table(col1 = 1:10000L,  # create integer
+#'                    col2 = 1:10000/3) # create float
+#'  mydt[, col3 := as.Date(Sys.Date()) - col1] # create date
+#'  mydt[, col4 := as.character(col3)] # create string
+#'  myfieldtypes <- c(col1 = 'int', col2 = 'float', col3 = 'date', col4 = 'nvarchar(255)')
+#'
+#'  tsql_chunk_loader(
+#'    ph.data = mydt,
+#'    db_conn = rads::validate_hhsaw_key(), # connect to Azure 16
+#'    chunk_size = 3333,
+#'    schema_name = Sys.getenv("USERNAME"),
+#'    table_name = 'JustTesting',
+#'    overwrite = TRUE,
+#'    append = FALSE,
+#'    field_types = myfieldtypes,
+#'    validate_field_types = TRUE,
+#'    validate_upload = TRUE
+#'  )
+#' }
+#'
+#' @export
+#' @rdname tsql_chunk_loader
+#'
+
+tsql_chunk_loader <- function(ph.data = NULL, # R data.frame/data.table
+                             db_conn = NULL, # connection name
+                             chunk_size = 5000, # of rows of data to load at once
+                             schema_name = NULL, # schema name
+                             table_name = NULL, # table name
+                             overwrite = FALSE, # overwrite?
+                             append = TRUE, # append?
+                             field_types = NULL,  # want to specify field types?
+                             validate_field_types = TRUE, # validate specified field_types
+                             validate_upload = TRUE){ # want to validate the upload?
+  # Declare local variables used by data.table as NULL here to play nice with devtools::check() ----
+    db_conn.name <- queryCount <- finalCount <- uploadedCount <- max.row.num <- NULL
+    number.chunks <- starting.row <- ending.row <- NULL
+
+  # Validate arguments ----
+    # ph.data
+        if(is.null(ph.data)){
+          stop("\n\U1F6D1 You must specify a dataset (i.e., {ph.data} must be defined)")
+        }
+        if(!is.data.table(ph.data)){
+          if(is.data.frame(ph.data)){
+            setDT(ph.data)
+          } else {
+            stop(paste0("\n\U1F6D1 {ph.data} must be the name of a data.frame or data.table."))
+          }
+        }
+
+    # db_conn
+        if(is.null(db_conn)){stop('\n\U1F6D1 {db_conn} must be specified.')}
+        if(class(db_conn)[1] != 'Microsoft SQL Server'){
+          stop('\n\U1F6D1 {db_conn} is not a "Microsoft SQL Server" object.')}
+        if(!DBI::dbIsValid(db_conn)){
+          stop("\n\U1F6D1 {db_conn} must specify a valid database object. \nIf you are sure that it exists, confirm that it has not been disconnected.")
+        }
+        db_conn.name <- deparse(substitute(db_conn))
+
+    # chunk_size
+        if(chunk_size %% 1 != 0 | !chunk_size %between% c(100, 20000)){
+          stop("\n\U1F6D1 {chunk_size} must be an integer between 100 and 20,000.")
+        }
+
+    # schema
+        if(!is.character(schema_name) | length(schema_name) > 1){
+          stop('\n\U1F6D1 {schema_name} must be a quoted name of a single schema, e.g., "ref", "claims", "death", etc.')
+        }
+        possible.schemas <- DBI::dbGetQuery(db_conn, "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA")[]$SCHEMA_NAME
+        if(!schema_name %in% possible.schemas){
+          stop(paste0('\n\U1F6D1 The value of {schema_name} (', schema_name, ') is not a valid schema name in {db_conn} (', db_conn.name, ').'))
+        }
+
+    # table_name
+        if(!is.character(table_name) | length(table_name) > 1){
+          stop('\n\U1F6D1 {table_name} must be a quoted name of a single table with your specified schema, e.g., "mytable1", "mytable2", etc.')
+        }
+
+    # overwrite
+        if(!is.logical(overwrite)){
+          stop('\n\U1F6D1 {overwrite} must be specified as a logical (i.e., TRUE, T, FALSE, or F)')
+        }
+
+    # append
+        if(!is.logical(append)){
+          stop('\n\U1F6D1 {append} must be specified as a logical (i.e., TRUE, T, FALSE, or F)')
+        }
+        if(overwrite == append){
+          stop('\n\U1F6D1 {overwrite} & {append} cannot both be set to the same value! \nIf one is TRUE the other must be FALSE.')
+        }
+
+    # field_types
+        if(append == TRUE){field_types = NULL}
+        if(!is.null(field_types) && !identical(sort(names(field_types)), sort(names(ph.data))) ){
+          stop('\n\U1F6D1 The names in {field_types} must match the column names in {ph.data}')
+        }
+        if(!is.null(field_types) && !(is.character(field_types) &&
+             !is.null(names(field_types)) &&
+             all(nzchar(names(field_types))))){
+          stop('\n\U1F6D1 {field_types} is optional, but when provided must specify a named character vector. Please view the help file for details.')
+        }
+
+    # validate_upload
+        if(!is.logical(validate_upload )){
+          stop('\n\U1F6D1 {validate_upload } must be specified as a logical (i.e., TRUE, T, FALSE, or F)')
+        }
+
+    # validate_field_types
+        if(!is.logical(validate_upload )){
+          stop('\n\U1F6D1 {validate_upload } must be specified as a logical (i.e., TRUE, T, FALSE, or F)')
+        }
+        if(validate_field_types == TRUE & is.null(field_types)){
+          validate_field_types = FALSE
+        }
+
+  # Validate field types if requested ----
+        if(validate_field_types == TRUE){
+          tsql_validate_field_types(ph.data = ph.data,
+                                    field_types = field_types)
+        }
+
+  # Set initial values ----
+    max.row.num <- nrow(ph.data)
+    number.chunks <-  ceiling(max.row.num/chunk_size) # number of chunks to be uploaded
+    starting.row <- 1 # the starting row number for each chunk to be uploaded. Initialize with 1
+    ending.row <- chunk_size  # the final row number for each chunk to be uploaded. Initialize with overall chunk size
+
+    if(validate_upload == TRUE){
+      if(append == TRUE){
+        querycnt <- sprintf("SELECT COUNT(*) as total_rows FROM %s.%s", schema_name, table_name)
+        originalCount <- DBI::dbGetQuery(db_conn, querycnt)[]$total_rows
+      } else { originalCount <- 0}
+    }
+
+  # Drop existing table if requested ----
+    if(overwrite == TRUE & append == FALSE){
+      DBI::dbGetQuery(conn = db_conn,
+                      statement = paste0("IF OBJECT_ID('", schema_name, ".", table_name, "', 'U') IS NOT NULL ",
+                                         "DROP TABLE ", schema_name, ".", table_name))
+      overwrite = FALSE
+      append = TRUE
+    }
+
+  # Create loop for appending new data ----
+    for(i in 1:number.chunks){
+      # counter so we know it is not stuck
+        message(paste0(Sys.time(), ": Loading chunk ", format(i, big.mark = ','), " of ", format(number.chunks, big.mark = ','), ": rows ", format(starting.row, big.mark = ','), "-", format(ending.row, big.mark = ',')))
+
+      # load the data chunk into SQL (will try each chunk up to 3 times)
+        attempt <- 1 # initializing attempt counter
+        while(attempt <= 3){
+          tryCatch({
+            # try to load to SQL
+            if(is.null(field_types)){
+              DBI::dbWriteTable(conn = db_conn,
+                                name = DBI::Id(schema = schema_name, table = table_name),
+                                value = ph.data[starting.row:ending.row,],
+                                append = append,
+                                row.names = FALSE)
+            } else {
+              DBI::dbWriteTable(conn = db_conn,
+                                name = DBI::Id(schema = schema_name, table = table_name),
+                                value = ph.data[starting.row:ending.row,],
+                                append = FALSE, # set to false so can use field types
+                                row.names = FALSE,
+                                field.types = field_types)
+              field_types = NULL # Reset field_types after use
+            }
+
+            # If operation succeeds, break out of the tryCatch loop
+            break
+          }, error = function(e){
+            # If this was the third attempt, stop the process
+            if(attempt == 3){
+              stop(paste0('\n\U1F6D1 There have been three failed attempts to load chunk #',
+                          format(i, big.mark = ','), '. \nThe script has stopped and you will have to ',
+                          'try to correct the problem and run it again.') )
+            } else {
+              # Print an error message indicating a retry
+              message(paste("Attempt", attempt, "failed. Trying again..."))
+            }
+          })
+
+          # Increment the attempt counter for the next iteration
+          attempt <- attempt + 1
+        }
+
+      # set the starting and ending rows for the next chunk to be uploaded
+        starting.row <- starting.row + chunk_size
+        ending.row <- min(starting.row + chunk_size - 1, max.row.num)
+    }
+
+  # Print summary of upload ----
+    if(validate_upload == TRUE){
+      # count rows in SQL
+        queryCount <- sprintf("SELECT COUNT(*) as total_rows FROM %s.%s", schema_name, table_name)
+        finalCount <- DBI::dbGetQuery(db_conn, queryCount)[]$total_rows
+
+      # how many rows in SQL are new rows
+        uploadedCount <- finalCount - originalCount
+
+      # check if all rows of ph.data seem to have been uploaded
+        if(uploadedCount == nrow(ph.data)){
+          message("\U0001f642 \U0001f389 \U0001f38a \U0001f308 \n Congratulations! All the rows in {ph.data} were successfully uploaded.")
+        } else {
+          stop(paste0("\n\U1F6D1 \U2620 \U0001f47f \U1F6D1\n",
+                      "{ph.data} has ", format(nrow(ph.data), big.mark = ','),
+                      " rows, but [", schema_name, '].[', table_name, '] only has ',
+                      format(uploadedCount, big.mark = ','), ' new rows.'))
+        }
+    }
+
+}
+
 
 # validate_hhsaw_key() ----
 #' Validate HHSAW keys and connect (if possible)
