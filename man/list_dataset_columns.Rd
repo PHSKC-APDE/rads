@@ -4,7 +4,12 @@
 \alias{list_dataset_columns}
 \title{List columns available for analysis for a particular dataset in RADS}
 \usage{
-list_dataset_columns(dataset, year = 2021, mykey = "hhsaw", analytic_only = F)
+list_dataset_columns(
+  dataset = NULL,
+  year = 2021,
+  mykey = "hhsaw",
+  analytic_only = F
+)
 }
 \arguments{
 \item{dataset}{Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options}

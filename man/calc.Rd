@@ -9,7 +9,7 @@ calc(ph.data, ...)
 
 \method{calc}{dtsurvey}(
   ph.data,
-  what,
+  what = NULL,
   where,
   by = NULL,
   metrics = c("mean", "numerator", "denominator"),

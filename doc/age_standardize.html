@@ -161,6 +161,7 @@ section.footnotes::before {
 <pre><code class="language-r">get_ref_pop(&quot;2000 U.S. Std Population (11 age groups)&quot;)[, 1:4]
 </code></pre>
 <pre><code>##          agecat age_start age_end      pop
+##          &lt;char&gt;     &lt;int&gt;   &lt;int&gt;    &lt;int&gt;
 ##  1:           0         0       0  3795000
 ##  2:   1-4 years         1       4 15192000
 ##  3:  5-14 years         5      14 39977000
@@ -228,18 +229,19 @@ temp1 &lt;- data.table(
 
 temp1[]
 </code></pre>
-<pre><code>##       age disease  pop
-##    1:  51       0 1000
-##    2:  52       1  990
-##    3:  53       0  980
-##    4:  54       1  970
-##    5:  55       1  960
-##   ---                 
-##  996:  56       1  950
-##  997:  57       1  940
-##  998:  58       1  930
-##  999:  59       1  920
-## 1000:  60       0  910
+<pre><code>##         age disease   pop
+##       &lt;int&gt;   &lt;int&gt; &lt;num&gt;
+##    1:    51       0  1000
+##    2:    52       1   990
+##    3:    53       0   980
+##    4:    54       1   970
+##    5:    55       1   960
+##   ---                    
+##  996:    56       1   950
+##  997:    57       1   940
+##  998:    58       1   930
+##  999:    59       1   920
+## 1000:    60       0   910
 </code></pre>
 <p><strong>Run age_standardize with APDE’s default reference population</strong></p>
 <pre><code class="language-r">age_standardize(ph.data = temp1,
@@ -251,8 +253,10 @@ temp1[]
                 conf.level = 0.95)[]
 </code></pre>
 <pre><code>##    count    pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci
+##    &lt;num&gt;  &lt;num&gt;      &lt;num&gt;     &lt;num&gt;     &lt;num&gt;    &lt;num&gt;   &lt;num&gt;   &lt;num&gt;
 ## 1:   511 955000       0.54      0.49      0.58     0.52    0.47    0.57
 ##                               reference_pop
+##                                      &lt;char&gt;
 ## 1: 2000 U.S. Std Population (11 age groups)
 </code></pre>
 <p><em>Does anything seem fishy? Think for a moment …</em></p>
@@ -276,17 +280,18 @@ temp1[]
 <pre><code class="language-r">temp1 &lt;- temp1[, .(disease = sum(disease)), by = c(&quot;age&quot;, &quot;pop&quot;)]
 temp1[]
 </code></pre>
-<pre><code>##     age  pop disease
-##  1:  51 1000      49
-##  2:  52  990      46
-##  3:  53  980      50
-##  4:  54  970      47
-##  5:  55  960      60
-##  6:  56  950      50
-##  7:  57  940      61
-##  8:  58  930      50
-##  9:  59  920      52
-## 10:  60  910      46
+<pre><code>##       age   pop disease
+##     &lt;int&gt; &lt;num&gt;   &lt;int&gt;
+##  1:    51  1000      49
+##  2:    52   990      46
+##  3:    53   980      50
+##  4:    54   970      47
+##  5:    55   960      60
+##  6:    56   950      50
+##  7:    57   940      61
+##  8:    58   930      50
+##  9:    59   920      52
+## 10:    60   910      46
 </code></pre>
 <p><strong>Run age_standardize again &lt;&lt; this time with aggregated disease events</strong></p>
 <pre><code class="language-r">ex1.1 &lt;- age_standardize(ph.data = temp1,
@@ -298,9 +303,11 @@ temp1[]
                       conf.level = 0.95)
 ex1.1[]
 </code></pre>
-<pre><code>##    count  pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci
-## 1:   511 9550      53.51     48.97     58.35    51.93   47.19   57.05
+<pre><code>##    count   pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci
+##    &lt;num&gt; &lt;num&gt;      &lt;num&gt;     &lt;num&gt;     &lt;num&gt;    &lt;num&gt;   &lt;num&gt;   &lt;num&gt;
+## 1:   511  9550      53.51     48.97     58.35    51.93   47.19   57.05
 ##                               reference_pop
+##                                      &lt;char&gt;
 ## 1: 2000 U.S. Std Population (11 age groups)
 </code></pre>
 <p>Now that count, pop, and rates seem reasonable, let’s see what happens if we change the reference population. We’ll arbitrarily set the references population to the 36th in the list provided by <code>list_ref_pop()</code> (i.e., ‘World (WHO 2000-2025) Std Million (single ages to 99)’).</p>
@@ -313,9 +320,11 @@ ex1.1[]
                       conf.level = 0.95)
 ex1.2[]
 </code></pre>
-<pre><code>##    count  pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci
-## 1:   511 9550      53.51     48.97     58.35    53.34   48.81    58.2
+<pre><code>##    count   pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci
+##    &lt;num&gt; &lt;num&gt;      &lt;num&gt;     &lt;num&gt;     &lt;num&gt;    &lt;num&gt;   &lt;num&gt;   &lt;num&gt;
+## 1:   511  9550      53.51     48.97     58.35    53.34   48.81    58.2
 ##                                            reference_pop
+##                                                   &lt;char&gt;
 ## 1: World (WHO 2000-2025) Std Million (single ages to 99)
 </code></pre>
 <p>As we’d expect, the crude rates are identical since the reference population is irrelevant for those calculations (53.51 vs 53.51). However, the age-standardized rates changed from 51.93 to 53.34. Remember, if you want to compare your age-adjusted rates to those published by other health jurisdictions, it’s important that you use the same reference population.</p>
@@ -331,13 +340,14 @@ temp2 &lt;- data.table(
 
 head(temp2)
 </code></pre>
-<pre><code>##    gender age disease  pop
-## 1:      F  46      32 3134
-## 2:      F  47      36 2930
-## 3:      F  48      29 3289
-## 4:      F  49      27 3198
-## 5:      F  50      27 3480
-## 6:      F  51      33 2679
+<pre><code>##    gender   age disease   pop
+##    &lt;char&gt; &lt;int&gt;   &lt;int&gt; &lt;int&gt;
+## 1:      F    46      32  3134
+## 2:      F    47      36  2930
+## 3:      F    48      29  3289
+## 4:      F    49      27  3198
+## 5:      F    50      27  3480
+## 6:      F    51      33  2679
 </code></pre>
 <p><strong>Let’s examine the overall rates</strong></p>
 <pre><code class="language-r">ex2.1 &lt;- age_standardize(ph.data = temp2,
@@ -350,8 +360,10 @@ head(temp2)
 ex2.1[]
 </code></pre>
 <pre><code>##    count    pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci
+##    &lt;num&gt;  &lt;num&gt;      &lt;num&gt;     &lt;num&gt;     &lt;num&gt;    &lt;num&gt;   &lt;num&gt;   &lt;num&gt;
 ## 1:  1333 115448      11.55     10.93     12.18    11.68   10.87   12.57
 ##                               reference_pop
+##                                      &lt;char&gt;
 ## 1: 2000 U.S. Std Population (11 age groups)
 </code></pre>
 <p>In this case, the crude rate and age standardized rate are the same. This doesn’t mean there is a mistake. Notice that the confidence intervals differ – as would be expected.</p>
@@ -368,9 +380,11 @@ ex2.1[]
 ex2.2[]
 </code></pre>
 <pre><code>##    gender count   pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci
+##    &lt;char&gt; &lt;num&gt; &lt;num&gt;      &lt;num&gt;     &lt;num&gt;     &lt;num&gt;    &lt;num&gt;   &lt;num&gt;   &lt;num&gt;
 ## 1:      F   731 60827      12.02     11.16     12.92    12.22   11.07   13.50
 ## 2:      M   602 54621      11.02     10.16     11.94    11.09    9.97   12.36
 ##                               reference_pop
+##                                      &lt;char&gt;
 ## 1: 2000 U.S. Std Population (11 age groups)
 ## 2: 2000 U.S. Std Population (11 age groups)
 </code></pre>
@@ -387,26 +401,29 @@ new.standard &lt;- data.table(
 
 head(new.standard)
 </code></pre>
-<pre><code>##    gender age stdpop
-## 1:      M  46  10160
-## 2:      M  47   8515
-## 3:      M  48   9204
-## 4:      M  49   7827
-## 5:      M  50   9756
-## 6:      M  51   9178
+<pre><code>##    gender   age stdpop
+##    &lt;char&gt; &lt;int&gt;  &lt;int&gt;
+## 1:      M    46  10160
+## 2:      M    47   8515
+## 3:      M    48   9204
+## 4:      M    49   7827
+## 5:      M    50   9756
+## 6:      M    51   9178
 </code></pre>
 <p><strong>Merge the standard population onto the data</strong></p>
 <pre><code class="language-r">temp3 &lt;- merge(temp2, new.standard, by = c(&quot;age&quot;, &quot;gender&quot;), all = T)
 
 head(temp3)
 </code></pre>
-<pre><code>##    age gender disease  pop stdpop
-## 1:  46      F      32 3134  14506
-## 2:  46      M      26 3055  10160
-## 3:  47      F      36 2930  18955
-## 4:  47      M      35 2954   8515
-## 5:  48      F      29 3289  17813
-## 6:  48      M      35 2268   9204
+<pre><code>## Key: &lt;age, gender&gt;
+##      age gender disease   pop stdpop
+##    &lt;int&gt; &lt;char&gt;   &lt;int&gt; &lt;int&gt;  &lt;int&gt;
+## 1:    46      F      32  3134  14506
+## 2:    46      M      26  3055  10160
+## 3:    47      F      36  2930  18955
+## 4:    47      M      35  2954   8515
+## 5:    48      F      29  3289  17813
+## 6:    48      M      35  2268   9204
 </code></pre>
 <p><strong>Calculate the rates when <code>ref.pop = &quot;none&quot;</code></strong></p>
 <p>Note that I need to specify <code>collapse = F</code> because the function expects data to be pre-aggregated for the custom reference population contained in <code>stdpop</code>.</p>
@@ -422,9 +439,11 @@ head(temp3)
 ex3.1[]
 </code></pre>
 <pre><code>##    gender count   pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci
+##    &lt;char&gt; &lt;num&gt; &lt;num&gt;      &lt;num&gt;     &lt;num&gt;     &lt;num&gt;    &lt;num&gt;   &lt;num&gt;   &lt;num&gt;
 ## 1:      F   731 60827      12.02     11.16     12.92    12.02   11.15   12.95
 ## 2:      M   602 54621      11.02     10.16     11.94    11.15   10.25   12.12
 ##               reference_pop
+##                      &lt;char&gt;
 ## 1: stdpop column in `temp3`
 ## 2: stdpop column in `temp3`
 </code></pre>
@@ -441,13 +460,14 @@ temp4 &lt;- data.table(
 
 head(temp4)
 </code></pre>
-<pre><code>##    gender age disease  pop
-## 1:      M  46      32 3134
-## 2:      M  47      36 2930
-## 3:      M  48      29 3289
-## 4:      M  49      27 3198
-## 5:      M  50      27 3480
-## 6:      M  51      33 2679
+<pre><code>##    gender   age disease   pop
+##    &lt;char&gt; &lt;int&gt;   &lt;int&gt; &lt;int&gt;
+## 1:      M    46      32  3134
+## 2:      M    47      36  2930
+## 3:      M    48      29  3289
+## 4:      M    49      27  3198
+## 5:      M    50      27  3480
+## 6:      M    51      33  2679
 </code></pre>
 <p><strong>Collapse the data down to the same age bins as those used in the APDE standard reference population</strong></p>
 <pre><code class="language-r">temp4[age %in% 45:49, agecat := &quot;45-49 years&quot;]
@@ -460,6 +480,7 @@ temp4 &lt;- temp4[, .(pop = sum(pop), disease = sum(disease)), by = c(&quot;agec
 temp4[]
 </code></pre>
 <pre><code>##          agecat gender   pop disease
+##          &lt;char&gt; &lt;char&gt; &lt;int&gt;   &lt;int&gt;
 ##  1: 45-49 years      M 12551     124
 ##  2: 50-54 years      M 15192     169
 ##  3: 55-59 years      M 15466     198
@@ -502,21 +523,22 @@ ex4.1[]
   setnames(births, &quot;chi_age&quot;, &quot;age&quot;)
   births[]
 </code></pre>
-<pre><code>##     age         geo births
-##  1:  13 King County      1
-##  2:  14 King County      4
-##  3:  15 King County     10
-##  4:  16 King County     23
-##  5:  17 King County     45
-##  6:  18 King County    107
-##  7:  19 King County    230
-##  8:  13    WA State      6
-##  9:  14    WA State     16
-## 10:  15    WA State     70
-## 11:  16    WA State    193
-## 12:  17    WA State    346
-## 13:  18    WA State    745
-## 14:  19    WA State   1488
+<pre><code>##       age         geo births
+##     &lt;int&gt;      &lt;char&gt;  &lt;int&gt;
+##  1:    13 King County      1
+##  2:    14 King County      4
+##  3:    15 King County     10
+##  4:    16 King County     23
+##  5:    17 King County     45
+##  6:    18 King County    107
+##  7:    19 King County    230
+##  8:    13    WA State      6
+##  9:    14    WA State     16
+## 10:    15    WA State     70
+## 11:    16    WA State    193
+## 12:    17    WA State    346
+## 13:    18    WA State    745
+## 14:    19    WA State   1488
 </code></pre>
 <p><strong>Get the female populations corresponding to the birth counts</strong></p>
 <pre><code class="language-r">  kcpop &lt;- get_population(kingco = T, years = 2019, ages = 13:19, 
@@ -530,42 +552,45 @@ ex4.1[]
   pop &lt;- rbind(kcpop, wapop)
   pop[]
 </code></pre>
-<pre><code>##     age         geo      pop
-##  1:  18 King County 12654.47
-##  2:  19 King County 13401.31
-##  3:  13 King County 12407.25
-##  4:  15 King County 11131.42
-##  5:  16 King County 11420.94
-##  6:  17 King County 11565.07
-##  7:  14 King County 12208.96
-##  8:  14    WA State 46476.42
-##  9:  13    WA State 46374.96
-## 10:  16    WA State 44581.08
-## 11:  17    WA State 43452.42
-## 12:  19    WA State 47390.04
-## 13:  15    WA State 44635.30
-## 14:  18    WA State 45951.20
+<pre><code>##       age         geo      pop
+##     &lt;int&gt;      &lt;char&gt;    &lt;num&gt;
+##  1:    18 King County 12654.47
+##  2:    19 King County 13401.31
+##  3:    13 King County 12407.25
+##  4:    15 King County 11131.42
+##  5:    16 King County 11420.94
+##  6:    17 King County 11565.07
+##  7:    14 King County 12208.96
+##  8:    13    WA State 46374.96
+##  9:    14    WA State 46476.42
+## 10:    18    WA State 45951.20
+## 11:    19    WA State 47390.04
+## 12:    15    WA State 44635.30
+## 13:    17    WA State 43452.42
+## 14:    16    WA State 44581.08
 </code></pre>
 <p><strong>Merge population onto to birth counts</strong></p>
 <pre><code class="language-r">  temp5 &lt;- merge(births, pop, by = c(&quot;age&quot;, &quot;geo&quot;), all = T)
   
   temp5[]
 </code></pre>
-<pre><code>##     age         geo births      pop
-##  1:  13 King County      1 12407.25
-##  2:  13    WA State      6 46374.96
-##  3:  14 King County      4 12208.96
-##  4:  14    WA State     16 46476.42
-##  5:  15 King County     10 11131.42
-##  6:  15    WA State     70 44635.30
-##  7:  16 King County     23 11420.94
-##  8:  16    WA State    193 44581.08
-##  9:  17 King County     45 11565.07
-## 10:  17    WA State    346 43452.42
-## 11:  18 King County    107 12654.47
-## 12:  18    WA State    745 45951.20
-## 13:  19 King County    230 13401.31
-## 14:  19    WA State   1488 47390.04
+<pre><code>## Key: &lt;age, geo&gt;
+##       age         geo births      pop
+##     &lt;int&gt;      &lt;char&gt;  &lt;int&gt;    &lt;num&gt;
+##  1:    13 King County      1 12407.25
+##  2:    13    WA State      6 46374.96
+##  3:    14 King County      4 12208.96
+##  4:    14    WA State     16 46476.42
+##  5:    15 King County     10 11131.42
+##  6:    15    WA State     70 44635.30
+##  7:    16 King County     23 11420.94
+##  8:    16    WA State    193 44581.08
+##  9:    17 King County     45 11565.07
+## 10:    17    WA State    346 43452.42
+## 11:    18 King County    107 12654.47
+## 12:    18    WA State    745 45951.20
+## 13:    19 King County    230 13401.31
+## 14:    19    WA State   1488 47390.04
 </code></pre>
 <p><strong>Run <code>age_standardize()</code></strong></p>
 <pre><code class="language-r">  ex5.1 &lt;- age_standardize(ph.data = temp5,
@@ -579,9 +604,11 @@ ex4.1[]
   ex5.1[]
 </code></pre>
 <pre><code>##            geo count       pop crude.rate crude.lci crude.uci adj.rate adj.lci
+##         &lt;char&gt; &lt;num&gt;     &lt;num&gt;      &lt;num&gt;     &lt;num&gt;     &lt;num&gt;    &lt;num&gt;   &lt;num&gt;
 ## 1: King County   420  84789.41       4.95      4.49      5.45     4.65    4.21
 ## 2:    WA State  2864 318861.42       8.98      8.66      9.32     8.77    8.45
 ##    adj.uci                                         reference_pop
+##      &lt;num&gt;                                                &lt;char&gt;
 ## 1:    5.12 World (WHO 2000-2025) Std Million (single ages to 84)
 ## 2:    9.10 World (WHO 2000-2025) Std Million (single ages to 84)
 </code></pre>

@@ -182,3 +182,19 @@ test_that('get_population works with passed db connection',{
   r2 = get_population(mykey = mycon)
   expect_equal(r1,r2)
 })
+
+test_that('hispanic option for group by',{
+  t1 = get_population(group_by = c('hispanic'), return_query = F)
+  t2 = get_population(group_by = c('hispanic', 'race_eth'), return_query = F)
+  t3 = get_population(group_by = c('hispanic', 'race_eth'), return_query = F, races = c('white', 'black'))
+
+  expect_equal(t1[hispanic == 'Not Hispanic', pop], t2[hispanic != 'Hispanic', sum(pop)])
+  expect_equal(t2[hispanic == 'Hispanic' & race_eth == 'White', pop], t2[hispanic == 'Hispanic' & race_eth == 'White', sum(pop)])
+  expect_equal(t1[1, race_eth], 'AIAN, Asian, Black, Multiple race, NHPI, White')
+
+  expect_equal(
+    expect_warning(get_population(race_type = 'race_eth', races = 'hispanic', group_by = c('hispanic'))$pop),
+    get_population(race_type = 'race_eth', group_by = c('hispanic'))[hispanic == 'Hispanic', pop]
+  )
+  expect_error(get_population(race_type = 'race_eth', races = c('white', 'hispanic'), group_by = c('hispanic'))[])
+})

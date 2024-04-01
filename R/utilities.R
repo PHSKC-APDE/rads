@@ -1,5 +1,6 @@
 options("scipen"=999) # turn off scientific notation
 
+# adjust_direct() ----
 #' Calculate crude and directly adjusted rates
 #'
 #' @param count Numeric vector of indeterminate length. The # of events of interest (e.g., deaths, births, etc.)
@@ -51,7 +52,7 @@ adjust_direct <- function (count, pop, stdpop, per = 100000, conf.level = 0.95)
   adjusted <- c(count = sum(count), pop = sum(pop), adjusted)
 }
 
-
+# age_standardize() ----
 #' Calculate age standardized rates from a data.table with age, counts, and population columns. (Built on adjust_direct())
 #'
 #' @description
@@ -254,7 +255,7 @@ age_standardize <- function (ph.data, ref.popname = NULL, collapse = T, my.count
   return(my.rates)
 }
 
-
+# calc_age() ----
 #' Proper calculation of age in years
 #'
 #' @param from Vector of dates or characters ("YYYY-MM-DD") of indeterminate length.  vector of length 1.
@@ -279,7 +280,8 @@ calc_age <- function(from, to) {
          age - 1, age)
 }
 
-
+# chi_compare_est() ----
+#
 #' List of standard CHI / Tableau Ready columns
 #' @export
 chi_cols = function(){
@@ -372,7 +374,7 @@ chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = 
 
 }
 
-
+# chi_compare_kc() ----
 #' Compare CHI standard tabular results to the King County average for the same year within a given data set
 #' @param orig Character vector of length 1. Identifies the data.table/data.frame to be fetched. Note the table must have the following columns:
 #' 'result', 'lower_bound', & 'upper_bound' and all three must be numeric
@@ -424,7 +426,7 @@ chi_compare_kc <- function(orig,
   return(orig)
 }
 
-
+# chi_metadata_cols() ----
 #' List of standard CHI / Tableau Ready metadata columns
 #' @export
 chi_metadata_cols = function(){
@@ -432,8 +434,7 @@ chi_metadata_cols = function(){
   chi_metanames <- names(chi.yaml$metadata)
 }
 
-
-
+# compare_estimate() ----
 #' Compare aggregated results (proportions or means) for one strata to the rest
 #' of the strata in the summary table.
 #' @param mydt Unquoted name of a data.table or data.frame to be processed. Note
@@ -580,7 +581,7 @@ compare_estimate <- function (mydt,
   return(mydt)
 }
 
-
+# dumb_convert() ----
 #' Convert from one type to another type
 #'
 #' @param x factor
@@ -613,7 +614,7 @@ dumb_convert <- function(x, target = 'character'){
   stop(paste0('Target class of ', target, ' is invalid'))
 }
 
-
+# format_time() ----
 #' Format a vector of time into a series of human readable chunks
 #' @param x numeric
 #' @export
@@ -655,7 +656,7 @@ format_time <- function(x){
 
 }
 
-
+# format_time_simple() ----
 #' Format a vector of time into a simple human readable chunk
 #' @param x numeric
 #' @export
@@ -680,7 +681,7 @@ format_time_simple <- function(x){
 
 }
 
-
+# generate_yaml() ----
 #' Generate a YAML file for SQL loading based on in a data.frame or data.table
 #'
 #' @description
@@ -850,7 +851,7 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
 
 }
 
-
+# get_xwalk ----
 #' Load clean geographic crosswalk tables
 #' @description
 #' This function provides a curated assortment of standardized geographic crosswalks.
@@ -931,7 +932,7 @@ get_xwalk <- function(geo1 = NA, geo2 = NA){
   # load xwalk table ----
   data("ref_get_xwalk", envir=environment()) # import ref_get_xwalk from /data as a promise
   geodt <- copy(ref_get_xwalk) # evaluate / import the promise
-  geodt <- sql_clean(geodt)
+  geodt <- string_clean(geodt)
 
   # validate input and output ----
   if(is.null(geo1)){geo1 <- NA}
@@ -958,7 +959,7 @@ get_xwalk <- function(geo1 = NA, geo2 = NA){
   # xwalkdt <- copy(eval(parse(text=paste0('rads.data::', geodt$object))))
   neo <- geodt$object
   xwalkdt = eval(substitute(rads.data::x, list(x = as.name(neo))))
-  sql_clean(xwalkdt)
+  string_clean(xwalkdt)
   keepers <- c(geodt$inputvar, geodt$outputvar)
   xwalkdt <- xwalkdt[, (keepers), with = FALSE] # alternative to xwalkdt[, ..keepers]
   setnames(xwalkdt, c(geodt$inputvar, geodt$outputvar), c(geodt$input, geodt$output))
@@ -993,6 +994,7 @@ get_xwalk <- function(geo1 = NA, geo2 = NA){
   return(xwalkdt)
 }
 
+# get_ref_pop() ----
 #' Load a reference population as a data.table object in memory
 #'
 #' @param ref_name Character vector of length 1. Loads a reference population identified by list_ref_pop()
@@ -1028,7 +1030,7 @@ get_ref_pop <- function(ref_name = NULL){
   return(ref_pop_table)
 }
 
-
+# list_apde_data() ----
 #' Returns the list of datasets currently available for analysis in RADS
 #'
 #' @return Character vector of available datasets.
@@ -1047,7 +1049,7 @@ list_apde_data <- function(){
 
 }
 
-
+# list_dataset_columns() ----
 #' List columns available for analysis for a particular dataset in RADS
 #'
 #' @param dataset Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options
@@ -1068,51 +1070,48 @@ list_apde_data <- function(){
 #' \dontrun{
 #'  list_dataset_columns('hys', T)
 #' }
-list_dataset_columns <- function(dataset, year = 2021, mykey = 'hhsaw', analytic_only = F){
+list_dataset_columns <- function(dataset = NULL, year = 2021, mykey = 'hhsaw', analytic_only = F){
   colname <- NULL
-  # create a negate function of %in% for readability
-  '%!in%' = Negate('%in%')
   opts = list_apde_data()
 
-  stopifnot('dataset must be a character vector of length 1' = length(dataset) == 1)
-  if(dataset %!in% opts){
-    stop(paste0('list_dataset_columns functionality for dataset "', dataset, '" not currently available/implemented. ',
-                "Only the following datasets are implemented: ", paste(opts, collapse = ', ')))
+  if(is.null(dataset)){stop("\n\U0001f47f The 'dataset' argument cannot be missing. Available options are in `list_apde_data()`.")}
 
+  stopifnot('dataset must be a character vector of length 1' = length(dataset) == 1)
+  if(!dataset %in% opts){
+    stop(paste0('\n\U0001f47f list_dataset_columns functionality for dataset "', dataset, '" not currently available/implemented. ',
+                "Only the following datasets are implemented: ", paste(opts, collapse = ', '), "."))
+  }
+
+  if(dataset %in% c('birth', 'death', 'chars')){ # vital stats on Azure is relatively standard
+    con <- validate_hhsaw_key(hhsaw_key = mykey)
+    message(paste0("Column names for '", dataset, "' data are taken from all available years."))
+    if(analytic_only == T){
+        message(paste0("The `analytic_only` argument does not apply to the '", dataset, "' data and will be ignored."))
+    }
   }
 
   # The below code would ideally be replaced by a single call to a generic interface configured by the user
   if(dataset == "birth") {
-    #message("Column names for birth data are taken from all available years.")
     # get list of all colnames from SQL
-    con <- validate_hhsaw_key(hhsaw_key = mykey)
     var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [birth].[final_analytic]"))
-    ar = rep(TRUE, length(var.names))
   }
   if(dataset == "chars") {
-    #message("Column names for birth data are taken from all available years.")
     # get list of all colnames from SQL
-    con <- validate_hhsaw_key(hhsaw_key = mykey)
     var.names <- names(DBI::dbGetQuery(con, "SELECT TOP (0) * FROM [chars].[final_analytic]"))
-    bonus.CHI.names <- c('wastate', 'yage4', 'age6', 'race3', 'race4')
+    bonus.CHI.names <- c('wastate', 'yage4', 'age6', 'race3', 'race4') # made on the fly by rads
     var.names <- tolower(sort(c(var.names, bonus.CHI.names)))
-    ar = rep(TRUE, length(var.names))
   }
   if(dataset == "death") {
-    #message("Column names for birth data are taken from all available years.")
     # get list of all colnames from SQL
-    con <- validate_hhsaw_key(hhsaw_key = mykey)
     var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [death].[final_analytic]"))
-    bonus.CHI.names <- c('wastate', 'age6', 'race3', 'race4', 'bigcities', 'hra20_name', 'chi_geo_region')
+    bonus.CHI.names <- c('wastate', 'age6', 'race3', 'race4', 'bigcities', 'hra20_name', 'chi_geo_region') # made on the fly by rads
     var.names <- tolower(sort(c(var.names, bonus.CHI.names)))
-    ar = rep(TRUE, length(var.names))
   }
   if(dataset =="hys") {
     if(!all(year %in% c(seq(2004,2018,2), 2021))) {
       stop(paste0("invalid year(s) indicated for Health Youth Survey data. Please see department documentation for details on currently correct years."))
-      #year <- 2021
     }
-    dat <- data.table::fread('//PHDATA01/EPE_Data/HYSdata/hys/2021/best/hys_cols.csv')
+    dat <- data.table::fread('//dphcifs/APDE-CDIP/HYS/releases/2021/best/hys_cols.csv')
     yyy = year
     dat = dat[year %in% yyy]
     var.names.ar <- dat[ar == TRUE, colname]
@@ -1124,17 +1123,18 @@ list_dataset_columns <- function(dataset, year = 2021, mykey = 'hhsaw', analytic
     }
 
     var.names = c(var.names.ar, var.names.stg)
-    ar = c(rep(TRUE, length(var.names.ar)), rep(FALSE, length(var.names.stg)))
+    a_r = c(rep(TRUE, length(var.names.ar)), rep(FALSE, length(var.names.stg)))
 
   }
 
-  Variable_Descriptions = unique(data.table(var.names = var.names, analytic_ready = ar))
+  if(exists('a_r')){
+      Variable_Descriptions = unique(data.table(var.names = var.names, analytic_ready = a_r))
+  } else {Variable_Descriptions = unique(data.table(var.names = var.names))}
 
   return(Variable_Descriptions)
-
 }
 
-
+# list_ref_xwalk() ----
 #' View table of geographic pairs usable in the get_xwalk() function
 #' @description
 #' Displays a table of geographic pairings that can be submitted to \code{get_xwalk()}
@@ -1181,12 +1181,12 @@ list_ref_xwalk <- function(){
   ref_get_xwalk <- input <- output <- '.' <-  NULL
   data("ref_get_xwalk", envir=environment()) # import ref_get_xwalk from /data as a promise
   geodt <- copy(ref_get_xwalk) # evaluate / import the promise
-  geodt <- sql_clean(geodt)
+  geodt <- string_clean(geodt)
   geodt <- geodt[, .(geo1 = input, geo2 = output)]
   return(geodt)
 }
 
-
+# list_ref_pop() ----
 #' Return vector of all reference populations available in RADS
 #'
 #' @return Character vector of available reference populations
@@ -1218,7 +1218,7 @@ list_ref_pop <- function(){
   return(ref_pop_table$standard)
 }
 
-
+# lossless_convert() ----
 #' Convert the class of a vector to another class is possible without introducing additional NAs
 #' @param x vector of indeterminate length and type
 #' @param class character vector of length one specifying the preferred new column type (i.e.,
@@ -1244,7 +1244,7 @@ lossless_convert <- function(x = NULL, class = NULL){
   return(x)
 }
 
-
+# metrics() ----
 #' List of available metric for `calc`
 #' @return character vector. A vector of the available metrics for `calc`
 #' @name metrics
@@ -1299,7 +1299,7 @@ metrics = function(){
     'rate', 'ndistinct')
 }
 
-
+# round2() ----
 #' Improved rounding function
 #' @param x values to be rounded
 #' @param n number of digits
@@ -1314,45 +1314,109 @@ round2 = function(x, n = 0) {
   z*posneg
 }
 
+# string_clean() ----
+#' Clean string & factor columns
+#' @param dat name of data.frame or data.table
+#' @param stringsAsFactors logical. Specifies whether to convert strings to
+#' factors (TRUE) or not (FALSE). Note that columns that were originally factors
+#' will always be returned as factors.
+#' @description
+#' `string_clean` is designed to clean and preprocess strings and factors within a
+#' data.frame or data.table after importing from SQL, text files, CSVs, etc. It
+#' encodes text to UTF-8, trims and replaces multiple whitespaces, converts blank
+#' strings to true NA values, and optionally converts strings factors. The function
+#' maintains the original order of columns and leaves numeric and logical columns
+#' as they were.
+#'
+#' @details
+#' Depending on the size of the data.frame/data.table, the cleaning
+#' process can take a long time.
+#'
+#' The `string_clean` function modifies objects in place due to the use
+#' of data.table's by-reference assignment (e.g., :=). In other words, there is
+#' *no need to assign the output*, just
+#' type `string_clean(myTable)`.
+#' @export
+#' @importFrom utf8 utf8_encode
+#' @return data.table
+#' @examples
+#' \dontrun{
+#' myTable <- data.table::data.table(
+#' intcol = as.integer(1, 2, 3),
+#' county = c(' King  County ', 'Pierce County', '  Snohomish  county '))
+#' myTable[, county_factor := factor(county)]
+#' string_clean(myTable, stringsAsFactors = TRUE)
+#' print(myTable)
+#' }
 
+string_clean <- function(dat = NULL,
+                         stringsAsFactors = FALSE) {
+
+  # check date.frame
+    if(!is.null(dat)){
+      if(!is.data.frame(dat)){
+        stop("'dat' must be the name of a data.frame or data.table")
+      }
+      if(is.data.frame(dat) && !data.table::is.data.table(dat)){
+        data.table::setDT(dat)
+      }
+    } else {stop("'dat' (the name of a data.frame or data.table) must be specified")}
+
+  original.order <- names(dat)
+
+  # convert factors to strings
+    factor.columns <- names(dat)[sapply(dat, is.factor)] # Identify factor columns
+    dat[, (factor.columns) := lapply(.SD, as.character), .SDcols = factor.columns]
+
+  string.columns <- which(vapply(dat, is.character, FUN.VALUE = logical(1))) # Identify string columns
+  if (length(string.columns) > 0) {
+    # Define a custom cleaning function
+    clean_string <- function(x) {
+      x <- utf8::utf8_encode(x) # Convert encoding to UTF-8
+      x <- gsub("[[:space:]]+", " ", x) # Replace common unconventional white spaces to a true white space
+      x <- trimws(x, which = "both") # Trim white space to right or left
+      x <- gsub("\\s+", " ", x) # Collapse multiple consecutive white spaces into one
+      x <- ifelse(nzchar(trimws(x)), x, NA) # Replace blanks (or strings that become blanks after trim) with NA
+      return(x)
+    }
+
+    # Apply the custom cleaning function to all string columns at once
+      dat[, (string.columns) := lapply(.SD, clean_string), .SDcols = string.columns]
+
+    # convert strings to factors
+      if (stringsAsFactors == TRUE) {
+        dat[, (string.columns) := lapply(.SD, factor), .SDcols = string.columns]
+      } else {
+        dat[, (factor.columns) := lapply(.SD, factor), .SDcols = factor.columns] # original factors back to factors
+      }
+  }
+
+  # Reorder table to original column order
+  setcolorder(dat, original.order)
+
+  return(dat) # Return cleaned data.table
+}
+
+# sql_clean() ----
 #' Clean string columns read from SQL
-#' @param dat character vector of length one. Name of data.frame or data.table
+#' @param dat name of data.frame or data.table
 #' @param stringsAsFactors logical. Specifies whether to convert strings to factors (TRUE) or not (FALSE)
+#' @description
+#' `sql_clean` has been deprecated. Please use `string_clean` instead.
 #' @export
 #' @importFrom utf8 utf8_encode
 #' @return data.table
 sql_clean <- function(dat = NULL, stringsAsFactors = FALSE){
+  .Deprecated("string_clean", package = "yourPackageName")
 
-  # check date.frame
-  if(!is.null(dat)){
-    if(!is.data.frame(dat)){
-      stop("'dat' must be the name of a data.frame or data.table")
-    }
-    if(is.data.frame(dat) && !data.table::is.data.table(dat)){
-      data.table::setDT(dat)
-    }
-  } else {stop("'dat' (the name of a data.frame or data.table) must be specified")}
+  warning("\n\U00026A0 As a courtesy, `sql_clean` remains operational for the time being.\n",
+          "Good things don't last forever. \nPlease update your code.",
+          immediate. = FALSE)
 
-  original.order <- names(dat)
-  factor.columns <- which(vapply(dat,is.factor, FUN.VALUE=logical(1) )) # identify factor columns
-  if(length(factor.columns)>0) {
-    dat[, (factor.columns) := lapply(.SD, as.character), .SDcols = factor.columns] # convert factor to string
-  }
-  string.columns <- which(vapply(dat,is.character, FUN.VALUE=logical(1) )) # identify string columns
-  if(length(string.columns)>0) {
-    dat[, (string.columns) := lapply(.SD, utf8::utf8_encode), .SDcols = string.columns] # ensure encoding is UTF8
-    dat[, (string.columns) := lapply(.SD, trimws, which="both"), .SDcols = string.columns] # trim white space to right or left
-    dat[, (string.columns) := lapply(.SD, function(x){gsub("^ *|(?<= ) | *$", "", x, perl = TRUE)}), .SDcols = string.columns] # collapse multiple consecutive white spaces into one
-    dat[, (string.columns) := lapply(.SD, function(x){gsub("^$|^ $", NA, x)}), .SDcols = string.columns] # replace blanks with NA
-    if(stringsAsFactors==TRUE){
-      dat <- dat[, (string.columns) := lapply(.SD, factor), .SDcols = string.columns] # convert strings to factors
-    }
-  }
-  # reorder table
-  data.table::setcolorder(dat, original.order)
+  string_clean(dat = dat, stringsAsFactors = stringsAsFactors)
 }
 
-
+# std_error() ----
 #' Calculate standard error of the mean
 #' @param x name of a column in a data.frame/data.table or a vector
 #' @export
@@ -1391,7 +1455,7 @@ std_error<-function(x) {
   return(stderr/sqrt(vnx))
 }
 
-
+# substrRight() ----
 #' Substring selection from the right to complement base R substr
 #' @param x character
 #' @param x.start digit to start (counting from the right)
@@ -1407,7 +1471,7 @@ substrRight <- function(x, x.start, x.stop){
   substr(x, nchar(x)-x.stop+1, nchar(x)-x.start+1)
 }
 
-
+# validate_yaml_data() ----
 #' Compare the expected column types in YAML with the actual column types in R
 #' @param DF Character vector of length 1. Identifies the data.table/data.frame that you want to assess vis-à-vis the YAML file
 #'
@@ -1524,7 +1588,7 @@ validate_yaml_data <- function(DF = NULL, YML = NULL, VARS = "vars"){
 
 }
 
-
+# quiet() ----
 #' Silence (i.e., suppress or mute) printed messages from functions
 #'
 #' @description
@@ -1556,6 +1620,405 @@ quiet <- function(myf) {
   sink(tempfile())
   on.exit(sink())
   invisible(force(myf))
+}
+
+# tsql_validate_field_types() ----
+#' Validates whether a named vector of TSQL data types is compatible with a data.table
+#'
+#' \code{tsql_validate_field_types} checks whether a named vector of TSQL data types is
+#' compatible with a given data.table that you wish to upload to Microsoft SQL Server.
+#' The function does not cover every possible situation! For example, you might
+#' want to push your R '`POSIXct`' column to a SQL Server table as an '`nvarchar()`' datatype,
+#' but this function will expect you to map it to a more typical data type such
+#' as '`date`' or '`datetime`'. Think of this function as a second set of eyes
+#' to make sure you didn't do something careless.
+#'
+#' @param ph.data The name of a single data.table/data.frame to be loaded to SQL Server.
+#' @param field_types A named character vector with the desired TSQL
+#' datatypes for your upload. For example, `c(col1 = 'int', col2 = 'float', col3 = 'date')`.
+#' Note that the names in `field_types` must be the same as the names in `ph.data`. This
+#' is often read into memory from a *.yaml file, but can also be manually created.
+#'
+#' @name tsql_validate_field_types
+#'
+#' @details
+#' Note that this function does not evaluate if the allocated length for
+#' character strings, i.e., `nvarchar()` and `varchar()`, is sufficient.
+#'
+#' @examples
+#' \dontrun{
+#' # example of a success
+#'  mydt = data.table(col1 = 1:10000L,  # creates integers
+#'                    col2 = 1:10000/3) # creates floats
+#'  mydt[, col3 := as.Date(Sys.Date()) - col1] # creates dates
+#'  mydt[, col4 := as.character(col3)] # create strings
+#'
+#'  myfieldtypes <- c(col1 = 'int', col2 = 'float', col3 = 'date', col4 = 'nvarchar(255)')
+#'
+#'  tsql_validate_field_types(ph.data = mydt, field_types = myfieldtypes)
+#'
+#'  # example of a failure
+#'  myfieldtypes <- c(col1 = 'int', col2 = 'float', col3 = 'nvarchar(12)', col4 = 'nvarchar(255)')
+#'
+#'  tsql_validate_field_types(ph.data = mydt, field_types = myfieldtypes)
+#' }
+#'
+#' @export
+#' @rdname tsql_validate_field_types
+#'
+
+tsql_validate_field_types <- function(ph.data = NULL, # R data.frame/data.table
+                                field_types = NULL ){ # named vector of tsql data types
+# Declare local variables used by data.table as NULL here to play nice with devtools::check() ----
+    Rtypes <- RtypesDT <- TSQLtypesDT <- combotypesDT <- NULL
+
+# Validate arguments ----
+  # ph.data
+    if(is.null(ph.data)){
+      stop("\n\U1F6D1 You must specify a dataset (i.e., {ph.data} must be defined)")
+    }
+    if(!is.data.table(ph.data)){
+      if(is.data.frame(ph.data)){
+        setDT(ph.data)
+      } else {
+        stop(paste0("\n\U1F6D1 {ph.data} must be the name of a data.frame or data.table."))
+      }
+    }
+
+  # field_types
+    if(is.null(field_types) | !(is.character(field_types) &&
+                                   !is.null(names(field_types)) &&
+                                   all(nzchar(names(field_types))))){
+                                     stop('\n\U1F6D1 {field_types} must specify a named character vector of TSQL data types.')
+                                   }
+
+    if(!identical(sort(names(ph.data)), sort(names(field_types)))){
+      stop('\n\U1F6D1 Validation of TSQL data types necessitates exactly one TSQL datatype per column name in {ph.data}.')
+    }
+
+# Standardize the data.types from data.table ----
+  # extract R data types from data.table
+    Rtypes <- sapply(ph.data, class)
+    RtypesDT <- data.table::data.table(colname = tolower(names(Rtypes)),
+                                       r_type = Rtypes)
+
+  # Generate standard data type equivalents to those in R
+    RtypesDT[, std_type := fcase(
+      r_type %in% c("logical"), "logical",
+      r_type %in% c("integer"), "integer",
+      r_type %in% c("numeric", "double"), "numeric",
+      r_type %in% c("character", "factor"), "character",
+      r_type %in% c("POSIXct", "Date"), "POSIXct",
+      r_type %in% c("raw"), "raw",
+      default = NA_character_
+    )]
+
+    if(nrow(RtypesDT[is.na(std_type)]) > 0){
+      stop(paste0("\n\U1F6D1 ", RtypesDT[is.na(std_type)]$colname, " in {ph.data} is of class '", RtypesDT[is.na(std_type)]$r_type, "', which is not recognized by rads::tsql_validate_field_types.\n",
+            "If you think this is a mistake, please submit a GitHub issue."))
+    }
+
+# Standardize the data types from SQL data type vector ----
+  # convert named vector to a table
+    TSQLtypesDT <- data.table::data.table(colname = tolower(names(field_types)),
+                                          tsql_type = field_types)
+
+  # keep only the core name of the tsql_type
+    TSQLtypesDT[, tsql_type := gsub("\\(.*$", "", tsql_type)]
+
+  # Generate standard data type equivalents to those in TSQL
+    TSQLtypesDT[, std_type := fcase(
+      tsql_type %in% c("bit"), "logical",
+      tsql_type %in% c("tinyint", "int"), "integer",
+      tsql_type %in% c("bigint"), "numeric", # bigint as numeric to avoid overflow for 32bit R integer
+      tsql_type %in% c("smallmoney", "money", "numeric", "decimal", "real", "float"), "numeric",
+      tsql_type %in% c("char", "varchar", "nchar", "nvarchar", "text", "ntext"), "character",
+      tsql_type %in% c("date", "time", "datetime", "datetime2", "smalldatetime", "datetimeoffset"), "POSIXct",
+      tsql_type %in% c("uniqueidentifier"), "character",
+      tsql_type %in% c("binary", "varbinary", "image"), "raw",
+      default = NA_character_
+    )]
+
+    if(nrow(TSQLtypesDT[is.na(std_type)]) > 0){
+      stop(paste0("\n\U1F6D1 ", TSQLtypesDT[is.na(std_type)]$colname, " in {field_types} has the data type '", TSQLtypesDT[is.na(std_type)]$tsql_type, "', which is not recognized by rads::tsql_validate_field_types.\n",
+                  "If you think this is a mistake, please submit a GitHub issue."))
+    }
+
+# Combine the standardized data types from R and SQL into one table ----
+    combotypesDT <- merge(RtypesDT,
+                          TSQLtypesDT,
+                          by = c('colname', 'std_type'),
+                          all.x = F, all.y = F)
+
+# Give feedback to user ----
+    if(length(Rtypes) == nrow(combotypesDT[!is.na(std_type)])){
+      message('\U0001f642 Success! Your desired TSQL data types appear to be suitable for your dataset.')
+    } else {stop(paste0('\n\U1F6D1\U0001f47f The following columns in your dataset did not align with the proposed TSQL datatypes: ',
+                        paste(setdiff(names(Rtypes), combotypesDT$colname), collapse = ', '), '.\n',
+                        'Please manually check the class() and proposed TSQL data types for these columns.\n',
+                        'If you are certain that the data type pairings are logical AND should be a default, please submit a GitHub Issue.'))}
+
+}
+
+# tsql_chunk_loader() ----
+#' Loads large data sets to Microsoft SQL Server (TSQL) in 'chunks'
+#'
+#' \code{tsql_chunk_loader} divides a data.frame/data.table into smaller tables
+#' so it can be easily loaded into SQL. Experience has shown that loading large
+#' tables in 'chunks' is less likely to cause errors. It is not needed for small
+#' tables which load quickly. For **extremely large** datasets, you will likely
+#' want to use another method, perhaps something like
+#' [bcp](https://learn.microsoft.com/en-us/sql/tools/bcp-utility?view=sql-server-ver16).
+#'
+#'
+#' @param ph.data The name of a single data.table/data.frame to be loaded to SQL Server
+#' @param db_conn The name of the relevant open database connection to SQL Server
+#' @param chunk_size The number of rows that you desire to have per upload 'chunk'
+#' @param schema_name The name of the schema where you want to write the data
+#' @param table_name The name of the table where you want to write the data
+#' @param overwrite Do you want to overwrite an existing table? Logical (T|F).
+#' Default `overwrite = FALSE`.
+#' @param append Do you want to append to an existing table? Logical (T|F).
+#' Default `append = TRUE`.
+#' @param field_types *Optional!* A named character vector
+#' with the desired TSQL datatypes for your upload. For example,
+#' `c(col1 = 'int', col2 = 'float', col3 = 'date')`
+#' @param validate_field_types Do you want to validate TSQL field types using
+#' `rads::tsql_validate_field_types`? Logical (T|F).
+#' Default `validate_field_types = TRUE`.
+#' @param validate_upload Do you want to validate that all rows have been
+#' uploaded? Logical (T|F).
+#' Default `validate_upload = TRUE`.
+#'
+#' @details
+#' `overwrite` & `append` are intentionally redundant in order to reduce the risk
+#' of accidentally overwriting a table. Note that it is illogical for `overwrite`
+#' & `append` to have the same value.
+#'
+#' The names in `field_types` must be the same as the names in `ph.data`. Also
+#' note that `field_types` is only processed when `append = FALSE`. This prevents
+#' conflicts with data types in pre-existing SQL tables.
+#'
+#' `validate_field_types = TRUE` is ignored if the `field_types` argument is not
+#' provided.
+#'
+#' @name tsql_chunk_loader
+#'
+#' @examples
+#' \dontrun{
+#'  mydt = data.table(col1 = 1:10000L,  # create integer
+#'                    col2 = 1:10000/3) # create float
+#'  mydt[, col3 := as.Date(Sys.Date()) - col1] # create date
+#'  mydt[, col4 := as.character(col3)] # create string
+#'  myfieldtypes <- c(col1 = 'int', col2 = 'float', col3 = 'date', col4 = 'nvarchar(255)')
+#'
+#'  tsql_chunk_loader(
+#'    ph.data = mydt,
+#'    db_conn = rads::validate_hhsaw_key(), # connect to Azure 16
+#'    chunk_size = 3333,
+#'    schema_name = Sys.getenv("USERNAME"),
+#'    table_name = 'JustTesting',
+#'    overwrite = TRUE,
+#'    append = FALSE,
+#'    field_types = myfieldtypes,
+#'    validate_field_types = TRUE,
+#'    validate_upload = TRUE
+#'  )
+#' }
+#'
+#' @export
+#' @rdname tsql_chunk_loader
+#'
+
+tsql_chunk_loader <- function(ph.data = NULL, # R data.frame/data.table
+                             db_conn = NULL, # connection name
+                             chunk_size = 5000, # of rows of data to load at once
+                             schema_name = NULL, # schema name
+                             table_name = NULL, # table name
+                             overwrite = FALSE, # overwrite?
+                             append = TRUE, # append?
+                             field_types = NULL,  # want to specify field types?
+                             validate_field_types = TRUE, # validate specified field_types
+                             validate_upload = TRUE){ # want to validate the upload?
+  # Declare local variables used by data.table as NULL here to play nice with devtools::check() ----
+    db_conn.name <- queryCount <- finalCount <- uploadedCount <- max.row.num <- NULL
+    number.chunks <- starting.row <- ending.row <- NULL
+
+  # Validate arguments ----
+    # ph.data
+        if(is.null(ph.data)){
+          stop("\n\U1F6D1 You must specify a dataset (i.e., {ph.data} must be defined)")
+        }
+        if(!is.data.table(ph.data)){
+          if(is.data.frame(ph.data)){
+            setDT(ph.data)
+          } else {
+            stop(paste0("\n\U1F6D1 {ph.data} must be the name of a data.frame or data.table."))
+          }
+        }
+
+    # db_conn
+        if(is.null(db_conn)){stop('\n\U1F6D1 {db_conn} must be specified.')}
+        if(class(db_conn)[1] != 'Microsoft SQL Server'){
+          stop('\n\U1F6D1 {db_conn} is not a "Microsoft SQL Server" object.')}
+        if(!DBI::dbIsValid(db_conn)){
+          stop("\n\U1F6D1 {db_conn} must specify a valid database object. \nIf you are sure that it exists, confirm that it has not been disconnected.")
+        }
+        db_conn.name <- deparse(substitute(db_conn))
+
+    # chunk_size
+        if(chunk_size %% 1 != 0 | !chunk_size %between% c(100, 20000)){
+          stop("\n\U1F6D1 {chunk_size} must be an integer between 100 and 20,000.")
+        }
+
+    # schema
+        if(!is.character(schema_name) | length(schema_name) > 1){
+          stop('\n\U1F6D1 {schema_name} must be a quoted name of a single schema, e.g., "ref", "claims", "death", etc.')
+        }
+        possible.schemas <- DBI::dbGetQuery(db_conn, "SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA")[]$SCHEMA_NAME
+        if(!schema_name %in% possible.schemas){
+          stop(paste0('\n\U1F6D1 The value of {schema_name} (', schema_name, ') is not a valid schema name in {db_conn} (', db_conn.name, ').'))
+        }
+
+    # table_name
+        if(!is.character(table_name) | length(table_name) > 1){
+          stop('\n\U1F6D1 {table_name} must be a quoted name of a single table with your specified schema, e.g., "mytable1", "mytable2", etc.')
+        }
+
+    # overwrite
+        if(!is.logical(overwrite)){
+          stop('\n\U1F6D1 {overwrite} must be specified as a logical (i.e., TRUE, T, FALSE, or F)')
+        }
+
+    # append
+        if(!is.logical(append)){
+          stop('\n\U1F6D1 {append} must be specified as a logical (i.e., TRUE, T, FALSE, or F)')
+        }
+        if(overwrite == append){
+          stop('\n\U1F6D1 {overwrite} & {append} cannot both be set to the same value! \nIf one is TRUE the other must be FALSE.')
+        }
+
+    # field_types
+        if(append == TRUE){field_types = NULL}
+        if(!is.null(field_types) && !identical(sort(names(field_types)), sort(names(ph.data))) ){
+          stop('\n\U1F6D1 The names in {field_types} must match the column names in {ph.data}')
+        }
+        if(!is.null(field_types) && !(is.character(field_types) &&
+             !is.null(names(field_types)) &&
+             all(nzchar(names(field_types))))){
+          stop('\n\U1F6D1 {field_types} is optional, but when provided must specify a named character vector. Please view the help file for details.')
+        }
+
+    # validate_upload
+        if(!is.logical(validate_upload )){
+          stop('\n\U1F6D1 {validate_upload } must be specified as a logical (i.e., TRUE, T, FALSE, or F)')
+        }
+
+    # validate_field_types
+        if(!is.logical(validate_upload )){
+          stop('\n\U1F6D1 {validate_upload } must be specified as a logical (i.e., TRUE, T, FALSE, or F)')
+        }
+        if(validate_field_types == TRUE & is.null(field_types)){
+          validate_field_types = FALSE
+        }
+
+  # Validate field types if requested ----
+        if(validate_field_types == TRUE){
+          tsql_validate_field_types(ph.data = ph.data,
+                                    field_types = field_types)
+        }
+
+  # Set initial values ----
+    max.row.num <- nrow(ph.data)
+    number.chunks <-  ceiling(max.row.num/chunk_size) # number of chunks to be uploaded
+    starting.row <- 1 # the starting row number for each chunk to be uploaded. Initialize with 1
+    ending.row <- chunk_size  # the final row number for each chunk to be uploaded. Initialize with overall chunk size
+
+    if(validate_upload == TRUE){
+      if(append == TRUE){
+        querycnt <- sprintf("SELECT COUNT(*) as total_rows FROM %s.%s", schema_name, table_name)
+        originalCount <- DBI::dbGetQuery(db_conn, querycnt)[]$total_rows
+      } else { originalCount <- 0}
+    }
+
+  # Drop existing table if requested ----
+    if(overwrite == TRUE & append == FALSE){
+      DBI::dbGetQuery(conn = db_conn,
+                      statement = paste0("IF OBJECT_ID('", schema_name, ".", table_name, "', 'U') IS NOT NULL ",
+                                         "DROP TABLE ", schema_name, ".", table_name))
+      overwrite = FALSE
+      append = TRUE
+    }
+
+  # Create loop for appending new data ----
+    for(i in 1:number.chunks){
+      # counter so we know it is not stuck
+        message(paste0(Sys.time(), ": Loading chunk ", format(i, big.mark = ','), " of ", format(number.chunks, big.mark = ','), ": rows ", format(starting.row, big.mark = ','), "-", format(ending.row, big.mark = ',')))
+
+      # load the data chunk into SQL (will try each chunk up to 3 times)
+        attempt <- 1 # initializing attempt counter
+        while(attempt <= 3){
+          tryCatch({
+            # try to load to SQL
+            if(is.null(field_types)){
+              DBI::dbWriteTable(conn = db_conn,
+                                name = DBI::Id(schema = schema_name, table = table_name),
+                                value = ph.data[starting.row:ending.row,],
+                                append = append,
+                                row.names = FALSE)
+            } else {
+              DBI::dbWriteTable(conn = db_conn,
+                                name = DBI::Id(schema = schema_name, table = table_name),
+                                value = ph.data[starting.row:ending.row,],
+                                append = FALSE, # set to false so can use field types
+                                row.names = FALSE,
+                                field.types = field_types)
+              field_types = NULL # Reset field_types after use
+            }
+
+            # If operation succeeds, break out of the tryCatch loop
+            break
+          }, error = function(e){
+            # If this was the third attempt, stop the process
+            if(attempt == 3){
+              stop(paste0('\n\U1F6D1 There have been three failed attempts to load chunk #',
+                          format(i, big.mark = ','), '. \nThe script has stopped and you will have to ',
+                          'try to correct the problem and run it again.') )
+            } else {
+              # Print an error message indicating a retry
+              message(paste("Attempt", attempt, "failed. Trying again..."))
+            }
+          })
+
+          # Increment the attempt counter for the next iteration
+          attempt <- attempt + 1
+        }
+
+      # set the starting and ending rows for the next chunk to be uploaded
+        starting.row <- starting.row + chunk_size
+        ending.row <- min(starting.row + chunk_size - 1, max.row.num)
+    }
+
+  # Print summary of upload ----
+    if(validate_upload == TRUE){
+      # count rows in SQL
+        queryCount <- sprintf("SELECT COUNT(*) as total_rows FROM %s.%s", schema_name, table_name)
+        finalCount <- DBI::dbGetQuery(db_conn, queryCount)[]$total_rows
+
+      # how many rows in SQL are new rows
+        uploadedCount <- finalCount - originalCount
+
+      # check if all rows of ph.data seem to have been uploaded
+        if(uploadedCount == nrow(ph.data)){
+          message("\U0001f642 \U0001f389 \U0001f38a \U0001f308 \n Congratulations! All the rows in {ph.data} were successfully uploaded.")
+        } else {
+          stop(paste0("\n\U1F6D1 \U2620 \U0001f47f \U1F6D1\n",
+                      "{ph.data} has ", format(nrow(ph.data), big.mark = ','),
+                      " rows, but [", schema_name, '].[', table_name, '] only has ',
+                      format(uploadedCount, big.mark = ','), ' new rows.'))
+        }
+    }
+
 }
 
 
