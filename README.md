@@ -25,6 +25,12 @@ If you haven't yet installed [`rads`](https://github.com/PHSKC-APDE/rads), follo
 
 5.  Load [`rads`](https://github.com/PHSKC-APDE/rads) ... `library(rads)`
 
+## New for version 1.2.0.0
+1. `get_data_hys` updated to pull 2023 data.
+2. `get_population` data updated to pull estimates by hispanic/non-hispanic within a race (as opposed to Hispanic as its own race).
+3. Updated error messages in `calc`
+4. Updated documentation throughout
+
 ## New for version 1.1.7.7
 1. You must create a keyring:: 'service' key for HHSAW as described above. If you do not do this, you will not be able to use `get_population`, `get_data*`, and `list_dataset_columns()` functions.
 
