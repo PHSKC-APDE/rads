@@ -27,27 +27,27 @@
 #' @import dtsurvey
 #' @import future
 #' @import future.apply
+#' @export
 #'
 chi_generate_tro_shell <- function(ph.analysis_set,
                                       start.year,
                                       end.year,
                                       trend.span = NULL,
                                       trend.periods = NULL){
-  #parameterizaiton checks
+  #parameterization checks
   if("x" %in% ph.analysis_set$trends & (is.null(trend.span) | is.null(trend.periods))) {stop("you have indicated that a trends analysis is to be conducted, but have not indicated both the span and number of periods for this analysis.")}
 
   #ph.analysis_set checks
 
 
   #advisory messages
-  if("x" %in% ph.analysis_set$trends) {message("Note: trend.span applies trends backwards from end.year")}
-
+  if("x" %in% ph.analysis_set$trends) {message("Note: trends are applied backwards from end.year")}
 
 
   # apply the template generating function
   template <- rbindlist(
     lapply(X = seq(1, length(unique(ph.analysis_set$set))),
-           FUN = chi_generate_nontrend_years, ph.analysis_set = ph.analysis_set))
+           FUN = chi_process_nontrends, ph.analysis_set = ph.analysis_set))
 
   # split trends from other tabs because processed for multiple years
   template.trends <- template[tab=='trends']
@@ -60,7 +60,7 @@ chi_generate_tro_shell <- function(ph.analysis_set,
                     template[tab == '_kingcounty'][, tab := 'metadata'][, start := end.year])
 
   # add years to template (trends)
-  trend.years <- chi_generate_trend_years(indicator_key = unique(template$indicator_key),
+  trend.years <- chi_process_trends(indicator_key = unique(template$indicator_key),
                                           trend.span = trend.span,
                                           end.year = end.year,
                                           trend.periods = trend.periods)
@@ -71,4 +71,5 @@ chi_generate_tro_shell <- function(ph.analysis_set,
 
   return(template)
 }
+
 

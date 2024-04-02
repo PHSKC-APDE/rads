@@ -21,4 +21,7 @@ test_that("chi_generate_template injest template format") {
                          trends,
                          set_indicator_keys)
   DT <- chi_generate_tro_shell(ph.analysis_set, 2021, 2022, 3, 5)
+  expect_equal(nrow(DT), 264)
+  expect_equal(length(unique(DT$indicator_key)),5)
+  expect_equal(DT[tab == "trends",][1]$end - DT[tab == "trends",][1]$start,2)
 }

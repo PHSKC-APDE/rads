@@ -6,16 +6,17 @@
 #' @param trend.periods
 #'
 #' @description
-#' !!! What does this do !!!
+#' helper fucntion for chi_generate_tro_shell
 #'
 #' @details
-#' uuuuu
+#' called by chi_generate_tro_shell to calculate and create rows for expected trends analyses.
 #'
-#' @returns figure this out
+#'
+#' @returns TRO with rows for each indicator key and span of years within the provided time frame
 #' @keywords CHI, Tableau, Production
 #' @import dtsurvey
 
-chi_generate_trend_years <- function(indicator_key = NULL,
+chi_process_trends <- function(indicator_key = NULL,
                                      trend.span = NULL,
                                      end.year = NULL,
                                      trend.periods = NULL){

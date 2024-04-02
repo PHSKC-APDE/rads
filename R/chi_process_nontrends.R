@@ -24,7 +24,7 @@
 #' @import dtsurvey
 #' @import future
 #' @import future.apply
-chi_generate_nontrend_years <- function(ph.analysis_set = NULL,
+chi_process_nontrends <- function(ph.analysis_set = NULL,
                                   myset = NULL){
 
   subsets <- ph.analysis_set[set == myset] # process a single analysis set
