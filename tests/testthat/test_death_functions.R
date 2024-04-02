@@ -75,9 +75,46 @@ library('testthat')
     expect_error(life_table(dt, ci = -.1 )) # ci must be between 0.01 & 0.99
   })
 
-
   test_that('Confirm output is independent of argument/column names...',{
     expect_equal( test1, test2)
+  })
+
+  test_that('Confirm that group_by argument works when specified...',{
+    # Create arbitrary small variations for 'demographic' groups ----
+      # first create an empty table
+        mygroups <- data.table::CJ(shape = c('circle', 'square'), color = c('blue', 'orange'))
+        dt_groups <- merge(copy(dt)[,constant := 1],
+                           mygroups[, constant := 1],
+                           by = 'constant',
+                           allow.cartesian = T)[, constant := NULL]
+      # now modify the values
+        set.seed(98104)
+        dt_groups[, deaths := round(deaths * sample(seq(.75, 1.25, .01), .N, replace = TRUE))]
+        dt_groups[, pop := round(pop * sample(seq(.75, 1.25, .01), .N, replace = TRUE))]
+
+      # append the original data
+        dt_groups2 <- rbind(dt_groups, dt, fill = T)
+
+    # Run the tests ----
+      expect_no_error(test_groups <- life_table(ph.data = dt_groups,
+                                                myages = 'ages',
+                                                mydeaths = 'deaths',
+                                                mypops = 'pop',
+                                                myprops = 'fraction',
+                                                group_by = c('shape', 'color'),
+                                                ci = 0.95))
+      expect_equal(nrow(test_groups), 76) # 76 because 4 stratum and 19 age groups
+
+      expect_no_error(test_groups2 <- life_table(ph.data = dt_groups2,
+                                                 myages = 'ages',
+                                                 mydeaths = 'deaths',
+                                                 mypops = 'pop',
+                                                 myprops = 'fraction',
+                                                 group_by = c('shape', 'color'),
+                                                 ci = 0.95))
+      expect_identical(test1, # original data, run by itself
+                       test_groups2[is.na(shape) & is.na(color)][, c('shape', 'color') := NULL] # original data when run with other groups
+                       )
   })
 
 
@@ -92,7 +129,6 @@ library('testthat')
     expect_equal( test1[19]$ex, 6.35)
   })
 
-
   test_that('confidence intervals seem logical...',{
     # remember the higher the % confidence, the wider the interval
     expect_gt( test1.99[7]$ex_upper, test1[7]$ex_upper)
@@ -100,7 +136,6 @@ library('testthat')
     expect_lt( test1.99[7]$ex_lower, test1[7]$ex_lower)
     expect_lt( test1[7]$ex_lower, test1.90[7]$ex_lower)
   })
-
 
   test_that('check that deaths with an unknown age interval and redistributed...', {
     dtna <- rbind(dt, data.table(deaths = 16000), fill = T)
@@ -135,7 +170,8 @@ library('testthat')
   ltp[, days_lived := NULL]
 
   # life_table_prep() create output ----
-  ltp_output <- life_table_prep(DTx = ltp)
+  ltp_output <- life_table_prep(ph.data = ltp)
+  ltp_output_group <- life_table_prep(ph.data = ltp, group_by = c('year', 'race_eth'))
 
   # life_table_prep() tests ----
   test_that("Check for errors based on validation failure...", {
@@ -154,8 +190,8 @@ library('testthat')
 
   test_that("Confirm proper columns are output ...", {
     expect_equal(
-      setdiff(names(ltp), c("date_of_birth", "date_of_death")),
-      setdiff(names(ltp_output), c("ages", "deaths", "fraction"))
+      length(setdiff(names(ltp_output), c("ages", "deaths", "fraction"))),
+      0 # expect zero because ages, deaths, and fractions should be the only columns in ltp_output
     )
   })
 
@@ -164,6 +200,20 @@ library('testthat')
     expect_equal(life_table_prep(ltp), life_table_prep(ltp2))
   })
 
+  test_that("Check that group_by command works as expected ...", {
+    expect_identical(
+      sort(setdiff(names(ltp), c('date_of_death', 'date_of_birth'))),
+      sort(setdiff(names(ltp_output_group), c('ages', 'deaths', 'fraction')))
+    )
+    expect_identical(
+      nrow(ltp),
+      sum(ltp_output_group$deaths)
+    )
+    expect_identical(
+      setorder(unique(ltp[, .(year, race_eth)]), race_eth, year),
+      setorder(unique(ltp_output_group[, .(year, race_eth)]), race_eth, year)
+    )
+  })
 
 # Check death_113 ----
   # death_113() create data ----

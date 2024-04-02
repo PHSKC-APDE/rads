@@ -5,54 +5,64 @@
 \title{Prepare death data for use with life_table()}
 \usage{
 life_table_prep(
-  DTx = NULL,
+  ph.data = NULL,
   cuts = c(0, 1, 5, 10, 15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85),
   dobvar = "date_of_birth",
-  dodvar = "date_of_death"
+  dodvar = "date_of_death",
+  group_by = NULL
 )
 }
 \arguments{
-\item{DTx}{a data.table or data.frame. Must contain line level death data
-with the date of birth, date of death, and any demographic which you want
-to use to aggregate the resulting table.
+\item{ph.data}{a data.table or data.frame. Must contain individual-level
+death data with the date of birth, date of death, and any demographics which
+you want to use to aggregate the resulting table.
 
-Note!! Extraneous columns should not
-be passed to this argument since it will attempt to aggregate results by
-all the columns it receives (except for dates of birth and death).}
+The default value is \code{ph.data = NULL}.}
 
-\item{cuts}{character vector of any length greater than 1 (typically of
+\item{cuts}{integer vector of any length greater than 1 (typically of
 length ~ 20). It specifies the cut-points for the age groupings to be created
-in the data. Each number represents the beginning of an interval and the
-final cut is through the maximum age. For example, when cuts = c(0, 5, 10, 20
-), the data will be stratified into ages [0,5), [5,10), [10,20), and [20,
+in the data. Each number represents the beginning of an interval and the final
+cut extends through to the maximum age observed. For example, when cuts =
+c(0, 5, 10, 20), the data will be grouped into ages [0,5), [5,10), [10,20), and [20,
 infinity).
 
-The default == c(0, 1, 5, 10, 15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65,
-70, 75, 80, 85), which creates the standard age groupings used by WA DOH.}
+The default is \code{cuts= c(0, 1, 5, 10, 15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65,
+70, 75, 80, 85)}, which creates the standard age groupings used by WA DOH.}
 
-\item{dobvar}{character vector of length one identifying a column with the
-the decedents date of birth. The referenced column must be of class
+\item{dobvar}{character vector of length one identifying a column with
+the decedent's date of birth. The referenced column must be of class
 'date' or class 'character' in the format "YYYY-MM-DD" or "YYYY/MM/DD."
 
-The default == "date_of_birth", which is the dob variable in Azure server 16
-(death.final_analytic).}
+The default is \code{dobvar = "date_of_birth"}, which is the dob variable
+available via \code{rads::get_data_death()}.}
 
-\item{dodvar}{character vector of length one identifying a column with the
-the decedents date of death. The referenced column must be of class
+\item{dodvar}{character vector of length one identifying a column with
+the decedent's date of death. The referenced column must be of class
 'date' or class 'character' in the format "YYYY-MM-DD" or "YYYY/MM/DD."
 
-The default == "date_of_death", which is the dod variable in Azure server 16
-((death.final_analytic)).}
+The default is \code{dodvar = "date_of_death"}, which is the dod variable
+available via \code{rads::get_data_death()}.}
+
+\item{group_by}{a character vector of indeterminate length. This is used to
+specify all the variables by which you want to group (a.k.a. stratify) the
+results. For example, if you specified \code{group_by = c('chi_sex',
+'chi_race_6')}, the results would be grouped by each combination of sex
+and race. If you leave it blank (i.e., \code{group_by = NULL}), it will only
+provide the death counts and death fractions by age group
+described by \code{cuts}.
+
+The default is \code{group_by = NULL}}
 }
 \value{
-a data.table with deaths aggregated by any demographics included in
-DTx as well as \code{ages} (age strata), \code{deaths} (deaths per demographic group
-and age strata), and \code{fraction} (the mean fraction of the age interval lived
-by those who died in that interval).
+a data.table with deaths aggregated by any demographics specified in
+the \code{group_by} argument, as well as \code{ages} (age group), \code{deaths} (deaths per
+demographic group and age group), and \code{fraction} (the mean fraction of the
+age interval lived by those who died in that interval).
 }
 \description{
-Processes line level death data to create a standardized collapsed/
-aggregated data.table of death counts by age bin and demographics.
+Processes individual-level death data to create a standardized data table.
+This table is collapsed/aggregated by age bin and optionally, by
+demographics, for use with \code{rads::life_table()}.
 }
 \details{
 Note that population data (from \code{\link{get_population}}) must be merged
@@ -60,20 +70,27 @@ onto the returned data.table before running it through
 \code{\link{life_table}}.
 }
 \examples{
+\donttest{
  # create data set ----
- set.seed(98104)
- eg1 <- data.table::data.table(
-   date_of_death = rep(as.Date("2020-01-01"), 10000) + sample(0:365, 10000, replace = TRUE),
-   days_lived = round2(rnorm(10000, mean = 29930, sd = 11000), 0),
-   race_eth = rep_len(c("AIAN", "Asian", "Black", "Hispanic", "NHPI", "White"), 1000),
-   year = 2020
- )
- eg1[days_lived <0, days_lived := 0] # can't live negative days
- eg1[days_lived >43800, days_lived := 365*sample(35:100, 1)] # cap lifespan at 120 years
- eg1[, date_of_birth := date_of_death - days_lived]
- eg1[, days_lived := NULL]
+set.seed(98104)
+
+deaths <- data.table::data.table(
+  date_of_death = as.Date("2020-01-01") + sample(0:365, 10000, replace = TRUE),
+  race_eth = rep_len(c("AIAN", "Asian", "Black", "Hispanic", "NHPI", "White"),
+  length.out = 10000),
+  gender = sample(c('Male', 'Female'), 10000, replace = TRUE),
+  year = 2020
+)
+# Calculate a date of birth based on a maximum age of 120 years (~43800 days)
+deaths[, date_of_birth := date_of_death - sample(1:43800, 10000, replace = TRUE)]
+
  # process with life_table_prep ----
- eg1_output <- life_table_prep(DTx = eg1)
- eg1_output[]
+ output1 <- life_table_prep(ph.data = deaths)
+ head(output1)
+
+ # process with life_table_prep using group_by argument----
+ output2 <- life_table_prep(ph.data = deaths, group_by = c('gender', 'race_eth'))
+ head(output2)
+}
 
 }

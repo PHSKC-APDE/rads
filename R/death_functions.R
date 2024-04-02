@@ -605,7 +605,7 @@ death_xxx_count <- function(ph.data = NULL,
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
     problem.icds  <-  causeid <- cause.of.death <- deaths <- '.' <- NULL
     x_reftable <- x_combo <- x_covid <- x_cause <- x_all <- x_ypll <- NULL
-    chi_geo_kc <- underlying_cod_code <- icd10 <- NULL
+    chi_geo_kc <- underlying_cod_code <- icd10 <- x.causeid <- NULL
     date_of_death <- date_of_birth <- calculated.age <- orig.coding <- NULL
 
   # Check arguments ----
@@ -1806,7 +1806,7 @@ death_other_count <- function(ph.data = NULL,
 #'
 #' @description
 #' Generates a standard life table given a data.frame or data.table with basic
-#' attributes.
+#' essential attributes.
 #'
 #' @references
 #' Chiang, Chin Long & World Health Organization. (1979).
@@ -1819,27 +1819,51 @@ death_other_count <- function(ph.data = NULL,
 #'
 #' @param ph.data a data.table or data.frame. Must contain aggregated deaths and
 #' corresponding populations, as well as the age interval and the average
-#' fraction of years lived in the interval by those who die in the interval.
-#' @param myages character vector of length one identifying a column
+#' fraction of years lived in the interval by those who die in the interval. It
+#' is *highly recommended*, though not necessary, that you use
+#' \code{\link{life_table_prep}} to prepare `ph.data`.
+#'
+#' The default value is \code{ph.data = NULL}.
+#' @param myages a character vector of length one identifying a column
 #' specifying the beginning and end of each age interval separated by a hyphen.
 #' Note, the start of each interval should be the end of the previous
 #' interval, e.g., '5-10', '10-15', '15-20', etc. Think of this as short-hand
-#' for [5, 10), [10, 15), [15, 20). The final interval should be open ended with
+#' for [5, 10), [10, 15), [15, 20), etc.. The final interval should be open ended with
 #' the starting value followed by a '+' (e.g., '85+', '90+', etc.). The maximum
-#' age cannot exceed 100. Leave the value blank (i.e., NA) for the total deaths
+#' age cannot exceed 100 in order to align with WA State population estimates.
+#' Leave the value blank (i.e., NA) for the total deaths
 #' at an unknown age. These deaths will be distributed proportionately over the
 #' other age groups.
-#' @param mydeaths character vector of length one identifying a numeric column
+#'
+#' The default value is \code{myages = "ages"}.
+#' @param mydeaths a character vector of length one identifying a numeric column
 #' with the total deaths for the given age interval in the given year(s).
-#' @param mypops character vector of length one identifying a numeric column
+#'
+#' The default value is \code{mydeaths = "deaths"}.
+#' @param mypops a character vector of length one identifying a numeric column
 #' with the total population in the age intervals corresponding to mydeaths.
 #' This is technically the mid-year population. In practice we usually
-#' use OFM population estimates.
-#' @param myprops character vector of length one identifying a numeric column
+#' use [OFM](https://ofm.wa.gov/) population estimates available from
+#' \code{\link{get_population}}.
+#'
+#' The default value is \code{mypops = "pop"}.
+#' @param myprops a character vector of length one identifying a numeric column
 #' with the average proportion of the interval lived by those who died in the
 #' interval. For example, if those who died in '80-85' lived an average of 1000
 #' days past their 80th birthday, myprops would be 0.54 (1000/(365.25*5)).
-#' @param ci numeric of length one. Confidence level, >0 & <1, default == 0.95.
+#'
+#' The default value is \code{myprops = "fraction"}.
+#' @param ci a numeric value representing the confidence level, which must be
+#' greater than 0 and less than 1.
+#'
+#' The default value is \code{ci = 0.95}.
+#' @param group_by a character vector used to
+#' specify all the variables by which you want to group (a.k.a. stratify) the
+#' results. For example, if you specified \code{group_by = c('chi_sex',
+#' 'chi_race_6')}, the results would be stratified by each combination of sex
+#' and race.
+#'
+#' The default is \code{group_by = NULL}
 #'
 #' @return a data.table with the pre-existing columns plus the
 #' standard life table columns
@@ -1861,25 +1885,57 @@ death_other_count <- function(ph.data = NULL,
 #' - Tx: total person years lived beyond the start of the age interval
 #'
 #' - ex: expectation of life (a.k.a., life expectancy) at the start of the age
-#' interval
+#' interval. ***The value of ex for those under one year of age is typically
+#' referred to as 'Life Expectancy at Birth'.***
 #'
 #' @export
 #' @name life_table
 #' @examples
-#'  temp1 <- data.table::data.table(
-#'           ages = c("0-1", "1-2", "2-3", "3-4", "4-5", "5-10", "10-15",
-#'                    "15-20", "20+"),
-#'           dead = c(391, 30, 17, 14, 8, 41, 73, 202, 28919),
-#'           population = c(25640, 25104, 25507, 24998, 24038, 131202, 128490,
-#'                        127951, 1747871),
-#'           fraction = c(0.09, rep(0.5, 8)))
-#'  temp1[]
-#'  temp2 <- life_table(ph.data = temp1,
-#'                       myages = "ages",
-#'                       mydeaths = "dead",
-#'                       mypops = "population",
-#'                       myprops = "fraction")
-#'  temp2[]
+#' \donttest{
+#' # 1970 CA abridged death data
+#' dt <- data.table::data.table(
+#'   ages = c("0-1", "1-5", "5-10", "10-15", "15-20", "20-25", "25-30", "30-35",
+#'            "35-40", "40-45", "45-50", "50-55", "55-60", "60-65", "65-70",
+#'            "70-75", "75-80", "80-85", "85+"),
+#'   deaths = c(6234, 1049, 723, 735, 2054, 2702, 2071, 1964, 2588, 4114, 6722,
+#'              8948, 11942, 14309, 17088, 19149, 21325, 20129, 22483),
+#'   pop = c(340483, 1302198, 1918117, 1963681, 1817379, 1740966, 1457614,
+#'           1219389, 1149999, 1208550, 1245903, 1083852, 933244, 770770,
+#'           620805, 484431, 342097, 210953, 142691),
+#'   fraction = c(0.09, 0.41, 0.44, 0.54, 0.59, 0.49, 0.51, 0.52, 0.53, 0.54, 0.53,
+#'                0.53, 0.52, 0.52, 0.51, 0.52, 0.51, 0.50, NA))
+#'
+#' # Create arbitrary small variations for 'demographic' groups
+#' # first create an empty table
+#' mygroups <- data.table::CJ(shape = c('circle', 'square'), color = c('blue', 'orange'))
+#' dt_groups <- merge(data.table::copy(dt)[,constant := 1],
+#'                    mygroups[, constant := 1],
+#'                    by = 'constant',
+#'                    allow.cartesian = TRUE)[, constant := NULL]
+#' # now modify the values
+#' set.seed(98104)
+#' dt_groups[, deaths := round(deaths * sample(seq(.75, 1.25, .01), .N, replace = TRUE))]
+#' dt_groups[, pop := round(pop * sample(seq(.75, 1.25, .01), .N, replace = TRUE))]
+#'
+#'
+#' nogroups <- life_table(ph.data = dt,
+#'                      myages = 'ages',
+#'                      mydeaths = 'deaths',
+#'                      mypops = 'pop',
+#'                      myprops = 'fraction',
+#'                      group_by = NULL,
+#'                      ci = 0.95)
+#' head(nogroups)
+#'
+#' yesgroups <- life_table(ph.data = dt_groups,
+#'                       myages = 'ages',
+#'                       mydeaths = 'deaths',
+#'                       mypops = 'pop',
+#'                       myprops = 'fraction',
+#'                       group_by = c('shape', 'color'),
+#'                       ci = 0.95)
+#' head(yesgroups)
+#' }
 #'
 #' @import data.table
 #' @importFrom stats qnorm
@@ -1890,165 +1946,283 @@ life_table <- function(ph.data = NULL,
                        mydeaths = "deaths",
                        mypops = "pop",
                        myprops = "fraction",
+                       group_by = NULL,
                        ci = 0.95){
 
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
   istart <- iend <- irank <- ilength <- mx <- qx <- lx <- dx <- Lx <- Tx <- ex <- NULL
   ax <- mx_upper <- mx_lower <- mx_se <- qnorm <- qx_variance <- px_variance <- NULL
   ex_temp <- ex_temp_cumsum <- ex_variance <- ex_se <- ex_lower <- ex_upper <- NULL
-  ordered_cols <- NULL
+  ordered_cols <- newdeaths <- original_order <- NULL
 
   # Get name of the data.frame/data.table ----
   ph.dataname <- deparse(substitute(ph.data))
 
   # Check arguments ----
-  if(!is.null(ph.data)){
-    if(!is.data.frame(ph.data)){
-      stop("'ph.data' must be the unquoted name of a data.frame or data.table")
-    }
-    if(is.data.frame(ph.data) && !data.table::is.data.table(ph.data)){
-      data.table::setDT(ph.data)
-    }
-  } else {stop("'ph.data', the name of a data.frame or data.table with population and death data, must be specified")}
+    # ph.data ----
+      if(!is.null(ph.data)){
+        if(!is.data.frame(ph.data)){
+          stop("\n\U0001f47f 'ph.data' must be the unquoted name of a data.frame or data.table")
+        }
+        if(is.data.frame(ph.data) && !data.table::is.data.table(ph.data)){
+          data.table::setDT(ph.data)
+        }
+      } else {stop("\n\U0001f47f 'ph.data', the name of a data.frame or data.table with population and death data, must be specified")}
 
+    # group_by ----
+      if(!is.null(group_by)){
+        group_col_error <- setdiff(group_by, names(ph.data))
+        if(length(group_col_error) > 0){stop(paste0("\U0001f6d1\n The following `group_by` values are not column names in `ph.data`: ", paste0(group_col_error, collapse = ', '), "."))}
+      }
 
-  if(myages == "myages"){
-    stop(paste0("If the argument myages == 'myages', R will get confused and angry. Please rename the column 'myages' and run again."))
-  }
-  if(!myages %in% names(ph.data)){
-    stop(paste0("'myages' (", myages, ") is not the name of a column in 'ph.data'."))}
-  if(nrow(ph.data[!is.na(get(myages))]) != nrow(ph.data[!is.na(get(myages)) & get(myages) %like% "[0-9]-[0-9]|[0-9]\\+"])){
-    stop(paste0("The values in 'myages' (i.e., ", myages, ") must be in the form #-# or #+, e.g., '10-15' or '85+'"))}
-  if(nrow(ph.data[get(myages) %like% "[0-9]\\+"]) != 1){
-    stop(paste0("The final age in 'myages' (i.e., ", myages, ") must be in the form #+, e.g., '85+' or '90+'"))}
-  if(nrow(ph.data) != length(unique(ph.data[[myages]]))){
-    stop(paste0("The values in 'myages' (i.e., ", myages, ") must be unique"))}
+    # myages ----
+      if(myages == "myages"){
+        stop(paste0("\n\U0001f47f If the argument myages == 'myages', R will get confused and angry. Please rename the column 'myages' and run again."))
+      }
 
-  if(mypops == "mypops"){
-    stop(paste0("If the argument mypops == 'mypops', R will get confused and angry. Please rename the column 'mypops' and run again."))
-  }
-  if(!mypops %in% names(ph.data)){
-    stop(paste0("'mypops' (", mypops, ") is not the name of a column in 'ph.data'."))}
-  if(!is.numeric(ph.data[[mypops]])){
-    stop(paste0("'mypops' (i.e., ", mypops, ") must be of class == numeric"))}
+      if(!myages %in% names(ph.data)){
+        stop(paste0("\n\U0001f47f 'myages' (", myages, ") is not the name of a column in 'ph.data'."))}
 
-  if(mydeaths == "mydeaths"){
-    stop(paste0("If the argument mydeaths == 'mydeaths', R will get confused and angry. Please rename the column 'mydeaths' and run again."))
-  }
-  if(!mydeaths %in% names(ph.data)){
-    stop(paste0("'mydeaths' (", mydeaths, ") is not the name of a column in 'ph.data'."))}
-  if(!is.numeric(ph.data[[mydeaths]])){
-    stop(paste0("'mydeaths' (i.e., ", mydeaths, ") must be of class == numeric"))}
-  if(nrow(ph.data[is.na(get(myages)) & !is.na(get(mydeaths))]) > 1 ){
-    stop(paste0("'ph.data' (i.e., ", ph.dataname, ") can only have 1 row with deaths where the myages is NA."))}
+      if(nrow(ph.data[!is.na(get(myages))]) != nrow(ph.data[!is.na(get(myages)) & get(myages) %like% "[0-9]-[0-9]|[0-9]\\+"])){
+        stop(paste0("\n\U0001f47f The values in 'myages' (i.e., ", myages, ") must be in the form #-# or #+, e.g., '10-15' or '85+'"))}
 
-  if(myprops == "myprops"){
-    stop(paste0("If the argument myprops == 'myprops', R will get confused and angry. Please rename the column 'myprops' and run again."))
-  }
-  if(!myprops %in% names(ph.data)){
-    stop(paste0("'myprops' (", myprops, ") is not the name of a column in 'ph.data'."))}
-  if(!is.numeric(ph.data[[myprops]])){
-    stop(paste0("'myprops' (i.e.,", myprops, ") must be of class == numeric"))}
-  if(nrow(ph.data[!get(myprops) %between% 0:1]) > 0){
-    stop(paste0("'myprops' (i.e., ", ax, ") should be a proportion (i.e., it must be between 0 & 1)"))}
+      # check that myages is unique per combination of values in group_by
+        if (is.null(group_by)) {
+          if(nrow(ph.data) != length(unique(ph.data[[myages]]))){
+            stop(paste0("\n\U0001f47f The values in 'myages' (i.e., ", myages, ") must be unique"))}
+        } else {
+          # Create a temporary data.table to check for duplicates
+          temp <- ph.data[, list(count = .N), by = c(myages, group_by)]
+          # Check if any group has more than one entry (which would mean a duplicate)
+          if(any(temp$count > 1)){
+            stop(paste0("\n\U0001f47f The values in 'myages' (i.e., ", myages, ") must be unique for each combination of the values in the `group_by` variables"))}
+        }
 
-  if( !class(ci) %in% c("numeric")){
-    stop(paste0("`ci` (", ci, ") should be a two digit decimal between 0.01 & 0.99"))}
-  if(!(ci >= 0.01 & ci <= 0.99)){
-    stop(paste0("`ci` (", ci, ") should be a two digit decimal between 0.00 & 0.99"))}
+      if(sum(grepl("[0-9]\\+", unique(ph.data[[myages]]))) != 1){
+        stop(paste0("\n\U0001f47f The final age in 'myages' (i.e., ", myages, ") must be in the form #+, e.g., '85+' or '90+'. \nAll other values must be in the form #-#, e.g., 20-25"))}
+
+    # mypops ----
+      if(mypops == "mypops"){
+        stop(paste0("\n\U0001f47f If the argument mypops == 'mypops', R will get confused and angry. Please rename the column 'mypops' and run again."))
+      }
+      if(!mypops %in% names(ph.data)){
+        stop(paste0("\n\U0001f47f 'mypops' (", mypops, ") is not the name of a column in 'ph.data'."))}
+      if(!is.numeric(ph.data[[mypops]])){
+        stop(paste0("\n\U0001f47f 'mypops' (i.e., ", mypops, ") must be of class == numeric"))}
+
+    # mydeaths ----
+      if(mydeaths == "mydeaths"){
+        stop(paste0("\n\U0001f47f If the argument mydeaths == 'mydeaths', R will get confused and angry. Please rename the column 'mydeaths' and run again."))
+      }
+      if(!mydeaths %in% names(ph.data)){
+        stop(paste0("\n\U0001f47f 'mydeaths' (", mydeaths, ") is not the name of a column in 'ph.data'."))}
+      if(!is.numeric(ph.data[[mydeaths]])){
+        stop(paste0("\n\U0001f47f 'mydeaths' (i.e., ", mydeaths, ") must be of class == numeric"))}
+      if(nrow(ph.data[is.na(get(myages)) & !is.na(get(mydeaths))]) > 1 ){
+        stop(paste0("\n\U0001f47f 'ph.data' (i.e., ", ph.dataname, ") can only have 1 row with deaths where the myages is NA."))}
+
+    # myprops ----
+      if(myprops == "myprops"){
+        stop(paste0("\n\U0001f47f If the argument myprops == 'myprops', R will get confused and angry. Please rename the column 'myprops' and run again."))
+      }
+      if(!myprops %in% names(ph.data)){
+        stop(paste0("\n\U0001f47f 'myprops' (", myprops, ") is not the name of a column in 'ph.data'."))}
+      if(!is.numeric(ph.data[[myprops]])){
+        stop(paste0("\n\U0001f47f 'myprops' (i.e.,", myprops, ") must be of class == numeric"))}
+      if(nrow(ph.data[!get(myprops) %between% 0:1]) > 0){
+        stop(paste0("\n\U0001f47f 'myprops' (i.e., ", ax, ") should be a proportion (i.e., it must be between 0 & 1)"))}
+
+    # ci ----
+      if( !class(ci) %in% c("numeric")){
+        stop(paste0("\n\U0001f47f `ci` (", ci, ") should be a two digit decimal between 0.01 & 0.99"))}
+      if(!(ci >= 0.01 & ci <= 0.99)){
+        stop(paste0("\n\U0001f47f `ci` (", ci, ") should be a two digit decimal between 0.00 & 0.99"))}
 
   # Copy ph.data to prevent changing original by reference ----
-  ph.data <- data.table::setDT(data.table::copy(ph.data))
+    ph.data <- data.table::setDT(data.table::copy(ph.data))
 
   # Get name of pre-existing variables ----
-  orig_cols <- data.table::copy(names(ph.data))
+    orig_cols <- data.table::copy(names(ph.data))
 
   # Split myages to create intervals ----
-  ph.data[,c("istart", "iend") := tstrsplit(gsub("\\+", "", get(myages)), "-")]
-  ph.data[, c("istart", "iend") := lapply(.SD, as.integer), .SDcols = c("istart", "iend")]
-  ph.data[, irank := rank(istart)]
-  setorder(ph.data, irank) # critical that table is sorted from youngest to oldest
-  ph.data[, ilength := iend - istart]
-  ph.data[is.na(iend), ilength := 100-istart] # adjustment for final interval
+    ph.data[,c("istart", "iend") := tstrsplit(gsub("\\+", "", get(myages)), "-")]
+    ph.data[, c("istart", "iend") := lapply(.SD, as.integer), .SDcols = c("istart", "iend")]
+    if(is.null(group_by)){
+      ph.data[, irank := rank(istart)]
+        setorder(ph.data, istart) # critical that table is sorted from youngest to oldest
+    }else{
+        ph.data[, irank := rank(istart), group_by]
+        setorderv(ph.data, c(group_by, 'istart'))
+      }
+    ph.data[, ilength := iend - istart]
+    ph.data[is.na(iend), ilength := 100-istart] # adjustment for final interval
 
   # Distribute deaths with unknown age proportionately among deaths with known ages ----
-  if(nrow(ph.data[is.na(get(myages)) & !is.na(get(mydeaths))]) > 0){
-    deaths.unk.age <- ph.data[is.na(get(myages))][[mydeaths]]  # count num of deaths with unknown age
-    ph.data <- ph.data[!is.na(get(myages))] # delete rows from summary table with unknown age
-    ph.data[, paste0(mydeaths) := get(mydeaths) + (deaths.unk.age * get(mydeaths)/(sum(ph.data[[mydeaths]])))] # distribute unknown death
-  }
+    # Create a simple function for a table of unique demographics
+      distribute_deaths <- function(ph.data.sub, myages, mydeaths) {
+        if(nrow(ph.data.sub[is.na(get(myages)) & !is.na(get(mydeaths))]) > 0){
+          deaths.unk.age <- sum(ph.data.sub[is.na(get(myages)), get(mydeaths)], na.rm = TRUE)  # count num of deaths with unknown age
+          ph.data.sub <- ph.data.sub[!is.na(get(myages))] # delete rows from summary table with unknown age
+          # Distribute unknown death among rows with ages
+          ph.data.sub[, newdeaths := get(mydeaths) + (deaths.unk.age * get(mydeaths) / sum(ph.data.sub[[mydeaths]])), by = list(get(myages))]
+          ph.data.sub[, (mydeaths) := NULL] # drop original death count b/c to be replaced by newdeaths
+          setnames(ph.data.sub, 'newdeaths', mydeaths)
+        }
+        return(ph.data.sub)
+      }
+
+    # Use the distribute_deaths function
+      if(is.null(group_by)){
+        ph.data <- distribute_deaths(ph.data.sub = ph.data, myages = myages, mydeaths = mydeaths)
+      } else {
+        ph.split <- split(ph.data, by = group_by) # create a list of tables with unique combo of group_by values
+        ph.data <- rbindlist(lapply(ph.split,
+                               FUN = function(x) distribute_deaths(ph.data.sub = x, myages = myages, mydeaths = mydeaths)), use.names = T)
+      }
 
   # Check that beginning of each interval == end of previous interval ----
-  if( nrow(ph.data[shift(iend, n = 1L, type = "lag") == istart]) != (nrow(ph.data)-1)){
-    stop(paste0("The values in 'myages' (i.e., ", myages, ") are misspecified.
-                    The start of each interval must be the end of the previous interval"))
-  }
+    if (is.null(group_by)) {
+      invalid_rows <- ph.data[, list(rownumber = .I[shift(iend, n = 1L, type = "lag") != istart
+                                                 & !is.na(shift(iend, n = 1L, type = "lag"))])]
+      } else {
+        invalid_rows <- ph.data[, list(rownumber = .I[shift(iend, n = 1L, type = "lag") != istart
+                                               & !is.na(shift(iend, n = 1L, type = "lag"))]),
+                            by = c(group_by)]
+      }
+
+    if(nrow(invalid_rows) > 0){
+      stop(paste0("\n\U0001f47f The values in 'myages' (i.e., ", myages, ") are misspecified.",
+      "\nThe start of each interval must be the end of the previous interval"))
+    }
 
   # Calculate metrics for life table ----
   # ax ... the proportion (i.e., fraction) of person-years lived in the interval by those who died in the interval ----
-  # Note that CDC approximates with 0.5 for 1 year intervals, but I have real data so will use that instead when possible.
-  ph.data[get(myprops) == 0, paste0(myprops) := 0.5] # when zero deaths in age bin, approximate fraction half the time period
-  ph.data[irank == max(irank), paste0(myprops) := NA] # fraction for oldest age bin is set to NA following WA DOH example for Adams County
+    # Note that CDC approximates with 0.5 for 1 year intervals, but I have real data so will use that instead when possible.
+    ph.data[get(myprops) == 0, paste0(myprops) := 0.5] # when zero deaths in age bin, approximate fraction half the time period
+    if(is.null(group_by)){
+      ph.data[irank == max(irank), paste0(myprops) := NA]} else { # fraction for oldest age bin is set to NA following WA DOH example for Adams County
+        ph.data[irank == max(irank), paste0(myprops) := NA, group_by]
+      }
 
   # mx ... calculate the age specific death rate ----
   # mx = #_deaths_in_age_group / #_person_years_lived_in_age_group
-  # ph.data[, mx := deaths / ((ilength*(pop-deaths)) + (ilength*ax*deaths))] # Chiang ch 2, formula 1.2
-  ph.data[, mx := get(mydeaths)/get(mypops)] # Chiang 2.4 ... "age specific death rate can be estimated from ..."
-  ph.data[mx > 1, mx := 1] # due to small numbers, it is possible for #deaths>#pop, especially for single old age groups. Probability > 100% illogical.
+    # ph.data[, mx := deaths / ((ilength*(pop-deaths)) + (ilength*ax*deaths))] # Chiang ch 2, formula 1.2
+    ph.data[, mx := get(mydeaths)/get(mypops)] # Chiang 2.4 ... "age specific death rate can be estimated from ..."
+    ph.data[mx > 1, mx := 1] # due to small numbers, it is possible for #deaths>#pop, especially for single old age groups. Probability > 100% illogical.
 
-  ph.data[, mx_upper := qgamma((ci+(1-ci)/2), get(mydeaths) + 1) / get(mypops)] # exact Poisson upper CI
-  ph.data[, mx_se := (mx_upper - mx) / qnorm((ci+(1-ci)/2))] # reverse_engineer poisson standard error
-  ph.data[, mx_upper := NULL]
+    ph.data[, mx_upper := qgamma((ci+(1-ci)/2), get(mydeaths) + 1) / get(mypops)] # exact Poisson upper CI
+    ph.data[, mx_se := (mx_upper - mx) / qnorm((ci+(1-ci)/2))] # reverse_engineer poisson standard error
+    ph.data[, mx_upper := NULL]
 
   # qx ... probability of dying in the interval ----
-  ph.data[, qx := ilength*mx / (1 + ((1-get(myprops))*ilength*mx))] # Chiang formula 1.4 & 2.3
-  ph.data[irank == max(irank) | qx > 1, qx := 1] # probability of death for those in final age group is always 100%
+    ph.data[, qx := ilength*mx / (1 + ((1-get(myprops))*ilength*mx))] # Chiang formula 1.4 & 2.3
+    ph.data[qx > 1, qx := 1]
+
+    if(is.null(group_by)){
+      ph.data[irank == max(irank), qx := 1] # probability of death for those in final age group is always 100%
+      } else { ph.data[irank == max(irank), qx := 1, group_by]}
 
   # lx ... # alive at the start of the age interval ----
-  ph.data[1, lx := 100000] # start with hypothetical pop of 100K
-  for(ii in seq(2, nrow(ph.data), 1)){
-    ph.data[ii, lx := ph.data[ii-1]$lx * (1-ph.data[ii-1]$qx) ]
-  }
+    # create mini-function to calculate lx
+      create_lx <- function(ph.data.sub){
+        ph.data.sub[1, lx := 100000] # start with hypothetical pop of 100K
+          for(ii in seq(2, nrow(ph.data.sub), 1)){
+            ph.data.sub[ii, lx := ph.data.sub[ii-1]$lx * (1-ph.data.sub[ii-1]$qx) ]
+          }
+        return(ph.data.sub)
+      }
+    # use create_lx()
+      if(is.null(group_by)){
+        ph.data <- create_lx(ph.data.sub = ph.data)
+      } else {
+        ph.split <- split(ph.data, by = group_by) # create a list of tables with unique combo of group_by values
+        ph.data <- rbindlist(lapply(ph.split,
+                                    FUN = function(x) create_lx(ph.data.sub = x)), use.names = T)
+      }
 
   # dx ... # deaths in age interval ----
-  ph.data[, dx := qx * lx] # same as ph.data[, dx := lx - shift(lx, n = 1L, type = "lead")]
+    ph.data[, dx := qx * lx] # same as ph.data[, dx := lx - shift(lx, n = 1L, type = "lead")]
 
   # Lx ... calculate person-years lived in age interval ----
-  # ph.data[!grepl("^0", age.range), Lx := lx - (0.5*dx)] # approximation, approximation doesn't apply to first year
-  ph.data[, Lx := ilength*(lx - dx) + (ilength*get(myprops)*dx)] # Chiang formula 2.3 & 2.7
-  ph.data[irank == max(irank), Lx := dx / mx] # Chiang formula 3.10, for final interval which is open ended
+    # ph.data[!grepl("^0", age.range), Lx := lx - (0.5*dx)] # approximation, approximation doesn't apply to first year
+    ph.data[, Lx := ilength*(lx - dx) + (ilength*get(myprops)*dx)] # Chiang formula 2.3 & 2.7
+    if(is.null(group_by)){
+      ph.data[irank == max(irank), Lx := dx / mx] # Chiang formula 3.10, for final interval which is open ended
+    }else{ph.data[irank == max(irank), Lx := dx / mx, group_by]}
 
   # Tx ... calculate total number of person-years lived over start of age interval ----
-  # this is a sum of all Lx for the same age range or older
-  for(ii in seq(1, nrow(ph.data), 1) ){
-    ph.data[ii, Tx := sum(ph.data[ii:nrow(ph.data)]$Lx)]
-  }
-  ph.data[irank == max(irank), Tx := Lx] # Chiang formula 3.12, for final interval which is open ended
+    # this is a sum of all Lx for the same age range or older
+    # table is sorted from youngest to oldest, so reverse Lx before applying cumulative sum
+    # then need to reverse the cumulative sum
+    if(is.null(group_by)){
+      ph.data[, Tx := rev(cumsum(rev(Lx)))]
+      ph.data[irank == max(irank), Tx := Lx] # Chiang formula 3.12, for final interval which is open ended
+    } else {
+      ph.data[, Tx := rev(cumsum(rev(Lx))), group_by]
+      ph.data[irank == max(irank), Tx := Lx, group_by] # Chiang formula 3.12, for final interval which is open ended
+    }
 
   # ex ... expectation of life (aka life expectancy) at start of age interval ----
-  ph.data[, ex := Tx / lx]
-  ph.data[irank == max(irank), ex := 1/mx] # Chiang formula 3.12, for final interval which is open ended
+    ph.data[, ex := Tx / lx]
+    if(is.null(group_by)){
+      ph.data[irank == max(irank), ex := 1/mx] # Chiang formula 3.12, for final interval which is open ended
+    } else {
+      ph.data[irank == max(irank), ex := 1/mx, group_by]
+    }
 
   # Calculate uncertainty for life expectancy ----
   ph.data[, qx_variance := ((qx^2)*(1-qx)) / get(mydeaths)] # Chiang 2.2 variance of qx
-    # when have zero deaths, would have 0/0 (undefined) as variance, so ascribe the mean of the
-    # three lowest measured variances (except zero for 85+)
-      low.variances <- sort(ph.data[!is.nan(qx_variance) & qx_variance != 0]$qx_variance)
-      if(length(low.variances) < 0.5*nrow(ph.data)){
-        warning(paste0("\U0001f47f \nYou have ", nrow(ph.data[is.nan(qx_variance)]), " rows where the variance of the probability of dying in the interval is NaN, probably due to zero deaths.
-        This is more than 50% of your age groups, which means your population is likely too small for meaningful life expectancy calculations.
-        The variances will be filled with the median of the measured variances, but be cautious in using / interpreting the estimates."))}
-      ph.data[is.nan(qx_variance), qx_variance := median(low.variances)]
+    # when have zero deaths, would have 0/0 (undefined) as variance, so ascribe the median of the
+    # observed variances (except zero for 85+)
+    # first create small function
+      fill_variance <- function(ph.data.sub){
+        obs.variances <- sort(ph.data.sub[!is.nan(qx_variance) & qx_variance != 0]$qx_variance)
+        if(length(obs.variances) < 0.5*nrow(ph.data.sub)){
+          warning(paste0("\U00026A0 You have ", nrow(ph.data.sub[is.nan(qx_variance)]), " rows where the variance of the probability of dying in the interval is NaN, probably due to zero deaths.",
+                         "\n This is more than 50% of your age groups, which means your population is likely too small for meaningful life expectancy calculations.",
+                         "\n The variances will be filled with the median of the measured variances, but be cautious in using / interpreting the estimates.",
+                         "\n If this message is repeated, it is because this problem occurs in more than one of your tables defined by the `group_by` argument."))}
+        ph.data.sub[is.nan(qx_variance), qx_variance := median(obs.variances)]
+        return(ph.data.sub)
+      }
+
+    # Then apply fill.variance() function
+      if(is.null(group_by)){
+        ph.data <- fill_variance(ph.data.sub = ph.data)
+      } else {
+        ph.split <- split(ph.data, by = group_by) # create a list of tables with unique combo of group_by values
+        ph.data <- rbindlist(lapply(ph.split,
+                                    FUN = function(x) fill_variance(ph.data.sub = x)), use.names = T)
+      }
+
   ph.data[, px_variance := qx_variance] # Chiang 3.6, variance prob(survival) == variance of prob(death)
-  ph.data[, ex_temp := (lx^2) * ((((1-get(myprops))*ilength) + shift(ex, 1L, type = "lead"))^2) * px_variance] # Chiang page 137
+
+  if(is.null(group_by)){
+      ph.data[, ex_temp := (lx^2) * ((((1-get(myprops))*ilength) + shift(ex, 1L, type = "lead"))^2) * px_variance] # Chiang page 137
+  } else {
+    ph.split <- split(ph.data, by = group_by) # create a list of tables with unique combo of group_by values
+    ph.data <- rbindlist(lapply(ph.split,
+                                FUN = function(x){
+                                  x[, ex_temp := (lx^2) * ((((1-get(myprops))*ilength) + shift(ex, 1L, type = "lead"))^2) * px_variance]
+                                  return(x)} ), use.names = T)}
 
   # reverse cumulative sum, so flip, get cumsum, then flip back
-  setorder(ph.data, -irank)
-  ph.data[!is.na(ex_temp), ex_temp_cumsum := cumsum(ex_temp)] # reverse cumulative sum
-  setorder(ph.data, irank)
+    # get original order
+      ph.data[, original_order := .I]
+
+    # sort by rank (and group_by if needed)
+      setorderv(setorder(ph.data, -irank), group_by)
+
+    # generate cumulative sum
+      ph.data[!is.na(ex_temp), ex_temp_cumsum := cumsum(ex_temp),
+              by = if (is.null(group_by)) NULL else mget(group_by)]
+
+    # restore order
+      setorder(ph.data, original_order)
+      ph.data[, original_order := NULL]
 
   # divide ex_temp_cumsum by lx^2 to get sample variance
-  ph.data[, ex_variance := ex_temp_cumsum / lx^2]
+    ph.data[, ex_variance := ex_temp_cumsum / lx^2]
 
   # variance for oldest age interval cannot be calculated using the Chiang method
   # and is assumed to be zero because qx for the oldest interval == 1.00.
@@ -2059,7 +2233,19 @@ life_table <- function(ph.data = NULL,
   # authors that the printed formula was incorrect.
   # ph.data[irank == max(irank), ex_variance := ((lx^2)/(mx^4)) * mx_se^2]
   # The replacement formula below was derived from careful study of Silcocks' original paper
-  ph.data[irank == max(irank), ex_variance := (0.5*ph.data[irank == max(irank)-1]$Lx) * (4 / get(mydeaths)*(mx^2))]
+  ph.data[irank == max(irank),
+          ex_variance := (0.5*ph.data[irank == max(irank)-1]$Lx) *
+            (4 / get(mydeaths)*(mx^2))]
+
+
+  if(is.null(group_by)){
+    ph.data[irank == max(irank), ex_variance := (0.5*ph.data[irank == max(irank)-1]$Lx) * (4 / get(mydeaths)*(mx^2))]
+  } else {
+    ph.split <- split(ph.data, by = group_by) # create a list of tables with unique combo of group_by values
+    ph.data <- rbindlist(lapply(ph.split,
+                                FUN = function(x){
+                                  x[irank == max(irank), ex_variance := (0.5*x[irank == max(irank)-1]$Lx) * (4 / get(mydeaths)*(mx^2))]
+                                  return(x)} ), use.names = T)}
 
   ph.data[, ex_se := sqrt(ex_variance)]
   zscore = qnorm(1 - (1-ci)/2) # since two sided, need to split the alpha for upper and lower tails
@@ -2091,46 +2277,54 @@ life_table <- function(ph.data = NULL,
 #' Prepare death data for use with life_table()
 #'
 #' @description
-#' Processes line level death data to create a standardized collapsed/
-#' aggregated data.table of death counts by age bin and demographics.
+#' Processes individual-level death data to create a standardized data table.
+#' This table is collapsed/aggregated by age bin and optionally, by
+#' demographics, for use with `rads::life_table()`.
 #'
+#' @param ph.data a data.table or data.frame. Must contain individual-level
+#' death data with the date of birth, date of death, and any demographics which
+#' you want to use to aggregate the resulting table.
 #'
-#' @param DTx a data.table or data.frame. Must contain line level death data
-#' with the date of birth, date of death, and any demographic which you want
-#' to use to aggregate the resulting table.
+#' The default value is \code{ph.data = NULL}.
 #'
-#' Note!! Extraneous columns should not
-#' be passed to this argument since it will attempt to aggregate results by
-#' all the columns it receives (except for dates of birth and death).
-#'
-#' @param cuts character vector of any length greater than 1 (typically of
+#' @param cuts integer vector of any length greater than 1 (typically of
 #' length ~ 20). It specifies the cut-points for the age groupings to be created
-#' in the data. Each number represents the beginning of an interval and the
-#' final cut is through the maximum age. For example, when cuts = c(0, 5, 10, 20
-#' ), the data will be stratified into ages [0,5), [5,10), [10,20), and [20,
+#' in the data. Each number represents the beginning of an interval and the final
+#' cut extends through to the maximum age observed. For example, when cuts =
+#' c(0, 5, 10, 20), the data will be grouped into ages [0,5), [5,10), [10,20), and [20,
 #' infinity).
 #'
-#' The default == c(0, 1, 5, 10, 15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65,
-#' 70, 75, 80, 85), which creates the standard age groupings used by WA DOH.
+#' The default is \code{cuts= c(0, 1, 5, 10, 15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65,
+#' 70, 75, 80, 85)}, which creates the standard age groupings used by WA DOH.
 #'
-#' @param dobvar character vector of length one identifying a column with the
-#' the decedents date of birth. The referenced column must be of class
+#' @param dobvar character vector of length one identifying a column with
+#' the decedent's date of birth. The referenced column must be of class
 #' 'date' or class 'character' in the format "YYYY-MM-DD" or "YYYY/MM/DD."
 #'
-#' The default == "date_of_birth", which is the dob variable in Azure server 16
-#' (death.final_analytic).
+#' The default is \code{dobvar = "date_of_birth"}, which is the dob variable
+#' available via `rads::get_data_death()`.
 #'
-#' @param dodvar character vector of length one identifying a column with the
-#' the decedents date of death. The referenced column must be of class
+#' @param dodvar character vector of length one identifying a column with
+#' the decedent's date of death. The referenced column must be of class
 #' 'date' or class 'character' in the format "YYYY-MM-DD" or "YYYY/MM/DD."
 #'
-#' The default == "date_of_death", which is the dod variable in Azure server 16
-#' ((death.final_analytic)).
+#' The default is \code{dodvar = "date_of_death"}, which is the dod variable
+#' available via `rads::get_data_death()`.
 #'
-#' @return a data.table with deaths aggregated by any demographics included in
-#' DTx as well as `ages` (age strata), `deaths` (deaths per demographic group
-#' and age strata), and `fraction` (the mean fraction of the age interval lived
-#' by those who died in that interval).
+#' @param group_by a character vector of indeterminate length. This is used to
+#' specify all the variables by which you want to group (a.k.a. stratify) the
+#' results. For example, if you specified \code{group_by = c('chi_sex',
+#' 'chi_race_6')}, the results would be grouped by each combination of sex
+#' and race. If you leave it blank (i.e., `group_by = NULL`), it will only
+#' provide the death counts and death fractions by age group
+#' described by `cuts`.
+#'
+#' The default is \code{group_by = NULL}
+#'
+#' @return a data.table with deaths aggregated by any demographics specified in
+#' the `group_by` argument, as well as `ages` (age group), `deaths` (deaths per
+#' demographic group and age group), and `fraction` (the mean fraction of the
+#' age interval lived by those who died in that interval).
 #'
 #' @details
 #' Note that population data (from \code{\link{get_population}}) must be merged
@@ -2140,115 +2334,131 @@ life_table <- function(ph.data = NULL,
 #' @export
 #' @name life_table_prep
 #' @examples
+#' \donttest{
 #'  # create data set ----
-#'  set.seed(98104)
-#'  eg1 <- data.table::data.table(
-#'    date_of_death = rep(as.Date("2020-01-01"), 10000) + sample(0:365, 10000, replace = TRUE),
-#'    days_lived = round2(rnorm(10000, mean = 29930, sd = 11000), 0),
-#'    race_eth = rep_len(c("AIAN", "Asian", "Black", "Hispanic", "NHPI", "White"), 1000),
-#'    year = 2020
-#'  )
-#'  eg1[days_lived <0, days_lived := 0] # can't live negative days
-#'  eg1[days_lived >43800, days_lived := 365*sample(35:100, 1)] # cap lifespan at 120 years
-#'  eg1[, date_of_birth := date_of_death - days_lived]
-#'  eg1[, days_lived := NULL]
-
+#' set.seed(98104)
+#'
+#' deaths <- data.table::data.table(
+#'   date_of_death = as.Date("2020-01-01") + sample(0:365, 10000, replace = TRUE),
+#'   race_eth = rep_len(c("AIAN", "Asian", "Black", "Hispanic", "NHPI", "White"),
+#'   length.out = 10000),
+#'   gender = sample(c('Male', 'Female'), 10000, replace = TRUE),
+#'   year = 2020
+#' )
+#' # Calculate a date of birth based on a maximum age of 120 years (~43800 days)
+#' deaths[, date_of_birth := date_of_death - sample(1:43800, 10000, replace = TRUE)]
+#'
 #'  # process with life_table_prep ----
-#'  eg1_output <- life_table_prep(DTx = eg1)
-#'  eg1_output[]
+#'  output1 <- life_table_prep(ph.data = deaths)
+#'  head(output1)
+#'
+#'  # process with life_table_prep using group_by argument----
+#'  output2 <- life_table_prep(ph.data = deaths, group_by = c('gender', 'race_eth'))
+#'  head(output2)
+#' }
 #'
 #' @import data.table
 #' @importFrom lubridate years add_with_rollback
 #'
-life_table_prep <- function(DTx = NULL,
+life_table_prep <- function(ph.data = NULL,
                             cuts = c(0, 1, 5, 10, 15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85),
                             dobvar = "date_of_birth",
-                            dodvar = "date_of_death"){
+                            dodvar = "date_of_death",
+                            group_by = NULL){
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
   orig_cols <- dob <- dod <- dob_na <- dob_na <- death_age <- tempz <- NULL
   end <- start <- interval <- age.lab <- ages <- length.interval <- NULL
-  interval.start <- interval.end <- fraction <- DTxsum <- '.' <- NULL
+  interval.start <- interval.end <- fraction <- ph.datasum <- '.' <- NULL
 
   # Check arguments ----
-  if(!is.null(DTx)){
-    if(!is.data.frame(DTx)){
-      stop("'DTx' must be the unquoted name of a data.frame or data.table")
-    }
-    if(is.data.frame(DTx) && !data.table::is.data.table(DTx)){
-      data.table::setDT(DTx)
-    }
-  } else {stop("'DTx', the name of a data.frame or data.table with population and death data, must be specified")}
+    # ph.data ----
+      if(!is.null(ph.data)){
+        if(!is.data.frame(ph.data)){
+          stop("\n\U0001f47f 'ph.data' must be the unquoted name of a data.frame or data.table")
+        }
+        if(is.data.frame(ph.data) && !data.table::is.data.table(ph.data)){
+          data.table::setDT(ph.data)
+        }
+      } else {stop("\n\U0001f47f 'ph.data', the name of a data.frame or data.table with population and death data, must be specified")}
 
-  if(length(intersect(c("start", "end", "dob", "dod"), names(DTx))) > 1){
-    warning("DTx has a column named 'start', 'end', 'dob', or 'dod' which was overwritten by this function. \nTo preserve your columns, rename them, and run this function again.")}
+      if(length(intersect(c("start", "end", "dob", "dod"), names(ph.data))) > 1){
+        warning("ph.data has a column named 'start', 'end', 'dob', or 'dod' which was overwritten by this function. \nTo preserve your columns, rename them, and run this function again.")}
 
-  DTx = data.table::setDT(data.table::copy(DTx)) # copy at start to prevent changes by reference
+      ph.data = data.table::setDT(data.table::copy(ph.data)) # copy at start to prevent changes by reference
 
+    # cuts ----
+      if(isTRUE(any(is.na(cuts))) || is.null(cuts) || !is.numeric(cuts)){stop("\n\U0001f47f 'cuts' must be specified as a numeric vector and cannot contain any NA's.")}
+      if(length(cuts) <= 1){stop("\n\U0001f47f 'cuts' should be a numeric vector of length >1 and typically of length ~20.")}
+      if(min(cuts) < 0){stop("\n\U0001f47f The minimum age in 'cuts' should be zero.")}
+      if(max(cuts) > 100){warning("\nYou're maximum age in 'cuts' is greater than 100. \nYou do not have to change this, but know that ages are top coded at 100.")}
 
-  if(isTRUE(any(is.na(cuts))) || is.null(cuts) || !is.numeric(cuts)){stop("\n'cuts' must be specified as a numeric vector and cannot contain any NA's.")}
-  if(length(cuts) <= 1){stop("\n'cuts' should be a numeric vector of length >1 and typically of length ~20.")}
-  if(min(cuts) < 0){stop("\nThe minimum age in 'cuts' should be zero.")}
-  if(max(cuts) > 100){warning("\nYou're maximum age in 'cuts' is greater than 100. \nYou do not have to change this, but know that ages are top coded at 100.")}
+    # dobvar ----
+      if(dobvar == "dobvar"){
+        stop(paste0("\n\U0001f47f If the argument dobvar == 'dobvar', R will get confused and angry. Please rename the column 'dobvar' and run again."))
+      }
+      if(!dobvar %in% names(ph.data)){stop("\n\U0001f47f 'dobvar' must specify the name of a date of birth column that exists in ph.data.")}
 
+    # dodvar ----
+      if(dodvar == "dodvar"){
+        stop(paste0("\n\U0001f47f If the argument dodvar == 'dodvar', R will get confused and angry. Please rename the column 'dodvar' and run again."))
+      }
+      if(!dodvar %in% names(ph.data)){stop("\n\U0001f47f 'dodvar' must specify the name of a date of death column that exists in ph.data.")}
 
-  if(dobvar == "dobvar"){
-    stop(paste0("If the argument dobvar == 'dobvar', R will get confused and angry. Please rename the column 'dobvar' and run again."))
-  }
-  if(!dobvar %in% names(DTx)){stop("'dobvar' must specify the name of a date of birth column that exists in DTx.")}
+      if(nrow(ph.data[get(dodvar) < get(dobvar)]) > 0){
+        warning(paste0("\nThere are ", nrow(ph.data[dodvar < dobvar]), " rows where 'dodvar' is less than 'dobvar'. \nThese date pairs had their values set to NA and will only contribute indirectly to the life_table calculations."))
+        ph.data[get(dodvar) < get(dobvar), paste0(dodvar) := NA]
+        ph.data[get(dodvar) < get(dobvar), paste0(dobvar) := NA]
+      }
 
+    # group_by ----
+      if(!is.null(group_by)){
+        group_col_error <- setdiff(group_by, names(ph.data))
+        if(length(group_col_error) > 0){stop(paste0("\U0001f6d1\nThe following `group_by` values are not column names in `ph.data`: ", paste0(group_col_error, collapse = ', '), "."))}
+      }
 
-  if(dodvar == "dodvar"){
-    stop(paste0("If the argument dodvar == 'dodvar', R will get confused and angry. Please rename the column 'dodvar' and run again."))
-  }
-  if(!dodvar %in% names(DTx)){stop("'dodvar' must specify the name of a date of death column that exists in DTx.")}
+  # Copy ph.data to prevent changing original by reference ----
+    orig_cols <- data.table::copy(names(ph.data))
 
-  if(nrow(DTx[get(dodvar) < get(dobvar)]) > 0){
-    warning(paste0("\nThere are ", nrow(DTx[dodvar < dobvar]), " rows where 'dodvar' is less than 'dobvar'. \nThese date pairs had their values set to NA and will only contribute indirectly to the life_table calculations."))
-    DTx[get(dodvar) < get(dobvar), paste0(dodvar) := NA]
-    DTx[get(dodvar) < get(dobvar), paste0(dobvar) := NA]
-  }
+  # Standardize dob and dod ----
+    ph.data[!is.na(get(dobvar)), dob := as.Date(get(dobvar))]
+    ph.data[!is.na(get(dodvar)), dod := as.Date(get(dodvar))]
 
-  # Copy DTx to prevent changing original by reference ----
-  orig_cols <- data.table::copy(names(DTx))
+    # confirm that dob and dod are legitimate
+    dob_na <- nrow(ph.data[is.na(dob)])/nrow(ph.data)
+    dod_na <- nrow(ph.data[is.na(dod)])/nrow(ph.data)
+    if(dob_na > 0.01){warning("More than 1% of the date of birth values are missing. \nPlease check that your variable is of class Date or is of class character in the form 'YYYY-MM-DD' or 'YYYY/MM/DD'. \nDeaths with unknown dob will be distributed proportionately among deaths with known dates of birth.")}
+    if(dod_na > 0.01){warning("More than 1% of the date of death values are missing. \nPlease check that your variable is of class Date or is of class character in the form 'YYYY-MM-DD' or 'YYYY/MM/DD'.")}
 
-  # standardize dob and dod ----
-  DTx[!is.na(get(dobvar)), dob := as.Date(get(dobvar))]
-  DTx[!is.na(get(dodvar)), dod := as.Date(get(dodvar))]
+  # Properly calculate age at death ----
+    ph.data[, death_age := rads::calc_age(dob, dod)]
 
-  # confirm that dob and dod are legitimate
-  dob_na <- nrow(DTx[is.na(dob)])/nrow(DTx)
-  dod_na <- nrow(DTx[is.na(dod)])/nrow(DTx)
-  if(dob_na > 0.01){warning("More than 1% of the date of birth values are missing. \nPlease check that your variable is of class Date or is of class character in the form 'YYYY-MM-DD' or 'YYYY/MM/DD'. \nDeaths with unknown dob will be distributed proportionately among deaths with known dates of birth.")}
-  if(dod_na > 0.01){warning("More than 1% of the date of death values are missing. \nPlease check that your variable is of class Date or is of class character in the form 'YYYY-MM-DD' or 'YYYY/MM/DD'.")}
+  # Mark the age bins and time intervals specified by 'cuts' ----
+    ph.data[,  ages := cut(death_age, cuts, right = F)]
+    ph.data[, ages := gsub("\\[|\\]|\\)", "", ages)]
+    ph.data[, ages := gsub("\\,", "-", ages)]
+    ph.data[death_age >= max(cuts), ages := paste0(max(cuts), "+")]
 
-  # properly calculate age at death ----
-  DTx[, death_age := rads::calc_age(dob, dod)]
+  # Calculate proportion of interval lived within the interval in which the person died ----
+    ph.data[,  c("start", "end") := tstrsplit(gsub("\\+", "", ages), "-")]
+    ph.data[, c("start", "end") := lapply(.SD, as.integer), .SDcols = c("start", "end")]
+    ph.data[start == max(as.numeric(ph.data$start), na.rm = T), end := 100] # set max age == 100 because pop also tops out at 100
 
-  # mark the age bins and time intervals specified by 'cuts' ----
-  DTx[,  ages := cut(death_age, cuts, right = F)]
-  DTx[, ages := gsub("\\[|\\]|\\)", "", ages)]
-  DTx[, ages := gsub("\\,", "-", ages)]
-  DTx[death_age >= max(cuts), ages := paste0(max(cuts), "+")]
+    ph.data[, interval.start := lubridate::add_with_rollback(dob, lubridate::years(as.integer(start)))] # intervals starts at birthday + # of years for start of interval
+    ph.data[, interval.end := lubridate::add_with_rollback(dob, lubridate::years(1 + as.integer(end))) - 1] # end of interval is 1 day before birthday that would start next interval
 
-  # calculate proportion of interval lived within the interval in which the person died ----
-  DTx[,  c("start", "end") := tstrsplit(gsub("\\+", "", ages), "-")]
-  DTx[, c("start", "end") := lapply(.SD, as.integer), .SDcols = c("start", "end")]
-  DTx[start == max(as.numeric(DTx$start), na.rm = T), end := 100] # set max age == 100 because pop also tops out at 100
-
-  DTx[, interval.start := lubridate::add_with_rollback(dob, lubridate::years(as.integer(start)))] # intervals starts at birthday + # of years for start of interval
-  DTx[, interval.end := lubridate::add_with_rollback(dob, lubridate::years(1 + as.integer(end))) - 1] # end of interval is 1 day before birthday that would start next interval
-
-  DTx[, fraction := as.integer(dod - interval.start) / as.integer(interval.end - interval.start)]
-  DTx[fraction > 1, fraction := 1] # for oldest age group, can actually live > 100, but capped at 100 because of pop data, so force max prop to 1
+    ph.data[, fraction := as.integer(dod - interval.start) / as.integer(interval.end - interval.start)]
+    ph.data[fraction > 1, fraction := 1] # for oldest age group, can actually live > 100, but capped at 100 because of pop data, so force max prop to 1
 
   # collapse/aggregate  ----
-  collapse_cols <- c(setdiff(orig_cols, c(dobvar, dodvar)), "ages", "fraction")
-  DTx <- DTx[, .SD, .SDcols = collapse_cols]
-  DTxsum <- DTx[, .(deaths = .N, fraction = mean(fraction, na.rm = T)), by = setdiff(collapse_cols, "fraction")]
-  data.table::setorderv(DTxsum, c("ages", setdiff(collapse_cols, "ages")))
+  if(!is.null(group_by)){
+    collapse_cols <- c(group_by, "ages", "fraction")
+  } else {collapse_cols <- c("ages", "fraction")}
+  ph.data <- ph.data[, .SD, .SDcols = collapse_cols]
+  ph.datasum <- ph.data[, list(deaths = .N, fraction = mean(fraction, na.rm = T)), by = setdiff(collapse_cols, "fraction")]
+  data.table::setorderv(ph.datasum, c("ages", setdiff(collapse_cols, "ages")))
 
   # return the object from function ----
   #print("Note!! These aggregated deaths need to be merged with population data with the same demographics before running through the life_table() function.")
-  return(DTxsum)
+  return(ph.datasum)
 
 }

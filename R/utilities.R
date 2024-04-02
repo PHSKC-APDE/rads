@@ -927,7 +927,7 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
 get_xwalk <- function(geo1 = NA, geo2 = NA){
   # bindings for data.table/check global variables ----
   ref_get_xwalk <- input <- output <- lgd10 <- scd10 <- region10 <- tract10 <-
-    tract10_new <- `rads.data::x` <- x <- hra10 <- NULL
+    tract10_new <- x <- hra10 <- NULL
 
   # load xwalk table ----
   data("ref_get_xwalk", envir=environment()) # import ref_get_xwalk from /data as a promise
@@ -956,9 +956,8 @@ get_xwalk <- function(geo1 = NA, geo2 = NA){
   }
 
   # get crosswalk data ----
-  # xwalkdt <- copy(eval(parse(text=paste0('rads.data::', geodt$object))))
   neo <- geodt$object
-  xwalkdt = eval(substitute(rads.data::x, list(x = as.name(neo))))
+  xwalkdt <- eval(parse(text = paste0('rads.data::', neo))) #xwalkdt = eval(substitute(rads.data::x, list(x = as.name(neo))))
   string_clean(xwalkdt)
   keepers <- c(geodt$inputvar, geodt$outputvar)
   xwalkdt <- xwalkdt[, (keepers), with = FALSE] # alternative to xwalkdt[, ..keepers]
@@ -1071,6 +1070,10 @@ list_apde_data <- function(){
 #'  list_dataset_columns('hys', T)
 #' }
 list_dataset_columns <- function(dataset = NULL, year = 2021, mykey = 'hhsaw', analytic_only = F){
+
+  # visible bindings
+    ar <- NULL
+
   colname <- NULL
   opts = list_apde_data()
 
@@ -1670,7 +1673,7 @@ quiet <- function(myf) {
 tsql_validate_field_types <- function(ph.data = NULL, # R data.frame/data.table
                                 field_types = NULL ){ # named vector of tsql data types
 # Declare local variables used by data.table as NULL here to play nice with devtools::check() ----
-    Rtypes <- RtypesDT <- TSQLtypesDT <- combotypesDT <- NULL
+    Rtypes <- RtypesDT <- TSQLtypesDT <- combotypesDT <- std_type <- r_type <- tsql_type <- NULL
 
 # Validate arguments ----
   # ph.data
