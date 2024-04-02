@@ -1,12 +1,3 @@
----
-title: "get_data()"
-output:
-  rmarkdown::html_vignette: default
-  github_document: default
-vignette: >
-  %\VignetteIndexEntry{get_data}
-  %\VignetteEngine{knitr::knitr}
----
 
 ## Introduction
 
@@ -23,7 +14,7 @@ Begin by loading the [`rads`](https://github.com/PHSKC-APDE/rads) package/librar
 library(rads)
 ```
 
-The analytic ready birth data is stored in Azure Server 16 (`[birth].[final_analytic]`). The `get_data_birth()` function will allow you to pull data from the SQL server with minimal fuss. To see the possible arguments that you can pass, use the `args()` function by typing the following:
+The analytic ready birth data is stored in on Azure Server 16 (`[birth].[final_analytic]`). The `get_data_birth()` function will allow you to pull data from the SQL server with minimal fuss. To see the possible arguments that you can pass, use the `args()` function by typing the following:
 
 
 ```r
@@ -31,7 +22,8 @@ args(get_data_birth)
 ```
 
 ```
-## function (cols = NA, year = NA, kingco = T) 
+## function (cols = NA, year = NA, kingco = T, version = "final", 
+##     mykey = "hhsaw") 
 ## NULL
 ```
 
@@ -44,6 +36,10 @@ You can see that `get_data_birth` takes three possible arguments:
 2)  `year` \<\< a vector of the year or years of data that you want to load, e.g., c(2011, 2015:2018). Note that the default is to load 2017 data only.
 
 3)  `kingco` \<\< a logical argument (i.e., `T` or `F` only, without quotes) denoting whether or not the data should be limited to King County. The default is King County only.
+
+4)  `version` \<\< a character vector (either 'final' or 'stage'). The default is 'final'.  
+
+5)  `mykey` \<\< a character vector of length 1. Identifies the keyring:: 'service' name that can be used to access the Health & Human Services Analytic Workspace (HHSAW). The default is 'hhsaw'.
 
 Let's try the function to see how it works by loading the year and King County columns for WA State in 2019:
 
@@ -60,13 +56,12 @@ ls()
 ```
 
 ```
-##  [1] "birth"                "births"               "deaths"               "est"                  "ex1.1"                "ex1.2"               
-##  [7] "ex2.1"                "ex2.2"                "ex3.1"                "ex4.1"                "ex5.1"                "grades.distribution" 
-## [13] "grades.distribution2" "household.wa"         "kcbirth"              "kcpop"                "mtcars"               "mydt"                
-## [19] "mysvy"                "new.standard"         "nlines"               "out"                  "person.wa"            "pop"                 
-## [25] "population"           "pums"                 "pums2"                "rl"                   "rmds"                 "rrr"                 
-## [31] "start_dir"            "td"                   "temp1"                "temp2"                "temp3"                "temp4"               
-## [37] "temp5"                "test1"                "test2"                "wabirth"              "wapop"                "wiki"                
+##  [1] "birth"                "births"               "deaths"               "est"                  "ex1.1"                "ex1.2"                "ex2.1"               
+##  [8] "ex2.2"                "ex3.1"                "ex4.1"                "ex5.1"                "grades.distribution"  "grades.distribution2" "household.wa"        
+## [15] "kcbirth"              "kcpop"                "mtcars"               "mydt"                 "mysvy"                "new.standard"         "nlines"              
+## [22] "out"                  "person.wa"            "pop"                  "population"           "pums"                 "pums2"                "rl"                  
+## [29] "rmds"                 "rrr"                  "start_dir"            "td"                   "temp1"                "temp2"                "temp3"               
+## [36] "temp4"                "temp5"                "test1"                "test2"                "wabirth"              "wapop"                "wiki"                
 ## [43] "xwalk"
 ```
 
@@ -104,6 +99,7 @@ head(birth)
 
 ```
 ##    chi_geo_kc chi_year
+##        <fctr>    <int>
 ## 1:       <NA>     2019
 ## 2:       <NA>     2019
 ## 3:       <NA>     2019
@@ -121,13 +117,18 @@ head(list_dataset_columns('birth'))
 ```
 
 ```
-##              var.names analytic_ready
-## 1:  birth_cert_encrypt           TRUE
-## 2:     birth_cert_type           TRUE
-## 3:                 sex           TRUE
-## 4: date_of_birth_month           TRUE
-## 5:  date_of_birth_year           TRUE
-## 6:       time_of_birth           TRUE
+## Column names for 'birth' data are taken from all available years.
+```
+
+```
+##              var.names
+##                 <char>
+## 1:  birth_cert_encrypt
+## 2:     birth_cert_type
+## 3:                 sex
+## 4: date_of_birth_month
+## 5:  date_of_birth_year
+## 6:       time_of_birth
 ```
 
 ## Loading data with get_data()
