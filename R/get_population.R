@@ -112,7 +112,7 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #'  a = get_population(geo_type = "region")
 #'  print(a)
 #' }

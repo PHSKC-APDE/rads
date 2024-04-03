@@ -126,7 +126,7 @@ eg1 <- death_113_count(ph.data = deathdata,
                        kingco = FALSE,
                        ypll_age = NULL,
                        death_age_col = NULL)
-eg1[]
+head(eg1)
 
 # example 2: with YPLL calculation
 deathdata2 <- data.table::copy(deathdata)
@@ -140,7 +140,7 @@ eg2 <- death_113_count(ph.data = deathdata2,
                        kingco = FALSE,
                        ypll_age = 65,
                        death_age_col = "ageofdeath")
-eg2[]
+head(eg2)
 
 }
 \references{

@@ -20,7 +20,7 @@ character vector
 Substring selection from the right to complement base R substr
 }
 \examples{
-\dontrun{
+\donttest{
 substrRight("Good morning!", 2, 8)
 }
 }

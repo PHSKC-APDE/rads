@@ -4,27 +4,38 @@
 \alias{quiet}
 \title{Silence (i.e., suppress or mute) printed messages from functions}
 \usage{
-quiet(myf)
+quiet(expr, suppressWarnings = FALSE)
 }
 \arguments{
-\item{myf}{the name of the function that you desire to silence, along with its arguments}
+\item{expr}{the expression that you desire to silence (i.e., the function
+along with its arguments)}
+
+\item{suppressWarnings}{a logical (TRUE or FALSE), noting whether you wish
+to suppress warning messages. The default is \code{suppressWarnings = FALSE}}
 }
 \value{
-whatever should be returned by the function that is being silenced
+whatever should be returned by the expression that is being silenced
 }
 \description{
-Silence noisy functions
+Silence messages from noisy functions. Optionally silence warning messages
+too.
 }
 \examples{
-\dontrun{
-test <- function(x) {
-  x = 3^x
-  cat("silences cat(): ", x, "\n")
-  print(paste0("silences print():", x))
-  message("does not silence message(): ", x)
-}
-test(4)
-quiet(test(4))
+\donttest{
+# Suppresses only messages
+result <- quiet({
+  message("This message is silenced")
+  warning("This warning is shown")
+  42  # Return a value
+})
+
+# Suppresses both messages and warnings
+result <- quiet({
+  message("This message is silenced")
+  warning("This warning is silenced too")
+  42  # Return a value
+}, suppressWarnings = TRUE)
+
 }
 }
 \keyword{quiet}

@@ -31,7 +31,7 @@ Data.frame with two columns. First column is the variable name, while the second
 List columns available for analysis for a particular dataset in RADS
 }
 \examples{
-\dontrun{
- list_dataset_columns('hys', T)
+\donttest{
+ list_dataset_columns('death')
 }
 }
