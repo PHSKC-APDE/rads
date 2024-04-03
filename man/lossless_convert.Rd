@@ -18,3 +18,13 @@ a vector of the same length as x, but of the new class (when possible)
 \description{
 Convert the class of a vector to another class is possible without introducing additional NAs
 }
+\examples{
+temp <- 1:10
+temp <- lossless_convert(temp, 'character')
+str(temp)
+temp <- lossless_convert(temp, 'integer')
+str(temp)
+temp <- lossless_convert(temp, 'numeric')
+str(temp)
+
+}

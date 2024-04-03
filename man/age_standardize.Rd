@@ -48,17 +48,27 @@ Your dataset must have the following three columns ...
 }
 }
 \examples{
-\dontrun{
+\donttest{
+library(data.table)
 temp1 <- data.table(age = c(50:60), count = c(25:35), pop = c(seq(1000, 900, -10)) )
 age_standardize(ph.data = temp1,
-ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)", collapse = T,
-my.count = "count", my.pop = "pop", per = 1000, conf.level = 0.95)[]
+ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)",
+collapse = TRUE,
+my.count = "count",
+my.pop = "pop",
+per = 1000,
+conf.level = 0.95)[]
 
 temp2 <- data.table(sex = c(rep("M", 11), rep("F", 11)), age = rep(50:60, 2),
 count = c(25:35, 26:36), pop = c(seq(1000, 900, -10), seq(1100, 1000, -10)),
 stdpop = rep(1000, 22))
-age_standardize(ph.data = temp2, ref.popname = "none", collapse = F, my.count = "count",
-my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex")[]
+age_standardize(ph.data = temp2, ref.popname = "none",
+collapse = FALSE,
+my.count = "count",
+my.pop = "pop",
+per = 1000,
+conf.level = 0.95,
+group_by = "sex")[]
 }
 }
 \references{

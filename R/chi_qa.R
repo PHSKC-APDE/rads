@@ -29,13 +29,7 @@
 #' @importFrom utils write.table
 #' @importFrom yaml yaml.load
 #'
-#' @examples
-#'
-#' \dontrun{
-#' # create sample data
-#'
-#' # run function
-#' }
+
 
 # chi_qa function ----
 
@@ -102,10 +96,10 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, ignore_trends = T, 
 
   ## Confirm that variables are of the proper class ----
           if(verbose) message("Validating CHI estimates: ")
-          validate_yaml_data(DF = chi_est, YML = chi.yaml, VARS = "vars") # check CHI estimate table
+          validate_yaml_data(ph.data = chi_est, YML = chi.yaml, VARS = "vars") # check CHI estimate table
 
           if(verbose) message(paste("", "Validating CHI metadata: ", sep = "\n"))
-          validate_yaml_data(DF = chi_meta, YML = chi.yaml, VARS = "metadata") # check CHI metadata table
+          validate_yaml_data(ph.data = chi_meta, YML = chi.yaml, VARS = "metadata") # check CHI metadata table
 
           if(verbose) message(paste("", "", sep = "\n"))
 

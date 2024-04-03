@@ -19,7 +19,7 @@ numeric
 Calculate standard error of the mean
 }
 \examples{
-\dontrun{
+\donttest{
 temp1 <- data.table::data.table(x = c(seq(0, 400, 100), seq(1000, 1800, 200), NA),
 mygroup = c(rep("A", 5), rep("B", 6))
 )

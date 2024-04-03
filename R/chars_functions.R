@@ -178,7 +178,7 @@ chars_injury_matrix<- function(){
 #'
 #' @examples
 #' # example: 2019 King County hospitalizations due to intentional injury, by sex
-#' \dontrun{
+#' \donttest{
 #' blah = get_data_chars(year = 2019, kingco = TRUE)
 #' myresult <- chars_injury_matrix_count(ph.data = blah,
 #'                                       intent = '^intentional',
@@ -635,7 +635,7 @@ chars_icd_ccs <- function(ref_type = 'all',
 #'
 #' @examples
 #' # example: 2019 King County hospitalizations for chemotherapy, by sex
-#' \dontrun{
+#' \donttest{
 #' blah = get_data_chars(year = 2019, kingco = TRUE)
 #' myresult <- chars_icd_ccs_count(ph.data = blah,
 #'                                 detailed = 'headache',

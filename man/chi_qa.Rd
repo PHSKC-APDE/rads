@@ -37,14 +37,6 @@ This function ensures that the structure of the data matches all CHI Tableau Rea
 specifications. QA for data quality vis-à-vis previous production data, CHAT, or any other source,
 must be performed separately
 }
-\examples{
-
-\dontrun{
-# create sample data
-
-# run function
-}
-}
 \keyword{CHI,}
 \keyword{Production}
 \keyword{Tableau,}

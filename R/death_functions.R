@@ -193,7 +193,7 @@ death_injury_matrix<- function(){
 #'                             kingco = FALSE,
 #'                             ypll_age = NULL,
 #'                             death_age_col = NULL)
-#' eg1[] # note the data are stratified by year because year was in ph.data
+#' head(eg1) # note the data are stratified by year because year was in ph.data
 #'
 #' # example 2: falls designated as homicides and or suicides
 #' eg2 <- death_injury_matrix_count(ph.data = injurydata,
@@ -203,7 +203,7 @@ death_injury_matrix<- function(){
 #'                             kingco = FALSE,
 #'                             ypll_age = NULL,
 #'                             death_age_col = NULL)
-#' eg2[]
+#' head(eg2)
 #'
 #' # example 3: summary of all injury deaths regardless of intent and mechanism
 #' eg3 <- death_injury_matrix_count(ph.data = injurydata,
@@ -586,6 +586,29 @@ death_injury_matrix_count <- function(ph.data = NULL,
 #' causes of death you want to assess using the \code{causeids} or \code{cause}
 #' arguments.
 #'
+#' @examples
+#' # example 1: death count only
+#' set.seed(98104)
+#' deathdata <- data.table::data.table(
+#'   cod.icd10 = c(rep("A85.2", round(runif(1, 30, 100000), 0)),
+#'                 rep("B51", round(runif(1, 30, 100000), 0)),
+#'                 rep("U071", round(runif(1, 30, 100000), 0)),
+#'                 rep("E44", round(runif(1, 30, 100000), 0)),
+#'                 rep("E62", round(runif(1, 30, 100000), 0)),
+#'                 rep("G00", round(runif(1, 30, 100000), 0)),
+#'                 rep("J10", round(runif(1, 30, 100000), 0)),
+#'                 rep("J15", round(runif(1, 30, 100000), 0)),
+#'                 rep("V874", round(runif(1, 30, 100000), 0)))
+#' )
+#' eg1 <- death_xxx_count(ph.data = deathdata,
+#'                        causeids = seq(1, 113, 1),
+#'                        cause = NULL,
+#'                        icdcol = "cod.icd10",
+#'                        kingco = FALSE,
+#'                        ypll_age = NULL,
+#'                        death_age_col = NULL,
+#'                        nchsnum = 113)
+#' head(eg1)
 #'
 #' @export
 #'
@@ -1149,7 +1172,7 @@ death_113<- function(){
 #'                        kingco = FALSE,
 #'                        ypll_age = NULL,
 #'                        death_age_col = NULL)
-#' eg1[]
+#' head(eg1)
 #'
 #' # example 2: with YPLL calculation
 #' deathdata2 <- data.table::copy(deathdata)
@@ -1163,7 +1186,7 @@ death_113<- function(){
 #'                        kingco = FALSE,
 #'                        ypll_age = 65,
 #'                        death_age_col = "ageofdeath")
-#' eg2[]
+#' head(eg2)
 #'
 #' @import data.table rads.data
 #'
@@ -1354,7 +1377,7 @@ death_130<- function(){
 #'                        kingco = FALSE,
 #'                        ypll_age = NULL,
 #'                        death_age_col = NULL)
-#' eg1[]
+#' head(eg1)
 #'
 #' @import data.table rads.data
 #'
@@ -1527,7 +1550,7 @@ death_other<- function(){
 #'                        kingco = FALSE,
 #'                        ypll_age = NULL,
 #'                        death_age_col = NULL)
-#' eg1[]
+#' head(eg1)
 #'
 #' # example 2: with YPLL calculation
 #' deathdata2 <- data.table::copy(deathdata)
@@ -1540,7 +1563,7 @@ death_other<- function(){
 #'                        kingco = FALSE,
 #'                        ypll_age = 65,
 #'                        death_age_col = "ageofdeath")
-#' eg2[]
+#' head(eg2)
 #'
 #' @import data.table rads.data
 #'

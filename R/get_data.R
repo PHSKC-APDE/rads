@@ -14,8 +14,13 @@
 #' @export
 #' @references \url{https://github.com/PHSKC-APDE/rads/wiki/get_data}
 #' @examples
-#' \dontrun{
-#'  get_data(dataset = 'hys', cols = NULL, year = c(2016, 2018)
+#' \donttest{
+#'  test <- get_data(
+#'           dataset = 'death',
+#'           cols = c('chi_year', 'chi_geo_kc', 'chi_geo_seattle'),
+#'           year = c(2018))
+#'
+#'  head(test)
 #' }
 get_data <- function(dataset, cols = NULL, year = 2018, ...){
 
@@ -58,7 +63,7 @@ get_data <- function(dataset, cols = NULL, year = 2018, ...){
 #'
 #' @examples
 #'
-#' \dontrun{
+#' \donttest{
 #'  get_data_hys(cols = NULL, year = c(2016, 2018), weight_variable = 'wt_grade_kc')
 #' }
 get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_grade_kc', kingco = TRUE, version = 'best', ar = TRUE){
@@ -176,12 +181,15 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_grad
 #'
 #' @examples
 #'
-#' \dontrun{
-#'  get_data_birth(cols = NA,
-#'  year = c(2015, 2016, 2017),
-#'  kingco = F,
-#'  version = 'final',
-#'  mykey = 'hhsaw')
+#' \donttest{
+#'  test <- get_data_birth(
+#'             cols = c('chi_year', 'chi_geo_kc', 'chi_sex'),
+#'             year = c(2019),
+#'             kingco = FALSE,
+#'             version = 'final',
+#'             mykey = 'hhsaw')
+#'
+#'  head(test)
 #' }
 get_data_birth <- function(cols = NA,
                            year = NA,
@@ -299,13 +307,16 @@ get_data_birth <- function(cols = NA,
 #'
 #' @examples
 #'
-#' \dontrun{
-#'  get_data_death(cols = NA,
-#'  year = c(2019),
-#'  kingco = T,
-#'  version = 'final',
-#'  topcode = F,
-#'  mykey = 'hhsaw')
+#' \donttest{
+#'  test <- get_data_death(
+#'           cols = c('chi_year', 'chi_geo_kc', 'chi_sex'),
+#'           year = c(2019),
+#'           kingco = TRUE,
+#'           version = 'final',
+#'           topcode = FALSE,
+#'           mykey = 'hhsaw')
+#'
+#'  head(test)
 #' }
 get_data_death <- function(cols = NA,
                            year = NA,
@@ -540,16 +551,19 @@ get_data_death <- function(cols = NA,
 #'
 #' @examples
 #'
-#' \dontrun{
-#'  get_data_chars(cols = c('seq_no', 'chi_age'),
-#'                 year = c(2020),
-#'                 kingco = T,
-#'                 wastate = T,
-#'                 version = 'final',
-#'                 inpatient = T,
-#'                 deaths = F,
-#'                 topcode = F,
-#'                 mykey = 'hhsaw')
+#' \donttest{
+#'  test <- get_data_chars(
+#'           cols = c('seq_no', 'chi_age'),
+#'           year = c(2020),
+#'           kingco = TRUE,
+#'           wastate = TRUE,
+#'           version = 'final',
+#'           inpatient = TRUE,
+#'           deaths = FALSE,
+#'           topcode = FALSE,
+#'           mykey = 'hhsaw')
+#'
+#'  head(test)
 #' }
 get_data_chars <- function(cols = NA,
                            year = NA,

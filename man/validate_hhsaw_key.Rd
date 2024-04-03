@@ -24,7 +24,7 @@ Validates keyring:: \code{service} name and the corresponding password. If they
 are valid, it creates a database connection.
 }
 \examples{
-\dontrun{
+\donttest{
  myConnection <- validate_hhsaw_key(hhsaw_key = 'hhsaw')
 }
 }
