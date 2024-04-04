@@ -10,7 +10,7 @@
 #' @param server name of serverto access
 #' @param replace_table If T, drop existing table and insert data, if F update matching rows and insert new data
 #'
-#' @return
+#' @return status message indicating success and location, or failure, of upload
 #' @export
 #'
 #' @examples
@@ -186,9 +186,9 @@ chi_sql_update <- function(CHIestimates = NULL,
   }
 
   # return----
-  message(paste0("\n\U0001f389Congratulations!\U0001f973\nYour data were successfully pushed to the SQL server!\n",
+  return(message(paste0("\n\U0001f389Congratulations!\U0001f973\nYour data were successfully pushed to the SQL server!\n",
                  "The result are here: [", complete_servername, "].[PHExtractStore].[APDE", schema_suffix, "].[", table_name, "_results]\n",
-                 "The metadata are here: [", complete_servername, "].[PHExtractStore].[APDE", schema_suffix, "].[", table_name, "_metadata]\n"))
+                 "The metadata are here: [", complete_servername, "].[PHExtractStore].[APDE", schema_suffix, "].[", table_name, "_metadata]\n")))
 
 
 }
