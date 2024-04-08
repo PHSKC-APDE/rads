@@ -335,7 +335,7 @@ get_population <- function(kingco = T,
                         sql_col = c('race_aian', 'race_as', 'race_blk', 'race_hisp', NA, 'race_nhpi', 'race_wht'))
   stopifnot(nrow(ref.table) == 7)
   ref.table = merge(ref.table, colnames, all.x = T, by = 'short')
-  if(!all(races == 'All')) races = ref.table[ short %in% races, value]
+  if(!all(races %in% 'All')) races = ref.table[ short %in% races, value]
 
   ### race_aic is handled below
 
@@ -508,7 +508,7 @@ get_population <- function(kingco = T,
                               ref.table[, value],
                               ref.table[, label])]
   }else{
-    if(races == 'All') races = ref.table[, value]
+    if(length(races) == 1 && races == 'All') races = ref.table[, value]
     if('hispanic' %in% group_by) races = setdiff(races, 6)
     r[, (race_type) := ref.table[value %in% races, paste(label, collapse = ', ')]]
   }

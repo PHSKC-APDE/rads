@@ -198,3 +198,12 @@ test_that('hispanic option for group by',{
   )
   expect_error(get_population(race_type = 'race_eth', races = c('white', 'hispanic'), group_by = c('hispanic'))[])
 })
+
+test_that('subset without grouping',{
+
+  t1 = get_population(races = c("aian", "asian"))
+  expect_equal(t1$race_eth, 'AIAN, Asian')
+  expect_error(get_population(races = c("All", "asian")))
+
+
+})
