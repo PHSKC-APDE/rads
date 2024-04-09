@@ -2,7 +2,8 @@
 % Please edit documentation in R/utilities.R
 \name{validate_yaml_data}
 \alias{validate_yaml_data}
-\title{Compare the expected column types in YAML with the actual column types in R}
+\title{validate the structure and data types of a data.frame or data.table against
+specifications defined in a YAML file}
 \usage{
 validate_yaml_data(ph.data = NULL, YML = NULL, VARS = "vars")
 }
@@ -17,7 +18,11 @@ validate_yaml_data(ph.data = NULL, YML = NULL, VARS = "vars")
 A simple printed statement, either identifying incompatible column types or a statement of success
 }
 \description{
-Compare the expected column types in YAML with the actual column types in R
+Validate the structure and data types of a data.frame or data.table against
+specifications defined in a YAML file. This is most often used to check that
+your data.frame or data.table is suitable to be pushed to TSQL when a YAML
+file specifies the field.types to be used by \code{DBI::dbWriteTable} &
+\code{odbc::dbWriteTable}.
 }
 \examples{
 library(data.table)
