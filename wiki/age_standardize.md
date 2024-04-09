@@ -1,13 +1,3 @@
----
-title: "age_standardize()"
-output:
-  pdf_document: default
-  rmarkdown::html_vignette: default
-  github_document: default
-  urlcolor: blue
-vignette: |
-  %\VignetteEngine{knitr::knitr} %\VignetteIndexEntry{age_standardize}
----
 
 ## Introduction
 
@@ -37,6 +27,7 @@ get_ref_pop("2000 U.S. Std Population (11 age groups)")[, 1:4]
 
 ```
 ##          agecat age_start age_end      pop
+##          <char>     <int>   <int>    <int>
 ##  1:           0         0       0  3795000
 ##  2:   1-4 years         1       4 15192000
 ##  3:  5-14 years         5      14 39977000
@@ -100,18 +91,19 @@ temp1[]
 ```
 
 ```
-##       age disease  pop
-##    1:  51       0 1000
-##    2:  52       1  990
-##    3:  53       0  980
-##    4:  54       1  970
-##    5:  55       1  960
-##   ---                 
-##  996:  56       1  950
-##  997:  57       1  940
-##  998:  58       1  930
-##  999:  59       1  920
-## 1000:  60       0  910
+##         age disease   pop
+##       <int>   <int> <num>
+##    1:    51       0  1000
+##    2:    52       1   990
+##    3:    53       0   980
+##    4:    54       1   970
+##    5:    55       1   960
+##   ---                    
+##  996:    56       1   950
+##  997:    57       1   940
+##  998:    58       1   930
+##  999:    59       1   920
+## 1000:    60       0   910
 ```
 
 **Run age_standardize with APDE's default reference population**
@@ -128,6 +120,7 @@ age_standardize(ph.data = temp1,
 
 ```
 ##    count    pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci                            reference_pop
+##    <num>  <num>      <num>     <num>     <num>    <num>   <num>   <num>                                   <char>
 ## 1:   511 955000       0.54      0.49      0.58     0.52    0.47    0.57 2000 U.S. Std Population (11 age groups)
 ```
 *Does anything seem fishy? Think for a moment ...* 
@@ -152,17 +145,18 @@ temp1[]
 ```
 
 ```
-##     age  pop disease
-##  1:  51 1000      49
-##  2:  52  990      46
-##  3:  53  980      50
-##  4:  54  970      47
-##  5:  55  960      60
-##  6:  56  950      50
-##  7:  57  940      61
-##  8:  58  930      50
-##  9:  59  920      52
-## 10:  60  910      46
+##       age   pop disease
+##     <int> <num>   <int>
+##  1:    51  1000      49
+##  2:    52   990      46
+##  3:    53   980      50
+##  4:    54   970      47
+##  5:    55   960      60
+##  6:    56   950      50
+##  7:    57   940      61
+##  8:    58   930      50
+##  9:    59   920      52
+## 10:    60   910      46
 ```
 
 **Run age_standardize again << this time with aggregated disease events**
@@ -179,8 +173,9 @@ ex1.1[]
 ```
 
 ```
-##    count  pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci                            reference_pop
-## 1:   511 9550      53.51     48.97     58.35    51.93   47.19   57.05 2000 U.S. Std Population (11 age groups)
+##    count   pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci                            reference_pop
+##    <num> <num>      <num>     <num>     <num>    <num>   <num>   <num>                                   <char>
+## 1:   511  9550      53.51     48.97     58.35    51.93   47.19   57.05 2000 U.S. Std Population (11 age groups)
 ```
 Now that count, pop, and rates seem reasonable, let's see what happens if we change the reference population. We'll arbitrarily set the references population to the 36th in the list provided by `list_ref_pop()` (i.e., 'World (WHO 2000-2025) Std Million (single ages to 99)'). 
 
@@ -197,8 +192,9 @@ ex1.2[]
 ```
 
 ```
-##    count  pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci                                         reference_pop
-## 1:   511 9550      53.51     48.97     58.35    53.34   48.81    58.2 World (WHO 2000-2025) Std Million (single ages to 99)
+##    count   pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci                                         reference_pop
+##    <num> <num>      <num>     <num>     <num>    <num>   <num>   <num>                                                <char>
+## 1:   511  9550      53.51     48.97     58.35    53.34   48.81    58.2 World (WHO 2000-2025) Std Million (single ages to 99)
 ```
 As we'd expect, the crude rates are identical since the reference population is irrelevant for those calculations (53.51 vs 53.51). However, the age-standardized rates changed from 51.93 to 53.34. Remember, if you want to compare your age-adjusted rates to those published by other health jurisdictions, it's important that you use the same reference population.
 
@@ -219,13 +215,14 @@ head(temp2)
 ```
 
 ```
-##    gender age disease  pop
-## 1:      F  46      32 3134
-## 2:      F  47      36 2930
-## 3:      F  48      29 3289
-## 4:      F  49      27 3198
-## 5:      F  50      27 3480
-## 6:      F  51      33 2679
+##    gender   age disease   pop
+##    <char> <int>   <int> <int>
+## 1:      F    46      32  3134
+## 2:      F    47      36  2930
+## 3:      F    48      29  3289
+## 4:      F    49      27  3198
+## 5:      F    50      27  3480
+## 6:      F    51      33  2679
 ```
 
 **Let's examine the overall rates**
@@ -243,6 +240,7 @@ ex2.1[]
 
 ```
 ##    count    pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci                            reference_pop
+##    <num>  <num>      <num>     <num>     <num>    <num>   <num>   <num>                                   <char>
 ## 1:  1333 115448      11.55     10.93     12.18    11.68   10.87   12.57 2000 U.S. Std Population (11 age groups)
 ```
 In this case, the crude rate and age standardized rate are the same. This doesn't mean there is a mistake. Notice that the confidence intervals differ -- as would be expected. 
@@ -265,6 +263,7 @@ ex2.2[]
 
 ```
 ##    gender count   pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci                            reference_pop
+##    <char> <num> <num>      <num>     <num>     <num>    <num>   <num>   <num>                                   <char>
 ## 1:      F   731 60827      12.02     11.16     12.92    12.22   11.07   13.50 2000 U.S. Std Population (11 age groups)
 ## 2:      M   602 54621      11.02     10.16     11.94    11.09    9.97   12.36 2000 U.S. Std Population (11 age groups)
 ```
@@ -288,13 +287,14 @@ head(new.standard)
 ```
 
 ```
-##    gender age stdpop
-## 1:      M  46  10160
-## 2:      M  47   8515
-## 3:      M  48   9204
-## 4:      M  49   7827
-## 5:      M  50   9756
-## 6:      M  51   9178
+##    gender   age stdpop
+##    <char> <int>  <int>
+## 1:      M    46  10160
+## 2:      M    47   8515
+## 3:      M    48   9204
+## 4:      M    49   7827
+## 5:      M    50   9756
+## 6:      M    51   9178
 ```
 
 **Merge the standard population onto the data**
@@ -306,13 +306,15 @@ head(temp3)
 ```
 
 ```
-##    age gender disease  pop stdpop
-## 1:  46      F      32 3134  14506
-## 2:  46      M      26 3055  10160
-## 3:  47      F      36 2930  18955
-## 4:  47      M      35 2954   8515
-## 5:  48      F      29 3289  17813
-## 6:  48      M      35 2268   9204
+## Key: <age, gender>
+##      age gender disease   pop stdpop
+##    <int> <char>   <int> <int>  <int>
+## 1:    46      F      32  3134  14506
+## 2:    46      M      26  3055  10160
+## 3:    47      F      36  2930  18955
+## 4:    47      M      35  2954   8515
+## 5:    48      F      29  3289  17813
+## 6:    48      M      35  2268   9204
 ```
 
 **Calculate the rates when `ref.pop = "none"`**
@@ -334,6 +336,7 @@ ex3.1[]
 
 ```
 ##    gender count   pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci            reference_pop
+##    <char> <num> <num>      <num>     <num>     <num>    <num>   <num>   <num>                   <char>
 ## 1:      F   731 60827      12.02     11.16     12.92    12.02   11.15   12.95 stdpop column in `temp3`
 ## 2:      M   602 54621      11.02     10.16     11.94    11.15   10.25   12.12 stdpop column in `temp3`
 ```
@@ -357,13 +360,14 @@ head(temp4)
 ```
 
 ```
-##    gender age disease  pop
-## 1:      M  46      32 3134
-## 2:      M  47      36 2930
-## 3:      M  48      29 3289
-## 4:      M  49      27 3198
-## 5:      M  50      27 3480
-## 6:      M  51      33 2679
+##    gender   age disease   pop
+##    <char> <int>   <int> <int>
+## 1:      M    46      32  3134
+## 2:      M    47      36  2930
+## 3:      M    48      29  3289
+## 4:      M    49      27  3198
+## 5:      M    50      27  3480
+## 6:      M    51      33  2679
 ```
 
 **Collapse the data down to the same age bins as those used in the APDE standard reference population**
@@ -381,6 +385,7 @@ temp4[]
 
 ```
 ##          agecat gender   pop disease
+##          <char> <char> <int>   <int>
 ##  1: 45-49 years      M 12551     124
 ##  2: 50-54 years      M 15192     169
 ##  3: 55-59 years      M 15466     198
@@ -438,21 +443,22 @@ You quickly pull up [CHAT](https://www.doh.wa.gov/ForPublicHealthandHealthcarePr
 ```
 
 ```
-##     age         geo births
-##  1:  13 King County      1
-##  2:  14 King County      4
-##  3:  15 King County     10
-##  4:  16 King County     23
-##  5:  17 King County     45
-##  6:  18 King County    107
-##  7:  19 King County    230
-##  8:  13    WA State      6
-##  9:  14    WA State     16
-## 10:  15    WA State     70
-## 11:  16    WA State    193
-## 12:  17    WA State    346
-## 13:  18    WA State    745
-## 14:  19    WA State   1488
+##       age         geo births
+##     <int>      <char>  <int>
+##  1:    13 King County      1
+##  2:    14 King County      4
+##  3:    15 King County     10
+##  4:    16 King County     23
+##  5:    17 King County     45
+##  6:    18 King County    107
+##  7:    19 King County    230
+##  8:    13    WA State      6
+##  9:    14    WA State     16
+## 10:    15    WA State     70
+## 11:    16    WA State    193
+## 12:    17    WA State    346
+## 13:    18    WA State    745
+## 14:    19    WA State   1488
 ```
 
 **Get the female populations corresponding to the birth counts**
@@ -471,21 +477,22 @@ You quickly pull up [CHAT](https://www.doh.wa.gov/ForPublicHealthandHealthcarePr
 ```
 
 ```
-##     age         geo      pop
-##  1:  18 King County 12654.47
-##  2:  19 King County 13401.31
-##  3:  13 King County 12407.25
-##  4:  15 King County 11131.42
-##  5:  16 King County 11420.94
-##  6:  17 King County 11565.07
-##  7:  14 King County 12208.96
-##  8:  18    WA State 45951.20
-##  9:  19    WA State 47390.04
-## 10:  13    WA State 46374.96
-## 11:  17    WA State 43452.42
-## 12:  15    WA State 44635.30
-## 13:  16    WA State 44581.08
-## 14:  14    WA State 46476.42
+##       age         geo      pop
+##     <int>      <char>    <num>
+##  1:    18 King County 12654.47
+##  2:    19 King County 13401.31
+##  3:    13 King County 12407.25
+##  4:    15 King County 11131.42
+##  5:    16 King County 11420.94
+##  6:    17 King County 11565.07
+##  7:    14 King County 12208.96
+##  8:    13    WA State 46374.96
+##  9:    19    WA State 47390.04
+## 10:    18    WA State 45951.20
+## 11:    17    WA State 43452.42
+## 12:    16    WA State 44581.08
+## 13:    15    WA State 44635.30
+## 14:    14    WA State 46476.42
 ```
 
 **Merge population onto to birth counts**
@@ -497,21 +504,23 @@ You quickly pull up [CHAT](https://www.doh.wa.gov/ForPublicHealthandHealthcarePr
 ```
 
 ```
-##     age         geo births      pop
-##  1:  13 King County      1 12407.25
-##  2:  13    WA State      6 46374.96
-##  3:  14 King County      4 12208.96
-##  4:  14    WA State     16 46476.42
-##  5:  15 King County     10 11131.42
-##  6:  15    WA State     70 44635.30
-##  7:  16 King County     23 11420.94
-##  8:  16    WA State    193 44581.08
-##  9:  17 King County     45 11565.07
-## 10:  17    WA State    346 43452.42
-## 11:  18 King County    107 12654.47
-## 12:  18    WA State    745 45951.20
-## 13:  19 King County    230 13401.31
-## 14:  19    WA State   1488 47390.04
+## Key: <age, geo>
+##       age         geo births      pop
+##     <int>      <char>  <int>    <num>
+##  1:    13 King County      1 12407.25
+##  2:    13    WA State      6 46374.96
+##  3:    14 King County      4 12208.96
+##  4:    14    WA State     16 46476.42
+##  5:    15 King County     10 11131.42
+##  6:    15    WA State     70 44635.30
+##  7:    16 King County     23 11420.94
+##  8:    16    WA State    193 44581.08
+##  9:    17 King County     45 11565.07
+## 10:    17    WA State    346 43452.42
+## 11:    18 King County    107 12654.47
+## 12:    18    WA State    745 45951.20
+## 13:    19 King County    230 13401.31
+## 14:    19    WA State   1488 47390.04
 ```
   
   
@@ -531,6 +540,7 @@ You quickly pull up [CHAT](https://www.doh.wa.gov/ForPublicHealthandHealthcarePr
 
 ```
 ##            geo count       pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci                                         reference_pop
+##         <char> <num>     <num>      <num>     <num>     <num>    <num>   <num>   <num>                                                <char>
 ## 1: King County   420  84789.41       4.95      4.49      5.45     4.65    4.21    5.12 World (WHO 2000-2025) Std Million (single ages to 84)
 ## 2:    WA State  2864 318861.42       8.98      8.66      9.32     8.77    8.45    9.10 World (WHO 2000-2025) Std Million (single ages to 84)
 ```

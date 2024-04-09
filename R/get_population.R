@@ -112,7 +112,7 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #'  a = get_population(geo_type = "region")
 #'  print(a)
 #' }
@@ -138,7 +138,7 @@ get_population <- function(kingco = T,
   . <- age <-  code <- colname <- coltype <- cou_id <- cou_name <- gender <-  geo_id <- geo_id_code <- NULL
   hra <- label <- lgd_counties<-  lgd_id<-  lgd_name<-  max_year<-  pop <- region <- region_id<- NULL
   scd_id <- scd_name <- setNames <- short<-  sql_col <- value<-  varname<-  vid <- NULL
-  hra20_id <- hra20_name <- NULL
+  hra20_id <- hra20_name <- hispanic <- NULL
 
   # valid inputs
   validate_input = function(varname, vals, allowed_vals, additional = "", convert_to_all = TRUE){
@@ -335,7 +335,7 @@ get_population <- function(kingco = T,
                         sql_col = c('race_aian', 'race_as', 'race_blk', 'race_hisp', NA, 'race_nhpi', 'race_wht'))
   stopifnot(nrow(ref.table) == 7)
   ref.table = merge(ref.table, colnames, all.x = T, by = 'short')
-  if(!all(races == 'All')) races = ref.table[ short %in% races, value]
+  if(!all(races %in% 'All')) races = ref.table[ short %in% races, value]
 
   ### race_aic is handled below
 
@@ -508,7 +508,7 @@ get_population <- function(kingco = T,
                               ref.table[, value],
                               ref.table[, label])]
   }else{
-    if(races == 'All') races = ref.table[, value]
+    if(length(races) == 1 && races == 'All') races = ref.table[, value]
     if('hispanic' %in% group_by) races = setdiff(races, 6)
     r[, (race_type) := ref.table[value %in% races, paste(label, collapse = ', ')]]
   }

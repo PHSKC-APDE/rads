@@ -79,7 +79,7 @@ propagation. Here is a line of \code{data.table} code as an example:
 }
 }
 \examples{
-\dontrun{
+\donttest{
  myxwalk <- get_xwalk(geo1 = 'zip', geo2 = 'city')
  myxwalk[]
 }

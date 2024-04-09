@@ -122,7 +122,7 @@ which codes are mapped to which intents and mechanisms.
 }
 \examples{
 # example: 2019 King County hospitalizations due to intentional injury, by sex
-\dontrun{
+\donttest{
 blah = get_data_chars(year = 2019, kingco = TRUE)
 myresult <- chars_injury_matrix_count(ph.data = blah,
                                       intent = '^intentional',

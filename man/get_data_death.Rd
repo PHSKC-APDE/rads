@@ -49,12 +49,15 @@ Get Death microdata from storage.
 }
 \examples{
 
-\dontrun{
- get_data_death(cols = NA,
- year = c(2019),
- kingco = T,
- version = 'final',
- topcode = F,
- mykey = 'hhsaw')
+\donttest{
+ test <- get_data_death(
+          cols = c('chi_year', 'chi_geo_kc', 'chi_sex'),
+          year = c(2019),
+          kingco = TRUE,
+          version = 'final',
+          topcode = FALSE,
+          mykey = 'hhsaw')
+
+ head(test)
 }
 }

@@ -122,7 +122,7 @@ eg1 <- death_130_count(ph.data = deathdata,
                        kingco = FALSE,
                        ypll_age = NULL,
                        death_age_col = NULL)
-eg1[]
+head(eg1)
 
 }
 \references{

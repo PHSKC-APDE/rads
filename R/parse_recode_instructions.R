@@ -1,19 +1,20 @@
 #'Parse Recode Instructions
 #'
 #'@details
-#'Imports a data.frame with at a minimum of the following columns: old_var, old_value, new_var, new_value, new_label, start_year, and end_year.
+#'Imports a data.frame with at a minimum of the following columns: `old_var`,
+#'`old_value`, `new_var`, `new_value`, `new_label`, `start_year`, and `end_year`.
 #'
-#'old_var: Column in the dataset containing the values to be recoded
+#'- `old_var`: Column in the dataset containing the values to be recoded
 #'
-#'old_value: value in the column `old_var` to be translated into a new value by recoding. If left blank/NA/""/NULL or otherwise missing, the recode operation
+#'- `old_value`: value in the column `old_var` to be translated into a new value by recoding. If left blank/NA/""/NULL or otherwise missing, the recode operation
 #'will essentially take the form of a rename of `old_var` -> `new_var`
 #'
-#'new_var: Column where the recoded values will be placed. If `new_var` doesn't exist, than it will be created. Otherwise it will be overwritten.
+#'- `new_var`: Column where the recoded values will be placed. If `new_var` doesn't exist, than it will be created. Otherwise it will be overwritten.
 #'
-#'new_value: Column indicating where the new values for the recoding process exist. It is positionally (e.g. row) tied to a particular `old_value`.
+#'- `new_value`: Column indicating where the new values for the recoding process exist. It is positionally (e.g. row) tied to a particular `old_value`.
 #'If blank, it helps identify a simpler rename operation.
 #'
-#'new_label: character (or convertable to character): The factor label that `old_value` will be recoded to in conjunction with the position of `new_value`
+#'- `new_label`: character (or convertable to character): The factor label that `old_value` will be recoded to in conjunction with the position of `new_value`
 #'
 #' @param recode data.frame. In the format described in "Details"
 #' @param catch_NAs logical. Should the presence of "NA" be turned into NA_character_
