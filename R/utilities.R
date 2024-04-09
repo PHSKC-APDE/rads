@@ -1241,38 +1241,83 @@ list_ref_pop <- function(){
 }
 
 # lossless_convert() ----
-#' Convert the class of a vector to another class is possible without introducing additional NAs
+#' Convert the class of a vector to another class -- when possible without
+#' introducing additional NAs
+#'
+#' @description
+#' Convert the class of a vector to another class -- when possible without
+#' introducing additional NAs. If NAs would be introduced, the original vector
+#' will be returned along with a warning so the user knows it has not been
+#' converted.
+#'
 #' @param x vector of indeterminate length and type
 #' @param class character vector of length one specifying the preferred new column type (i.e.,
 #' 'character', 'numeric', 'integer', or 'factor')
 #' @examples
-#' temp <- 1:10
-#' temp <- lossless_convert(temp, 'character')
-#' str(temp)
-#' temp <- lossless_convert(temp, 'integer')
-#' str(temp)
-#' temp <- lossless_convert(temp, 'numeric')
-#' str(temp)
+#' \donttest{
+#' str(lossless_convert(c('1', '2', '3'), 'integer'))
+#' str(lossless_convert(c('one', '2', '3'), 'integer'))
+#' str(lossless_convert(c('1', '2', 'three'), 'integer'))
+#'
+#' str(lossless_convert(c('2020-01-01', '2021-12-31', '2022-02-22'), 'Date'))
+#' str(lossless_convert(c('2020-01-01', '2021-12-31', 'z'), 'Date'))
+#' str(lossless_convert(c('z', '2020-01-01', '2021-12-31'), 'Date'))
+#' }
 #'
 #' @export
 #' @return a vector of the same length as x, but of the new class (when possible)
-lossless_convert <- function(x = NULL, class = NULL){
-  if(is.null(x)){
+lossless_convert <- function(x, class) {
+  # Validate 'x'
+  if (missing(x)) {
     stop("'x', the vector you wish to change, must be specified.")
   }
 
-  if(is.null(class)){
-    stop("'class' must be specified by choosing one of the following: 'character', 'integer', 'numeric'")
+  # Validate 'class'
+  if (missing(class)) {
+    stop("'class' must be specified.")
   }
 
-  if(!class %in% c('character', 'integer', 'numeric') || length(class) != 1 ){
-    stop("'class' is limited to *one* of the following: 'character', 'integer', 'numeric'")
+  if (length(class) != 1 || !class %in% c("character", "integer", "numeric", "Date", "POSIXct")) {
+    stop("'class' must be one of the following: 'character', 'integer', 'numeric', 'Date', 'POSIXct'")
   }
 
-  if(sum(is.na(x)) == sum(is.na(suppressWarnings(as(x, class)))) ){
-    x <- suppressWarnings(as(x, class))
+  # Get the name of x
+  x_name <- deparse(substitute(x))
+  if (nchar(x_name) > 20) { # If 'x' is a vector rather than a name, use 'x'
+    x_name <- "x"
   }
-  return(x)
+
+  # Pre-check for Date or POSIXct conversion
+  if (class %in% c("Date", "POSIXct")) {
+    temp_x <- suppressWarnings(as.character(x))
+    if (any(sapply(temp_x, function(x) tryCatch(is.na(as.Date(x)), error = function(e) TRUE)))) {
+      message("Conversion of '", x_name, "' to ", class, " would introduce additional NAs. Operation not performed.")
+      return(x)
+    }
+  }
+
+  # Attempt conversion with checks for loss
+  original_na_count <- sum(is.na(x))
+  converted_x <- tryCatch({
+    if (class %in% c("Date", "POSIXct")) {
+      # For date types, use already converted temp_x to avoid duplicate conversion
+      new_x <- suppressWarnings(if (class == "Date") as.Date(temp_x) else as.POSIXct(temp_x))
+    } else {
+      # For other types, attempt direct conversion
+      new_x <- suppressWarnings(as(x, class))
+    }
+    if (sum(is.na(new_x)) > original_na_count) {
+      message("Conversion of '", x_name, "' to ", class, " would introduce additional NAs. Operation not performed.")
+      return(x)
+    } else {
+      return(new_x)
+    }
+  }, error = function(e) {
+    message("\U0001f47f An unexpected issue occurred during conversion '", x_name, "' to ", class, ": ", e$message)
+    return(x)
+  })
+
+  return(converted_x)
 }
 
 # metrics() ----
@@ -1511,7 +1556,17 @@ substrRight <- function(x, x.start, x.stop){
 }
 
 # validate_yaml_data() ----
-#' Compare the expected column types in YAML with the actual column types in R
+#' Validate the structure and data types of a data.frame or data.table against
+#' specifications defined in a YAML file
+#'
+#' @description
+#' Validate the structure and data types of a data.frame or data.table against
+#' specifications defined in a YAML file. This is most often used to check that
+#' your data.frame or data.table is suitable to be pushed to TSQL when a YAML
+#' file specifies the field.types to be used by `DBI::dbWriteTable` &
+#' `odbc::dbWriteTable`.
+#'
+#'
 #' @param ph.data Name of the data.table/data.frame that you want to assess vis-à-vis the YAML file
 #'
 #' @param YML Name of the YAML object in memory
@@ -1578,7 +1633,7 @@ validate_yaml_data <- function(ph.data = NULL, YML = NULL, VARS = "vars"){
   }
 
   # notice that this might take a while ----
-  message("The validation may take a few minutes if your data & yaml contain dates and or times")
+  message("The validation may take a few minutes if your data & yaml contain dates and or times ...")
 
   # identify proper classes from YAML file ----
   class.compare <- data.table::data.table(
@@ -1600,29 +1655,9 @@ validate_yaml_data <- function(ph.data = NULL, YML = NULL, VARS = "vars"){
   make.int  <- class.compare[yaml.class == "integer"]$name
   make.logical  <- class.compare[yaml.class == "logical"]$name
   make.POSIXct  <- class.compare[yaml.class == "POSIXct"]$name
-  make.Date  <- class.compare[yaml.class == "Date"]$name
+  make.Date  <- class.compare[yaml.class == "date"]$name
 
-  # create function to convert column classes if it can be done without introducing NA's ----
-  lossless_convert <- function(x, class){
-    if(!class %in% c("Date", "POSIXct")){
-      if(sum(is.na(x)) == sum(is.na(suppressWarnings(as(x, class)))) ){
-        x <- suppressWarnings(as(x, class))
-      }
-    }
-    if(class %in% c("Date")){
-      if(sum(is.na(x)) == sum(is.na(suppressWarnings(as.Date(as.character(x))))) ){
-        x <- suppressWarnings(as.Date(as.character(x)))
-      }
-    }
-    if(class %in% c("POSIXct")){
-      if(sum(is.na(x)) == sum(is.na(suppressWarnings(as.POSIXct(as.character(x))))) ){
-        x <- suppressWarnings(as.POSIXct(as.character(x)))
-      }
-    }
-    return(x)
-  }
-
-  # use function convert R column types if possible / needed ----
+  # use lossless_convert function to convert R column types if possible / needed ----
   suppressWarnings(ph.data[, (make.char) := lapply(.SD, lossless_convert, class = 'character'), .SDcols = make.char])
   suppressWarnings(ph.data[, (make.num) := lapply(.SD, lossless_convert, class = 'numeric'), .SDcols = make.num])
   suppressWarnings(ph.data[, (make.int) := lapply(.SD, lossless_convert, class = 'integer'), .SDcols = make.int])
@@ -1645,9 +1680,9 @@ validate_yaml_data <- function(ph.data = NULL, YML = NULL, VARS = "vars"){
     class.problems <- paste(paste0(yaml.name, " (", yaml.class, ")"), collapse = ", ")
     stop(glue::glue("\n\U0001f47f The following variables could not be coerced to their proper class (which is specified in parentheses):
                               {class.problems}"))
-  }else{success <- message(paste0("\U0001f642 All column classes in `", orig.ph.dataname,"` are compatible with the YAML reference standard."))}
+  }else{message(paste0("\U0001f642 All column classes in `", orig.ph.dataname,"` are compatible with the YAML reference standard."))}
 
-  return(success)
+  return(invisible(NULL))
 
 }
 
