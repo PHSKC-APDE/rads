@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities.R
 \name{validate_yaml_data}
 \alias{validate_yaml_data}
-\title{validate the structure and data types of a data.frame or data.table against
+\title{Validate the structure and data types of a data.frame or data.table against
 specifications defined in a YAML file}
 \usage{
 validate_yaml_data(ph.data = NULL, YML = NULL, VARS = "vars")

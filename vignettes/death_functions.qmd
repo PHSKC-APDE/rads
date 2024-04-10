@@ -12,7 +12,8 @@ The [rads package](https://github.com/PHSKC-APDE/rads/) has a suite of tools des
 
 The core `rads` death functions are:
 
--   `get_data_death()`: easily download standardized death data from SQL into R
+-   `get_data_death()`: easily download standardized death data from TSQL into R
+-   `death_icd10_clean()`: clean and standardize ICD-10 codes for use with `rads` death functions
 -   `death_113_count()`: generate death counts for the CDC's 113 Selected Causes of Death (PLUS COVID-19)
 -   `death_130_count()`: generate death counts for the CDC's 130 Selected Causes of **infant** Death (PLUS COVID-19)
 -   `death_injury_matrix_count()`: generate counts of external cause (a.k.a., injury related) deaths by intent and mechanism
@@ -63,6 +64,30 @@ unique(ex0$chi_year) # check the year
 max(ex0$chi_age, na.rm = T) # check top coding
 ```
 
+# death_icd10_clean()
+
+`death_icd10_clean()` is called upon by all of the `death_***_count()` functions, but can also be used as a standalone function for truly custom analyses. It takes a single argument:
+
+-   `icdcol`: the name of a character vector of ICD-10 codes.
+
+The function can be used to clean any arbitrary vector of ICD-10 codes. Notice that it gives a warning, informing you that it cleaned the codes.
+
+```{r}
+#| echo: TRUE
+icd_codes <- c('G30.9', 'I25.1', 'I250', 'C349', 'U07-1', 'X44')
+cleaned_icd_codes <- death_icd10_clean(icd_codes)
+print(cleaned_icd_codes)
+```
+
+The function can also be used within a data.table. Notice that this time it gives a different warning, informing you that it had to replace one of the values (i.e., '3X44') with NA because it did not appear to be an ICD-10 code.
+
+```{r}
+#| echo: TRUE
+mydt <- data.table(icd_codes = c('G309', 'I251', 'I250', 'C349', 'U071', '3X44'))
+mydt[, cleaned_icd_codes := death_icd10_clean(icd_codes)]
+head(mydt)
+```
+
 # death_113_count()
 
 `death_113_count()` allows the user to get death counts following the CDC's National Center for Health Statistics (NCHS) National Vital Statistics System's (NVSS) list of 113 selected causes of death ([see Table B](https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf)). To review this list, simply type `death_113()` into your R console. You can use this information to select information for either the `causeids` or `cause` arguments of `death_113_count()`.
@@ -90,7 +115,7 @@ Please refer to the help file for more details.
 
 ### example #1: Count 2020 deaths from COVID-19 or viral hepatitis
 
-Get the 2020 data from SQL
+Get the 2020 data from TSQL
 
 ```{r}
 ex1 <- get_data_death(year = 2020, 
@@ -146,7 +171,7 @@ kable(head(dt1.alt), format = "markdown")
 
 ### example #2: 2019 & 2020 top five causes of death in `death_113_count()`
 
-First, let's get 2019 & 2020 data from SQL ...
+First, let's get 2019 & 2020 data from TSQL ...
 
 ```{r}
 #| warning: false

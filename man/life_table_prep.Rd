@@ -5,7 +5,7 @@
 \title{Prepare death data for use with life_table()}
 \usage{
 life_table_prep(
-  ph.data = NULL,
+  ph.data,
   cuts = c(0, 1, 5, 10, 15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85),
   dobvar = "date_of_birth",
   dodvar = "date_of_death",
