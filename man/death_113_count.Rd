@@ -5,11 +5,11 @@
 \title{Summarize NCHS 113 causes of deaths}
 \usage{
 death_113_count(
-  ph.data = NULL,
+  ph.data,
   causeids = seq(1, 113, 1),
   cause = NULL,
   icdcol = "underlying_cod_code",
-  kingco = T,
+  kingco = TRUE,
   group_by = NULL,
   ypll_age = NULL,
   death_age_col = NULL

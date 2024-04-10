@@ -5,10 +5,10 @@
 \title{Summarize "Other" causes of deaths}
 \usage{
 death_other_count(
-  ph.data = NULL,
-  cause = NULL,
+  ph.data,
+  cause,
   icdcol = "underlying_cod_code",
-  kingco = T,
+  kingco = TRUE,
   group_by = NULL,
   ypll_age = NULL,
   death_age_col = NULL
