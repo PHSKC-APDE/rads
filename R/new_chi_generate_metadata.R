@@ -1,16 +1,14 @@
 #' CHI Generate Metadata
 #'
 #' @description
-#' function to generate metadata table combining existing metadata and latest estimates ----
+#' function to generate metadata table combining existing metadata and latest estimates.
 #'
-#'
-#' @param meta.old
-#' @param est.current
+#' @param meta.old Previous metadata table
+#' @param est.current current year's tableau ready output with completed estimates
 #'
 #' @return
 #' @export
 #'
-#' @examples
 chi_generate_metadata <- function(meta.old = NULL,
                                   est.current = NULL){
   # get new metadata ----
