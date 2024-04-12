@@ -92,6 +92,50 @@ test_that('age_standardize',{
 
   })
 
+# convert_to_date() ----
+# Test that common date formats are parsed correctly
+test_that("common date formats are parsed correctly", {
+  expect_equal(convert_to_date("2024-01-01"), as.Date("2024-01-01"))
+  expect_equal(convert_to_date("2024/02/01"), as.Date("2024-02-01"))
+  expect_equal(convert_to_date("03-01-2024"), as.Date("2024-03-01"))
+  expect_equal(convert_to_date("04/01/2024"), as.Date("2024-04-01"))
+  expect_equal(convert_to_date("2024-03-05 12:00:00"), as.Date("2024-03-05"))
+  expect_equal(convert_to_date("2024/03/05 12:00:00"), as.Date("2024-03-05"))
+  expect_equal(convert_to_date("March 10, 2024"), as.Date("2024-03-10"))
+  expect_equal(convert_to_date("10 March 2024"), as.Date("2024-03-10"))
+})
+
+# Test that numeric values are converted correctly using different origins
+test_that("numeric values are converted correctly using default and custom origins", {
+  expect_equal(convert_to_date(0), as.Date("1899-12-30"))
+  expect_equal(convert_to_date(1), as.Date("1899-12-31"))
+  expect_equal(convert_to_date(43500, origin = "1900-1-1"), as.Date("2019-02-06"))
+})
+
+# Test handling of non-date strings
+test_that("non-date strings return NA and a warning", {
+  expect_warning(out <- convert_to_date(c("dogs", "cats")),
+                 "cannot be converted to a date")
+  expect_equal(out, c("dogs", "cats"))
+})
+
+# Test that origin must be in %Y-%m-%d format
+test_that("origin must be in %Y-%m-%d format", {
+  expect_error(convert_to_date(43500, origin = "01-01-1900"),
+               "Origin date must be in '%Y-%m-%d' format.")
+  expect_error(convert_to_date(43500, origin = "1900/1/1"),
+               "Origin date must be in '%Y-%m-%d' format.")
+})
+
+# Test with real data and mixed valid/invalid dates
+test_that("real data with mixed valid and invalid dates handles correctly", {
+  mixed_dates <- c("2024-01-01", "invalid date", "2024-12-31", "not a date")
+  expected_dates <- as.Date(c("2024-01-01", NA, "2024-12-31", NA))
+  result <- convert_to_date(mixed_dates)
+  expect_equal(result, expected_dates)
+})
+
+
 # format_time() ----
 test_that('format_time',{
 
