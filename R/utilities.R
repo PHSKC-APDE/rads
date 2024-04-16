@@ -601,6 +601,84 @@ compare_estimate <- function (mydt,
   return(mydt)
 }
 
+# convert_to_date() ----
+#' Convert Numeric and Character Data to Dates
+#'
+#' This function attempts to convert specified values, vectors, or table columns
+#' into date format when possible. The function handles numeric values by
+#' treating them as the number of days since a specified origin date, with the
+#' default being "1899-12-30" (Excel's origin date). It also attempts to parse
+#' character vectors according to common date formats.
+#'
+#' @param x A numeric or character vector that needs to be converted to the date
+#' format.
+#' @param origin A character string specifying the origin date for numeric
+#' conversions. It must be in "%Y-%m-%d" format.
+#'
+#' The default is "1899-12-30".
+#'
+#' @return Returns a vector of class `Date`. If conversion is not possible for
+#' some values, those values will be replaced with `NA`. If none of the original
+#' values can be converted, the original vector will be returned.
+#'
+#' @details The function handles different input types:
+#'
+#' - If `x` is already a Date object, it is returned unchanged.
+#'
+#' - Numeric values are treated as the number of days since `origin`.
+#'
+#' - Character values are parsed using several common American date formats.
+#'   If all conversion attempts fail, a warning is issued and the original data
+#'   is returned.
+#'
+#'@importFrom lubridate parse_date_time
+#'
+#' @examples
+#' convert_to_date(c("2024-01-01", "February 13, 1999", "2024/02/01", "03/21/2000", "Not date"))
+#' convert_to_date(c(42005, 42006), origin = "1899-12-30")
+#' convert_to_date(c('puppies', 'kittens'))
+#'
+#' @export
+convert_to_date <- function(x, origin = "1899-12-30") {
+  # validation of 'origin'
+  if (! grepl("^\\d{4}-\\d{1,2}-\\d{1,2}$", origin) ||
+      inherits(try(as.Date(origin), silent = TRUE), "try-error") ||
+      is.na(as.Date(origin))) {
+    stop("Origin date must be in '%Y-%m-%d' format, e.g., '1970-01-01'")
+  }
+
+  # get name of 'x'
+  x_name <- deparse(substitute(x))
+
+  # get copy of original data
+  x_orig <- copy(x)
+
+  # if already a date, return it unchanged
+  if (inherits(x, 'Date')) {
+    return(x)
+  }
+
+  # Sometimes we get character data for dates that should be numeric, but aren't
+  x = rads::quiet(rads::lossless_convert(x, 'numeric'))
+
+  # convert numerics first, then strings
+  if (is.numeric(x)) {
+    return(as.Date(x, origin = origin))
+  } else {
+    date_out <- as.Date(suppressWarnings(
+      lubridate::parse_date_time(x,
+                                 orders = c("%Y-%m-%d", "%Y/%m/%d", "%m/%d/%Y",
+                                            "%m-%d-%Y", "%B %d, %Y",
+                                            "%d %B, %Y", "%Y-%m-%d %H:%M:%S",
+                                            "%Y/%m/%d %H:%M:%S"))))
+    if (all(is.na(date_out))) {
+      warning('\n\U00026A0 `', x_name, '` cannot be converted to a date. Your original data will be returned.')
+      return(x_orig)
+    } else {return(date_out)}
+  }
+}
+
+
 # dumb_convert() ----
 #' Convert from one type to another type
 #'
