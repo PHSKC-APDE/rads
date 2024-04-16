@@ -290,7 +290,7 @@ calc_age <- function(from, to) {
          age - 1, age)
 }
 
-# chi_compare_est() ----
+# chi_cols() ----
 #
 #' Vector of standard CHI / Tableau Ready columns
 #'
@@ -303,6 +303,7 @@ chi_cols = function(){
   chi_colnames <- names(chi.yaml$vars)
 }
 
+# chi_compare_est() ----
 #' Compare two data.frames with properly formatted CHI data
 #' @param OLD Character vector of length 1. Identifies the data.table/data.frame that you want to use as a reference
 #'
@@ -319,6 +320,7 @@ chi_cols = function(){
 #'
 #' @export
 #' @return A simple printed statement, either identifying incompatible column types or a statement of success
+#'
 chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = NULL, META = NULL){
 
   #Bindings for data.table/check global variables
