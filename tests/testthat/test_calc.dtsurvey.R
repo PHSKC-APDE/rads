@@ -195,7 +195,7 @@ test_that('Time var without window',{
 
 #
 test_that('Invalid input for what',{
-  expect_error(calc(sur, 'thisvarnoexists', time_var = NULL), 'columns in `ph.data`: thisvarnoexists')
+  expect_error(calc(sur, 'thisvarnoexists', time_var = NULL), 'columns in `ph.data`')
 })
 #
 test_that('Invalid input for ... filters',{
@@ -203,7 +203,9 @@ test_that('Invalid input for ... filters',{
 })
 
 test_that('Invalid input for by',{
-  expect_error(calc(sur, 'api00', by = 'turtles', time_var = NULL), 'columns in `ph.data`: turtles')
+
+  expect_error(calc(sur, 'api00', by = 'turtles', time_var = NULL), '`by` values are not names of columns')
+
 })
 #
 test_that('Invalid input for metric',{

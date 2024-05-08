@@ -8,5 +8,9 @@
 #' A data.table with 16 rows and 6 columns: \code{input}, \code{output}, \code{object},
 #' \code{inputvar}, \code{outputvar}, and \code{notes}.
 #'
+#' @examples
+#' head(ref_get_xwalk)
+#'
+#'
 #' @name ref_get_xwalk
 "ref_get_xwalk"

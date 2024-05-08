@@ -20,17 +20,15 @@ list of lists of recode instructions.
 Parse Recode Instructions
 }
 \details{
-Imports a data.frame with at a minimum of the following columns: old_var, old_value, new_var, new_value, new_label, start_year, and end_year.
-
-old_var: Column in the dataset containing the values to be recoded
-
-old_value: value in the column \code{old_var} to be translated into a new value by recoding. If left blank/NA/""/NULL or otherwise missing, the recode operation
+Imports a data.frame with at a minimum of the following columns: \code{old_var},
+\code{old_value}, \code{new_var}, \code{new_value}, \code{new_label}, \code{start_year}, and \code{end_year}.
+\itemize{
+\item \code{old_var}: Column in the dataset containing the values to be recoded
+\item \code{old_value}: value in the column \code{old_var} to be translated into a new value by recoding. If left blank/NA/""/NULL or otherwise missing, the recode operation
 will essentially take the form of a rename of \code{old_var} -> \code{new_var}
-
-new_var: Column where the recoded values will be placed. If \code{new_var} doesn't exist, than it will be created. Otherwise it will be overwritten.
-
-new_value: Column indicating where the new values for the recoding process exist. It is positionally (e.g. row) tied to a particular \code{old_value}.
+\item \code{new_var}: Column where the recoded values will be placed. If \code{new_var} doesn't exist, than it will be created. Otherwise it will be overwritten.
+\item \code{new_value}: Column indicating where the new values for the recoding process exist. It is positionally (e.g. row) tied to a particular \code{old_value}.
 If blank, it helps identify a simpler rename operation.
-
-new_label: character (or convertable to character): The factor label that \code{old_value} will be recoded to in conjunction with the position of \code{new_value}
+\item \code{new_label}: character (or convertable to character): The factor label that \code{old_value} will be recoded to in conjunction with the position of \code{new_value}
+}
 }

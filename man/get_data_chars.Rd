@@ -69,15 +69,18 @@ Get CHARS (Comprehensive Hospital Abstract Reporting System) microdata from stor
 }
 \examples{
 
-\dontrun{
- get_data_chars(cols = c('seq_no', 'chi_age'),
-                year = c(2020),
-                kingco = T,
-                wastate = T,
-                version = 'final',
-                inpatient = T,
-                deaths = F,
-                topcode = F,
-                mykey = 'hhsaw')
+\donttest{
+ test <- get_data_chars(
+          cols = c('seq_no', 'chi_age'),
+          year = c(2020),
+          kingco = TRUE,
+          wastate = TRUE,
+          version = 'final',
+          inpatient = TRUE,
+          deaths = FALSE,
+          topcode = FALSE,
+          mykey = 'hhsaw')
+
+ head(test)
 }
 }

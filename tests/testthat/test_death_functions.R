@@ -1,170 +1,6 @@
 library('data.table')
 library('testthat')
 
-# Check life_table ----
-  # life_table() create data ----
-  # Test with 1970 CA Abridged Death Data
-  # Chiang, Chin Long & World Health Organization. (1979).
-  # Life table and mortality analysis / Chin Long Chiang.
-  # World Health Organization. https://apps.who.int/iris/handle/10665/62916
-  dt <- data.table::data.table(
-    ages = c("0-1", "1-5", "5-10", "10-15", "15-20", "20-25", "25-30", "30-35",
-             "35-40", "40-45", "45-50", "50-55", "55-60", "60-65", "65-70",
-             "70-75", "75-80", "80-85", "85+"),
-    deaths = c(6234, 1049, 723, 735, 2054, 2702, 2071, 1964, 2588, 4114, 6722,
-               8948, 11942, 14309, 17088, 19149, 21325, 20129, 22483),
-    pop = c(340483, 1302198, 1918117, 1963681, 1817379, 1740966, 1457614,
-            1219389, 1149999, 1208550, 1245903, 1083852, 933244, 770770,
-            620805, 484431, 342097, 210953, 142691),
-    fraction = c(0.09, 0.41, 0.44, 0.54, 0.59, 0.49, 0.51, 0.52, 0.53, 0.54, 0.53,
-                 0.53, 0.52, 0.52, 0.51, 0.52, 0.51, 0.50, NA))
-
-  # life_table() create output ----
-  # default argument values
-  test1 <- life_table(ph.data = dt,
-                      myages = "ages",
-                      mydeaths = "deaths",
-                      mypops = "pop",
-                      myprops = "fraction",
-                      ci = 0.95)
-
-  # when argument have non-default values
-  dt2 <- copy(dt)
-  setnames(dt2, paste0(names(dt), "x"))
-  test2 <- life_table(ph.data = dt2,
-                      myages = "agesx",
-                      mydeaths = "deathsx",
-                      mypops = "popx",
-                      myprops = "fractionx",
-                      ci = 0.95)
-  setnames(test2, c("agesx", "popx", "deathsx", "fractionx"), c("ages", "pop", "deaths", "fraction"))
-
-  # alternate ci
-  test1.90 <- life_table(ph.data = dt,
-                         myages = "ages",
-                         mydeaths = "deaths",
-                         mypops = "pop",
-                         myprops = "fraction",
-                         ci = 0.90)
-  test1.99 <- life_table(ph.data = dt,
-                         myages = "ages",
-                         mydeaths = "deaths",
-                         mypops = "pop",
-                         myprops = "fraction",
-                         ci = 0.99)
-
-  # life_table() tests ----
-  test_that("Check for errors based on validation failure...", {
-    expect_error(life_table()) # need to specify data.frame
-    expect_error(life_table(hello)) # non-existant data.frame
-    expect_error(life_table(dt, ages = "blah"))
-    dta<-copy(dt); dta[, ages := gsub("-", "_", ages)]
-    expect_error(life_table(dta)) # interval needs '-'
-    dta<-copy(dt); dta[, ages := gsub("\\+", "", ages)]
-    expect_error(life_table(dta)) # final interval needs '+'
-    dta<-copy(dt); dta[, pop := as.character(pop)]
-    expect_error(life_table(dta)) # pop must be numeric
-    dta<-copy(dt); dta[, deaths := as.character(deaths)]
-    expect_error(life_table(dta)) # deaths must be numeric
-    dta<-rbind(copy(dt), data.table(ages = c(NA, NA), deaths = c(1000, 1000)), fill = T)
-    expect_error(life_table(dta)) # ages can only have one row with NA
-    dta<-copy(dt); dta[, fraction := as.character(fraction)]
-    expect_error(life_table(dta)) # my_frac must be numeric
-    expect_error(life_table(dt, ci = 1 )) # ci must be between 0.01 & 0.99
-    expect_error(life_table(dt, ci = 0 )) # ci must be between 0.01 & 0.99
-    expect_error(life_table(dt, ci = -.1 )) # ci must be between 0.01 & 0.99
-  })
-
-
-  test_that('Confirm output is independent of argument/column names...',{
-    expect_equal( test1, test2)
-  })
-
-
-  test_that('structure and results compared to Chiang 1979...',{
-    expect_equal( nrow(test1), 19)
-    expect_equal( ncol(test1), 15)
-    expect_equal( test1[1]$qx, 0.01801)
-    expect_equal( test1[1]$ex, 71.95)
-    expect_equal( test1[10]$qx, 0.01689)
-    expect_equal( test1[10]$ex, 35.56)
-    expect_equal( test1[19]$qx, 1)
-    expect_equal( test1[19]$ex, 6.35)
-  })
-
-
-  test_that('confidence intervals seem logical...',{
-    # remember the higher the % confidence, the wider the interval
-    expect_gt( test1.99[7]$ex_upper, test1[7]$ex_upper)
-    expect_gt( test1[7]$ex_upper, test1.90[7]$ex_upper)
-    expect_lt( test1.99[7]$ex_lower, test1[7]$ex_lower)
-    expect_lt( test1[7]$ex_lower, test1.90[7]$ex_lower)
-  })
-
-
-  test_that('check that deaths with an unknown age interval and redistributed...', {
-    dtna <- rbind(dt, data.table(deaths = 16000), fill = T)
-    dtna_table <- life_table(dtna)
-    expect_equal(nrow(dtna_table), nrow(test1))
-    expect_lte(sum(dtna_table$deaths), (sum(test1$deaths) + 16000 + 3)) # allow some buffer for rounding
-    expect_gte(sum(dtna_table$deaths), (sum(test1$deaths) + 16000 - 3)) # allow some buffer for rounding
-
-    dtna <- rbind(dt, data.table(deaths = rep(16000, 2)), fill = T)
-    expect_error( life_table(dtna)) # should not allow more than 1 row with deaths and missing age interval
-
-    dtna <- rbind(dt2, data.table(deathsx = 16000), fill = T)
-    dtna_table <- life_table(dtna, myages = "agesx", mydeaths = "deathsx", mypops = "popx", myprops = "fractionx")
-    expect_equal(nrow(dtna_table), nrow(test1))
-    expect_lte(sum(dtna_table$deaths), (sum(test1$deaths) + 16000 + 3)) # allow some buffer for rounding
-    expect_gte(sum(dtna_table$deaths), (sum(test1$deaths) + 16000 - 3)) # allow some buffer for rounding
-  })
-
-
-# Check life_table_prep ----
-  # life_table_prep() create data ----
-  set.seed(98104)
-  ltp <- data.table::data.table(
-    date_of_death = rep(as.Date("2020-01-01"), 10000) + sample(0:365, 10000, replace = TRUE),
-    days_lived = round2(rnorm(10000, mean = 29930, sd = 11000), 0),
-    race_eth = rep_len(c("AIAN", "Asian", "Black", "Hispanic", "NHPI", "White"), 1000),
-    year = 2020
-  )
-  ltp[days_lived <0, days_lived := 0] # can't live negative days
-  ltp[days_lived >43800, days_lived := 365*sample(35:100, 1)] # cap lifespan at 120 years
-  ltp[, date_of_birth := date_of_death - days_lived]
-  ltp[, days_lived := NULL]
-
-  # life_table_prep() create output ----
-  ltp_output <- life_table_prep(DTx = ltp)
-
-  # life_table_prep() tests ----
-  test_that("Check for errors based on validation failure...", {
-    expect_error(life_table_prep()) # need to specify data.frame
-    expect_error(life_table_prep("ltp")) # improper quoting of table name
-    expect_error(life_table_prep(hello)) # non-existant data.frame
-    expect_error(life_table_prep(ltp, cuts = NULL))
-    expect_error(life_table_prep(ltp, cuts = c(0, NA, 100)))
-    expect_error(life_table_prep(ltp, cuts = c(-1, 50, 100)))
-    expect_warning(life_table_prep(ltp, cuts = c(0, 50, 105)))
-    expect_error(life_table_prep(ltp, cuts = c("0", "50", "100")))
-    expect_error(life_table_prep(ltp, dobvar = "dob")) # non-existent
-    expect_error(life_table_prep(ltp, dodvar = "dod")) # non-existent
-    expect_warning(life_table_prep(ltp, dobvar = "date_of_death", dodvar = "date_of_birth")) # date of death should not greater than date of birth
-  })
-
-  test_that("Confirm proper columns are output ...", {
-    expect_equal(
-      setdiff(names(ltp), c("date_of_birth", "date_of_death")),
-      setdiff(names(ltp_output), c("ages", "deaths", "fraction"))
-    )
-  })
-
-  test_that("Check that dates can be formatted as character vars ...", {
-    ltp2 <- copy(ltp)[, c("date_of_birth", "date_of_death") := lapply(.SD, function(X){as.character(X)}), .SDcols = c("date_of_birth", "date_of_death")]
-    expect_equal(life_table_prep(ltp), life_table_prep(ltp2))
-  })
-
-
 # Check death_113 ----
   # death_113() create data ----
   # not necessary
@@ -552,3 +388,252 @@ library('testthat')
                  sort(c('one', 'two', 'three')))
   })
 
+# Check death_icd10_clean ----
+  # Test for proper conversion ----
+  test_that("ICD-10 codes are correctly cleaned and standardized", {
+    expect_equal(suppressWarnings(death_icd10_clean(c("A85.2"))), "A852")
+    expect_equal(suppressWarnings(death_icd10_clean(c("b99-1"))), "B991")
+    expect_equal(suppressWarnings(death_icd10_clean(c("C34"))), "C340")
+    expect_equal(suppressWarnings(death_icd10_clean(c("J20.9"))), "J209")
+  })
+
+  # Test for handling of NA values for invalid patterns ----
+  test_that("Invalid ICD-10 patterns are set to NA", {
+    expect_equal(suppressWarnings(death_icd10_clean(c("1234"))), NA_character_)
+    expect_equal(suppressWarnings(death_icd10_clean(c("ABCDE"))), NA_character_)
+  })
+
+  # Test for errors on missing input  ----
+  test_that("Error is thrown for missing input", {
+    expect_error(death_icd10_clean(), "cannot be missing")
+  })
+
+  # Test for warnings ----
+  test_that("Warning is issued for non-alphanumeric characters", {
+    expect_warning(death_icd10_clean(c("A85.2")), "non alpha-numeric character")
+    expect_warning(death_icd10_clean(c("B99-1")), "non alpha-numeric character")
+    expect_warning(death_icd10_clean(c("1X12")), "have been replaced with NA")
+    expect_warning(death_icd10_clean(c("X12X")), "have been replaced with NA")
+  })
+
+  # Test for specific lengths and padding ----
+  test_that("Codes are trimmed or padded to 4 characters", {
+    input <- c("A1", "B99", "C123", "D1234", "E12345")
+    expected <- c("A100", "B990", "C123", "D123", "E123")
+    result <- suppressWarnings(death_icd10_clean(input))
+    expect_equal(result, expected)
+  })
+
+# Check life_table ----
+  # life_table() create data ----
+  # Test with 1970 CA Abridged Death Data
+  # Chiang, Chin Long & World Health Organization. (1979).
+  # Life table and mortality analysis / Chin Long Chiang.
+  # World Health Organization. https://apps.who.int/iris/handle/10665/62916
+  dt <- data.table::data.table(
+    ages = c("0-1", "1-5", "5-10", "10-15", "15-20", "20-25", "25-30", "30-35",
+             "35-40", "40-45", "45-50", "50-55", "55-60", "60-65", "65-70",
+             "70-75", "75-80", "80-85", "85+"),
+    deaths = c(6234, 1049, 723, 735, 2054, 2702, 2071, 1964, 2588, 4114, 6722,
+               8948, 11942, 14309, 17088, 19149, 21325, 20129, 22483),
+    pop = c(340483, 1302198, 1918117, 1963681, 1817379, 1740966, 1457614,
+            1219389, 1149999, 1208550, 1245903, 1083852, 933244, 770770,
+            620805, 484431, 342097, 210953, 142691),
+    fraction = c(0.09, 0.41, 0.44, 0.54, 0.59, 0.49, 0.51, 0.52, 0.53, 0.54, 0.53,
+                 0.53, 0.52, 0.52, 0.51, 0.52, 0.51, 0.50, NA))
+
+  # life_table() create output ----
+  # default argument values
+  test1 <- life_table(ph.data = dt,
+                      myages = "ages",
+                      mydeaths = "deaths",
+                      mypops = "pop",
+                      myprops = "fraction",
+                      ci = 0.95)
+
+  # when argument have non-default values
+  dt2 <- copy(dt)
+  setnames(dt2, paste0(names(dt), "x"))
+  test2 <- life_table(ph.data = dt2,
+                      myages = "agesx",
+                      mydeaths = "deathsx",
+                      mypops = "popx",
+                      myprops = "fractionx",
+                      ci = 0.95)
+  setnames(test2, c("agesx", "popx", "deathsx", "fractionx"), c("ages", "pop", "deaths", "fraction"))
+
+  # alternate ci
+  test1.90 <- life_table(ph.data = dt,
+                         myages = "ages",
+                         mydeaths = "deaths",
+                         mypops = "pop",
+                         myprops = "fraction",
+                         ci = 0.90)
+  test1.99 <- life_table(ph.data = dt,
+                         myages = "ages",
+                         mydeaths = "deaths",
+                         mypops = "pop",
+                         myprops = "fraction",
+                         ci = 0.99)
+
+  # life_table() tests ----
+  test_that("Check for errors based on validation failure...", {
+    expect_error(life_table()) # need to specify data.frame
+    expect_error(life_table(hello)) # non-existant data.frame
+    expect_error(life_table(dt, ages = "blah"))
+    dta<-copy(dt); dta[, ages := gsub("-", "_", ages)]
+    expect_error(life_table(dta)) # interval needs '-'
+    dta<-copy(dt); dta[, ages := gsub("\\+", "", ages)]
+    expect_error(life_table(dta)) # final interval needs '+'
+    dta<-copy(dt); dta[, pop := as.character(pop)]
+    expect_error(life_table(dta)) # pop must be numeric
+    dta<-copy(dt); dta[, deaths := as.character(deaths)]
+    expect_error(life_table(dta)) # deaths must be numeric
+    dta<-rbind(copy(dt), data.table(ages = c(NA, NA), deaths = c(1000, 1000)), fill = T)
+    expect_error(life_table(dta)) # ages can only have one row with NA
+    dta<-copy(dt); dta[, fraction := as.character(fraction)]
+    expect_error(life_table(dta)) # my_frac must be numeric
+    expect_error(life_table(dt, ci = 1 )) # ci must be between 0.01 & 0.99
+    expect_error(life_table(dt, ci = 0 )) # ci must be between 0.01 & 0.99
+    expect_error(life_table(dt, ci = -.1 )) # ci must be between 0.01 & 0.99
+  })
+
+  test_that('Confirm output is independent of argument/column names...',{
+    expect_equal( test1, test2)
+  })
+
+  test_that('Confirm that group_by argument works when specified...',{
+    # Create arbitrary small variations for 'demographic' groups ----
+      # first create an empty table
+        mygroups <- data.table::CJ(shape = c('circle', 'square'), color = c('blue', 'orange'))
+        dt_groups <- merge(copy(dt)[,constant := 1],
+                           mygroups[, constant := 1],
+                           by = 'constant',
+                           allow.cartesian = T)[, constant := NULL]
+      # now modify the values
+        set.seed(98104)
+        dt_groups[, deaths := round(deaths * sample(seq(.75, 1.25, .01), .N, replace = TRUE))]
+        dt_groups[, pop := round(pop * sample(seq(.75, 1.25, .01), .N, replace = TRUE))]
+
+      # append the original data
+        dt_groups2 <- rbind(dt_groups, dt, fill = T)
+
+    # Run the tests ----
+      expect_no_error(test_groups <- life_table(ph.data = dt_groups,
+                                                myages = 'ages',
+                                                mydeaths = 'deaths',
+                                                mypops = 'pop',
+                                                myprops = 'fraction',
+                                                group_by = c('shape', 'color'),
+                                                ci = 0.95))
+      expect_equal(nrow(test_groups), 76) # 76 because 4 stratum and 19 age groups
+
+      expect_no_error(test_groups2 <- life_table(ph.data = dt_groups2,
+                                                 myages = 'ages',
+                                                 mydeaths = 'deaths',
+                                                 mypops = 'pop',
+                                                 myprops = 'fraction',
+                                                 group_by = c('shape', 'color'),
+                                                 ci = 0.95))
+      expect_identical(test1, # original data, run by itself
+                       test_groups2[is.na(shape) & is.na(color)][, c('shape', 'color') := NULL] # original data when run with other groups
+                       )
+  })
+
+
+  test_that('structure and results compared to Chiang 1979...',{
+    expect_equal( nrow(test1), 19)
+    expect_equal( ncol(test1), 15)
+    expect_equal( test1[1]$qx, 0.01801)
+    expect_equal( test1[1]$ex, 71.95)
+    expect_equal( test1[10]$qx, 0.01689)
+    expect_equal( test1[10]$ex, 35.56)
+    expect_equal( test1[19]$qx, 1)
+    expect_equal( test1[19]$ex, 6.35)
+  })
+
+  test_that('confidence intervals seem logical...',{
+    # remember the higher the % confidence, the wider the interval
+    expect_gt( test1.99[7]$ex_upper, test1[7]$ex_upper)
+    expect_gt( test1[7]$ex_upper, test1.90[7]$ex_upper)
+    expect_lt( test1.99[7]$ex_lower, test1[7]$ex_lower)
+    expect_lt( test1[7]$ex_lower, test1.90[7]$ex_lower)
+  })
+
+  test_that('check that deaths with an unknown age interval and redistributed...', {
+    dtna <- rbind(dt, data.table(deaths = 16000), fill = T)
+    dtna_table <- life_table(dtna)
+    expect_equal(nrow(dtna_table), nrow(test1))
+    expect_lte(sum(dtna_table$deaths), (sum(test1$deaths) + 16000 + 3)) # allow some buffer for rounding
+    expect_gte(sum(dtna_table$deaths), (sum(test1$deaths) + 16000 - 3)) # allow some buffer for rounding
+
+    dtna <- rbind(dt, data.table(deaths = rep(16000, 2)), fill = T)
+    expect_error( life_table(dtna)) # should not allow more than 1 row with deaths and missing age interval
+
+    dtna <- rbind(dt2, data.table(deathsx = 16000), fill = T)
+    dtna_table <- life_table(dtna, myages = "agesx", mydeaths = "deathsx", mypops = "popx", myprops = "fractionx")
+    expect_equal(nrow(dtna_table), nrow(test1))
+    expect_lte(sum(dtna_table$deaths), (sum(test1$deaths) + 16000 + 3)) # allow some buffer for rounding
+    expect_gte(sum(dtna_table$deaths), (sum(test1$deaths) + 16000 - 3)) # allow some buffer for rounding
+  })
+
+
+# Check life_table_prep ----
+  # life_table_prep() create data ----
+  set.seed(98104)
+  ltp <- data.table::data.table(
+    date_of_death = rep(as.Date("2020-01-01"), 10000) + sample(0:365, 10000, replace = TRUE),
+    days_lived = round2(rnorm(10000, mean = 29930, sd = 11000), 0),
+    race_eth = rep_len(c("AIAN", "Asian", "Black", "Hispanic", "NHPI", "White"), 1000),
+    year = 2020
+  )
+  ltp[days_lived <0, days_lived := 0] # can't live negative days
+  ltp[days_lived >43800, days_lived := 365*sample(35:100, 1)] # cap lifespan at 120 years
+  ltp[, date_of_birth := date_of_death - days_lived]
+  ltp[, days_lived := NULL]
+
+  # life_table_prep() create output ----
+  ltp_output <- life_table_prep(ph.data = ltp)
+  ltp_output_group <- life_table_prep(ph.data = ltp, group_by = c('year', 'race_eth'))
+
+  # life_table_prep() tests ----
+  test_that("Check for errors based on validation failure...", {
+    expect_error(life_table_prep()) # need to specify data.frame
+    expect_error(life_table_prep("ltp")) # improper quoting of table name
+    expect_error(life_table_prep(hello)) # non-existant data.frame
+    expect_error(life_table_prep(ltp, cuts = NULL))
+    expect_error(life_table_prep(ltp, cuts = c(0, NA, 100)))
+    expect_error(life_table_prep(ltp, cuts = c(-1, 50, 100)))
+    expect_warning(life_table_prep(ltp, cuts = c(0, 50, 105)))
+    expect_error(life_table_prep(ltp, cuts = c("0", "50", "100")))
+    expect_error(life_table_prep(ltp, dobvar = "dob")) # non-existent
+    expect_error(life_table_prep(ltp, dodvar = "dod")) # non-existent
+    expect_warning(life_table_prep(ltp, dobvar = "date_of_death", dodvar = "date_of_birth")) # date of death should not greater than date of birth
+  })
+
+  test_that("Confirm proper columns are output ...", {
+    expect_equal(
+      length(setdiff(names(ltp_output), c("ages", "deaths", "fraction"))),
+      0 # expect zero because ages, deaths, and fractions should be the only columns in ltp_output
+    )
+  })
+
+  test_that("Check that dates can be formatted as character vars ...", {
+    ltp2 <- copy(ltp)[, c("date_of_birth", "date_of_death") := lapply(.SD, function(X){as.character(X)}), .SDcols = c("date_of_birth", "date_of_death")]
+    expect_equal(life_table_prep(ltp), life_table_prep(ltp2))
+  })
+
+  test_that("Check that group_by command works as expected ...", {
+    expect_identical(
+      sort(setdiff(names(ltp), c('date_of_death', 'date_of_birth'))),
+      sort(setdiff(names(ltp_output_group), c('ages', 'deaths', 'fraction')))
+    )
+    expect_identical(
+      nrow(ltp),
+      sum(ltp_output_group$deaths)
+    )
+    expect_identical(
+      setorder(unique(ltp[, .(year, race_eth)]), race_eth, year),
+      setorder(unique(ltp_output_group[, .(year, race_eth)]), race_eth, year)
+    )
+  })

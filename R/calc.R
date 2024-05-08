@@ -70,7 +70,10 @@
 #' @examples
 #'
 #' #record data
-#' test.data <- get_data_birth(year = 2015:2017)
+#' test.data <- get_data_birth(
+#'                year = 2015:2017,
+#'                cols = c("chi_year", "kotelchuck",
+#'                         "chi_sex", "fetal_pres"))
 #'
 #' test.results <- calc(test.data,
 #'                      what = c("kotelchuck", "fetal_pres"),
@@ -78,6 +81,8 @@
 #'                       by = c("chi_year", "chi_sex"),
 #'                       metrics = c("mean", "numerator", "denominator",
 #'                                   "total"))
+#'
+#' print(test.results)
 #'
 calc <- function(ph.data, ...) {
   UseMethod("calc")

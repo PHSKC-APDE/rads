@@ -5,11 +5,11 @@
 \title{Summarize NCHS causes of deaths}
 \usage{
 death_xxx_count(
-  ph.data = NULL,
+  ph.data,
   causeids = NULL,
   cause = NULL,
   icdcol = "underlying_cod_code",
-  kingco = T,
+  kingco = TRUE,
   group_by = NULL,
   ypll_age = NULL,
   death_age_col = NULL,
@@ -98,6 +98,31 @@ COVID-19 deaths (since they do not have their own NCHS category).
 \details{
 See \code{rads::death_113()} & \code{rads::death_130()} for a complete list
 of available causesid and cause values.
+}
+\examples{
+# example 1: death count only
+set.seed(98104)
+deathdata <- data.table::data.table(
+  cod.icd10 = c(rep("A85.2", round(runif(1, 30, 100000), 0)),
+                rep("B51", round(runif(1, 30, 100000), 0)),
+                rep("U071", round(runif(1, 30, 100000), 0)),
+                rep("E44", round(runif(1, 30, 100000), 0)),
+                rep("E62", round(runif(1, 30, 100000), 0)),
+                rep("G00", round(runif(1, 30, 100000), 0)),
+                rep("J10", round(runif(1, 30, 100000), 0)),
+                rep("J15", round(runif(1, 30, 100000), 0)),
+                rep("V874", round(runif(1, 30, 100000), 0)))
+)
+eg1 <- death_xxx_count(ph.data = deathdata,
+                       causeids = seq(1, 113, 1),
+                       cause = NULL,
+                       icdcol = "cod.icd10",
+                       kingco = FALSE,
+                       ypll_age = NULL,
+                       death_age_col = NULL,
+                       nchsnum = 113)
+head(eg1)
+
 }
 \references{
 \url{https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf} &

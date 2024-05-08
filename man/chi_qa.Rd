@@ -29,21 +29,13 @@ feedback every time there is an error.
 }
 \description{
 This functions seeks to ensure that the data being assessed meet the detailed CHI
-Tableau Ready standards detailed on our network drive:
-"//phshare01/epe_share/WORK/CHI Visualizations/Tableau Ready Output Format_v2.xlsx"
+Tableau Ready standards detailed on our SharePoint:
+DPH-CommunityHealthIndicators >> CHIVizes >> CHI-Standards-TableauReady Output.xlsx
 }
 \details{
 This function ensures that the structure of the data matches all CHI Tableau Ready
 specifications. QA for data quality vis-à-vis previous production data, CHAT, or any other source,
 must be performed separately
-}
-\examples{
-
-\dontrun{
-# create sample data
-
-# run function
-}
 }
 \keyword{CHI,}
 \keyword{Production}

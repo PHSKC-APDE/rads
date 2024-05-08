@@ -43,3 +43,6 @@ Default ci (e.g. upper and lower) is 95 percent.
 \item ndistinct: The unique number of \code{what} values in the given subset. For factors, it is the unique number of levels in the subset.
 }
 }
+\examples{
+print(metrics())
+}

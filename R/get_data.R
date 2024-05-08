@@ -14,8 +14,13 @@
 #' @export
 #' @references \url{https://github.com/PHSKC-APDE/rads/wiki/get_data}
 #' @examples
-#' \dontrun{
-#'  get_data(dataset = 'hys', cols = NULL, year = c(2016, 2018)
+#' \donttest{
+#'  test <- get_data(
+#'           dataset = 'death',
+#'           cols = c('chi_year', 'chi_geo_kc', 'chi_geo_seattle'),
+#'           year = c(2018))
+#'
+#'  head(test)
 #' }
 get_data <- function(dataset, cols = NULL, year = 2018, ...){
 
@@ -58,17 +63,17 @@ get_data <- function(dataset, cols = NULL, year = 2018, ...){
 #'
 #' @examples
 #'
-#' \dontrun{
-#'  get_data_hys(cols = NULL, year = c(2016, 2018), weight_variable = 'wt_sex_grade_kc')
+#' \donttest{
+#'  get_data_hys(cols = NULL, year = c(2016, 2018), weight_variable = 'wt_grade_kc')
 #' }
-get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_grade_kc', kingco = TRUE, version = 'best', ar = TRUE){
+get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_grade_kc', kingco = TRUE, version = 'best', ar = TRUE){
 
   colname <- chi_geo_kc <- weight1 <- psu <- chi_year <- NULL
 
-  stopifnot(all(year %in% c(seq(2004,2018,2), 2021)))
+  stopifnot(all(year %in% c(seq(2004,2018,2), 2021, 2023)))
 
   # pull the list of vars
-  vars = file.path('//dphcifs/APDE-CDIP/HYS/releases/2021/',version, 'hys_cols.csv')
+  vars = file.path('//dphcifs/APDE-CDIP/HYS/releases/',version, 'hys_cols.csv')
   vars = data.table::fread(vars)
 
   # subset by year
@@ -94,12 +99,12 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_
   arfp = c()
   sfp = c()
   if(any(vars[, ar])){
-    arfp = file.path('//dphcifs/APDE-CDIP/HYS/releases/2021/',version, '/', paste0('hys_ar_', year, '.rds'))
+    arfp = file.path('//dphcifs/APDE-CDIP/HYS/releases/',version, '/', paste0('hys_ar_', year, '.rds'))
     ardat = data.table::rbindlist(lapply(arfp, readRDS), use.names = T, fill = T)
 
   }
   if(any(!vars[, ar])){
-    sfp = file.path('//dphcifs/APDE-CDIP/HYS/releases/2021/',version, '/', paste0('hys_stage_', year, '.rds'))
+    sfp = file.path('//dphcifs/APDE-CDIP/HYS/releases/',version, '/', paste0('hys_stage_', year, '.rds'))
     sdat = data.table::rbindlist(lapply(sfp, readRDS), use.names = T, fill = T)
 
   }
@@ -176,12 +181,15 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_sex_
 #'
 #' @examples
 #'
-#' \dontrun{
-#'  get_data_birth(cols = NA,
-#'  year = c(2015, 2016, 2017),
-#'  kingco = F,
-#'  version = 'final',
-#'  mykey = 'hhsaw')
+#' \donttest{
+#'  test <- get_data_birth(
+#'             cols = c('chi_year', 'chi_geo_kc', 'chi_sex'),
+#'             year = c(2019),
+#'             kingco = FALSE,
+#'             version = 'final',
+#'             mykey = 'hhsaw')
+#'
+#'  head(test)
 #' }
 get_data_birth <- function(cols = NA,
                            year = NA,
@@ -248,7 +256,7 @@ get_data_birth <- function(cols = NA,
 
   # Format string variables due to SQL import quirks ----
     original.order <- names(dat)
-    sql_clean(dat, stringsAsFactors = TRUE) # clean random white spaces and change strings to factors
+    string_clean(dat, stringsAsFactors = TRUE) # clean random white spaces and change strings to factors
 
   # reorder table----
     setcolorder(dat, original.order)
@@ -299,13 +307,16 @@ get_data_birth <- function(cols = NA,
 #'
 #' @examples
 #'
-#' \dontrun{
-#'  get_data_death(cols = NA,
-#'  year = c(2019),
-#'  kingco = T,
-#'  version = 'final',
-#'  topcode = F,
-#'  mykey = 'hhsaw')
+#' \donttest{
+#'  test <- get_data_death(
+#'           cols = c('chi_year', 'chi_geo_kc', 'chi_sex'),
+#'           year = c(2019),
+#'           kingco = TRUE,
+#'           version = 'final',
+#'           topcode = FALSE,
+#'           mykey = 'hhsaw')
+#'
+#'  head(test)
 #' }
 get_data_death <- function(cols = NA,
                            year = NA,
@@ -405,7 +416,7 @@ get_data_death <- function(cols = NA,
         }
       }
 
-      sql_clean(dat, stringsAsFactors = FALSE) # clean random white spaces and change strings to factors
+      string_clean(dat, stringsAsFactors = FALSE) # clean random white spaces and change strings to factors
 
   # Label race_ethnicity data ----
       if( 'chi_race_eth7' %in% cols | 'chi_race_eth7' %in% names(dat) ){
@@ -540,16 +551,19 @@ get_data_death <- function(cols = NA,
 #'
 #' @examples
 #'
-#' \dontrun{
-#'  get_data_chars(cols = c('seq_no', 'chi_age'),
-#'                 year = c(2020),
-#'                 kingco = T,
-#'                 wastate = T,
-#'                 version = 'final',
-#'                 inpatient = T,
-#'                 deaths = F,
-#'                 topcode = F,
-#'                 mykey = 'hhsaw')
+#' \donttest{
+#'  test <- get_data_chars(
+#'           cols = c('seq_no', 'chi_age'),
+#'           year = c(2020),
+#'           kingco = TRUE,
+#'           wastate = TRUE,
+#'           version = 'final',
+#'           inpatient = TRUE,
+#'           deaths = FALSE,
+#'           topcode = FALSE,
+#'           mykey = 'hhsaw')
+#'
+#'  head(test)
 #' }
 get_data_chars <- function(cols = NA,
                            year = NA,
@@ -649,7 +663,7 @@ get_data_chars <- function(cols = NA,
   # Format string variables due to SQL import quirks ----
       original.order <- names(dat)
 
-      sql_clean(dat, stringsAsFactors = F) # clean random white spaces and ensure all factors are strings
+      string_clean(dat, stringsAsFactors = F) # clean random white spaces and ensure all factors are strings
       string.vars <- setdiff(names(dat)[sapply(dat, is.character)], c('diag1', 'proc1', 'ecode1'))
       if(length(string.vars) > 0){dat[, (string.vars) := lapply(.SD, tolower), .SDcols = string.vars]}
 

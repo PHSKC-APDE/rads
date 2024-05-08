@@ -24,7 +24,7 @@ a labeled numeric vector of the count, rate, and adjusted rate with the CI
 Calculate crude and directly adjusted rates
 }
 \examples{
-\dontrun{
+\donttest{
  adjust_direct(count = c(11, 9), pop = c(500, 500), stdpop = c(640, 720),
  per = 100, conf.level = 0.95)[]
 }

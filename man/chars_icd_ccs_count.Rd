@@ -136,7 +136,7 @@ error because your resulting table will have zero rows.
 }
 \examples{
 # example: 2019 King County hospitalizations for chemotherapy, by sex
-\dontrun{
+\donttest{
 blah = get_data_chars(year = 2019, kingco = TRUE)
 myresult <- chars_icd_ccs_count(ph.data = blah,
                                 detailed = 'headache',

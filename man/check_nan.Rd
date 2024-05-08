@@ -15,3 +15,12 @@ logical
 \description{
 Check to see if a value is NA, NULL, or ""
 }
+\examples{
+check_nan(NaN)
+check_nan(NA)
+check_nan(NULL)
+check_nan('')
+check_nan('x')
+check_nan(10)
+
+}

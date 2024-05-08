@@ -17,3 +17,10 @@ numeric
 \description{
 Improved rounding function
 }
+\examples{
+# round a decimal
+round2(12345.6789, 2)
+
+# round large numbers
+round2(12345.6789, -2)
+}

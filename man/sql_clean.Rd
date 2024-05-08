@@ -7,7 +7,7 @@
 sql_clean(dat = NULL, stringsAsFactors = FALSE)
 }
 \arguments{
-\item{dat}{character vector of length one. Name of data.frame or data.table}
+\item{dat}{name of data.frame or data.table}
 
 \item{stringsAsFactors}{logical. Specifies whether to convert strings to factors (TRUE) or not (FALSE)}
 }
@@ -15,5 +15,5 @@ sql_clean(dat = NULL, stringsAsFactors = FALSE)
 data.table
 }
 \description{
-Clean string columns read from SQL
+\code{sql_clean} has been deprecated. Please use \code{string_clean} instead.
 }

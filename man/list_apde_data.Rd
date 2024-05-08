@@ -13,7 +13,7 @@ Character vector of available datasets.
 Returns the list of datasets currently available for analysis in RADS
 }
 \examples{
-\dontrun{
+\donttest{
  list_apde_data()
 }
 }

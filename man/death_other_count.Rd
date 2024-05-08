@@ -5,10 +5,10 @@
 \title{Summarize "Other" causes of deaths}
 \usage{
 death_other_count(
-  ph.data = NULL,
-  cause = NULL,
+  ph.data,
+  cause,
   icdcol = "underlying_cod_code",
-  kingco = T,
+  kingco = TRUE,
   group_by = NULL,
   ypll_age = NULL,
   death_age_col = NULL
@@ -104,7 +104,7 @@ eg1 <- death_other_count(ph.data = deathdata,
                        kingco = FALSE,
                        ypll_age = NULL,
                        death_age_col = NULL)
-eg1[]
+head(eg1)
 
 # example 2: with YPLL calculation
 deathdata2 <- data.table::copy(deathdata)
@@ -117,6 +117,6 @@ eg2 <- death_other_count(ph.data = deathdata2,
                        kingco = FALSE,
                        ypll_age = 65,
                        death_age_col = "ageofdeath")
-eg2[]
+head(eg2)
 
 }

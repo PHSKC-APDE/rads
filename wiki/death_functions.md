@@ -1,5 +1,4 @@
-Death Functions
-================
+# Death Functions
 
 # Introduction
 
@@ -9,10 +8,12 @@ death data. Combining the `rads` functions below with the clean death
 data on our servers should allow APDE analysts to conduct custom
 analyses with relative ease.
 
-The core `rads` death function are:
+The core `rads` death functions are:
 
-- `get_data_death()`: easily download standardized death data from SQL
+- `get_data_death()`: easily download standardized death data from TSQL
   into R
+- `death_icd10_clean()`: clean and standardize ICD-10 codes for use with
+  `rads` death functions
 - `death_113_count()`: generate death counts for the CDC’s 113 Selected
   Causes of Death (PLUS COVID-19)
 - `death_130_count()`: generate death counts for the CDC’s 130 Selected
@@ -63,13 +64,16 @@ library(data.table)
 
 If you do not specify any of the arguments, you will get all death data
 columns, for King County, for the latest year, with top coding to 100.
+Top coding to 100 is our general practice because there are few people
+above 100 years of age and it aligns with our population data, which is
+also top coded to 100.
 
 ``` r
 ex0 <- get_data_death()
 ncol(ex0) # number of columns in the downloaded death data  
 ```
 
-    [1] 328
+    [1] 344
 
 ``` r
 names(ex0)[1:6] # names of the first 6 columns
@@ -88,13 +92,69 @@ unique(ex0$chi_geo_kc) # confirm data is limited to King County
 unique(ex0$chi_year) # check the year
 ```
 
-    [1] 2021
+    [1] 2022
 
 ``` r
 max(ex0$chi_age, na.rm = T) # check top coding
 ```
 
     [1] 100
+
+# death_icd10_clean()
+
+`death_icd10_clean()` is called upon by all of the `death_***_count()`
+functions, but can also be used as a standalone function for truly
+custom analyses. It takes a single argument:
+
+- `icdcol`: the name of a character vector of ICD-10 codes.
+
+The function can be used to clean any arbitrary vector of ICD-10 codes.
+Notice that it gives a warning, informing you that it cleaned the codes.
+
+``` r
+icd_codes <- c('G30.9', 'I25.1', 'I250', 'C349', 'U07-1', 'X44')
+cleaned_icd_codes <- death_icd10_clean(icd_codes)
+```
+
+    Warning in death_icd10_clean(icd_codes): 
+    ⚠ There is at least one row where `icdcol` contains a hyphen (-), period (.), 
+    space or some other non alpha-numeric character. These characters have been deleted, 
+    e.g., A85.2 will become A852. This is necessary because rads death functions expect
+    pure alpha numeric ICD codes.
+
+``` r
+print(cleaned_icd_codes)
+```
+
+    [1] "G309" "I251" "I250" "C349" "U071" "X440"
+
+The function can also be used within a data.table. Notice that this time
+it gives a different warning, informing you that it had to replace one
+of the values (i.e., ‘3X44’) with NA because it did not appear to be an
+ICD-10 code.
+
+``` r
+mydt <- data.table(icd_codes = c('G309', 'I251', 'I250', 'C349', 'U071', '3X44'))
+mydt[, cleaned_icd_codes := death_icd10_clean(icd_codes)]
+```
+
+    Warning in death_icd10_clean(icd_codes): 
+    ⚠  There is/are 1 value(s) in `icdcol` that do not follow the proper 
+    ICD pattern. All ICDs that do not begin with a letter and end with
+    a numeric have been replaced with NA.
+
+``` r
+head(mydt)
+```
+
+       icd_codes cleaned_icd_codes
+          <char>            <char>
+    1:      G309              G309
+    2:      I251              I251
+    3:      I250              I250
+    4:      C349              C349
+    5:      U071              U071
+    6:      3X44              <NA>
 
 # death_113_count()
 
@@ -147,7 +207,7 @@ Please refer to the help file for more details.
 
 ### example \#1: Count 2020 deaths from COVID-19 or viral hepatitis
 
-Get the 2020 data from SQL
+Get the 2020 data from TSQL
 
 ``` r
 ex1 <- get_data_death(year = 2020, 
@@ -169,21 +229,21 @@ names(ex1)
 
     [1] "chi_year"            "chi_geo_kc"          "underlying_cod_code"
 
-Lets take a peak at the first 10 rows where the underlying cause of
+Let’s take a peek at the first 10 rows where the underlying cause of
 death is not missing to see the data structure.
 
 | chi_year | chi_geo_kc  | underlying_cod_code |
 |---------:|:------------|:--------------------|
-|     2020 | King County | I64                 |
-|     2020 | King County | I131                |
-|     2020 | King County | I429                |
-|     2020 | King County | C55                 |
-|     2020 | King County | I219                |
-|     2020 | King County | I500                |
-|     2020 | King County | I672                |
-|     2020 | King County | G129                |
-|     2020 | King County | J690                |
-|     2020 | King County | C539                |
+|     2020 | King County | I330                |
+|     2020 | King County | J440                |
+|     2020 | King County | C259                |
+|     2020 | King County | J440                |
+|     2020 | King County | I059                |
+|     2020 | King County | E142                |
+|     2020 | King County | B182                |
+|     2020 | King County | I613                |
+|     2020 | King County | K703                |
+|     2020 | King County | A199                |
 
 Count deaths due to COVID-19 or viral hepatitis
 
@@ -223,9 +283,9 @@ dt1.alt <- death_113_count(ph.data = ex1,
 | Missing/Unknown  | NA      | 13,356 |
 | Viral hepatitis  | 14      | 28     |
 
-### example \#2: 2019 & 2020 top five causes of death
+### example \#2: 2019 & 2020 top five causes of death in `death_113_count()`
 
-First, let’s get 2019 & 2020 data from SQL …
+First, let’s get 2019 & 2020 data from TSQL …
 
 ``` r
 ex2 <- get_data_death(year = 2019:2020, 
@@ -263,6 +323,11 @@ setorder(dt113_19_20, chi_year, rank)
 | Alzheimer’s disease                               | 48      | 904    |     2020 |    3 |
 | All other forms of chronic ischemic heart disease | 55      | 771    |     2020 |    4 |
 | Cerebrovascular diseases                          | 61      | 642    |     2020 |    5 |
+
+*Note!* Calculating the leading causes of death that we report publicly
+is more complicated. Please refer to the [CHI repository
+README](https://github.com/PHSKC-APDE/chi/tree/main/death#leading-causes-of-death)
+for details.
 
 ### example \#3: Calculating years of potential life lost due to COVID-19, assuming age of death at 65 as the standard
 
@@ -458,11 +523,10 @@ death_other()
 
      [1] "Alcohol_Death"                       "CO_Death"                           
      [3] "Cancer"                              "Chronic liver disease and cirrhosis"
-     [5] "Chronic lower respiratory disease"   "Diabetes_Death"                     
-     [7] "Drug-induced"                        "Drug-overdose"                      
-     [9] "Drug_Death"                          "Heart disease"                      
-    [11] "HeatStress_Death"                    "Influenza/pneumonia"                
-    [13] "Opioid_Death"                        "Parkinson_Death"                    
+     [5] "Chronic lower respiratory disease"   "Drug-induced"                       
+     [7] "Drug-overdose"                       "Drug_Death"                         
+     [9] "Heart disease"                       "HeatStress_Death"                   
+    [11] "Influenza/pneumonia"                 "Opioid_Death"                       
 
 `death_other_count()` takes seven potential arguments:
 
@@ -542,9 +606,10 @@ dt8 <- death_other_count(ph.data = ex8,
 `life_table()` generates a standard life table, where the first row is
 the life expectancy (aka ‘expectation of life’) at birth. Since it needs
 aggregate death data, you are **strongly encouraged to preprocess the
-death data with `life_table_prep()`.**
+death data with `life_table_prep()`.** A simple example of how to use
+`life_table_prep()` is embedded below.
 
-`life_table()` takes six potential arguments:
+`life_table()` takes seven potential arguments:
 
 - `ph.data`: the name of data.table/data.frame with aggregated deaths
   and corresponding populations, as well as the age interval and the
@@ -558,6 +623,8 @@ death data with `life_table_prep()`.**
   population corresponding to `mydeaths`.
 - `myprops`: the name of a numeric column in `ph.data` with the average
   proportion of the interval lived by those who died in the interval.
+- `group_by`: identifies the variables by which you want to group
+  (a.k.a., stratify) the results.
 - `ci`: the confidence interval, must be \[0, 1\]. Default is 0.95
 
 Please refer to the help file for more details.
@@ -571,8 +638,8 @@ ex9 <- get_data_death(year = 2016:2020,
                         cols = c('date_of_birth', 'date_of_death', 'chi_sex'))
 ```
 
-To preserve privacy, lets look at a summary of the table rather than the
-actual table
+To preserve privacy, let’s look at a summary of the table rather than
+the actual table
 
 ``` r
 summary(ex9)
@@ -595,7 +662,8 @@ WA DOH. These intervals can easily be customized if desired. Here we
 show just the top six rows so you can see the data structure.
 
 ``` r
-dt9 = life_table_prep(DTx = ex9)
+dt9 = life_table_prep(ph.data = ex9, 
+                      group_by = 'chi_sex')
 ```
 
 | chi_sex | ages | deaths |  fraction |
@@ -692,22 +760,23 @@ dt9 <- merge(dt9,
 Run `life_table()` function to create life tables for males and females.
 
 ``` r
-dt9.male <- life_table(ph.data = dt9[gender == 'Male'])
-dt9.female <- life_table(ph.data = dt9[gender == 'Female'])
+dt9.lifetable <- life_table(ph.data = dt9, 
+                            group_by = 'gender')
 ```
 
-Display the first row of the life table, which is for children under 1.
-The `ex` column is the life expectancy at birth. To see a detailed key
-of what all the columns mean, type `?life_table` in your R console and
-read the ‘Details’ section.
+Display the first row of the life table for each gender, which is for
+children under 1. The `ex` column is the life expectancy at birth. To
+see a detailed key of what all the columns mean, type `?life_table` in
+your R console and read the ‘Details’ section.
 
-| gender | ages |      pop | deaths |  fraction |      mx |    qx |    lx |  dx |   ax |    Lx |      Tx |   ex | ex_lower | ex_upper | ex_se |
-|:-------|:-----|---------:|-------:|----------:|--------:|------:|------:|----:|-----:|------:|--------:|-----:|---------:|---------:|------:|
-| Male   | 0-1  | 66699.47 |    268 | 0.0559866 | 0.00402 | 0.004 | 1e+05 | 400 | 0.06 | 99622 | 7950038 | 79.5 |    79.38 |    79.62 | 0.063 |
+``` r
+dt9.lifetable[ages == '0-1',]
+```
 
 | gender | ages |      pop | deaths |  fraction |      mx |      qx |    lx |  dx |   ax |    Lx |      Tx |    ex | ex_lower | ex_upper |   ex_se |
 |:-------|:-----|---------:|-------:|----------:|--------:|--------:|------:|----:|-----:|------:|--------:|------:|---------:|---------:|--------:|
 | Female | 0-1  | 65156.33 |    212 | 0.0613904 | 0.00325 | 0.00324 | 1e+05 | 324 | 0.06 | 99696 | 8405505 | 84.06 |    83.94 |    84.17 | 0.05745 |
+| Male   | 0-1  | 66699.47 |    268 | 0.0559866 | 0.00402 | 0.00400 | 1e+05 | 400 | 0.06 | 99622 | 7950038 | 79.50 |    79.38 |    79.62 | 0.06300 |
 
 # Conclusion
 
@@ -719,3 +788,5 @@ mortality analyses in the future.
 If you’ve read through this vignette and the corresponding help files
 and are still confused, please feel free to reach out for assistance.
 You may have found a bug, who knows? Good luck!
+
+– *Updated by dcolombara, 2024-04-09*

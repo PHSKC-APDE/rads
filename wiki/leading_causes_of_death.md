@@ -183,7 +183,7 @@ Tidy the infant mortality data you just imported
 
 ``` r
 # Generic string cleaning
-rads::sql_clean(infdeath)
+rads::string_clean(infdeath)
 
 # Clean sex variable
 infdeath[chi_sex == 'N', chi_sex := NA]

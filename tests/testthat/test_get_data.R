@@ -139,8 +139,8 @@ test_that('Load data hys', {
   expect_warning(t7 <- get_data_hys(ar = TRUE,kingco = F), 'outside of KC')
 
   # from an alternate version
-  t8 = get_data_hys(c('chi_year', 'year'), year = 2021, ar = TRUE, version = 'vdev')
-  t9 = get_data_hys(c('chi_year', 'year'), year = 2021, ar = FALSE, version = 'vdev')
+  t8 = get_data_hys(c('chi_year', 'year'), year = 2021, ar = TRUE, version = 'cifstest')
+  t9 = get_data_hys(c('chi_year', 'year'), year = 2021, ar = FALSE, version = 'cifstest')
   expect_equal(t8, t9)
 
 })
