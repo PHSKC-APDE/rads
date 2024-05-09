@@ -24,7 +24,7 @@ alts = lapply(1:1000, function(i){
 
 })
 
-ns = c(1,5,10,50,100,250,500,1000)
+ns = c(1,5,10, 25, 50,100,250)
 nsz = lapply(ns, function(n) sample(seq_along(alts), n))
 
 res_init = lapply(nsz, function(n){
@@ -47,6 +47,8 @@ res_init = lapply(nsz, function(n){
 res = lapply(res_init, function(x) x[, .(hra_code, level, variable, mean, mean_se, mean_lower, mean_upper, niter, start, end)])
 
 res = rbindlist(res)
+times = unique(res[, .(niter, start,end)])
+times[, elapsed := end-start]
 
 hids = sample(unique(res$hra_code), 8)
 
@@ -55,7 +57,8 @@ g = ggplot(res[hra_code %in% hids], aes(x = log(niter), y = mean, color = factor
   geom_errorbar(aes(ymin = mean_lower, ymax = mean_upper)) +
   geom_hline(data = res[hra_code %in% hids & niter == 1000], aes(yintercept = mean)) +
   scale_color_brewer(type = 'qual', name = '# Iter') +
-  theme_bw()
+  theme_dark() +
+  ggtitle('MI estimates by number of permutations/iterations', 'by HRA')
 g
 
 mi_svy = svydesign(id = ~seqno, strata = ~x_ststr, weights = ~finalwt1, data = mitools::imputationList(alts), nest = T)
