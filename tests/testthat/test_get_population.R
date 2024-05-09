@@ -207,3 +207,10 @@ test_that('subset without grouping',{
 
 
 })
+
+test_that('new dchs stuff'{
+  # Just run these to make sure nothing breaks
+  r1 = lapply(c('ccl', 'csa', 'inc_uninc', 'puma', 'kccd', 'tribal'), function(x) get_population(geo_type = x))
+  r2 = lapply(c('ccl', 'csa', 'inc_uninc', 'puma', 'kccd', 'tribal'), function(x) get_population(geo_type = x, races = 'White'))
+  r3 = lapply(c('ccl', 'csa', 'inc_uninc', 'puma', 'kccd', 'tribal'), function(x) get_population(geo_type = x, group_by = 'race', races = 'White', race_type = 'race'))
+})
