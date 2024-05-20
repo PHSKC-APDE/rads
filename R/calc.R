@@ -157,7 +157,7 @@ calc.imputationList = function(ph.data, ...){
     do.call(calc, args = append(list(ph.data = x), dots[names(dots) != 'ph.data']), quote = T)
   })
 
-  # combine with MIcombine
+  # format so that we can combine with MIcombine
   ans = res[[1]]
   isfactor = !all(is.na(ans[,level]))
 
@@ -204,6 +204,7 @@ calc.imputationList = function(ph.data, ...){
      }
 
     # compute estimates
+    # I think this is borrowed/adapted from mitools
     mi = lapply(r, function(a){
       # if(!isfactor) a = list(ests = list(a$ests[[1]]), varz = list(a$varz[[1]]))
       m = mitools::MIcombine(a$ests, a$varz)
