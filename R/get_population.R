@@ -172,10 +172,7 @@ get_population <- function(kingco = T,
                   'region', 'seattle', 'scd' , 'tract', 'wa', 'zip',
                   'ccl', 'csa', 'inc_uninc', 'puma', 'kccd', 'tribal')
   geo_type = match.arg(tolower(geo_type), valid_geogs)
-  if(geo_type %in% c('blk', 'blkgrp', 'tract', 'county', 'hra', 'kc', 'lgd',
-                            'region', 'seattle', 'scd' , 'tract', 'wa', 'zip')){
-    geo_type = substr(geo_type, 1,3)
-  }
+
   ## create geo_type selectors and filters ----
   ## TODO: should we recompute blkgrp and tract? It'll be a lot faster
   if(geo_type %in% c('blkgrp')){
@@ -204,6 +201,10 @@ get_population <- function(kingco = T,
     group_geo_type = DBI::Id(column = 'geo_id')
     select_geo_type = DBI::Id(column = 'geo_id')
   }else{
+    if(geo_type %in% c('blk', 'blkgrp', 'tract', 'county', 'hra', 'kc', 'lgd',
+                       'region', 'seattle', 'scd' , 'tract', 'wa', 'zip')){
+      geo_type = tolower(substr(geo_type, 1,3))
+    }
     pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, tolower(geo_type)))
     where_geo_type = SQL('')
     group_geo_type = SQL('geo_id') # over the whole state
