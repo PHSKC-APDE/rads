@@ -208,9 +208,19 @@ test_that('subset without grouping',{
 
 })
 
-test_that('new dchs stuff'{
+test_that('new dchs stuff',{
   # Just run these to make sure nothing breaks
   r1 = lapply(c('ccl', 'csa', 'inc_uninc', 'puma', 'kccd', 'tribal'), function(x) get_population(geo_type = x))
-  r2 = lapply(c('ccl', 'csa', 'inc_uninc', 'puma', 'kccd', 'tribal'), function(x) get_population(geo_type = x, races = 'White'))
+  r2 = lapply(c('ccl', 'csa', 'inc_uninc', 'puma', 'kccd', 'tribal'), function(x) get_population(geo_type = x, races = 'NHPI'))
   r3 = lapply(c('ccl', 'csa', 'inc_uninc', 'puma', 'kccd', 'tribal'), function(x) get_population(geo_type = x, group_by = 'race', races = 'White', race_type = 'race'))
+})
+
+test_that('core geographies',{
+  cg = c('blk', 'blkgrp', 'tract', 'county', 'hra', 'kc', 'lgd',
+         'region', 'seattle', 'scd' , 'tract', 'wa', 'zip')
+  # Just run these to make sure nothing breaks
+  r1 = lapply(cg, function(x) get_population(geo_type = x))
+  r2 = lapply(cg, function(x) get_population(geo_type = x, races = 'Asian'))
+  r3 = lapply(cg, function(x) get_population(geo_type = x, group_by = 'race', races = 'black', race_type = 'race'))
+
 })

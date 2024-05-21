@@ -172,6 +172,10 @@ get_population <- function(kingco = T,
                   'region', 'seattle', 'scd' , 'tract', 'wa', 'zip',
                   'ccl', 'csa', 'inc_uninc', 'puma', 'kccd', 'tribal')
   geo_type = match.arg(tolower(geo_type), valid_geogs)
+  if(geo_type %in% c('blk', 'blkgrp', 'tract', 'county', 'hra', 'kc', 'lgd',
+                            'region', 'seattle', 'scd' , 'tract', 'wa', 'zip')){
+    geo_type = substr(geo_type, 1,3)
+  }
   ## create geo_type selectors and filters ----
   ## TODO: should we recompute blkgrp and tract? It'll be a lot faster
   if(geo_type %in% c('blkgrp')){
