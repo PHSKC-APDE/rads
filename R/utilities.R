@@ -1454,7 +1454,7 @@ metrics = function(){
     'numerator','denominator', 'obs', 'median',
     'unique.time',
     'missing', 'missing.prop',
-    'rate', 'ndistinct')
+    'rate', 'ndistinct', 'vcov')
 }
 
 # round2() ----

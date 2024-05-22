@@ -195,6 +195,7 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
   #For each metric, define a function to compute it-- or ignore it if not called for.
   xisfactor = is.factor(DT[[x]])
 
+  xvar = x
   x = as.name(x)
 
   #construct the query
@@ -301,10 +302,28 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
     ndis_fun = NULL
   }
 
+  #vcov
+  if('vcov' %in% metrics){
+    stopifnot( 'One of `mean` or `total` must be in the metrics for vcov to make sense' = any(c('mean', 'total') %in% metrics))
+    if('mean' %in% metrics){
+      mean_vcov_fun = substitute(sur_var(x, na.rm = T, type = 'mean', as_list = TRUE,  sv = sv(DT), ids = `_id`, st = st(DT)), list(x=x))
+    }else{
+      mean_vcov_fun = NULL
+    }
+    if('total' %in% metrics){
+      total_vcov_fun = substitute(sur_var(x, na.rm = T, type = 'total', as_list = TRUE,  sv = sv(DT), ids = `_id`, st = st(DT)), list(x=x))
+    }else{
+      total_vcov_fun = NULL
+    }
+  }else{
+    mean_vcov_fun = NULL
+    total_vcov_fun = NULL
+  }
   #use something like a = DT[, .(list(a), list(b)), env = list(a = mean_fun, b = total_fun), by = byvar]
   #to capture the se and ci returns and then break out post hoc
   #if it is a factor, compute some things separately
-  # browser()
+  # Following bit creates the call taht will be executed within the data.table DT
+  # This construction is used for flexibility (build the whole call and take out the null bits)
   the_call = substitute(list(
     time = time_fun,
     variable = X,
@@ -317,7 +336,9 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
     missing = mis_fun,
     missing.prop = misp_fun,
     unique.time = ut_fun,
-    ndistinct = ndis_fun
+    ndistinct = ndis_fun,
+    mean_vcov = mean_vcov_fun,
+    total_vcov = total_vcov_fun
   ),list(X = as.character(x),
          time_fun = time_fun,
          mean_fun = mean_fun,
@@ -329,7 +350,9 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
          misp_fun = misp_fun,
          ut_fun = ut_fun,
          obs_fun = obs_fun,
-         ndis_fun = ndis_fun))
+         ndis_fun = ndis_fun,
+         mean_vcov_fun = mean_vcov_fun,
+         total_vcov_fun = total_vcov_fun))
 
   #remove nulls
   the_call = as.list(the_call)
@@ -464,10 +487,12 @@ compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, t
 
   if(!is.null(time_var)) data.table::setnames(res, 'time', time_var)
 
+  if(!is.null(by)) data.table::setorderv(res, cols = c(by, 'level'))
+
   #make 0 row if ph.data is 0
   if(nrow(DT) == 0) res = res[FALSE]
 
-  return(data.table::data.table(res))
+  return(res)
 
 
 }
