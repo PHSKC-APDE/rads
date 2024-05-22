@@ -169,8 +169,10 @@ get_population <- function(kingco = T,
   ## validate geo_type and kingco ----
   ## if seattle, pull region where seattle
   valid_geogs = c('blk', 'blkgrp', 'tract', 'county', 'hra', 'kc', 'lgd',
-                  'region', 'seattle', 'scd' , 'tract', 'wa', 'zip')
-  geo_type = match.arg(geo_type, valid_geogs)
+                  'region', 'seattle', 'scd' , 'tract', 'wa', 'zip',
+                  'ccl', 'csa', 'inc_uninc', 'puma', 'kccd', 'tribal')
+  geo_type = match.arg(tolower(geo_type), valid_geogs)
+
   ## create geo_type selectors and filters ----
   ## TODO: should we recompute blkgrp and tract? It'll be a lot faster
   if(geo_type %in% c('blkgrp')){
@@ -199,7 +201,11 @@ get_population <- function(kingco = T,
     group_geo_type = DBI::Id(column = 'geo_id')
     select_geo_type = DBI::Id(column = 'geo_id')
   }else{
-    pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, tolower(substring(geo_type,1,3))))
+    if(geo_type %in% c('blk', 'blkgrp', 'tract', 'county', 'hra', 'kc', 'lgd',
+                       'region', 'seattle', 'scd' , 'tract', 'wa', 'zip')){
+      geo_type = tolower(substr(geo_type, 1,3))
+    }
+    pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, tolower(geo_type)))
     where_geo_type = SQL('')
     group_geo_type = SQL('geo_id') # over the whole state
     select_geo_type = DBI::Id(column = 'geo_id')
@@ -211,8 +217,8 @@ get_population <- function(kingco = T,
   pt_chk = DBI::dbGetQuery(con, glue::glue_sql("
                  SELECT *
                  FROM INFORMATION_SCHEMA.TABLES
-                 WHERE TABLE_SCHEMA = {pop_table@name['schema']}
-                 AND  TABLE_NAME = {pop_table@name['table']}", .con = con))
+                 WHERE lower(TABLE_SCHEMA) = {pop_table@name['schema']}
+                 AND  lower(TABLE_NAME) = {pop_table@name['table']}", .con = con))
   if(nrow(pt_chk) != 1) stop('`pop_table` does not exist in the supplied database and/or some how refers to multiple tables. Check the schema and table_prefix argument')
 
 
@@ -238,16 +244,6 @@ get_population <- function(kingco = T,
   ## validate geo_vintage ----
   geo_vintage = validate_input('geo_vintage', geo_vintage, c(2010, 2020))
 
-  ## FIXME: A temporary fix for hras until the new ones get released
-  # if(geo_vintage == 2020 & geo_type == 'hra'){
-  #   warning('2020 geo_vintage HRAs are not available yet. If you are getting this message April 2023 try reinstalling rads. geo_vintage changed to 2010')
-  #   geo_vintage = 2010
-  # }
-  # if(geo_vintage == 2020 & geo_type == 'region'){
-  #   stop('2020 geo_vintage region are not available yet. If you are getting this message April 2023 try reinstalling rads, geo_vintage changed to 2010')
-  #   geo_vintage = 2010
-  #
-  # }
   # TODO: REVISIT THIS
   if(geo_vintage == 2010 & census_vintage == 2020 & geo_type %in% c('kc','county', 'wa')){
     geo_vintage = 2020
@@ -583,6 +579,15 @@ get_population <- function(kingco = T,
   if(geo_type == 'wa'){
     r[, geo_id := 'Washington State']
     r[, geo_id_code := 53]
+  }
+
+  if(geo_type %in% c('ccl', 'csa', 'inc_uninc', 'puma', 'kccd', 'tribal')){
+    gt = rads.data::spatial_ids_and_names[tolower(type) %in% geo_type]
+    gt[, geo_id_code := as.character(geo_id_code)]
+    data.table::setnames(r, 'geo_id', 'geo_id_code')
+    r = merge(r, gt[, .(geo_id, geo_id_code)], all.x = T, by = 'geo_id_code')
+    stopifnot(all(!is.na(r$geo_id)))
+
   }
 
   if(round) r[, pop := rads::round2(pop, 0)]
