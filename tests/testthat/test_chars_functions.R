@@ -96,7 +96,7 @@ library('testthat')
                                           broad = 'neo',
                                           detailed = 'benign',
                                           kingco = F)
-      expect_equal(nrow(multi.result), 1)
+      expect_equal(nrow(multi.result), 2)
       expect_equal(sort(names(multi.result)),
                    sort(c('icdcm_desc', 'broad_desc', 'detailed_desc', 'hospitalizations')))
 
