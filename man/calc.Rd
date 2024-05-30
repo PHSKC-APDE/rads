@@ -91,7 +91,6 @@ When \code{what} is a factor/character, the missing information is provided for 
 \item rate: mean * per. Provides rescaled mean estimates (i.e., per 100 or per 100,0000).
 Returns rate, rate_se, rate_lower, rate_upper.
 Default ci (e.g. upper and lower) is 95 percent.
-\item vcov: variance-covariance matrix
 }
 
 For survey data, use the \code{proportion} argument where relevant to ensure metrics are calculated using special proportion (e.g \code{svyciprop})

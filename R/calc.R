@@ -128,6 +128,7 @@ calc.grouped_df <- function(ph.data, ...){
 #' @noRd
 #' @export
 #' @importFrom mitools MIcombine
+#' @importFrom stats coef qt
 calc.imputationList = function(ph.data, ...){
 
   call = match.call()

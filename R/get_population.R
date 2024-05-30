@@ -203,9 +203,11 @@ get_population <- function(kingco = T,
   }else{
     if(geo_type %in% c('blk', 'blkgrp', 'tract', 'county', 'hra', 'kc', 'lgd',
                        'region', 'seattle', 'scd' , 'tract', 'wa', 'zip')){
-      geo_type = tolower(substr(geo_type, 1,3))
+      gt = tolower(substr(geo_type, 1,3))
+    }else{
+      gt = geo_type
     }
-    pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, tolower(geo_type)))
+    pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, gt))
     where_geo_type = SQL('')
     group_geo_type = SQL('geo_id') # over the whole state
     select_geo_type = DBI::Id(column = 'geo_id')
