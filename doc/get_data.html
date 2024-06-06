@@ -186,18 +186,19 @@ section.footnotes::before {
 <p>We can confirm the <code>birth</code> object is in our environment by typing <code>ls()</code></p>
 <pre><code class="language-r">ls() 
 </code></pre>
-<pre><code>##  [1] &quot;birth&quot;                &quot;births&quot;               &quot;deaths&quot;              
-##  [4] &quot;est&quot;                  &quot;ex1.1&quot;                &quot;ex1.2&quot;               
-##  [7] &quot;ex2.1&quot;                &quot;ex2.2&quot;                &quot;ex3.1&quot;               
-## [10] &quot;ex4.1&quot;                &quot;ex5.1&quot;                &quot;grades.distribution&quot; 
-## [13] &quot;grades.distribution2&quot; &quot;household.wa&quot;         &quot;kcbirth&quot;             
-## [16] &quot;kcpop&quot;                &quot;mtcars&quot;               &quot;mydt&quot;                
-## [19] &quot;mysvy&quot;                &quot;new.standard&quot;         &quot;person.wa&quot;           
-## [22] &quot;pop&quot;                  &quot;population&quot;           &quot;pums&quot;                
-## [25] &quot;pums2&quot;                &quot;temp1&quot;                &quot;temp2&quot;               
-## [28] &quot;temp3&quot;                &quot;temp4&quot;                &quot;temp5&quot;               
-## [31] &quot;test1&quot;                &quot;test2&quot;                &quot;wabirth&quot;             
-## [34] &quot;wapop&quot;                &quot;xwalk&quot;
+<pre><code>##  [1] &quot;base&quot;                 &quot;birth&quot;                &quot;births&quot;              
+##  [4] &quot;deaths&quot;               &quot;est&quot;                  &quot;ex1.1&quot;               
+##  [7] &quot;ex1.2&quot;                &quot;ex2.1&quot;                &quot;ex2.2&quot;               
+## [10] &quot;ex3.1&quot;                &quot;ex4.1&quot;                &quot;ex5.1&quot;               
+## [13] &quot;grades.distribution&quot;  &quot;grades.distribution2&quot; &quot;household.wa&quot;        
+## [16] &quot;kcbirth&quot;              &quot;kcpop&quot;                &quot;midat&quot;               
+## [19] &quot;mtcars&quot;               &quot;mydt&quot;                 &quot;mysvy&quot;               
+## [22] &quot;new.standard&quot;         &quot;nomi&quot;                 &quot;person.wa&quot;           
+## [25] &quot;pop&quot;                  &quot;population&quot;           &quot;pums&quot;                
+## [28] &quot;pums2&quot;                &quot;temp1&quot;                &quot;temp2&quot;               
+## [31] &quot;temp3&quot;                &quot;temp4&quot;                &quot;temp5&quot;               
+## [34] &quot;test1&quot;                &quot;test2&quot;                &quot;wabirth&quot;             
+## [37] &quot;wapop&quot;                &quot;withmi&quot;               &quot;xwalk&quot;
 </code></pre>
 <p>To identify the class of the <code>birth</code> object and to confirm that our columns are present, we can type <code>str(birth)</code></p>
 <pre><code class="language-r">str(birth) 
@@ -228,14 +229,16 @@ section.footnotes::before {
 <p>As mentioned and demonstrated above, you can use the <code>cols</code> argument to save time by downloading a limited data set from the SQL servers. However, to do so, you need to know the column names. This is why we’ve created the<code>list_dataset_columns()</code> function. The sole argument is the name of the dataset (e.g., ‘birth’, ‘chars’, etc.) and the output is a table with all of the variable names.</p>
 <pre><code class="language-r">head(list_dataset_columns('birth'))
 </code></pre>
-<pre><code>##              var.names analytic_ready
-##                 &lt;char&gt;         &lt;lgcl&gt;
-## 1:  birth_cert_encrypt           TRUE
-## 2:     birth_cert_type           TRUE
-## 3:                 sex           TRUE
-## 4: date_of_birth_month           TRUE
-## 5:  date_of_birth_year           TRUE
-## 6:       time_of_birth           TRUE
+<pre><code>## Column names for 'birth' data are taken from all available years.
+</code></pre>
+<pre><code>##              var.names
+##                 &lt;char&gt;
+## 1:  birth_cert_encrypt
+## 2:     birth_cert_type
+## 3:                 sex
+## 4: date_of_birth_month
+## 5:  date_of_birth_year
+## 6:       time_of_birth
 </code></pre>
 <h2 id="loading-data-with-get-data">Loading data with get_data()</h2>
 <p>Note that the same dataset can be retrieved using the <code>get_data()</code> function. Since this is generalized for multiple data sources, you will need to specify ‘birth’ as the data set.</p>

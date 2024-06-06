@@ -8,11 +8,11 @@
 }
 \usage{
 death_injury_matrix_count(
-  ph.data = NULL,
+  ph.data,
   intent = "*",
   mechanism = "*",
   icdcol = "underlying_cod_code",
-  kingco = T,
+  kingco = TRUE,
   group_by = NULL,
   ypll_age = NULL,
   death_age_col = NULL

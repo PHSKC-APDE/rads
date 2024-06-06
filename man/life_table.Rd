@@ -5,7 +5,7 @@
 \title{Generate a standard life table}
 \usage{
 life_table(
-  ph.data = NULL,
+  ph.data,
   myages = "ages",
   mydeaths = "deaths",
   mypops = "pop",

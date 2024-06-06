@@ -10,8 +10,10 @@ analyses with relative ease.
 
 The core `rads` death functions are:
 
-- `get_data_death()`: easily download standardized death data from SQL
+- `get_data_death()`: easily download standardized death data from TSQL
   into R
+- `death_icd10_clean()`: clean and standardize ICD-10 codes for use with
+  `rads` death functions
 - `death_113_count()`: generate death counts for the CDC’s 113 Selected
   Causes of Death (PLUS COVID-19)
 - `death_130_count()`: generate death counts for the CDC’s 130 Selected
@@ -98,6 +100,62 @@ max(ex0$chi_age, na.rm = T) # check top coding
 
     [1] 100
 
+# death_icd10_clean()
+
+`death_icd10_clean()` is called upon by all of the `death_***_count()`
+functions, but can also be used as a standalone function for truly
+custom analyses. It takes a single argument:
+
+- `icdcol`: the name of a character vector of ICD-10 codes.
+
+The function can be used to clean any arbitrary vector of ICD-10 codes.
+Notice that it gives a warning, informing you that it cleaned the codes.
+
+``` r
+icd_codes <- c('G30.9', 'I25.1', 'I250', 'C349', 'U07-1', 'X44')
+cleaned_icd_codes <- death_icd10_clean(icd_codes)
+```
+
+    Warning in death_icd10_clean(icd_codes): 
+    ⚠ There is at least one row where `icdcol` contains a hyphen (-), period (.), 
+    space or some other non alpha-numeric character. These characters have been deleted, 
+    e.g., A85.2 will become A852. This is necessary because rads death functions expect
+    pure alpha numeric ICD codes.
+
+``` r
+print(cleaned_icd_codes)
+```
+
+    [1] "G309" "I251" "I250" "C349" "U071" "X440"
+
+The function can also be used within a data.table. Notice that this time
+it gives a different warning, informing you that it had to replace one
+of the values (i.e., ‘3X44’) with NA because it did not appear to be an
+ICD-10 code.
+
+``` r
+mydt <- data.table(icd_codes = c('G309', 'I251', 'I250', 'C349', 'U071', '3X44'))
+mydt[, cleaned_icd_codes := death_icd10_clean(icd_codes)]
+```
+
+    Warning in death_icd10_clean(icd_codes): 
+    ⚠  There is/are 1 value(s) in `icdcol` that do not follow the proper 
+    ICD pattern. All ICDs that do not begin with a letter and end with
+    a numeric have been replaced with NA.
+
+``` r
+head(mydt)
+```
+
+       icd_codes cleaned_icd_codes
+          <char>            <char>
+    1:      G309              G309
+    2:      I251              I251
+    3:      I250              I250
+    4:      C349              C349
+    5:      U071              U071
+    6:      3X44              <NA>
+
 # death_113_count()
 
 `death_113_count()` allows the user to get death counts following the
@@ -149,7 +207,7 @@ Please refer to the help file for more details.
 
 ### example \#1: Count 2020 deaths from COVID-19 or viral hepatitis
 
-Get the 2020 data from SQL
+Get the 2020 data from TSQL
 
 ``` r
 ex1 <- get_data_death(year = 2020, 
@@ -227,7 +285,7 @@ dt1.alt <- death_113_count(ph.data = ex1,
 
 ### example \#2: 2019 & 2020 top five causes of death in `death_113_count()`
 
-First, let’s get 2019 & 2020 data from SQL …
+First, let’s get 2019 & 2020 data from TSQL …
 
 ``` r
 ex2 <- get_data_death(year = 2019:2020, 
@@ -731,4 +789,4 @@ If you’ve read through this vignette and the corresponding help files
 and are still confused, please feel free to reach out for assistance.
 You may have found a bug, who knows? Good luck!
 
-– *Updated by dcolombara, 2024-04-02*
+– *Updated by dcolombara, 2024-04-09*
