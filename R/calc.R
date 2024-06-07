@@ -131,7 +131,7 @@ calc.grouped_df <- function(ph.data, ...){
 #' @importFrom stats coef qt
 calc.imputationList = function(ph.data, ...){
   call = match.call()
-  dots = list()
+  # dots = list()
   # dots = list(...)
   # dot_nms = names(dots)
 
@@ -141,10 +141,10 @@ calc.imputationList = function(ph.data, ...){
   }else{
 
     # get metrics
-    dots$metrics = ...elt(which(...names() == 'metrics'))
+    metrics = ...elt(which(...names() == 'metrics'))
 
-    if(any(c('mean', 'total') %in% dots$metrics) && !'vcov' %in% dots$metrics){
-      dots$metrics = c(dots$metrics, 'vcov')
+    if(any(c('mean', 'total') %in% metrics) && !'vcov' %in% metrics){
+      metrics = c(metrics, 'vcov')
     }
 
   }
@@ -162,7 +162,7 @@ calc.imputationList = function(ph.data, ...){
     adjcall = call
     adjcall[[1]] <- quote(calc)
     adjcall$ph.data <- quote(`_x`)
-    adjcall$metrics <- dots$metrics
+    adjcall$metrics <- metrics
     # do.call(calc, args = append(list(ph.data = x), dots[names(dots) != 'ph.data']), quote = T)
     eval(adjcall)
   })
@@ -184,7 +184,7 @@ calc.imputationList = function(ph.data, ...){
 
     m
   }
-
+  byme = ...elt(which(...names() == 'by'))
   # For each possible thing that gets combined
   for(vvv in intersect(c('mean', 'total'), names(res[[1]]))){
 
@@ -192,7 +192,7 @@ calc.imputationList = function(ph.data, ...){
     r = lapply(res, function(x){
 
       if(isfactor){
-        byme = c(dots$by)
+
         y = x[, list(ests = list(get(vvv)),
                      varz = list(make_vcov(get(paste0(vvv, '_vcov')))),
                      levels = list(level)), keyby = byme]
@@ -207,8 +207,8 @@ calc.imputationList = function(ph.data, ...){
 
     # organize them by "by variables"
      r = rbindlist(r)
-     if(isfactor && !is.null(dots$by)){
-      r = split(r, by = dots$by)
+     if(isfactor && !is.null(byme)){
+      r = split(r, by = byme)
      }else{
        r = list(r)
      }
@@ -223,7 +223,7 @@ calc.imputationList = function(ph.data, ...){
       mdt[, lower := coef - crit * se]
       mdt[, upper := coef + crit * se]
       mdt[, level := a$levels[1]]
-      if(isfactor & !is.null(dots$by)) mdt = cbind(mdt, a[1,.SD,.SDcols = dots$by])
+      if(isfactor & !is.null(byme)) mdt = cbind(mdt, a[1,.SD,.SDcols = byme])
       mdt
     })
 
@@ -238,11 +238,11 @@ calc.imputationList = function(ph.data, ...){
     ans[, (updateme) := NULL]
 
     # Clean up
-    if(!isfactor && !is.null(dots$by)) mi[, (dots$by) := ans[, .SD, .SDcols = c(dots$by)]]
+    if(!isfactor && !is.null(byme)) mi[, (byme) := ans[, .SD, .SDcols = c(byme)]]
 
-    ans = merge(ans, mi, all.x = T, by = c(dots$by, 'level'))
+    ans = merge(ans, mi, all.x = T, by = c(byme, 'level'))
 
-    if(!is.null(dots$by)) data.table::setorderv(ans, cols = c(dots$by, 'level'))
+    if(!is.null(byme)) data.table::setorderv(ans, cols = c(byme, 'level'))
 
     # Update ans
     ans[, paste0(vvv,'_vcov') := NULL]
