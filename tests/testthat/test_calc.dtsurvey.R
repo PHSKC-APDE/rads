@@ -469,7 +469,7 @@ test_that('Resample approach', {
 
   # imputed variable as factor metric with non imputed by
   r4.1 = mitools::MIcombine(with(misur, svyby(~random_fact, ~stype, svymean, design = misur)))
-  r4.2 = calc(midat, 'random_fact', metrics = c('mean', 'vcov'), by = 'stype')
+  r4.2 = calc(midat, 'random_fact', metrics = c('mean'), by = 'stype')
   setorder(r4.2, level, stype)
   r4.1sum = summary(r4.1)
 
@@ -510,6 +510,18 @@ test_that('Resample approach', {
   expect_equal(unname(SE(r7.1)), r7.2$mean_se)
   expect_equal(r7.1sum$`(lower`, r7.2$mean_lower)
   expect_equal(r7.1sum$`upper)`, r7.2$mean_upper)
+
+  # with filtering
+  sub_misur = subset(misur, both == 'Yes')
+  r8.1 = mitools::MIcombine(with(sub_misur, svyby(~random, ~stype, svymean, design = sub_misur)))
+  r8.2 = calc(midat, 'random', where = both == 'Yes', metrics = c('mean', 'vcov'), by = c('stype'))
+  setorder(r8.2, level, stype)
+  r8.1sum = summary(r8.1,)
+
+  expect_equal(unname(coef(r8.1)), r8.2$mean)
+  expect_equal(unname(SE(r8.1)), r8.2$mean_se)
+  expect_equal(r8.1sum$`(lower`, r8.2$mean_lower)
+  expect_equal(r8.1sum$`upper)`, r8.2$mean_upper)
 
 })
 
