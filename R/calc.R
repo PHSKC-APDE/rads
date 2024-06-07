@@ -129,8 +129,21 @@ calc.grouped_df <- function(ph.data, ...){
 #' @export
 #' @importFrom mitools MIcombine
 #' @importFrom stats coef qt
-calc.imputationList = function(ph.data, ...){
+calc.imputationList = function(ph.data,
+                               what = NULL,
+                               where = NULL, #this is a change from the main calc framework
+                               by = NULL,
+                               metrics = c('mean', 'numerator', 'denominator'),
+                               per = NULL,
+                               win = NULL,
+                               time_var = NULL,
+                               proportion = FALSE,
+                               fancy_time = TRUE,
+                               ci = .95,
+                               verbose = FALSE,
+                               ...){
   call = match.call()
+
   # dots = list()
   # dots = list(...)
   # dot_nms = names(dots)
@@ -140,9 +153,6 @@ calc.imputationList = function(ph.data, ...){
     stop('metrics argument must be explictly specified for the MI method to work')
   }else{
 
-    # get metrics
-    metrics = ...elt(which(...names() == 'metrics'))
-
     if(any(c('mean', 'total') %in% metrics) && !'vcov' %in% metrics){
       metrics = c(metrics, 'vcov')
     }
@@ -151,20 +161,32 @@ calc.imputationList = function(ph.data, ...){
 
   # Borrowed from mitools::summary
   # Set the CI boundary
-  if('ci' %in% ...names()){
-    alpha = 1 - ...elt(which(...names() %in% 'ci'))
+  if(!missing(ci)){
+    alpha = 1 - ci
   } else{
     alpha = .05
   }
 
+  if(!missing(where)){
+    where = substitute(where)
+    wherecheck = T
+  } else{
+    wherecheck = F
+  }
+
   # For each imputation realization, run calc
   res = lapply(ph.data[[1]], function(`_x`){
-    adjcall = call
-    adjcall[[1]] <- quote(calc)
-    adjcall$ph.data <- quote(`_x`)
-    adjcall$metrics <- metrics
-    # do.call(calc, args = append(list(ph.data = x), dots[names(dots) != 'ph.data']), quote = T)
-    eval(adjcall)
+
+    # Evaluate where early
+    if(wherecheck) r <- eval(where, `_x`, parent.frame()) else r <- TRUE
+
+    do.call(calc, list(ph.data = `_x`[r,], what = what,
+         by = by, metrics = metrics,
+         per = per, win = win,
+         time_var = time_var,
+         proportion = proportion, fancy_time = fancy_time,
+         ci = ci,
+         verbose = verbose))
   })
 
   # format so that we can combine with MIcombine
@@ -184,7 +206,7 @@ calc.imputationList = function(ph.data, ...){
 
     m
   }
-  byme = ...elt(which(...names() == 'by'))
+
   # For each possible thing that gets combined
   for(vvv in intersect(c('mean', 'total'), names(res[[1]]))){
 
@@ -195,7 +217,7 @@ calc.imputationList = function(ph.data, ...){
 
         y = x[, list(ests = list(get(vvv)),
                      varz = list(make_vcov(get(paste0(vvv, '_vcov')))),
-                     levels = list(level)), keyby = byme]
+                     levels = list(level)), keyby = by]
       }else{
         y = x[, list(ests = list(get(vvv)),
                      varz = list(make_vcov(get(paste0(vvv, '_vcov')))),
@@ -207,8 +229,8 @@ calc.imputationList = function(ph.data, ...){
 
     # organize them by "by variables"
      r = rbindlist(r)
-     if(isfactor && !is.null(byme)){
-      r = split(r, by = byme)
+     if(isfactor && !is.null(by)){
+      r = split(r, by = by)
      }else{
        r = list(r)
      }
@@ -223,7 +245,7 @@ calc.imputationList = function(ph.data, ...){
       mdt[, lower := coef - crit * se]
       mdt[, upper := coef + crit * se]
       mdt[, level := a$levels[1]]
-      if(isfactor & !is.null(byme)) mdt = cbind(mdt, a[1,.SD,.SDcols = byme])
+      if(isfactor & !is.null(by)) mdt = cbind(mdt, a[1,.SD,.SDcols = by])
       mdt
     })
 
@@ -238,11 +260,11 @@ calc.imputationList = function(ph.data, ...){
     ans[, (updateme) := NULL]
 
     # Clean up
-    if(!isfactor && !is.null(byme)) mi[, (byme) := ans[, .SD, .SDcols = c(byme)]]
+    if(!isfactor && !is.null(by)) mi[, (by) := ans[, .SD, .SDcols = c(by)]]
 
-    ans = merge(ans, mi, all.x = T, by = c(byme, 'level'))
+    ans = merge(ans, mi, all.x = T, by = c(by, 'level'))
 
-    if(!is.null(byme)) data.table::setorderv(ans, cols = c(byme, 'level'))
+    if(!is.null(by)) data.table::setorderv(ans, cols = c(by, 'level'))
 
     # Update ans
     ans[, paste0(vvv,'_vcov') := NULL]

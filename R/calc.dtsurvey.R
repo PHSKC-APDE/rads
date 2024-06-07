@@ -30,7 +30,7 @@ calc.dtsurvey = function(ph.data,
   call = match.call() # get 'call' object containing function name plus every argument
 
   #filter the dataset
-  if(!missing(where)){
+  if(!missing(where) && !is.null(where)){
 
     if(is.character(call[['where']])){
       where = str2lang(call[['where']])
