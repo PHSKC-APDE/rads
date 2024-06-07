@@ -130,15 +130,19 @@ calc.grouped_df <- function(ph.data, ...){
 #' @importFrom mitools MIcombine
 #' @importFrom stats coef qt
 calc.imputationList = function(ph.data, ...){
-
   call = match.call()
-  dots = list(...)
-  dot_nms = names(dots)
+  dots = list()
+  # dots = list(...)
+  # dot_nms = names(dots)
 
   # make sure metrics is specified
-  if(!'metrics' %in% dot_nms){
-    stop('metrics argument must be explictly specified')
+  if(!'metrics' %in% names(call)){
+    stop('metrics argument must be explictly specified for the MI method to work')
   }else{
+
+    # get metrics
+    dots$metrics = ...elt(which(...names() == 'metrics'))
+
     if(any(c('mean', 'total') %in% dots$metrics) && !'vcov' %in% dots$metrics){
       dots$metrics = c(dots$metrics, 'vcov')
     }
@@ -147,15 +151,20 @@ calc.imputationList = function(ph.data, ...){
 
   # Borrowed from mitools::summary
   # Set the CI boundary
-  if('ci' %in% dot_nms){
-    alpha = 1 - dots$ci
+  if('ci' %in% ...names()){
+    alpha = 1 - ...elt(which(...names() %in% 'ci'))
   } else{
     alpha = .05
   }
 
   # For each imputation realization, run calc
-  res = lapply(ph.data[[1]], function(x){
-    do.call(calc, args = append(list(ph.data = x), dots[names(dots) != 'ph.data']), quote = T)
+  res = lapply(ph.data[[1]], function(`_x`){
+    adjcall = call
+    adjcall[[1]] <- quote(calc)
+    adjcall$ph.data <- quote(`_x`)
+    adjcall$metrics <- dots$metrics
+    # do.call(calc, args = append(list(ph.data = x), dots[names(dots) != 'ph.data']), quote = T)
+    eval(adjcall)
   })
 
   # format so that we can combine with MIcombine

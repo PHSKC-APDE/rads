@@ -469,7 +469,7 @@ test_that('Resample approach', {
 
   # imputed variable as factor metric with non imputed by
   r4.1 = mitools::MIcombine(with(misur, svyby(~random_fact, ~stype, svymean, design = misur)))
-  r4.2 = calc(midat, 'random_fact', metrics = c('mean', 'vcov'), by = 'stype')
+  r4.2 = calc(midat, 'random_fact', metrics = c('mean'), by = 'stype')
   setorder(r4.2, level, stype)
   r4.1sum = summary(r4.1)
 
