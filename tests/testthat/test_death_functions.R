@@ -262,6 +262,150 @@ library('testthat')
     # do not need to test group_by, because already tested with death_113_count, and both use same underlying function (death_xxx_count)
   })
 
+# Check death_other ----
+  # death_other create data ----
+  # not necessary
+
+  # death_other create output ----
+  # not necessary
+
+  # death_other tests ----
+  test_that("Check that death_other() exists, is the right type, and has some expected values ...", {
+    otherz <- death_other()
+    expect_true(is.character(otherz))
+    expect_true(any(grepl('opioid', otherz, ignore.case = T)))
+    expect_true(any(grepl('alcohol', otherz, ignore.case = T)))
+    expect_true(any(grepl('overdose', otherz, ignore.case = T)))
+  })
+
+# Check death_other_count ----
+  # death_other_count create data ----
+  set.seed(98104)
+  otherdata <- data.table::data.table(cod.icd10 = sample(rads.data::icd_other_causes_of_death[]$icd10, size = 5000, replace = T),
+                                      chi_age = sample(35:85, 5000, replace = T),
+                                      shape = sample(c('square', 'cirlce', 'triangle'), size = 5000, replace = T),
+                                      binary = sample(c('On', 'Off'), size = 5000, replace = T))
+  otherdata[, ypll_65 := fifelse(chi_age < 65, 65 - chi_age, 0)]
+
+
+  otherdata.manual <- merge(otherdata,
+                     rads.data::icd_other_causes_of_death[, .(cause.of.death, cod.icd10 = icd10)],
+                     by = 'cod.icd10',
+                     all.x = T,
+                     all.y = F) # will lengthen table because some ICD codes map to > 1 'Other' cause of death
+  otherdata.manual[, ypll_65 := fifelse(chi_age < 65, 65 - chi_age, 0)]
+
+  # death_other_count create output ----
+  other.rads <- suppressWarnings(death_other_count(ph.data = copy(otherdata)[, ypll_65 := NULL],
+                                                   cause = death_other(),
+                                                   icdcol = "cod.icd10",
+                                                   kingco = FALSE,
+                                                   group_by = c('shape', 'binary'),
+                                                   ypll_age = 65,
+                                                   death_age_col = 'chi_age'))
+  other.manual <- rbind(
+    # cause specific
+    merge(otherdata.manual[, .(manual.count = .N), .(cause.of.death, shape, binary)],
+          otherdata.manual[, .(manual.ypll = sum(ypll_65)), .(cause.of.death, shape, binary)],
+          by = c('cause.of.death', 'shape', 'binary'),
+          all = T),
+    # all cause
+    merge(otherdata[, .(manual.count = .N), .(shape, binary)],
+          otherdata[, .(manual.ypll = sum(ypll_65)), .(shape, binary)],
+          by = c('shape', 'binary'),
+          all = T)[, cause.of.death := 'All causes']
+  )
+
+  other.rads <- other.rads[, .(cause.of.death, shape, binary, deaths, ypll_65)]
+  other.manual <- other.manual[, .(cause.of.death, shape, binary, deaths = manual.count, ypll_65 = manual.ypll)]
+
+  # death_other_count tests ----
+    test_that("Check for proper triggering of errors ...", {
+      ph.data <- data.table(underlying_cod_code = c("A00", "A01", "A02"),
+                            chi_geo_kc = c("King County", "King County", "Other County"),
+                            chi_age = c(65, 70, 75))
+
+      # missing ph.data
+      expect_error(death_other_count(cause = "A00"),
+                   "\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
+
+      # ph.data is a data.frame/data.table
+      expect_error(death_other_count(ph.data = list(), cause = "A00"),
+                   "\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
+
+      # missing cause
+      expect_error(death_other_count(ph.data = ph.data),
+                   "\U0001f47f `cause` cannot be missing. Please specify the `cause = XXX` argument and submit again")
+
+      # cause is a character vector
+      expect_error(death_other_count(ph.data = ph.data, cause = 123),
+                   "\U0001f47f `cause` must be a character vector with whole or partial keywords for the cause of death of interest.")
+
+      # icdcol is in ph,data
+      expect_error(death_other_count(ph.data = ph.data, cause = "A00", icdcol = "invalid_column"),
+                   "\U0001f47f `icdcol` must be the name of a column that exists in `ph.data`.")
+
+      # kingco is a logical
+      expect_error(death_other_count(ph.data = ph.data, cause = "A00", kingco = "TRUE"),
+                   "\U0001f47f `kingco` must be a logical value, i.e., TRUE or FALSE.")
+
+      # missing chi_geo_kc when when kingco == T
+      ph.data_no_kingco <- copy(ph.data)[, chi_geo_kc := NULL]
+      expect_error(death_other_count(ph.data = ph.data_no_kingco, cause = "A00", kingco = TRUE),
+                   "\U0001f47f `ph.data` does not have the column `chi_geo_kc`, which is required for King County data.")
+
+      # valid group_by columns
+      expect_error(death_other_count(ph.data = ph.data, cause = "A00", group_by = c("invalid_column")),
+                   "\U0001f6d1 The following `group_by` values are not column names in `ph.data`: invalid_column.")
+
+      # valid ypll_age values
+      expect_error(death_other_count(ph.data = ph.data, cause = "A00", ypll_age = 0),
+                   "\U0001f47f `ypll_age` must be an integer between 1 and 99.")
+      expect_error(death_other_count(ph.data = ph.data, cause = "A00", ypll_age = 100),
+                   "\U0001f47f `ypll_age` must be an integer between 1 and 99.")
+      expect_error(death_other_count(ph.data = ph.data, cause = "A00", ypll_age = "10"),
+                   "\U0001f47f `ypll_age` must be an integer between 1 and 99.")
+
+      # valid death_age_col
+      expect_error(death_other_count(ph.data = ph.data, cause = "A00", ypll_age = 75, death_age_col = "invalid_column"),
+                   "\U0001f47f `death_age_col` must be the name of column that exists in `ph.data`.")
+      })
+
+    test_that("Death counts & YPLL counts by cause are accurate ...", {
+      expect_equal(dim(other.rads), dim(other.manual)) # table size
+      expect_identical(names(other.rads), names(other.manual)) # col names
+      expect_identical(sort(unique(other.rads$cause.of.death)), sort(unique(other.manual$cause.of.death))) # COD
+
+      expect_equal(sum(other.rads[cause.of.death == 'All causes']$deaths), sum(other.manual[cause.of.death == 'All causes']$deaths)) # all cause deaths
+      expect_equal(sum(other.rads[cause.of.death != 'All causes']$deaths), sum(other.manual[cause.of.death != 'All causes']$deaths)) # cause specific deaths
+
+      expect_equal(sum(other.rads[cause.of.death == 'All causes']$ypll_65), sum(other.manual[cause.of.death == 'All causes']$ypll_65)) # all cause YPLL
+      expect_equal(sum(other.rads[cause.of.death != 'All causes']$ypll_65), sum(other.manual[cause.of.death != 'All causes']$ypll_65)) # cause specific YPLL
+    })
+
+    test_that("'cause' argument works correctly ...", {
+      expect_identical(
+        sort(unique(death_other_count(ph.data = copy(otherdata)[, ypll_65 := NULL],
+                          cause = 'heart disease',
+                          icdcol = "cod.icd10",
+                          kingco = FALSE,
+                          group_by = c('shape', 'binary'),
+                          ypll_age = 65,
+                          death_age_col = 'chi_age')[]$cause.of.death)),
+        c('All causes', 'Heart disease')
+        )
+
+        expect_identical(
+          sort(unique(death_other_count(ph.data = copy(otherdata)[, ypll_65 := NULL],
+                                        cause = c('heat', 'stress', 'drug'),
+                                        icdcol = "cod.icd10",
+                                        kingco = FALSE,
+                                        group_by = c('shape', 'binary'),
+                                        ypll_age = 65,
+                                        death_age_col = 'chi_age')[]$cause.of.death)),
+          c('All causes', 'Drug-induced', 'Drug-overdose', 'Drug_Death', 'HeatStress_Death')
+        )
+    })
 
 # Check death_injury_matrix_count ----
   # death_injury_matrix_count() create data ----
