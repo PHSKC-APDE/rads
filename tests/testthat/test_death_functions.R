@@ -480,20 +480,20 @@ library('testthat')
 
   test_that("Filtering by intent and mechanism work properly ...", {
     intent.check <- death_injury_matrix_count(ph.data = injurydata,
-                                         intent = "suicide",
-                                         mechanism = "*",
-                                         icdcol = "cod.icd10",
-                                         kingco = F)
+                                              intent = "suicide",
+                                              mechanism = "*",
+                                              icdcol = "cod.icd10",
+                                              kingco = F)
     mechanism.check <- death_injury_matrix_count(ph.data = injurydata,
-                                            intent = "*",
-                                            mechanism = "firearm",
-                                            icdcol = "cod.icd10",
-                                            kingco = F)
+                                                 intent = "*",
+                                                 mechanism = "firearm",
+                                                 icdcol = "cod.icd10",
+                                                 kingco = F)
     double.none <- suppressWarnings(death_injury_matrix_count(ph.data = injurydata,
-                                        intent = "none",
-                                        mechanism = "none",
-                                        icdcol = "cod.icd10",
-                                        kingco = F))
+                                                              intent = "none",
+                                                              mechanism = "none",
+                                                              icdcol = "cod.icd10",
+                                                              kingco = F))
     expect_equal(nrow(intent.check), 2) # 1 for Fall/suicide and 1 for All injury/suicide
     expect_equal(nrow(mechanism.check), 5) # the '*' gets all five intents
     expect_equal(nrow(double.none), 1) # All injury/Any intent
