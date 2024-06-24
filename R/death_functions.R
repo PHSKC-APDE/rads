@@ -934,10 +934,13 @@ death_injury_matrix_count <- function(ph.data,
         }
 
       # Use CJ to create all combinations
-        template_xyz <- do.call(CJ, unique_col_vals)
+        template_xyz <- do.call(data.table::CJ, unique_col_vals)
 
       # Merge actual values onto template_xyz
-        x_combo <- merge(template_xyz, x_combo, all = T)
+        x_combo <- merge(template_xyz,
+                         x_combo,
+                         all.x = TRUE, # to ensure every combination of categorical vars are available
+                         all.y = TRUE) # could also be FALSE because, by definition, all values of y are in X
 
       # Fill deaths with zeros
         x_combo[is.na(deaths), deaths := 0]
@@ -1317,7 +1320,10 @@ death_other_count <- function(ph.data,
         template_xyz <- do.call(data.table::CJ, unique_col_vals)
 
       # merge actual values onto template_xyz
-        x_combo <- merge(template_xyz, x_combo, all = T)
+        x_combo <- merge(template_xyz,
+                         x_combo,
+                         all.x = TRUE, # to ensure every combination of categorical vars are available
+                         all.y = TRUE) # could also be FALSE because, by definition, all values of y are in X
 
       # Fill deaths with zeros
         x_combo[is.na(deaths), deaths := 0]
@@ -1692,7 +1698,10 @@ death_xxx_count <- function(ph.data,
       template_xyz <- do.call(data.table::CJ, unique_col_vals)
 
       # merge actual values onto template_xyz
-      x_combo <- merge(template_xyz, x_combo, all = TRUE)
+      x_combo <- merge(template_xyz,
+                       x_combo,
+                       all.x = TRUE, # to ensure every combination of categorical vars are available
+                       all.y = TRUE) # could also be FALSE because, by definition, all values of y are in X
 
       # Fill deaths with zeros
       x_combo[is.na(deaths), deaths := 0]
