@@ -1681,17 +1681,18 @@ death_xxx_count <- function(ph.data,
 
     # Create rows for zero values ----
     # create temporary vectors of unique values of all columns EXCEPT deaths and ypll_##
-      cols_xyz <- setdiff(names(x_combo), c('deaths', 'causeid', grep('^ypll_', names(x_combo), value = TRUE)))
-      list_xyz <- lapply(cols_xyz, function(col)
-        unique(x_combo[[col]]))
-      names(list_xyz) <- paste0('xyz_', cols_xyz)
-      for (var in names(list_xyz)) {
-        assign(var, list_xyz[[var]], envir = environment())
-      }
+      # Select columns to use for combination
+      cols_to_use <- setdiff(names(x_combo),
+                             c('deaths', 'causeid', grep('^ypll_', names(x_combo), value = TRUE)))
 
-      # create template of all combinations of x_combo values
-      template.xyz <- do.call(data.table::CJ, mget(ls(pattern = 'xyz_')))
-      setnames(template.xyz, gsub('^xyz_', '', names(template.xyz)))
+      # Create list of unique values for each selected column
+      unique_col_vals <- lapply(cols_to_use, function(col) unique(x_combo[[col]]))
+
+      # Create names for the list
+      names(unique_col_vals) <- cols_to_use
+
+      # Use CJ to create all combinations
+      template_xyz <- do.call(data.table::CJ, unique_col_vals)
 
       # merge actual values onto template.xyz
       x_combo <- merge(template.xyz, x_combo, all = TRUE)
