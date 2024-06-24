@@ -135,10 +135,11 @@ get_population <- function(kingco = T,
                            return_query = FALSE){
 
   # visible bindings ----
-  . <- age <-  code <- colname <- coltype <- cou_id <- cou_name <- gender <-  geo_id <- geo_id_code <- NULL
-  hra <- label <- lgd_counties<-  lgd_id<-  lgd_name<-  max_year<-  pop <- region <- region_id<- NULL
-  scd_id <- scd_name <- setNames <- short<-  sql_col <- value<-  varname<-  vid <- NULL
+  . <- age <- code <- colname <- coltype <- cou_id <- cou_name <- gender <- geo_id <- geo_id_code <- NULL
+  hra <- label <- lgd_counties <- lgd_id <- lgd_name <- max_year <- pop <- region <- region_id <- NULL
+  scd_id <- scd_name <- setNames <- short <- sql_col <- value <- varname <- vid <- type <- NULL
   hra20_id <- hra20_name <- hispanic <- NULL
+
 
   # valid inputs
   validate_input = function(varname, vals, allowed_vals, additional = "", convert_to_all = TRUE){

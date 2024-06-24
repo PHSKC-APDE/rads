@@ -144,6 +144,9 @@ calc.imputationList = function(ph.data,
                                ...){
   call = match.call()
 
+  # visible bindings ----
+  level <- lower <- upper <- se <- NULL
+
   # dots = list()
   # dots = list(...)
   # dot_nms = names(dots)
