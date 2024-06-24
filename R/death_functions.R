@@ -875,13 +875,11 @@ death_injury_matrix_count <- function(ph.data,
         x_reftable <- x_reftable[mechanism %in% x_mechanism]
 
     # merge reference table onto death data ----
-      x_combo <- merge(ph.data,
-                       x_reftable,
-                       by.x = 'icd10_tempy',
-                       by.y = 'icd10',
-                       all.x = FALSE,
-                       all.y = FALSE,
-                       allow.cartesian = TRUE) # needed because there can be duplicate icd10 in x_reftable
+      x_combo <- ph.data[x_reftable, # data.table join faster than merge for large datasets
+                         on = .(icd10_tempy = icd10),
+                         allow.cartesian = TRUE, # needed because there can be duplicate icd10 in x_reftable
+                         nomatch = 0]
+
       x_combo[, c(icdcol, 'icd10_tempy') := NULL]
       if("none" %in% intent){x_combo[, intent := "Any intent"]}
 
@@ -1269,12 +1267,9 @@ death_other_count <- function(ph.data,
 
       x_combo <- rbindlist(
         lapply(unique_cod, function(each.cod) {
-          merge(ph.data,
-                x_reftable[cause.of.death == each.cod],
-                by.x = c(icdcol),
-                by.y = c("icd10"),
-                all.x = FALSE,
-                all.y = FALSE)
+          ph.data[x_reftable[cause.of.death == each.cod], # data.table join faster alternative to merge
+                  on = .(icd10_tempy = icd10),
+                  nomatch = 0]
         })
       )
 
@@ -1650,7 +1645,7 @@ death_xxx_count <- function(ph.data,
   # Merge reference table onto death data ----
     setkey(ph.data, icd10_tempy)
     setkey(x_reftable, icd10)
-    x_combo <- x_reftable[ph.data, on = .(icd10 = icd10_tempy), allow.cartesian = TRUE]
+    x_combo <- x_reftable[ph.data, on = .(icd10 = icd10_tempy), allow.cartesian = TRUE] # data.table join faster alternative to merge
     x_combo[, icd10 := tolower(icd10)]
     x_combo[icd10 == "u071" |
               grepl("^u071", icd10), cause.of.death := "COVID-19 (U07.1)"]
