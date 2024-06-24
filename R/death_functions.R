@@ -938,7 +938,7 @@ death_injury_matrix_count <- function(ph.data,
       # Use CJ to create all combinations
         template_xyz <- do.call(CJ, unique_col_vals)
 
-      # Merge actual values onto template.xyz
+      # Merge actual values onto template_xyz
         x_combo <- merge(template_xyz, x_combo, all = T)
 
       # Fill deaths with zeros
@@ -1309,17 +1309,20 @@ death_other_count <- function(ph.data,
 
   # Tidy ----
     # Create rows for zero values (otherwise rows would simply be missing) ----
-      # create temporary vectors of unique values of all columns EXCEPT deaths and ypll_##
-        for(i in setdiff(names(x_combo), c('deaths', grep('^ypll_', names(x_combo), value = T)))){
-          assign(paste0('xyz_', i), unique(x_combo[, get(i)]))
-        }
+      # Select columns to use for combination
+        cols_to_use <- setdiff(names(x_combo), c('deaths', grep('^ypll_', names(x_combo), value = T)))
 
-      # create template of all combinations of x_combo values
-        template.xyz <- setDT(expand.grid(mget(ls(pattern = 'xyz_'))))
-        setnames(template.xyz, gsub('^xyz_', '', names(template.xyz)))
+      # Create list of unique values for each selected column
+        unique_col_vals <- lapply(cols_to_use, function(col) unique(x_combo[[col]]))
 
-      # merge actual values onto template.xyz
-        x_combo <- merge(template.xyz, x_combo, all = T)
+      # Create names for the list
+        names(unique_col_vals) <- cols_to_use
+
+      # Use CJ to create all combinations
+        template_xyz <- do.call(data.table::CJ, unique_col_vals)
+
+      # merge actual values onto template_xyz
+        x_combo <- merge(template_xyz, x_combo, all = T)
 
       # Fill deaths with zeros
         x_combo[is.na(deaths), deaths := 0]
@@ -1680,7 +1683,6 @@ death_xxx_count <- function(ph.data,
       }
 
     # Create rows for zero values ----
-    # create temporary vectors of unique values of all columns EXCEPT deaths and ypll_##
       # Select columns to use for combination
       cols_to_use <- setdiff(names(x_combo),
                              c('deaths', 'causeid', grep('^ypll_', names(x_combo), value = TRUE)))
@@ -1694,8 +1696,8 @@ death_xxx_count <- function(ph.data,
       # Use CJ to create all combinations
       template_xyz <- do.call(data.table::CJ, unique_col_vals)
 
-      # merge actual values onto template.xyz
-      x_combo <- merge(template.xyz, x_combo, all = TRUE)
+      # merge actual values onto template_xyz
+      x_combo <- merge(template_xyz, x_combo, all = TRUE)
 
       # Fill deaths with zeros
       x_combo[is.na(deaths), deaths := 0]
