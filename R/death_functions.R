@@ -725,164 +725,182 @@ death_injury_matrix_count <- function(ph.data,
                                 death_age_col = NULL){
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
   x_intent <- x_mechanism <- x_reftable <- x_combo <- orig.coding <- orig.order <- underlying_cod_code <- NULL
-  chi_geo_kc <- '.' <- deaths <- icd10 <- NULL
+  chi_geo_kc <- '.' <- deaths <- icd10 <- icd10_tempy <- NULL
   calculated.age <- x_ypll <- date_of_death <- date_of_birth <-  NULL
 
   # Check arguments ----
     # ph.data ----
-      ph.data.name <- deparse(substitute(ph.data))
-
-      if(missing(ph.data)){stop("\n\U0001f47f `ph.data`, the name of a data.frame or data.table with line level death data, must be specified.")}
-
-      if(!is.data.frame(ph.data)){
+      if (missing(ph.data) || !is.data.frame(ph.data)) {
         stop("\n\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
       }
 
-      if(is.data.frame(ph.data) && !data.table::is.data.table(ph.data)){
-        data.table::setDT(ph.data)
-      }
-
-      ph.data <- data.table::setDT(data.table::copy(ph.data)) # to prevent changing of original by reference
+      # Create a copy of ph.data and ensure it's a data.table
+      ph.data <- data.table::setDT(data.table::copy(ph.data))
 
     # intent ----
-    if(isFALSE(is.character(intent)) || length(intent) > 5){
-      stop("\n\U0001f47f `intent` must specify a character vector with a lenghth <= 5.\nTo select all options, use intent = '*'.")
-    }
-    myorig.intent <- copy(intent)
+      if(isFALSE(is.character(intent)) || length(intent) > 5){
+        stop("\n\U0001f47f `intent` must specify a character vector with a lenghth <= 5.\nTo select all options, use intent = '*'.")
+      }
+      myorig.intent <- copy(intent)
 
     # mechanism ----
-    if(isFALSE(is.character(mechanism)) || length(mechanism) > 28){
-      stop("\n\U0001f47f `mechanism` must specify a character vector with a lenghth <= 28.\nTo select all options, use mechanism = '*'.")
-    }
+      if(isFALSE(is.character(mechanism)) || length(mechanism) > 28){
+        stop("\n\U0001f47f `mechanism` must specify a character vector with a lenghth <= 28.\nTo select all options, use mechanism = '*'.")
+      }
 
     # icdcol ----
-    if(isFALSE(icdcol %in% colnames(ph.data))){
-      stop("\n\U0001f47f `icdcol` must be the name of column that exists in `ph.data`.")
-    }
+      if(isFALSE(icdcol %in% colnames(ph.data))){
+        stop("\n\U0001f47f `icdcol` must be the name of column that exists in `ph.data`.")
+      }
 
-    ph.data[, paste0(icdcol) := death_icd10_clean(get(icdcol))]
+      ph.data[, icd10_tempy := death_icd10_clean(get(icdcol))]
 
     # kingco ----
-    if(!is.logical(kingco)){stop("\n\U0001f47f `kingco` must be a logical vector of length 1, i.e,. TRUE or FALSE.")}
-    if (isTRUE(kingco) & (!"chi_geo_kc" %in% names(ph.data))){
-      stop("\n\U0001f47f You specified kingco=TRUE, but `ph.data` does not have the following columns that identify King County data:
-                     chi_geo_kc")
-    }
-    if (isTRUE(kingco)){ph.data <- ph.data[chi_geo_kc == "King County"]}
+      if (!is.logical(kingco)) {
+        stop("\n\U0001f47f `kingco` must be a logical value, i.e., TRUE or FALSE.")
+      }
+
+      if (kingco && !"chi_geo_kc" %in% names(ph.data)) {
+        stop(
+          "\n\U0001f47f `ph.data` does not have the column `chi_geo_kc`, which is required for King County data."
+        )
+      }
+
+      if (kingco) {
+        ph.data <- ph.data[chi_geo_kc == 'King County']
+      }
 
     # group_by ----
-    if(!is.null(group_by)){
-      group_col_error <- setdiff(group_by, names(ph.data))
-      if(length(group_col_error) > 0){stop(paste0("\n\U0001f47f The following `group_by` values are not column names in `ph.data`: ", paste0(group_col_error, collapse = ', '), "."))}
-    }
+      if (!is.null(group_by)) {
+        group_col_error <- setdiff(group_by, names(ph.data))
+        if (length(group_col_error) > 0) {
+          stop(
+            paste0(
+              "\U0001f6d1 The following `group_by` values are not column names in `ph.data`: ",
+              paste0(group_col_error, collapse = ', '),
+              "."
+            )
+          )
+        }
+      }
 
     # ypll_age ----
-    if(isFALSE(is.null(ypll_age))) {
-      if(isFALSE(is.numeric(ypll_age)) || isFALSE(all(ypll_age == floor(ypll_age)))){
-        stop("\n\U0001f47f If `ypll_age` is specified, it must be an integer. Typical values are 65 and 85.")
+      if (!is.null(ypll_age)) {
+        if (!is.numeric(ypll_age) ||
+            !all(ypll_age == floor(ypll_age)) ||
+            length(ypll_age) != 1 || ypll_age < 1 | ypll_age > 99) {
+          stop("\n\U0001f47f `ypll_age` must be an integer between 1 and 99.")
+        }
+
+        ypll_col_name <- paste0("ypll_", ypll_age)
       }
-      if(length(ypll_age) != 1){
-        stop(("\n\U0001f47f You can only specify one `ypll_age` at a time."))
-      }
-      if(ypll_age <1 | ypll_age > 99){
-        stop("\n\U0001f47f The minumum `ypll_age` is 1 and the maximum is 99.\nNote that both of these extremes are all but useless.\nTypical values are 65 and 85.")
-      }
-    }
 
     # death_age_col ----
-    if(isFALSE(is.null(death_age_col))) {
-      if(isFALSE(death_age_col %in% colnames(ph.data))){
-        stop("\n\U0001f47f `death_age_col` must be the name of column that exists in `ph.data`.")
+      if (!is.null(death_age_col)) {
+        if (!(death_age_col %in% names(ph.data))) {
+          stop("\n\U0001f47f `death_age_col` must be the name of column that exists in `ph.data`.")
+        }
+        col_data <- ph.data[[death_age_col]]
+        if (!is.numeric(col_data) || !all(is.na(col_data) | col_data == floor(col_data), na.rm = TRUE)) {
+          stop("\n\U0001f47f If `death_age_col` is specified, it must be a column of integers in `ph.data`.")
+        }
+        if (is.null(ypll_age)) {
+          stop("\n\U0001f47f `death_age_col` should not be specified when `ypll_age` is NULL.")
+        }
       }
-      if(!class(ph.data[[death_age_col]]) %in% c('integer', 'numeric') || isFALSE(all(ph.data[[death_age_col]] == floor(ph.data[[death_age_col]])))){
-        stop("\n\U0001f47f If `death_age_col` is specified, it must be a column of integers in `ph.data`.")
-      }
-      if(is.null(ypll_age)){
-        stop("\n\U0001f47f `death_age_col` should not be specified when `ypll_age` is NULL.")
-      }
-    }
 
-    if(isFALSE(is.null(ypll_age)) & is.null(death_age_col) & length(intersect(c("chi_age"), colnames(ph.data))) != 1){
-      stop(paste0("\n\U0001f47f You requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.\n",
-                  "The function attempted to use a column named `chi_age`, but it was not found.\n",
-                  "To calculate YPLL, please set death_age_col to the name of the column with the age at death."))
-    }
-
-    if( (isFALSE(is.null(ypll_age)) & is.null(death_age_col) & length(intersect(c("chi_age"), colnames(ph.data))) == 1)){
-      death_age_col = 'chi_age'
-      message(paste0("\n\U00026A0 You requested the calculation of Years of Potential Life Lost (e.g., `ypll_age = 65`),",
-              "but did provide `death_age_col`. The function found and used a column named `chi_age`",
-              "for the YPLL calculation. If this was not your intention, please specify the correct",
-              "column with the decendant's age with the `death_age_col` argument."))
+      if (is.null(death_age_col) & !is.null(ypll_age)) {
+        if ("chi_age" %in% names(ph.data)) {
+          death_age_col <- 'chi_age'
+          message("\U0001F4E3 \nYou requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
+                  "\nThe function found and used a column named `chi_age` for the YPLL calculation. If this was not",
+                  "\nyour intention, please specify the correct column with the decendant's age with the",
+                  "\n`death_age_col` argument.")
+        } else {
+          stop(paste0("\n\U0001f47f You requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
+                      "\nThe function attempted to use a column named `chi_age`, but it was not found.",
+                      "\nTo calculate YPLL, please set death_age_col to the name of the column with the age at death."))
+        }
       }
 
   # Identify intent of interest ----
-  intent = tolower(intent)
-  if("*" %in% intent){x_intent = unique(rads.data::icd10_death_injury_matrix$intent)}
-  if("none" %in% intent){x_intent = unique(rads.data::icd10_death_injury_matrix$intent)} # "Any intent" will be sum of all of intents
-  if(length(intersect(c("*", "none"), intent)) == 0){
-    x_intent = c()
-    for(i in intent){
-      x_intent <- unique(c(x_intent, grep(i, unique(rads.data::icd10_death_injury_matrix$intent), value = TRUE, ignore.case = TRUE)))
-    }
-  }
-  if(length(x_intent) == 0){
-    stop(paste0("\n\U0001f47f Your `intent` value (", intent, ") has filtered out all of the death injury intents.\nPlease enter 'none', '*', or a new partial keyword term and try again."))
+    unique_intents <- unique(rads.data::icd10_death_injury_matrix$intent)
+
+    intent = tolower(intent)
+
+    if("*" %in% intent){x_intent = unique_intents}
+
+    if("none" %in% intent){x_intent = unique_intents} # "Any intent" will be sum of all of intents
+
+    if(length(intersect(c("*", "none"), intent)) == 0){
+      x_intent <- unique(unlist(lapply(intent, function(i) grep(i, unique_intents, value = TRUE, ignore.case = TRUE))))
     }
 
+    if(length(x_intent) == 0){
+      stop(paste0("\n\U0001f47f Your `intent` value (", intent, ") has filtered out all of the death injury intents.",
+                  "\nPlease enter 'none', '*', or a new partial keyword term and try again."))
+      }
+
   # Identify mechanism of interest ----
-  mechanism = tolower(mechanism)
-  if("*" %in% mechanism){x_mechanism = unique(rads.data::icd10_death_injury_matrix$mechanism)}
-  if("none" %in% mechanism){x_mechanism = "All injury"}
-  if(length(intersect(c("*", "none"), mechanism)) == 0){
-    x_mechanism = c()
-    for(i in mechanism){
-      x_mechanism <- unique(c(x_mechanism, grep(i, unique(rads.data::icd10_death_injury_matrix$mechanism), value = TRUE, ignore.case = TRUE)))
+    unique_mechanisms <- unique(rads.data::icd10_death_injury_matrix$mechanism)
+
+    mechanism = tolower(mechanism)
+
+    if("*" %in% mechanism){x_mechanism = unique_mechanisms}
+
+    if("none" %in% mechanism){x_mechanism = "All injury"}
+
+    if(length(intersect(c("*", "none"), mechanism)) == 0){
+      x_mechanism <- unique(unlist(lapply(mechanism, function(i) grep(i, unique_mechanisms, value = TRUE, ignore.case = TRUE))))
     }
-  }
-  if(length(x_mechanism) == 0){
-    stop(paste0("\n\U0001f47f Your `mechanism` value (", mechanism, ") has filtered out all of the death injury mechanisms.\nPlease enter 'none', '*', or a new partial keyword term and try again."))
-    }
+
+    if(length(x_mechanism) == 0){
+      stop(paste0("\n\U0001f47f Your `mechanism` value (", mechanism, ") has filtered out all of the death injury mechanisms.",
+      "\nPlease enter 'none', '*', or a new partial keyword term and try again."))
+      }
 
   # Count deaths for each intent_x_mechanism of interest ----
     # prep injury matrix reference table ----
-    # get reference table from rads.data
-    x_reftable <- copy(rads.data::icd10_death_injury_matrix)[, orig.coding := NULL]
+      # get reference table from rads.data
+        x_reftable <- unique(rads.data::icd10_death_injury_matrix)[, .(mechanism, intent, icd10)]
 
-    # subset for intent
-    if(length(x_intent) == 1 && x_intent == "Any intent"){
-      x_reftable[, intent := x_intent]
-    } else {
-      x_reftable <- x_reftable[intent %in% x_intent]
-    }
+      # subset for intent
+        if(length(x_intent) == 1 && x_intent == "Any intent"){
+          x_reftable[, intent := x_intent]
+        } else {
+          x_reftable <- x_reftable[intent %in% x_intent]
+        }
 
-    # subset for mechanism
-    x_reftable <- x_reftable[mechanism %in% x_mechanism]
+      # subset for mechanism
+        x_reftable <- x_reftable[mechanism %in% x_mechanism]
 
     # merge reference table onto death data ----
-    x_combo <- merge(ph.data, x_reftable, by.x = icdcol, by.y = "icd10", all.x = FALSE, all.y = FALSE, allow.cartesian = TRUE)
-    x_combo[, c(icdcol) := NULL]
-    if("none" %in% intent){x_combo[, intent := "Any intent"]}
+      x_combo <- ph.data[x_reftable, # data.table join faster than merge for large datasets
+                         on = .(icd10_tempy = icd10),
+                         allow.cartesian = TRUE, # needed because there can be duplicate icd10 in x_reftable
+                         nomatch = 0]
 
-    # calculate death count ----
-    if(is.null(ypll_age)){
-      x_combo <- x_combo[, .(deaths = .N), by = c("mechanism", "intent", group_by)]
-    } else {
-      # create table with ypll summary
-      x_ypll <- copy(x_combo)
-      x_ypll[ypll_age >= get(death_age_col), paste0("ypll_", ypll_age) := ypll_age - get(death_age_col)]
-      x_ypll[, c(death_age_col) := NULL]
-      x_ypll <- x_ypll[, .(temp_ypll = sum(get(paste0("ypll_", ypll_age)), na.rm = TRUE)), # use temporary name because data.table doesn't accept quoted value after .(
-                       by = c("mechanism", "intent", group_by)]
-      setnames(x_ypll, "temp_ypll", paste0("ypll_", ypll_age))
+      x_combo[, c(icdcol, 'icd10_tempy') := NULL]
+      if("none" %in% intent){x_combo[, intent := "Any intent"]}
 
-      # create table with death summary
-      x_combo <- x_combo[, .(deaths = .N), by = c("mechanism", "intent", group_by)]
+    # calculate YPLL count ----
+      if(is.null(ypll_age)){
+        x_combo <- x_combo[, .(deaths = .N), by = c("mechanism", "intent", group_by)]
+      } else {
+        # create table with ypll summary
+          x_ypll <- copy(x_combo)
+          x_ypll[get(death_age_col) < ypll_age, ypll_col_name := ypll_age - get(death_age_col)]
+          x_ypll[, c(death_age_col) := NULL]
+          x_ypll <- x_ypll[, .(temp_ypll = sum(ypll_col_name, na.rm = TRUE)), # use temporary name because data.table doesn't accept quoted value after .(
+                           by = c("mechanism", "intent", group_by)]
+          setnames(x_ypll, "temp_ypll", ypll_col_name)
 
-      # merge ypll onto death summaries
-      x_combo <- merge(x_combo, x_ypll, all = T)
+        # calculate death count
+          x_combo <- x_combo[, .(deaths = .N), by = c("mechanism", "intent", group_by)]
 
-    }
+        # merge ypll onto death summaries
+          x_combo <- merge(x_combo, x_ypll, all = T)
+      }
 
   # Tidy ----
     # Rename & aggregate by mechanism and intent when needed ----
@@ -892,8 +910,8 @@ death_injury_matrix_count <- function(ph.data,
           x_combo <- x_combo[, list(deaths = sum(deaths)), by = setdiff(names(x_combo), c("deaths"))]
         } else {
           x_combo[, intent := 'Any intent']
-          x_combo <- x_combo[, list(deaths = sum(deaths), temp_ypll = sum(get(paste0("ypll_", ypll_age)))),
-                             by = setdiff(names(x_combo), c("deaths", paste0("ypll_", ypll_age)))]
+          x_combo <- x_combo[, list(deaths = sum(deaths), temp_ypll = sum(get(ypll_col_name))),
+                             by = setdiff(names(x_combo), c("deaths", ypll_col_name))]
           setnames(x_combo, "temp_ypll", paste0("ypll_", ypll_age))
         }
       }
@@ -901,19 +919,28 @@ death_injury_matrix_count <- function(ph.data,
       if(mechanism == 'none'){x_combo[, mechanism := 'Any mechanism']}
 
     # Create rows for zero values (otherwise rows would simply be missing) ----
-      # create temporary vectors of unique values of all columns EXCEPT deaths and ypll_##
-        for(i in setdiff(names(x_combo), c('deaths', grep('^ypll_', names(x_combo), value = T)))){
-          assign(paste0('xyz_', i), unique(x_combo[, get(i)]))
+      # Select columns to use for combination
+        cols_to_use <- setdiff(names(x_combo), c('deaths', grep('^ypll_', names(x_combo), value = TRUE)))
+
+      # Create list of unique values for each selected column
+        unique_col_vals <- lapply(cols_to_use, function(col) unique(x_combo[[col]]))
+
+      # Create names for the list
+        names(unique_col_vals) <- c(cols_to_use)
+
+      # If myorig.intent is '*', add intent column
+        if (exists("myorig.intent") && myorig.intent == '*') {
+          unique_col_vals$intent <- unique(death_injury_matrix()$intent)
         }
 
-        if(myorig.intent == '*'){xyz_intent <- unique(death_injury_matrix()[]$intent)}
+      # Use CJ to create all combinations
+        template_xyz <- do.call(data.table::CJ, unique_col_vals)
 
-      # create template of all combinations of x_combo values
-        template.xyz <- setDT(expand.grid(mget(ls(pattern = 'xyz_'))))
-        setnames(template.xyz, gsub('^xyz_', '', names(template.xyz)))
-
-      # merge actual values onto template.xyz
-        x_combo <- merge(template.xyz, x_combo, all = T)
+      # Merge actual values onto template_xyz
+        x_combo <- merge(template_xyz,
+                         x_combo,
+                         all.x = TRUE, # to ensure every combination of categorical vars are available
+                         all.y = TRUE) # could also be FALSE because, by definition, all values of y are in X
 
       # Fill deaths with zeros
         x_combo[is.na(deaths), deaths := 0]
@@ -925,16 +952,12 @@ death_injury_matrix_count <- function(ph.data,
         }
 
     # Sort columns and rows ----
-      if(!is.null(ypll_age)){
-        setcolorder(x_combo, c("mechanism", "intent", "deaths", ypll_name))
-        setorderv(x_combo, c("mechanism", "intent", setdiff(names(x_combo), c("deaths", "mechanism", "intent", ypll_name)) ))
-      } else{
-        setcolorder(x_combo, c("mechanism", "intent", "deaths"))
-        setorderv(x_combo, c("mechanism", "intent", setdiff(names(x_combo), c("deaths", "mechanism", "intent")) ))
-      }
+      setcolorder(x_combo, c("mechanism", "intent", "deaths", grep('^ypll_', names(x_combo), value = TRUE)))
+      sort_cols <- c("mechanism", "intent", setdiff(names(x_combo), c("deaths", "mechanism", "intent", grep('^ypll_', names(x_combo), value = TRUE))))
+      setorderv(x_combo, sort_cols)
 
   # Return data ----
-  return(x_combo)
+    return(x_combo)
 }
 
 # death_other() ----
@@ -1110,201 +1133,197 @@ death_other_count <- function(ph.data,
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
   problem.icds <- long113 <-  cause.of.death <- deaths <- '.' <- NULL
   x_reftable <- x_combo <- x_covid <- x_cause <- x_all <- x_ypll <- NULL
-  chi_geo_kc <- underlying_cod_code <- NULL
-  date_of_death <- date_of_birth <- calculated.age <- orig.coding <- NULL
+  chi_geo_kc <- underlying_cod_code <- icd10_tempy <- ypll_col_name <- NULL
+  date_of_death <- date_of_birth <- calculated.age <- orig.coding <- icd10 <- NULL
 
   # Check arguments ----
     # ph.data ----
-      ph.data.name <- deparse(substitute(ph.data))
-
-      if(missing(ph.data)){stop("\n\U0001f47f `ph.data`, the name of a data.frame or data.table with line level death data, must be specified.")}
-
-      if(!is.data.frame(ph.data)){
+      if (missing(ph.data) || !is.data.frame(ph.data)) {
         stop("\n\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
       }
 
-      if(is.data.frame(ph.data) && !data.table::is.data.table(ph.data)){
-        data.table::setDT(ph.data)
-      }
-
-      ph.data <- data.table::setDT(data.table::copy(ph.data)) # to prevent changing of original by reference
+      # Create a copy of ph.data and ensure it's a data.table
+      ph.data <- data.table::setDT(data.table::copy(ph.data))
 
     # cause ----
-    if(missing(cause)){
-      stop("\n\U0001f47f `cause` cannot be missing. Please specify the `cause = XXX` argument and submit again")
-    }
-    if(isFALSE(is.character(cause))){
-      stop("\n\U0001f47f `cause` must be a character vector with whole or partial keywords for the cause of death of interest.")
-    }
-
-    # icdcol ----
-      if(isFALSE(icdcol %in% colnames(ph.data))){
-        stop("\n\U0001f47f `icdcol` must be the name of column that exists in `ph.data`.")
+      if(missing(cause)){
+        stop("\n\U0001f47f `cause` cannot be missing. Please specify the `cause = XXX` argument and submit again")
+      }
+      if(isFALSE(is.character(cause))){
+        stop("\n\U0001f47f `cause` must be a character vector with whole or partial keywords for the cause of death of interest.")
       }
 
-      ph.data[, paste0(icdcol) := death_icd10_clean(get(icdcol))]
+    # icdcol ----
+      if (!icdcol %in% names(ph.data)) {
+        stop("\n\U0001f47f `icdcol` must be the name of a column that exists in `ph.data`.")
+      }
+
+      ph.data[, icd10_tempy := death_icd10_clean(get(icdcol))]
 
     # check that kingco is a logical ----
-    if (isFALSE(is.logical(kingco))){stop("\n\U0001f47f `kingco` must be a logical value (i.e., T|F|TRUE|FALSE")}
-    if (isTRUE(kingco) & (!"chi_geo_kc" %in% names(ph.data))){
-      stop("\n\U0001f47f You specified kingco=TRUE, but `ph.data` does not have the following columns that identify King County data:
-                     chi_geo_kc")
-    }
-    if (isTRUE(kingco)){ph.data <- ph.data[chi_geo_kc == 'King County']}
+      if (!is.logical(kingco)) {
+        stop("\n\U0001f47f `kingco` must be a logical value, i.e., TRUE or FALSE.")
+      }
+
+      if (kingco && !"chi_geo_kc" %in% names(ph.data)) {
+        stop(
+          "\n\U0001f47f `ph.data` does not have the column `chi_geo_kc`, which is required for King County data."
+        )
+      }
+
+      if (kingco) {
+        ph.data <- ph.data[chi_geo_kc == 'King County']
+      }
 
     # group_by ----
-      if(!is.null(group_by)){
+      if (!is.null(group_by)) {
         group_col_error <- setdiff(group_by, names(ph.data))
-        if(length(group_col_error) > 0){stop(paste0("\U0001f6d1\nThe following `group_by` values are not column names in `ph.data`: ", paste0(group_col_error, collapse = ', '), "."))}
+        if (length(group_col_error) > 0) {
+          stop(
+            paste0(
+              "\U0001f6d1 The following `group_by` values are not column names in `ph.data`: ",
+              paste0(group_col_error, collapse = ', '),
+              "."
+            )
+          )
+        }
       }
 
     # ypll_age ----
-    if(isFALSE(is.null(ypll_age))) {
-      if(isFALSE(is.numeric(ypll_age)) || isFALSE(all(ypll_age == floor(ypll_age)))){
-        stop("\n\U0001f47f If `ypll_age` is specified, it must be an integer. Typical values are 65 and 85.")
+      if (!is.null(ypll_age)) {
+        if (!is.numeric(ypll_age) ||
+            !all(ypll_age == floor(ypll_age)) ||
+            length(ypll_age) != 1 || ypll_age < 1 | ypll_age > 99) {
+          stop("\n\U0001f47f `ypll_age` must be an integer between 1 and 99.")
+        }
+
+        ypll_col_name <- paste0("ypll_", ypll_age)
       }
-      if(length(ypll_age) != 1){
-        stop(("\n\U0001f47f You can only specify one `ypll_age` at a time."))
-      }
-      if(ypll_age <1 | ypll_age > 99){
-        stop("\n\U0001f47f The minumum `ypll_age` is 1 and the maximum is 99.",
-             "\nNote that both of these extremes are all but useless.",
-             "\nTypical values are 65 and 85.")
-      }
-    }
-      if(isFALSE(is.null(ypll_age)) & is.null(death_age_col) & length(intersect(c("chi_age"), colnames(ph.data))) != 1){
-        stop("\n\U0001f47f You requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
-             "\nThe function attempted to use a column named `chi_age`, but it was not found.",
-             "\nTo calculate YPLL, please set death_age_col to the name of the column with the age at death.")
-      }
-      if(isFALSE(is.null(ypll_age)) & is.null(death_age_col) & length(intersect(c("chi_age"), colnames(ph.data))) == 1){
-        death_age_col = 'chi_age'
-        message("
-            You requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.
-            The function found and used a column named `chi_age` for the YPLL calculation. If this was not
-            your intention, please specify the correct column with the decendant's age with the
-            `death_age_col` argument
-            "
-        )}
 
     # death_age_col ----
-    if(isFALSE(is.null(death_age_col))) {
-      if(isFALSE(death_age_col %in% colnames(ph.data))){
-        stop("\n\U0001f47f `death_age_col` must be the name of column that exists in `ph.data`.")
+      if (!is.null(death_age_col)) {
+        if (!(death_age_col %in% names(ph.data))) {
+          stop("\n\U0001f47f `death_age_col` must be the name of column that exists in `ph.data`.")
+        }
+        col_data <- ph.data[[death_age_col]]
+        if (!is.numeric(col_data) || !all(is.na(col_data) | col_data == floor(col_data), na.rm = TRUE)) {
+          stop("\n\U0001f47f If `death_age_col` is specified, it must be a column of integers in `ph.data`.")
+        }
+        if (is.null(ypll_age)) {
+          stop("\n\U0001f47f `death_age_col` should not be specified when `ypll_age` is NULL.")
+        }
       }
-      if(isFALSE(class(ph.data[[death_age_col]]) %in% c("numeric", 'integer')) || isFALSE(all(ph.data[[death_age_col]] == floor(ph.data[[death_age_col]])))){
-        stop("\n\U0001f47f If `death_age_col` is specified, it must be a column of integers in `ph.data`.")
+
+      if (is.null(death_age_col) & !is.null(ypll_age)) {
+        if ("chi_age" %in% names(ph.data)) {
+          death_age_col <- 'chi_age'
+          message("\U0001F4E3 \nYou requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
+                  "\nThe function found and used a column named `chi_age` for the YPLL calculation. If this was not",
+                  "\nyour intention, please specify the correct column with the decendant's age with the",
+                  "\n`death_age_col` argument.")
+        } else {
+          stop(paste0("\n\U0001f47f You requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
+                      "\nThe function attempted to use a column named `chi_age`, but it was not found.",
+                      "\nTo calculate YPLL, please set death_age_col to the name of the column with the age at death."))
+        }
       }
-      if(is.null(ypll_age)){
-        stop("\n\U0001f47f `death_age_col` should not be specified when `ypll_age` is NULL.")
-      }
-    }
-    if(isFALSE(is.null(ypll_age)) & is.null(death_age_col) & length(intersect(c("date_of_birth", "date_of_death"), colnames(ph.data))) != 2){
-      stop("\n\U0001f47f You requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
-           "\nThe function attempted to calculate the age at death using columns named 'date_of_birth' and 'date_of_death',",
-           "\nbut at least one of these columns were not found.",
-           "\nTo calculate YPLL, please set death_age_col to the name of the column with the age at death OR ensure that",
-           "\n`ph.data` has columns named 'date_of_birth' and 'date_of_death' with properly formatted dates.")
-    }
-    if(isFALSE(is.null(ypll_age)) & is.null(death_age_col) & length(intersect(c("date_of_birth", "date_of_death"), colnames(ph.data))) == 2){
-      if(isFALSE(class(ph.data[['date_of_birth']]) == "Date") | isFALSE(class(ph.data[['date_of_birth']]) == "Date")){
-        stop("\n\U0001f47f You requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
-             "\nThe function attempted to calculate the age at death using columns named 'date_of_birth' and 'date_of_death',",
-             "\nbut at least one of these columns were not of the class 'Date'. Please update your data and try running it again.")
-      } else{
-        ph.data[date_of_death >= date_of_birth, calculated.age := rads::calc_age(date_of_birth, date_of_death)]
-        ph.data[, c("date_of_death", "date_of_birth") := NULL]
-        death_age_col = "calculated.age"
-      }
-    }
 
   # Identify cause(s) of interest ----
-  if(isFALSE(is.null(cause))){
-    cause = tolower(cause)
-    x_cause = c()
-    for(i in cause){
-      x_cause <- unique(c(x_cause,
-                          grep(i, unique(rads.data::icd_other_causes_of_death[]$cause.of.death),
-                               value = TRUE,
-                               ignore.case = TRUE)))
+    if (!is.null(cause)) {
+      other_death_causes <- unique(rads.data::icd_other_causes_of_death$cause.of.death)
+
+      # Create a pattern by joining all cause values with "|"
+      pattern <- paste(cause, collapse = "|")
+
+      # Use grep with the combined pattern
+      x_cause <- unique(grep(pattern, other_death_causes, value = TRUE, ignore.case = TRUE))
     }
-  }
-  if(isFALSE(is.null(cause)) & length(x_cause) == 0){
-    stop("\n\U0001f47f Your `cause` value (", cause, ") has filtered out all of the available causes of death.",
-         "\nPlease enter a new keyword or keywords and try again.",
-         "\nTo view all available cause of death, type the following in your console: death_other()")
-    }
+
+    if(!(is.null(cause)) & length(x_cause) == 0){
+      stop("\n\U0001f47f Your `cause` value (", cause, ") has filtered out all of the available causes of death.",
+           "\nPlease enter a new keyword or keywords and try again.",
+           "\nTo view all available cause of death, type the following in your console: death_other()")
+      }
 
   # Count deaths for each cause of death ----
     # prep cause of death reference table ----
       # get reference table from rads.data
-      x_reftable <- copy(rads.data::icd_other_causes_of_death)[, orig.coding := NULL]
-      if('source' %in% names(x_reftable)){x_reftable[, source := NULL]}
+      x_reftable <- rads.data::icd_other_causes_of_death[, .(cause.of.death, icd10)]
 
       # subset for cause of death
-      if(isFALSE(is.null(cause))){
+      if(!(is.null(cause))){
         x_reftable <- x_reftable[cause.of.death %in% x_cause] # limit to named causes of death from arguments
       }
 
     # calculate YPLL line level if needed ----
-    if(isFALSE(is.null(ypll_age))){
-      ph.data[ypll_age >= get(death_age_col), paste0("ypll_", ypll_age) := ypll_age - get(death_age_col)]
+    if(!(is.null(ypll_age))){
+      ph.data[, c(ypll_col_name) := fifelse(get(death_age_col) < ypll_age,
+                                            ypll_age - get(death_age_col),
+                                            0)]
       ph.data[, c(death_age_col) := NULL]
     }
 
     # merge reference table onto death data ----
     # can't do a simple merge because some causes are sub-categories of others,
     # e.g., drug-overdose is a subset of drug-induced
-    x_combo <- data.table() # shell to append sub-tables created for each cause of death
-    for(each.cod in unique(x_reftable$cause.of.death)){
-      x_combo <- rbind(x_combo,
-                       merge(ph.data, x_reftable[cause.of.death == each.cod], by.x = icdcol, by.y = "icd10", all.x = TRUE, all.y = F))
-    }
-    x_combo <- x_combo[!is.na(cause.of.death)]
-    x_combo[, c(icdcol) := NULL]
+      unique_cod <- unique(x_reftable$cause.of.death)
 
+      x_combo <- rbindlist(
+        lapply(unique_cod, function(each.cod) {
+          ph.data[x_reftable[cause.of.death == each.cod], # data.table join faster alternative to merge
+                  on = .(icd10_tempy = icd10),
+                  nomatch = 0]
+        })
+      )
+
+      x_combo[, (icdcol) := NULL]
 
     # calculate death count ----
     if(is.null(ypll_age)){
-      x_all <- copy(ph.data)[, .(cause.of.death = "All causes", deaths = .N),
+      x_all <- ph.data[, list(cause.of.death = "All causes", deaths = .N),
                              by = group_by]
 
-      x_combo <- x_combo[, .(deaths = .N), by = c("cause.of.death", group_by)]
+      x_combo <- x_combo[, list(deaths = .N), by = c("cause.of.death", group_by)]
 
       x_combo <- rbind(x_all, x_combo)
     } else {
       # create summary table of YPLL ----
       # all deaths
-      x_all <- copy(ph.data)[, list(cause.of.death = "All causes",
+      x_all <- ph.data[, list(cause.of.death = "All causes",
                                  deaths = .N,
-                                 temp_ypll = sum(get(paste0("ypll_", ypll_age)), na.rm = TRUE)),
+                                 temp_ypll = sum(get(ypll_col_name), na.rm = TRUE)),
                              by = group_by]
 
       # NCHS causes of death
-      x_combo <- copy(x_combo)[, list(deaths = .N,
-                                   temp_ypll = sum(get(paste0("ypll_", ypll_age)), na.rm = TRUE)),
+      x_combo <- x_combo[, list(deaths = .N,
+                                   temp_ypll = sum(get(ypll_col_name), na.rm = TRUE)),
                                by = c('cause.of.death', group_by)]
 
       # combine all_deaths + NCHS_113
       x_combo <- rbind(x_all, x_combo)
       rm(list = c("x_all"))
-      setnames(x_combo, "temp_ypll", paste0("ypll_", ypll_age))
+      setnames(x_combo, "temp_ypll", ypll_col_name)
     }
-
 
   # Tidy ----
     # Create rows for zero values (otherwise rows would simply be missing) ----
-      # create temporary vectors of unique values of all columns EXCEPT deaths and ypll_##
-        for(i in setdiff(names(x_combo), c('deaths', grep('^ypll_', names(x_combo), value = T)))){
-          assign(paste0('xyz_', i), unique(x_combo[, get(i)]))
-        }
+      # Select columns to use for combination
+        cols_to_use <- setdiff(names(x_combo), c('deaths', grep('^ypll_', names(x_combo), value = T)))
 
-      # create template of all combinations of x_combo values
-        template.xyz <- setDT(expand.grid(mget(ls(pattern = 'xyz_'))))
-        setnames(template.xyz, gsub('^xyz_', '', names(template.xyz)))
+      # Create list of unique values for each selected column
+        unique_col_vals <- lapply(cols_to_use, function(col) unique(x_combo[[col]]))
 
-      # merge actual values onto template.xyz
-        x_combo <- merge(template.xyz, x_combo, all = T)
+      # Create names for the list
+        names(unique_col_vals) <- cols_to_use
+
+      # Use CJ to create all combinations
+        template_xyz <- do.call(data.table::CJ, unique_col_vals)
+
+      # merge actual values onto template_xyz
+        x_combo <- merge(template_xyz,
+                         x_combo,
+                         all.x = TRUE, # to ensure every combination of categorical vars are available
+                         all.y = TRUE) # could also be FALSE because, by definition, all values of y are in X
 
       # Fill deaths with zeros
         x_combo[is.na(deaths), deaths := 0]
@@ -1461,255 +1480,202 @@ death_xxx_count <- function(ph.data,
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
     problem.icds  <-  causeid <- cause.of.death <- deaths <- '.' <- NULL
     x_reftable <- x_combo <- x_covid <- x_cause <- x_all <- x_ypll <- NULL
-    chi_geo_kc <- underlying_cod_code <- icd10 <- x.causeid <- NULL
-    date_of_death <- date_of_birth <- calculated.age <- orig.coding <- NULL
+    chi_geo_kc <- underlying_cod_code <- icd10 <- x.causeid <- icd10_tempy <- NULL
+    date_of_death <- date_of_birth <- calculated.age <- orig.coding <- ypll_col_name <- NULL
 
   # Check arguments ----
-      # ph.data ----
-        ph.data.name <- deparse(substitute(ph.data))
+    # ph.data ----
+    if (missing(ph.data) || !is.data.frame(ph.data)) {
+      stop("\n\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
+    }
 
-        if(missing(ph.data)){stop("\n\U0001f47f `ph.data`, the name of a data.frame or data.table with line level death data, must be specified.")}
+    # Create a copy of ph.data and ensure it's a data.table
+    ph.data <- data.table::setDT(data.table::copy(ph.data))
 
-        if(!is.data.frame(ph.data)){
-          stop("\n\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
+    # causeids ----
+      if (is.null(causeids) & is.null(cause)) {
+        stop("\U0001f6d1 You cannot have both `causeids` and `cause` == NULL.")
+      }
+
+      if (!is.null(causeids)) {
+        if (any(is.na(causeids))) {
+          stop("\n\U0001f47f `causeids` must not contain NA values.")
+        }
+        if (!is.numeric(causeids) || !all(causeids == floor(causeids))) {
+          stop("\n\U0001f47f `causeids` must be a vector of integers.")
         }
 
-        if(is.data.frame(ph.data) && !data.table::is.data.table(ph.data)){
-          data.table::setDT(ph.data)
+        if (nchsnum == 113 &&
+            (min(causeids) < 1 | max(causeids) > 114)) {
+          stop("\n\U0001f47f `causeids` are limited to integers [1, 114].")
         }
 
-        ph.data <- data.table::setDT(data.table::copy(ph.data)) # to prevent changing of original by reference
+        if (nchsnum == 130 &&
+            (min(causeids) < 1 | max(causeids) > 130)) {
+          stop("\n\U0001f47f `causeids` are limited to integers [1, 130].")
+        }
 
-      # causeids ----
-          if(is.null(causeids) & is.null(cause)){stop("\U0001f6d1 You cannot have both `causeids` and `cause` == NULL.")}
-          if(nchsnum == 113 & !is.null(causeids)){
-              if (isFALSE(is.numeric(causeids)) ||
-                  isFALSE(all(causeids == floor(causeids)))) {
-                stop(
-                  "\n\U0001f47f `causeids` must be a vector of integers (e.g., c(1, 3, 5)). \nTo see the full list of causeids, type `death_113()`\nIf you plan to use keywords, you can set causeids = NULL."
-                )
-              }
-              if (min(causeids) < 1 | max(causeids) > 114) {
-                stop(
-                  "\n\U0001f47f `causeids` are limited to integers [1, 114]. \nTo see the full list of causeids, type `death_113()`"
-                )
-              }
-          }
-          if(nchsnum == 130 & !is.null(causeids)){
-            if (isFALSE(is.numeric(causeids)) ||
-                isFALSE(all(causeids == floor(causeids)))) {
-              stop(
-                "\n\U0001f47f `causeids` must be a vector of integers (e.g., c(1, 3, 5)). \nTo see the full list of causeids, type `death_130()`\nIf you plan to use keywords, you can set causeids = NULL."
-              )
-            }
-            if (min(causeids) < 1 | max(causeids) > 130) {
-              stop(
-                "\n\U0001f47f `causeids` are limited to integers [1, 130]. \nTo see the full list of causeids, type `death_130()`"
-              )
-            }
-          }
+        causeids <- sort(unique(causeids))
+      }
 
-          causeids <- sort(unique(causeids))
+    # cause ----
+      if (!is.null(cause) && !is.character(cause)) {
+        stop("\n\U0001f47f `cause` must either be NULL or a character vector.")
+      }
 
-      # cause ----
-          if (isFALSE(is.null(cause)) & isFALSE(is.character(cause))) {
-            stop(
-              "\n\U0001f47f `cause` must either be NULL (in which case the function uses causeids) or must be character vector with whole or partial keywords for the cause of death of interest."
+      if (!is.null(cause) & !is.null(causeids)){
+        message('\U00026A0 You specified both a cause and causeid argument. The causes will replace the causeids.')
+        causeids <- NULL
+        }
+
+    # icdcol ----
+      if (!icdcol %in% names(ph.data)) {
+        stop("\n\U0001f47f `icdcol` must be the name of a column that exists in `ph.data`.")
+      }
+
+      ph.data[, icd10_tempy := death_icd10_clean(get(icdcol))]
+
+    # kingco ----
+      if (!is.logical(kingco)) {
+        stop("\n\U0001f47f `kingco` must be a logical value, i.e., TRUE or FALSE.")
+      }
+
+      if (kingco && !"chi_geo_kc" %in% names(ph.data)) {
+        stop(
+          "\n\U0001f47f `ph.data` does not have the column `chi_geo_kc`, which is required for King County data."
+        )
+      }
+
+      if (kingco) {
+        ph.data <- ph.data[chi_geo_kc == 'King County']
+      }
+
+    # group_by ----
+      if (!is.null(group_by)) {
+        group_col_error <- setdiff(group_by, names(ph.data))
+        if (length(group_col_error) > 0) {
+          stop(
+            paste0(
+              "\U0001f6d1 The following `group_by` values are not column names in `ph.data`: ",
+              paste0(group_col_error, collapse = ', '),
+              "."
             )
-          }
-          if (is.character(cause)) {
-            causeids = NULL
-          }
+          )
+        }
+      }
 
-          if (is.null(causeids) &
-              is.null(cause)) {
-            stop("\n\U0001f47f Both `causeids` and `cause` are NULL You must specify one or the other.")
-          }
+    # ypll_age ----
+      if (!is.null(ypll_age)) {
+        if (!is.numeric(ypll_age) ||
+            !all(ypll_age == floor(ypll_age)) ||
+            length(ypll_age) != 1 || ypll_age < 1 | ypll_age > 99) {
+          stop("\n\U0001f47f `ypll_age` must be an integer between 1 and 99.")
+        }
 
-      # icdcol ----
-          if (isFALSE(icdcol %in% colnames(ph.data))) {
-            stop("\n\U0001f47f `icdcol` must be the name of column that exists in `ph.data`.")
-          }
+        ypll_col_name <- paste0("ypll_", ypll_age)
+      }
 
-          ph.data[, paste0(icdcol) := death_icd10_clean(get(icdcol))]
+    # death_age_col ----
+      if (!is.null(death_age_col)) {
+        if (!(death_age_col %in% names(ph.data))) {
+          stop("\n\U0001f47f `death_age_col` must be the name of column that exists in `ph.data`.")
+        }
+        col_data <- ph.data[[death_age_col]]
+        if (!is.numeric(col_data) || !all(is.na(col_data) | col_data == floor(col_data), na.rm = TRUE)) {
+          stop("\n\U0001f47f If `death_age_col` is specified, it must be a column of integers in `ph.data`.")
+        }
+        if (is.null(ypll_age)) {
+          stop("\n\U0001f47f `death_age_col` should not be specified when `ypll_age` is NULL.")
+        }
+      }
 
-      # check that kingco is a logical ----
-          if (isFALSE(is.logical(kingco))) {
-            stop("\n\U0001f47f `kingco` must be a logical value (i.e., T|F|TRUE|FALSE")
-          }
-          if (isTRUE(kingco) & (!"chi_geo_kc" %in% names(ph.data))) {
-            stop(
-              "\n\U0001f47f You specified kingco=TRUE, but `ph.data` does not have the following columns that identify King County data: chi_geo_kc"
-            )
-          }
-          if (isTRUE(kingco)) {
-            ph.data <- ph.data[chi_geo_kc == 'King County']
-          }
+      if (is.null(death_age_col) & !is.null(ypll_age)) {
+        if ("chi_age" %in% names(ph.data)) {
+          death_age_col <- 'chi_age'
+          message("\U0001F4E3 \nYou requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
+                  "\nThe function found and used a column named `chi_age` for the YPLL calculation. If this was not",
+                  "\nyour intention, please specify the correct column with the decendant's age with the",
+                  "\n`death_age_col` argument.")
+        } else {
+          stop(paste0("\n\U0001f47f You requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
+                      "\nThe function attempted to use a column named `chi_age`, but it was not found.",
+                      "\nTo calculate YPLL, please set death_age_col to the name of the column with the age at death."))
+        }
+      }
 
-      # group_by ----
-          if(!is.null(group_by)){
-            group_col_error <- setdiff(group_by, names(ph.data))
-            if(length(group_col_error) > 0){stop(paste0("\U0001f6d1\n The following `group_by` values are not column names in `ph.data`: ", paste0(group_col_error, collapse = ', '), "."))}
-          }
-
-      # ypll_age ----
-          if (isFALSE(is.null(ypll_age))) {
-            if (isFALSE(is.numeric(ypll_age)) ||
-                isFALSE(all(ypll_age == floor(ypll_age)))) {
-              stop("\n\U0001f47f If `ypll_age` is specified, it must be an integer. Typical values are 65 and 85.")
-            }
-            if (length(ypll_age) != 1) {
-              stop(("\n\U0001f47f You can only specify one `ypll_age` at a time."))
-            }
-            if (ypll_age < 1 | ypll_age > 99) {
-              stop(paste0("\n\U0001f47f The minumum `ypll_age` is 1 and the maximum is 99.",
-                          "\nNote that both of these extremes are all but useless.",
-                          "\nTypical values are 65 and 85."
-              ))
-            }
-          }
-
-      # death_age_col ----
-          if (isFALSE(is.null(death_age_col))) {
-            if (isFALSE(death_age_col %in% colnames(ph.data))) {
-              stop("\n\U0001f47f `death_age_col` must be the name of column that exists in `ph.data`.")
-            }
-            if (isFALSE(class(ph.data[[death_age_col]]) %in% c("numeric", 'integer')) ||
-                isFALSE(all(ph.data[[death_age_col]] == floor(ph.data[[death_age_col]])))) {
-              stop("\n\U0001f47f If `death_age_col` is specified, it must be a column of integers in `ph.data`.
-                       ")
-            }
-            if (is.null(ypll_age)) {
-              stop("\n\U0001f47f `death_age_col` should not be specified when `ypll_age` is NULL.")
-            }
-          }
-          if (isFALSE(is.null(ypll_age)) &
-              is.null(death_age_col) &
-              length(intersect(c("chi_age"), colnames(ph.data))) != 1) {
-            stop(paste0("\n\U0001f47f You requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
-                     "\nThe function attempted to use a column named `chi_age`, but it was not found.",
-                     "\nTo calculate YPLL, please set death_age_col to the name of the column with the age at death."))
-          }
-          if (isFALSE(is.null(ypll_age)) &
-              is.null(death_age_col) &
-              length(intersect(c("chi_age"), colnames(ph.data))) == 1) {
-            death_age_col = 'chi_age'
-            message(
-              "
-                    You requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.
-                    The function found and used a column named `chi_age` for the YPLL calculation. If this was not
-                    your intention, please specify the correct column with the decendant's age with the
-                    `death_age_col` argument
-                    "
-            )
-          }
 
   # Import reference table once ----
-      if(nchsnum == 113){
-        nchsref <- unique(rads.data::icd_nchs113causes[, .(cause.of.death, causeid)])} else {
-          nchsref <- unique(rads.data::icd_nchs130causes[, .(cause.of.death, causeid)])
-        }
+    x_reftable <- if (nchsnum == 113) {
+      unique(rads.data::icd_nchs113causes[, .(cause.of.death, causeid, icd10)])
+    } else {
+      unique(rads.data::icd_nchs130causes[, .(cause.of.death, causeid, icd10)])
+    }
 
   # Identify cause(s) of interest ----
-      if (isFALSE(is.null(cause))) {
-        cause = tolower(cause)
-        x_cause = c()
-        for (i in cause) {
-          x_cause <- unique(c(x_cause,
-                              grep(i,
-                                   nchsref$cause.of.death,
-                                   value = TRUE,
-                                   ignore.case = TRUE)))
-        }
-      }
-      if (isFALSE(is.null(cause)) & length(x_cause) == 0) {
-        stop(paste0("\n\U0001f47f Your `cause` value(s) (",
-            paste0("'", paste0(cause, collapse= "', '"), "'"),") filtered out",
-            "\nall of the available causes of death. Please enter a new keyword",
-            "\nor keywords and try again. To view all available cause of death, ",
-            "\ntype the following in your console: `rads::death_", nchsnum, "()`"))
-      }
+    if (!is.null(cause)) {
+      cause <- tolower(cause)
+      x_cause <- unique(unlist(lapply(cause, function(i)
+        grep(
+          i,
+          unique(x_reftable$cause.of.death),
+          value = TRUE,
+          ignore.case = TRUE
+        ))))
 
-  # Count deaths for each cause ----
-    # prep causes of death reference table ----
-      # get reference table from rads.data
-      if(nchsnum == 113){x_reftable <- copy(rads.data::icd_nchs113causes)}
-      if(nchsnum == 130){x_reftable <- copy(rads.data::icd_nchs130causes)}
-
-      # subset for causeids
-      if (isFALSE(is.null(causeids))) {
-        x_reftable <-
-          x_reftable[causeid %in% causeids] # limit to causeids from arguments
-      }
-
-      # subset for cause of death
-      if (isFALSE(is.null(cause))) {
-        x_reftable <-
-          x_reftable[cause.of.death %in% x_cause] # limit to named causes of death from arguments
-      }
-
-      # bring causeid 17 into alignment with WA DOH (and out of alignment with CDC)
-      x_reftable <-
-        x_reftable[!(causeid == 17 &
-                       icd10 == 'U071')] # this is COVID, which DOH extracts from unspecified infectious/parasitic
-
-    # calculate YPLL line level if needed ----
-      if (isFALSE(is.null(ypll_age))) {
-        ph.data[ypll_age >= get(death_age_col), paste0("ypll_", ypll_age) := ypll_age - get(death_age_col)]
-        ph.data[, c(death_age_col) := NULL]
-      }
-
-    # merge reference table onto death data ----
-      x_combo <-
-        merge(
-          ph.data,
-          x_reftable,
-          by.x = icdcol,
-          by.y = "icd10",
-          all.x = TRUE,
-          all.y = F
+      if (length(x_cause) == 0) {
+        stop(
+          paste0(
+            "\n\U0001f47f Your `cause` value(s) filtered out all available causes of death. Please enter new keywords and try again."
+          )
         )
+      }
 
-      x_combo[get(icdcol) %like% "U071", `:=` (cause.of.death = "COVID-19 (U07.1)",
-                                               orig.coding = 'U07.1')]
+      x_reftable <- x_reftable[cause.of.death %in% x_cause] # only keep selected causes in reference table
+    }
 
-      x_combo[, c(icdcol) := NULL]
-      x_combo[is.na(cause.of.death), cause.of.death := "Missing/Unknown"]
+    if (!is.null(causeids)) {
+      x_reftable <- x_reftable[causeid %in% causeids]
+    }
 
-  # calculate death count ----
-      if (is.null(ypll_age)) {
-        x_all <-
-          copy(ph.data)[, .(causeid = NA_character_,
-                            cause.of.death = "All causes",
-                            deaths = .N),
-                        by = group_by]
-        x_combo <-
-          x_combo[, .(deaths = .N), by = c("causeid", "cause.of.death", group_by)]
+    # bring causeid 17 into alignment with WA DOH
+    x_reftable <- x_reftable[!(causeid == 17 & icd10 == 'U071')]
 
-        x_combo <- rbind(x_all, x_covid, x_combo)
-      } else {
-        # create summary table of YPLL ----
-        # all deaths
-        x_all <- copy(ph.data)[, .(
-          causeid = NA_character_,
-          cause.of.death = "All causes",
-          orig.coding = NA_character_,
-          deaths = .N,
-          temp_ypll = sum(get(paste0(
-            "ypll_", ypll_age
-          )), na.rm = TRUE)
-        ),
-        by = group_by]
+  # Calculate YPLL line level if needed ----
+    if (!is.null(ypll_age) && !is.null(death_age_col)) {
+      ph.data[, (ypll_col_name) := fifelse(get(death_age_col) < ypll_age,
+                                           ypll_age - get(death_age_col),
+                                           0)]
+      ph.data[, (death_age_col) := NULL]
+    }
 
-    # NCHS causes of death
-    x_combo <- copy(x_combo)[, .(deaths = .N, temp_ypll = sum(get(paste0("ypll_", ypll_age)), na.rm = TRUE)),
-                             by = c("causeid", "cause.of.death", 'orig.coding', group_by)]
+  # Merge reference table onto death data ----
+    setkey(ph.data, icd10_tempy)
+    setkey(x_reftable, icd10)
+    x_combo <- x_reftable[ph.data, on = .(icd10 = icd10_tempy), allow.cartesian = TRUE] # data.table join faster alternative to merge
+    x_combo[, icd10 := tolower(icd10)]
+    x_combo[icd10 == "u071" |
+              grepl("^u071", icd10), cause.of.death := "COVID-19 (U07.1)"]
+    x_combo <- x_combo[!is.na(cause.of.death)]
 
-    # combine all_deaths + COVID-19 + NCHS###
-    x_combo <- rbind(x_all, x_combo)
-    rm(list = c("x_all", "x_covid"))
-    setnames(x_combo, "temp_ypll", paste0("ypll_", ypll_age))
-  }
+  # calculate death counts & YPLL summaries ----
+    if (is.null(ypll_age)) {
+      x_all <- ph.data[, .(causeid = NA_character_,
+                           cause.of.death = "All causes",
+                           deaths = .N), by = group_by]
+      x_combo <- x_combo[, .(deaths = .N), by = c("causeid", "cause.of.death", group_by)]
+      x_combo <- rbind(x_all, x_combo)
+    } else {
+      x_all <- ph.data[, .(
+        causeid = NA_character_,
+        cause.of.death = "All causes",
+        deaths = .N,
+        temp_ypll = sum(get(ypll_col_name), na.rm = TRUE)
+      ), by = group_by]
+      x_combo <- x_combo[, .(deaths = .N,
+                             temp_ypll = sum(get(ypll_col_name), na.rm = TRUE)), by = c("causeid", "cause.of.death", group_by)]
+      x_combo <- rbind(x_all, x_combo)
+      setnames(x_combo, "temp_ypll", ypll_col_name)
+    }
 
   # Tidy ----
     # Drop orig.coding if exists ----
@@ -1717,30 +1683,38 @@ death_xxx_count <- function(ph.data,
         x_combo[, orig.coding := NULL]
       }
 
-    # Create rows for zero values (otherwise rows would simply be missing) ----
-    # create temporary vectors of unique values of all columns EXCEPT deaths and ypll_##
-      for (i in setdiff(names(x_combo), c('deaths', 'causeid', grep('^ypll_', names(x_combo), value = T)))) {
-        assign(paste0('xyz_', i), unique(x_combo[, get(i)]))
-      }
+    # Create rows for zero values ----
+      # Select columns to use for combination
+      cols_to_use <- setdiff(names(x_combo),
+                             c('deaths', 'causeid', grep('^ypll_', names(x_combo), value = TRUE)))
 
-      # create template of all combinations of x_combo values
-      template.xyz <- setDT(expand.grid(mget(ls(pattern = 'xyz_'))))
-      setnames(template.xyz, gsub('^xyz_', '', names(template.xyz)))
+      # Create list of unique values for each selected column
+      unique_col_vals <- lapply(cols_to_use, function(col) unique(x_combo[[col]]))
 
-      # merge actual values onto template.xyz
-      x_combo <- merge(template.xyz, x_combo, all = T)
+      # Create names for the list
+      names(unique_col_vals) <- cols_to_use
+
+      # Use CJ to create all combinations
+      template_xyz <- do.call(data.table::CJ, unique_col_vals)
+
+      # merge actual values onto template_xyz
+      x_combo <- merge(template_xyz,
+                       x_combo,
+                       all.x = TRUE, # to ensure every combination of categorical vars are available
+                       all.y = TRUE) # could also be FALSE because, by definition, all values of y are in X
 
       # Fill deaths with zeros
       x_combo[is.na(deaths), deaths := 0]
 
       # Fill ypll_## with zeros if needed
       if (!is.null(ypll_age)) {
-        ypll_name = grep('^ypll_[0-9]', names(x_combo), value = T)
+        ypll_name <- grep('^ypll_[0-9]', names(x_combo), value = TRUE)
         x_combo[is.na(get(ypll_name)), paste0(ypll_name) := 0]
       }
 
       # Fill causeid if needed
-      x_combo[is.na(causeid), causeid := nchsref[x_combo[is.na(causeid)], on = .(cause.of.death), x.causeid]]
+      x_reftable <- unique(x_reftable[, .(cause.of.death, causeid)])
+      x_combo[is.na(causeid), causeid := x_reftable[x_combo[is.na(causeid)], on = .(cause.of.death), causeid]]
 
     # Sort columns and rows ----
       if (!is.null(ypll_age)) {
@@ -1750,7 +1724,7 @@ death_xxx_count <- function(ph.data,
           names(x_combo),
           c("deaths", 'cause.of.death', "causeid", ypll_name)
         )))
-      } else{
+      } else {
         setcolorder(x_combo, c("cause.of.death", "causeid", "deaths"))
         setorderv(x_combo, c('cause.of.death', setdiff(
           names(x_combo), c("deaths", 'cause.of.death', "causeid")
@@ -1758,22 +1732,18 @@ death_xxx_count <- function(ph.data,
       }
 
   # Message about COVID-19 if selected causeid 17 ----
-  if(nchsnum == 113){
-    if (17 %in% x_combo$causeid) {
+    if (nchsnum == 113 && 17 %in% x_combo$causeid) {
       message(
-        "\U00026A0
-              You selected causeid == 17 (Other and unspecified infectious and parasitic diseases...).
-              COVID-19 (U07.1) has been EXCLUDED from this cause, following the example of WA DOH. Note
-              however that, as of October 2020, CDC INCLUDES COVID-19 (U07.1) in causeid == 17. In
-              otherwords, APDE followed WA DOH's decision since we provide a separate row for COVID-19."
+        "\U00026A0 You selected causeid == 17 (Other and unspecified infectious and parasitic diseases...).
+            COVID-19 (U07.1) has been EXCLUDED from this cause, following the example of WA DOH. Note
+            however that, as of October 2020, CDC INCLUDES COVID-19 (U07.1) in causeid == 17. In
+            other words, APDE followed WA DOH's decision since we provide a separate row for COVID-19."
       )
     }
-  }
 
   # Return data ----
-  return(x_combo)
+    return(x_combo)
 }
-
 
 # life_table ----
 #' Generate a standard life table

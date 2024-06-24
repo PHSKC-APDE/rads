@@ -256,14 +256,11 @@ dt1 <- death_113_count(ph.data = ex1,
 |:-----------------|:--------|:-------|
 | All causes       | NA      | 14,353 |
 | COVID-19 (U07.1) | NA      | 969    |
-| Missing/Unknown  | NA      | 13,356 |
 | Viral hepatitis  | 14      | 28     |
 
 Glancing at the table above, you’ll see that you have the two causes of
-death of interest, PLUS the total of death from any cause (‘All causes’)
-PLUS any rows where the ICD code did not match the selected causes of
-death (‘Missing/Unknown’). *Missing/Unknown = All causes - Viral
-hepatitis - COVID-19.*
+death of interest, PLUS the total of death from any cause (‘All
+causes’)*.*
 
 We could have specified ‘Viral hepatitis’ using `causeids` rather than
 the `cause` text string for the same result. Also, we really can’t
@@ -280,7 +277,6 @@ dt1.alt <- death_113_count(ph.data = ex1,
 |:-----------------|:--------|:-------|
 | All causes       | NA      | 14,353 |
 | COVID-19 (U07.1) | NA      | 969    |
-| Missing/Unknown  | NA      | 13,356 |
 | Viral hepatitis  | 14      | 28     |
 
 ### example \#2: 2019 & 2020 top five causes of death in `death_113_count()`
@@ -307,7 +303,7 @@ data.table
 dt113_19_20[cause.of.death != 'All causes', 
             rank := frank(-deaths), 
             by = 'chi_year']
-dt113_19_20 <- dt113_19_20[rank <=5 ]
+dt113_19_20 <- dt113_19_20[rank <= 5 ]
 setorder(dt113_19_20, chi_year, rank)
 ```
 
@@ -360,9 +356,11 @@ The table above tells us that, if everyone who died from COVID-19 in
 
 # death_130_count()
 
-`death_130()` and `death_130_count()` work in exactly the same way as
-`death_113()` and `death_113_count()` and will therefore not be
-described in detail.
+`death_130()` and `death_130_count()` are used for the [NCHS 130
+Selected Causes of Infant Death (Table
+C)](https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf).
+They work in exactly the same way as `death_113()` and
+`death_113_count()` and will therefore not be described in detail.
 
 # death_injury_matrix_count()
 
@@ -425,7 +423,7 @@ Run death_injury_matrix_count and show the first six rows
 dt4 <- death_injury_matrix_count(ph.data = ex4, 
                                  intent = "*", 
                                  mechanism = "*",
-                                 kingco = FALSE, 
+                                 kingco = FALSE, # FALSE b/c already subset to KC when importing data
                                  group_by = 'chi_sex')[1:6]
 ```
 
@@ -438,12 +436,7 @@ dt4 <- death_injury_matrix_count(ph.data = ex4,
 | All injury | Suicide                | 69     | Female  |
 | All injury | Suicide                | 186    | Male    |
 
-Notice that you did not have to specify that you wanted the results
-stratified by sex. The function will automatically stratify by whatever
-extra columns are contained in `ph.data`. Be mindful of this and be sure
-that you submit `ph.data` with the minimum necessary number of columns.
-
-**Now, what happens if you set both intent & mechanism to “none”?** The
+**What happens if you set both intent & mechanism to “none”?** The
 function assumes you want the total injury related deaths (without
 regard to intent or mechanism).
 
@@ -789,4 +782,4 @@ If you’ve read through this vignette and the corresponding help files
 and are still confused, please feel free to reach out for assistance.
 You may have found a bug, who knows? Good luck!
 
-– *Updated by dcolombara, 2024-04-09*
+– *Updated by dcolombara, 2024-06-24*
