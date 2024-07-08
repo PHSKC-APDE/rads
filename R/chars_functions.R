@@ -653,7 +653,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
     CMtable <- CMtable.expanded <- filter.count <- problem.icds <- superlevel_desc <- broad_desc <-
       midlevel_desc <- detailed_desc <- chi_geo_kc <- hospitalizations <- icdcm_code <- KeepMe <-
       icdcm_desc <- icdcm_code <- query.group <- diag1 <- intent_ignore <-
-      chars_injury_matrix_count <- mechanism_ignore <- NULL
+      chars_injury_matrix_count <- mechanism_ignore <- dummy <- NULL
 
   # Check arguments & filter reference table of all ICD CM (CMtable) ----
     # ph.data ----
