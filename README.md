@@ -25,6 +25,11 @@ If you haven't yet installed [`rads`](https://github.com/PHSKC-APDE/rads), follo
 
 5.  Load [`rads`](https://github.com/PHSKC-APDE/rads) ... `library(rads)`
 
+## New for version 1.2.1.0
+1. `get_population` now accepts 'ccl', 'csa', 'inc_uninc', 'puma', 'kccd', and 'tribal' as valid geography types (`geo_type`). These refer to crisis care levy areas, community service areas, incorperated and unincorperated king county, public use microdata areas, king county council districts, and tribal lands respectively.
+2. `rads::calc` can now handle `imputationList` type inputs as data. See the [wiki]([https://github.com/PHSKC-APDE/rads/wiki/calc](https://github.com/PHSKC-APDE/rads/wiki/calc#example-analyses-with-resampled-datamultiple-imputation) for more information.
+3. `rads::calc` now has sorted outputs. This is a a minor, potentially breaking change.
+
 ## New for version 1.2.0.0
 1. `get_data_hys` updated to pull 2023 data.
 2. `get_population` data updated to pull estimates by hispanic/non-hispanic within a race (as opposed to Hispanic as its own race).

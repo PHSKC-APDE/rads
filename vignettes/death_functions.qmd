@@ -10,9 +10,10 @@ editor: visual
 
 The [rads package](https://github.com/PHSKC-APDE/rads/) has a suite of tools designed to facilitate and accelerate the analysis of standardized death data. Combining the `rads` functions below with the clean death data on our servers should allow APDE analysts to conduct custom analyses with relative ease.
 
-The core `rads` death function are:
+The core `rads` death functions are:
 
--   `get_data_death()`: easily download standardized death data from SQL into R
+-   `get_data_death()`: easily download standardized death data from TSQL into R
+-   `death_icd10_clean()`: clean and standardize ICD-10 codes for use with `rads` death functions
 -   `death_113_count()`: generate death counts for the CDC's 113 Selected Causes of Death (PLUS COVID-19)
 -   `death_130_count()`: generate death counts for the CDC's 130 Selected Causes of **infant** Death (PLUS COVID-19)
 -   `death_injury_matrix_count()`: generate counts of external cause (a.k.a., injury related) deaths by intent and mechanism
@@ -50,7 +51,7 @@ library(kableExtra)
 -   `kingco`: logical (T\|F) specifying whether to limit the download to King County.
 -   `topcode`: logical (T\|F) specifying whether you want to top code `chi_age` at 100 to match population data.
 
-If you do not specify any of the arguments, you will get all death data columns, for King County, for the latest year, with top coding to 100.
+If you do not specify any of the arguments, you will get all death data columns, for King County, for the latest year, with top coding to 100. Top coding to 100 is our general practice because there are few people above 100 years of age and it aligns with our population data, which is also top coded to 100.
 
 ```{r}
 #| warning: false
@@ -61,6 +62,30 @@ names(ex0)[1:6] # names of the first 6 columns
 unique(ex0$chi_geo_kc) # confirm data is limited to King County
 unique(ex0$chi_year) # check the year
 max(ex0$chi_age, na.rm = T) # check top coding
+```
+
+# death_icd10_clean()
+
+`death_icd10_clean()` is called upon by all of the `death_***_count()` functions, but can also be used as a standalone function for truly custom analyses. It takes a single argument:
+
+-   `icdcol`: the name of a character vector of ICD-10 codes.
+
+The function can be used to clean any arbitrary vector of ICD-10 codes. Notice that it gives a warning, informing you that it cleaned the codes.
+
+```{r}
+#| echo: TRUE
+icd_codes <- c('G30.9', 'I25.1', 'I250', 'C349', 'U07-1', 'X44')
+cleaned_icd_codes <- death_icd10_clean(icd_codes)
+print(cleaned_icd_codes)
+```
+
+The function can also be used within a data.table. Notice that this time it gives a different warning, informing you that it had to replace one of the values (i.e., '3X44') with NA because it did not appear to be an ICD-10 code.
+
+```{r}
+#| echo: TRUE
+mydt <- data.table(icd_codes = c('G309', 'I251', 'I250', 'C349', 'U071', '3X44'))
+mydt[, cleaned_icd_codes := death_icd10_clean(icd_codes)]
+head(mydt)
 ```
 
 # death_113_count()
@@ -90,7 +115,7 @@ Please refer to the help file for more details.
 
 ### example #1: Count 2020 deaths from COVID-19 or viral hepatitis
 
-Get the 2020 data from SQL
+Get the 2020 data from TSQL
 
 ```{r}
 ex1 <- get_data_death(year = 2020, 
@@ -105,7 +130,7 @@ dim(ex1)
 names(ex1)
 ```
 
-Lets take a peak at the first 10 rows where the underlying cause of death is not missing to see the data structure.
+Let's take a peek at the first 10 rows where the underlying cause of death is not missing to see the data structure.
 
 ```{r}
 #| echo: FALSE
@@ -127,7 +152,7 @@ dt1[, deaths := format(deaths, big.mark = ',')]
 kable(head(dt1), format = "markdown")
 ```
 
-Glancing at the table above, you'll see that you have the two causes of death of interest, PLUS the total of death from any cause ('All causes') PLUS any rows where the ICD code did not match the selected causes of death ('Missing/Unknown'). *Missing/Unknown = All causes - Viral hepatitis - COVID-19.*
+Glancing at the table above, you'll see that you have the two causes of death of interest, PLUS the total of death from any cause ('All causes')*.*
 
 We could have specified 'Viral hepatitis' using `causeids` rather than the `cause` text string for the same result. Also, we really can't specify COVID-19. Since COVID-19 is not on the official 113 causes of death list, it does not have a code. It is however returned automatically by this function.
 
@@ -144,9 +169,9 @@ dt1.alt[, deaths := format(deaths, big.mark = ',')]
 kable(head(dt1.alt), format = "markdown")
 ```
 
-### example #2: 2019 & 2020 top five causes of death
+### example #2: 2019 & 2020 top five causes of death in `death_113_count()`
 
-First, let's get 2019 & 2020 data from SQL ...
+First, let's get 2019 & 2020 data from TSQL ...
 
 ```{r}
 #| warning: false
@@ -173,7 +198,7 @@ Finally, let's select the top five causes of death by year using data.table
 dt113_19_20[cause.of.death != 'All causes', 
             rank := frank(-deaths), 
             by = 'chi_year']
-dt113_19_20 <- dt113_19_20[rank <=5 ]
+dt113_19_20 <- dt113_19_20[rank <= 5 ]
 setorder(dt113_19_20, chi_year, rank)
 ```
 
@@ -182,6 +207,8 @@ setorder(dt113_19_20, chi_year, rank)
 dt113_19_20[, deaths := format(deaths, big.mark = ',')]
 kable(dt113_19_20, format = "markdown")
 ```
+
+*Note!* Calculating the leading causes of death that we report publicly is more complicated. Please refer to the [CHI repository README](https://github.com/PHSKC-APDE/chi/tree/main/death#leading-causes-of-death) for details.
 
 ### example #3: Calculating years of potential life lost due to COVID-19, assuming age of death at 65 as the standard
 
@@ -215,7 +242,7 @@ The table above tells us that, if everyone who died from COVID-19 in 2020 had li
 
 # death_130_count()
 
-`death_130()` and `death_130_count()` work in exactly the same way as `death_113()` and `death_113_count()` and will therefore not be described in detail.
+`death_130()` and `death_130_count()` are used for the [NCHS 130 Selected Causes of Infant Death (Table C)](https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf). They work in exactly the same way as `death_113()` and `death_113_count()` and will therefore not be described in detail.
 
 # death_injury_matrix_count()
 
@@ -260,7 +287,7 @@ Run death_injury_matrix_count and show the first six rows
 dt4 <- death_injury_matrix_count(ph.data = ex4, 
                                  intent = "*", 
                                  mechanism = "*",
-                                 kingco = FALSE, 
+                                 kingco = FALSE, # FALSE b/c already subset to KC when importing data
                                  group_by = 'chi_sex')[1:6]
 ```
 
@@ -270,9 +297,7 @@ dt4[, deaths := format(deaths, big.mark = ',')]
 kable(dt4, format = "markdown")
 ```
 
-Notice that you did not have to specify that you wanted the results stratified by sex. The function will automatically stratify by whatever extra columns are contained in `ph.data`. Be mindful of this and be sure that you submit `ph.data` with the minimum necessary number of columns.
-
-**Now, what happens if you set both intent & mechanism to "none"?** The function assumes you want the total injury related deaths (without regard to intent or mechanism).
+**What happens if you set both intent & mechanism to "none"?** The function assumes you want the total injury related deaths (without regard to intent or mechanism).
 
 ```{r}
 #| message: false
@@ -420,15 +445,16 @@ kable(dt8, format = "markdown")
 
 # life_table()
 
-`life_table()` generates a standard life table, where the first row is the life expectancy (aka 'expectation of life') at birth. Since it needs aggregate death data, you are **strongly encouraged to preprocess the death data with `life_table_prep()`.**
+`life_table()` generates a standard life table, where the first row is the life expectancy (aka 'expectation of life') at birth. Since it needs aggregate death data, you are **strongly encouraged to preprocess the death data with `life_table_prep()`.** A simple example of how to use `life_table_prep()` is embedded below.
 
-`life_table()` takes six potential arguments:
+`life_table()` takes seven potential arguments:
 
 -   `ph.data`: the name of data.table/data.frame with aggregated deaths and corresponding populations, as well as the age interval and the average fraction of years lived in the interval by those who die in the interval.
 -   `myages`: the name of a column in `ph.data` with the age intervals used for the life table calculations (e.g., c('0-1', '1-5', ... '85+')).
 -   `mydeaths`: the name of a numeric column in `ph.data` with the total deaths for the given age interval in the given year.
 -   `mypops`: the name of a numeric column in `ph.data` with the total population corresponding to `mydeaths`.
 -   `myprops`: the name of a numeric column in `ph.data` with the average proportion of the interval lived by those who died in the interval.
+-   `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
 -   `ci`: the confidence interval, must be \[0, 1\]. Default is 0.95
 
 Please refer to the help file for more details.
@@ -444,7 +470,7 @@ ex9 <- get_data_death(year = 2016:2020,
                         cols = c('date_of_birth', 'date_of_death', 'chi_sex'))
 ```
 
-To preserve privacy, lets look at a summary of the table rather than the actual table
+To preserve privacy, let's look at a summary of the table rather than the actual table
 
 ```{r}
 #| message: false
@@ -457,7 +483,8 @@ Use `life_table_prep()` to aggregate the age interval specific count of deaths a
 ```{r}
 #| message: false
 #| warning: false
-dt9 = life_table_prep(DTx = ex9)
+dt9 = life_table_prep(ph.data = ex9, 
+                      group_by = 'chi_sex')
 ```
 
 ```{r}
@@ -542,16 +569,22 @@ Run `life_table()` function to create life tables for males and females.
 ```{r}
 #| message: false
 #| warning: false
-dt9.male <- life_table(ph.data = dt9[gender == 'Male'])
-dt9.female <- life_table(ph.data = dt9[gender == 'Female'])
+dt9.lifetable <- life_table(ph.data = dt9, 
+                            group_by = 'gender')
 ```
 
-Display the first row of the life table, which is for children under 1. The `ex` column is the life expectancy at birth. To see a detailed key of what all the columns mean, type `?life_table` in your R console and read the 'Details' section.
+Display the first row of the life table for each gender, which is for children under 1. The `ex` column is the life expectancy at birth. To see a detailed key of what all the columns mean, type `?life_table` in your R console and read the 'Details' section.
+
+```{r}
+#| message: false
+#| warning: false
+#| results: 'hide'
+dt9.lifetable[ages == '0-1',]
+```
 
 ```{r}
 #| echo: false
-kable(dt9.male[1,], format = "markdown")
-kable(dt9.female[1,], format = "markdown")
+kable(dt9.lifetable[ages == '0-1',], format = "markdown")
 ```
 
 # Conclusion
@@ -559,3 +592,5 @@ kable(dt9.female[1,], format = "markdown")
 We know this was a lot to process. The good news is that this vignette isn't going anywhere. If you remember (a) that this vignette exists and (b) where to find it, you'll be in good shape to take on standard mortality analyses in the future.
 
 If you've read through this vignette and the corresponding help files and are still confused, please feel free to reach out for assistance. You may have found a bug, who knows? Good luck!
+
+-- *`r paste0("Updated by ", Sys.getenv("USERNAME"), ", ", Sys.Date())`*

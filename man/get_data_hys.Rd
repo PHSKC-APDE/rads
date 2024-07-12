@@ -35,7 +35,7 @@ Get HYS microdata from storage.
 }
 \examples{
 
-\dontrun{
+\donttest{
  get_data_hys(cols = NULL, year = c(2016, 2018), weight_variable = 'wt_grade_kc')
 }
 }

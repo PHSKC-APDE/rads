@@ -8,11 +8,11 @@
 }
 \usage{
 death_injury_matrix_count(
-  ph.data = NULL,
+  ph.data,
   intent = "*",
   mechanism = "*",
   icdcol = "underlying_cod_code",
-  kingco = T,
+  kingco = TRUE,
   group_by = NULL,
   ypll_age = NULL,
   death_age_col = NULL
@@ -148,7 +148,7 @@ eg1 <- death_injury_matrix_count(ph.data = injurydata,
                             kingco = FALSE,
                             ypll_age = NULL,
                             death_age_col = NULL)
-eg1[] # note the data are stratified by year because year was in ph.data
+head(eg1) # note the data are stratified by year because year was in ph.data
 
 # example 2: falls designated as homicides and or suicides
 eg2 <- death_injury_matrix_count(ph.data = injurydata,
@@ -158,7 +158,7 @@ eg2 <- death_injury_matrix_count(ph.data = injurydata,
                             kingco = FALSE,
                             ypll_age = NULL,
                             death_age_col = NULL)
-eg2[]
+head(eg2)
 
 # example 3: summary of all injury deaths regardless of intent and mechanism
 eg3 <- death_injury_matrix_count(ph.data = injurydata,

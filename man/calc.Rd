@@ -99,7 +99,10 @@ methods. That is, when you want to find the fraction of ____, toggle \code{propo
 \examples{
 
 #record data
-test.data <- get_data_birth(year = 2015:2017)
+test.data <- get_data_birth(
+               year = 2015:2017,
+               cols = c("chi_year", "kotelchuck",
+                        "chi_sex", "fetal_pres"))
 
 test.results <- calc(test.data,
                      what = c("kotelchuck", "fetal_pres"),
@@ -107,6 +110,8 @@ test.results <- calc(test.data,
                       by = c("chi_year", "chi_sex"),
                       metrics = c("mean", "numerator", "denominator",
                                   "total"))
+
+print(test.results)
 
 }
 \references{

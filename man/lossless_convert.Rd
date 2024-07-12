@@ -2,9 +2,10 @@
 % Please edit documentation in R/utilities.R
 \name{lossless_convert}
 \alias{lossless_convert}
-\title{Convert the class of a vector to another class is possible without introducing additional NAs}
+\title{Convert the class of a vector to another class -- when possible without
+introducing additional NAs}
 \usage{
-lossless_convert(x = NULL, class = NULL)
+lossless_convert(x, class)
 }
 \arguments{
 \item{x}{vector of indeterminate length and type}
@@ -16,5 +17,20 @@ lossless_convert(x = NULL, class = NULL)
 a vector of the same length as x, but of the new class (when possible)
 }
 \description{
-Convert the class of a vector to another class is possible without introducing additional NAs
+Convert the class of a vector to another class -- when possible without
+introducing additional NAs. If NAs would be introduced, the original vector
+will be returned along with a warning so the user knows it has not been
+converted.
+}
+\examples{
+\donttest{
+str(lossless_convert(c('1', '2', '3'), 'integer'))
+str(lossless_convert(c('one', '2', '3'), 'integer'))
+str(lossless_convert(c('1', '2', 'three'), 'integer'))
+
+str(lossless_convert(c('2020-01-01', '2021-12-31', '2022-02-22'), 'Date'))
+str(lossless_convert(c('2020-01-01', '2021-12-31', 'z'), 'Date'))
+str(lossless_convert(c('z', '2020-01-01', '2021-12-31'), 'Date'))
+}
+
 }

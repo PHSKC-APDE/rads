@@ -1,38 +1,6 @@
 library('testthat')
 library(DBI)
 
-# format_time() ----
-test_that('format_time',{
-
-  expect_equal('2010', format_time(2010))
-
-  expect_equal('2000, 2014-2016, 3000, 3002-4000', format_time(c(2000, 2014:2016, 3000, 3002:4000)))
-
-  expect_equal('2000, 2014-2016, 3000, 3002-4000', format_time(c(3002:4000, 2000, 2014:2016, 3000)))
-
-
-})
-
-# list_ref_pop() ----
-test_that('list_ref_pop',{
-
-  expect_equal(36, length(list_ref_pop()))
-
-})
-
-# get_ref_pop() ----
-test_that('get_ref_pop',{
-
-  temp.pop <- get_ref_pop("2000 U.S. Std Population (19 age groups - Census P25-1130)")
-
-  expect_equal(19, nrow(temp.pop))
-
-  expect_equal(5, ncol(temp.pop))
-
-  expect_equal(c("age_end", "age_start", "agecat", "pop", "ref_pop_name"), sort(names(temp.pop)))
-
-})
-
 # adjust_direct() ----
 test_that('adjust_direct',{
 
@@ -123,6 +91,114 @@ test_that('age_standardize',{
   expect_warning(age_standardize(copy(temp.dt3)[1, count := pop + 1], my.count = "count", my.pop = "pop"))
 
   })
+
+# convert_to_date() ----
+# Test that common date formats are parsed correctly
+test_that("common date formats are parsed correctly", {
+  expect_equal(convert_to_date("2024-01-01"), as.Date("2024-01-01"))
+  expect_equal(convert_to_date("2024/02/01"), as.Date("2024-02-01"))
+  expect_equal(convert_to_date("03-01-2024"), as.Date("2024-03-01"))
+  expect_equal(convert_to_date("04/01/2024"), as.Date("2024-04-01"))
+  expect_equal(convert_to_date("2024-03-05 12:00:00"), as.Date("2024-03-05"))
+  expect_equal(convert_to_date("2024/03/05 12:00:00"), as.Date("2024-03-05"))
+  expect_equal(convert_to_date("March 10, 2024"), as.Date("2024-03-10"))
+  expect_equal(convert_to_date("10 March 2024"), as.Date("2024-03-10"))
+})
+
+# Test that numeric values are converted correctly using different origins
+test_that("numeric values are converted correctly using default and custom origins", {
+  expect_equal(convert_to_date(0), as.Date("1899-12-30"))
+  expect_equal(convert_to_date(1), as.Date("1899-12-31"))
+  expect_equal(convert_to_date(43500, origin = "1900-1-1"), as.Date("2019-02-06"))
+})
+
+# Test handling of non-date strings
+test_that("non-date strings return NA and a warning", {
+  expect_warning(out <- convert_to_date(c("dogs", "cats")),
+                 "cannot be converted to a date")
+  expect_equal(out, c("dogs", "cats"))
+})
+
+# Test that origin must be in %Y-%m-%d format
+test_that("origin must be in %Y-%m-%d format", {
+  expect_error(convert_to_date(43500, origin = "01-01-1900"),
+               "Origin date must be in '%Y-%m-%d' format.")
+  expect_error(convert_to_date(43500, origin = "1900/1/1"),
+               "Origin date must be in '%Y-%m-%d' format.")
+})
+
+# Test with real data and mixed valid/invalid dates
+test_that("real data with mixed valid and invalid dates handles correctly", {
+  mixed_dates <- c("2024-01-01", "invalid date", "2024-12-31", "not a date")
+  expected_dates <- as.Date(c("2024-01-01", NA, "2024-12-31", NA))
+  result <- convert_to_date(mixed_dates)
+  expect_equal(result, expected_dates)
+})
+
+
+# format_time() ----
+test_that('format_time',{
+
+  expect_equal('2010', format_time(2010))
+
+  expect_equal('2000, 2014-2016, 3000, 3002-4000', format_time(c(2000, 2014:2016, 3000, 3002:4000)))
+
+  expect_equal('2000, 2014-2016, 3000, 3002-4000', format_time(c(3002:4000, 2000, 2014:2016, 3000)))
+
+
+})
+
+# get_ref_pop() ----
+test_that('get_ref_pop',{
+
+  temp.pop <- get_ref_pop("2000 U.S. Std Population (19 age groups - Census P25-1130)")
+
+  expect_equal(19, nrow(temp.pop))
+
+  expect_equal(5, ncol(temp.pop))
+
+  expect_equal(c("age_end", "age_start", "agecat", "pop", "ref_pop_name"), sort(names(temp.pop)))
+
+})
+
+# list_ref_pop() ----
+test_that('list_ref_pop',{
+
+  expect_equal(36, length(list_ref_pop()))
+
+})
+
+# lossless_convert() ----
+test_that('lossless_convert', {
+  expect_equal(class(lossless_convert(c('1', '2', '3'), 'integer')), 'integer')
+
+  expect_equal(
+    expect_message(
+      lossless_convert(c('one', '2', '3'), 'integer'),
+      'would introduce additional NAs'),
+    c('one', '2', '3'))
+
+  expect_equal(
+    expect_message(
+      lossless_convert(c('1', '2', 'three'), 'integer'),
+      'would introduce additional NAs'),
+    c('1', '2', 'three'))
+
+  expect_equal(class(lossless_convert(c('2020-01-01', '2021-12-31', '2022-02-22'), 'Date')), 'Date')
+
+  expect_equal(
+    expect_message(
+      lossless_convert(c('2020-01-01', '2021-12-31', 'z'), 'Date'),
+    'would introduce additional NAs'),
+  c('2020-01-01', '2021-12-31', 'z'))
+
+  expect_equal(
+    expect_message(
+      lossless_convert(c('z', '2020-01-01', '2021-12-31'), 'Date'),
+    'would introduce additional NAs'),
+  c('z', '2020-01-01', '2021-12-31'))
+
+})
 
 # std_error() ----
 test_that('std_error',{

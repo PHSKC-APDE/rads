@@ -48,7 +48,7 @@ codes used with HCA data. To view the latter, please type \code{rads.data::spati
 }
 }
 \examples{
-\dontrun{
+\donttest{
  list_ref_xwalk()
 }
 }

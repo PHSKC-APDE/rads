@@ -70,7 +70,10 @@
 #' @examples
 #'
 #' #record data
-#' test.data <- get_data_birth(year = 2015:2017)
+#' test.data <- get_data_birth(
+#'                year = 2015:2017,
+#'                cols = c("chi_year", "kotelchuck",
+#'                         "chi_sex", "fetal_pres"))
 #'
 #' test.results <- calc(test.data,
 #'                      what = c("kotelchuck", "fetal_pres"),
@@ -78,6 +81,8 @@
 #'                       by = c("chi_year", "chi_sex"),
 #'                       metrics = c("mean", "numerator", "denominator",
 #'                                   "total"))
+#'
+#' print(test.results)
 #'
 calc <- function(ph.data, ...) {
   UseMethod("calc")
@@ -118,4 +123,157 @@ calc.svyrep.design <- function(ph.data, ...){
 calc.grouped_df <- function(ph.data, ...){
   stop("calc doesn't know how to handle `grouped_df` objects. Likely, you have a dplyr::group_by somewhere higher up in the code.
        Instead of grouping before running calc, use the `by` argument in calc")
+}
+
+#' @noRd
+#' @export
+#' @importFrom mitools MIcombine
+#' @importFrom stats coef qt
+calc.imputationList = function(ph.data,
+                               what = NULL,
+                               where = NULL, #this is a change from the main calc framework
+                               by = NULL,
+                               metrics = c('mean', 'numerator', 'denominator'),
+                               per = NULL,
+                               win = NULL,
+                               time_var = NULL,
+                               proportion = FALSE,
+                               fancy_time = TRUE,
+                               ci = .95,
+                               verbose = FALSE,
+                               ...){
+  call = match.call()
+
+  # visible bindings ----
+  level <- lower <- upper <- se <- NULL
+
+  # dots = list()
+  # dots = list(...)
+  # dot_nms = names(dots)
+
+  # make sure metrics is specified
+  if(!'metrics' %in% names(call)){
+    stop('metrics argument must be explictly specified for the MI method to work')
+  }else{
+
+    if(any(c('mean', 'total') %in% metrics) && !'vcov' %in% metrics){
+      metrics = c(metrics, 'vcov')
+    }
+
+  }
+
+  # Borrowed from mitools::summary
+  # Set the CI boundary
+  if(!missing(ci)){
+    alpha = 1 - ci
+  } else{
+    alpha = .05
+  }
+
+  if(!missing(where)){
+    where = substitute(where)
+    wherecheck = T
+  } else{
+    wherecheck = F
+  }
+
+  # For each imputation realization, run calc
+  res = lapply(ph.data[[1]], function(`_x`){
+
+    # Evaluate where early
+    if(wherecheck) r <- eval(where, `_x`, parent.frame()) else r <- TRUE
+
+    do.call(calc, list(ph.data = `_x`[r,], what = what,
+         by = by, metrics = metrics,
+         per = per, win = win,
+         time_var = time_var,
+         proportion = proportion, fancy_time = fancy_time,
+         ci = ci,
+         verbose = verbose))
+  })
+
+  # format so that we can combine with MIcombine
+  ans = res[[1]]
+  isfactor = !all(is.na(ans[,level]))
+
+  # Organizes the vcov
+  make_vcov = function(v){
+
+    # For factors, return the first one. The rest are duplicates
+    if(ncol(v[[1]][[1]])>1) return(v[[1]][[1]])
+
+    # Otherwise they need to be constructed
+    d = unlist(v)
+    m = matrix(0, length(d), length(d))
+    diag(m)<-d
+
+    m
+  }
+
+  # For each possible thing that gets combined
+  for(vvv in intersect(c('mean', 'total'), names(res[[1]]))){
+
+    # extract and organize the estimates and their variances
+    r = lapply(res, function(x){
+
+      if(isfactor){
+
+        y = x[, list(ests = list(get(vvv)),
+                     varz = list(make_vcov(get(paste0(vvv, '_vcov')))),
+                     levels = list(level)), keyby = by]
+      }else{
+        y = x[, list(ests = list(get(vvv)),
+                     varz = list(make_vcov(get(paste0(vvv, '_vcov')))),
+                     levels = list(level))]
+      }
+
+      y
+    })
+
+    # organize them by "by variables"
+     r = rbindlist(r)
+     if(isfactor && !is.null(by)){
+      r = split(r, by = by)
+     }else{
+       r = list(r)
+     }
+
+    # compute estimates
+    # I think this is borrowed/adapted from mitools
+    mi = lapply(r, function(a){
+      # if(!isfactor) a = list(ests = list(a$ests[[1]]), varz = list(a$varz[[1]]))
+      m = mitools::MIcombine(a$ests, a$varz)
+      mdt = data.table(coef = coef(m), se = survey::SE(m))
+      crit <- qt(alpha/2, m$df, lower.tail = FALSE)
+      mdt[, lower := coef - crit * se]
+      mdt[, upper := coef + crit * se]
+      mdt[, level := a$levels[1]]
+      if(isfactor & !is.null(by)) mdt = cbind(mdt, a[1,.SD,.SDcols = by])
+      mdt
+    })
+
+    # combine results
+    mi = rbindlist(mi)
+    updateme = c(vvv, paste0(vvv,'_se'), paste0(vvv, '_lower'), paste0(vvv, '_upper'))
+    setnames(mi,
+             c('coef', 'se', 'lower', 'upper'),
+             updateme
+             )
+
+    ans[, (updateme) := NULL]
+
+    # Clean up
+    if(!isfactor && !is.null(by)) mi[, (by) := ans[, .SD, .SDcols = c(by)]]
+
+    ans = merge(ans, mi, all.x = T, by = c(by, 'level'))
+
+    if(!is.null(by)) data.table::setorderv(ans, cols = c(by, 'level'))
+
+    # Update ans
+    ans[, paste0(vvv,'_vcov') := NULL]
+
+  }
+
+  ans
+
 }

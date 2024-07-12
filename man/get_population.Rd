@@ -138,7 +138,7 @@ ZIP codes are year specific when possible and school districts are mostly consid
 For all other geographies, the value should represent the vintage/era of the Census
 }
 \examples{
-\dontrun{
+\donttest{
  a = get_population(geo_type = "region")
  print(a)
 }

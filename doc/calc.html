@@ -329,42 +329,42 @@ calc(ph.data = birth,
 </code></pre>
 <pre><code>##     chi_race_eth8 chi_sex           variable     mean  level     mean_se
 ##            &lt;fctr&gt;  &lt;fctr&gt;             &lt;char&gt;    &lt;num&gt; &lt;lgcl&gt;       &lt;num&gt;
-##  1:         White    Male birth_weight_grams 3460.298     NA    7.489711
-##  2:         Asian    Male birth_weight_grams 3231.952     NA    9.784437
-##  3:       Oth/unk  Female birth_weight_grams 3223.599     NA   30.670381
-##  4:       Oth/unk    Male birth_weight_grams 3315.557     NA   33.357232
-##  5:      Multiple  Female birth_weight_grams 3251.312     NA   24.365976
-##  6:      Hispanic    Male birth_weight_grams 3301.784     NA   14.310447
-##  7:         White  Female birth_weight_grams 3340.295     NA    7.280580
-##  8:         Asian  Female birth_weight_grams 3145.902     NA    9.419157
-##  9:      Hispanic  Female birth_weight_grams 3270.074     NA   13.703835
-## 10:         Black  Female birth_weight_grams 3196.872     NA   18.683442
-## 11:      Multiple    Male birth_weight_grams 3369.178     NA   23.359494
-## 12:         Black    Male birth_weight_grams 3306.213     NA   19.794051
-## 13:          NHPI  Female birth_weight_grams 3287.541     NA   49.322668
-## 14:          NHPI    Male birth_weight_grams 3444.178     NA   43.324387
-## 15:          AIAN  Female birth_weight_grams 3251.965     NA   79.070604
-## 16:         White    &lt;NA&gt; birth_weight_grams 1873.500     NA 1321.500000
-## 17:          AIAN    Male birth_weight_grams 3438.641     NA   84.306018
+##  1:          AIAN  Female birth_weight_grams 3251.965     NA   79.070604
+##  2:          AIAN    Male birth_weight_grams 3438.641     NA   84.306018
+##  3:         Asian  Female birth_weight_grams 3145.902     NA    9.419157
+##  4:         Asian    Male birth_weight_grams 3231.952     NA    9.784437
+##  5:         Black  Female birth_weight_grams 3196.872     NA   18.683442
+##  6:         Black    Male birth_weight_grams 3306.213     NA   19.794051
+##  7:      Hispanic  Female birth_weight_grams 3270.074     NA   13.703835
+##  8:      Hispanic    Male birth_weight_grams 3301.784     NA   14.310447
+##  9:      Multiple  Female birth_weight_grams 3251.312     NA   24.365976
+## 10:      Multiple    Male birth_weight_grams 3369.178     NA   23.359494
+## 11:          NHPI  Female birth_weight_grams 3287.541     NA   49.322668
+## 12:          NHPI    Male birth_weight_grams 3444.178     NA   43.324387
+## 13:       Oth/unk  Female birth_weight_grams 3223.599     NA   30.670381
+## 14:       Oth/unk    Male birth_weight_grams 3315.557     NA   33.357232
+## 15:         White    &lt;NA&gt; birth_weight_grams 1873.500     NA 1321.500000
+## 16:         White  Female birth_weight_grams 3340.295     NA    7.280580
+## 17:         White    Male birth_weight_grams 3460.298     NA    7.489711
 ##     mean_lower mean_upper        rse
 ##          &lt;num&gt;      &lt;num&gt;      &lt;num&gt;
-##  1:   3445.618   3474.977  0.2164470
-##  2:   3212.775   3251.129  0.3027408
-##  3:   3163.487   3283.712  0.9514328
-##  4:   3250.178   3380.936  1.0060823
-##  5:   3203.556   3299.069  0.7494198
-##  6:   3273.736   3329.832  0.4334156
-##  7:   3326.026   3354.565  0.2179622
-##  8:   3127.441   3164.363  0.2994104
-##  9:   3243.215   3296.933  0.4190681
-## 10:   3160.253   3233.491  0.5844288
-## 11:   3323.394   3414.962  0.6933292
-## 12:   3267.418   3345.009  0.5986925
-## 13:   3190.871   3384.212  1.5002905
-## 14:   3359.264   3529.092  1.2579021
-## 15:   3096.989   3406.940  2.4314716
-## 16: -14917.750  18664.750 70.5364291
-## 17:   3273.404   3603.877  2.4517252
+##  1:   3096.989   3406.940  2.4314716
+##  2:   3273.404   3603.877  2.4517252
+##  3:   3127.441   3164.363  0.2994104
+##  4:   3212.775   3251.129  0.3027408
+##  5:   3160.253   3233.491  0.5844288
+##  6:   3267.418   3345.009  0.5986925
+##  7:   3243.215   3296.933  0.4190681
+##  8:   3273.736   3329.832  0.4334156
+##  9:   3203.556   3299.069  0.7494198
+## 10:   3323.394   3414.962  0.6933292
+## 11:   3190.871   3384.212  1.5002905
+## 12:   3359.264   3529.092  1.2579021
+## 13:   3163.487   3283.712  0.9514328
+## 14:   3250.178   3380.936  1.0060823
+## 15: -14917.750  18664.750 70.5364291
+## 16:   3326.026   3354.565  0.2179622
+## 17:   3445.618   3474.977  0.2164470
 </code></pre>
 <p><strong>Proportion of 2017-2019 births among each race/eth group</strong></p>
 <pre><code class="language-r">calc(ph.data = birth, 
@@ -430,13 +430,13 @@ calc(ph.data = birth,
 </code></pre>
 <pre><code>##    chi_year variable   obs missing missing.prop  level
 ##       &lt;int&gt;   &lt;char&gt; &lt;int&gt;   &lt;int&gt;        &lt;num&gt; &lt;fctr&gt;
-## 1:     2017  chi_sex 25274       0   0.0000e+00   Male
-## 2:     2017  chi_sex 25274       0   0.0000e+00 Female
+## 1:     2017  chi_sex 25274       0   0.0000e+00 Female
+## 2:     2017  chi_sex 25274       0   0.0000e+00   Male
 ## 3:     2018  chi_sex 24337       0   0.0000e+00 Female
 ## 4:     2018  chi_sex 24337       0   0.0000e+00   Male
-## 5:     2019  chi_sex 24090       2   8.3022e-05   Male
+## 5:     2019  chi_sex 24090       2   8.3022e-05   &lt;NA&gt;
 ## 6:     2019  chi_sex 24090       2   8.3022e-05 Female
-## 7:     2019  chi_sex 24090       2   8.3022e-05   &lt;NA&gt;
+## 7:     2019  chi_sex 24090       2   8.3022e-05   Male
 </code></pre>
 <hr />
 <h2 id="example-survey-analyses">Example survey analyses</h2>
@@ -604,12 +604,12 @@ calc(ph.data = pums,
 </code></pre>
 <pre><code>##              disability variable     mean median numerator denominator   obs
 ##                  &lt;fctr&gt;   &lt;char&gt;    &lt;num&gt;  &lt;num&gt;     &lt;int&gt;       &lt;int&gt; &lt;int&gt;
-## 1:    With a disability     agep 56.32190     64    142658        2404  2404
-## 2: Without a disability     agep 36.57783     38    727379       19102 19102
+## 1: Without a disability     agep 36.57783     38    727379       19102 19102
+## 2:    With a disability     agep 56.32190     64    142658        2404  2404
 ##     level    mean_se mean_lower mean_upper       rse
 ##    &lt;lgcl&gt;      &lt;num&gt;      &lt;num&gt;      &lt;num&gt;     &lt;num&gt;
-## 1:     NA 0.66249953   55.00323   57.64057 1.1762734
-## 2:     NA 0.06941677   36.43966   36.71600 0.1897783
+## 1:     NA 0.06941677   36.43966   36.71600 0.1897783
+## 2:     NA 0.66249953   55.00323   57.64057 1.1762734
 </code></pre>
 <hr />
 <h2 id="example-analyses-with-non-standard-data">Example analyses with non-standard data</h2>
@@ -703,8 +703,117 @@ grades.distribution2[level %in% c(&quot;A&quot;, &quot;B&quot;)]
 </code></pre>
 <p>You’ll note that using the survey design caused small changes in the results. For examples, the proportion of A’s in the Alpha school changed from 0.286 to 0.282.</p>
 <hr />
+<h2 id="example-analyses-with-resampled-data-multiple-imputation">Example analyses with resampled data/multiple imputation</h2>
+<p>There may be a few instances where a variable you want to compute some metrics using (multiple) imputed data. <code>calc</code> can work with these sorts of situations.</p>
+<p>The following code creates a fake survey of 100 people and then creates 10 different iterations of the survey with differing values of <code>v</code> (to represent the imputed variable).</p>
+<pre><code class="language-r"># Create some fake data
+library('data.table')
+base = data.table::data.table(id = 1:100, bin = sample(0:1, 100, T), psu = sample(1:3, 100, T), weight = runif(100, 0,2))
+base = dtsurvey::dtsurvey(base, psu = 'psu', weight = 'weight')
+midat = lapply(1:10, function(i){
+  r = data.table::copy(base)[, v := sample(1:3, 100, T)]
+})
+</code></pre>
+<p>To use the imputation version of calc, the ph.data argument must be an <code>imputationList</code> object. You can turn your list of plausible datasets into an <code>imputationList</code> via the <code>mitools::imputationList</code> function. You may need to install the <code>mitools</code> package for this to work.</p>
+<pre><code class="language-r">midat = mitools::imputationList(midat)
+class(midat)
+</code></pre>
+<pre><code>## [1] &quot;imputationList&quot;
+</code></pre>
+<p>Now that <code>midat</code> is the right type/class of object, you can pass it to the <code>calc</code> function as you would any other dataset. The slight exception is that the metrics argument must be explicitly specified. For fun, a version of the results from one imputation is also computed.</p>
+<pre><code class="language-r">withmi = calc(ph.data =midat, what = 'bin', by = 'v', metrics = 'mean', proportion = T)
+nomi = calc(ph.data = midat$imputations[[1]], what = 'bin', by = 'v')
+</code></pre>
+<p>Table: Results using MI combining methods</p>
+<table>
+<thead>
+<tr>
+<th align="right">v</th>
+<th align="left">variable</th>
+<th align="right">mean</th>
+<th align="right">mean_se</th>
+<th align="right">mean_lower</th>
+<th align="right">mean_upper</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="right">1</td>
+<td align="left">bin</td>
+<td align="right">0.5051381</td>
+<td align="right">0.1390337</td>
+<td align="right">0.2071490</td>
+<td align="right">0.8031272</td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td align="left">bin</td>
+<td align="right">0.5369530</td>
+<td align="right">0.1380729</td>
+<td align="right">0.2437939</td>
+<td align="right">0.8301120</td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td align="left">bin</td>
+<td align="right">0.5218571</td>
+<td align="right">0.1491685</td>
+<td align="right">0.2154041</td>
+<td align="right">0.8283100</td>
+</tr>
+</tbody>
+</table>
+<p>Table: Results of one iteration</p>
+<table>
+<thead>
+<tr>
+<th align="right">v</th>
+<th align="left">variable</th>
+<th align="right">mean</th>
+<th align="right">mean_se</th>
+<th align="right">mean_lower</th>
+<th align="right">mean_upper</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="right">1</td>
+<td align="left">bin</td>
+<td align="right">0.4273156</td>
+<td align="right">0.0143969</td>
+<td align="right">0.3653709</td>
+<td align="right">0.4892602</td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td align="left">bin</td>
+<td align="right">0.6505122</td>
+<td align="right">0.0025634</td>
+<td align="right">0.6394829</td>
+<td align="right">0.6615416</td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td align="left">bin</td>
+<td align="right">0.4560479</td>
+<td align="right">0.0659792</td>
+<td align="right">0.1721622</td>
+<td align="right">0.7399336</td>
+</tr>
+</tbody>
+</table>
+<p>Some additional notes:</p>
+<ol>
+<li>
+<p>If there is no variation (or imputation) in the <code>what</code> or <code>by</code> variables, you should get the same result as doing just one iteration.</p>
+</li>
+<li>
+<p>The <code>proportion</code> argument is ignored when <code>ph.data</code> is an <code>imputationList</code> object. This is because the <code>proportion</code> argument governs what methods are used to create confidence intervals – and the special proportion methods are not currently implemented for imputed data estimates. As such, you may find confidence intervals that are outside the normal [0-1] constraints.</p>
+</li>
+</ol>
+<hr />
 <h2 id="knowing-is-half-the-battle-but-only-half">Knowing is half the battle … but only half</h2>
-<p>You’ve been introduced to <code>calc()</code>, but you’ll only become competent at using it by using it. Try it out with your favorite dataset. Use it to answer data requests. Play with it. Try to break it and, if you’re successful, submit a <a href="https://github.com/PHSKC-APDE/rads/issues/new">GitHub issue</a>. Enjoy!</p>
+<p>You’ve been introduced to <code>calc()</code>, but you’ll only become competent at using it by using it. Try it out with your favorite dataset. Play with it. Try to break it and, if you’re successful, submit a <a href="https://github.com/PHSKC-APDE/rads/issues/new">GitHub issue</a>. Enjoy!</p>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js" defer></script>

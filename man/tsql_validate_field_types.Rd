@@ -28,8 +28,9 @@ Note that this function does not evaluate if the allocated length for
 character strings, i.e., \code{nvarchar()} and \code{varchar()}, is sufficient.
 }
 \examples{
-\dontrun{
+\donttest{
 # example of a success
+ library(data.table)
  mydt = data.table(col1 = 1:10000L,  # creates integers
                    col2 = 1:10000/3) # creates floats
  mydt[, col3 := as.Date(Sys.Date()) - col1] # creates dates
@@ -39,10 +40,6 @@ character strings, i.e., \code{nvarchar()} and \code{varchar()}, is sufficient.
 
  tsql_validate_field_types(ph.data = mydt, field_types = myfieldtypes)
 
- # example of a failure
- myfieldtypes <- c(col1 = 'int', col2 = 'float', col3 = 'nvarchar(12)', col4 = 'nvarchar(255)')
-
- tsql_validate_field_types(ph.data = mydt, field_types = myfieldtypes)
 }
 
 }

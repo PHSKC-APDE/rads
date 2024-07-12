@@ -204,3 +204,30 @@ grades.distribution2 <- calc(
 
 grades.distribution2[level %in% c("A", "B")]
 
+## ----warning=FALSE, message= FALSE--------------------------------------------
+# Create some fake data
+library('data.table')
+base = data.table::data.table(id = 1:100, bin = sample(0:1, 100, T), psu = sample(1:3, 100, T), weight = runif(100, 0,2))
+base = dtsurvey::dtsurvey(base, psu = 'psu', weight = 'weight')
+midat = lapply(1:10, function(i){
+  r = data.table::copy(base)[, v := sample(1:3, 100, T)]
+})
+
+
+## ----warning = FALSE, message = FALSE-----------------------------------------
+midat = mitools::imputationList(midat)
+class(midat)
+
+## ----warning = FALSE, message = FALSE-----------------------------------------
+
+withmi = calc(ph.data =midat, what = 'bin', by = 'v', metrics = 'mean', proportion = T)
+nomi = calc(ph.data = midat$imputations[[1]], what = 'bin', by = 'v')
+
+
+## ----echo = F-----------------------------------------------------------------
+
+knitr::kable(withmi[, .(v, variable, mean, mean_se, mean_lower, mean_upper)],caption = 'Results using MI combining methods')
+
+knitr::kable(nomi[, .(v, variable, mean, mean_se, mean_lower, mean_upper)], caption = 'Results of one iteration')
+
+

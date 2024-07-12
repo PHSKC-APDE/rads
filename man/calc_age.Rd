@@ -18,7 +18,7 @@ Character vector of available datasets.
 Proper calculation of age in years
 }
 \examples{
-\dontrun{
+\donttest{
  calc_age(from = "2000-02-29", to = "2021-07-01")
 }
 

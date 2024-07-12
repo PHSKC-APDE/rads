@@ -5,43 +5,69 @@
 \title{Generate a standard life table}
 \usage{
 life_table(
-  ph.data = NULL,
+  ph.data,
   myages = "ages",
   mydeaths = "deaths",
   mypops = "pop",
   myprops = "fraction",
+  group_by = NULL,
   ci = 0.95
 )
 }
 \arguments{
 \item{ph.data}{a data.table or data.frame. Must contain aggregated deaths and
 corresponding populations, as well as the age interval and the average
-fraction of years lived in the interval by those who die in the interval.}
+fraction of years lived in the interval by those who die in the interval. It
+is \emph{highly recommended}, though not necessary, that you use
+\code{\link{life_table_prep}} to prepare \code{ph.data}.
 
-\item{myages}{character vector of length one identifying a column
+The default value is \code{ph.data = NULL}.}
+
+\item{myages}{a character vector of length one identifying a column
 specifying the beginning and end of each age interval separated by a hyphen.
 Note, the start of each interval should be the end of the previous
 interval, e.g., '5-10', '10-15', '15-20', etc. Think of this as short-hand
-for [5, 10), [10, 15), [15, 20). The final interval should be open ended with
+for [5, 10), [10, 15), [15, 20), etc.. The final interval should be open ended with
 the starting value followed by a '+' (e.g., '85+', '90+', etc.). The maximum
-age cannot exceed 100. Leave the value blank (i.e., NA) for the total deaths
+age cannot exceed 100 in order to align with WA State population estimates.
+Leave the value blank (i.e., NA) for the total deaths
 at an unknown age. These deaths will be distributed proportionately over the
-other age groups.}
+other age groups.
 
-\item{mydeaths}{character vector of length one identifying a numeric column
-with the total deaths for the given age interval in the given year(s).}
+The default value is \code{myages = "ages"}.}
 
-\item{mypops}{character vector of length one identifying a numeric column
+\item{mydeaths}{a character vector of length one identifying a numeric column
+with the total deaths for the given age interval in the given year(s).
+
+The default value is \code{mydeaths = "deaths"}.}
+
+\item{mypops}{a character vector of length one identifying a numeric column
 with the total population in the age intervals corresponding to mydeaths.
 This is technically the mid-year population. In practice we usually
-use OFM population estimates.}
+use \href{https://ofm.wa.gov/}{OFM} population estimates available from
+\code{\link{get_population}}.
 
-\item{myprops}{character vector of length one identifying a numeric column
+The default value is \code{mypops = "pop"}.}
+
+\item{myprops}{a character vector of length one identifying a numeric column
 with the average proportion of the interval lived by those who died in the
 interval. For example, if those who died in '80-85' lived an average of 1000
-days past their 80th birthday, myprops would be 0.54 (1000/(365.25*5)).}
+days past their 80th birthday, myprops would be 0.54 (1000/(365.25*5)).
 
-\item{ci}{numeric of length one. Confidence level, >0 & <1, default == 0.95.}
+The default value is \code{myprops = "fraction"}.}
+
+\item{group_by}{a character vector used to
+specify all the variables by which you want to group (a.k.a. stratify) the
+results. For example, if you specified \code{group_by = c('chi_sex',
+'chi_race_6')}, the results would be stratified by each combination of sex
+and race.
+
+The default is \code{group_by = NULL}}
+
+\item{ci}{a numeric value representing the confidence level, which must be
+greater than 0 and less than 1.
+
+The default value is \code{ci = 0.95}.}
 }
 \value{
 a data.table with the pre-existing columns plus the
@@ -49,7 +75,7 @@ standard life table columns
 }
 \description{
 Generates a standard life table given a data.frame or data.table with basic
-attributes.
+essential attributes.
 }
 \details{
 The function returns the following life table columns:
@@ -62,24 +88,56 @@ The function returns the following life table columns:
 \item Lx: total person years lived in the age interval
 \item Tx: total person years lived beyond the start of the age interval
 \item ex: expectation of life (a.k.a., life expectancy) at the start of the age
-interval
+interval. \emph{\strong{The value of ex for those under one year of age is typically
+referred to as 'Life Expectancy at Birth'.}}
 }
 }
 \examples{
- temp1 <- data.table::data.table(
-          ages = c("0-1", "1-2", "2-3", "3-4", "4-5", "5-10", "10-15",
-                   "15-20", "20+"),
-          dead = c(391, 30, 17, 14, 8, 41, 73, 202, 28919),
-          population = c(25640, 25104, 25507, 24998, 24038, 131202, 128490,
-                       127951, 1747871),
-          fraction = c(0.09, rep(0.5, 8)))
- temp1[]
- temp2 <- life_table(ph.data = temp1,
-                      myages = "ages",
-                      mydeaths = "dead",
-                      mypops = "population",
-                      myprops = "fraction")
- temp2[]
+\donttest{
+# 1970 CA abridged death data
+dt <- data.table::data.table(
+  ages = c("0-1", "1-5", "5-10", "10-15", "15-20", "20-25", "25-30", "30-35",
+           "35-40", "40-45", "45-50", "50-55", "55-60", "60-65", "65-70",
+           "70-75", "75-80", "80-85", "85+"),
+  deaths = c(6234, 1049, 723, 735, 2054, 2702, 2071, 1964, 2588, 4114, 6722,
+             8948, 11942, 14309, 17088, 19149, 21325, 20129, 22483),
+  pop = c(340483, 1302198, 1918117, 1963681, 1817379, 1740966, 1457614,
+          1219389, 1149999, 1208550, 1245903, 1083852, 933244, 770770,
+          620805, 484431, 342097, 210953, 142691),
+  fraction = c(0.09, 0.41, 0.44, 0.54, 0.59, 0.49, 0.51, 0.52, 0.53, 0.54, 0.53,
+               0.53, 0.52, 0.52, 0.51, 0.52, 0.51, 0.50, NA))
+
+# Create arbitrary small variations for 'demographic' groups
+# first create an empty table
+mygroups <- data.table::CJ(shape = c('circle', 'square'), color = c('blue', 'orange'))
+dt_groups <- merge(data.table::copy(dt)[,constant := 1],
+                   mygroups[, constant := 1],
+                   by = 'constant',
+                   allow.cartesian = TRUE)[, constant := NULL]
+# now modify the values
+set.seed(98104)
+dt_groups[, deaths := round(deaths * sample(seq(.75, 1.25, .01), .N, replace = TRUE))]
+dt_groups[, pop := round(pop * sample(seq(.75, 1.25, .01), .N, replace = TRUE))]
+
+
+nogroups <- life_table(ph.data = dt,
+                     myages = 'ages',
+                     mydeaths = 'deaths',
+                     mypops = 'pop',
+                     myprops = 'fraction',
+                     group_by = NULL,
+                     ci = 0.95)
+head(nogroups)
+
+yesgroups <- life_table(ph.data = dt_groups,
+                      myages = 'ages',
+                      mydeaths = 'deaths',
+                      mypops = 'pop',
+                      myprops = 'fraction',
+                      group_by = c('shape', 'color'),
+                      ci = 0.95)
+head(yesgroups)
+}
 
 }
 \references{
