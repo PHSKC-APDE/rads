@@ -2,10 +2,14 @@
 % Please edit documentation in R/utilities.R
 \name{chi_metadata_cols}
 \alias{chi_metadata_cols}
-\title{List of standard CHI / Tableau Ready metadata columns}
+\title{Vector of standard CHI / Tableau Ready metadata columns}
 \usage{
 chi_metadata_cols()
 }
 \description{
-List of standard CHI / Tableau Ready metadata columns
+Vector of standard CHI / Tableau Ready metadata columns
+}
+\examples{
+print(chi_metadata_cols())
+
 }

@@ -2,14 +2,15 @@
 % Please edit documentation in R/utilities.R
 \name{validate_yaml_data}
 \alias{validate_yaml_data}
-\title{Compare the expected column types in YAML with the actual column types in R}
+\title{Validate the structure and data types of a data.frame or data.table against
+specifications defined in a YAML file}
 \usage{
-validate_yaml_data(DF = NULL, YML = NULL, VARS = "vars")
+validate_yaml_data(ph.data = NULL, YML = NULL, VARS = "vars")
 }
 \arguments{
-\item{DF}{Character vector of length 1. Identifies the data.table/data.frame that you want to assess vis-à-vis the YAML file}
+\item{ph.data}{Name of the data.table/data.frame that you want to assess vis-à-vis the YAML file}
 
-\item{YML}{Character vector of length 1. It is the name of the YAML object in memory.}
+\item{YML}{Name of the YAML object in memory}
 
 \item{VARS}{Character vector of length 1. Is is the name of the object in the list contained by YML}
 }
@@ -17,5 +18,34 @@ validate_yaml_data(DF = NULL, YML = NULL, VARS = "vars")
 A simple printed statement, either identifying incompatible column types or a statement of success
 }
 \description{
-Compare the expected column types in YAML with the actual column types in R
+Validate the structure and data types of a data.frame or data.table against
+specifications defined in a YAML file. This is most often used to check that
+your data.frame or data.table is suitable to be pushed to TSQL when a YAML
+file specifies the field.types to be used by \code{DBI::dbWriteTable} &
+\code{odbc::dbWriteTable}.
+}
+\examples{
+library(data.table)
+
+# create sample data.table
+mydt <- data.table(myalpha = letters[1:10],
+                   myint = 1L:10L,
+                   mynum = seq(.1, 1, .1))
+mydt[, mydate := as.Date('2000-01-01') + myint]
+mydt[, myfact := factor(myalpha)]
+
+# create sample yaml object
+myyaml <- list(
+  myvars = list(
+    myalpha = "varchar(255)",
+    myint = "int",
+    mynum = "float",
+    mydate = "date",
+    myfact = "varchar(255)"
+  )
+)
+
+# use function
+validate_yaml_data(ph.data = mydt, YML = myyaml, VARS = "myvars")
+
 }

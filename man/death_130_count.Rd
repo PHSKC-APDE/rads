@@ -5,11 +5,11 @@
 \title{Summarize NCHS 130 Select Causes of Infant Death}
 \usage{
 death_130_count(
-  ph.data = NULL,
+  ph.data,
   causeids = seq(1, 130, 1),
   cause = NULL,
   icdcol = "underlying_cod_code",
-  kingco = T,
+  kingco = TRUE,
   group_by = NULL,
   ypll_age = NULL,
   death_age_col = NULL
@@ -122,7 +122,7 @@ eg1 <- death_130_count(ph.data = deathdata,
                        kingco = FALSE,
                        ypll_age = NULL,
                        death_age_col = NULL)
-eg1[]
+head(eg1)
 
 }
 \references{

@@ -59,13 +59,14 @@ test_that('Defaults (mostly) work: svy',{
 test_that('Grouping without filtering',{
   expect_equal(
     calc(sur, 'api00', by = c('stype'), metrics = 'denominator', time_var = NULL)[, denominator],
-    sur[, .(denominator = .N), stype][, denominator]
+    sur[, .(denominator = .N), keyby = stype][, denominator]
   )
 })
 
 test_that('Multi Grouping with filtering',{
           st = calc(sur, 'api00', cname == 'Los Angeles', by = c('stype', 'cname'), metrics = 'denominator', time_var = NULL)[, .(stype, cname, denominator)]
-          man = sur[cname == 'Los Angeles', .(denominator = .N), .(stype, cname)]
+          man = sur[cname == 'Los Angeles', .(denominator = .N), keyby = .(stype, cname)]
+          data.table::setkeyv(man, NULL)
           expect_equal(st, as.data.table(man))
 })
 
@@ -202,7 +203,9 @@ test_that('Invalid input for ... filters',{
 })
 
 test_that('Invalid input for by',{
+
   expect_error(calc(sur, 'api00', by = 'turtles', time_var = NULL), '`by` values are not names of columns')
+
 })
 #
 test_that('Invalid input for metric',{
@@ -381,7 +384,7 @@ test_that('Ndistinct does things', {
 
   expect_equal(r1[, unique(ndistinct)], sur[, length(unique(awards))])
   expect_equal(r2[, unique(ndistinct)], 1)
-  expect_equal(r3[, ndistinct], sur[, length(unique(enroll)), stype][, V1])
+  expect_equal(r3[, ndistinct], sur[, length(unique(enroll)), keyby = stype][, V1])
 
 
 })
@@ -407,6 +410,118 @@ test_that('Where elimiates everything', {
   expect_warning(calc(sur, what = 'api00', where = yyy == -1, metrics = c('mean'), proportion = T, ci = .95, time_var = 'yyy', win = 1),
                  'statement subsets out all rows')
 
+
+})
+
+test_that('Resample approach', {
+
+  # "Imputed" is used below -- but resampling also works
+
+  # Create several iterations of an "imputed" or resampled dataset
+  midat = lapply(1:10, function(x){
+    r = apiclus1
+    r$random = sample(1:5, nrow(r), T)
+    r$random3 = sample(1:3, nrow(r), T)
+    r$random_fact = factor(r$random)
+    dtsurvey(r, 'dnum', weight = 'pw')
+
+  })
+
+  # store them in a imputationList (so the s3 calc method will be called)
+  midat = mitools::imputationList(midat)
+
+  # use base survey as the "truth"
+  misur = svydesign(id=~dnum, weights=~pw, data=midat)
+
+  # Numeric variable unrelated to the resampling
+  # r1.1 tests micombine with base survey package
+  r1.1 = mitools::MIcombine(with(misur, svymean(~api00,design = misur)))
+  #r1.2 is calc routine for imputationList
+  r1.2 = calc(midat, 'api00', metrics = c('mean', 'vcov'))
+  #r1.3 is the normal way of using calc with a dtsurvey
+  r1.3 = calc(midat$imputations[[1]], 'api00')
+
+  expect_equal(unname(coef(r1.1)), r1.2$mean)
+  expect_equal(r1.2$mean, r1.3$mean)
+  expect_equal(unname(SE(r1.1)), r1.2$mean_se)
+  expect_equal(r1.2$mean_se, r1.3$mean_se)
+  # The confidence intervals are not the same because of different ways of calculating it. I think it probably has to do with degrees of freedom)
+
+  # Imputed variable as metric
+  r2.1 = mitools::MIcombine(with(misur, svymean(~random,design = misur)))
+  r2.2 = calc(midat, 'random', metrics = c('mean', 'vcov'))
+  r2.1sum = summary(r2.1)
+
+  expect_equal(unname(coef(r2.1)), r2.2$mean)
+  expect_equal(unname(SE(r2.1)), r2.2$mean_se)
+  expect_equal(r2.1sum$`(lower`, r2.2$mean_lower)
+  expect_equal(r2.1sum$`upper)`, r2.2$mean_upper)
+
+  # imputed variable as factor metric
+  r3.1 = mitools::MIcombine(with(misur, svymean(~random_fact,design = misur)))
+  r3.2 = calc(midat, 'random_fact', metrics = c('mean', 'vcov'))
+  r3.1sum = summary(r3.1)
+
+  expect_equal(unname(coef(r3.1)), r3.2$mean)
+  expect_equal(unname(SE(r3.1)), r3.2$mean_se)
+  expect_equal(r3.1sum$`(lower`, r3.2$mean_lower)
+  expect_equal(r3.1sum$`upper)`, r3.2$mean_upper)
+
+  # imputed variable as factor metric with non imputed by
+  r4.1 = mitools::MIcombine(with(misur, svyby(~random_fact, ~stype, svymean, design = misur)))
+  r4.2 = calc(midat, 'random_fact', metrics = c('mean'), by = 'stype')
+  setorder(r4.2, level, stype)
+  r4.1sum = summary(r4.1)
+
+  expect_equal(unname(coef(r4.1)), r4.2$mean)
+  expect_equal(unname(SE(r4.1)), r4.2$mean_se)
+  expect_equal(r4.1sum$`(lower`, r4.2$mean_lower)
+  expect_equal(r4.1sum$`upper)`, r4.2$mean_upper)
+
+  # imputed variable as factor metric with imputed by
+  r5.1 = mitools::MIcombine(with(misur, svyby(~random_fact, ~random3, svymean, design = misur)))
+  r5.2 = calc(midat, 'random_fact', metrics = c('mean', 'vcov'), by = 'random3')
+  setorder(r5.2, level, random3)
+  r5.1sum = summary(r5.1)
+
+  expect_equal(unname(coef(r5.1)), r5.2$mean)
+  expect_equal(unname(SE(r5.1)), r5.2$mean_se)
+  expect_equal(r5.1sum$`(lower`, r5.2$mean_lower)
+  expect_equal(r5.1sum$`upper)`, r5.2$mean_upper)
+
+  # imputed variable as factor metric with imputed by and non imputed by
+  r6.1 = mitools::MIcombine(with(misur, svyby(~random_fact, ~random3+stype, svymean, design = misur)))
+  r6.2 = calc(midat, 'random_fact', metrics = c('mean', 'vcov'), by = c('random3', 'stype'))
+  setorder(r6.2, level, stype,random3)
+  r6.1sum = summary(r6.1)
+
+  expect_equal(unname(coef(r6.1)), r6.2$mean)
+  expect_equal(unname(SE(r6.1)), r6.2$mean_se)
+  expect_equal(r6.1sum$`(lower`, r6.2$mean_lower)
+  expect_equal(r6.1sum$`upper)`, r6.2$mean_upper)
+
+  # imputed variable as numeric metric with imputed by and non imputed by
+  r7.1 = mitools::MIcombine(with(misur, svyby(~random, ~random3+stype, svymean, design = misur)))
+  r7.2 = calc(midat, 'random', metrics = c('mean', 'vcov'), by = c('random3', 'stype'))
+  setorder(r7.2, level, stype,random3)
+  r7.1sum = summary(r7.1)
+
+  expect_equal(unname(coef(r7.1)), r7.2$mean)
+  expect_equal(unname(SE(r7.1)), r7.2$mean_se)
+  expect_equal(r7.1sum$`(lower`, r7.2$mean_lower)
+  expect_equal(r7.1sum$`upper)`, r7.2$mean_upper)
+
+  # with filtering
+  sub_misur = subset(misur, both == 'Yes')
+  r8.1 = mitools::MIcombine(with(sub_misur, svyby(~random, ~stype, svymean, design = sub_misur)))
+  r8.2 = calc(midat, 'random', where = both == 'Yes', metrics = c('mean', 'vcov'), by = c('stype'))
+  setorder(r8.2, level, stype)
+  r8.1sum = summary(r8.1,)
+
+  expect_equal(unname(coef(r8.1)), r8.2$mean)
+  expect_equal(unname(SE(r8.1)), r8.2$mean_se)
+  expect_equal(r8.1sum$`(lower`, r8.2$mean_lower)
+  expect_equal(r8.1sum$`upper)`, r8.2$mean_upper)
 
 })
 

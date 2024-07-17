@@ -34,7 +34,7 @@ of data.table's by-reference assignment (e.g., :=). In other words, there is
 type \code{string_clean(myTable)}.
 }
 \examples{
-\dontrun{
+\donttest{
 myTable <- data.table::data.table(
 intcol = as.integer(1, 2, 3),
 county = c(' King  County ', 'Pierce County', '  Snohomish  county '))

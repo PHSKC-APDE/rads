@@ -23,8 +23,13 @@ dataset either in data.table (adminstrative data) or svy_tbl (survey data) for f
 Simple front-end for pulling in standard APDE data
 }
 \examples{
-\dontrun{
- get_data(dataset = 'hys', cols = NULL, year = c(2016, 2018)
+\donttest{
+ test <- get_data(
+          dataset = 'death',
+          cols = c('chi_year', 'chi_geo_kc', 'chi_geo_seattle'),
+          year = c(2018))
+
+ head(test)
 }
 }
 \references{

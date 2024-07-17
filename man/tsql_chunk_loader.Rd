@@ -67,7 +67,8 @@ conflicts with data types in pre-existing SQL tables.
 provided.
 }
 \examples{
-\dontrun{
+\donttest{
+ library(data.table)
  mydt = data.table(col1 = 1:10000L,  # create integer
                    col2 = 1:10000/3) # create float
  mydt[, col3 := as.Date(Sys.Date()) - col1] # create date

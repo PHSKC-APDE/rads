@@ -44,11 +44,14 @@ Get Birth microdata from storage.
 }
 \examples{
 
-\dontrun{
- get_data_birth(cols = NA,
- year = c(2015, 2016, 2017),
- kingco = F,
- version = 'final',
- mykey = 'hhsaw')
+\donttest{
+ test <- get_data_birth(
+            cols = c('chi_year', 'chi_geo_kc', 'chi_sex'),
+            year = c(2019),
+            kingco = FALSE,
+            version = 'final',
+            mykey = 'hhsaw')
+
+ head(test)
 }
 }

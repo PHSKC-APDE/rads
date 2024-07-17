@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities.R
 \name{format_time}
 \alias{format_time}
-\title{Format a vector of time into a series of human readable chunks}
+\title{Format a vector of time (or any numeric values) into a series of human readable chunks}
 \usage{
 format_time(x)
 }
@@ -13,7 +13,7 @@ format_time(x)
 character vector
 }
 \description{
-Format a vector of time into a series of human readable chunks
+Format a vector of time (or any numeric values) into a series of human readable chunks
 }
 \examples{
 format_time(c(1:5, 10, 12, 24, 25))

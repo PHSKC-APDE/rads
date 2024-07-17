@@ -6,6 +6,7 @@ output:
   pdf_document: default
   urlcolor: blue
   keep_md: true
+  toc: true
 vignette: |
   %\VignetteEngine{knitr::knitr} %\VignetteIndexEntry{calc}
 ---
@@ -360,6 +361,55 @@ You'll note that using the survey design caused small changes in the results. Fo
 
 ------------------------------------------------------------------------
 
+## Example analyses with resampled data/multiple imputation
+
+There may be a few instances where a variable you want to compute some metrics using (multiple) imputed data. `calc` can work with these sorts of situations.
+
+The following code creates a fake survey of 100 people and then creates 10 different iterations of the survey with differing values of `v` (to represent the imputed variable).
+
+```{r, warning=FALSE, message= FALSE}
+# Create some fake data
+library('data.table')
+base = data.table::data.table(id = 1:100, bin = sample(0:1, 100, T), psu = sample(1:3, 100, T), weight = runif(100, 0,2))
+base = dtsurvey::dtsurvey(base, psu = 'psu', weight = 'weight')
+midat = lapply(1:10, function(i){
+  r = data.table::copy(base)[, v := sample(1:3, 100, T)]
+})
+
+```
+
+To use the imputation version of calc, the ph.data argument must be an `imputationList` object. You can turn your list of plausible datasets into an `imputationList` via the `mitools::imputationList` function. You may need to install the `mitools` package for this to work.
+
+```{r, warning = FALSE, message = FALSE}
+midat = mitools::imputationList(midat)
+class(midat)
+```
+
+Now that `midat` is the right type/class of object, you can pass it to the `calc` function as you would any other dataset. The slight exception is that the metrics argument must be explicitly specified. For fun, a version of the results from one imputation is also computed.
+
+```{r, warning = FALSE, message = FALSE}
+
+withmi = calc(ph.data =midat, what = 'bin', by = 'v', metrics = 'mean', proportion = T)
+nomi = calc(ph.data = midat$imputations[[1]], what = 'bin', by = 'v')
+
+```
+
+```{r, echo = F}
+
+knitr::kable(withmi[, .(v, variable, mean, mean_se, mean_lower, mean_upper)],caption = 'Results using MI combining methods')
+
+knitr::kable(nomi[, .(v, variable, mean, mean_se, mean_lower, mean_upper)], caption = 'Results of one iteration')
+
+```
+
+Some additional notes:
+
+1.  If there is no variation (or imputation) in the `what` or `by` variables, you should get the same result as doing just one iteration.
+
+2.  The `proportion` argument is ignored when `ph.data` is an `imputationList` object. This is because the `proportion` argument governs what methods are used to create confidence intervals – and the special proportion methods are not currently implemented for imputed data estimates. As such, you may find confidence intervals that are outside the normal [0-1] constraints.
+
+------------------------------------------------------------------------
+
 ## Knowing is half the battle ... but only half
 
-You've been introduced to `calc()`, but you'll only become competent at using it by using it. Try it out with your favorite dataset. Use it to answer data requests. Play with it. Try to break it and, if you're successful, submit a [GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new). Enjoy!
+You've been introduced to `calc()`, but you'll only become competent at using it by using it. Try it out with your favorite dataset. Play with it. Try to break it and, if you're successful, submit a [GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new). Enjoy!

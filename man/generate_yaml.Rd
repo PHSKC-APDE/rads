@@ -39,13 +39,14 @@ This function expects data in the form of a data.frame or data.table
 }
 \examples{
 
-\dontrun{
+\donttest{
 data(mtcars)
 # output to object in memory
   check <- generate_yaml(mtcars, schema = "SCH", table = "TBL",
   datasource = "R standard mtcars")
 # output to a file
-  generate_yaml(mtcars, outfile = "C:/temp/test.yaml", schema = "SCH", table = "TBL",
+  output_file <- tempfile('output_file', fileext = ".yaml")
+  generate_yaml(mtcars, outfile = output_file, schema = "SCH", table = "TBL",
   datasource = "R standard mtcars")
 }
 

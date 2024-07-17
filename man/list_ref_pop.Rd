@@ -13,7 +13,7 @@ Character vector of available reference populations
 Return vector of all reference populations available in RADS
 }
 \examples{
-\dontrun{
+\donttest{
  list_ref_pop()
 }
 }

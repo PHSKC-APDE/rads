@@ -1,15 +1,3 @@
----
-title: "Calculating rates with rads"
-output:
-  html_document:
-    df_print: paged
-  rmarkdown::html_vignette: default
-  github_document: default
-  urlcolor: blue
-  pdf_document: default
-vignette: |
-  %\VignetteEngine{knitr::knitr} %\VignetteIndexEntry{calculating_rates_with_rads}
----
 
 
 
@@ -106,6 +94,7 @@ head(deaths[deaths >9]) # only display non-suppressed data
 
 ```
 ##    mechanism        intent deaths chi_age
+##       <char>        <char>  <int>   <int>
 ## 1:      Fall Unintentional     10      55
 ## 2:      Fall Unintentional     11      56
 ## 3:      Fall Unintentional     12      61
@@ -123,13 +112,14 @@ head(deaths[count >9]) # only display non-suppressed data
 ```
 
 ```
-##           intent age count
-## 1: Unintentional  55    10
-## 2: Unintentional  56    11
-## 3: Unintentional  61    12
-## 4: Unintentional  62    10
-## 5: Unintentional  63    13
-## 6: Unintentional  64    14
+##           intent   age count
+##           <char> <int> <int>
+## 1: Unintentional    55    10
+## 2: Unintentional    56    11
+## 3: Unintentional    61    12
+## 4: Unintentional    62    10
+## 5: Unintentional    63    13
+## 6: Unintentional    64    14
 ```
 
 The table above confirms shows that we created a summary table of event (fall deaths) counts by age and intent. Congratulations, you've completed step 1.
@@ -147,13 +137,14 @@ head(population)
 ```
 
 ```
-##           pop geo_type      geo_id      year age       gender                                                 race_eth
-## 1: 126926.123       kc King County 2016-2020  18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 2:  25414.877       kc King County 2016-2020  86 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 3:   7474.077       kc King County 2016-2020  93 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 4:  87325.243       kc King County 2016-2020  68 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 5: 131855.803       kc King County 2016-2020   0 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
-## 6: 193885.671       kc King County 2016-2020  33 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+##           pop geo_type      geo_id      year   age       gender                                                 race_eth
+##         <num>   <char>      <char>    <char> <int>       <char>                                                   <char>
+## 1: 126926.123       kc King County 2016-2020    18 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 2:  25414.877       kc King County 2016-2020    86 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 3:   7474.077       kc King County 2016-2020    93 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 4:  87325.243       kc King County 2016-2020    68 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 5: 131855.803       kc King County 2016-2020     0 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
+## 6: 193885.671       kc King County 2016-2020    33 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White
 ```
 
 The essential columns of interest are `pop` and `age`, so let's drop the other columns.
@@ -165,13 +156,14 @@ head(population)
 ```
 
 ```
-##    age        pop
-## 1:  18 126926.123
-## 2:  86  25414.877
-## 3:  93   7474.077
-## 4:  68  87325.243
-## 5:   0 131855.803
-## 6:  33 193885.671
+##      age        pop
+##    <int>      <num>
+## 1:    18 126926.123
+## 2:    86  25414.877
+## 3:    93   7474.077
+## 4:    68  87325.243
+## 5:     0 131855.803
+## 6:    33 193885.671
 ```
 
 Since we are interested in strata (i.e., `intent`), we will need a complete set of population data for each strata.
@@ -186,12 +178,13 @@ population[, .N, intent] # confirm that have 101 rows per intent
 ```
 
 ```
-##                    intent   N
-## 1:               Homicide 101
-## 2: Legal intervention/war 101
-## 3:                Suicide 101
-## 4:           Undetermined 101
-## 5:          Unintentional 101
+##                    intent     N
+##                    <char> <int>
+## 1:               Homicide   101
+## 2: Legal intervention/war   101
+## 3:                Suicide   101
+## 4:           Undetermined   101
+## 5:          Unintentional   101
 ```
 
 ### STEP 3: **Merge** the denominators onto the numerators
@@ -210,13 +203,15 @@ head(deaths[count > 9]) # only display non-suppressed data
 ```
 
 ```
-##    age        intent count       pop
-## 1:  55 Unintentional    10 150673.44
-## 2:  56 Unintentional    11 145840.61
-## 3:  61 Unintentional    12 129379.94
-## 4:  62 Unintentional    10 128243.03
-## 5:  63 Unintentional    13 122568.98
-## 6:  64 Unintentional    14  95319.47
+## Key: <age, intent>
+##      age        intent count       pop
+##    <int>        <char> <int>     <num>
+## 1:    55 Unintentional    10 150673.44
+## 2:    56 Unintentional    11 145840.61
+## 3:    61 Unintentional    12 129379.94
+## 4:    62 Unintentional    10 128243.03
+## 5:    63 Unintentional    13 122568.98
+## 6:    64 Unintentional    14  95319.47
 ```
 
 ### STEP 4: Use [rads::age_standardize()](https://github.com/PHSKC-APDE/rads/wiki/age_standardize)
@@ -238,6 +233,7 @@ head(est)
 
 ```
 ##                    intent count      pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci                            reference_pop
+##                    <char> <num>    <num>      <num>     <num>     <num>    <num>   <num>   <num>                                   <char>
 ## 1:               Homicide     0 10974431       0.00      0.00      0.03     0.00    0.00    0.04 2000 U.S. Std Population (11 age groups)
 ## 2: Legal intervention/war     0 10974431       0.00      0.00      0.03     0.00    0.00    0.04 2000 U.S. Std Population (11 age groups)
 ## 3:                Suicide    70 10974431       0.64      0.50      0.81     0.61    0.47    0.78 2000 U.S. Std Population (11 age groups)
@@ -287,13 +283,14 @@ head(deaths)
 ```
 
 ```
-##    age underlying_cod_code Region
-## 1:  80                D471   <NA>
-## 2:  96                F019   <NA>
-## 3:  69                C259   <NA>
-## 4:  88                F019   <NA>
-## 5:  64                 W80   <NA>
-## 6:  48                J100   <NA>
+##      age underlying_cod_code Region
+##    <int>              <char> <char>
+## 1:    76                I250   <NA>
+## 2:    46                K703   <NA>
+## 3:    65                 N10   <NA>
+## 4:    25                F191   <NA>
+## 5:    28                K703   <NA>
+## 6:    36                F191   <NA>
 ```
 
 As you can see, there are few rows where the death data are missing a Region (due to a missing HRA). For simplicity sake, let's drop these rows.
@@ -312,13 +309,14 @@ head(deaths)
 ```
 
 ```
-##    age Region count
-## 1:  63  South    77
-## 2:  97  South    62
-## 3:  93  South   112
-## 4:  78  South   108
-## 5:  95  South    80
-## 6:  60  South    75
+##      age Region count
+##    <int> <char> <int>
+## 1:    61  South    64
+## 2:    70  South    99
+## 3:    82  South   123
+## 4:    56  South    44
+## 5:    83  South   133
+## 6:    85  South   129
 ```
 
 Finally, let's take a peak at the number of deaths by region:
@@ -329,11 +327,12 @@ deaths[, sum(count), Region]
 ```
 
 ```
-##     Region   V1
-## 1:   South 5207
-## 2: Seattle 3986
-## 3:    East 2853
-## 4:   North 1095
+##     Region    V1
+##     <char> <int>
+## 1:   South  5207
+## 2: Seattle  3986
+## 3:    East  2853
+## 4:   North  1095
 ```
 
 This table of deaths by region shows that the number of deaths in South King County is five times higher than those in North King County (5207 vs. 1095). Does that mean the death *rates* in South King County are five times higher than those in North King County? Let's get the corresponding population data and find out.
@@ -351,13 +350,14 @@ head(population)
 ```
 
 ```
-##          pop geo_type  geo_id year age       gender                                                 race_eth geo_id_code
-## 1:  9617.317   region    East 2019  31 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
-## 2:  2155.107   region   North 2019  30 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
-## 3: 17707.450   region Seattle 2019  27 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
-## 4:  1723.738   region   North 2019  43 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
-## 5:  8190.881   region    East 2019  48 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
-## 6:  6742.962   region Seattle 2019   3 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
+##          pop geo_type  geo_id   year   age       gender                                                 race_eth geo_id_code
+##        <num>   <char>  <char> <char> <int>       <char>                                                   <char>      <char>
+## 1:  9617.317   region    East   2019    31 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
+## 2:  2155.107   region   North   2019    30 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
+## 3: 17707.450   region Seattle   2019    27 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
+## 4:  1723.738   region   North   2019    43 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           2
+## 5:  8190.881   region    East   2019    48 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           1
+## 6:  6742.962   region Seattle   2019     3 Female, Male AIAN, Asian, Black, Hispanic, Multiple race, NHPI, White           3
 ```
 
 The key columns of interest are `pop`, `geo_id` (which has our regions), and `age`. The other columns are all constants, so let's just keep what we need.
@@ -369,13 +369,14 @@ head(population)
 ```
 
 ```
-##     Region age       pop
-## 1:    East  31  9617.317
-## 2:   North  30  2155.107
-## 3: Seattle  27 17707.450
-## 4:   North  43  1723.738
-## 5:    East  48  8190.881
-## 6: Seattle   3  6742.962
+##     Region   age       pop
+##     <char> <int>     <num>
+## 1:    East    31  9617.317
+## 2:   North    30  2155.107
+## 3: Seattle    27 17707.450
+## 4:   North    43  1723.738
+## 5:    East    48  8190.881
+## 6: Seattle     3  6742.962
 ```
 
 Note that, unlike in the example above, we already have a complete population data set (ages 0 to 100) for each strata.
@@ -386,11 +387,12 @@ population[, .N, Region]
 ```
 
 ```
-##     Region   N
-## 1:    East 101
-## 2:   North 101
-## 3: Seattle 101
-## 4:   South 101
+##     Region     N
+##     <char> <int>
+## 1:    East   101
+## 2:   North   101
+## 3: Seattle   101
+## 4:   South   101
 ```
 
 ### STEP 3: **Merge** the denominators onto the numerators
@@ -409,13 +411,15 @@ head(deaths)
 ```
 
 ```
-##    Region age count      pop
-## 1:   East   0    16 7150.688
-## 2:   East   1     1 7018.036
-## 3:   East   2     0 7217.847
-## 4:   East   3     2 7215.894
-## 5:   East   4     1 7061.314
-## 6:   East   5     0 8389.604
+## Key: <Region, age>
+##    Region   age count      pop
+##    <char> <int> <int>    <num>
+## 1:   East     0    16 7150.688
+## 2:   East     1     1 7018.036
+## 3:   East     2     0 7217.847
+## 4:   East     3     2 7215.894
+## 5:   East     4     1 7061.314
+## 6:   East     5     0 8389.604
 ```
 
 ### STEP 4: Use [rads::age_standardize()](https://github.com/PHSKC-APDE/rads/wiki/age_standardize)
@@ -435,6 +439,7 @@ head(est)
 
 ```
 ##     Region count      pop crude.rate crude.lci crude.uci adj.rate adj.lci adj.uci                            reference_pop
+##     <char> <num>    <num>      <num>     <num>     <num>    <num>   <num>   <num>                                   <char>
 ## 1:    East  2853 570568.9     500.03    481.85    518.72   517.25  498.19  536.93 2000 U.S. Std Population (11 age groups)
 ## 2:   North  1095 136125.9     804.40    757.46    853.50   625.86  588.59  665.32 2000 U.S. Std Population (11 age groups)
 ## 3: Seattle  3986 723214.3     551.15    534.17    568.53   531.22  514.54  548.45 2000 U.S. Std Population (11 age groups)
