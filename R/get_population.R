@@ -169,9 +169,22 @@ get_population <- function(kingco = T,
   ## validate geo_type and kingco ----
   ## if seattle, pull region where seattle
   valid_geogs = c('blk', 'blkgrp', 'tract', 'county', 'hra', 'kc', 'lgd',
-                  'region', 'seattle', 'scd' , 'tract', 'wa', 'zip',
+                  'region', 'seattle', 'scd' , 'wa', 'zip',
                   'ccl', 'csa', 'inc_uninc', 'puma', 'kccd', 'tribal')
   geo_type = match.arg(tolower(geo_type), valid_geogs)
+
+  if(geo_type %in% c('blk', 'blkgrp', 'county', 'hra', 'lgd',
+                     'region', 'scd' , 'zip')){
+    gt = tolower(substr(geo_type, 1,3))
+  }else if(geo_type %in% c('kc', 'wa')){
+    gt = 'cou'
+  }else if(geo_type =='seattle'){
+    gt = 'reg'
+  }else if(geo_type == 'tract'){
+    gt = 'blk'
+  }else{
+    gt = geo_type
+  }
 
   ## create geo_type selectors and filters ----
   ## TODO: should we recompute blkgrp and tract? It'll be a lot faster
@@ -201,12 +214,6 @@ get_population <- function(kingco = T,
     group_geo_type = DBI::Id(column = 'geo_id')
     select_geo_type = DBI::Id(column = 'geo_id')
   }else{
-    if(geo_type %in% c('blk', 'blkgrp', 'tract', 'county', 'hra', 'kc', 'lgd',
-                       'region', 'seattle', 'scd' , 'tract', 'wa', 'zip')){
-      gt = tolower(substr(geo_type, 1,3))
-    }else{
-      gt = geo_type
-    }
     pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, gt))
     where_geo_type = SQL('')
     group_geo_type = SQL('geo_id') # over the whole state
@@ -262,7 +269,6 @@ get_population <- function(kingco = T,
 
   ## validate years ----
   ## integer year between 2000 and 2022
-  gt = substr(pop_table@name['table'],9,nchar(pop_table@name['table']))
   find_years_where = c(
     where_census_vintage,
     where_geo_vintage,
