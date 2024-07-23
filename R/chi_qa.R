@@ -96,10 +96,10 @@ chi_qa <- function(chi_est = NULL, chi_meta = NULL, acs = F, ignore_trends = T, 
 
   ## Confirm that variables are of the proper class ----
           if(verbose) message("Validating CHI estimates: ")
-          validate_yaml_data(ph.data = chi_est, YML = chi.yaml, VARS = "vars") # check CHI estimate table
+          tsql_validate_field_types(ph.data = chi_est, field_types = unlist(chi.yaml$vars)) # check CHI estimate table
 
           if(verbose) message(paste("", "Validating CHI metadata: ", sep = "\n"))
-          validate_yaml_data(ph.data = chi_meta, YML = chi.yaml, VARS = "metadata") # check CHI metadata table
+          tsql_validate_field_types(ph.data = chi_meta,  field_types = unlist(chi.yaml$metadata)) # check CHI metadata table
 
           if(verbose) message(paste("", "", sep = "\n"))
 

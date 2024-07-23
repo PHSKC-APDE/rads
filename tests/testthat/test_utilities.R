@@ -294,7 +294,7 @@ test_that("error if field_types are not compatible with classes in ph.data", {
   expect_error(tsql_chunk_loader(ph.data = mydt, db_conn = myconn, schema = Sys.getenv("USERNAME"),
                                  table_name = c("JustTesting"), overwrite = TRUE, append = FALSE,
                                  field_types =  c(col1 = 'date', col2 = 'float', col3 = 'date', col4 = 'nvarchar(255)'),
-                                 validate_field_types = TRUE), "did not align with the proposed TSQL datatypes")
+                                 validate_field_types = TRUE), "did not align with the proposed TSQL field types")
 })
 
 test_that("error if validate_upload is not logical", {
@@ -311,17 +311,55 @@ test_that("function succeeds with compatible data.table and field types", {
   expect_message(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types), "Success")
 })
 
+test_that("function is case insensitive", {
+  mydt <- data.table(COL1 = 1:10, Col2 = runif(10))
+  my_field_types <- c(CoL1 = 'INT', col2 = 'FLOAT')
+  expect_message(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types), "Success")
+})
+
 test_that("function fails with incompatible field types", {
-  mydt <- data.table(col1 = 1:10, col2 = as.Date('2023-01-01'))
-  my_field_types <- c(col1 = 'int', col2 = 'nvarchar(12)')
-  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types))
+  mydt <- data.table(col1 = 32758:32767,
+                     col2 = as.Date('2023-01-01'),
+                     col3 = (99991:100000)/10,
+                     col4 = rep('AReallyLongStringOfWordForTestingLengthChecks', 10),
+                     col5 = Sys.time())
+  my_field_types <- c(col1 = 'smallint',
+                      col2 = 'date',
+                      col3 = 'numeric',
+                      col4 = 'nvarchar(100)',
+                      col5 = 'datetime')
+  expect_message(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types), 'Success')
+
+  bad_field_types <- data.table::copy(my_field_types)
+  bad_field_types["col1"] <- "fff" # invalid tsql type
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = bad_field_types), 'The following TSQL field types are not recognized')
+
+  bad_field_types <- data.table::copy(my_field_types)
+  bad_field_types["col1"] <- "tinyint" # tinyint is too small (up to 255)
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = bad_field_types), 'column: col1')
+
+  bad_field_types <- data.table::copy(my_field_types)
+  bad_field_types["col2"] <- "nvarchar(20)" # does not expect moving dates to non dates in TSQL
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = bad_field_types), 'column: col2')
+
+  bad_field_types <- data.table::copy(my_field_types)
+  bad_field_types["col3"] <- "INT" # numeric cannot be changed to integer without loss
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = bad_field_types), 'column: col3')
+
+  bad_field_types <- data.table::copy(my_field_types)
+  bad_field_types["col4"] <- "nvarchar(25)" # not long enough for number of characters
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = bad_field_types), 'column: col4')
+
+  bad_field_types <- data.table::copy(my_field_types)
+  bad_field_types["col5"] <- "date" # R POSIXct should only map to some sort of datetime, not date
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = bad_field_types), 'column: col5')
 })
 
 test_that("function handles NULL arguments appropriately", {
   mydt <- data.table(col1 = 1:10, col2 = runif(10))
   my_field_types <- c(col1 = 'int', col2 = 'float')
-  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = NULL))
-  expect_error(tsql_validate_field_types(ph.data = NULL, field_types = my_field_types))
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = NULL), 'must specify a named character vector')
+  expect_error(tsql_validate_field_types(ph.data = NULL, field_types = my_field_types), 'must specify a dataset')
 })
 
 test_that("function converts data.frame to data.table and succeeds", {
@@ -333,15 +371,48 @@ test_that("function converts data.frame to data.table and succeeds", {
 test_that("function fails when field types and data.table column names do not match", {
   mydt <- data.table(col1 = 1:10, col3 = runif(10))
   my_field_types <- c(col1 = 'int', col2 = 'float')
-  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types))
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types), 'necessitates exactly one TSQL datatype per column name')
 })
 
 test_that("function handles unsupported R data types gracefully", {
   mydt <- data.table(col1 = 1:10, col2 = list(1:10))
   my_field_types <- c(col1 = 'int', col2 = 'int')
-  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types))
-
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types),
+               "are not recognized")
   mydt <- data.table(col1 = 1:10, col2 = as.character(1:10))
   my_field_types <- c(col1 = 'int', col2 = 'unsupported')
-  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types))
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types),
+               "The following TSQL field types are not recognized")
+})
+
+test_that("function correctly handles character fields at size limit", {
+  mydt <- data.table(col1 = c("abc", "defgh", "ijklm"))
+  expect_message(tsql_validate_field_types(ph.data = mydt, field_types = c(col1 = 'varchar(5)')), "Success")
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = c(col1 = 'varchar(4)')), "Fails constraints")
+})
+
+test_that("function correctly handles numeric to integer conversion", {
+  mydt <- data.table(col1 = c(1, 2, 3.0), col2 = c(4.0, 5.0, 6.0))
+  my_field_types <- c(col1 = 'int', col2 = 'int')
+  expect_message(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types), "Success")
+
+  mydt <- data.table(col1 = c(1.1, 2.0, 3.0), col2 = c(4.0, 5.0, 6.0))
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types), "Numeric values cannot be safely converted to integer")
+})
+
+test_that("function correctly handles POSIXct types", {
+  mydt <- data.table(col1 = as.POSIXct("2023-01-01 12:00:00"))
+  expect_message(tsql_validate_field_types(ph.data = mydt, field_types = c(col1 = 'datetime')), "Success")
+  expect_message(tsql_validate_field_types(ph.data = mydt, field_types = c(col1 = 'datetime2')), "Success")
+  expect_message(tsql_validate_field_types(ph.data = mydt, field_types = c(col1 = 'datetimeoffset')), "Success")
+})
+
+test_that("function handles NA and NULL values correctly", {
+  mydt <- data.table(col1 = c(1, 2, NA), col2 = c("a", "b", NA), col3 = c(TRUE, FALSE, NA))
+  my_field_types <- c(col1 = 'int', col2 = 'varchar(10)', col3 = 'bit')
+  expect_message(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types), "Success")
+
+  mydt <- data.table(col1 = c(1, 2, NA), col2 = c("a", "b", NA), col3 = c(NA, NA, NA))
+  my_field_types <- c(col1 = 'int', col2 = 'varchar(10)', col3 = 'bit')
+  expect_warning(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types))
 })

@@ -8,16 +8,21 @@ specifications defined in a YAML file}
 validate_yaml_data(ph.data = NULL, YML = NULL, VARS = "vars")
 }
 \arguments{
-\item{ph.data}{Name of the data.table/data.frame that you want to assess vis-à-vis the YAML file}
+\item{ph.data}{Name of the data.table/data.frame that you want to assess
+vis-à-vis the YAML file}
 
 \item{YML}{Name of the YAML object in memory}
 
-\item{VARS}{Character vector of length 1. Is is the name of the object in the list contained by YML}
+\item{VARS}{Character vector of length 1. Is is the name of the object in the
+list contained by YML}
 }
 \value{
 A simple printed statement, either identifying incompatible column types or a statement of success
 }
 \description{
+\strong{!!!STOP!!! This function has been deprecated!} Please use
+\link{tsql_validate_field_types} instead.
+
 Validate the structure and data types of a data.frame or data.table against
 specifications defined in a YAML file. This is most often used to check that
 your data.frame or data.table is suitable to be pushed to TSQL when a YAML
