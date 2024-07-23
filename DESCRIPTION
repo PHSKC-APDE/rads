@@ -20,7 +20,7 @@ Imports:
     methods,
     mitools(>= 2.4),
     odbc (>= 1.2.2),
-    rads.data (>= 1.0.7.9),
+    rads.data (>= 1.0.8.0),
     stats,
     utf8 (>= 1.1.4),
     yaml (>= 2.2.1),
