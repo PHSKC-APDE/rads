@@ -16,11 +16,12 @@ chi_compare_kc(
 
 \item{linkage.vars}{Character vector of length 1. It is the name of the column that you will use for merging.}
 
-\item{new.col.name}{Character vector of length 1. It is the name of the column containining the comparison results.}
+\item{new.col.name}{Character vector of length 1. It is the name of the column containing the comparison results.}
 }
 \value{
 data.table comprised of the original data.table and two additional columns ... 'significance' and 'comparison_with_kc' (or alternatively specified name)
 }
 \description{
-Compare CHI standard tabular results to the King County average for the same year within a given data set
+\strong{!!!STOP!!! This function has been deprecated!} Please use
+\link{compare_estimate} instead.
 }

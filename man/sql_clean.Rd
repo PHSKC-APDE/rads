@@ -15,5 +15,6 @@ sql_clean(dat = NULL, stringsAsFactors = FALSE)
 data.table
 }
 \description{
-\code{sql_clean} has been deprecated. Please use \code{string_clean} instead.
+\strong{!!!STOP!!! This function has been deprecated!} Please use
+\link{string_clean} instead.
 }

@@ -392,9 +392,12 @@ chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = 
 
 # chi_compare_kc() ----
 #' Compare CHI standard tabular results to the King County average for the same year within a given data set
+#' @description
+#' \strong{!!!STOP!!! This function has been deprecated!} Please use
+#' \link{compare_estimate} instead.
 #' @param orig Character vector of length 1. Identifies the data.table/data.frame to be fetched. Note the table must have the following columns:
 #' 'result', 'lower_bound', & 'upper_bound' and all three must be numeric
-#' @param new.col.name Character vector of length 1. It is the name of the column containining the comparison results.
+#' @param new.col.name Character vector of length 1. It is the name of the column containing the comparison results.
 #' @param linkage.vars Character vector of length 1. It is the name of the column that you will use for merging.
 #'
 #' @importFrom data.table setnames ":=" setDT
@@ -1566,12 +1569,13 @@ string_clean <- function(dat = NULL,
 #' @param dat name of data.frame or data.table
 #' @param stringsAsFactors logical. Specifies whether to convert strings to factors (TRUE) or not (FALSE)
 #' @description
-#' `sql_clean` has been deprecated. Please use `string_clean` instead.
+#' \strong{!!!STOP!!! This function has been deprecated!} Please use
+#' \link{string_clean} instead.
 #' @export
 #' @importFrom utf8 utf8_encode
 #' @return data.table
 sql_clean <- function(dat = NULL, stringsAsFactors = FALSE){
-  .Deprecated("string_clean", package = "yourPackageName")
+  .Deprecated("string_clean")
 
   warning("\n\U00026A0 As a courtesy, `sql_clean` remains operational for the time being.\n",
           "Good things don't last forever. \nPlease update your code.",
@@ -1635,137 +1639,6 @@ substrRight <- function(x, x.start, x.stop){
   substr(x, nchar(x)-x.stop+1, nchar(x)-x.start+1)
 }
 
-# validate_yaml_data() ----
-#' Validate the structure and data types of a data.frame or data.table against
-#' specifications defined in a YAML file
-#'
-#' @description
-#' Validate the structure and data types of a data.frame or data.table against
-#' specifications defined in a YAML file. This is most often used to check that
-#' your data.frame or data.table is suitable to be pushed to TSQL when a YAML
-#' file specifies the field.types to be used by `DBI::dbWriteTable` &
-#' `odbc::dbWriteTable`.
-#'
-#'
-#' @param ph.data Name of the data.table/data.frame that you want to assess vis-à-vis the YAML file
-#'
-#' @param YML Name of the YAML object in memory
-#'
-#' @param VARS Character vector of length 1. Is is the name of the object in the list contained by YML
-#'
-#' @importFrom data.table data.table setnames ":=" setDT
-#'
-#' @examples
-#' library(data.table)
-#'
-#' # create sample data.table
-#' mydt <- data.table(myalpha = letters[1:10],
-#'                    myint = 1L:10L,
-#'                    mynum = seq(.1, 1, .1))
-#' mydt[, mydate := as.Date('2000-01-01') + myint]
-#' mydt[, myfact := factor(myalpha)]
-#'
-#' # create sample yaml object
-#' myyaml <- list(
-#'   myvars = list(
-#'     myalpha = "varchar(255)",
-#'     myint = "int",
-#'     mynum = "float",
-#'     mydate = "date",
-#'     myfact = "varchar(255)"
-#'   )
-#' )
-#'
-#' # use function
-#' validate_yaml_data(ph.data = mydt, YML = myyaml, VARS = "myvars")
-#'
-#' @export
-#' @return A simple printed statement, either identifying incompatible column types or a statement of success
-validate_yaml_data <- function(ph.data = NULL, YML = NULL, VARS = "vars"){
-  ## Global variables used by data.table declared as NULL here to play nice with devtools::check()
-  ph.data.class <- orig.ph.dataname <- yamlcols <- yamlnames <- yamlextra <- dfcols <- dfnames <- NULL
-
-  # Get the name of of the data.frame/data.table passed to to the function ----
-  orig.ph.dataname <- deparse(substitute(ph.data))
-
-  # Check that DT is a data.frame/data.table ----
-  if(is.data.frame(ph.data) == FALSE){
-    stop("'ph.data' must be a data.frame or a data.table")
-  }else{ph.data <- data.table::setDT(copy(ph.data))}
-
-  # Check that number of vars in YML is same as ncols in ph.data ----
-  yamlcols <- length(YML[[VARS]])
-  dfcols <- ncol(ph.data)
-  if(yamlcols != dfcols){
-    stop(paste0("The number of vars specified in the YAML (", yamlcols, ") does not match the number of columns in ph.data (", dfcols, ")"))
-  }
-
-  # Check that the column names in YML match those in ph.data ----
-  yamlnames <- sort(names(YML[[VARS]]))
-  dfnames <- sort(names(ph.data))
-  yamlextra <- setdiff(yamlnames, dfnames)
-  if(length(yamlextra) == 0){yamlextra <- "_____"}
-  dfextra <- setdiff(dfnames, yamlnames)
-  if(length(dfextra) == 0){dfextra <- "_____"}
-  if(setequal(yamlnames, dfnames)==F){
-    stop(paste0("The following variables are in the YAML but not in ph.data: ", yamlextra),
-         paste0(". The following variables are in ph.data but not in the YAML: ", dfextra), ".")
-  }
-
-  # notice that this might take a while ----
-  message("The validation may take a few minutes if your data & yaml contain dates and or times ...")
-
-  # identify proper classes from YAML file ----
-  class.compare <- data.table::data.table(
-    name =  c(names(YML[[VARS]])),
-    yaml.class = tolower(as.character(YML[[VARS]]))
-  )
-
-  # convert names of SQL data types to R classes ----
-  class.compare[grepl("char|text|uniqueidentifier", tolower(yaml.class)), yaml.class := "character"]
-  class.compare[tolower(yaml.class) %in% c("tinyint", "smallint", "int"), yaml.class := "integer"]
-  class.compare[grepl("bigint|decimal|float|money|numeric|real", tolower(yaml.class)), yaml.class := "numeric"]
-  class.compare[grepl("bit", tolower(yaml.class)), yaml.class := "logical"]
-  class.compare[grepl("time", tolower(yaml.class)), yaml.class := "POSIXct"]
-  class.compare[grepl("date", tolower(yaml.class)), yaml.class := "date"]
-
-  # identify which VARS should be of which class (assuming YAML is correct) ----
-  make.char <- class.compare[yaml.class == "character"]$name
-  make.num  <- class.compare[yaml.class == "numeric"]$name
-  make.int  <- class.compare[yaml.class == "integer"]$name
-  make.logical  <- class.compare[yaml.class == "logical"]$name
-  make.POSIXct  <- class.compare[yaml.class == "POSIXct"]$name
-  make.Date  <- class.compare[yaml.class == "date"]$name
-
-  # use lossless_convert function to convert R column types if possible / needed ----
-  suppressWarnings(ph.data[, (make.char) := lapply(.SD, lossless_convert, class = 'character'), .SDcols = make.char])
-  suppressWarnings(ph.data[, (make.num) := lapply(.SD, lossless_convert, class = 'numeric'), .SDcols = make.num])
-  suppressWarnings(ph.data[, (make.int) := lapply(.SD, lossless_convert, class = 'integer'), .SDcols = make.int])
-  suppressWarnings(ph.data[, (make.logical) := lapply(.SD, lossless_convert, class = 'logical'), .SDcols = make.logical])
-  suppressWarnings(ph.data[, (make.Date) := lapply(.SD, lossless_convert, class = 'Date'), .SDcols = make.Date])
-  suppressWarnings(ph.data[, (make.POSIXct) := lapply(.SD, lossless_convert, class = 'POSIXct'), .SDcols = make.POSIXct])
-
-  # check if there are variables that could not be coerced to proper type ----
-  class.compare <- merge(data.table::data.table(name = names(sapply(ph.data, class)), ph.data.class = tolower(sapply(ph.data, class))),
-                         class.compare, by = "name")
-  class.compare[ph.data.class == 'c("posixct", "posixt")', ph.data.class := 'POSIXct']
-
-  # allow R to be more strict than YAML with numbers ----
-  class.compare[yaml.class=="numeric" & ph.data.class == "integer", ph.data.class := "numeric"]
-
-  # Assess whether there were any problems ----
-  if(nrow(class.compare[ph.data.class != yaml.class]) > 0){
-    yaml.name <- class.compare[ph.data.class != yaml.class]$name
-    yaml.class <- class.compare[ph.data.class != yaml.class]$yaml.class
-    class.problems <- paste(paste0(yaml.name, " (", yaml.class, ")"), collapse = ", ")
-    stop(glue::glue("\n\U0001f47f The following variables could not be coerced to their proper class (which is specified in parentheses):
-                              {class.problems}"))
-  }else{message(paste0("\U0001f642 All column classes in `", orig.ph.dataname,"` are compatible with the YAML reference standard."))}
-
-  return(invisible(NULL))
-
-}
-
 # quiet() ----
 #' Silence (i.e., suppress or mute) printed messages from functions
 #'
@@ -1819,27 +1692,37 @@ quiet <- function(expr, suppressWarnings = FALSE) {
 }
 
 # tsql_validate_field_types() ----
-#' Validates whether a named vector of TSQL data types is compatible with a data.table
+#' Validates whether a named vector of TSQL data types is compatible with a
+#' data.table
 #'
-#' \code{tsql_validate_field_types} checks whether a named vector of TSQL data types is
-#' compatible with a given data.table that you wish to upload to Microsoft SQL Server.
-#' The function does not cover every possible situation! For example, you might
-#' want to push your R '`POSIXct`' column to a SQL Server table as an '`nvarchar()`' datatype,
-#' but this function will expect you to map it to a more typical data type such
-#' as '`date`' or '`datetime`'. Think of this function as a second set of eyes
-#' to make sure you didn't do something careless.
+#' \code{tsql_validate_field_types} checks whether a named vector of TSQL data
+#' types is compatible with a given data.table that you wish to upload to
+#' Microsoft SQL Server. The function does not cover every possible situation!
+#' For example, you might want to push your R '`POSIXct`' column to a SQL Server
+#' table as an '`nvarchar()`' datatype, but this function will expect you to map
+#' it to a more typical data type such as '`datetime`'. Think of this function
+#' as a second set of eyes to make sure you didn't do something careless.
 #'
-#' @param ph.data The name of a single data.table/data.frame to be loaded to SQL Server.
-#' @param field_types A named character vector with the desired TSQL
-#' datatypes for your upload. For example, `c(col1 = 'int', col2 = 'float', col3 = 'date')`.
-#' Note that the names in `field_types` must be the same as the names in `ph.data`. This
-#' is often read into memory from a *.yaml file, but can also be manually created.
+#' @param ph.data The name of a single data.table/data.frame to be loaded to SQL
+#'   Server.
+#' @param field_types A named character vector with the desired TSQL datatypes
+#'   for your upload. For example, `c(col1 = 'int', col2 = 'float', col3 =
+#'   'date')`. Note that the names in `field_types` must be the same as the
+#'   names in `ph.data`. This is often read into memory from a *.yaml file, but
+#'   can also be manually created.
 #'
 #' @name tsql_validate_field_types
 #'
-#' @details
-#' Note that this function does not evaluate if the allocated length for
-#' character strings, i.e., `nvarchar()` and `varchar()`, is sufficient.
+#' @details Note that this function may not thoroughly evaluate if the allocated
+#' length for character strings, i.e., `nvarchar()` and `varchar()`, is
+#' sufficient.
+#'
+#' Note that this replaces `rads::validate_yaml_data`. To use this function to
+#' check the compatibility of field types in a yaml file with your dataset, do
+#' the following:
+#' 1) load the yaml file, e.g., `yaml <- yaml::read_yaml("X:/code/myyaml.yaml")`
+#' 2) unlist the variable descriptions, e.g., `yaml_field_types = unlist(yaml$vars)`
+#' 3) use `tsql_validate_field_types`, e.g., `tsql_validate_field_types(ph.data = mydt, field_types = yaml_field_types)`
 #'
 #' @examples
 #' \donttest{
@@ -1849,8 +1732,13 @@ quiet <- function(expr, suppressWarnings = FALSE) {
 #'                    col2 = 1:10000/3) # creates floats
 #'  mydt[, col3 := as.Date(Sys.Date()) - col1] # creates dates
 #'  mydt[, col4 := as.character(col3)] # create strings
+#'  mydt[, col5 := Sys.time()] # create POSIXct
 #'
-#'  myfieldtypes <- c(col1 = 'int', col2 = 'float', col3 = 'date', col4 = 'nvarchar(255)')
+#'  myfieldtypes <- c(col1 = 'int',
+#'                    col2 = 'float',
+#'                    col3 = 'date',
+#'                    col4 = 'nvarchar(255)',
+#'                    col5 = 'datetime')
 #'
 #'  tsql_validate_field_types(ph.data = mydt, field_types = myfieldtypes)
 #'
@@ -1860,99 +1748,177 @@ quiet <- function(expr, suppressWarnings = FALSE) {
 #' @rdname tsql_validate_field_types
 #' @import data.table
 
-tsql_validate_field_types <- function(ph.data = NULL, # R data.frame/data.table
-                                field_types = NULL ){ # named vector of tsql data types
-# Declare local variables used by data.table as NULL here to play nice with devtools::check() ----
-    Rtypes <- RtypesDT <- TSQLtypesDT <- combotypesDT <- std_type <- r_type <- tsql_type <- NULL
+tsql_validate_field_types <- function(ph.data = NULL,
+                                      field_types = NULL) {
+  # Visible bindings for data.table/check global variables ----
+      Rtypes <- RtypesDT <- TSQLtypesDT <- combotypesDT <- std_type <- NULL
+      colname <- size <- value_range <- is_valid <- R_type <- tsql_type <- NULL
+      is_compatible <- meets_constraints <- NULL
 
-# Validate arguments ----
-  # ph.data
-    if(is.null(ph.data)){
-      stop("\n\U1F6D1 You must specify a dataset (i.e., {ph.data} must be defined)")
-    }
-    if(!is.data.table(ph.data)){
-      if(is.data.frame(ph.data)){
-        setDT(ph.data)
-      } else {
-        stop(paste0("\n\U1F6D1 {ph.data} must be the name of a data.frame or data.table."))
+  # Validate arguments ----
+      if (is.null(ph.data)) {
+        stop("\n\U1F6D1 You must specify a dataset (i.e., {ph.data} must be defined)")
       }
-    }
+      if (!is.data.table(ph.data)) {
+        if (is.data.frame(ph.data)) {
+          setDT(ph.data)
+        } else {
+          stop("\n\U1F6D1 {ph.data} must be the name of a data.frame or data.table.")
+        }
+      }
 
-  # field_types
-    if(is.null(field_types) | !(is.character(field_types) &&
-                                   !is.null(names(field_types)) &&
-                                   all(nzchar(names(field_types))))){
-                                     stop('\n\U1F6D1 {field_types} must specify a named character vector of TSQL data types.')
-                                   }
+      ph.data = copy(ph.data) # copy ph.data so will not change the underlying file submitted to this function via `set` functions
+      setnames(ph.data, tolower(names(ph.data))) # b/c TSQL normally case insensitive re: column names and this function is to validate data types compatability
 
-    if(!identical(sort(names(ph.data)), sort(names(field_types)))){
-      stop('\n\U1F6D1 Validation of TSQL data types necessitates exactly one TSQL datatype per column name in {ph.data}.')
-    }
+      if (is.null(field_types) || !(is.character(field_types) && !is.null(names(field_types)) && all(nzchar(names(field_types))))) {
+        stop('\n\U1F6D1 {field_types} must specify a named character vector of TSQL data types.')
+      }
 
-# Standardize the data.types from data.table ----
-  # extract R data types from data.table
-    Rtypes <- sapply(ph.data, class)
-    RtypesDT <- data.table::data.table(colname = tolower(names(Rtypes)),
-                                       r_type = Rtypes)
+      if (!identical(sort(tolower(names(ph.data))), sort(tolower(names(field_types))))) {
+        stop('\n\U1F6D1 Validation of TSQL data types necessitates exactly one TSQL datatype per column name in {ph.data}.')
+      }
 
-  # Generate standard data type equivalents to those in R
-    RtypesDT[, std_type := fcase(
-      r_type %in% c("logical"), "logical",
-      r_type %in% c("integer"), "integer",
-      r_type %in% c("numeric", "double"), "numeric",
-      r_type %in% c("character", "factor"), "character",
-      r_type %in% c("POSIXct", "Date"), "POSIXct",
-      r_type %in% c("raw"), "raw",
-      default = NA_character_
-    )]
+  # Define type compatibility and constraints ----
+      type_compatibility <- list(
+        integer = c("tinyint", "smallint", "int", "bigint"),
+        numeric = c("tinyint", "smallint", "int", "bigint", "decimal", "numeric", "float", "real", "money", "smallmoney"),
+        character = c("char", "varchar", "text", "nchar", "nvarchar", "ntext"),
+        factor = c("char", "varchar", "text", "nchar", "nvarchar", "ntext"),
+        logical = "bit",
+        Date = "date",
+        POSIXct = c("datetime", "datetime2", "smalldatetime", "datetimeoffset"),
+        raw = c("binary", "varbinary", "image")
+      )
 
-    if(nrow(RtypesDT[is.na(std_type)]) > 0){
-      stop(paste0("\n\U1F6D1 ", RtypesDT[is.na(std_type)]$colname, " in {ph.data} is of class '", RtypesDT[is.na(std_type)]$r_type, "', which is not recognized by rads::tsql_validate_field_types.\n",
-            "If you think this is a mistake, please submit a GitHub issue."))
-    }
+      type_constraints <- list(
+        tinyint = list(min = 0, max = 255),
+        smallint = list(min = -32768, max = 32767),
+        int = list(min = -2147483648, max = 2147483647),
+        bigint = list(min = -9223372036854775808, max = 9223372036854775807)
+      )
 
-# Standardize the data types from SQL data type vector ----
-  # convert named vector to a table
-    TSQLtypesDT <- data.table::data.table(colname = tolower(names(field_types)),
-                                          tsql_type = field_types)
+  # Define helper functions ----
+    # Function to extract size from TSQL type ----
+        extract_size <- function(type) {
+          size <- gsub(".*\\((\\d+)\\).*", "\\1", type)
+          if (size == type) NA_integer_ else as.integer(size)
+        }
 
-  # keep only the core name of the tsql_type
-    TSQLtypesDT[, tsql_type := gsub("\\(.*$", "", tsql_type)]
+    # Function to check type compatibility ----
+        check_compatibility <- function(R_type, tsql_type) {
+          compatible_types <- unlist(type_compatibility[R_type])
+          tsql_type %in% compatible_types
+        }
 
-  # Generate standard data type equivalents to those in TSQL
-    TSQLtypesDT[, tsql_type := tolower(tsql_type)]
-    TSQLtypesDT[, std_type := fcase(
-      tsql_type %in% c("bit"), "logical",
-      tsql_type %in% c("tinyint", "int", "integer"), "integer",
-      tsql_type %in% c("bigint"), "numeric", # bigint as numeric to avoid overflow for 32bit R integer
-      tsql_type %in% c("smallmoney", "money", "numeric", "decimal", "real", "float"), "numeric",
-      tsql_type %in% c("char", "varchar", "nchar", "nvarchar", "text", "ntext"), "character",
-      tsql_type %in% c("date", "time", "datetime", "datetime2", "smalldatetime", "datetimeoffset"), "POSIXct",
-      tsql_type %in% c("uniqueidentifier"), "character",
-      tsql_type %in% c("binary", "varbinary", "image"), "raw",
-      default = NA_character_
-    )]
+    # Function to check value constraints ----
+        check_constraints <- function(column, tsql_type, size, R_type) {
+          if (tsql_type %in% names(type_constraints)) { # check range of vals for variations of INT
+            constraints <- type_constraints[[tsql_type]]
+            non_na <- !is.na(column)
+            all(column[non_na] >= constraints$min & column[non_na] <= constraints$max, na.rm = TRUE) &&
+              # Add check for numeric to integer conversion
+              if (R_type == "numeric") {
+                all(column[non_na] == floor(column[non_na]), na.rm = TRUE)
+              } else {
+                TRUE # if R_type not numeric, must be integer -- defined in type compatibility
+              }
+          } else if (tsql_type %in% c("char", "varchar", "nchar", "nvarchar") && !is.na(size)) {
+            all(nchar(as.character(column)) <= size, na.rm = TRUE)
+          } else {
+            TRUE
+          }
+        }
 
-    if(nrow(TSQLtypesDT[is.na(std_type)]) > 0){
-      stop(paste0("\n\U1F6D1 ", TSQLtypesDT[is.na(std_type)]$colname, " in {field_types} has the data type '", TSQLtypesDT[is.na(std_type)]$tsql_type, "', which is not recognized by rads::tsql_validate_field_types.\n",
-                  "If you think this is a mistake, please submit a GitHub issue."))
-    }
+  # Generate R types data table ----
+      RtypesDT <- data.table(
+        colname = tolower(names(ph.data)),
+        R_type = sapply(ph.data, \(x) class(x)[1]), # keep only first class if there is more than one, e.g., c("POSIXct", "POSIXt")
+        key = "colname"
+      )
+      RtypesDT[R_type %in% c('POSIXt', 'POSIXlt'), R_type := 'POSIXct']
 
-# Combine the standardized data types from R and SQL into one table ----
-    combotypesDT <- merge(RtypesDT,
-                          TSQLtypesDT,
-                          by = c('colname', 'std_type'),
-                          all.x = F, all.y = F)
+      valid_R_types <- unique(names(type_compatibility))
+      if(nrow(RtypesDT[!R_type %in% valid_R_types]) > 0){
+        stop(paste0("\n\U1F6D1\U0001f47f The following R classes (column data types) are not recognized: ",
+                    paste0(unique(RtypesDT[!R_type %in% valid_R_types]$R_type), collapse = ','),
+                    ".\n These data types are not currently supported for TSQL conversion.",
+                    " If you think this is a mistake, please submit a GitHub issue."))
+      }
 
-# Give feedback to user ----
-    if(length(Rtypes) == nrow(combotypesDT[!is.na(std_type)])){
-      message('\U0001f642 Success! Your desired TSQL data types appear to be suitable for your dataset.')
-    } else {stop(paste0('\n\U1F6D1\U0001f47f The following columns in your dataset did not align with the proposed TSQL datatypes: ',
-                        paste(setdiff(names(Rtypes), combotypesDT$colname), collapse = ', '), '.\n',
-                        'Please manually check the class() and proposed TSQL data types for these columns.\n',
-                        'If you are certain that the data type pairings are logical AND should be a default, please submit a GitHub Issue.'))}
+  # Generate TSQL types data table ----
+      TSQLtypesDT <- data.table(
+        colname = tolower(names(field_types)),
+        tsql_type = gsub("\\(.*$", "", tolower(field_types)), # drop off (###)
+        size = sapply(field_types, extract_size),
+        key = "colname"
+      )
 
+      valid_tsql_types <- unique(unlist(type_compatibility))
+      if(nrow(TSQLtypesDT[!tsql_type %in% valid_tsql_types]) > 0){
+        stop(paste0("\n\U1F6D1\U0001f47f The following TSQL field types are not recognized: ",
+                    paste0(unique(TSQLtypesDT[!tsql_type %in% valid_tsql_types]$tsql_type), collapse = ','),
+                    ".\n If you believe it is valid, please submit a GitHub issue."))
+      }
+
+  # Combine R and TSQL type information ----
+      combotypesDT <- merge(RtypesDT, TSQLtypesDT, by = "colname")
+
+  # Validate type compatibility and constraints ----
+      combotypesDT[, is_compatible := mapply(check_compatibility,
+                                             R_type,
+                                             tsql_type)]
+
+      combotypesDT[, meets_constraints := mapply(check_constraints,
+                                                 ph.data[, .SD, .SDcols = colname],
+                                                 tsql_type,
+                                                 size,
+                                                 R_type)]
+
+      combotypesDT[is.na(meets_constraints), meets_constraints := TRUE]
+
+  # Generate detailed validation results ----
+      validation_results <- combotypesDT[, list(
+        colname = colname,
+        R_type = R_type,
+        tsql_type = tsql_type,
+        is_valid = is_compatible & meets_constraints,
+        issue = fcase(
+          !is_compatible, "Incompatible types",
+          !meets_constraints & R_type == "numeric" & tsql_type %in% c("tinyint", "smallint", "int", "bigint"),
+          "Numeric values cannot be safely converted to integer",
+          !meets_constraints, "Fails constraints",
+          default = NA_character_
+        )
+      )]
+
+  # Provide feedback to user ----
+      # report if column is all NA
+      na_cols <- ph.data[, lapply(.SD, function(x) all(is.na(x))), .SDcols = names(ph.data)]
+      na_cols <- names(na_cols)[as.logical(na_cols)]
+      if(length(na_cols) > 0){warning('\U00026A0 Validation may be flawed for the following variables because they are 100% missing: ', paste0(na_cols, collapse = ', '))}
+
+      # report back overall validation
+      if (all(validation_results$is_valid)) {
+        message('\U0001f642 Success! Your desired TSQL data types are suitable for your dataset.')
+      } else {
+        invalid_columns <- validation_results[is_valid == FALSE]
+        stop(paste0(
+          '\n\U1F6D1\U0001f47f The following columns in your dataset did not ',
+          'align with the proposed TSQL field types:\n',
+          paste0(
+            "     column: ", invalid_columns$colname,
+            ", R Type: ", invalid_columns$R_type,
+            ", TSQL Type: ", invalid_columns$tsql_type,
+            ", issue: ", invalid_columns$issue,
+            collapse = "\n"
+          )
+        ))
+      }
+
+  # Return validation results ----
+  return(validation_results)
 }
+
 
 # tsql_chunk_loader() ----
 #' Loads large data sets to Microsoft SQL Server (TSQL) in 'chunks'
@@ -2305,5 +2271,144 @@ validate_hhsaw_key <- function(hhsaw_key = 'hhsaw'){
   }
 
   return(con)
+
+}
+
+# validate_yaml_data() ----
+#' Validate the structure and data types of a data.frame or data.table against
+#' specifications defined in a YAML file
+#'
+#' @description
+#' \strong{!!!STOP!!! This function has been deprecated!} Please use
+#' \link{tsql_validate_field_types} instead.
+#'
+#' Validate the structure and data types of a data.frame or data.table against
+#' specifications defined in a YAML file. This is most often used to check that
+#' your data.frame or data.table is suitable to be pushed to TSQL when a YAML
+#' file specifies the field.types to be used by `DBI::dbWriteTable` &
+#' `odbc::dbWriteTable`.
+#'
+#'
+#' @param ph.data Name of the data.table/data.frame that you want to assess
+#' vis-à-vis the YAML file
+#'
+#' @param YML Name of the YAML object in memory
+#'
+#' @param VARS Character vector of length 1. Is is the name of the object in the
+#' list contained by YML
+#'
+#' @importFrom data.table data.table setnames ":=" setDT
+#'
+#' @examples
+#' library(data.table)
+#'
+#' # create sample data.table
+#' mydt <- data.table(myalpha = letters[1:10],
+#'                    myint = 1L:10L,
+#'                    mynum = seq(.1, 1, .1))
+#' mydt[, mydate := as.Date('2000-01-01') + myint]
+#' mydt[, myfact := factor(myalpha)]
+#'
+#' # create sample yaml object
+#' myyaml <- list(
+#'   myvars = list(
+#'     myalpha = "varchar(255)",
+#'     myint = "int",
+#'     mynum = "float",
+#'     mydate = "date",
+#'     myfact = "varchar(255)"
+#'   )
+#' )
+#'
+#' # use function
+#' validate_yaml_data(ph.data = mydt, YML = myyaml, VARS = "myvars")
+#'
+#' @export
+#' @return A simple printed statement, either identifying incompatible column types or a statement of success
+validate_yaml_data <- function(ph.data = NULL, YML = NULL, VARS = "vars"){
+  ## Global variables used by data.table declared as NULL here to play nice with devtools::check()
+  ph.data.class <- orig.ph.dataname <- yamlcols <- yamlnames <- yamlextra <- dfcols <- dfnames <- NULL
+
+  #Deprecation warning
+  .Deprecated("tsql_validate_field_types")
+
+  # Get the name of of the data.frame/data.table passed to to the function ----
+  orig.ph.dataname <- deparse(substitute(ph.data))
+
+  # Check that DT is a data.frame/data.table ----
+  if(is.data.frame(ph.data) == FALSE){
+    stop("'ph.data' must be a data.frame or a data.table")
+  }else{ph.data <- data.table::setDT(copy(ph.data))}
+
+  # Check that number of vars in YML is same as ncols in ph.data ----
+  yamlcols <- length(YML[[VARS]])
+  dfcols <- ncol(ph.data)
+  if(yamlcols != dfcols){
+    stop(paste0("The number of vars specified in the YAML (", yamlcols, ") does not match the number of columns in ph.data (", dfcols, ")"))
+  }
+
+  # Check that the column names in YML match those in ph.data ----
+  yamlnames <- sort(names(YML[[VARS]]))
+  dfnames <- sort(names(ph.data))
+  yamlextra <- setdiff(yamlnames, dfnames)
+  if(length(yamlextra) == 0){yamlextra <- "_____"}
+  dfextra <- setdiff(dfnames, yamlnames)
+  if(length(dfextra) == 0){dfextra <- "_____"}
+  if(setequal(yamlnames, dfnames)==F){
+    stop(paste0("The following variables are in the YAML but not in ph.data: ", yamlextra),
+         paste0(". The following variables are in ph.data but not in the YAML: ", dfextra), ".")
+  }
+
+  # notice that this might take a while ----
+  message("The validation may take a few minutes if your data & yaml contain dates and or times ...")
+
+  # identify proper classes from YAML file ----
+  class.compare <- data.table::data.table(
+    name =  c(names(YML[[VARS]])),
+    yaml.class = tolower(as.character(YML[[VARS]]))
+  )
+
+  # convert names of SQL data types to R classes ----
+  class.compare[grepl("char|text|uniqueidentifier", tolower(yaml.class)), yaml.class := "character"]
+  class.compare[tolower(yaml.class) %in% c("tinyint", "smallint", "int"), yaml.class := "integer"]
+  class.compare[grepl("bigint|decimal|float|money|numeric|real", tolower(yaml.class)), yaml.class := "numeric"]
+  class.compare[grepl("bit", tolower(yaml.class)), yaml.class := "logical"]
+  class.compare[grepl("time", tolower(yaml.class)), yaml.class := "POSIXct"]
+  class.compare[grepl("date", tolower(yaml.class)), yaml.class := "date"]
+
+  # identify which VARS should be of which class (assuming YAML is correct) ----
+  make.char <- class.compare[yaml.class == "character"]$name
+  make.num  <- class.compare[yaml.class == "numeric"]$name
+  make.int  <- class.compare[yaml.class == "integer"]$name
+  make.logical  <- class.compare[yaml.class == "logical"]$name
+  make.POSIXct  <- class.compare[yaml.class == "POSIXct"]$name
+  make.Date  <- class.compare[yaml.class == "date"]$name
+
+  # use lossless_convert function to convert R column types if possible / needed ----
+  suppressWarnings(ph.data[, (make.char) := lapply(.SD, lossless_convert, class = 'character'), .SDcols = make.char])
+  suppressWarnings(ph.data[, (make.num) := lapply(.SD, lossless_convert, class = 'numeric'), .SDcols = make.num])
+  suppressWarnings(ph.data[, (make.int) := lapply(.SD, lossless_convert, class = 'integer'), .SDcols = make.int])
+  suppressWarnings(ph.data[, (make.logical) := lapply(.SD, lossless_convert, class = 'logical'), .SDcols = make.logical])
+  suppressWarnings(ph.data[, (make.Date) := lapply(.SD, lossless_convert, class = 'Date'), .SDcols = make.Date])
+  suppressWarnings(ph.data[, (make.POSIXct) := lapply(.SD, lossless_convert, class = 'POSIXct'), .SDcols = make.POSIXct])
+
+  # check if there are variables that could not be coerced to proper type ----
+  class.compare <- merge(data.table::data.table(name = names(sapply(ph.data, class)), ph.data.class = tolower(sapply(ph.data, class))),
+                         class.compare, by = "name")
+  class.compare[ph.data.class == 'c("posixct", "posixt")', ph.data.class := 'POSIXct']
+
+  # allow R to be more strict than YAML with numbers ----
+  class.compare[yaml.class=="numeric" & ph.data.class == "integer", ph.data.class := "numeric"]
+
+  # Assess whether there were any problems ----
+  if(nrow(class.compare[ph.data.class != yaml.class]) > 0){
+    yaml.name <- class.compare[ph.data.class != yaml.class]$name
+    yaml.class <- class.compare[ph.data.class != yaml.class]$yaml.class
+    class.problems <- paste(paste0(yaml.name, " (", yaml.class, ")"), collapse = ", ")
+    stop(glue::glue("\n\U0001f47f The following variables could not be coerced to their proper class (which is specified in parentheses):
+                              {class.problems}"))
+  }else{message(paste0("\U0001f642 All column classes in `", orig.ph.dataname,"` are compatible with the YAML reference standard."))}
+
+  return(invisible(NULL))
 
 }

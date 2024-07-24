@@ -2,30 +2,42 @@
 % Please edit documentation in R/utilities.R
 \name{tsql_validate_field_types}
 \alias{tsql_validate_field_types}
-\title{Validates whether a named vector of TSQL data types is compatible with a data.table}
+\title{Validates whether a named vector of TSQL data types is compatible with a
+data.table}
 \usage{
 tsql_validate_field_types(ph.data = NULL, field_types = NULL)
 }
 \arguments{
-\item{ph.data}{The name of a single data.table/data.frame to be loaded to SQL Server.}
+\item{ph.data}{The name of a single data.table/data.frame to be loaded to SQL
+Server.}
 
-\item{field_types}{A named character vector with the desired TSQL
-datatypes for your upload. For example, \code{c(col1 = 'int', col2 = 'float', col3 = 'date')}.
-Note that the names in \code{field_types} must be the same as the names in \code{ph.data}. This
-is often read into memory from a *.yaml file, but can also be manually created.}
+\item{field_types}{A named character vector with the desired TSQL datatypes
+for your upload. For example, \code{c(col1 = 'int', col2 = 'float', col3 = 'date')}. Note that the names in \code{field_types} must be the same as the
+names in \code{ph.data}. This is often read into memory from a *.yaml file, but
+can also be manually created.}
 }
 \description{
-\code{tsql_validate_field_types} checks whether a named vector of TSQL data types is
-compatible with a given data.table that you wish to upload to Microsoft SQL Server.
-The function does not cover every possible situation! For example, you might
-want to push your R '\code{POSIXct}' column to a SQL Server table as an '\code{nvarchar()}' datatype,
-but this function will expect you to map it to a more typical data type such
-as '\code{date}' or '\code{datetime}'. Think of this function as a second set of eyes
-to make sure you didn't do something careless.
+\code{tsql_validate_field_types} checks whether a named vector of TSQL data
+types is compatible with a given data.table that you wish to upload to
+Microsoft SQL Server. The function does not cover every possible situation!
+For example, you might want to push your R '\code{POSIXct}' column to a SQL Server
+table as an '\code{nvarchar()}' datatype, but this function will expect you to map
+it to a more typical data type such as '\code{datetime}'. Think of this function
+as a second set of eyes to make sure you didn't do something careless.
 }
 \details{
-Note that this function does not evaluate if the allocated length for
-character strings, i.e., \code{nvarchar()} and \code{varchar()}, is sufficient.
+Note that this function may not thoroughly evaluate if the allocated
+length for character strings, i.e., \code{nvarchar()} and \code{varchar()}, is
+sufficient.
+
+Note that this replaces \code{rads::validate_yaml_data}. To use this function to
+check the compatibility of field types in a yaml file with your dataset, do
+the following:
+\enumerate{
+\item load the yaml file, e.g., \code{yaml <- yaml::read_yaml("X:/code/myyaml.yaml")}
+\item unlist the variable descriptions, e.g., \code{yaml_field_types = unlist(yaml$vars)}
+\item use \code{tsql_validate_field_types}, e.g., \code{tsql_validate_field_types(ph.data = mydt, field_types = yaml_field_types)}
+}
 }
 \examples{
 \donttest{
@@ -35,8 +47,13 @@ character strings, i.e., \code{nvarchar()} and \code{varchar()}, is sufficient.
                    col2 = 1:10000/3) # creates floats
  mydt[, col3 := as.Date(Sys.Date()) - col1] # creates dates
  mydt[, col4 := as.character(col3)] # create strings
+ mydt[, col5 := Sys.time()] # create POSIXct
 
- myfieldtypes <- c(col1 = 'int', col2 = 'float', col3 = 'date', col4 = 'nvarchar(255)')
+ myfieldtypes <- c(col1 = 'int',
+                   col2 = 'float',
+                   col3 = 'date',
+                   col4 = 'nvarchar(255)',
+                   col5 = 'datetime')
 
  tsql_validate_field_types(ph.data = mydt, field_types = myfieldtypes)
 
