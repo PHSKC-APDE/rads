@@ -189,12 +189,12 @@ chars_injury_matrix<- function(){
 #' @import data.table rads.data
 #'
 chars_injury_matrix_count<- function(ph.data = NULL,
-                                intent = "*",
-                                mechanism = "*",
-                                group_by = NULL,
-                                def = 'narrow',
-                                primary_ecode = T,
-                                kingco = T){
+                                     intent = "*",
+                                     mechanism = "*",
+                                     group_by = NULL,
+                                     def = 'narrow',
+                                     primary_ecode = T,
+                                     kingco = T){
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
     chi_geo_kc <- icd10 <- bingo <- hospitalizations <- icd10cm <- icd10cm_desc <- NULL
     var.names <- injury_nature_narrow <- injury_ecode <- injury_nature_broad <- NULL
@@ -206,17 +206,13 @@ chars_injury_matrix_count<- function(ph.data = NULL,
 
   # Check arguments ----
     # ph.data ----
-        ph.data.name <- deparse(substitute(ph.data))
-        if(!is.null(ph.data)){
-          if(!is.data.frame(ph.data)){
-            stop("\n\U0001f47f 'ph.data' must be the unquoted name of a data.frame or data.table")
-          }
-          if(is.data.frame(ph.data) && !data.table::is.data.table(ph.data)){
-            data.table::setDT(ph.data)
-          }
-        } else {stop("\n\U0001f47f 'ph.data', the name of a data.frame or data.table with line level CHARS data, must be specified")}
-
-        ph.data <- data.table::setDT(data.table::copy(ph.data)) # to prevent changing of original by reference
+      if (missing(ph.data) || !is.data.frame(ph.data)) {
+        stop("\n\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
+      }
+      if (!data.table::is.data.table(ph.data)) {
+        data.table::setDT(ph.data)
+      }
+      ph.data <- data.table::copy(ph.data) # to prevent changing of original by reference
 
     # seq_no (unique identifier) ----
         if(!'seq_no' %in% names(ph.data)){
@@ -232,7 +228,7 @@ chars_injury_matrix_count<- function(ph.data = NULL,
           stop("\n\U0001f47f The intent '*' cannot be specified with any other intents.")
         }
 
-        if(nrow(setDT(list_dataset_columns('chars'))[grepl('^intent_', var.names)]) >
+        if(nrow(setDT(quiet(list_dataset_columns('chars')))[grepl('^intent_', var.names)]) >
            length(grep('^intent_', names(ph.data), value = T))){
           mi_col_intent <- setdiff(setDT(list_dataset_columns('chars'))[grepl('^intent_', var.names)]$var.names, grep('^intent_', names(ph.data), value = T))
           warning(paste0("\n\U00026A0 ph.data is missing the following `intent_**` columns: ", paste0(mi_col_intent, collapse = ', '), ". This may impact the completeness of your results."))
@@ -246,7 +242,7 @@ chars_injury_matrix_count<- function(ph.data = NULL,
           stop("\n\U0001f47f The mechanism '*' cannot be specified with any other mechanisms.")
         }
 
-        if(nrow(setDT(list_dataset_columns('chars'))[grepl('^mechanism_', var.names)]) >
+        if(nrow(setDT(quiet(list_dataset_columns('chars')))[grepl('^mechanism_', var.names)]) >
            length(grep('^mechanism_', names(ph.data), value = T))){
           mi_col_mechanism <- setdiff(setDT(list_dataset_columns('chars'))[grepl('^mechanism_', var.names)]$var.names, grep('^mechanism_', names(ph.data), value = T))
           warning(paste0("\n\U00026A0 ph.data is missing the following `mechanism_**` columns: ", paste0(mi_col_mechanism, collapse = ', '), ". This may impact the completeness of your results."))
@@ -332,25 +328,25 @@ chars_injury_matrix_count<- function(ph.data = NULL,
 
   # Create motor_vehicle_traffic column when needed ----
       if('motor_vehicle_traffic' %in% x_mechanism){
-        # Matt Dowle's suggestion ... https://stackoverflow.com/questions/7885147/efficient-row-wise-operations-on-a-data-table
-        ph.data[, mechanism_motor_vehicle_traffic := do.call(pmax, c(.SD, na.rm = T)),
-                .SDcols = paste0('mechanism_', grep('mvt_', possible.mechanisms, value = T))]
+        mvt_cols <- paste0('mechanism_', grep('mvt_', possible.mechanisms, value = TRUE))
+        ph.data[, mechanism_motor_vehicle_traffic := Reduce(function(x, y) pmax(x, y, na.rm = TRUE),
+                                                            .SD,
+                                                            init = NA_real_),
+                                                      .SDcols = mvt_cols]
       }
 
   # Count hospitalizations for each intent_x_mechanism of interest ----
-      x_combo <- data.table() # table to hold results of all combinations of mech & intent specified by the arguments
         # create matrix of all mechanisms and intents of interest ----
         x_grid <- data.table::setDT(expand.grid(mechanism = x_mechanism, intent = x_intent))
 
         # count number of hospitalizations (i.e., rows) when def == 'narrow' ----
-        for(ii in 1:nrow(x_grid)){
+        x_combo <- rbindlist(lapply(1:nrow(x_grid), function(ii) {
           temp.ph.data <- copy(ph.data)
 
         # Identify whether the combination of mech & intent in x_grid has any hospitalizations in person level data ----
-            # could theoretically use injury_mechanism & injury_intent, but would need extra coding to address when either has value 'any'
-            temp.ph.data[, bingo := 0] # By default, assume the row does not have the given combination of mech and intent
-            temp.ph.data[get(paste0("mechanism_", as.character(x_grid[ii]$mechanism))) >= 1 &
-                           get(paste0("intent_", as.character(x_grid[ii]$intent))) >= 1, bingo := 1]
+          # could theoretically use injury_mechanism & injury_intent, but would need extra coding to address when either has value 'any'
+            temp.ph.data[, bingo := as.integer(get(paste0("mechanism_", x_grid[ii]$mechanism)) >= 1 &
+                                                 get(paste0("intent_", x_grid[ii]$intent)) >= 1)]
 
         # Aggregate (sum) the number of hospitalizations for the mech / intent combination from x_grid ----
             if(!is.null(group_by)){
@@ -365,19 +361,15 @@ chars_injury_matrix_count<- function(ph.data = NULL,
 
           # create grid of all possible combinations of group_by vars ----
             gridvars <- setdiff(names(temp.ph.data), 'hospitalizations')
-            for(mygridvar in gridvars){
-              assign(paste0("xtemp_", mygridvar), unique(temp.ph.data[[mygridvar]]))
-            }
-            complete.grid <- data.table(setDT(expand.grid(mget(paste0("xtemp_", gridvars)))))
-            setnames(complete.grid, gsub("^xtemp_", "", names(complete.grid)))
+            complete.grid <- do.call(CJ, lapply(gridvars, function(x) unique(temp.ph.data[[x]])))
+            setnames(complete.grid, gridvars)
 
           # merge temp.ph.data onto complete.grid ----
             temp.ph.data <- merge(complete.grid, temp.ph.data, all = T)
             temp.ph.data[is.na(hospitalizations), hospitalizations := 0]
 
-          # append onto x_combo ----
-            x_combo <- rbind(x_combo, temp.ph.data)
-        }
+          return(temp.ph.data)
+        }), fill=TRUE)
 
   # Tidy ----
     # Additional collapse/aggregate if mechanism == 'none' ----
@@ -661,21 +653,17 @@ chars_icd_ccs_count <- function(ph.data = NULL,
     CMtable <- CMtable.expanded <- filter.count <- problem.icds <- superlevel_desc <- broad_desc <-
       midlevel_desc <- detailed_desc <- chi_geo_kc <- hospitalizations <- icdcm_code <- KeepMe <-
       icdcm_desc <- icdcm_code <- query.group <- diag1 <- intent_ignore <-
-      chars_injury_matrix_count <- mechanism_ignore <- NULL
+      chars_injury_matrix_count <- mechanism_ignore <- dummy <- NULL
 
   # Check arguments & filter reference table of all ICD CM (CMtable) ----
     # ph.data ----
-        ph.data.name <- deparse(substitute(ph.data))
-        if(!is.null(ph.data)){
-          if(!is.data.frame(ph.data)){
-            stop("\n\U0001f47f 'ph.data' must be the unquoted name of a data.frame or data.table")
-          }
-          if(is.data.frame(ph.data) && !data.table::is.data.table(ph.data)){
-            data.table::setDT(ph.data)
-          }
-        } else {stop("\n\U0001f47f 'ph.data', the name of a data.frame or data.table with line level CHARS data, must be specified")}
-
-        ph.data <- data.table::setDT(data.table::copy(ph.data)) # to prevent changing of original by reference
+        if (missing(ph.data) || !is.data.frame(ph.data)) {
+          stop("\n\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
+        }
+        if (!data.table::is.data.table(ph.data)) {
+          data.table::setDT(ph.data)
+        }
+        ph.data <- data.table::copy(ph.data) # to prevent changing of original by reference
 
     # icdcm_version ----
         if(!icdcm_version %in% c(9, 10) | length(icdcm_version) != 1){stop("\n \U0001f47f the `icdcm_version` argument is limited to the integers '9' OR '10'")}
@@ -777,7 +765,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
           stop(paste0("\n\U0001f47f You specified icdcol='", icdcol, "', but '", icdcol, "' does not exist in `ph.data`."))
         }
 
-        ph.data[, paste(icdcol) := toupper(get(icdcol))]
+        ph.data[, (icdcol) := toupper(get(icdcol))]
 
         if(length(grep("\\.|-", ph.data[[icdcol]], value = T) >0 )){
           warning(paste0("\U00026A0 There is at least one row where `icdcol` (",
@@ -843,44 +831,45 @@ chars_icd_ccs_count <- function(ph.data = NULL,
       CMtable[, query.group := .GRP, by = setdiff(names(CMtable), "icdcm_code")]
 
     # generate counts for each query.group ----
-      HospCounts <- data.table()
-      for(QG in unique(CMtable$query.group)){
-        if(is.null(group_by)){
-          tempHospCounts <- ph.data[diag1 %in% unlist(CMtable[query.group == QG]$icdcm_code), list(hospitalizations = .N)]
-        }
-        if(!is.null(group_by)){
-          tempHospCounts <- ph.data[diag1 %in% unlist(CMtable[query.group == QG]$icdcm_code), list(hospitalizations = .N), by = group_by]
+      HospCounts <- rbindlist(lapply(unique(CMtable$query.group), function(QG) {
+        tempHospCounts <- if (is.null(group_by)) {
+          ph.data[diag1 %in% unlist(CMtable[query.group == QG]$icdcm_code), list(hospitalizations = .N)]
+        } else {
+          ph.data[diag1 %in% unlist(CMtable[query.group == QG]$icdcm_code), list(hospitalizations = .N), by = group_by]
         }
         tempHospCounts[, query.group := QG]
-        tempHospCounts <- merge(tempHospCounts, CMtable, by = "query.group")
-        tempHospCounts[, c('icdcm_code') := NULL]
-        HospCounts <- rbind(HospCounts, tempHospCounts, fill = T)
-      }
+        # tempHospCounts <- CMtable[tempHospCounts, on = "query.group"] # native data.table merge syntax
+        tempHospCounts <- merge(CMtable, tempHospCounts, by = 'query.group', all = FALSE)
+        tempHospCounts[, icdcm_code := NULL]
+        return(tempHospCounts)
+      }), fill = TRUE)
 
   # Expand reference table for each combination of group_by variables ----
       CMtable[, icdcm_code := NULL]
-      if(is.null(group_by)){CMtable.expanded <- CMtable}
-      if(!is.null(group_by)){
-          for(nombre in group_by){
-            assign(paste0('xyz_', nombre), unique(ph.data[, get(nombre)]))
-          }
+      if (is.null(group_by)) {
+        CMtable.expanded <- CMtable
+      } else {
+        # Create a list of unique values for each group_by variable
+        unique_vals_list <- lapply(group_by, function(col) unique(ph.data[[col]]))
+        names(unique_vals_list) <- group_by
 
-          template.xyz <- setDT(expand.grid(mget(ls(pattern = 'xyz_'))))
-          setnames(template.xyz, gsub('^xyz_', '', names(template.xyz)))
+        # Create the Cartesian product of unique values using CJ
+        template.xyz <- do.call(CJ, unique_vals_list)
 
-          CMtable.expanded <- data.table()
-          for(xyz.count in 1:nrow(template.xyz)){
-            CMtable.expanded <- rbind(CMtable.expanded, cbind(CMtable, template.xyz[xyz.count]))
-          }
+        # Expand CMtable for each combination of group_by variables
+        CMtable.expanded <- merge(CMtable[, dummy := 1],
+                                  template.xyz[, dummy := 1],
+                                  by = 'dummy',
+                                  allow.cartesian = TRUE)[, dummy := NULL]
       }
 
   # Merge counts onto the expanded table to get table with all possible combination, even when counts == 0 ----
-    HospCounts <- merge(CMtable.expanded, HospCounts, by = intersect(names(HospCounts), names(CMtable.expanded)), all.x = T, all.y = T)
+    HospCounts <- merge(CMtable.expanded, HospCounts,
+                        by = intersect(names(HospCounts), names(CMtable.expanded)),
+                        all = TRUE)
     HospCounts[is.na(hospitalizations), hospitalizations := 0]
     setorderv(HospCounts, c('query.group', group_by))
     HospCounts[, c("query.group") := NULL]
-
-  # Tidy ----
 
   # Return data ----
   return(HospCounts)

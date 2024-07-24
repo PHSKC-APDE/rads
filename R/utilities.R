@@ -1920,9 +1920,10 @@ tsql_validate_field_types <- function(ph.data = NULL, # R data.frame/data.table
     TSQLtypesDT[, tsql_type := gsub("\\(.*$", "", tsql_type)]
 
   # Generate standard data type equivalents to those in TSQL
+    TSQLtypesDT[, tsql_type := tolower(tsql_type)]
     TSQLtypesDT[, std_type := fcase(
       tsql_type %in% c("bit"), "logical",
-      tsql_type %in% c("tinyint", "int"), "integer",
+      tsql_type %in% c("tinyint", "int", "integer"), "integer",
       tsql_type %in% c("bigint"), "numeric", # bigint as numeric to avoid overflow for 32bit R integer
       tsql_type %in% c("smallmoney", "money", "numeric", "decimal", "real", "float"), "numeric",
       tsql_type %in% c("char", "varchar", "nchar", "nvarchar", "text", "ntext"), "character",

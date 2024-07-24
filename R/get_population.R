@@ -140,7 +140,6 @@ get_population <- function(kingco = T,
   scd_id <- scd_name <- setNames <- short <- sql_col <- value <- varname <- vid <- type <- NULL
   hra20_id <- hra20_name <- hispanic <- NULL
 
-
   # valid inputs
   validate_input = function(varname, vals, allowed_vals, additional = "", convert_to_all = TRUE){
 
@@ -170,9 +169,22 @@ get_population <- function(kingco = T,
   ## validate geo_type and kingco ----
   ## if seattle, pull region where seattle
   valid_geogs = c('blk', 'blkgrp', 'tract', 'county', 'hra', 'kc', 'lgd',
-                  'region', 'seattle', 'scd' , 'tract', 'wa', 'zip',
+                  'region', 'seattle', 'scd' , 'wa', 'zip',
                   'ccl', 'csa', 'inc_uninc', 'puma', 'kccd', 'tribal')
   geo_type = match.arg(tolower(geo_type), valid_geogs)
+
+  if(geo_type %in% c('blk', 'blkgrp', 'county', 'hra', 'lgd',
+                     'region', 'scd' , 'zip')){
+    gt = tolower(substr(geo_type, 1,3))
+  }else if(geo_type %in% c('kc', 'wa')){
+    gt = 'cou'
+  }else if(geo_type =='seattle'){
+    gt = 'reg'
+  }else if(geo_type == 'tract'){
+    gt = 'blk'
+  }else{
+    gt = geo_type
+  }
 
   ## create geo_type selectors and filters ----
   ## TODO: should we recompute blkgrp and tract? It'll be a lot faster
@@ -202,12 +214,6 @@ get_population <- function(kingco = T,
     group_geo_type = DBI::Id(column = 'geo_id')
     select_geo_type = DBI::Id(column = 'geo_id')
   }else{
-    if(geo_type %in% c('blk', 'blkgrp', 'tract', 'county', 'hra', 'kc', 'lgd',
-                       'region', 'seattle', 'scd' , 'tract', 'wa', 'zip')){
-      gt = tolower(substr(geo_type, 1,3))
-    }else{
-      gt = geo_type
-    }
     pop_table = DBI::Id(schema = schema, table = paste0(table_prefix, gt))
     where_geo_type = SQL('')
     group_geo_type = SQL('geo_id') # over the whole state
@@ -263,20 +269,18 @@ get_population <- function(kingco = T,
 
   ## validate years ----
   ## integer year between 2000 and 2022
-  gt = substr(pop_table@name['table'],9,nchar(pop_table@name['table']))
   find_years_where = c(
-    DBI::SQL('r_type = 97'),
-    DBI::SQL('load_ref_datetime is not null'),
-    DBI::SQL('delete_ref_datetime is null'),
     where_census_vintage,
     where_geo_vintage,
     glue::glue_sql('geo_type = {gt}', .con = con)
   )
   find_years_where = find_years_where[!sapply(find_years_where, function(x) x == DBI::SQL(''))]
   find_years_where = glue::glue_sql_collapse(find_years_where, sep = ' AND ')
-  year_q = glue::glue_sql('select max(year) as maxyear from
-                          ref.pop_metadata_etl_log
-                          where {find_years_where}',.con  = con)
+
+  year_q = glue::glue_sql('select max(year) as maxyear
+                        from {`pop_table`}
+                        where {find_years_where}', .con = con)
+
   year_r = dbGetQuery(con, year_q)
   if(all(is.na(years)) || is.null(years)){
     years = as.numeric(year_r$maxyear)
@@ -391,19 +395,19 @@ get_population <- function(kingco = T,
     ## Query for race ----
     ### The query to data by race (ignoring ethnicity) ----
     q1 = build_getpop_query(con = con,
-                           cols = cols,
-                           pop_table = pop_table,
-                           group_by = group_by,
-                           group_geo_type = group_geo_type,
-                           select_geo_type = select_geo_type,
-                           ages = ages,
-                           years = years,
-                           genders = genders,
-                           races = races,
-                           where_geo_type,
-                           where_geo_vintage,
-                           where_census_vintage,
-                           subset_by_kingco)
+                            cols = cols,
+                            pop_table = pop_table,
+                            group_by = group_by,
+                            group_geo_type = group_geo_type,
+                            select_geo_type = select_geo_type,
+                            ages = ages,
+                            years = years,
+                            genders = genders,
+                            races = races,
+                            where_geo_type,
+                            where_geo_vintage,
+                            where_census_vintage,
+                            subset_by_kingco)
     q = list(q1)
 
     ### A query for the hispanic data ----
@@ -445,21 +449,21 @@ get_population <- function(kingco = T,
       hcols = data.table::copy(cols)
       hcols[coltype == race_type, colname := rcol]
       build_getpop_query(
-                        con = con,
-                        cols = hcols,
-                        pop_table = pop_table,
-                        group_by = group_by,
-                        group_geo_type = group_geo_type,
-                        select_geo_type = select_geo_type,
-                        ages = ages,
-                        years = years,
-                        genders = genders,
-                        races = 1,
-                        where_geo_type,
-                        where_geo_vintage,
-                        where_census_vintage,
-                        subset_by_kingco
-                      )
+        con = con,
+        cols = hcols,
+        pop_table = pop_table,
+        group_by = group_by,
+        group_geo_type = group_geo_type,
+        select_geo_type = select_geo_type,
+        ages = ages,
+        years = years,
+        genders = genders,
+        races = 1,
+        where_geo_type,
+        where_geo_vintage,
+        where_census_vintage,
+        subset_by_kingco
+      )
 
 
     })
