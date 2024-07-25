@@ -16,8 +16,7 @@ age_standardize(
 )
 }
 \arguments{
-\item{ph.data}{Name of a data.frame or data.table object. Note, if ph.data already has a standard population (ref.popname = "none"),
-it must contain a numeric column named 'stdpop'. Otherwise, it must contain a numeric column named 'age'.}
+\item{ph.data}{a data.table or data.frame containing the data to be age-standardized.}
 
 \item{ref.popname}{Character vector of length 1. Only valid options are those in list_ref_pop() and
 "none" (when standard population already exists in ph.data)}
@@ -42,9 +41,9 @@ Calculate age standardized rates from a data.table with age, counts, and populat
 
 Your dataset must have the following three columns ...
 \itemize{
-\item 'age' or 'agecat': 'age' in single years (if collapse = T) or 'agecat' with the same age bins as your selected reference population (if collapse = F) item
-\item a count for the event (e.g., disease) for which you want to find an age standardized rate item
-\item the population corresponding to the age or agecat in your original data item
+\item 'age' or 'agecat': 'age' in single years (if collapse = T) or 'agecat' with the same age bins as your selected reference population (if collapse = F)
+\item an aggregated count for the event (e.g., disease) for which you want to find an age standardized rate
+\item the population corresponding to the age or agecat in your original data
 }
 }
 \examples{
