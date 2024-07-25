@@ -23,7 +23,7 @@ test_that('adjust_direct',{
 })
 
 # age_standardize() ----
-test_that('age_standardize',{
+test_that('age_standardize ... valid output',{
   temp.dt1 <- data.table(age = c(50:60), count = c(25:35), pop = c(seq(1000, 800, -20)) )
   temp.agestd1 <- suppressWarnings(age_standardize(ph.data = temp.dt1, ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)", collapse = T,
                   my.count = "count", my.pop = "pop", per = 1000, conf.level = 0.95))
@@ -69,8 +69,9 @@ test_that('age_standardize',{
 
   expect_equal(35.35 , temp.agestd2[sex == "M"]$adj.uci) # checked vis-à-vis epitools::ageadjust.direct
   expect_equal(32.97 , temp.agestd2[sex == "F"]$adj.uci) # checked vis-à-vis epitools::ageadjust.direct
+  })
 
-  # test for errors and warnings
+test_that('age_standardize ... errors & warnings',{
   set.seed(98104)
   temp.dt3 <- data.table(age = c(0:100), count = sample(1000:4000, size = 101), pop = sample(10000:40000, size = 101) )
 
@@ -90,7 +91,73 @@ test_that('age_standardize',{
 
   expect_warning(age_standardize(copy(temp.dt3)[1, count := pop + 1], my.count = "count", my.pop = "pop"))
 
-  })
+  expect_error(age_standardize(copy(temp.dt3)[, agecat := 'myagegroup'], my.count = "count", my.pop = "pop"),
+               "Both 'age' and 'agecat' columns are present, but only one is needed")
+
+  expect_error(age_standardize(copy(temp.dt3)[, age := NULL], my.count = "count", my.pop = "pop"),
+               "Neither 'age' nor 'agecat' columns are present")
+
+  expect_error(age_standardize(copy(temp.dt3)[, age := age + 0.1], my.count = "count", my.pop = "pop"),
+               "The 'age' column is not an integer and cannot be converted to integer without loss of data")
+
+  expect_error(age_standardize(copy(temp.dt3)[, age := NULL][, agecat := 10], my.count = "count", my.pop = "pop"),
+               "The 'agecat' column is neither character nor factor")
+
+  # detailed warnings when missing ages in specific groups defined by group_by
+  set.seed(98104)
+  tempy <- data.table(
+    gender = sample(c('F', 'M'), 20000, replace = T),
+    height = sample(c('Short', 'Tall'), 20000, replace = T),
+    weight = sample(c('Heavy', 'Light'), 20000, replace = T),
+    age = sample(0:100, 20000, replace = T),
+    disease = sample(0:1, 20000, replace = T))
+  tempy <- tempy[, .(pop = .N, disease = sum(disease)), .(gender, height, weight, age)]
+
+  tempy <- tempy[!(gender == 'F' & age %in% 20:25) ]
+  tempy <- tempy[!(height == 'Short' & age %in% 30:35) ]
+  tempy <- tempy[!(weight == 'Heavy' & age %in% 40:45) ]
+
+  expect_warning(age_standardize(ph.data = tempy,
+                                 ref.popname = "2000 U.S. Std Population (11 age groups)",
+                                 collapse = T,
+                                 my.count = 'disease',
+                                 my.pop = 'pop',
+                                 per = 100000,
+                                 conf.level = 0.95,
+                                 group_by = c('height', 'weight', 'gender')),
+                 'Group \\(height=Tall, weight=Light, gender=F\\) is missing ages: 20, 21, 22, 23, 24, 25')
+
+  # test if fails when have mismatched aggregated data
+  set.seed(98104)
+  tempy <- data.table(
+    gender = sample(c('F', 'M'), 20000, replace = T),
+    age = sample(0:100, 20000, replace = T),
+    disease = sample(0:1, 20000, replace = T))
+  tempy <- tempy[, .(pop = .N, disease = sum(disease)), .(gender, age)]
+  tempy[age == 0, agecat := "0"]
+  tempy[age %in% 1:5, agecat := "1-5 years"]
+  tempy[age %in% 6:14, agecat := "6-14 years"]
+  tempy[age %in% 15:24, agecat := "15-24 years"]
+  tempy[age %in% 25:34, agecat := "25-34 years"]
+  tempy[age %in% 35:44, agecat := "35-44 years"]
+  tempy[age %in% 45:54, agecat := "45-54 years"]
+  tempy[age %in% 55:64, agecat := "55-64 years"]
+  tempy[age %in% 65:74, agecat := "65-74 years"]
+  tempy[age %in% 75:84, agecat := "75-84 years"]
+  tempy[age %in% 85:100, agecat := "85+ years"]
+  tempy <- tempy[, .(count = sum(disease), pop = sum(pop)), .(agecat, gender)]
+
+  expect_error(age_standardize(ph.data = copy(tempy),
+                               ref.popname = "2000 U.S. Std Population (11 age groups)",
+                               collapse = F, # because already collapsed
+                               my.count = "count",
+                               my.pop = "pop",
+                               per = 1000,
+                               conf.level = 0.95,
+                               group_by = "gender"),
+               'The agecat values in ph.data must match those in your reference')
+
+})
 
 # convert_to_date() ----
 # Test that common date formats are parsed correctly
