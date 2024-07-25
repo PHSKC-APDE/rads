@@ -103,7 +103,7 @@ Default == 2020}
 Default = 'ref'}
 
 \item{table_prefix}{character. Prefix of the tables in \code{schema} where pop data
-is stored. The table will be selected as {schema}.pop_geo_{geo_type} unless
+is stored. The table will be selected as \{schema\}.pop_geo_\{geo_type\} unless
 geo_type is aggregated on the fly from blocks. \emph{Unless you know what you
 are doing, do not change the default!}
 
