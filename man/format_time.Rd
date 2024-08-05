@@ -2,20 +2,23 @@
 % Please edit documentation in R/utilities.R
 \name{format_time}
 \alias{format_time}
-\title{Format a vector of time (or any numeric values) into a series of human readable chunks}
+\title{Format a vector of time, date, or any numeric values into a series of human readable chunks}
 \usage{
-format_time(x)
+format_time(x, date_format = "\%Y-\%m-\%d")
 }
 \arguments{
-\item{x}{numeric}
+\item{x}{numeric or Date}
+
+\item{date_format}{character, format string for dates in output (default: "\%Y-\%m-\%d")}
 }
 \value{
 character vector
 }
 \description{
-Format a vector of time (or any numeric values) into a series of human readable chunks
+Format a vector of time, date, or any numeric values into a series of human readable chunks
 }
 \examples{
 format_time(c(1:5, 10, 12, 24, 25))
+format_time(as.Date(c("2023-01-01", "2023-01-02", "2023-01-03", "2023-01-05", "2023-01-06")))
 
 }

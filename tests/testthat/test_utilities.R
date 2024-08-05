@@ -92,6 +92,14 @@ test_that('age_standardize',{
 
   })
 
+# calc_age ----
+test_that("calc_age gives expected ages", {
+  expect_equal(calc_age(from = as.Date('1990-08-02'), to = as.Date('2024-08-01')), 33)
+  expect_equal(calc_age(from = as.Date('1990-08-02'), to = as.Date('2024-08-03')), 34)
+  expect_equal(calc_age(from = as.Date('2000-02-29'), to = as.Date('2024-02-28')), 23)
+  expect_equal(calc_age(from = as.Date('2000-02-29'), to = as.Date('2024-02-29')), 24)
+})
+
 # convert_to_date() ----
 # Test that common date formats are parsed correctly
 test_that("common date formats are parsed correctly", {
@@ -198,6 +206,268 @@ test_that('lossless_convert', {
     'would introduce additional NAs'),
   c('z', '2020-01-01', '2021-12-31'))
 
+})
+
+# multi_t_test ----
+test_that("multi_t_test functions correctly", {
+  # Setup
+  set.seed(98104)
+  means <- c(10, 12, 9, 11, 13)
+  ses <- c(0.5, 0.6, 0.4, 0.5, 0.7)
+  n <- c(30, 35, 28, 32, 33)
+  reference_index <- 2
+
+  # Test 1: Basic functionality
+  result <- suppressWarnings(multi_t_test(means, ses, reference_index))
+  expect_is(result, "data.table")
+  expect_equal(nrow(result), 5)
+  expect_equal(ncol(result), 9)
+  expect_true(all(c("comparison", "diff_means", "t.statistic", "df", "p.value", "ci_lower", "ci_upper", "significant", "df_method") %in% names(result)))
+
+  # Test 2: Different df_methods
+  expect_silent(multi_t_test(means, ses, reference_index, df_method = "conservative"))
+  expect_silent(multi_t_test(means, ses, reference_index, df_method = "moderate"))
+  expect_silent(multi_t_test(means, ses, reference_index, df_method = "liberal"))
+  expect_gt(multi_t_test(means, ses, reference_index, df_method = "conservative")[1]$p.value,
+            multi_t_test(means, ses, reference_index, df_method = "moderate")[1]$p.value)
+  expect_gt(multi_t_test(means, ses, reference_index, df_method = "moderate")[1]$p.value,
+            multi_t_test(means, ses, reference_index, df_method = "liberal")[1]$p.value)
+
+  # Test 3: Different alternative hypotheses
+  expect_no_error(suppressWarnings(multi_t_test(means, ses, reference_index, alternative = "less")))
+  expect_no_error(suppressWarnings(multi_t_test(means, ses, reference_index, alternative = "greater")))
+
+  # Test 4: Providing sample sizes & confirm output structure
+  result_with_n <- suppressWarnings(multi_t_test(means, ses, reference_index, n = n))
+  expect_is(result_with_n, "data.table")
+  expect_equal(nrow(result_with_n), length(means))
+  expect_equal(ncol(result_with_n), 9)
+
+  # Test 5: Different alpha levels
+  expect_no_error(suppressWarnings(multi_t_test(means, ses, reference_index, alpha = 0.01)))
+  expect_no_error(suppressWarnings(multi_t_test(means, ses, reference_index, alpha = 0.1)))
+  expect_lt(suppressWarnings(multi_t_test(means, ses, reference_index, alpha = 0.01))[1]$ci_lower, # expect wider CI
+            suppressWarnings(multi_t_test(means, ses, reference_index, alpha = 0.10))[1]$ci_lower) # expect narrower CI
+
+  # Test 6: Error for non-numeric means
+  expect_error(multi_t_test(c("a", "b", "c"), ses, reference_index), "must be numeric vectors")
+
+  # Test 7: Error for non-numeric ses
+  expect_error(multi_t_test(means, c("a", "b", "c"), reference_index), "must be numeric vectors")
+
+  # Test 8: Error for invalid reference_index
+  expect_error(multi_t_test(means, ses, 0), "out of bounds")
+  expect_error(multi_t_test(means, ses, 6), "out of bounds")
+
+  # Test 9: Error for invalid n
+  expect_error(multi_t_test(means, ses, reference_index, n = c(-1, 2, 3, 4, 5)), "must be a numeric vector of positive values")
+
+  # Test 10: Warning for small sample sizes
+  expect_warning(multi_t_test(means, ses, reference_index, n = c(10, 15, 20, 25, 30)), "Some sample sizes are below 30")
+
+  # Test 11: Error for invalid alpha
+  expect_error(multi_t_test(means, ses, reference_index, alpha = 1.5), "must be a numeric value between 0 and 1")
+
+  # Test 12: Error for invalid df_method
+  expect_error(multi_t_test(means, ses, reference_index, df_method = "invalid"), "Invalid df_method")
+
+  # Test 13: Error for invalid alternative
+  expect_error(multi_t_test(means, ses, reference_index, alternative = "invalid"), "Invalid alternative")
+
+  # Test 14: Warning for estimated sample sizes
+  expect_warning(multi_t_test(means, ses, reference_index), "Sample sizes are estimated from standard errors")
+
+  # Test 15: Check if reference group has NA values
+  result <- suppressWarnings(multi_t_test(means, ses, reference_index))
+  expect_true(all(is.na(result[comparison == "Group 2 - Referent", .(t.statistic, df, p.value, ci_lower, ci_upper)])))
+
+  # Test 16: Check if diff_means is calculated correctly
+  expected_diff <- means - means[reference_index]
+  expect_equal(result$diff_means, expected_diff)
+
+  # Test 17: Check if significance is determined correctly
+  expect_equal(result$significant, result$p.value < 0.05)
+
+  # Test 18: Error for less than two elements in means or ses
+  expect_error(multi_t_test(10, 0.5, 1), "must have at least two elements")
+
+  # Test 19: Error for non-positive ses
+  expect_error(multi_t_test(means, c(0.5, -0.6, 0.4, 0.5, 0.7), reference_index), "All values in 'ses' must be positive")
+
+  # Test 20: Error for null alpha
+  expect_error(multi_t_test(means, ses, reference_index, alpha = NULL), "'alpha' must be provided")
+})
+
+test_that("multi_t_test 'two.sided' compared to stats::t.test", {
+  # check all output when stats::t.test paired == F and var.equal = F
+  # create data
+  set.seed(98104)
+  sample1 <- sample(1000:2000, size = 500, replace = T)
+  sample2 <- sample(1200:2200, size = 600, replace = T)
+
+  # Generate rads::multi_t_test estimate
+  apde <- multi_t_test(means = c(mean(sample1), mean(sample2)),
+                       ses = c(rads::std_error(sample1), rads::std_error(sample2)),
+                       reference_index = 2,
+                       n = c(length(sample1), length(sample2)),
+                       alternative = 'two.sided',
+                       df_method = "estimated"
+  )[comparison == 'Group 1 vs Reference']
+
+  # Generate stats::t.test estimate
+  standard <- stats::t.test(sample1, sample2,
+                            var.equal = F, paired = F, # when var.equal = F, use Welch's
+                            alternative = 'two.sided')
+
+  standardDT <- data.table(comparison = 'stats::t.test()', # structure results into a data.table
+                           diff_means = standard$estimate[1]-standard$estimate[2],
+                           ci_lower = standard$conf.int[1],
+                           ci_upper = standard$conf.int[2],
+                           p.value = standard$p.value,
+                           significant = NA_character_,
+                           t.statistic = standard$statistic,
+                           df = standard$parameter,
+                           df_method = 'stats::t_test')
+
+  # Combine rads:: and stats:: output
+  combo <- rbind(apde, standardDT)
+
+  # actual tests
+  expect_equal(combo[1]$diff_means, combo[2]$diff_means)
+  expect_equal(combo[1]$ci_lower, combo[2]$ci_lower)
+  expect_equal(combo[1]$ci_upper, combo[2]$ci_upper)
+  expect_equal(combo[1]$p.value, combo[2]$p.value)
+  expect_equal(combo[1]$t.statistic, combo[2]$t.statistic)
+  expect_equal(combo[1]$df, combo[2]$df)
+
+})
+
+test_that("multi_t_test 'greater' compared to stats::t.test", {
+  # check all output when stats::t.test paired == F and var.equal = F
+  # create data
+  set.seed(98104)
+  sample1 <- sample(1000:2000, size = 500, replace = T)
+  sample2 <- sample(1200:2200, size = 600, replace = T)
+
+  # Generate rads::multi_t_test estimate
+  apde <- multi_t_test(means = c(mean(sample1), mean(sample2)),
+                       ses = c(rads::std_error(sample1), rads::std_error(sample2)),
+                       reference_index = 2,
+                       n = c(length(sample1), length(sample2)),
+                       alternative = 'greater',
+                       df_method = "estimated"
+  )[comparison == 'Group 1 vs Reference']
+
+  # Generate stats::t.test estimate
+  # Generate stats::t.test estimate
+  standard <- stats::t.test(sample1, sample2,
+                            var.equal = F, paired = F, # when var.equal = F, use Welch's
+                            alternative = 'greater')
+
+  standardDT <- data.table(comparison = 'stats::t.test()', # structure results into a data.table
+                           diff_means = standard$estimate[1]-standard$estimate[2],
+                           ci_lower = standard$conf.int[1],
+                           ci_upper = standard$conf.int[2],
+                           p.value = standard$p.value,
+                           significant = NA_character_,
+                           t.statistic = standard$statistic,
+                           df = standard$parameter,
+                           df_method = 'stats::t_test')
+
+  # Combine rads:: and stats:: output
+  combo <- rbind(apde, standardDT)
+
+  # actual tests
+  expect_equal(combo[1]$diff_means, combo[2]$diff_means)
+  expect_lt(abs(combo[1]$ci_lower - combo[2]$ci_lower) / combo[1]$ci_lower, 0.005) # allow for up to 0.5% difference in CI
+  expect_equal(combo[1]$ci_upper, combo[2]$ci_upper)
+  expect_equal(combo[1]$p.value, combo[2]$p.value)
+  expect_equal(combo[1]$t.statistic, combo[2]$t.statistic)
+  expect_equal(combo[1]$df, combo[2]$df)
+})
+
+test_that("multi_t_test 'greater' compared to stats::t.test", {
+  # check all output when stats::t.test paired == F and var.equal = F
+  # create data
+  set.seed(98104)
+  sample1 <- sample(1000:2000, size = 500, replace = T)
+  sample2 <- sample(1200:2200, size = 600, replace = T)
+
+  # Generate rads::multi_t_test estimate
+  apde <- multi_t_test(means = c(mean(sample1), mean(sample2)),
+                       ses = c(rads::std_error(sample1), rads::std_error(sample2)),
+                       reference_index = 2,
+                       n = c(length(sample1), length(sample2)),
+                       alternative = 'less',
+                       df_method = "estimated"
+  )[comparison == 'Group 1 vs Reference']
+
+  # Generate stats::t.test estimate
+  # Generate stats::t.test estimate
+  standard <- stats::t.test(sample1, sample2,
+                            var.equal = F, paired = F, # when var.equal = F, use Welch's
+                            alternative = 'less')
+
+  standardDT <- data.table(comparison = 'stats::t.test()', # structure results into a data.table
+                           diff_means = standard$estimate[1]-standard$estimate[2],
+                           ci_lower = standard$conf.int[1],
+                           ci_upper = standard$conf.int[2],
+                           p.value = standard$p.value,
+                           significant = NA_character_,
+                           t.statistic = standard$statistic,
+                           df = standard$parameter,
+                           df_method = 'stats::t_test')
+
+  # Combine rads:: and stats:: output
+  combo <- rbind(apde, standardDT)
+
+  # actual tests
+  expect_equal(combo[1]$diff_means, combo[2]$diff_means)
+  expect_equal(combo[1]$ci_lower, combo[2]$ci_lower)
+  expect_lt(abs(combo[1]$ci_upper - combo[2]$ci_upper) / combo[1]$ci_upper, 0.005) # allow for up to 0.5% difference in CI
+  expect_equal(combo[1]$p.value, combo[2]$p.value)
+  expect_equal(combo[1]$t.statistic, combo[2]$t.statistic)
+  expect_equal(combo[1]$df, combo[2]$df)
+})
+
+test_that("multi_t_test handles adjustment methods correctly", {
+
+  # Sample data ----
+  means <- c(10, 12, 15, 11)
+  ses <- c(1, 1.5, 2, 1.2)
+  n <- c(100, 90, 80, 95)
+
+  # Test 1: Invalid adjustment method ----
+  expect_error(
+    multi_t_test(means, ses, reference_index = 1, n = n, adjust_method = "invalid"),
+    "Invalid adjust_method. Choose NULL, 'Holm-Bonferroni', or 'Benjamini-Hochberg'."
+  )
+
+  # Test 2: Holm-Bonferroni adjustment ----
+  result_holm <- multi_t_test(means, ses, reference_index = 1, n = n, adjust_method = "Holm-Bonferroni")
+  unadjusted <- multi_t_test(means, ses, reference_index = 1, n = n)
+
+  # Check if adjusted p-values are >= original p-values
+  non_ref_rows <- !is.na(result_holm$p.value)
+  expect_true(all(result_holm$p.value[non_ref_rows] >= unadjusted$p.value[non_ref_rows]))
+
+  # Check if order of significance (p.value magnitude) is maintained
+  expect_equal(order(result_holm$p.value[non_ref_rows]), order(unadjusted$p.value[non_ref_rows]))
+
+  expect_equal(result_holm$adjust_method[1], "Holm-Bonferroni")
+
+  # Test 3: Benjamini-Hochberg adjustment ----
+  result_bh <- multi_t_test(means, ses, reference_index = 1, n = n, adjust_method = "Benjamini-Hochberg")
+  unadjusted <- multi_t_test(means, ses, reference_index = 1, n = n)
+
+  # Check if adjusted p-values are >= original p-values
+  non_ref_rows <- !is.na(result_bh$p.value)
+  expect_true(all(result_bh$p.value[non_ref_rows] >= unadjusted$p.value[non_ref_rows]))
+
+  # Check if order of significance (p.value magnitude) is maintained
+  expect_equal(order(result_bh$p.value[non_ref_rows]), order(unadjusted$p.value[non_ref_rows]))
+
+  expect_equal(result_bh$adjust_method[1], "Benjamini-Hochberg")
 })
 
 # std_error() ----
