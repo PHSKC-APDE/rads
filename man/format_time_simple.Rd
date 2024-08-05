@@ -7,7 +7,7 @@
 format_time_simple(x)
 }
 \arguments{
-\item{x}{numeric}
+\item{x}{numeric or Date}
 }
 \value{
 character vector
@@ -17,5 +17,5 @@ Format a vector of time (or any numeric values) into a single human readable chu
 }
 \examples{
 format_time_simple(c(1:5, 10, 12, 24, 25))
-
+format_time_simple(as.Date(c("2023-01-01", "2023-01-02", "2023-01-03", "2023-01-05", "2023-01-06")))
 }

@@ -285,9 +285,13 @@ calc_age <- function(from, to) {
 
   age = to_lt$year - from_lt$year
 
-  ifelse(to_lt$mon < from_lt$mon |
-           (to_lt$mon == from_lt$mon & to_lt$mday < from_lt$mday),
-         age - 1, age)
+  age = ifelse(to_lt$mon < from_lt$mon |
+                 (to_lt$mon == from_lt$mon & to_lt$mday < from_lt$mday),
+               age - 1, age)
+
+  age = as.integer(age)
+
+  return(age)
 }
 
 # chi_cols() ----
@@ -662,7 +666,7 @@ convert_to_date <- function(x, origin = "1899-12-30") {
   }
 
   # Sometimes we get character data for dates that should be numeric, but aren't
-  x = rads::quiet(rads::lossless_convert(x, 'numeric'))
+  # x = rads::quiet(rads::lossless_convert(x, 'numeric'))
 
   # convert numerics first, then strings
   if (is.numeric(x)) {
@@ -716,66 +720,78 @@ dumb_convert <- function(x, target = 'character'){
 }
 
 # format_time() ----
-#' Format a vector of time (or any numeric values) into a series of human readable chunks
-#' @param x numeric
+#' Format a vector of time, date, or any numeric values into a series of human readable chunks
+#' @param x numeric or Date
+#' @param date_format character, format string for dates in output (default: "%Y-%m-%d")
 #' @export
 #' @return character vector
 #'
 #' @examples
 #' format_time(c(1:5, 10, 12, 24, 25))
+#' format_time(as.Date(c("2023-01-01", "2023-01-02", "2023-01-03", "2023-01-05", "2023-01-06")))
 #'
-format_time <- function(x){
+format_time <- function(x, date_format = "%Y-%m-%d") {
+  # Check if input is Date class
+  is_date <- inherits(x, "Date")
 
-  #get the unique values
-  x <- sort(unique(x))
+  # Get the unique values and sort
+  x_sorted <- sort(unique(x))
 
-  #find breaks in runs
-  breaks = data.table::shift(x, type = 'lead') == (x + 1)
-  bps = which(!breaks)
-
-  #separate
-  if(length(bps)>0){
-    seper = split(x, cut(x, c(-Inf, x[bps], Inf)))
-  }else{
-    seper = list(x)
+  # Function to find consecutive sequences
+  find_sequences <- function(x) {
+    gaps <- diff(x) != 1
+    cumsum(c(TRUE, gaps))
   }
 
-  #format into string
-  seper = lapply(seper, function(y){
+  # Split into sequences
+  sequences <- split(x_sorted, find_sequences(if(is_date) as.numeric(x_sorted) else x_sorted))
 
-    if(length(y)>1){
-      return(paste(min(y), max(y), sep = '-'))
-    }else{
-      return(paste(y))
+  # Format each sequence
+  formatted <- sapply(sequences, function(seq) {
+    if (length(seq) > 1) {
+      if (is_date) {
+        paste(format(min(seq), format = date_format),
+              format(max(seq), format = date_format),
+              sep = " to ")
+      } else {
+        paste(min(seq), max(seq), sep = "-")
+      }
+    } else {
+      if (is_date) {
+        format(seq, format = date_format)
+      } else {
+        as.character(seq)
+      }
     }
-
   })
 
-  ret = paste(seper, collapse = ', ')
-
-  return(ret)
-
+  # Combine all formatted sequences
+  paste(formatted, collapse = ", ")
 }
-
 # format_time_simple() ----
 #' Format a vector of time (or any numeric values) into a single human readable chunk
-#' @param x numeric
+#' @param x numeric or Date
 #' @export
 #' @return character vector
 #'
 #' @examples
 #' format_time_simple(c(1:5, 10, 12, 24, 25))
-#'
+#' format_time_simple(as.Date(c("2023-01-01", "2023-01-02", "2023-01-03", "2023-01-05", "2023-01-06")))
 format_time_simple <- function(x){
+
+  # Check if x is of type Date
+  is_date <- inherits(x, "Date")
 
   #get the unique values
   x <- sort(unique(x))
 
   # format into string
-  if(max(x, na.rm = T) == min(x, na.rm = T)){
-    ret <- paste0(x)
-  } else{
-    ret <- paste0(min(x, na.rm = T), "-", max(x, na.rm = T))
+  if (max(x, na.rm = TRUE) == min(x, na.rm = TRUE)) {
+    ret <- as.character(x[1])
+  } else {
+    # Use " to " for dates, "-" for other types
+    separator <- if (is_date) " to " else "-"
+    ret <- paste0(min(x, na.rm = TRUE), separator, max(x, na.rm = TRUE))
   }
 
   return(ret)
@@ -871,8 +887,8 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
   }
 
   if(is.null(datasource)){
-    message(paste0("Warning: You did not enter a datasource for where the underlying data exists on a shared drive. \n",
-                   "         The YAML file will be created, but the datasource will not be recorded in the header."))
+    message(paste0("\nWarning: You did not enter a datasource for where the underlying data exists on a shared drive. \n",
+                   "The YAML file will be created, but the datasource will not be recorded in the header."))
   }
 
   ## Set up ----
@@ -1460,6 +1476,291 @@ metrics = function(){
     'rate', 'ndistinct', 'vcov')
 }
 
+# multi_t_test ----
+#' Perform t-tests for Multiple Comparisons with Summary Statistics
+#'
+#' @description
+#' This function performs t-tests comparing multiple groups against a reference
+#' group using summary statistics. It offers flexibility in the method for
+#' calculating degrees of freedom, can estimate sample sizes if they are not
+#' provided, and can adjust p-values for multiple comparisons.
+#'
+#' @details
+#' This function conducts t-tests to compare multiple groups against a reference
+#' group.
+#'
+#' The `estimated` degrees of freedom method (Welch's t-test) is generally
+#' preferred and is set as the default. However, when sample sizes (`n`) are
+#' less than 30, results can be unreliable. When `n` is not specified and
+#' `df_method = "estimated"`, the function estimates sample sizes based partly
+#' on the distribution of mean values. The quality of these estimates depends on
+#' the number of groups (length of the means argument). While the function can
+#' estimate sample sizes if not provided, it's always preferable to use actual
+#' sample sizes when available to ensure more accurate results.
+#'
+#' @note This function assumes unequal variances, which is typically more appropriate
+#' for comparisons across demographic groups in vital statistics, survey data, and
+#' other population-based studies. Equal variances are rarely encountered in such
+#' contexts due to inherent differences between subpopulations. If you have the
+#' underlying raw data (not just the means and standard errors) and want to
+#' perform calculations assuming equal variances or a paired t-test, please
+#' refer to \code{\link{t.test}} in the \code{\link{stats}} package.
+#'
+#' @param means Numeric vector of group means.
+#' @param ses Numeric vector of standard errors for each group.
+#' @param reference_index Integer indicating the index of the reference group.
+#' @param n Optional numeric vector of sample sizes for each group.
+#' @param alpha Numeric value for significance level (default is \strong{`0.05`}).
+#' @param df_method String specifying the method for calculating degrees of
+#' freedom. Options are:
+#'    - \strong{`'estimated'`} (Welch–Satterthwaite equation): This method, which
+#'    corresponds to Welch's t-test, calculates an approximation of the degrees
+#'    of freedom based on the sample variances and sizes. It's particularly
+#'    useful when groups have unequal variances and/or unequal sample sizes,
+#'    making it generally more reliable than the standard t-test in these
+#'    situations. It is a data driven approach and is often preferred due to
+#'    balance between Type I Errors (false +) and Type II Errors (false -).
+#'    - \strong{`'conservative'`} (df = 2): Uses the minimum possible degrees of
+#'    freedom, resulting in the widest confidence intervals (for the difference
+#'    in means) and the most conservative (largest) p-values. Reduces Type I
+#'    Error (false +) and increases Type II Error (false -).
+#'    - \strong{`'moderate'`} (df = k - 1): Uses the number of groups minus 1 as the degrees
+#'    of freedom, providing a balance between conservative and liberal approaches.
+#'    - \strong{`'liberal'`} (df = Inf): Assumes infinite degrees of freedom, resulting in
+#'    the narrowest confidence intervals (for the difference in means) and the
+#'    most liberal (smallest) p-values. Increases Type I Error (false +) and
+#'    reduces Type II Error (false -).
+#'
+#' Default is \strong{`'estimated'`}.
+#' @param alternative String specifying the alternative hypothesis: \strong{`'two.sided'`}
+#' (default), \strong{`'less'`}, or \strong{`'greater'`}. Default is \strong{`'two.sided'`}.
+#' @param adjust_method String specifying the method of adjustment for multiple
+#' comparisons: \strong{`NULL`}, \strong{`'Holm-Bonferroni'`},
+#' \strong{`'Benjamini-Hochberg'`}. Refer to the `holm` and `bh` descriptions
+#' in \code{\link{p.adjust}} in the \code{\link{stats}} package for more
+#' information. Default is \strong{`NULL`}.
+#'
+#' @return A data.table containing comparison results with the following columns:
+#'   \item{comparison}{String describing the comparison}
+#'   \item{diff_means}{Numeric difference in means}
+#'   \item{ci_lower}{Numeric lower bound of the confidence interval}
+#'   \item{ci_upper}{Numeric upper bound of the confidence interval}
+#'   \item{p.value}{Numeric p-value}
+#'   \item{significant}{Logical indicating if the result is significant (TRUE if
+#'     p-value < alpha, FALSE otherwise)}
+#'   \item{t.statistic}{Numeric t-statistic}
+#'   \item{df}{Numeric degrees of freedom}
+#'   \item{df_method}{String indicating the method used for
+#'     calculating degrees of freedom}
+#'   \item{adjust_method}{String indicating the method used for multiple
+#'     comparisons p.value adjustment (when `adjust_method` is not `NULL`)}
+#'
+#' @examples
+#' # Example 1: Comparing birthweights across different maternal age groups
+#' age_groups <- c("18-24", "25-29", "30-34", "35-39", "40+")
+#' birthweight_means <- c(3150, 3450, 3400, 3250, 3100)  # in grams
+#' birthweight_ses <- c(50, 45, 40, 55, 60)
+#' sample_sizes <- c(500, 800, 750, 400, 200)
+#' reference_group <- 3  # comparing all groups to the 30-34 age group
+#'
+#' birthweight_comparison <- multi_t_test(
+#'   means = birthweight_means,
+#'   ses = birthweight_ses,
+#'   reference_index = reference_group,
+#'   n = sample_sizes,
+#'   df_method = "estimated"
+#' )
+#'
+#' # Add age group labels to the results
+#' birthweight_comparison[, Age_Group := age_groups]
+#'
+#' print(birthweight_comparison)
+#'
+#' @import data.table
+#' @export
+multi_t_test <- function(means,
+                         ses,
+                         reference_index,
+                         n = NULL,
+                         alpha = 0.05,
+                         df_method = "estimated",
+                         alternative = "two.sided",
+                         adjust_method = NULL) {
+  # Bindings for data.table/check global variables ----
+  comparison <- p.value <- significant <- NULL
+
+  # Input validation ----
+    if (!is.numeric(means) || !is.numeric(ses)) {
+      stop("\n\U1F6D1 'means' and 'ses' must be numeric vectors.")
+    }
+
+    if (length(means) < 2 || length(ses) < 2) {
+      stop("\n\U1F6D1 'means' and 'ses' must have at least two elements.")
+    }
+
+    if (any(ses <= 0)) {
+      stop("\n\U1F6D1 All values in 'ses' must be positive.")
+    }
+
+    if (!is.numeric(reference_index) || length(reference_index) != 1 || reference_index %% 1 != 0) {
+      stop("\n\U1F6D1 'reference_index' must be a single integer.")
+    }
+
+    if (reference_index < 1 || reference_index > length(means)) {
+      stop("\n\U1F6D1 'reference_index' is out of bounds.")
+    }
+
+    if (!is.null(n)) {
+      if (!is.numeric(n) || any(n <= 0)) {
+        stop("\n\U1F6D1 'n' must be a numeric vector of positive values.")
+      }
+      if (any(n < 30)) {
+        warning("\n\U00026A0 Some sample sizes are below 30. ",
+                "Results may be unreliable, especially with the 'estimated' df_method. ",
+                "Consider using a different df_method if appropriate.")
+      }
+    }
+
+    if (is.null(alpha)) {
+      stop("\n\U1F6D1 'alpha' must be provided as a numeric value between 0 and 1.")
+    }
+
+    if (!is.numeric(alpha) || alpha <= 0 || alpha >= 1) {
+      stop("\n\U1F6D1 'alpha' must be a numeric value between 0 and 1.")
+    }
+
+    if (!df_method %in% c("estimated", "conservative", "moderate", "liberal")) {
+      stop("\n\U1F6D1 Invalid df_method. Choose 'estimated', 'conservative', 'moderate', or 'liberal'.")
+    }
+
+    if (!alternative %in% c("two.sided", "less", "greater")) {
+      stop("\n\U1F6D1 Invalid alternative. Choose 'two.sided', 'less', or 'greater'.")
+    }
+
+    if (!is.null(adjust_method) && !adjust_method %in% c("Holm-Bonferroni", "Benjamini-Hochberg")) {
+      stop("\n\U1F6D1 Invalid adjust_method. Choose NULL, 'Holm-Bonferroni', or 'Benjamini-Hochberg'.")
+    }
+
+  # Check if ses, means, and n (when provided) are of the same length
+    if (length(means) != length(ses)) {
+      stop("\n\U1F6D1 'means' and 'ses' must have the same length.")
+    }
+
+    if (!is.null(n) && length(means) != length(n)) {
+      stop("\n\U1F6D1 'n' must have the same length as 'means' and 'ses' when provided.")
+    }
+
+  # Number of groups ----
+    k <- length(means)
+
+  # Estimate sample sizes if not provided ----
+    if (is.null(n) && df_method == "estimated") {
+      # Assuming the SEM = SD / sqrt(n), then sqrt(n) = SD / SEM, then n = (SD/SEM)^2
+      # and SD ~= (max(means) - min(means)) / 4, because most (~95%) of the data
+      # falls within 2 SD of the mean in a normal distribution
+      estimated_sd <- (max(means) - min(means)) / 4
+      n <- round((estimated_sd / ses)^2)
+      warning("\U00026A0 Sample sizes are estimated from standard errors and the range of means.\n",
+              "Use with caution. ", "Please provide the sample sizes {`n`} if known.")
+
+      if (k < 10) {
+        warning("\n\U00026A0 The number of groups is small (< 10). ",
+                "This may affect the reliability of estimated sample sizes.\n",
+                "Consider providing actual sample sizes if available.")
+      }
+
+      if (any(n < 30)) {
+        warning("\n\U00026A0 Some estimated sample sizes are below 30. ",
+                "Results may be unreliable, especially with the 'estimated' df_method. ",
+                "Consider using actual sample sizes or a different df_method.")
+      }
+
+    }
+
+  # Reference mean, SE, and sample size ----
+    mean_ref <- means[reference_index]
+    se_ref <- ses[reference_index]
+    n_ref <- n[reference_index]
+    means = means[-reference_index]
+    ses = ses[-reference_index]
+    n = n[-reference_index]
+
+    diff_means = means - mean_ref
+    t_stat = diff_means/sqrt(ses^2 + se_ref^2)
+
+    df <- switch(df_method,
+                 "estimated" = (ses^2 + se_ref^2)^2 /
+                   ((ses^4 / (n - 1)) + (se_ref^4 / (n_ref - 1))), # Welch–Satterthwaite equation
+                 "conservative" = 2,
+                 "moderate" = k - 1,
+                 "liberal" = Inf
+    )
+
+    # Calculate vector of p-values
+    p_value <- switch(alternative,
+                      "two.sided" = 2 * stats::pt(abs(t_stat), df = df, lower.tail = FALSE), # times 2 bc two tailed
+                      "less" = stats::pt(t_stat, df = df, lower.tail = TRUE),
+                      "greater" = stats::pt(t_stat, df = df, lower.tail = FALSE)
+    )
+
+    # Adjust vector of p-values for multiple comparisons -- if requested
+    if (!is.null(adjust_method)) {
+      adjusted_p_values <- switch(adjust_method,
+                                  "Holm-Bonferroni" = stats::p.adjust(p_value, method = "holm"),
+                                  "Benjamini-Hochberg" = stats::p.adjust(p_value, method = "BH")
+      )
+      p_value <- adjusted_p_values
+    }
+
+    # Calculate confidence interval
+    ci_margin <- stats::qt(1 - alpha/2, df) * sqrt(ses^2 + se_ref^2)
+    ci_lower <- switch(alternative,
+                       "two.sided" = diff_means - ci_margin,
+                       "less" = -Inf,
+                       "greater" = diff_means - ci_margin)
+    ci_upper <- switch(alternative,
+                       "two.sided" = diff_means + ci_margin,
+                       "less" = diff_means + ci_margin,
+                       "greater" = Inf)
+
+    #Compile table
+    r = data.table::data.table(
+      comparison = paste0("Group ", seq_len(length(means)+1)[-reference_index], " vs Reference"),
+      diff_means = diff_means,
+      ci_lower = ci_lower,
+      ci_upper = ci_upper,
+      p.value = p_value,
+      significant = NA,
+      t.statistic = t_stat,
+      df = df
+    )
+
+    t.results = rbind(r, data.table::data.table(
+      comparison = paste0("Group ", reference_index, " - Referent"),
+      diff_means = 0,
+      ci_lower = NA_real_,
+      ci_upper = NA_real_,
+      p.value = NA_real_,
+      significant = NA,
+      t.statistic = NA_real_,
+      df = NA_real_
+    ))
+
+    data.table::setorder(t.results, comparison)
+
+  # Add significance column & df method----
+    t.results[, significant := ifelse(is.na(p.value), NA, p.value < alpha)]
+    t.results[, df_method := df_method]
+
+  # Add adjustment method if needed ----
+    if (!is.null(adjust_method)){
+      t.results[, adjust_method := adjust_method]
+    }
+
+  # Return object ----
+    return(t.results)
+}
+
 # round2() ----
 #' Improved rounding function
 #' @param x values to be rounded
@@ -1603,24 +1904,28 @@ sql_clean <- function(dat = NULL, stringsAsFactors = FALSE){
 #' temp1[, sem := std_error(x), by = 'mygroup'][] # save results in the original
 #' }
 #'
-std_error<-function(x) {
-  vn<-function(x) return(sum(!is.na(x)))
-  dimx<-dim(x)
-  if(is.null(dimx)) {
-    stderr<-sd(x,na.rm=TRUE)
-    vnx<-vn(x)
-  }
-  else {
-    if(is.data.frame(x)) {
-      vnx<-unlist(sapply(x,vn))
-      stderr<-unlist(sapply(x,sd,na.rm=TRUE))
+std_error <- function(x) {
+  std_error_simple <- function(x) {
+    if (!is.numeric(x)) stop("\n\U1F6D1 Input must be numeric.")
+    if (all(is.na(x))) stop("\n\U1F6D1 Input contains only NA values.")
+    if (sum(!is.na(x)) < 2) stop("\n\U1F6D1 At least two non-NA values are required to calculate standard error.")
+
+    se <- sd(x, na.rm = TRUE) / sqrt(sum(!is.na(x))) # standard error or mean is sd / sqrt(# samples)
+
+    if (is.nan(se) || is.infinite(se)) {
+      warning("\n\U00026A0 Calculation resulted in NaN or Inf. Check your input data.")
     }
-    else {
-      vnx<-unlist(apply(x,2,vn))
-      stderr<-unlist(apply(x,2,sd,na.rm=TRUE))
-    }
+
+    return(se)
   }
-  return(stderr/sqrt(vnx))
+
+  if (is.data.frame(x) || is.matrix(x)) {
+    return(apply(x, 2, std_error_simple)) # for data.frames
+  } else if (is.list(x)) {
+    return(lapply(x, std_error_simple)) # for lists
+  } else {
+    return(std_error_simple(x)) # for use with vectors
+  }
 }
 
 # substrRight() ----
