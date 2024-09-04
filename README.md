@@ -15,7 +15,7 @@ If you haven't yet installed [`rads`](https://github.com/PHSKC-APDE/rads), follo
 3.  Install a keyring:: 'service' for accessing HHSAW. 
     -   `install.packages("keyring")`
     
-    -   `keyring::key_set(service = 'azure', username = 'Your.KCUsername@kingcounty.gov')`
+    -   `keyring::key_set(service = 'hhsaw', username = 'Your.KCUsername@kingcounty.gov')`
     
     -   In the pop-up window type in your standard King County password (the one you use to log into your laptop) and click `OK`
 
