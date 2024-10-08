@@ -1,5 +1,6 @@
 library('testthat')
 library(DBI)
+library(data.table)
 
 # adjust_direct() ----
 test_that('adjust_direct',{
@@ -576,8 +577,8 @@ test_that("error if validate_upload is not logical", {
 
 # tsql_validate_field_types ----
 test_that("function succeeds with compatible data.table and field types", {
-  mydt <- data.table(col1 = 1:10, col2 = runif(10))
-  my_field_types <- c(col1 = 'int', col2 = 'float')
+  mydt <- data.table(col1 = 1:10, col2 = runif(10), col3 = sample(c(0L, 1L, NA), 10, replace = T))
+  my_field_types <- c(col1 = 'int', col2 = 'float', col3 = 'bit')
   expect_message(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types), "Success")
 })
 
@@ -592,12 +593,14 @@ test_that("function fails with incompatible field types", {
                      col2 = as.Date('2023-01-01'),
                      col3 = (99991:100000)/10,
                      col4 = rep('AReallyLongStringOfWordForTestingLengthChecks', 10),
-                     col5 = Sys.time())
+                     col5 = Sys.time(),
+                     col6 = 2L)
   my_field_types <- c(col1 = 'smallint',
                       col2 = 'date',
                       col3 = 'numeric',
                       col4 = 'nvarchar(100)',
-                      col5 = 'datetime')
+                      col5 = 'datetime',
+                      col6 = 'int')
   expect_message(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types), 'Success')
 
   bad_field_types <- data.table::copy(my_field_types)
@@ -623,6 +626,11 @@ test_that("function fails with incompatible field types", {
   bad_field_types <- data.table::copy(my_field_types)
   bad_field_types["col5"] <- "date" # R POSIXct should only map to some sort of datetime, not date
   expect_error(tsql_validate_field_types(ph.data = mydt, field_types = bad_field_types), 'column: col5')
+
+  bad_field_types <- data.table::copy(my_field_types)
+  bad_field_types["col6"] <- "bit" # bit is limited to logical or integers with only 0|1 values
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = bad_field_types), 'column: col6')
+
 })
 
 test_that("function handles NULL arguments appropriately", {
