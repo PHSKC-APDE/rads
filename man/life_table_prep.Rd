@@ -62,7 +62,7 @@ age interval lived by those who died in that interval).
 \description{
 Processes individual-level death data to create a standardized data table.
 This table is collapsed/aggregated by age bin and optionally, by
-demographics, for use with \code{rads::life_table()}.
+demographics, for use with \code{\link{life_table}}.
 }
 \details{
 Note that population data (from \code{\link{get_population}}) must be merged

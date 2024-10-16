@@ -721,6 +721,48 @@ library('testthat')
     expect_gte(sum(dtna_table$deaths), (sum(test1$deaths) + 16000 - 3)) # allow some buffer for rounding
   })
 
+# Check life_table_predict_mx ----
+  # life_table_predict_mx is used by life_table when have missing or zero deaths
+  # in the oldest age group. Best to simply test this scenario with life_table
+  # Create data ----
+    # complete table
+      dt <- data.table(
+        shape = c(rep("Square", 20), rep("Circle", 20)),
+        ages = c("0-1", "1-5", "10-15", "15-18", "18-20", "20-25", "25-30", "30-35", "35-40", "40-45", "45-50", "5-10",
+                 "50-55", "55-60", "60-65", "65-70", "70-75", "75-80", "80-85", "85+",
+                 "0-1", "1-5", "10-15", "15-18", "18-20", "20-25", "25-30", "30-35", "35-40", "40-45", "45-50", "5-10",
+                 "50-55", "55-60", "60-65", "65-70", "70-75", "75-80", "80-85", "85+"),
+        deaths = c(212, 28, 26, 42, 29, 102, 169, 216, 325, 369, 538, 19, 881, 1309, 1712, 2225, 2679, 3016, 3946, 14957,
+                   268, 34, 40, 87, 112, 393, 495, 522, 591, 647, 917, 22, 1410, 2136, 2869, 3385, 3555, 3573, 3948, 9436),
+        fraction = c(0.06139045, 0.24805452, 0.51783137, 0.42818004, 0.37984224, 0.45175494, 0.42909058, 0.45478232, 0.43024378,
+                     0.44906213, 0.46987587, 0.35951133, 0.44678210, 0.43631448, 0.42537686, 0.43599385, 0.42606675, 0.42873223,
+                     0.43436675, 0.45719584, 0.05598660, 0.40372919, 0.46953323, 0.45510943, 0.33719204, 0.42685206, 0.43477724,
+                     0.41514970, 0.41599625, 0.42559335, 0.44192055, 0.47201290, 0.45655819, 0.43510860, 0.43777322, 0.42284555,
+                     0.41961828, 0.41960811, 0.42241863, 0.37966882),
+        pop = c(60317.00, 242150.33, 303483.82, 180610.16, 125693.81, 350694.40, 465846.22, 477813.49, 431277.65, 371051.13,
+                370453.81, 308085.24, 351226.56, 341058.78, 312385.24, 258675.01, 197510.39, 130167.18, 89999.79, 115149.40,
+                62738.56, 253080.73, 320067.23, 187910.53, 128870.42, 364203.13, 498792.04, 505409.47, 451411.41, 379740.65,
+                379353.86, 323939.56, 357230.78, 342488.85, 298674.16, 235700.26, 166653.90, 105379.45, 65184.64, 63682.87)
+      )
+
+    # append copy with missing / no deaths for oldest age group
+    dt <- rbind(dt,
+                copy(dt)[, shape := paste0(shape, "2")][ages == '85+', c('deaths', 'fraction') := 0])
+
+  # Create output ----
+    mylifetable <- suppressWarnings(life_table(ph.data = dt, group_by = 'shape'))
+    setorder(mylifetable, ages, shape)
+
+  # Tests ----
+    test_that("Check messages, proper filling of missing values, and LE0 estimates ...", {
+      expect_warning(life_table(ph.data = dt, group_by = 'shape'), "Zero deaths detected")
+      expect_equal(nrow(mylifetable[deaths == 0]), 2)
+      expect_equal(nrow(mylifetable[is.na(mx)]), 0)
+      expect_equal(nrow(mylifetable[is.na(ex)]), 0)
+      expect_equal(nrow(mylifetable[is.na(ex_lower)]), 0)
+      expect_lt(abs(mylifetable[ages == '0-1' & shape == 'Circle']$ex - mylifetable[ages == '0-1' & shape == 'Circle2']$ex), 2) # life expectancy within 2 years of the truth
+      expect_lt(abs(mylifetable[ages == '0-1' & shape == 'Square']$ex - mylifetable[ages == '0-1' & shape == 'Square2']$ex), 2) # life expectancy within 2 years of the truth
+    })
 
 # Check life_table_prep ----
   # life_table_prep() create data ----
@@ -780,4 +822,16 @@ library('testthat')
       setorder(unique(ltp[, .(year, race_eth)]), race_eth, year),
       setorder(unique(ltp_output_group[, .(year, race_eth)]), race_eth, year)
     )
+  })
+
+  test_that("Provides complete table of demographics and ages ...", {
+    # artificially create zero deaths for senior Hispanics
+    ltp_alt <- ltp
+    ltp_alt[race_eth == 'Hispanic', race_eth := fifelse(calc_age(date_of_birth, date_of_death) >= 64, 'White', race_eth)]
+
+    # run
+    ltp_output_group_alt <- life_table_prep(ph.data = ltp, group_by = c('year', 'race_eth'))
+
+    # test
+    expect_identical(ltp_output_group_alt[race_eth == 'Hispanic' & ages == '85+']$deaths, 0L)
   })
