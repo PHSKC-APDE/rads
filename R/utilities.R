@@ -2177,7 +2177,7 @@ tsql_validate_field_types <- function(ph.data = NULL,
 
   # Define type compatibility and constraints ----
       type_compatibility <- list(
-        integer = c("tinyint", "smallint", "int", "bigint"),
+        integer = c("tinyint", "smallint", "int", "bigint", "bit"),
         numeric = c("tinyint", "smallint", "int", "bigint", "decimal", "numeric", "float", "real", "money", "smallmoney"),
         character = c("char", "varchar", "text", "nchar", "nvarchar", "ntext"),
         factor = c("char", "varchar", "text", "nchar", "nvarchar", "ntext"),
@@ -2219,6 +2219,8 @@ tsql_validate_field_types <- function(ph.data = NULL,
               } else {
                 TRUE # if R_type not numeric, must be integer -- defined in type compatibility
               }
+          } else if (tsql_type == "bit" && R_type == "integer") {
+            all(column %in% c(0, 1, NA), na.rm = TRUE)
           } else if (tsql_type %in% c("char", "varchar", "nchar", "nvarchar") && !is.na(size)) {
             all(nchar(as.character(column)) <= size, na.rm = TRUE)
           } else {
