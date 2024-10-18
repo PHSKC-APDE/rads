@@ -1745,7 +1745,7 @@ death_xxx_count <- function(ph.data,
     return(x_combo)
 }
 
-# life_table ----
+# life_table() ----
 #' Generate a standard life table
 #'
 #' @description
@@ -1814,19 +1814,19 @@ death_xxx_count <- function(ph.data,
 #' @details
 #' The function returns the following life table columns:
 #'
-#' - mx: age interval specific death rate
+#' - \emph{\bold{mx}}: age interval specific death rate
 #'
-#' - qx: probability of dying in the age interval
+#' - \emph{\bold{qx}}: probability of dying in the age interval
 #'
-#' - lx: # of (theoretical) persons alive at the start of the age interval
+#' - \emph{\bold{lx}}: # of (theoretical) persons alive at the start of the age interval
 #'
-#' - dx: # of deaths during the age interval
+#' - \emph{\bold{dx}}: # of deaths during the age interval
 #'
-#' - ax: average fraction of the interval lived by those who died in the interval
+#' - \emph{\bold{ax}}: average fraction of the interval lived by those who died in the interval
 #'
-#' - Lx: total person years lived in the age interval
+#' - \emph{\bold{Lx}}: total person years lived in the age interval
 #'
-#' - Tx: total person years lived beyond the start of the age interval
+#' - \emph{\bold{Tx}}: total person years lived beyond the start of the age interval
 #'
 #' - ex: expectation of life (a.k.a., life expectancy) at the start of the age
 #' interval. ***The value of ex for those under one year of age is typically
@@ -1898,6 +1898,7 @@ life_table <- function(ph.data,
   ax <- mx_upper <- mx_lower <- mx_se <- qnorm <- qx_variance <- px_variance <- NULL
   ex_temp <- ex_temp_cumsum <- ex_variance <- ex_se <- ex_lower <- ex_upper <- NULL
   ordered_cols <- newdeaths <- original_order <- NULL
+  predicted_mx <- deaths_original <- deaths <- pop <- NULL
 
   # Get name of the data.frame/data.table ----
   ph.dataname <- deparse(substitute(ph.data))
@@ -2059,6 +2060,37 @@ life_table <- function(ph.data,
     ph.data[, mx := get(mydeaths)/get(mypops)] # Chiang 2.4 ... "age specific death rate can be estimated from ..."
     ph.data[mx > 1, mx := 1] # due to small numbers, it is possible for #deaths>#pop, especially for single old age groups. Probability > 100% illogical.
 
+    # Use predicted mx for highest age group if necessary
+      if(nrow(ph.data[grepl('[0-9]+', get(myages)) & mx == 0]) > 0){
+
+        warning(paste0(
+          "\n\U00026A0",
+          "\nWarning: Zero deaths detected in one or more oldest age groups (e.g., `", myages, "==", unique(ph.data[istart == max(istart)][[myages]]), "`).",
+          "\nThis may indicate an error in data preparation or reflect small population sizes.\n",
+          "\nThe function has provided modeled `mx` values, affecting `Tx` and `ex` calculations,",
+          "\nincluding life expectancy at birth. `ex_se`, `ex_lower`, and `ex_upper` for the",
+          "\noldest age group are based soley on modeled deaths and should be interpreted cautiously.",
+          "\n\nPlease double-check your data preparation and consider whether life table calculations ",
+          "\nare appropriate for your population size."))
+
+        mxPredicted <- life_table_predict_mx(ph.data, group_by, myages)
+
+        if(is.null(group_by)){
+          ph.data <- merge(ph.data,
+                           mxPredicted,
+                           by = myages,
+                           all = T)
+        } else {
+          ph.data <- merge(ph.data,
+                           mxPredicted,
+                           by = c(group_by, myages),
+                           all = T)
+        }
+
+        ph.data[!is.na(predicted_mx) & mx == 0, mx := predicted_mx]
+        ph.data[, predicted_mx := NULL]
+      }
+
     ph.data[, mx_upper := qgamma((ci+(1-ci)/2), get(mydeaths) + 1) / get(mypops)] # exact Poisson upper CI
     ph.data[, mx_se := (mx_upper - mx) / qnorm((ci+(1-ci)/2))] # reverse_engineer poisson standard error
     ph.data[, mx_upper := NULL]
@@ -2183,10 +2215,22 @@ life_table <- function(ph.data,
   # authors that the printed formula was incorrect.
   # ph.data[irank == max(irank), ex_variance := ((lx^2)/(mx^4)) * mx_se^2]
   # The replacement formula below was derived from careful study of Silcocks' original paper
+
+  # When there are no deaths on record for the oldest age group, the Silcocks' method
+  # cannot estimate the variance. For the sake of generating an uncertainty estimate, we
+  # will use an estimate of deaths had they experienced the mx predicted by
+  # rads:::life_table_predict_mx(). Afterward, we will restore the original death
+  # records and will give a warning to the end user about interpreting the confidence
+  # interval
+
+  # Generate estimated deaths when needed for max age group
+  ph.data[, deaths_original := get(mydeaths)]
+  ph.data[irank == max(irank) & get(mydeaths) == 0, c(mydeaths) := as.integer(round2(pop * mx))]
+
+  # Silcocks' formula
   ph.data[irank == max(irank),
           ex_variance := (0.5*ph.data[irank == max(irank)-1]$Lx) *
             (4 / get(mydeaths)*(mx^2))]
-
 
   if(is.null(group_by)){
     ph.data[irank == max(irank), ex_variance := (0.5*ph.data[irank == max(irank)-1]$Lx) * (4 / get(mydeaths)*(mx^2))]
@@ -2197,10 +2241,14 @@ life_table <- function(ph.data,
                                   x[irank == max(irank), ex_variance := (0.5*x[irank == max(irank)-1]$Lx) * (4 / get(mydeaths)*(mx^2))]
                                   return(x)} ), use.names = T)}
 
+  # Use variance to calculate confidence intervals
   ph.data[, ex_se := sqrt(ex_variance)]
   zscore = qnorm(1 - (1-ci)/2) # since two sided, need to split the alpha for upper and lower tails
   ph.data[, ex_lower := ex - ex_se * zscore]
   ph.data[, ex_upper := ex + ex_se * zscore]
+
+  # Restore original death data
+  ph.data[, c(mydeaths) := deaths_original][, deaths_original := NULL]
 
   # Tidy final output ----
   # order and subset columns
@@ -2208,7 +2256,7 @@ life_table <- function(ph.data,
     ordered_cols <- c(myages, mypops, mydeaths, "mx", "qx", "lx", "dx", "ax", "Lx", "Tx", "ex", "ex_lower", "ex_upper", "ex_se")
   } else{
     ph.data[, ax := get(myprops)]
-    ordered_cols <- c(myages, mypops, mydeaths, myprops, "mx", "qx", "lx", "dx", "ax", "Lx", "Tx", "ex", "ex_lower", "ex_upper", "ex_se")
+    ordered_cols <- c(myages, mypops, mydeaths, "mx", "qx", "lx", "dx", "ax", "Lx", "Tx", "ex", "ex_lower", "ex_upper", "ex_se")
   }
   ordered_cols <- c(setdiff(orig_cols, ordered_cols), ordered_cols)
   ph.data <- ph.data[, ordered_cols, with = FALSE]
@@ -2223,13 +2271,133 @@ life_table <- function(ph.data,
   return(ph.data)
 }
 
+# life_table_predict_mx() ----
+#' Predict Mortality Rate for Highest Age Group
+#'
+#' @description
+#' This function predicts the `mx` value (age-specific mortality rate) for the
+#' highest age group (e.g., '85+') where there is insufficient data for
+#' calculating it directly. It is intended for internal use by `rads`'
+#' \code{\link{life_table}} only.
+#'
+#' @details
+#' The function uses a simplification of the Gompertz–Makeham law of mortality.
+#' In the log10-linear model `log10(mx) = a + b * istart`:
+#' - `a` (intercept) represents the Makeham age-independent mortality term
+#' - `b` represents the Gompertz age-dependent term
+#'
+#' The use of a base 10 log model and the value of the `empirical_adjustment_factor`
+#' were determined empirically by modeling age and gender specific USA 2018
+#' mortality data, and 2009-2018 WA and King County mortality data. These model
+#' parameters best fit these mortality data.
+#'
+#' Age specific mortality rates and are known to increase exponentially
+#' after age 30 and the `empirical_adjustment_factor` is based on predicting
+#' `mx` for those >= 85 years old. It is recommended that you do not use use
+#' this function when the max age is is less than '80+'.
+#'
+#' @param ph.data A data.table containing mortality data
+#'
+#' The default is \code{ph.data = ph.data}, where `ph.data` is passed
+#' from `rads::life_table()`
+#'
+#' @param group_by Variables used for stratification
+#'
+#' The default is \code{group_by = group_by}, where `group_by` is passed
+#' from `rads::life_table()`
+#'
+#' @param myages A vector of length one containing the name of the column with
+#' the age categories in their proper format (e.g., `c('65-74', 75-84', '85+')`).
+#'
+#'
+#' The default is \code{myages = myages}, where `myages` is passed from
+#' `rads::life_table()`
+#'
+#' @param empirical_adjustment_factor Adjustment factor for predicted mx
+#'
+#' The default is \code{empirical_adjustment_factor = 1.8}
+#'
+#' @return A data.table with predicted mx values for the highest age group
+#'
+#' @examples
+#' \donttest{
+#' library(data.table)
+#'
+#' # create data set ----
+#' deaths <- data.table(
+#'            ages = c("35-44", "45-54", "55-64", "65-74", "75-84", "85+"),
+#'            istart = c(35, 45, 55, 65, 75, 85),
+#'            gender = rep("Both", 6),
+#'            mx = c(0.001947, 0.003959, 0.008867, 0.017833, 0.043861, 0.134507)
+#' )
+#'
+#' # generate predictions ----
+#' output <- rads:::life_table_predict_mx(
+#'            ph.data = deaths,
+#'            group_by = 'gender',
+#'            myages = 'ages'
+#' )
+#'
+#' print(output)
+#' }
+#' @keywords internal
+#'
+#' @import data.table
+#' @importFrom stats lm coef
+#'
+#' @note
+#' This is an internal function and should not be called directly by users.
+#' It is exposed for transparency and documentation purposes only.
+#'
+life_table_predict_mx <- function(ph.data = ph.data,
+                                  group_by = group_by,
+                                  myages = myages,
+                                  empirical_adjustment_factor = 1.8) {
+  # Global variables used by data.table declared as NULL here to play nice with devtools::check()
+  istart <- mx <- NULL
+
+  # Filter for ages 30 and above, excluding the highest age group
+  ph.data_2mod <- ph.data[istart >= 30 & istart < max(istart)]
+
+  # Identify the maximum istart value
+  max_istart <- max(ph.data$istart)
+
+  # Function to perform log10-linear extrapolation for a single group
+  extrapolate_group <- function(group) {
+    # Fit log10-linear model: log10(mx) = a + b * istart
+    # This is an empirically informed simplification of Gompertz–Makeham law of mortality
+    model <- stats::lm(log10(mx) ~ istart, data = group)
+
+    # Extract coefficients
+    a <- coef(model)[1] # Makeham age-independent component
+    b <- coef(model)[2] # Gompertz age-dependent component
+
+    # Predict mx for the maximum istart value with adjustment
+    predicted_mx <- unname(empirical_adjustment_factor * 10^(a + b * max_istart))
+    return(predicted_mx)
+  }
+
+  if (is.null(group_by)) {
+    # If no strata variables, perform extrapolation on entire dataset
+    result <- data.table(ages = unique(ph.data[istart == max(istart)][[myages]]),
+                         predicted_mx = extrapolate_group(ph.data_2mod))
+  } else {
+    # Perform extrapolation within each stratum
+    result <- ph.data_2mod[, list(ages = unique(ph.data[istart == max(istart)][[myages]]),
+                                  predicted_mx = extrapolate_group(.SD)),
+                           by = group_by]
+  }
+
+  return(result)
+}
+
 # life_table_prep () ----
 #' Prepare death data for use with life_table()
 #'
 #' @description
 #' Processes individual-level death data to create a standardized data table.
 #' This table is collapsed/aggregated by age bin and optionally, by
-#' demographics, for use with `rads::life_table()`.
+#' demographics, for use with \code{\link{life_table}}.
 #'
 #' @param ph.data a data.table or data.frame. Must contain individual-level
 #' death data with the date of birth, date of death, and any demographics which
@@ -2318,7 +2486,7 @@ life_table_prep <- function(ph.data,
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
   orig_cols <- dob <- dod <- dob_na <- dob_na <- death_age <- tempz <- NULL
   end <- start <- interval <- age.lab <- ages <- length.interval <- NULL
-  interval.start <- interval.end <- fraction <- ph.datasum <- '.' <- NULL
+  interval.start <- interval.end <- fraction <- ph.datasum <- '.' <- deaths <- NULL
 
   # Check arguments ----
     # ph.data ----
@@ -2402,13 +2570,44 @@ life_table_prep <- function(ph.data,
     ph.data[, fraction := as.integer(dod - interval.start) / as.integer(interval.end - interval.start)]
     ph.data[fraction > 1, fraction := 1] # for oldest age group, can actually live > 100, but capped at 100 because of pop data, so force max prop to 1
 
-  # collapse/aggregate  ----
+  # Collapse/aggregate  ----
   if(!is.null(group_by)){
     collapse_cols <- c(group_by, "ages", "fraction")
   } else {collapse_cols <- c("ages", "fraction")}
   ph.data <- ph.data[, .SD, .SDcols = collapse_cols]
   ph.datasum <- ph.data[, list(deaths = .N, fraction = mean(fraction, na.rm = T)), by = setdiff(collapse_cols, "fraction")]
   data.table::setorderv(ph.datasum, c("ages", setdiff(collapse_cols, "ages")))
+
+  # Ensure every possible combo of group_by and ages is present ----
+  possibleAges <- cut(0:100, cuts, right = F)
+  possibleAges <- gsub("\\[|\\]|\\)", "", possibleAges)
+  possibleAges <- unique(gsub("\\,", "-", possibleAges))
+  possibleAges[is.na(possibleAges)] <- paste0(max(cuts), "+")
+
+  if(!is.null(group_by)){
+    possibleGroupBy <- lapply(group_by,
+                             function(col){
+                               unique(ph.data[!is.na(ph.data[[col]]), col, with = FALSE][[1]])})
+    possibleGroupBy <- do.call(CJ, possibleGroupBy)
+    setnames(possibleGroupBy, group_by)
+    template <- possibleGroupBy[rep(1:.N, each = length(possibleAges))]
+    template[, ages := rep(possibleAges, times = .N/length(possibleAges))]
+
+    ph.datasum <- merge(template,
+                        ph.datasum,
+                        by = c('ages', group_by),
+                        all = T)
+  } else {
+    template <- data.table(ages = possibleAges)
+    ph.datasum <- merge(template,
+                        ph.datasum,
+                        by = c('ages'),
+                        all = T)
+  }
+
+  ph.datasum[is.na(deaths), deaths := 0]
+  ph.datasum[is.na(fraction), fraction := 0] # later will be changed to 0.5 when there are zero deaths in an age bin, but keeping it simpler for user of this function
+
 
   # return the object from function ----
   #print("Note!! These aggregated deaths need to be merged with population data with the same demographics before running through the life_table() function.")
