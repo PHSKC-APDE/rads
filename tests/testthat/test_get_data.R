@@ -27,6 +27,48 @@ test_that('Load data birth', {
 
 })
 
+# BRFSS ----
+test_that('Load data brfss', {
+  # specify vars that do not need MI and for multiple years
+    brfss0 <- get_data_brfss(cols = c('chi_sex'), year = 2019:2023)
+    expect_true(inherits(brfss0, 'dtsurvey'))
+    expect_true(inherits(brfss0, 'data.table'))
+    expect_equal(sort(c('chi_year', 'chi_sex', 'finalwt1', 'x_ststr', 'default_wt', '_id')),  sort(names(brfss0)))
+    expect_identical(2019:2023, as.integer(unique(brfss0$chi_year)))
+
+  # specify vars that do not need MI and a single year
+    brfss1 <- get_data_brfss(cols = c('chi_sex'), year = 2022)
+    expect_true(inherits(brfss1, 'dtsurvey'))
+    expect_true(inherits(brfss1, 'data.table'))
+    expect_identical(1L, uniqueN(brfss1$chi_year))
+
+  # specify a var that needs MI and do not specify year
+    brfss2 <- get_data_brfss(cols = c('chi_sex', 'hra20_name'))
+    brfss2_names <- sort(names(brfss2$imputations[[1]]))
+    brfss2_names <- brfss2_names[!grepl('hra20_id_[0-9]', brfss2_names)]
+    expect_true(inherits(brfss2, 'imputationList'))
+    expect_true(inherits(brfss2$imputations[[1]], 'dtsurvey'))
+    expect_true(inherits(brfss2$imputations[[1]], 'data.table'))
+    expect_identical(1L, uniqueN(brfss2$imputations[[1]]$chi_year))
+    expect_identical(sort(c('chi_year', 'chi_sex', 'finalwt1', 'x_ststr', 'default_wt', '_id', 'hra20_name')), brfss2_names)
+
+  # do not specify a variable and specify multiple years
+    brfss3 <- get_data_brfss(cols = NULL, year = 2019:2023)
+    expect_true(inherits(brfss3, 'imputationList'))
+    expect_true(inherits(brfss3$imputations[[1]], 'dtsurvey'))
+    expect_true(inherits(brfss3$imputations[[1]], 'data.table'))
+    expect_gt(uniqueN(names(brfss3$imputations[[1]])), 200)
+    expect_identical(2019:2023, as.integer(unique(brfss3$imputations[[1]]$chi_year)))
+
+  # check that error messages work appropriately
+    expect_error(get_data_brfss(cols = NA), "columns are not available")
+    expect_error(get_data_brfss(cols = 'arbustus'), "columns are not available")
+    expect_error(get_data_brfss(year = '2020'), "must specify a vector of integers")
+    expect_error(get_data_brfss(year = 2020.00001), "must specify a vector of integers")
+    expect_error(get_data_brfss(year = 1984), "years are not available in the dataset")
+})
+
+
 # Death ----
 test_that('Load data death', {
   # check that NA loads all cols, with lowercase names
