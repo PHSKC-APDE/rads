@@ -538,6 +538,56 @@ test_that("multi_t_test handles adjustment methods correctly", {
   expect_equal(result_bh$adjust_method[1], "Benjamini-Hochberg")
 })
 
+# pool_brfss_weights ----
+test_that('pool_brfss_weights data.table', {
+
+  # generate a standard BRFSS table that contains multiple years (and therefore used pool_brfss_weights)
+    brfss_table <- get_data_brfss(cols = c('chi_sex'), year = 2019:2023)
+
+  # check that the total new weight is between the total for the earliest and the latest years (because population is growing)
+    expect_true(sum(brfss_table$default_wt) > sum(brfss_table[chi_year == 2019]$finalwt1) &
+                  sum(brfss_table$default_wt) < sum(brfss_table[chi_year == 2023]$finalwt1))
+
+  # survey set (including creating new weights) for just a subset of the years
+    brfss_table2 <- pool_brfss_weights(ph.data = brfss_table, years = 2020:2021, new_wt_var = 'brfss2_wt')
+
+  # check that the total new weight total is between the total weights for 2020 & 20201
+    expect_true(sum(brfss_table2$brfss2_wt) > sum(brfss_table2[chi_year == 2020]$finalwt1) &
+                  sum(brfss_table2$brfss2_wt) < sum(brfss_table2[chi_year == 2021]$finalwt1))
+
+  # check that new weight is zero outside of the specified years
+    expect_equal(sum(brfss_table2[!chi_year %in% c(2020:2021)]$brfss2_wt), 0)
+
+  # check that object is still a dtsurvey / data.table object
+    expect_true(inherits(brfss_table2, 'dtsurvey'))
+    expect_true(inherits(brfss_table2, 'data.table'))
+})
+
+test_that('pool_brfss_weights mitools:imputation_list', {
+
+  # generate a standard BRFSS table that contains multiple years (and therefore used pool_brfss_weights)
+  brfss_miList <- get_data_brfss(cols = c('chi_geo_region'), year = 2019:2023)
+
+  # check that the total new weight is between the total for the earliest and the latest years (because population is growing)
+  expect_true(sum(brfss_miList$imputations[[1]]$default_wt) > sum(brfss_miList$imputations[[1]][chi_year == 2019]$finalwt1) &
+                sum(brfss_miList$imputations[[1]]$default_wt) < sum(brfss_miList$imputations[[1]][chi_year == 2023]$finalwt1))
+
+  # survey set (including creating new weights) for just a subset of the years
+  brfss_miList2 <- pool_brfss_weights(ph.data = brfss_miList, years = 2020:2021, new_wt_var = 'brfss2_wt')
+
+  # check that the total new weight total is between the total weights for 2020 & 20201
+  expect_true(sum(brfss_miList2$imputations[[1]]$brfss2_wt) > sum(brfss_miList2$imputations[[1]][chi_year == 2020]$finalwt1) &
+                sum(brfss_miList2$imputations[[1]]$brfss2_wt) < sum(brfss_miList2$imputations[[1]][chi_year == 2021]$finalwt1))
+
+  # check that new weight is zero outside of the specified years
+  expect_equal(sum(brfss_miList2$imputations[[1]][!chi_year %in% c(2020:2021)]$brfss2_wt), 0)
+
+  # check that object is still a dtsurvey / data.table object
+  expect_true(inherits(brfss_miList2$imputations[[1]], 'dtsurvey'))
+  expect_true(inherits(brfss_miList2$imputations[[1]], 'data.table'))
+  expect_true(inherits(brfss_miList2, 'imputationList'))
+})
+
 # std_error() ----
 test_that('std_error',{
   expect_equal(std_error(c(seq(0, 400, 100), NA)), sd(c(seq(0, 400, 100), NA), na.rm = T) / sqrt(5))
