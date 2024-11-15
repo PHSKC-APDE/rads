@@ -8,24 +8,27 @@ list_dataset_columns(
   dataset = NULL,
   year = 2021,
   mykey = "hhsaw",
-  analytic_only = F
+  analytic_only = FALSE
 )
 }
 \arguments{
-\item{dataset}{Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options}
+\item{dataset}{Character vector of length 1. Identifies the dataset to be
+fetched. Use \code{\link{list_apde_data}} for available options.}
 
-\item{year}{Year of dataset to check.}
+\item{year}{Year(s) of dataset to check. Only applies to HYS and BRFSS data.
+Defaults to \code{year = 2021}.}
 
 \item{mykey}{Character vector of length 1 OR a database connection. Identifies
 the keyring:: key that can be used to access the Health & Human Services
-Analytic Workspace (HHSAW).
+Analytic Workspace (HHSAW). Defaults to \code{mykey = 'hhsaw'}.}
 
-Default == 'hhsaw'}
-
-\item{analytic_only}{logical. Controls whether columns outside the analytic dataset should be returned.}
+\item{analytic_only}{Logical. Controls whether columns outside the analytic
+dataset should be returned. Only applies to HYS. Defaults to
+\code{analytic_only = FALSE}.}
 }
 \value{
-Data.frame with two columns. First column is the variable name, while the second identifies whether or not it is in the analytic ready dataset
+A \code{data.frame} with two columns. The first column is the variable name,
+while the second identifies whether or not it is in the analytic ready dataset.
 }
 \description{
 List columns available for analysis for a particular dataset in RADS
