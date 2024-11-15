@@ -1251,27 +1251,27 @@ get_ref_pop <- function(ref_name = NULL){
 #' }
 list_apde_data <- function(){
 
-  ret <- c('hys', 'birth', 'chars', 'death')
+  ret <- c('birth', 'brfss', 'chars', 'death', 'hys')
 
   return(ret)
-
-
 }
 
 # list_dataset_columns() ----
 #' List columns available for analysis for a particular dataset in RADS
 #'
-#' @param dataset Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options
-#' @param year Year of dataset to check.
+#' @param dataset Character vector of length 1. Identifies the dataset to be
+#' fetched. Use \code{\link{list_apde_data}} for available options.
+#' @param year Year(s) of dataset to check. Only applies to HYS and BRFSS data.
+#' Defaults to \code{year = 2021}.
 #' @param mykey Character vector of length 1 OR a database connection. Identifies
 #' the keyring:: key that can be used to access the Health & Human Services
-#' Analytic Workspace (HHSAW).
+#' Analytic Workspace (HHSAW). Defaults to \code{mykey = 'hhsaw'}.
+#' @param analytic_only Logical. Controls whether columns outside the analytic
+#' dataset should be returned. Only applies to HYS. Defaults to
+#' \code{analytic_only = FALSE}.
 #'
-#' Default == 'hhsaw'
-#' @param analytic_only logical. Controls whether columns outside the analytic dataset should be returned.
-#'
-#'
-#' @return Data.frame with two columns. First column is the variable name, while the second identifies whether or not it is in the analytic ready dataset
+#' @return A \code{data.frame} with two columns. The first column is the variable name,
+#' while the second identifies whether or not it is in the analytic ready dataset.
 #' @export
 #' @importFrom data.table data.table
 #' @name list_dataset_columns
@@ -1279,73 +1279,104 @@ list_apde_data <- function(){
 #' \donttest{
 #'  list_dataset_columns('death')
 #' }
-list_dataset_columns <- function(dataset = NULL, year = 2021, mykey = 'hhsaw', analytic_only = F){
-
-  # visible bindings
+list_dataset_columns <- function(dataset = NULL,
+                                 year = 2021,
+                                 mykey = 'hhsaw',
+                                 analytic_only = FALSE){
+  # Visible bindings for data.table/check global variables ----
     ar <- NULL
+    colname <- NULL
 
-  colname <- NULL
-  opts = list_apde_data()
+  # Validate arguments ----
+    opts = list_apde_data()
 
-  if(is.null(dataset)){stop("\n\U0001f47f The 'dataset' argument cannot be missing. Available options are in `list_apde_data()`.")}
+    if(is.null(dataset)){stop("\n\U0001f47f The 'dataset' argument cannot be missing. Available options are in `list_apde_data()`.")}
 
-  stopifnot('dataset must be a character vector of length 1' = length(dataset) == 1)
-  if(!dataset %in% opts){
-    stop(paste0('\n\U0001f47f list_dataset_columns functionality for dataset "', dataset, '" not currently available/implemented. ',
-                "Only the following datasets are implemented: ", paste(opts, collapse = ', '), "."))
-  }
+    stopifnot('dataset must be a character vector of length 1' = length(dataset) == 1)
+    dataset <- tolower(dataset)
+    if(!dataset %in% opts){
+      stop(paste0('\n\U0001f47f list_dataset_columns functionality for dataset "', dataset, '" not currently available/implemented. ',
+                  "Only the following datasets are implemented: ", paste(opts, collapse = ', '), "."))
+    }
 
-  if(dataset %in% c('birth', 'death', 'chars')){ # vital stats on Azure is relatively standard
-    con <- validate_hhsaw_key(hhsaw_key = mykey)
-    message(paste0("Column names for '", dataset, "' data are taken from all available years."))
-    if(analytic_only == T){
+    if(dataset %in% c('birth', 'death', 'chars')){ # vital stats on Azure is relatively standard
+      con <- validate_hhsaw_key(hhsaw_key = mykey)
+      message(paste0("Column names for '", dataset, "' data are taken from all available years."))
+      if(analytic_only == T){
         message(paste0("The `analytic_only` argument does not apply to the '", dataset, "' data and will be ignored."))
-    }
-  }
-
-  # The below code would ideally be replaced by a single call to a generic interface configured by the user
-  if(dataset == "birth") {
-    # get list of all colnames from SQL
-    var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [birth].[final_analytic]"))
-  }
-  if(dataset == "chars") {
-    # get list of all colnames from SQL
-    var.names <- names(DBI::dbGetQuery(con, "SELECT TOP (0) * FROM [chars].[final_analytic]"))
-    bonus.CHI.names <- c('wastate', 'yage4', 'age6', 'race3', 'race4') # made on the fly by rads
-    var.names <- tolower(sort(c(var.names, bonus.CHI.names)))
-  }
-  if(dataset == "death") {
-    # get list of all colnames from SQL
-    var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [death].[final_analytic]"))
-    bonus.CHI.names <- c('wastate', 'age6', 'race3', 'race4', 'bigcities', 'hra20_name', 'chi_geo_region') # made on the fly by rads
-    var.names <- tolower(sort(c(var.names, bonus.CHI.names)))
-  }
-  if(dataset =="hys") {
-    if(!all(year %in% c(seq(2004,2018,2), 2021))) {
-      stop(paste0("invalid year(s) indicated for Health Youth Survey data. Please see department documentation for details on currently correct years."))
-    }
-    dat <- data.table::fread('//dphcifs/APDE-CDIP/HYS/releases/2021/best/hys_cols.csv')
-    yyy = year
-    dat = dat[year %in% yyy]
-    var.names.ar <- dat[ar == TRUE, colname]
-
-    if(!analytic_only){
-      var.names.stg = dat[ar == FALSE, colname]
-    } else{
-      var.names.stg = NULL
+      }
     }
 
-    var.names = c(var.names.ar, var.names.stg)
-    a_r = c(rep(TRUE, length(var.names.ar)), rep(FALSE, length(var.names.stg)))
+  # Identify columns from specific datasets ----
+    # The below code would ideally be replaced by a single call to a generic interface configured by the user
+    if(dataset == "birth") {
+      # get list of all colnames from SQL
+      var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [birth].[final_analytic]"))
+    }
 
-  }
+    if(dataset == "brfss") {
+      dat <- setDT(readRDS("//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds"))
+      if(!all(year %in% unique(dat$chi_year))) {
+        stop(paste0("invalid year(s) indicated for Health Youth Survey data. Please see department documentation for details on currently correct years."))
+      }
+      dat = dat[chi_year %in% year]
 
-  if(exists('a_r')){
-      Variable_Descriptions = unique(data.table(var.names = var.names, analytic_ready = a_r))
-  } else {Variable_Descriptions = unique(data.table(var.names = var.names))}
+      na_cols <- dat[, which(sapply(.SD, function(x) all(is.na(x)))), .SDcols = names(dat)] # identify columns with 100% missing
+      dat[, (na_cols) := NULL] # drop columns 100% missing
 
-  return(Variable_Descriptions)
+      var.names <- names(dat)
+      bonus.CHI.names <- c('hra20_id', 'hra20_name', 'chi_geo_region') # derived from hra20_id_#, whis is from spatagg::assign_cases xwalk ZIP to hra20
+
+      var.names <- sort(c(var.names, bonus.CHI.names))
+    }
+
+    if(dataset == "chars") {
+      # get list of all colnames from SQL
+      var.names <- names(DBI::dbGetQuery(con, "SELECT TOP (0) * FROM [chars].[final_analytic]"))
+      bonus.CHI.names <- c('wastate', 'yage4', 'age6', 'race3', 'race4') # made on the fly by rads
+      var.names <- tolower(sort(c(var.names, bonus.CHI.names)))
+    }
+
+    if(dataset == "death") {
+      # get list of all colnames from SQL
+      var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [death].[final_analytic]"))
+      bonus.CHI.names <- c('wastate', 'age6', 'race3', 'race4', 'bigcities', 'hra20_name', 'chi_geo_region') # made on the fly by rads
+      var.names <- tolower(sort(c(var.names, bonus.CHI.names)))
+    }
+
+    if(dataset =="hys") {
+      if(!all(year %in% c(seq(2004,2018,2), 2021))) {
+        stop(paste0("invalid year(s) indicated for Health Youth Survey data. Please see department documentation for details on currently correct years."))
+      }
+      dat <- data.table::fread('//dphcifs/APDE-CDIP/HYS/releases/2021/best/hys_cols.csv')
+      yyy = year
+      dat = dat[year %in% yyy]
+      var.names.ar <- dat[ar == TRUE, colname]
+
+      if(!analytic_only){
+        var.names.stg = dat[ar == FALSE, colname]
+      } else{
+        var.names.stg = NULL
+      }
+
+      var.names = c(var.names.ar, var.names.stg)
+      a_r = c(rep(TRUE, length(var.names.ar)), rep(FALSE, length(var.names.stg)))
+    }
+
+  # Create final table of variable names, analytic ready flag, and year ----
+    if(exists('a_r')){
+        Variable_Descriptions = unique(data.table(var.names = var.names, analytic_ready = a_r, `year(s)` = format_time(year)))
+    } else {Variable_Descriptions = unique(data.table(var.names = var.names, `year(s)` = format_time(year)))}
+
+    if(!dataset %in% c('hys', 'brfss')){
+      Variable_Descriptions[, `year(s)` := NULL]
+    }
+
+  # Return object ----
+    print(Variable_Descriptions)
+    return(Variable_Descriptions)
 }
+
 
 # list_ref_xwalk() ----
 #' View table of geographic pairs usable in the get_xwalk() function
@@ -1852,6 +1883,201 @@ multi_t_test <- function(means,
   # Return object ----
     return(t.results)
 }
+
+# pool_brfss_weights ----
+#' Create New BRFSS Survey Weights for Multi-Year Analyses
+#'
+#' @description
+#' Creates a \code{\link[dtsurvey]{dtsurvey}}/data.table object with properly adjusted
+#' survey weights for analyzing Behavioral Risk Factor
+#' Surveillance System (BRFSS) data across multiple years. The built-in BRFSS
+#' survey weight (`\code{finalwt1}`) is designed for single-year analyses. When
+#' analyzing BRFSS data across multiple years, the survey weights must be
+#' proportionately down scaled to approximate an average year's population. This
+#' function creates new survey weights by adjusting the original weights based
+#' on the relative population size of each year within the specified time period.
+#'
+#' @param ph.data A \code{data.frame}, \code{data.table}, \code{dtsurvey} object
+#' or \code{\link[mitools]{imputationList}} containing BRFSS survey data
+#' @param years An integer vector specifying which years to include in the weight
+#' calculation
+#' @param year_var Character string specifying the name of the column containing
+#' year values. Defaults to '\code{chi_year}'
+#' @param old_wt_var Character string specifying the name of the column
+#' containing the single year survey weights. Defaults to '\code{finalwt1}'
+#' @param new_wt_var Character string specifying the name for the new weight
+#' variable to be created
+#' @param strata Character string specifying the name for the strata to be used
+#' when survey setting the data. Defaults to '\code{x_ststr}'
+#'
+#' @details
+#' When analyzing multiple years of BRFSS data together, using the original
+#' weights would lead to overestimation of population totals, as each year's
+#' weights sum to that year's total survey population. This function down scales
+#' the weights proportionately based on each year's relative population size
+#' within the specified time period(s), ensuring that estimates approximate an
+#' average year's population.
+#'
+#' Note that while \code{\link{get_data_brfss}} automatically creates multi-year
+#' weights during the initial data download, you may need to use this function
+#' to create new weights when analyzing specific subsets of years. For example,
+#' some BRFSS questions are only asked in specific years, requiring custom weights
+#' to be calculated for those specific time periods. The original weight
+#' (\code{'finalwt1'}) will always be saved in order to allow this function to be
+#' used repeatedly on the same data set.
+#'
+#' @return
+#' For data.frame/data.table input: Returns a survey-weighted
+#' \code{\link[dtsurvey]{dtsurvey}}/data.table with
+#' an additional column containing the new adjusted weights.
+#'
+#' For \code{\link[mitools]{imputationList}} input: Returns a new imputationList
+#' where each \code{\link[dtsurvey]{dtsurvey}}/data.table is
+#' survey-weighted using the new weights.
+#'
+#' In both cases, the new weight column will be specified by the value of
+#' \code{new_wt_var}.
+#'
+#' @examples
+#' \dontrun{
+#' # Create weights for analyzing 2017-2022 BRFSS data
+#' brfss_data <- pool_brfss_weights(
+#'   ph.data = my_brfss_data,
+#'   years = 2017:2022,
+#'   new_wt_var = "wt_2017_2022"
+#' )
+#'
+#' # Create weights for specific years when a question was asked
+#' brfss_data <- pool_brfss_weights(
+#'   ph.data = my_brfss_data,
+#'   years = c(2017, 2019, 2021),
+#'   new_wt_var = "wt_odd_years"
+#' )
+#' }
+#'
+#' @import data.table
+#' @import dtsurvey
+#' @export
+#'
+pool_brfss_weights <- function(
+    ph.data,
+    years,
+    year_var = 'chi_year',
+    old_wt_var = 'finalwt1',
+    new_wt_var,
+    strata = 'x_ststr') {
+
+  # Visible bindings for data.table/check global variables ----
+    wt_adjustment_pop <- wt_adjustment_rows <- miList <- NULL
+
+  # Set default for return of an imputationList rather than a data.table ----
+    miList <- 0
+
+  # Validate arguments ----
+    if (missing(ph.data)) {
+      stop("\n\U1F6D1 You must specify a dataset (i.e., 'ph.data' argument is required)")
+    }
+
+    if (inherits(ph.data, "imputationList")) {
+      if (!is.data.frame(ph.data$imputations[[1]])) {
+        stop("\n\U1F6D1 If 'ph.data' is an imputation list, it must be a list of data.frames or data.tables")
+      }
+      ph.data <- as.data.table(ph.data$imputations[[1]])
+      miList <- 1
+    } else if (is.data.frame(ph.data)) {
+      ph.data <- as.data.table(ph.data)
+    } else {
+      stop("\n\U1F6D1 'ph.data' must be a data.frame, data.table, or mitools imputationList")
+    }
+
+    if (!year_var %in% names(ph.data)) {
+      stop(sprintf("\n\U1F6D1 Column '%s' not found in dataset", year_var))
+    }
+
+    if (!is.integer(ph.data[[year_var]]) &&
+        all(ph.data[[year_var]] != as.integer(ph.data[[year_var]])) ) {
+      stop(sprintf("\n\U1F6D1 Column '%s' must contain integer values", year_var))
+    }
+
+    if (!all(years %in% unique(ph.data[[year_var]]))) {
+      missing_years <- years[!years %in% unique(ph.data[[year_var]])]
+      stop(sprintf("\n\U1F6D1 The following years are not present in the dataset: %s",
+                   format_time(missing_years)))
+    }
+
+    if (!old_wt_var %in% names(ph.data)) {
+      stop(sprintf("\n\U1F6D1 Weight variable '%s' not found in dataset", old_wt_var))
+    }
+
+    if (!is.numeric(ph.data[[old_wt_var]])) {
+      stop(sprintf("\n\U1F6D1 Weight variable '%s' must be numeric", old_wt_var))
+    }
+
+    if (any(is.na(ph.data[get(year_var) %in% years][[old_wt_var]]))) {
+      stop(sprintf("\n\U1F6D1 Missing values found in weight variable '%s' for specified years",
+                   old_wt_var))
+    }
+
+    if (new_wt_var %in% names(ph.data)) {
+      stop(sprintf("\n\U1F6D1 Column name '%s' already exists in dataset", new_wt_var))
+    }
+
+    if (!strata %in% names(ph.data)) {
+      stop(sprintf("\n\U1F6D1 Strata variable '%s' not found in dataset", strata))
+    }
+
+  # Calculate proportion of period population per year as an adjustment factor for weights ----
+    adjustments <- ph.data[get(year_var) %in% years,
+                           .(wt_adjustment_pop = sum(get(old_wt_var)) /
+                               sum(ph.data[get(year_var) %in% years][[old_wt_var]]),
+                             wt_adjustment_rows = .N / nrow(ph.data[get(year_var) %in% years])),
+                           .(get(year_var))]
+    setnames(adjustments, 'get', year_var)
+
+    complete_years <- data.table(complete_years = min(ph.data[[year_var]]):max(ph.data[[year_var]]))
+    adjustments <- merge(adjustments,
+                         complete_years,
+                         by.x = c(year_var),
+                         by.y = 'complete_years',
+                         all = T)
+    adjustments[is.na(wt_adjustment_pop), wt_adjustment_pop := 0] # set to zero for years that are not applicable
+    adjustments[is.na(wt_adjustment_rows), wt_adjustment_rows := 0] # set to zero for years that are not applicable
+
+  # Calculate new weights ----
+    ph.data <- merge(ph.data,
+                     adjustments,
+                     by = c(year_var),
+                     all = TRUE)
+
+    ph.data[, c(new_wt_var) := get(old_wt_var) * wt_adjustment_pop]
+
+  # Tidy ----
+    ph.data[, intersect(c('wt_adjustment_pop', 'wt_adjustment_rows', 'hra20_id'), names(ph.data)) := NULL]
+
+  # Survey set ----
+    options(survey.lonely.psu="adjust")
+
+    if('_id' %in% names(ph.data)){
+      ph.data[, `_id` := NULL]
+    }
+
+    ph.data <- dtsurvey::dtsurvey(DT = ph.data, psu = NULL, weight = new_wt_var, strata = strata)
+
+  # Create imputation list (if needed) ----
+    if(miList == 1){
+      ph.data = lapply(1:10, function(i) copy(ph.data)[, hra20_id := get(paste0('hra20_id_',i))])
+      ph.data = mitools::imputationList(ph.data)
+    }
+
+  # return ----
+    message('Your data was survey set with the following parameters:\n',
+            ' - valid years = ', format_time(years), '\n',
+            ' - adjusted survey weight = `', new_wt_var, '` \n',
+            ' - strata = `', strata,'`\n')
+
+    return(ph.data)
+}
+
 
 # round2() ----
 #' Improved rounding function
