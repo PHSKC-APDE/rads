@@ -251,7 +251,7 @@ process:
 
 ``` r
 brfss <- get_data_brfss(
-  cols = c("age", "hra20_name"),
+  cols = c("age", "hra20_id"),
   year = 2019:2023
 )
 inherits(brfss, "imputationList")
