@@ -25,6 +25,8 @@ The Behavioral Risk Factor Surveillance System (BRFSS) is a gold mine of public 
 
 This vignette will show you how to easily work with King County BRFSS data while properly handling all these survey design considerations. Don't worry - the functions do the heavy lifting for you! We'll cover everything from finding available variables to getting properly weighted estimates.
 
+Note that the [BRFSS ETL process has its own repository](https://github.com/PHSKC-APDE/BRFSS) and questions regarding the data should be directed to the data steward.
+
 # Checking Variable Availability Across Years
 
 One quirk of BRFSS data is that not all questions are asked every year. Before diving into analysis, it's helpful to check which variables are available for your time period of interest. The `list_dataset_columns()` function makes this easy.
@@ -163,7 +165,7 @@ There are two scenarios where you might need to modify BRFSS data:
 
 2.  Applying transformations to existing variables
 
-Before making any modifications, first consider whether your changes should be standardized. If you're creating variables that will be used across multiple projects (CHI, CHNA, Communities Count, etc.), contact the ETL team about adding them to the analytic ready dataset.
+Before making any modifications, first consider whether your changes should be standardized. If you're creating variables that will be used across multiple projects (CHI, CHNA, Communities Count, etc.), contact the [BRFSS ETL steward](https://github.com/PHSKC-APDE/BRFSS) about adding them to the analytic ready dataset.
 
 For truly custom analyses, your modification approach will depend on whether you're working with a simple [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey) object or an [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf). Let's look at each case:
 
