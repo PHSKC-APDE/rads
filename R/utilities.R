@@ -1284,8 +1284,7 @@ list_dataset_columns <- function(dataset = NULL,
                                  mykey = 'hhsaw',
                                  analytic_only = FALSE){
   # Visible bindings for data.table/check global variables ----
-    ar <- NULL
-    colname <- NULL
+    ar <- colname <- chi_year <- `year(s)` <- NULL
 
   # Validate arguments ----
     opts = list_apde_data()
@@ -1968,7 +1967,7 @@ pool_brfss_weights <- function(
     strata = 'x_ststr') {
 
   # Visible bindings for data.table/check global variables ----
-    wt_adjustment_pop <- wt_adjustment_rows <- miList <- NULL
+    wt_adjustment_pop <- wt_adjustment_rows <- miList <- `_id` <- hra20_id <- NULL
 
   # Set default for return of an imputationList rather than a data.table ----
     miList <- 0
@@ -2028,10 +2027,10 @@ pool_brfss_weights <- function(
 
   # Calculate proportion of period population per year as an adjustment factor for weights ----
     adjustments <- ph.data[get(year_var) %in% years,
-                           .(wt_adjustment_pop = sum(get(old_wt_var)) /
+                           list(wt_adjustment_pop = sum(get(old_wt_var)) /
                                sum(ph.data[get(year_var) %in% years][[old_wt_var]]),
                              wt_adjustment_rows = .N / nrow(ph.data[get(year_var) %in% years])),
-                           .(get(year_var))]
+                           list(get(year_var))]
     setnames(adjustments, 'get', year_var)
 
     complete_years <- data.table(complete_years = min(ph.data[[year_var]]):max(ph.data[[year_var]]))
