@@ -1,9 +1,8 @@
 ---
-title: "Working with BRFSS Data"
-format: 
-  gfm:
-    prefer-html: false
-    self-contained: true
+title: "BRFSS Functions"
+format: gfm
+prefer-html: true
+self-contained: true
 editor: visual
 ---
 
