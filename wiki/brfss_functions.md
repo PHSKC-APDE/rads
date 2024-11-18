@@ -281,7 +281,13 @@ brfss[, age_category := fcase(age %in% 18:66, "working age",
 )]
 ```
 
-### 4. Convert your [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey) object to a list of 10 dtsurvey objects
+### 4. Drop existing HRA or region variables (because they will be replaced)
+
+``` r
+brfss[, intersect(c('hra20_id', 'hra20_name', 'chi_geo_region'), names(brfss)) := NULL]
+```
+
+### 5. Convert your [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey) object to a list of 10 dtsurvey objects
 
 This step transforms your single
 [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey) object into a list of
@@ -308,7 +314,7 @@ brfss <- lapply(1:10, function(i) {
 })
 ```
 
-### 5. Convert list to an [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf)
+### 6. Convert list to an [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf)
 
 ``` r
 brfss <- mitools::imputationList(brfss)
@@ -463,4 +469,4 @@ straightforward. Remember:
 
 Happy analyzing!
 
-– *Updated by dcolombara, 2024-11-15*
+– *Updated by dcolombara, 2024-11-18*
