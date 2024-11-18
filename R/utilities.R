@@ -1270,8 +1270,11 @@ list_apde_data <- function(){
 #' dataset should be returned. Only applies to HYS. Defaults to
 #' \code{analytic_only = FALSE}.
 #'
-#' @return A \code{data.frame} with two columns. The first column is the variable name,
-#' while the second identifies whether or not it is in the analytic ready dataset.
+#' @return A \code{data.table} with varying numbers of columns. Every dataset
+#' will return a `var.names` column, which is the variable name. When the
+#' dataset is 'brfss' or 'hys', it will also return a `years(s)` column. 'hys'
+#' also returns an `analytic_ready` column that identifies whether or not it is
+#' in the analytic ready dataset.
 #' @export
 #' @importFrom data.table data.table
 #' @name list_dataset_columns
@@ -1315,18 +1318,28 @@ list_dataset_columns <- function(dataset = NULL,
 
     if(dataset == "brfss") {
       dat <- setDT(readRDS("//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds"))
-      if(!all(year %in% unique(dat$chi_year))) {
-        stop(paste0("invalid year(s) indicated for Health Youth Survey data. Please see department documentation for details on currently correct years."))
+      if (!all(year %in% unique(dat$chi_year))) {
+        stop(paste0("Invalid year(s) indicated for Behavioral Risk Factor Surveillance System (BRFSS) data. Available years are limited to ", format_time(unique(dat$chi_year)), "."))
       }
-      dat = dat[chi_year %in% year]
+      dat <- dat[chi_year %in% year]
 
       na_cols <- dat[, which(sapply(.SD, function(x) all(is.na(x)))), .SDcols = names(dat)] # identify columns with 100% missing
       dat[, (na_cols) := NULL] # drop columns 100% missing
 
       var.names <- names(dat)
-      bonus.CHI.names <- c('hra20_id', 'hra20_name', 'chi_geo_region') # derived from hra20_id_#, whis is from spatagg::assign_cases xwalk ZIP to hra20
 
-      var.names <- sort(c(var.names, bonus.CHI.names))
+      # Determine the years each variable is available
+      var.years <- sapply(var.names, function(var) {
+        years_available <- unique(dat[!is.na(get(var)), chi_year])
+        format_time(years_available)
+      }, simplify = TRUE)
+
+      # Add on the HRA / region vars derived from hra20_id_#
+      var.names <- sort(c(var.names,
+                          c('hra20_id', 'hra20_name', 'chi_geo_region')))
+      var.years <- c(var.years,
+                     setNames(rep(format_time(year), 3), c('hra20_id', 'hra20_name', 'chi_geo_region')))
+      var.years <- var.years[var.names] # ensure same order as var.names
     }
 
     if(dataset == "chars") {
@@ -1365,10 +1378,12 @@ list_dataset_columns <- function(dataset = NULL,
   # Create final table of variable names, analytic ready flag, and year ----
     if(exists('a_r')){
         Variable_Descriptions = unique(data.table(var.names = var.names, analytic_ready = a_r, `year(s)` = format_time(year)))
-    } else {Variable_Descriptions = unique(data.table(var.names = var.names, `year(s)` = format_time(year)))}
-
-    if(!dataset %in% c('hys', 'brfss')){
-      Variable_Descriptions[, `year(s)` := NULL]
+    }
+    if (dataset == 'brfss'){
+      Variable_Descriptions <- data.table(var.names = var.names, `year(s)` = var.years)
+    }
+    if (!dataset %in% c('hys', 'brfss')){
+      Variable_Descriptions = unique(data.table(var.names = var.names))
     }
 
   # Return object ----
