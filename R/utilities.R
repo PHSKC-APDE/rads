@@ -1387,7 +1387,6 @@ list_dataset_columns <- function(dataset = NULL,
     }
 
   # Return object ----
-    print(Variable_Descriptions)
     return(Variable_Descriptions)
 }
 
