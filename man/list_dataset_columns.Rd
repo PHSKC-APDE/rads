@@ -27,8 +27,11 @@ dataset should be returned. Only applies to HYS. Defaults to
 \code{analytic_only = FALSE}.}
 }
 \value{
-A \code{data.frame} with two columns. The first column is the variable name,
-while the second identifies whether or not it is in the analytic ready dataset.
+A \code{data.table} with varying numbers of columns. Every dataset
+will return a \code{var.names} column, which is the variable name. When the
+dataset is 'brfss' or 'hys', it will also return a \code{years(s)} column. 'hys'
+also returns an \code{analytic_ready} column that identifies whether or not it is
+in the analytic ready dataset.
 }
 \description{
 List columns available for analysis for a particular dataset in RADS
