@@ -28,53 +28,49 @@ Before diving into analysis, it’s helpful to check which variables are
 available for your time period of interest. The `list_dataset_columns()`
 function makes this easy.
 
-For example, let’s see what variables are available for 2022:
+For example, let’s see what variables are available for 2023:
 
 ``` r
 # Check variables for a single year
-vars_2022 <- list_dataset_columns("brfss", year = 2022)
-head(vars_2022)
-nrow(vars_2022)
+vars_2023 <- list_dataset_columns("brfss", year = 2023)
+head(vars_2023)
+nrow(vars_2023)
 ```
 
 | var.names | year(s) |
 |:----------|:--------|
-| addepev3  | 2022    |
-| age       | 2022    |
-| age5_v1   | 2022    |
-| age5_v2   | 2022    |
-| agestd    | 2022    |
-| agestd2   | 2022    |
+| addepev3  | 2023    |
+| age       | 2023    |
+| age5_v1   | 2023    |
+| age5_v2   | 2023    |
+| agestd    | 2023    |
+| agestd2   | 2023    |
 
-    [1] 158
+    [1] 176
 
 If you’re planning to analyze multiple years together, you can check
 variable availability across years:
 
 ``` r
 # Check variables across multiple years
-vars_2019_2022 <- list_dataset_columns("brfss", year = 2019:2022)
-head(vars_2019_2022)
-nrow(vars_2019_2022)
+vars_2019_2023 <- list_dataset_columns("brfss", year = 2019:2023)
+head(vars_2019_2023)
+nrow(vars_2019_2023)
 ```
 
 | var.names | year(s)   |
 |:----------|:----------|
-| aceindx1  | 2019-2022 |
-| aceindx2  | 2019-2022 |
-| acescor1  | 2019-2022 |
-| acescor2  | 2019-2022 |
-| addepev3  | 2019-2022 |
-| age       | 2019-2022 |
+| aceindx1  | 2019-2021 |
+| aceindx2  | 2019-2021 |
+| acescor1  | 2019-2020 |
+| acescor2  | 2019-2020 |
+| addepev3  | 2019-2023 |
+| age       | 2019-2023 |
 
-    [1] 260
+    [1] 277
 
-A key thing to note: when checking multiple years,
-`list_dataset_columns()` shows variables that appear in *any* of those
-years. This means a variable might not be available for every year in
-your range. If you need a variable that’s consistently available across
-all your years of interest, you may want to check year by year or
-consult the BRFSS questionnaires.
+Notice that the `year(s)` column is not contstant because the variables
+BRFSS survey does not ask every question every year.
 
 # Getting BRFSS Data
 
@@ -94,13 +90,13 @@ Let’s see both methods in action:
 ``` r
 brfss_data1 <- get_data(
   dataset = "brfss",
-  cols = c("chi_year", "age", "race4", "chi_sex", "obese"),
-  year = 2019:2022
+  cols = c("chi_year", "age", "race4", "chi_sex", "prediab1"),
+  year = 2019:2023
 )
 ```
 
     Your data was survey set with the following parameters:
-     - valid years = 2019-2022
+     - valid years = 2019-2023
      - adjusted survey weight = `default_wt` 
      - strata = `x_ststr`
 
@@ -108,13 +104,13 @@ brfss_data1 <- get_data(
 
 ``` r
 brfss_data2 <- get_data_brfss(
-  cols = c("chi_year", "age", "race4", "chi_sex", "obese"),
-  year = 2019:2022
+  cols = c("chi_year", "age", "race4", "chi_sex", "prediab1"),
+  year = 2019:2023
 )
 ```
 
     Your data was survey set with the following parameters:
-     - valid years = 2019-2022
+     - valid years = 2019-2023
      - adjusted survey weight = `default_wt` 
      - strata = `x_ststr`
 
@@ -148,7 +144,7 @@ growing. Let’s verify our weight adjustments are working as expected:
 
 ``` r
 pop_2019 <- sum(brfss_data1[chi_year == 2019]$finalwt1)
-pop_2022 <- sum(brfss_data1[chi_year == 2022]$finalwt1)
+pop_2023 <- sum(brfss_data1[chi_year == 2023]$finalwt1)
 ```
 
 ## Calculate the adjusted population for the combined period
@@ -157,15 +153,15 @@ pop_2022 <- sum(brfss_data1[chi_year == 2022]$finalwt1)
 pop_adjusted <- sum(brfss_data1$default_wt)
 ```
 
-## Is the value of the adjusted population between that for 2019 and 2022?
+## Is the value of the adjusted population between that for 2019 and 2023?
 
 ``` r
-if(pop_2022 > pop_adjusted & pop_adjusted > pop_2019){
-  cat('\U0001f642 pop_adjusted is between pop_2019 and pop_2022')
+if(pop_2023 > pop_adjusted & pop_adjusted > pop_2019){
+  cat('\U0001f642 pop_adjusted is between pop_2019 and pop_2023')
 }
 ```
 
-    🙂 pop_adjusted is between pop_2019 and pop_2022
+    🙂 pop_adjusted is between pop_2019 and pop_2023
 
 # Working with HRAs and Regions
 
@@ -187,8 +183,8 @@ statistical estimates.
 ``` r
 # Get data including HRA information
 brfss_hra <- get_data_brfss(
-  cols = c("chi_year", "age", "race4", "chi_sex", "obese", "hra20_name"),
-  year = 2019:2022
+  cols = c("chi_year", "age", "race4", "chi_sex", "prediab1", "obese", "hra20_name"),
+  year = 2019:2023
 )
 
 # Confirm we generated an imputationList of 10 dtsurvey objects
@@ -375,49 +371,49 @@ Now for the fun part - analyzing our data! The
 handles all the survey design considerations for us. Let’s look at some
 examples:
 
-## Calculate obesity prevalence by sex and race (using a [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey) object)
+## Calculate prediabetes prevalence by sex and race (using a [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey) object)
 
 ``` r
-obesity_by_group <- calc(
+prediab_by_group <- calc(
   ph.data = brfss_data1,
-  what = "obese",
+  what = "prediab1",
   by = c("chi_sex", "race4"),
   metrics = c("mean", "rse"),
-  proportion = TRUE  # Since obesity is binary
+  proportion = TRUE  # Since prediab is binary
 )
-head(obesity_by_group)
+head(prediab_by_group)
 ```
 
 | chi_sex | race4 | variable | mean | level | mean_se | mean_lower | mean_upper | rse |
 |:---|:---|:---|---:|:---|---:|---:|---:|---:|
-| Male | AIAN | obese | 0.3145740 | NA | 0.0956222 | 0.1539557 | 0.5365011 | 30.397357 |
-| Male | Black | obese | 0.2540244 | NA | 0.0302701 | 0.1991500 | 0.3180148 | 11.916204 |
-| Male | Asian | obese | 0.0969335 | NA | 0.0126692 | 0.0747563 | 0.1248025 | 13.069995 |
-| Male | NHPI | obese | 0.2459367 | NA | 0.0816872 | 0.1168424 | 0.4456836 | 33.214724 |
-| Male | Hispanic | obese | 0.3098841 | NA | 0.0264844 | 0.2603779 | 0.3641684 | 8.546553 |
-| Male | White | obese | 0.2445188 | NA | 0.0084376 | 0.2283578 | 0.2614361 | 3.450709 |
+| Male | AIAN | prediab1 | 0.2286513 | NA | 0.1056334 | 0.0810315 | 0.4991324 | 46.19844 |
+| Male | Black | prediab1 | 0.1104866 | NA | 0.0229156 | 0.0728336 | 0.1641587 | 20.74057 |
+| Male | Asian | prediab1 | 0.1440075 | NA | 0.0162790 | 0.1149170 | 0.1789729 | 11.30427 |
+| Male | NHPI | prediab1 | 0.1882003 | NA | 0.0883866 | 0.0675507 | 0.4259102 | 46.96413 |
+| Male | Hispanic | prediab1 | 0.1393422 | NA | 0.0196825 | 0.1049936 | 0.1826349 | 14.12532 |
+| Male | White | prediab1 | 0.1066085 | NA | 0.0066475 | 0.0942613 | 0.1203582 | 6.23539 |
 
-## Calculate obesity prevalence by HRA20 (using an [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf))
+## Calculate prediabetes prevalence by HRA20 (using an [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf))
 
 ``` r
-obesity_by_hra20 <- calc(
+prediab_by_hra20 <- calc(
   ph.data = brfss_hra,
-  what = "obese",
+  what = "prediab1",
   by = c("hra20_name"),
   metrics = c("mean", "rse"),
   proportion = TRUE  
 )
-head(obesity_by_hra20)
+head(prediab_by_hra20)
 ```
 
 | hra20_name | level | variable | rse | mean | mean_se | mean_lower | mean_upper |
 |:---|:---|:---|---:|---:|---:|---:|---:|
-| Auburn - North | NA | obese | 12.33667 | 0.3269882 | 0.0440281 | 0.2399374 | 0.4140390 |
-| Auburn - South | NA | obese | 14.14332 | 0.3561001 | 0.0580984 | 0.2413867 | 0.4708136 |
-| Bear Creek and Greater Sammamish | NA | obese | 15.45107 | 0.2358673 | 0.0385144 | 0.1600071 | 0.3117275 |
-| Bellevue - Central | NA | obese | 20.00561 | 0.1469236 | 0.0388625 | 0.0682875 | 0.2255596 |
-| Bellevue - Northeast | NA | obese | 15.28179 | 0.1996892 | 0.0358325 | 0.1288697 | 0.2705086 |
-| Bellevue - South | NA | obese | 20.51088 | 0.1562690 | 0.0347160 | 0.0881736 | 0.2243643 |
+| Auburn - North | NA | prediab1 | 24.29766 | 0.0997622 | 0.0307659 | 0.0385771 | 0.1609474 |
+| Auburn - South | NA | prediab1 | 44.54647 | 0.1077833 | 0.0471159 | 0.0133618 | 0.2022049 |
+| Bear Creek and Greater Sammamish | NA | prediab1 | 24.20756 | 0.1300078 | 0.0366953 | 0.0571584 | 0.2028571 |
+| Bellevue - Central | NA | prediab1 | 29.23728 | 0.1200372 | 0.0416283 | 0.0366619 | 0.2034126 |
+| Bellevue - Northeast | NA | prediab1 | 29.05889 | 0.1120604 | 0.0419092 | 0.0295439 | 0.1945770 |
+| Bellevue - South | NA | prediab1 | 22.95378 | 0.1699585 | 0.0444625 | 0.0819283 | 0.2579887 |
 
 As noted in the [calc()
 wiki](https://github.com/PHSKC-APDE/rads/wiki/calc#example-analyses-with-resampled-datamultiple-imputation),
@@ -429,6 +425,28 @@ maintain consistent
 regardless of whether you’re working with a
 [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey) object or an
 [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf).
+
+## Calculate prediabetes & obesity prevalence by HRA20 & sex (using an [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf))
+
+``` r
+prediab_obese_hra20_sex <- calc(
+  ph.data = brfss_hra,
+  what = c("prediab1", "obese"),
+  by = c("hra20_name", "chi_sex"),
+  metrics = c("mean", "rse"),
+  proportion = TRUE  
+)
+head(prediab_obese_hra20_sex)
+```
+
+| hra20_name | chi_sex | level | variable | rse | mean | mean_se | mean_lower | mean_upper |
+|:---|:---|:---|:---|---:|---:|---:|---:|---:|
+| Auburn - North | Male | NA | prediab1 | 37.33219 | 0.0956076 | 0.0424812 | 0.0110614 | 0.1801538 |
+| Auburn - North | Male | NA | prediab1 | 37.33219 | 0.2683604 | 0.0523327 | 0.1636620 | 0.3730588 |
+| Auburn - North | Male | NA | obese | 15.51366 | 0.0956076 | 0.0424812 | 0.0110614 | 0.1801538 |
+| Auburn - North | Male | NA | obese | 15.51366 | 0.2683604 | 0.0523327 | 0.1636620 | 0.3730588 |
+| Auburn - North | Female | NA | prediab1 | 32.02231 | 0.1032095 | 0.0462180 | 0.0107485 | 0.1956706 |
+| Auburn - North | Female | NA | prediab1 | 32.02231 | 0.3959768 | 0.0641231 | 0.2670800 | 0.5248737 |
 
 # Common Gotchas
 

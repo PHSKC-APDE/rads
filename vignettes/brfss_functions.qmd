@@ -31,22 +31,22 @@ Note that the [BRFSS ETL process has its own repository](https://github.com/PHSK
 
 One quirk of BRFSS data is that not all questions are asked every year. Before diving into analysis, it's helpful to check which variables are available for your time period of interest. The `list_dataset_columns()` function makes this easy.
 
-For example, let's see what variables are available for 2022:
+For example, let's see what variables are available for 2023:
 
 ```{r}
 #| echo: true
 #| output: false
 # Check variables for a single year
-vars_2022 <- list_dataset_columns("brfss", year = 2022)
-head(vars_2022)
-nrow(vars_2022)
+vars_2023 <- list_dataset_columns("brfss", year = 2023)
+head(vars_2023)
+nrow(vars_2023)
 ```
 
 ```{r}
 #| echo: false
 #| output: true
-pretty_kable(head(vars_2022))
-nrow(vars_2022)
+pretty_kable(head(vars_2023))
+nrow(vars_2023)
 ```
 
 If you're planning to analyze multiple years together, you can check variable availability across years:
@@ -55,19 +55,19 @@ If you're planning to analyze multiple years together, you can check variable av
 #| echo: true
 #| output: false
 # Check variables across multiple years
-vars_2019_2022 <- list_dataset_columns("brfss", year = 2019:2022)
-head(vars_2019_2022)
-nrow(vars_2019_2022)
+vars_2019_2023 <- list_dataset_columns("brfss", year = 2019:2023)
+head(vars_2019_2023)
+nrow(vars_2019_2023)
 ```
 
 ```{r}
 #| echo: false
 #| output: true
-pretty_kable(head(vars_2019_2022))
-nrow(vars_2019_2022)
+pretty_kable(head(vars_2019_2023))
+nrow(vars_2019_2023)
 ```
 
-A key thing to note: when checking multiple years, `list_dataset_columns()` shows variables that appear in *any* of those years. This means a variable might not be available for every year in your range. If you need a variable that's consistently available across all your years of interest, you may want to check year by year or consult the BRFSS questionnaires.
+Notice that the `year(s)` column is not contstant because the variables BRFSS survey does not ask every question every year.
 
 # Getting BRFSS Data
 
@@ -85,8 +85,8 @@ Let's see both methods in action:
 ```{r}
 brfss_data1 <- get_data(
   dataset = "brfss",
-  cols = c("chi_year", "age", "race4", "chi_sex", "obese"),
-  year = 2019:2022
+  cols = c("chi_year", "age", "race4", "chi_sex", "prediab1"),
+  year = 2019:2023
 )
 ```
 
@@ -94,8 +94,8 @@ brfss_data1 <- get_data(
 
 ```{r}
 brfss_data2 <- get_data_brfss(
-  cols = c("chi_year", "age", "race4", "chi_sex", "obese"),
-  year = 2019:2022
+  cols = c("chi_year", "age", "race4", "chi_sex", "prediab1"),
+  year = 2019:2023
 )
 ```
 
@@ -117,7 +117,7 @@ Since BRFSS survey weights are designed to represent the population, we can veri
 
 ```{r}
 pop_2019 <- sum(brfss_data1[chi_year == 2019]$finalwt1)
-pop_2022 <- sum(brfss_data1[chi_year == 2022]$finalwt1)
+pop_2023 <- sum(brfss_data1[chi_year == 2023]$finalwt1)
 ```
 
 ## Calculate the adjusted population for the combined period
@@ -126,11 +126,11 @@ pop_2022 <- sum(brfss_data1[chi_year == 2022]$finalwt1)
 pop_adjusted <- sum(brfss_data1$default_wt)
 ```
 
-## Is the value of the adjusted population between that for 2019 and 2022?
+## Is the value of the adjusted population between that for 2019 and 2023?
 
 ```{r}
-if(pop_2022 > pop_adjusted & pop_adjusted > pop_2019){
-  cat('\U0001f642 pop_adjusted is between pop_2019 and pop_2022')
+if(pop_2023 > pop_adjusted & pop_adjusted > pop_2019){
+  cat('\U0001f642 pop_adjusted is between pop_2019 and pop_2023')
 }
 ```
 
@@ -143,8 +143,8 @@ To handle this, we use a statistical technique called multiple imputation. When 
 ```{r message=FALSE}
 # Get data including HRA information
 brfss_hra <- get_data_brfss(
-  cols = c("chi_year", "age", "race4", "chi_sex", "obese", "hra20_name"),
-  year = 2019:2022
+  cols = c("chi_year", "age", "race4", "chi_sex", "prediab1", "obese", "hra20_name"),
+  year = 2019:2023
 )
 
 # Confirm we generated an imputationList of 10 dtsurvey objects
@@ -208,6 +208,7 @@ brfss[, age_category := fcase(age %in% 18:66, "working age",
 ```
 
 ### 4. Drop existing HRA or region variables (because they will be replaced)
+
 ```{r}
 brfss[, intersect(c('hra20_id', 'hra20_name', 'chi_geo_region'), names(brfss)) := NULL]
 ```
@@ -286,49 +287,71 @@ pretty_kable(head(comparisons))
 
 Now for the fun part - analyzing our data! The [`calc()`](https://github.com/PHSKC-APDE/rads/wiki/calc) function handles all the survey design considerations for us. Let's look at some examples:
 
-## Calculate obesity prevalence by sex and race (using a [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey) object)
+## Calculate prediabetes prevalence by sex and race (using a [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey) object)
 
 ```{r}
 #| echo: true
 #| output: false
-obesity_by_group <- calc(
+prediab_by_group <- calc(
   ph.data = brfss_data1,
-  what = "obese",
+  what = "prediab1",
   by = c("chi_sex", "race4"),
   metrics = c("mean", "rse"),
-  proportion = TRUE  # Since obesity is binary
+  proportion = TRUE  # Since prediab is binary
 )
-head(obesity_by_group)
+head(prediab_by_group)
 ```
 
 ```{r}
 #| echo: false
 #| output: true
-pretty_kable(head(obesity_by_group))
+pretty_kable(head(prediab_by_group))
 ```
 
-## Calculate obesity prevalence by HRA20 (using an [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf))
+## Calculate prediabetes prevalence by HRA20 (using an [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf))
 
 ```{r}
 #| echo: true
 #| output: false
-obesity_by_hra20 <- calc(
+prediab_by_hra20 <- calc(
   ph.data = brfss_hra,
-  what = "obese",
+  what = "prediab1",
   by = c("hra20_name"),
   metrics = c("mean", "rse"),
   proportion = TRUE  
 )
-head(obesity_by_hra20)
+head(prediab_by_hra20)
 ```
 
 ```{r}
 #| echo: false
 #| output: true
-pretty_kable(head(obesity_by_hra20[!is.na(hra20_name)]))
+pretty_kable(head(prediab_by_hra20[!is.na(hra20_name)]))
 ```
 
 As noted in the [calc() wiki](https://github.com/PHSKC-APDE/rads/wiki/calc#example-analyses-with-resampled-datamultiple-imputation), when working with an [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf), the proportion argument is ignored. However, we include it here to maintain consistent [`calc()`](https://github.com/PHSKC-APDE/rads/wiki/calc) usage regardless of whether you're working with a [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey) object or an [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf).
+
+## Calculate prediabetes & obesity prevalence by HRA20 & sex (using an [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf))
+
+```{r}
+#| echo: true
+#| output: false
+prediab_obese_hra20_sex <- calc(
+  ph.data = brfss_hra,
+  what = c("prediab1", "obese"),
+  by = c("hra20_name", "chi_sex"),
+  metrics = c("mean", "rse"),
+  proportion = TRUE  
+)
+head(prediab_obese_hra20_sex)
+```
+
+```{r}
+#| echo: false
+#| output: true
+pretty_kable(head(prediab_obese_hra20_sex[!is.na(hra20_name)]))
+```
+
 
 # Common Gotchas
 
