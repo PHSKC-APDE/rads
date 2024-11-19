@@ -1904,7 +1904,7 @@ multi_t_test <- function(means,
 #' Creates a \code{\link[dtsurvey]{dtsurvey}}/data.table object with properly adjusted
 #' survey weights for analyzing Behavioral Risk Factor
 #' Surveillance System (BRFSS) data across multiple years. The built-in BRFSS
-#' survey weight (`\code{finalwt1}`) is designed for single-year analyses. When
+#' survey weight (\code{finalwt1}) is designed for single-year analyses. When
 #' analyzing BRFSS data across multiple years, the survey weights must be
 #' proportionately down scaled to approximate an average year's population. This
 #' function creates new survey weights by adjusting the original weights based
@@ -1920,6 +1920,14 @@ multi_t_test <- function(means,
 #' containing the single year survey weights. Defaults to '\code{finalwt1}'
 #' @param new_wt_var Character string specifying the name for the new weight
 #' variable to be created
+#' @param wt_method Character string specifying the name of the method used
+#' to rescale `old_wt_var` to `new_wt_var`. Options include:
+#'
+#' - '\code{simple}': Uniform rescaling by the number of surveys
+#' - '\code{obs}': Rescales weights based on the number of observations per year
+#' - '\code{pop}'. Rescales weights by the survey weighted population for each year
+#'
+#'  Defaults to '\code{simple}'
 #' @param strata Character string specifying the name for the strata to be used
 #' when survey setting the data. Defaults to '\code{x_ststr}'
 #'
@@ -1978,10 +1986,11 @@ pool_brfss_weights <- function(
     year_var = 'chi_year',
     old_wt_var = 'finalwt1',
     new_wt_var,
+    wt_method = 'simple',
     strata = 'x_ststr') {
 
   # Visible bindings for data.table/check global variables ----
-    wt_adjustment_pop <- wt_adjustment_rows <- miList <- `_id` <- hra20_id <- NULL
+    wt_adjustment <- miList <- `_id` <- hra20_id <- NULL
 
   # Set default for return of an imputationList rather than a data.table ----
     miList <- 0
@@ -2031,20 +2040,42 @@ pool_brfss_weights <- function(
                    old_wt_var))
     }
 
+    if (any(ph.data[get(year_var) %in% years][[old_wt_var]] <= 0)) {
+      stop(sprintf("\n\U1F6D1 Weight variable '%s' must contain only positive values", old_wt_var))
+    }
+
     if (new_wt_var %in% names(ph.data)) {
       stop(sprintf("\n\U1F6D1 Column name '%s' already exists in dataset", new_wt_var))
+    }
+
+    if (!is.character(wt_method) || length(wt_method) != 1 ||
+        is.na(wt_method) || !wt_method %in% c("simple", "obs", "pop")) {
+      stop("\n\U1F6D1 'wt_method' must be one of: 'simple', 'obs', or 'pop'")
     }
 
     if (!strata %in% names(ph.data)) {
       stop(sprintf("\n\U1F6D1 Strata variable '%s' not found in dataset", strata))
     }
 
-  # Calculate proportion of period population per year as an adjustment factor for weights ----
-    adjustments <- ph.data[get(year_var) %in% years,
-                           list(wt_adjustment_pop = sum(get(old_wt_var)) /
-                               sum(ph.data[get(year_var) %in% years][[old_wt_var]]),
-                             wt_adjustment_rows = .N / nrow(ph.data[get(year_var) %in% years])),
-                           list(get(year_var))]
+    if (any(is.na(ph.data[get(year_var) %in% years][[strata]]))) {
+      stop(sprintf("\n\U1F6D1 Missing values found in strata variable '%s' for specified years", strata))
+    }
+
+  # Create weight adjustment factors (based on wt_method) ----
+    if(wt_method == 'simple'){
+      adjustments <- unique(ph.data[get(year_var) %in% years, list(get = get(year_var))])
+      adjustments[, wt_adjustment := 1/nrow(adjustments)]
+    } else if (wt_method == 'obs'){
+      adjustments <- ph.data[get(year_var) %in% years,
+                             list(wt_adjustment = .N / nrow(ph.data[get(year_var) %in% years])),
+                             list(get(year_var))]
+    } else if (wt_method == 'pop'){
+      adjustments <- ph.data[get(year_var) %in% years,
+                       list(wt_adjustment = sum(get(old_wt_var)) /
+                           sum(ph.data[get(year_var) %in% years][[old_wt_var]])),
+                       list(get(year_var))]
+    }
+
     setnames(adjustments, 'get', year_var)
 
     complete_years <- data.table(complete_years = min(ph.data[[year_var]]):max(ph.data[[year_var]]))
@@ -2053,8 +2084,7 @@ pool_brfss_weights <- function(
                          by.x = c(year_var),
                          by.y = 'complete_years',
                          all = T)
-    adjustments[is.na(wt_adjustment_pop), wt_adjustment_pop := 0] # set to zero for years that are not applicable
-    adjustments[is.na(wt_adjustment_rows), wt_adjustment_rows := 0] # set to zero for years that are not applicable
+    adjustments[is.na(wt_adjustment), wt_adjustment := 0] # set to zero for years that are not applicable
 
   # Calculate new weights ----
     ph.data <- merge(ph.data,
@@ -2062,10 +2092,10 @@ pool_brfss_weights <- function(
                      by = c(year_var),
                      all = TRUE)
 
-    ph.data[, c(new_wt_var) := get(old_wt_var) * wt_adjustment_pop]
+    ph.data[, c(new_wt_var) := get(old_wt_var) * wt_adjustment]
 
   # Tidy ----
-    ph.data[, intersect(c('wt_adjustment_pop', 'wt_adjustment_rows', 'hra20_id'), names(ph.data)) := NULL]
+    ph.data[, intersect(c('wt_adjustment', 'hra20_id', 'hra20_name', 'chi_geo_region'), names(ph.data)) := NULL]
 
   # Survey set ----
     options(survey.lonely.psu="adjust")
@@ -2078,7 +2108,21 @@ pool_brfss_weights <- function(
 
   # Create imputation list (if needed) ----
     if(miList == 1){
-      ph.data = lapply(1:10, function(i) copy(ph.data)[, hra20_id := get(paste0('hra20_id_',i))])
+
+      ph.data <- lapply(1:10, function(i) {
+        temp_dt <- copy(ph.data)
+        temp_dt[, hra20_id := get(paste0("hra20_id_", i))]
+        temp_dt <- merge(
+          temp_dt,
+          rads.data::spatial_hra20_to_region20[, c("hra20_id", "hra20_name", "region_name")],
+          by = "hra20_id",
+          all.x = TRUE,
+          all.y = FALSE
+        )
+        setnames(temp_dt, "region_name", "chi_geo_region")
+        return(temp_dt)
+      })
+
       ph.data = mitools::imputationList(ph.data)
     }
 

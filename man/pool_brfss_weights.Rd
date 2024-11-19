@@ -10,6 +10,7 @@ pool_brfss_weights(
   year_var = "chi_year",
   old_wt_var = "finalwt1",
   new_wt_var,
+  wt_method = "simple",
   strata = "x_ststr"
 )
 }
@@ -28,6 +29,16 @@ containing the single year survey weights. Defaults to '\code{finalwt1}'}
 
 \item{new_wt_var}{Character string specifying the name for the new weight
 variable to be created}
+
+\item{wt_method}{Character string specifying the name of the method used
+to rescale \code{old_wt_var} to \code{new_wt_var}. Options include:
+\itemize{
+\item '\code{simple}': Uniform rescaling by the number of surveys
+\item '\code{obs}': Rescales weights based on the number of observations per year
+\item '\code{pop}'. Rescales weights by the survey weighted population for each year
+}
+
+Defaults to '\code{simple}'}
 
 \item{strata}{Character string specifying the name for the strata to be used
 when survey setting the data. Defaults to '\code{x_ststr}'}
@@ -48,7 +59,7 @@ In both cases, the new weight column will be specified by the value of
 Creates a \code{\link[dtsurvey]{dtsurvey}}/data.table object with properly adjusted
 survey weights for analyzing Behavioral Risk Factor
 Surveillance System (BRFSS) data across multiple years. The built-in BRFSS
-survey weight (\verb{\code{finalwt1}}) is designed for single-year analyses. When
+survey weight (\code{finalwt1}) is designed for single-year analyses. When
 analyzing BRFSS data across multiple years, the survey weights must be
 proportionately down scaled to approximate an average year's population. This
 function creates new survey weights by adjusting the original weights based

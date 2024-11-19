@@ -588,6 +588,38 @@ test_that('pool_brfss_weights mitools:imputation_list', {
   expect_true(inherits(brfss_miList2, 'imputationList'))
 })
 
+test_that("pool_brfss_weights correctly rescales weights using different methods", {
+  # Sample data
+  ph.data <- data.table(
+    chi_year = c(2019, 2019, 2020, 2020, 2021, 2021),
+    finalwt1 = c(100, 100, 150, 150, 250, 250),
+    x_ststr = c(1, 1, 2, 2, 3, 3)
+  )
+
+  # Test "simple" method
+  res_simple <- pool_brfss_weights(ph.data, years = 2019:2021, new_wt_var = "new_wt_simple", wt_method = "simple")
+  expect_s3_class(res_simple, "dtsurvey")
+
+  # Test "obs" method
+  res_obs <- pool_brfss_weights(ph.data, years = 2019:2021, new_wt_var = "new_wt_obs", wt_method = "obs")
+  expect_s3_class(res_obs, "dtsurvey")
+
+  # Test "simple" and "obs" produced the same new weights
+  # "simple" should give 1/3 for each because 3 years
+  # "obs" should give 1/3 for each because equal number of observations for each of three years
+  expect_equal(res_simple$new_wt_simple, res_obs$new_wt_obs)
+  expect_equal(res_simple$new_wt_simple, res_simple$finalwt1 / 3)
+
+  # Test "pop" method
+  res_pop <- pool_brfss_weights(ph.data, years = 2019:2021, new_wt_var = "new_wt_pop", wt_method = "pop")
+  expect_s3_class(res_pop, "dtsurvey")
+
+  # Test that "pop" apportioned according to sumy of year population
+  expect_equal(res_pop[chi_year == 2019][1]$new_wt_pop, 100*0.20) # 20% because 2019 pop = 200 out of 1000 total
+  expect_equal(res_pop[chi_year == 2020][1]$new_wt_pop, 150*0.30) # 30% because 2020 pop = 300 out of 1000 total
+  expect_equal(res_pop[chi_year == 2021][1]$new_wt_pop, 250*0.50) # 50% because 2021 pop = 500 out of 1000 total
+})
+
 # std_error() ----
 test_that('std_error',{
   expect_equal(std_error(c(seq(0, 400, 100), NA)), sd(c(seq(0, 400, 100), NA), na.rm = T) / sqrt(5))
