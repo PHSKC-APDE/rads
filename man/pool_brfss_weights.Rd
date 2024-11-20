@@ -33,9 +33,10 @@ variable to be created}
 \item{wt_method}{Character string specifying the name of the method used
 to rescale \code{old_wt_var} to \code{new_wt_var}. Options include:
 \itemize{
-\item '\code{simple}': Uniform rescaling by the number of surveys
+\item '\code{simple}': Uniform rescaling by the number of surveys. Use when the
+survey years have approximately the same sample sizes
 \item '\code{obs}': Rescales weights based on the number of observations per year
-\item '\code{pop}'. Rescales weights by the survey weighted population for each year
+\item '\code{pop}': Rescales weights by the survey weighted population for each year
 }
 
 Defaults to '\code{simple}'}

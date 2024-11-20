@@ -1923,9 +1923,10 @@ multi_t_test <- function(means,
 #' @param wt_method Character string specifying the name of the method used
 #' to rescale `old_wt_var` to `new_wt_var`. Options include:
 #'
-#' - '\code{simple}': Uniform rescaling by the number of surveys
+#' - '\code{simple}': Uniform rescaling by the number of surveys. Use when the
+#' survey years have approximately the same sample sizes
 #' - '\code{obs}': Rescales weights based on the number of observations per year
-#' - '\code{pop}'. Rescales weights by the survey weighted population for each year
+#' - '\code{pop}': Rescales weights by the survey weighted population for each year
 #'
 #'  Defaults to '\code{simple}'
 #' @param strata Character string specifying the name for the strata to be used
@@ -2096,6 +2097,11 @@ pool_brfss_weights <- function(
 
   # Tidy ----
     ph.data[, intersect(c('wt_adjustment', 'hra20_id', 'hra20_name', 'chi_geo_region'), names(ph.data)) := NULL]
+
+    all_missing_years <- ph.data[, .(all_missing = all(is.na(get(old_wt_var)) & is.na(get(new_wt_var)) & is.na(get(strata))) ), by = year_var]
+    all_missing_years <- all_missing_years[all_missing == TRUE, get(year_var)]
+
+    ph.data <- ph.data[!get(year_var) %in% all_missing_years]
 
   # Survey set ----
     options(survey.lonely.psu="adjust")
