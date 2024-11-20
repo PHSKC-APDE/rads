@@ -4,7 +4,7 @@
 \alias{get_data_brfss}
 \title{Get BRFSS microdata with adjusted weights for multi-year analyses from storage.}
 \usage{
-get_data_brfss(cols = NULL, year = NULL)
+get_data_brfss(cols = NULL, year = NULL, wt_method = "simple")
 }
 \arguments{
 \item{cols}{Character vector specifying which columns to include in the
@@ -15,17 +15,29 @@ returned data. If NULL, all columns identified by
 \item{year}{Integer vector specifying which years to include in the data.
 If NULL, the most recent year available in the data set will be used. Defaults
 to \code{year = NULL}}
+
+\item{wt_method}{Character string specifying the name of the method used
+to rescale the weights when selecting multiple years. Options include:
+\itemize{
+\item '\code{simple}': Uniform rescaling by the number of surveys. Use when the
+survey years have approximately the same sample sizes
+\item '\code{obs}': Rescales weights based on the number of observations per year
+\item '\code{pop}': Rescales weights by the survey weighted population for each year
+}
+
+Defaults to '\code{simple}'}
 }
 \value{
 If the requested columns \emph{\bold{do not include}} '\code{hra20_id}',
 '\code{hra20_name}', or '\code{chi_geo_region}': Returns a survey-weighted
 \code{\link[dtsurvey]{dtsurvey}}/data.table object with the specified columns,
-years, and '\code{default_wt}` (the adjusted weight).
+years, and '\code{default_wt}` (the rescaled / adjusted weight).
 
 If any of '\code{hra20_id}', '\code{hra20_name}', or '\code{chi_geo_region}'
 are requested: Returns an \code{\link[mitools]{imputationList}} comprised of
 survey-weighted \code{\link[dtsurvey]{dtsurvey}}/data.table objects with the
-specified columns, years, and '\code{default_wt}` (the adjusted weight).
+specified columns, years, and '\code{default_wt}` (the rescales / adjusted
+weight).
 }
 \description{
 Retrieves Behavioral Risk Factor Surveillance System (BRFSS) data

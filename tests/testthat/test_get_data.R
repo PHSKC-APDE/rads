@@ -66,8 +66,19 @@ test_that('Load data brfss', {
     expect_error(get_data_brfss(year = '2020'), "must specify a vector of integers")
     expect_error(get_data_brfss(year = 2020.00001), "must specify a vector of integers")
     expect_error(get_data_brfss(year = 1984), "years are not available in the dataset")
-})
 
+  # confirm wt_method argument generates distinct default_wt values
+    ss = get_data_brfss(cols = 'chi_year', year = c(2019, 2023), wt_method = 'simple')
+    oo = get_data_brfss(cols = 'chi_year', year = c(2019, 2023), wt_method = 'obs')
+    pp = get_data_brfss(cols = 'chi_year', year = c(2019, 2023), wt_method = 'pop')
+
+    expect_equal( sum(ss$finalwt1) / sum(ss$default_wt), 2) # simple should just divide by 2
+    expect_equal( round(sum(oo[chi_year == 2019]$default_wt) / sum(oo[chi_year == 2019]$finalwt1), 5),
+                  round(nrow(oo[chi_year == 2019]) / nrow(oo), 5)) # proportionate to row counts
+    expect_equal( round(sum(pp[chi_year == 2019]$default_wt) / sum(pp[chi_year == 2019]$finalwt1), 5),
+                  round(sum(pp[chi_year == 2019]$finalwt1) / sum(pp$finalwt1), 5)) # proportionate to population
+
+})
 
 # Death ----
 test_that('Load data death', {

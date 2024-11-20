@@ -186,6 +186,15 @@ get_data_birth <- function(cols = NA,
 #' @param year Integer vector specifying which years to include in the data.
 #' If NULL, the most recent year available in the data set will be used. Defaults
 #' to \code{year = NULL}
+#' @param wt_method Character string specifying the name of the method used
+#' to rescale the weights when selecting multiple years. Options include:
+#'
+#' - '\code{simple}': Uniform rescaling by the number of surveys. Use when the
+#' survey years have approximately the same sample sizes
+#' - '\code{obs}': Rescales weights based on the number of observations per year
+#' - '\code{pop}': Rescales weights by the survey weighted population for each year
+#'
+#'  Defaults to '\code{simple}'
 #'
 #' @details
 #' Note that while \code{get_data_brfss} automatically creates multi-year weights
@@ -211,12 +220,13 @@ get_data_birth <- function(cols = NA,
 #' If the requested columns \emph{\bold{do not include}} '\code{hra20_id}',
 #' '\code{hra20_name}', or '\code{chi_geo_region}': Returns a survey-weighted
 #' \code{\link[dtsurvey]{dtsurvey}}/data.table object with the specified columns,
-#' years, and '\code{default_wt}` (the adjusted weight).
+#' years, and '\code{default_wt}` (the rescaled / adjusted weight).
 #'
 #' If any of '\code{hra20_id}', '\code{hra20_name}', or '\code{chi_geo_region}'
 #' are requested: Returns an \code{\link[mitools]{imputationList}} comprised of
 #' survey-weighted \code{\link[dtsurvey]{dtsurvey}}/data.table objects with the
-#' specified columns, years, and '\code{default_wt}` (the adjusted weight).
+#' specified columns, years, and '\code{default_wt}` (the rescales / adjusted
+#' weight).
 #'
 #' @examples
 #' \dontrun{
@@ -235,7 +245,8 @@ get_data_birth <- function(cols = NA,
 #' @export
 #'
 get_data_brfss <- function(cols = NULL,
-                           year = NULL){
+                           year = NULL,
+                           wt_method = 'simple'){
   # Visible bindings for data.table/check global variables ----
     chi_year <- finalwt1 <- x_ststr <- hra20_id <- hra20_name <- NULL
     chi_geo_region <- region_name <- NULL
@@ -276,6 +287,12 @@ get_data_brfss <- function(cols = NULL,
       }
     } else {year <- max(dt$chi_year)}
 
+    # Validate the `wt_method` argument
+    if (!is.character(wt_method) || length(wt_method) != 1 ||
+        is.na(wt_method) || !wt_method %in% c("simple", "obs", "pop")) {
+      stop("\n\U1F6D1 'wt_method' must be one of: 'simple', 'obs', or 'pop'")
+    }
+
   # Subset the data ----
     dt <- dt[chi_year %in% year]
 
@@ -290,6 +307,7 @@ get_data_brfss <- function(cols = NULL,
       year_var = 'chi_year',
       old_wt_var = 'finalwt1',
       new_wt_var = 'default_wt',
+      wt_method = wt_method,
       strata = 'x_ststr')
 
   # Create an imputation list if requesting HRA or region (because xwalked from ZIP codes) ----
