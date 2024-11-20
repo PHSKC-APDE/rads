@@ -67,7 +67,7 @@ pretty_kable(head(vars_2019_2023))
 nrow(vars_2019_2023)
 ```
 
-Notice that the `year(s)` column is not contstant because the variables BRFSS survey does not ask every question every year.
+Notice that the `year(s)` column is not constant because the variables BRFSS survey does not ask every question every year.
 
 # Getting BRFSS Data
 
@@ -246,13 +246,14 @@ You might need to use `pool_brfss_weights()` in two scenarios:
 1.  When analyzing specific years where certain questions were asked
 2.  When you need to restore proper survey settings after using non-data.table commands for data manipulation
 
-While `get_data_brfss()` automatically creates weights and survey sets imported data, you can create new weights and re-survey set the data using `pool_brfss_weights()`. Here are argument descriptions:
+While `get_data_brfss()` automatically creates weights and survey sets imported data, you can create new weights and re-survey set the data using `pool_brfss_weights()`. Here are brief argument descriptions, see the help file for details:
 
 -   `ph.data`: Your BRFSS dataset (can be a data.frame, data.table, [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey), or [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf))
 -   `years`: Vector of years you want to analyze together
 -   `year_var`: Name of the year column (defaults to 'chi_year')
 -   `old_wt_var`: Name of the original weight variable (defaults to 'finalwt1')
 -   `new_wt_var`: Name for your new weight variable
+-   `wt_method`: Name of the method used to rescale your weights. Options include 'simple', 'obs', and 'pop' (defaults to 'simple')
 -   `strata`: Name of the strata variable (defaults to 'x_ststr')
 
 Let's see it in action:
@@ -351,7 +352,6 @@ head(prediab_obese_hra20_sex)
 #| output: true
 pretty_kable(head(prediab_obese_hra20_sex[!is.na(hra20_name)]))
 ```
-
 
 # Common Gotchas
 
