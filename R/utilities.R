@@ -2133,7 +2133,7 @@ pool_brfss_weights <- function(
     }
 
   # return ----
-    message('Your data was survey set with the following parameters:\n',
+    message('Your data was survey set with the following parameters is ready for rads::calc():\n',
             ' - valid years = ', format_time(years), '\n',
             ' - adjusted survey weight = `', new_wt_var, '` \n',
             ' - strata = `', strata,'`\n')
