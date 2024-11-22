@@ -10,7 +10,7 @@ pool_brfss_weights(
   year_var = "chi_year",
   old_wt_var = "finalwt1",
   new_wt_var,
-  wt_method = "simple",
+  wt_method = "obs",
   strata = "x_ststr"
 )
 }
@@ -33,13 +33,14 @@ variable to be created}
 \item{wt_method}{Character string specifying the name of the method used
 to rescale \code{old_wt_var} to \code{new_wt_var}. Options include:
 \itemize{
-\item '\code{simple}': Uniform rescaling by the number of surveys. Use when the
-survey years have approximately the same sample sizes
-\item '\code{obs}': Rescales weights based on the number of observations per year
+\item '\code{obs}': Rescales weights based on the number of observations per year.
+This is WA DOH's recommendation
 \item '\code{pop}': Rescales weights by the survey weighted population for each year
+\item '\code{simple}': Rescales weights uniformly by the number of surveys. Use
+when the survey years have approximately the same sample sizes
 }
 
-Defaults to '\code{simple}'}
+Defaults to '\code{obs}'}
 
 \item{strata}{Character string specifying the name for the strata to be used
 when survey setting the data. Defaults to '\code{x_ststr}'}
@@ -62,17 +63,15 @@ survey weights for analyzing Behavioral Risk Factor
 Surveillance System (BRFSS) data across multiple years. The built-in BRFSS
 survey weight (\code{finalwt1}) is designed for single-year analyses. When
 analyzing BRFSS data across multiple years, the survey weights must be
-proportionately down scaled to approximate an average year's population. This
-function creates new survey weights by adjusting the original weights based
-on the relative population size of each year within the specified time period.
+proportionately down scaled. This function provides three weight adjustment
+methods.
 }
 \details{
 When analyzing multiple years of BRFSS data together, using the original
 weights would lead to overestimation of population totals, as each year's
 weights sum to that year's total survey population. This function down scales
-the weights proportionately based on each year's relative population size
-within the specified time period(s), ensuring that estimates approximate an
-average year's population.
+the weights proportionately within the specified time period(s), ensuring
+that estimates approximate an average year's population.
 
 Note that while \code{\link{get_data_brfss}} automatically creates multi-year
 weights during the initial data download, you may need to use this function
@@ -81,6 +80,12 @@ some BRFSS questions are only asked in specific years, requiring custom weights
 to be calculated for those specific time periods. The original weight
 (\code{'finalwt1'}) will always be saved in order to allow this function to be
 used repeatedly on the same data set.
+
+When aggregating BRFSS data across years, WA DOH recommends including the
+survey year as an additional stratifying variable. However, the ETL process
+includes the survey year in '\code{x_ststr}' (
+\code{d1$x_ststr <- d1$year * 1000000 + d1$x_ststr}) so there is no need to
+include the survey year on its own.
 }
 \examples{
 \dontrun{

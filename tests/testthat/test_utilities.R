@@ -660,10 +660,10 @@ test_that("pool_brfss_weights validates ph.data correctly", {
   expect_error(pool_brfss_weights(sample_data, new_wt_var = "finalwt1", years = 2021), "\n\U1F6D1 Column name 'finalwt1' already exists in dataset")
 
   # Test for invalid wt_method
-  expect_error(pool_brfss_weights(sample_data, new_wt_var = "new_weight", wt_method = "invalid_method", years = 2021), "\n\U1F6D1 'wt_method' must be one of: 'simple', 'obs', or 'pop'")
+  expect_error(pool_brfss_weights(sample_data, new_wt_var = "new_weight", wt_method = "invalid_method", years = 2021), "\n\U1F6D1 'wt_method' must be one of: 'obs', 'pop', or 'simple'")
 
   # Test for missing strata column
-  expect_error(pool_brfss_weights(sample_data[, -c("x_ststr")], new_wt_var = 'new_weight', years = 2021), "\n\U1F6D1 Strata variable 'x_ststr' not found in dataset")
+  expect_error(pool_brfss_weights(sample_data[, -c("x_ststr")], new_wt_var = 'new_weight', years = 2021), "'x_ststr' not found in dataset")
 
   # Test for NA values in strata column for specified years
   expect_error(pool_brfss_weights(sample_data, years = 2020, new_wt_var = 'new_weight'), "\n\U1F6D1 Missing values found in weight variable 'finalwt1' for specified years")
