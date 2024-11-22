@@ -21,6 +21,13 @@ Note that the [BRFSS ETL process has its own
 repository](https://github.com/PHSKC-APDE/BRFSS) and questions regarding
 the data should be directed to the data steward.
 
+# Load essential packages
+
+``` r
+library(rads)
+library(data.table)
+```
+
 # Checking Variable Availability Across Years
 
 One quirk of BRFSS data is that not all questions are asked every year.
@@ -67,10 +74,10 @@ nrow(vars_2019_2023)
 | addepev3  | 2019-2023 |
 | age       | 2019-2023 |
 
-    [1] 277
+    [1] 279
 
-Notice that the `year(s)` column is not contstant because the variables
-BRFSS survey does not ask every question every year.
+Notice that the `year(s)` column is not constant because BRFSS does not
+ask every question in every year.
 
 # Getting BRFSS Data
 
@@ -87,6 +94,9 @@ Let’s see both methods in action:
 
 ## Method 1: Using `get_data()`
 
+This is the general interface that you can use to access any of APDE’s
+analytic ready data.
+
 ``` r
 brfss_data1 <- get_data(
   dataset = "brfss",
@@ -95,7 +105,7 @@ brfss_data1 <- get_data(
 )
 ```
 
-    Your data was survey set with the following parameters:
+    Your data was survey set with the following parameters is ready for rads::calc():
      - valid years = 2019-2023
      - adjusted survey weight = `default_wt` 
      - strata = `x_ststr`
@@ -109,7 +119,7 @@ brfss_data2 <- get_data_brfss(
 )
 ```
 
-    Your data was survey set with the following parameters:
+    Your data was survey set with the following parameters is ready for rads::calc():
      - valid years = 2019-2023
      - adjusted survey weight = `default_wt` 
      - strata = `x_ststr`
@@ -133,12 +143,12 @@ Notice that the functions provide an informative message regarding the
 survey object parameters. These will be hidden in the examples below,
 but are always produced when getting or survey setting BRFSS data.
 
-Since BRFSS survey weights are designed to represent the population, we
-can verify that our multi-year weight adjustments are working properly
-by comparing population sizes. We expect the adjusted weights to
-represent an “average” population that falls between the earliest and
-latest years’ populations since King County’s population has been
-growing. Let’s verify our weight adjustments are working as expected:
+Since BRFSS weights are designed to represent the population, we can
+verify that our multi-year weight adjustments are working properly by
+comparing population sizes. We expect the adjusted weights to represent
+an “average” population that falls between the earliest and latest
+years’ populations since King County’s population has been growing.
+Let’s verify our weight adjustments are working as expected:
 
 ## Calculate the survey population at the beginning and end of the period
 
@@ -172,13 +182,17 @@ we need to account for this uncertainty in our analyses.
 
 To handle this, we use a statistical technique called multiple
 imputation. When you request HRA-related columns (`hra20_id`,
-`hra20_name`, or `chi_geo_region`), the data is returned as an
+`hra20_name`, or `chi_geo_region`), the function returns an
 [`imputationList`](https://cran.r-project.org/web/packages/mitools/mitools.pdf)
 object containing 10 different versions of the data. Each version
 represents a different possible way that ZIP codes could be assigned to
 HRAs based on their overlap. This approach allows us to capture the
 uncertainty in our geographic assignments and incorporate it into our
 statistical estimates.
+
+Note: APDE decided to use 10 imputations based on an extensive empirical
+assessment by Daniel Casey. This is fixed in the ETL process and is not
+configurable.
 
 ``` r
 # Get data including HRA information
@@ -198,24 +212,21 @@ if(inherits(brfss_hra, "imputationList") &
     🙂 brfss_hra is an imputationList of 10 dtsurvey objects
 
 Don’t worry if this seems complex - the
-[`calc()`](https://github.com/PHSKC-APDE/rads/wiki/calc) function knows
-how to handle these
+[`calc()`](https://github.com/PHSKC-APDE/rads/wiki/calc) function
+automatically handles these
 [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf)
-objects automatically!
+objects.
 
 # Modifying BRFSS Data
 
-There are two scenarios where you might need to modify BRFSS data:
-
-1.  Adding custom variables for your analysis
-
-2.  Applying transformations to existing variables
-
-Before making any modifications, first consider whether your changes
-should be standardized. If you’re creating variables that will be used
-across multiple projects (CHI, CHNA, Communities Count, etc.), contact
-the [BRFSS ETL steward](https://github.com/PHSKC-APDE/BRFSS) about
-adding them to the analytic ready dataset.
+There are times when you might need to modify BRFSS data. For example,
+you might want to create a new variable. Before making any
+modifications, first consider whether your changes should be
+standardized. If you’re creating variables that will be used across
+multiple projects (CHI, CHNA, Communities Count, etc.) or repeatedly
+year after year, contact the [BRFSS ETL
+steward](https://github.com/PHSKC-APDE/BRFSS) and politely request the
+addition of these changes to the analytic ready dataset.
 
 For truly custom analyses, your modification approach will depend on
 whether you’re working with a simple
@@ -243,26 +254,32 @@ since we need to maintain consistency across all 10 imputed datasets.
 Here’s the step-by-step example that you can follow to help you in this
 process:
 
-### 1. Get your BRFSS data and confirm it is an [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf)
+### 1. Get your BRFSS [ImputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf)
 
 ``` r
 brfss <- get_data_brfss(
   cols = c("age", "hra20_id"),
   year = 2019:2023
 )
-inherits(brfss, "imputationList")
+inherits(brfss, "imputationList") # confirms it is an imputationList
 ```
 
     [1] TRUE
 
-### 2. Keep the first imputation and confirm it is a data.table/[dtsurvey](https://github.com/PHSKC-APDE/dtsurvey) object
+### 2. Keep the first imputed [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey)/data.table object
 
 ``` r
 brfss <- brfss$imputations[[1]]
-class(brfss)
+inherits(brfss, 'dtsurvey')
 ```
 
-    [1] "dtsurvey"   "data.table" "data.frame"
+    [1] TRUE
+
+``` r
+inherits(brfss, 'data.table')
+```
+
+    [1] TRUE
 
 ### 3. Create or modify a variable
 
@@ -271,6 +288,7 @@ In this step, the same guidelines apply that were mentioned in the
 above.
 
 ``` r
+# data.table::fcase is an implementation of SQL's CASE WHEN & comparable to dplyr::case_when
 brfss[, age_category := fcase(age %in% 18:66, "working age",
                               age >= 67, "retirement age",
                               default = NA_character_
@@ -287,20 +305,22 @@ brfss[, intersect(c('hra20_id', 'hra20_name', 'chi_geo_region'), names(brfss)) :
 
 This step transforms your single
 [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey) object into a list of
-10 [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey) objects, each
-representing a different potential assignment of ZIP codes to HRAs. The
-[dtsurvey](https://github.com/PHSKC-APDE/dtsurvey) object contains 10
-columns of hra20_ids, and we create a separate table for each one. We
+10 [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey) objects. Each
+object represents a different potential assignment of ZIP codes to HRAs.
+The [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey) object contains
+10 columns of hra20_ids, and we create a separate table for each one. We
 merge on `hra20_name` and `chi_geo_region` to maintain geographic
 consistency between HRAs and regions.
 
 ``` r
+xwalk_hra_region <- rads.data::spatial_hra20_to_region20[, c("hra20_id", "hra20_name", "region_name")]
+
 brfss <- lapply(1:10, function(i) {
   temp_dt <- copy(brfss)
   temp_dt[, hra20_id := get(paste0("hra20_id_", i))]
   temp_dt <- merge(
     temp_dt,
-    rads.data::spatial_hra20_to_region20[, c("hra20_id", "hra20_name", "region_name")],
+    xwalk_hra_region,
     by = "hra20_id",
     all.x = TRUE,
     all.y = FALSE
@@ -310,7 +330,7 @@ brfss <- lapply(1:10, function(i) {
 })
 ```
 
-### 6. Convert list to an [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf)
+### 6. Convert a standard list to an [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf)
 
 ``` r
 brfss <- mitools::imputationList(brfss)
@@ -326,7 +346,8 @@ You might need to use `pool_brfss_weights()` in two scenarios:
 
 While `get_data_brfss()` automatically creates weights and survey sets
 imported data, you can create new weights and re-survey set the data
-using `pool_brfss_weights()`. Here are argument descriptions:
+using `pool_brfss_weights()`. Here are brief argument descriptions, see
+the `pool_brfss_weights()` help file for details:
 
 - `ph.data`: Your BRFSS dataset (can be a data.frame, data.table,
   [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey), or
@@ -336,6 +357,8 @@ using `pool_brfss_weights()`. Here are argument descriptions:
 - `old_wt_var`: Name of the original weight variable (defaults to
   ‘finalwt1’)
 - `new_wt_var`: Name for your new weight variable
+- `wt_method`: Name of the method used to rescale your weights. Options
+  include ‘obs’, ‘pop’, and ‘simple’ (defaults to ‘obs’)
 - `strata`: Name of the strata variable (defaults to ‘x_ststr’)
 
 Let’s see it in action:
@@ -348,7 +371,7 @@ brfss_odd_years <- pool_brfss_weights(
   new_wt_var = "odd_year_wt"  # Name for the new weight variable
 )
 
-# Verify the sum of adjusted weights appear to be a weighted average of individual years
+# Verify the adjusted population falls between the estimated single year populations
 pop_2019 <- sum(brfss_odd_years[chi_year == 2019]$finalwt1)
 pop_2021 <- sum(brfss_odd_years[chi_year == 2021]$finalwt1)
 pop_2019_2021 <- sum(brfss_odd_years$odd_year_wt)
@@ -362,7 +385,7 @@ head(comparisons)
 |:------------|:-----------|
 | 2019        | 1,367,097  |
 | 2021        | 1,860,435  |
-| 2019, 2021  | 1,651,470  |
+| 2019, 2021  | 1,635,624  |
 
 # Analyzing BRFSS Data with [`calc()`](https://github.com/PHSKC-APDE/rads/wiki/calc)
 
@@ -386,12 +409,12 @@ head(prediab_by_group)
 
 | chi_sex | race4 | variable | mean | level | mean_se | mean_lower | mean_upper | rse |
 |:---|:---|:---|---:|:---|---:|---:|---:|---:|
-| Male | AIAN | prediab1 | 0.2286513 | NA | 0.1056334 | 0.0810315 | 0.4991324 | 46.19844 |
-| Male | Black | prediab1 | 0.1104866 | NA | 0.0229156 | 0.0728336 | 0.1641587 | 20.74057 |
-| Male | Asian | prediab1 | 0.1440075 | NA | 0.0162790 | 0.1149170 | 0.1789729 | 11.30427 |
-| Male | NHPI | prediab1 | 0.1882003 | NA | 0.0883866 | 0.0675507 | 0.4259102 | 46.96413 |
-| Male | Hispanic | prediab1 | 0.1393422 | NA | 0.0196825 | 0.1049936 | 0.1826349 | 14.12532 |
-| Male | White | prediab1 | 0.1066085 | NA | 0.0066475 | 0.0942613 | 0.1203582 | 6.23539 |
+| Male | AIAN | prediab1 | 0.2284831 | NA | 0.1021132 | 0.0839714 | 0.4889464 | 44.691821 |
+| Male | Black | prediab1 | 0.1187814 | NA | 0.0235966 | 0.0796585 | 0.1734967 | 19.865542 |
+| Male | Asian | prediab1 | 0.1548570 | NA | 0.0167577 | 0.1247503 | 0.1906468 | 10.821374 |
+| Male | NHPI | prediab1 | 0.2287657 | NA | 0.1063999 | 0.0810745 | 0.4993124 | 46.510431 |
+| Male | Hispanic | prediab1 | 0.1363339 | NA | 0.0177889 | 0.1050209 | 0.1751559 | 13.048070 |
+| Male | White | prediab1 | 0.1048950 | NA | 0.0061697 | 0.0934014 | 0.1176195 | 5.881782 |
 
 ## Calculate prediabetes prevalence by HRA20 (using an [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf))
 
@@ -408,12 +431,12 @@ head(prediab_by_hra20)
 
 | hra20_name | level | variable | rse | mean | mean_se | mean_lower | mean_upper |
 |:---|:---|:---|---:|---:|---:|---:|---:|
-| Auburn - North | NA | prediab1 | 24.29766 | 0.0997622 | 0.0307659 | 0.0385771 | 0.1609474 |
-| Auburn - South | NA | prediab1 | 44.54647 | 0.1077833 | 0.0471159 | 0.0133618 | 0.2022049 |
-| Bear Creek and Greater Sammamish | NA | prediab1 | 24.20756 | 0.1300078 | 0.0366953 | 0.0571584 | 0.2028571 |
-| Bellevue - Central | NA | prediab1 | 29.23728 | 0.1200372 | 0.0416283 | 0.0366619 | 0.2034126 |
-| Bellevue - Northeast | NA | prediab1 | 29.05889 | 0.1120604 | 0.0419092 | 0.0295439 | 0.1945770 |
-| Bellevue - South | NA | prediab1 | 22.95378 | 0.1699585 | 0.0444625 | 0.0819283 | 0.2579887 |
+| Auburn - North | NA | prediab1 | 21.95594 | 0.1099274 | 0.0333382 | 0.0430893 | 0.1767654 |
+| Auburn - South | NA | prediab1 | 39.77816 | 0.1099648 | 0.0494991 | 0.0095176 | 0.2104120 |
+| Bear Creek and Greater Sammamish | NA | prediab1 | 22.06666 | 0.1337885 | 0.0394263 | 0.0550953 | 0.2124817 |
+| Bellevue - Central | NA | prediab1 | 31.04421 | 0.1396632 | 0.0436696 | 0.0528487 | 0.2264776 |
+| Bellevue - Northeast | NA | prediab1 | 25.87562 | 0.1092822 | 0.0391424 | 0.0317412 | 0.1868232 |
+| Bellevue - South | NA | prediab1 | 21.43749 | 0.1690180 | 0.0409016 | 0.0882835 | 0.2497525 |
 
 As noted in the [calc()
 wiki](https://github.com/PHSKC-APDE/rads/wiki/calc#example-analyses-with-resampled-datamultiple-imputation),
@@ -441,12 +464,18 @@ head(prediab_obese_hra20_sex)
 
 | hra20_name | chi_sex | level | variable | rse | mean | mean_se | mean_lower | mean_upper |
 |:---|:---|:---|:---|---:|---:|---:|---:|---:|
-| Auburn - North | Male | NA | prediab1 | 37.33219 | 0.0956076 | 0.0424812 | 0.0110614 | 0.1801538 |
-| Auburn - North | Male | NA | prediab1 | 37.33219 | 0.2683604 | 0.0523327 | 0.1636620 | 0.3730588 |
-| Auburn - North | Male | NA | obese | 15.51366 | 0.0956076 | 0.0424812 | 0.0110614 | 0.1801538 |
-| Auburn - North | Male | NA | obese | 15.51366 | 0.2683604 | 0.0523327 | 0.1636620 | 0.3730588 |
-| Auburn - North | Female | NA | prediab1 | 32.02231 | 0.1032095 | 0.0462180 | 0.0107485 | 0.1956706 |
-| Auburn - North | Female | NA | prediab1 | 32.02231 | 0.3959768 | 0.0641231 | 0.2670800 | 0.5248737 |
+| Auburn - North | Male | NA | prediab1 | 33.80124 | 0.0956816 | 0.0396389 | 0.0166616 | 0.1747015 |
+| Auburn - North | Male | NA | prediab1 | 33.80124 | 0.2827067 | 0.0505252 | 0.1824743 | 0.3829391 |
+| Auburn - North | Male | NA | obese | 14.78364 | 0.0956816 | 0.0396389 | 0.0166616 | 0.1747015 |
+| Auburn - North | Male | NA | obese | 14.78364 | 0.2827067 | 0.0505252 | 0.1824743 | 0.3829391 |
+| Auburn - North | Female | NA | prediab1 | 28.32391 | 0.1230377 | 0.0509011 | 0.0210699 | 0.2250054 |
+| Auburn - North | Female | NA | prediab1 | 28.32391 | 0.3965369 | 0.0614569 | 0.2732766 | 0.5197973 |
+
+## Suppression & Reliability
+
+Please refer to the
+[APDE_SmallNumberUpdate.xlsx](https://kc1.sharepoint.com/:x:/r/teams/DPH-APDEData/_layouts/15/Doc.aspx?sourcedoc=%7B44562E46-6E45-44B1-9BAC-38EED75E9222%7D&file=APDE_SmallNumberUpdate.xlsx&action=default&mobileredirect=true&DefaultItemOpen=1)
+file on SharePoint for details.
 
 # Common Gotchas
 
@@ -487,4 +516,4 @@ straightforward. Remember:
 
 Happy analyzing!
 
-– *Updated by dcolombara, 2024-11-18*
+– *Updated by dcolombara, 2024-11-22*
