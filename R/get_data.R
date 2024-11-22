@@ -172,7 +172,7 @@ get_data_birth <- function(cols = NA,
 }
 
 # get_data_brfss() ----
-#' Get BRFSS microdata with adjusted weights for multi-year analyses from storage.
+#' Get BRFSS microdata with adjusted weights from storage.
 #'
 #' @description
 #' Retrieves Behavioral Risk Factor Surveillance System (BRFSS) data
@@ -189,12 +189,13 @@ get_data_birth <- function(cols = NA,
 #' @param wt_method Character string specifying the name of the method used
 #' to rescale the weights when selecting multiple years. Options include:
 #'
-#' - '\code{simple}': Uniform rescaling by the number of surveys. Use when the
-#' survey years have approximately the same sample sizes
-#' - '\code{obs}': Rescales weights based on the number of observations per year
+#' - '\code{obs}': Rescales weights based on the number of observations per year.
+#' This is WA DOH's recommendation
 #' - '\code{pop}': Rescales weights by the survey weighted population for each year
+#' - '\code{simple}': Rescales weights uniformly by the number of surveys. Use
+#' when the survey years have approximately the same sample sizes
 #'
-#'  Defaults to '\code{simple}'
+#'  Defaults to '\code{obs}'
 #'
 #' @details
 #' Note that while \code{get_data_brfss} automatically creates multi-year weights
@@ -217,16 +218,20 @@ get_data_birth <- function(cols = NA,
 #' details for you.
 #'
 #' @return
-#' If the requested columns \emph{\bold{do not include}} '\code{hra20_id}',
-#' '\code{hra20_name}', or '\code{chi_geo_region}': Returns a survey-weighted
+#' If '\code{hra20_id}', \code{hra20_name}', and '\code{chi_geo_region}'
+#' \emph{\bold{are not requested}}: Returns a survey-weighted
 #' \code{\link[dtsurvey]{dtsurvey}}/data.table object with the specified columns,
 #' years, and '\code{default_wt}` (the rescaled / adjusted weight).
 #'
 #' If any of '\code{hra20_id}', '\code{hra20_name}', or '\code{chi_geo_region}'
-#' are requested: Returns an \code{\link[mitools]{imputationList}} comprised of
+#' \emph{\bold{are requested}}: Returns an \code{\link[mitools]{imputationList}} comprised of
 #' survey-weighted \code{\link[dtsurvey]{dtsurvey}}/data.table objects with the
 #' specified columns, years, and '\code{default_wt}` (the rescales / adjusted
 #' weight).
+#'
+#' @references
+#' For information regarding the BRFSS ETL process, file locations, etc.,
+#' see: \url{https://github.com/PHSKC-APDE/BRFSS}
 #'
 #' @examples
 #' \dontrun{
@@ -246,7 +251,7 @@ get_data_birth <- function(cols = NA,
 #'
 get_data_brfss <- function(cols = NULL,
                            year = NULL,
-                           wt_method = 'simple'){
+                           wt_method = 'obs'){
   # Visible bindings for data.table/check global variables ----
     chi_year <- finalwt1 <- x_ststr <- hra20_id <- hra20_name <- NULL
     chi_geo_region <- region_name <- NULL
@@ -290,7 +295,7 @@ get_data_brfss <- function(cols = NULL,
     # Validate the `wt_method` argument
     if (!is.character(wt_method) || length(wt_method) != 1 ||
         is.na(wt_method) || !wt_method %in% c("simple", "obs", "pop")) {
-      stop("\n\U1F6D1 'wt_method' must be one of: 'simple', 'obs', or 'pop'")
+      stop("\n\U1F6D1 'wt_method' must be one of: 'obs', 'pop', or 'simple'")
     }
 
   # Subset the data ----
