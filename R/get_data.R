@@ -257,7 +257,15 @@ get_data_brfss <- function(cols = NULL,
     chi_geo_region <- region_name <- NULL
 
   # Load data ----
-    dt <- setDT(readRDS("//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds"))
+    myfile_path <- "//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds"
+    if (!file.exists(myfile_path)) {
+      stop("\n\U1F6D1 Unable to access file: ", myfile_path, "\n\n",
+           "Please verify:\n",
+           "1. You're connected to KC network\n",
+           "2. You have file permissions")
+    } else {
+      dt <- setDT(readRDS(myfile_path))
+    }
 
   # Validate arguments ----
     # Validate the `cols` argument
