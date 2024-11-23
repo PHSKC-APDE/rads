@@ -1251,7 +1251,7 @@ get_ref_pop <- function(ref_name = NULL){
 #' }
 list_apde_data <- function(){
 
-  ret <- c('birth', 'brfss', 'chars', 'death', 'hys')
+  ret <- c('birth', 'brfss', 'chars', 'death', 'hys', 'pums')
 
   return(ret)
 }

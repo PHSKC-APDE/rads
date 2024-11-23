@@ -198,3 +198,87 @@ test_that('Load data hys', {
 
 })
 
+
+# PUMS ----
+test_that("get_data_pums basic functionality works", {
+  # Basic usage with defaults
+  result <- get_data_pums()
+  expect_s3_class(result, "dtsurvey")
+  expect_true("chi_year" %in% names(result))
+  expect_true(any(grepl("wgtp", names(result))))
+})
+
+test_that("get_data_pums handles column selection correctly", {
+  # Test with specific columns
+  cols <- c("agep", "race4")
+  result <- get_data_pums(cols = cols)
+  expect_true(all(cols %in% names(result)))
+  expect_true("chi_year" %in% names(result)) # Should always include chi_year
+
+  # Test with invalid columns
+  expect_error(
+    get_data_pums(cols = c("invalid_col")),
+    "following columns are not available"
+  )
+})
+
+test_that("get_data_pums validates year parameter correctly", {
+  # Test invalid year inputs
+  expect_error(get_data_pums(year = 2020), "cannot equal 2020") # pandemic
+  expect_error(get_data_pums(year = c(2018, 2019)), "must be an integer vector")
+  expect_error(get_data_pums(year = 1900), "`year` value is invalid")
+
+  # Test valid 5-year range
+  result <- get_data_pums(year = 2018:2022)
+  expect_true(unique(result$chi_year) == 2022) # for 5-year data, chi_year == max year
+})
+
+test_that("get_data_pums handles record types correctly", {
+  # Test each record type
+  person <- get_data_pums(records = "person")
+  expect_true("pwgtp" %in% names(person))
+
+  household <- get_data_pums(records = "household")
+  expect_true("wgtp" %in% names(household))
+
+  combined <- get_data_pums(records = "combined")
+  expect_true(all(c("pwgtp", "wgtp") %in% names(combined)))
+
+  # Test invalid record type
+  expect_error(
+    get_data_pums(records = "invalid"),
+    "must have the value 'person', 'household', or 'combined'"
+  )
+})
+
+test_that("get_data_pums handles King County filtering correctly", {
+  # Test King County filtering
+  kc_data <- get_data_pums(kingco = TRUE)
+  expect_true(all(kc_data$chi_geo_kc == "King County"))
+
+  # Test without King County filtering
+  all_data <- get_data_pums(kingco = FALSE)
+  expect_true(uniqueN(all_data$chi_geo_kc) > 1)
+
+  # Test invalid kingco parameter
+  expect_error(
+    get_data_pums(kingco = "yes"),
+    "must be a logical"
+  )
+})
+
+test_that("get_data_pums properly sets up survey weights", {
+  # Test person-level weights
+  person <- get_data_pums(records = "person")
+  expect_true(inherits(person, 'dtrepsurvey')) # dtsurvey replicate survey
+  expect_equal(sum(grepl('rep[0-9]', names(attr(person, 'sdes')))), 80) # 80 replicates
+  expect_identical(attr(person, 'sdes')[['pweights']], person$pwgtp) # base weights match
+  expect_identical(attr(person, 'sdes')[['rep1']], person$pwgtp1) # first replicate matches
+
+  # Test household-level weights
+  household <- get_data_pums(records = "household")
+  expect_true(inherits(household, 'dtrepsurvey')) # dtsurvey replicate survey
+  expect_equal(sum(grepl('rep[0-9]', names(attr(household, 'sdes')))), 80) # 80 replicates
+  expect_identical(attr(household, 'sdes')[['pweights']], household$wgtp) # base weights match
+  expect_identical(attr(household, 'sdes')[['rep1']], household$wgtp1) # first replicate matches
+})
