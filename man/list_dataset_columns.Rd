@@ -15,7 +15,9 @@ list_dataset_columns(
 \item{dataset}{Character vector of length 1. Identifies the dataset to be
 fetched. Use \code{\link{list_apde_data}} for available options.}
 
-\item{year}{Year(s) of dataset to check. Only applies to HYS and BRFSS data.
+\item{year}{Year(s) of dataset to check. Applies to BRFSS, HYS and PUMS data.
+For PUMS data, this can be a single year (e.g., 2023) or a continuous 5-year
+period (e.g., 2018:2022)
 Defaults to \code{year = 2021}.}
 
 \item{mykey}{Character vector of length 1 OR a database connection. Identifies
@@ -29,15 +31,30 @@ dataset should be returned. Only applies to HYS. Defaults to
 \value{
 A \code{data.table} with varying numbers of columns. Every dataset
 will return a \code{var.names} column, which is the variable name. When the
-dataset is 'brfss' or 'hys', it will also return a \code{years(s)} column. 'hys'
-also returns an \code{analytic_ready} column that identifies whether or not it is
-in the analytic ready dataset.
+dataset is 'brfss', 'hys' or 'pums', it will also return a \code{years(s)} column.
+'hys' also returns an \code{analytic_ready} column that identifies whether or not
+it is in the analytic ready dataset. 'pums' also returns a \code{records} column,
+identifying whether it is from the household-level or person-level data.
 }
 \description{
 List columns available for analysis for a particular dataset in RADS
 }
+\details{
+This function relies on network access to DPHCIFS. Specifically:
+\itemize{
+\item BRFSS data: Requires access to '//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds'
+\item HYS data: Requires access to '//dphcifs/APDE-CDIP/HYS/releases/2021/best/hys_cols.csv'
+\item PUMS data: Requires access to '//dphcifs/APDE-CDIP/ACS/PUMS_data/' and its subdirectories
+}
+The function will error if these network locations are not accessible.
+}
 \examples{
 \donttest{
- list_dataset_columns('death')
+ list_dataset_columns('birth')
+ list_dataset_columns('chars', mykey = 'hhsaw')
+ list_dataset_columns('death', mykey = 'hhsaw')
+ list_dataset_columns('hys', year = 2021, analytic_only = TRUE)
+ list_dataset_columns('brfss', year = 2014:2023)
+ list_dataset_columns('pums', year = 2018:2022)
 }
 }

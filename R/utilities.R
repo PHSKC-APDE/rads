@@ -1261,7 +1261,9 @@ list_apde_data <- function(){
 #'
 #' @param dataset Character vector of length 1. Identifies the dataset to be
 #' fetched. Use \code{\link{list_apde_data}} for available options.
-#' @param year Year(s) of dataset to check. Only applies to HYS and BRFSS data.
+#' @param year Year(s) of dataset to check. Applies to BRFSS, HYS and PUMS data.
+#' For PUMS data, this can be a single year (e.g., 2023) or a continuous 5-year
+#' period (e.g., 2018:2022)
 #' Defaults to \code{year = 2021}.
 #' @param mykey Character vector of length 1 OR a database connection. Identifies
 #' the keyring:: key that can be used to access the Health & Human Services
@@ -1270,17 +1272,31 @@ list_apde_data <- function(){
 #' dataset should be returned. Only applies to HYS. Defaults to
 #' \code{analytic_only = FALSE}.
 #'
+#' @details This function relies on network access to DPHCIFS. Specifically:
+#' \itemize{
+#'   \item BRFSS data: Requires access to '//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds'
+#'   \item HYS data: Requires access to '//dphcifs/APDE-CDIP/HYS/releases/2021/best/hys_cols.csv'
+#'   \item PUMS data: Requires access to '//dphcifs/APDE-CDIP/ACS/PUMS_data/' and its subdirectories
+#' }
+#' The function will error if these network locations are not accessible.
+#'
 #' @return A \code{data.table} with varying numbers of columns. Every dataset
 #' will return a `var.names` column, which is the variable name. When the
-#' dataset is 'brfss' or 'hys', it will also return a `years(s)` column. 'hys'
-#' also returns an `analytic_ready` column that identifies whether or not it is
-#' in the analytic ready dataset.
+#' dataset is 'brfss', 'hys' or 'pums', it will also return a `years(s)` column.
+#' 'hys' also returns an `analytic_ready` column that identifies whether or not
+#' it is in the analytic ready dataset. 'pums' also returns a `records` column,
+#' identifying whether it is from the household-level or person-level data.
 #' @export
 #' @importFrom data.table data.table
 #' @name list_dataset_columns
 #' @examples
 #' \donttest{
-#'  list_dataset_columns('death')
+#'  list_dataset_columns('birth')
+#'  list_dataset_columns('chars', mykey = 'hhsaw')
+#'  list_dataset_columns('death', mykey = 'hhsaw')
+#'  list_dataset_columns('hys', year = 2021, analytic_only = TRUE)
+#'  list_dataset_columns('brfss', year = 2014:2023)
+#'  list_dataset_columns('pums', year = 2018:2022)
 #' }
 list_dataset_columns <- function(dataset = NULL,
                                  year = 2021,
@@ -1317,7 +1333,10 @@ list_dataset_columns <- function(dataset = NULL,
     }
 
     if(dataset == "brfss") {
-      dat <- setDT(readRDS("//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds"))
+      brfss_path <- "//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds"
+      validate_network_path(brfss_path, is_directory = FALSE)
+      dat <- setDT(readRDS(brfss_path))
+
       if (!all(year %in% unique(dat$chi_year))) {
         stop(paste0("Invalid year(s) indicated for Behavioral Risk Factor Surveillance System (BRFSS) data. Available years are limited to ", format_time(unique(dat$chi_year)), "."))
       }
@@ -1356,11 +1375,14 @@ list_dataset_columns <- function(dataset = NULL,
       var.names <- tolower(sort(c(var.names, bonus.CHI.names)))
     }
 
-    if(dataset =="hys") {
+    if(dataset == "hys") {
       if(!all(year %in% c(seq(2004,2018,2), 2021))) {
         stop(paste0("invalid year(s) indicated for Health Youth Survey data. Please see department documentation for details on currently correct years."))
       }
-      dat <- data.table::fread('//dphcifs/APDE-CDIP/HYS/releases/2021/best/hys_cols.csv')
+
+      hys_path <- "//dphcifs/APDE-CDIP/HYS/releases/2021/best/hys_cols.csv"
+      validate_network_path(hys_path, is_directory = FALSE)
+      dat <- data.table::fread(hys_path)
       yyy = year
       dat = dat[year %in% yyy]
       var.names.ar <- dat[ar == TRUE, colname]
@@ -1375,6 +1397,80 @@ list_dataset_columns <- function(dataset = NULL,
       a_r = c(rep(TRUE, length(var.names.ar)), rep(FALSE, length(var.names.stg)))
     }
 
+    if(dataset == 'pums'){
+      # validate network path
+        baseDir <- "//dphcifs/APDE-CDIP/ACS/PUMS_data/"
+        validate_network_path(baseDir, is_directory = TRUE)
+
+      # Identify available years
+        VNfiles <- list.files(baseDir, pattern = 'varnames.rds', recursive = T)
+        VNfiles <- grep('experimental', VNfiles, value = T, invert = T) # pandemic made data unusable
+
+        VNyears <- gsub('_1_year|_5_year', '', gsub('/.*', '', VNfiles))
+
+        maxYear <- max(as.integer(grep("^[0-9]{4}$", VNyears, value = T)))
+        minYear <- min(as.integer(grep("^[0-9]{4}$", VNyears, value = T)))
+        max5Year <- max(as.integer(substr(grep('_', VNyears, value = T), 1, 4)))
+        min5Year <- min(as.integer(substr(grep('_', VNyears, value = T), 1, 4))) - 4
+
+      # Validation
+        if(analytic_only == T){
+          message(paste0("The `analytic_only` argument does not apply to the '", dataset, "' data and will be ignored."))
+        }
+
+        if (is.null(year)) {
+          year <- maxYear
+          useFile <- grep(paste0(year, '_1_year'), VNfiles, value = T)
+        } else {
+          # Check if year is numeric or can be converted to integer losslessly & is correct length
+          if (!is.numeric(year) || !all(year == as.integer(year)) || !length(year) %in% c(1, 5)) {
+            stop("\n\U1F6D1 `year` must be an integer vector with: \n one value (e.g., 2022), ",
+                 "\n five continuous values (e.g., 2018:2022), or \n NULL for the most recent year.")
+          }
+
+          # Check if select years are available
+          if (length(year) == 1) {
+            if (year == 2020) {
+              stop("\n\U1F6D1 `year` cannot equal 2020 due to the COVID-19 pandemic survey disruptions")
+            }
+
+            if (year < minYear | year > maxYear) {
+              stop("\n\U1F6D1 Single `year` values must be >= ", minYear, " and <= ", maxYear)
+            }
+
+            useFile <- grep(paste0(year, '_1_year'), VNfiles, value = T)
+
+          } else if (length(year) == 5) {
+            if (all(diff(sort(year)) != 1)) {
+              stop("\n\U1F6D1 The `year` values are not continuous.")
+            }
+
+            if (min(year) < min5Year | max(year) > max5Year) {
+              stop("\n\U1F6D1 Five `year` values must be between ", min5Year, ":", min5Year+4 ,  " and ", max5Year-4, ":", max5Year)
+            }
+
+            useFile <- grep(paste0(max(year), "_", min(year), "_5_year"), VNfiles, value = TRUE)
+          }
+
+          if (length(useFile) == 0) {
+            stop("\n\U1F6D1 The `year` value is invalid.\n",
+                 "Single `year` values must be >= ", minYear, " and <= ", maxYear, ".\n",
+                 "Five `year` values must be between ", min5Year, ":", min5Year+4 ,  " and ", max5Year-4, ":", max5Year, ".")
+          } else if (length(useFile) > 1) {
+            stop("\n\U1F6D1 The `year` value returned more than one potential folder. Please report this to the rads team.")
+          }
+        }
+
+      # Get data
+        var.names = readRDS(paste0(baseDir, useFile))
+
+        # Validate records column
+        if (!"records" %in% names(var.names)) {
+          stop("\n\U1F6D1 PUMS variable names file is missing required 'records' column")
+        }
+
+    }
+
   # Create final table of variable names, analytic ready flag, and year ----
     if(exists('a_r')){
         Variable_Descriptions = unique(data.table(var.names = var.names, analytic_ready = a_r, `year(s)` = format_time(year)))
@@ -1382,8 +1478,12 @@ list_dataset_columns <- function(dataset = NULL,
     if (dataset == 'brfss'){
       Variable_Descriptions <- data.table(var.names = var.names, `year(s)` = var.years)
     }
-    if (!dataset %in% c('hys', 'brfss')){
+    if (dataset %in% c('birth', 'chars', 'death')){
       Variable_Descriptions = unique(data.table(var.names = var.names))
+    }
+    if (dataset == 'pums'){
+      Variable_Descriptions = readRDS(paste0(baseDir, useFile))
+      Variable_Descriptions <- Variable_Descriptions[, .(var.names = varname, records, `year(s)` = format_time(year) )]
     }
 
   # Return object ----
@@ -2975,6 +3075,40 @@ validate_hhsaw_key <- function(hhsaw_key = 'hhsaw'){
 
   return(con)
 
+}
+
+# validate_network_path ----
+#' Validate Network Path Accessibility
+#'
+#' Check if a network path or file exists and is accessible. Used internally by
+#' RADS functions to verify network dependencies before attempting data access.
+#'
+#' @param path Character string specifying the network path to validate
+#' @param is_directory Logical indicating whether path should be a directory (TRUE)
+#'        or file (FALSE)
+#' @return TRUE if path is accessible, otherwise stops with error
+#' @keywords internal
+#' @noRd
+
+validate_network_path <- function(path, is_directory = FALSE) {
+  if (!base::dir.exists(base::dirname(path))) {
+    stop(paste0("\n\U1F6D1 Network path not accessible: ", base::dirname(path),
+                "\nPlease verify your network connection and permissions."))
+  }
+
+  if (is_directory) {
+    if (base::dir.exists(path)) {
+      return(TRUE)
+    }
+    stop(paste0("\n\U1F6D1 Required directory not found: ", path,
+                "\nPlease verify your network connection and permissions."))
+  } else {
+    if (base::file.exists(path)) {
+      return(TRUE)
+    }
+    stop(paste0("\n\U1F6D1 Required file not found: ", path,
+                "\nPlease verify your network connection and permissions."))
+  }
 }
 
 # validate_yaml_data() ----
