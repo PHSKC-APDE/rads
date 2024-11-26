@@ -841,8 +841,12 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_grad
 
   stopifnot(all(year %in% c(seq(2004,2018,2), 2021, 2023)))
 
+  # Ensure directory is accessible
+  hysDir <- '//dphcifs/APDE-CDIP/HYS/releases/'
+  validate_network_path(hysDir, is_directory = TRUE)
+
   # pull the list of vars
-  vars = file.path('//dphcifs/APDE-CDIP/HYS/releases/',version, 'hys_cols.csv')
+  vars = file.path(hysDir, version, 'hys_cols.csv')
   vars = data.table::fread(vars)
 
   # subset by year
@@ -868,12 +872,12 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_grad
   arfp = c()
   sfp = c()
   if(any(vars[, ar])){
-    arfp = file.path('//dphcifs/APDE-CDIP/HYS/releases/',version, '/', paste0('hys_ar_', year, '.rds'))
+    arfp = file.path(hysDir, version, '/', paste0('hys_ar_', year, '.rds'))
     ardat = data.table::rbindlist(lapply(arfp, readRDS), use.names = T, fill = T)
 
   }
   if(any(!vars[, ar])){
-    sfp = file.path('//dphcifs/APDE-CDIP/HYS/releases/',version, '/', paste0('hys_stage_', year, '.rds'))
+    sfp = file.path(hysDir, version, '/', paste0('hys_stage_', year, '.rds'))
     sdat = data.table::rbindlist(lapply(sfp, readRDS), use.names = T, fill = T)
 
   }
