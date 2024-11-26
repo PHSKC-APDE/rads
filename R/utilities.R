@@ -1256,44 +1256,61 @@ list_apde_data <- function(){
   return(ret)
 }
 
-# list_dataset_columns() ----
-#' List columns available for analysis for a particular dataset in RADS
+# list_dataset_columns ----
+#' List columns available for analysis in APDE datasets
+#'
+#' @description
+#' Returns the available columns for a specified dataset. This function adapts to
+#' different data sources (SQL databases, network files) and handles various
+#' dataset-specific requirements like year validation and analytic-ready flags.
 #'
 #' @param dataset Character vector of length 1. Identifies the dataset to be
 #' fetched. Use \code{\link{list_apde_data}} for available options.
-#' @param year Year(s) of dataset to check. Applies to BRFSS, HYS and PUMS data.
-#' For PUMS data, this can be a single year (e.g., 2023) or a continuous 5-year
-#' period (e.g., 2018:2022)
-#' Defaults to \code{year = 2021}.
+#' @param year Year(s) of dataset to check. Only applies to BRFSS, HYS, and PUMS data.
+#' For PUMS data, this is limited to a single year (e.g., 2023) or a continuous
+#' 5-year period (e.g., 2018:2022). Defaults to \code{year = 2021}.
 #' @param mykey Character vector of length 1 OR a database connection. Identifies
-#' the keyring:: key that can be used to access the Health & Human Services
+#' the \code{keyring::} key that can be used to access the Health & Human Services
 #' Analytic Workspace (HHSAW). Defaults to \code{mykey = 'hhsaw'}.
 #' @param analytic_only Logical. Controls whether columns outside the analytic
-#' dataset should be returned. Only applies to HYS. Defaults to
+#' dataset should be returned. Only applies to HYS data. Defaults to
 #' \code{analytic_only = FALSE}.
 #'
-#' @details This function relies on network access to DPHCIFS. Specifically:
+#' @details
+#' This function handles multiple data sources with different requirements:
 #' \itemize{
-#'   \item BRFSS data: Requires access to '//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds'
-#'   \item HYS data: Requires access to '//dphcifs/APDE-CDIP/HYS/releases/2021/best/hys_cols.csv'
-#'   \item PUMS data: Requires access to '//dphcifs/APDE-CDIP/ACS/PUMS_data/' and its subdirectories
+#'   \item SQL-based (birth, death, chars): Accessed via HHSAW
+#'   \item Network-based (BRFSS, HYS, PUMS): Need appropriate permissions
 #' }
-#' The function will error if these network locations are not accessible.
 #'
-#' @return A \code{data.table} with varying numbers of columns. Every dataset
-#' will return a `var.names` column, which is the variable name. When the
-#' dataset is 'brfss', 'hys' or 'pums', it will also return a `years(s)` column.
-#' 'hys' also returns an `analytic_ready` column that identifies whether or not
-#' it is in the analytic ready dataset. 'pums' also returns a `records` column,
-#' identifying whether it is from the household-level or person-level data.
+#' Network paths required:
+#' \itemize{
+#'   \item BRFSS: '//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds'
+#'   \item HYS: '//dphcifs/APDE-CDIP/HYS/releases/2021/best/hys_cols.csv'
+#'   \item PUMS: '//dphcifs/APDE-CDIP/ACS/PUMS_data/' and subdirectories
+#' }
+#'
+#' @return
+#' A \code{data.table} with dataset-specific columns:
+#' \itemize{
+#'   \item All datasets: 'var.names' (variable names)
+#'   \item BRFSS/HYS/PUMS: Additional 'year(s)' column
+#'   \item HYS only: 'analytic_ready' flag
+#'   \item PUMS only: 'records' indicating household/person level
+#' }
+#'
 #' @export
-#' @importFrom data.table data.table
+#' @importFrom data.table data.table setDT
 #' @name list_dataset_columns
+#'
 #' @examples
 #' \donttest{
+#'  # SQL-based data
 #'  list_dataset_columns('birth')
 #'  list_dataset_columns('chars', mykey = 'hhsaw')
 #'  list_dataset_columns('death', mykey = 'hhsaw')
+#'
+#'  # Network-based data
 #'  list_dataset_columns('hys', year = 2021, analytic_only = TRUE)
 #'  list_dataset_columns('brfss', year = 2014:2023)
 #'  list_dataset_columns('pums', year = 2018:2022)
@@ -1301,195 +1318,275 @@ list_apde_data <- function(){
 list_dataset_columns <- function(dataset = NULL,
                                  year = 2021,
                                  mykey = 'hhsaw',
-                                 analytic_only = FALSE){
+                                 analytic_only = FALSE) {
+
   # Visible bindings for data.table/check global variables ----
-    ar <- colname <- chi_year <- `year(s)` <- NULL
+  ar <- colname <- chi_year <- `year(s)` <- NULL
 
-  # Validate arguments ----
-    opts = list_apde_data()
+  # Validate inputs ----
+  opts <- list_apde_data()
+  if(is.null(dataset)){
+    stop("\n\U0001f47f The 'dataset' argument cannot be missing. Available options are in `list_apde_data()`.")
+  }
+  stopifnot('dataset must be a character vector of length 1' = length(dataset) == 1)
+  dataset <- tolower(dataset)
+  if(!dataset %in% opts){
+    stop(paste0('\n\U0001f47f list_dataset_columns functionality for dataset "',
+                dataset, '" not currently available/implemented. ',
+                "Only the following datasets are implemented: ",
+                paste(opts, collapse = ', '), "."))
+  }
 
-    if(is.null(dataset)){stop("\n\U0001f47f The 'dataset' argument cannot be missing. Available options are in `list_apde_data()`.")}
+  # Get configuration for specified dataset ----
+  config <- list_dataset_columns_config(dataset)
 
-    stopifnot('dataset must be a character vector of length 1' = length(dataset) == 1)
-    dataset <- tolower(dataset)
-    if(!dataset %in% opts){
-      stop(paste0('\n\U0001f47f list_dataset_columns functionality for dataset "', dataset, '" not currently available/implemented. ',
-                  "Only the following datasets are implemented: ", paste(opts, collapse = ', '), "."))
-    }
+  # Route to appropriate handler based on dataset type ----
+  type_handler <- switch(config$type,
+                    "sql" = list_dataset_columns_sql,
+                    "brfss" = list_dataset_columns_brfss,
+                    "hys" = list_dataset_columns_hys,
+                    "pums" = list_dataset_columns_pums,
+                    stop("Unknown dataset type"))
 
-    if(dataset %in% c('birth', 'death', 'chars')){ # vital stats on Azure is relatively standard
-      con <- validate_hhsaw_key(hhsaw_key = mykey)
-      message(paste0("Column names for '", dataset, "' data are taken from all available years."))
-      if(analytic_only == T){
-        message(paste0("The `analytic_only` argument does not apply to the '", dataset, "' data and will be ignored."))
-      }
-    }
-
-  # Identify columns from specific datasets ----
-    # The below code would ideally be replaced by a single call to a generic interface configured by the user
-    if(dataset == "birth") {
-      # get list of all colnames from SQL
-      var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [birth].[final_analytic]"))
-    }
-
-    if(dataset == "brfss") {
-      brfss_path <- "//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds"
-      validate_network_path(brfss_path, is_directory = FALSE)
-      dat <- setDT(readRDS(brfss_path))
-
-      if (!all(year %in% unique(dat$chi_year))) {
-        stop(paste0("Invalid year(s) indicated for Behavioral Risk Factor Surveillance System (BRFSS) data. Available years are limited to ", format_time(unique(dat$chi_year)), "."))
-      }
-      dat <- dat[chi_year %in% year]
-
-      na_cols <- dat[, which(sapply(.SD, function(x) all(is.na(x)))), .SDcols = names(dat)] # identify columns with 100% missing
-      dat[, (na_cols) := NULL] # drop columns 100% missing
-
-      var.names <- names(dat)
-
-      # Determine the years each variable is available
-      var.years <- sapply(var.names, function(var) {
-        years_available <- unique(dat[!is.na(get(var)), chi_year])
-        format_time(years_available)
-      }, simplify = TRUE)
-
-      # Add on the HRA / region vars derived from hra20_id_#
-      var.names <- sort(c(var.names,
-                          c('hra20_id', 'hra20_name', 'chi_geo_region')))
-      var.years <- c(var.years,
-                     setNames(rep(format_time(year), 3), c('hra20_id', 'hra20_name', 'chi_geo_region')))
-      var.years <- var.years[var.names] # ensure same order as var.names
-    }
-
-    if(dataset == "chars") {
-      # get list of all colnames from SQL
-      var.names <- names(DBI::dbGetQuery(con, "SELECT TOP (0) * FROM [chars].[final_analytic]"))
-      bonus.CHI.names <- c('wastate', 'yage4', 'age6', 'race3', 'race4') # made on the fly by rads
-      var.names <- tolower(sort(c(var.names, bonus.CHI.names)))
-    }
-
-    if(dataset == "death") {
-      # get list of all colnames from SQL
-      var.names <- names(DBI::dbGetQuery(con, "SELECT top (0) * FROM [death].[final_analytic]"))
-      bonus.CHI.names <- c('wastate', 'age6', 'race3', 'race4', 'bigcities', 'hra20_name', 'chi_geo_region') # made on the fly by rads
-      var.names <- tolower(sort(c(var.names, bonus.CHI.names)))
-    }
-
-    if(dataset == "hys") {
-      if(!all(year %in% c(seq(2004,2018,2), 2021))) {
-        stop(paste0("invalid year(s) indicated for Health Youth Survey data. Please see department documentation for details on currently correct years."))
-      }
-
-      hys_path <- "//dphcifs/APDE-CDIP/HYS/releases/2021/best/hys_cols.csv"
-      validate_network_path(hys_path, is_directory = FALSE)
-      dat <- data.table::fread(hys_path)
-      yyy = year
-      dat = dat[year %in% yyy]
-      var.names.ar <- dat[ar == TRUE, colname]
-
-      if(!analytic_only){
-        var.names.stg = dat[ar == FALSE, colname]
-      } else{
-        var.names.stg = NULL
-      }
-
-      var.names = c(var.names.ar, var.names.stg)
-      a_r = c(rep(TRUE, length(var.names.ar)), rep(FALSE, length(var.names.stg)))
-    }
-
-    if(dataset == 'pums'){
-      # validate network path
-        baseDir <- "//dphcifs/APDE-CDIP/ACS/PUMS_data/"
-        validate_network_path(baseDir, is_directory = TRUE)
-
-      # Identify available years
-        VNfiles <- list.files(baseDir, pattern = 'varnames.rds', recursive = T)
-        VNfiles <- grep('experimental', VNfiles, value = T, invert = T) # pandemic made data unusable
-
-        VNyears <- gsub('_1_year|_5_year', '', gsub('/.*', '', VNfiles))
-
-        maxYear <- max(as.integer(grep("^[0-9]{4}$", VNyears, value = T)))
-        minYear <- min(as.integer(grep("^[0-9]{4}$", VNyears, value = T)))
-        max5Year <- max(as.integer(substr(grep('_', VNyears, value = T), 1, 4)))
-        min5Year <- min(as.integer(substr(grep('_', VNyears, value = T), 1, 4))) - 4
-
-      # Validation
-        if(analytic_only == T){
-          message(paste0("The `analytic_only` argument does not apply to the '", dataset, "' data and will be ignored."))
-        }
-
-        if (is.null(year)) {
-          year <- maxYear
-          useFile <- grep(paste0(year, '_1_year'), VNfiles, value = T)
-        } else {
-          # Check if year is numeric or can be converted to integer losslessly & is correct length
-          if (!is.numeric(year) || !all(year == as.integer(year)) || !length(year) %in% c(1, 5)) {
-            stop("\n\U1F6D1 `year` must be an integer vector with: \n one value (e.g., 2022), ",
-                 "\n five continuous values (e.g., 2018:2022), or \n NULL for the most recent year.")
-          }
-
-          # Check if select years are available
-          if (length(year) == 1) {
-            if (year == 2020) {
-              stop("\n\U1F6D1 `year` cannot equal 2020 due to the COVID-19 pandemic survey disruptions")
-            }
-
-            if (year < minYear | year > maxYear) {
-              stop("\n\U1F6D1 Single `year` values must be >= ", minYear, " and <= ", maxYear)
-            }
-
-            useFile <- grep(paste0(year, '_1_year'), VNfiles, value = T)
-
-          } else if (length(year) == 5) {
-            if (all(diff(sort(year)) != 1)) {
-              stop("\n\U1F6D1 The `year` values are not continuous.")
-            }
-
-            if (min(year) < min5Year | max(year) > max5Year) {
-              stop("\n\U1F6D1 Five `year` values must be between ", min5Year, ":", min5Year+4 ,  " and ", max5Year-4, ":", max5Year)
-            }
-
-            useFile <- grep(paste0(max(year), "_", min(year), "_5_year"), VNfiles, value = TRUE)
-          }
-
-          if (length(useFile) == 0) {
-            stop("\n\U1F6D1 The `year` value is invalid.\n",
-                 "Single `year` values must be >= ", minYear, " and <= ", maxYear, ".\n",
-                 "Five `year` values must be between ", min5Year, ":", min5Year+4 ,  " and ", max5Year-4, ":", max5Year, ".")
-          } else if (length(useFile) > 1) {
-            stop("\n\U1F6D1 The `year` value returned more than one potential folder. Please report this to the rads team.")
-          }
-        }
-
-      # Get data
-        var.names = readRDS(paste0(baseDir, useFile))
-
-        # Validate records column
-        if (!"records" %in% names(var.names)) {
-          stop("\n\U1F6D1 PUMS variable names file is missing required 'records' column")
-        }
-
-    }
-
-  # Create final table of variable names, analytic ready flag, and year ----
-    if(exists('a_r')){
-        Variable_Descriptions = unique(data.table(var.names = var.names, analytic_ready = a_r, `year(s)` = format_time(year)))
-    }
-    if (dataset == 'brfss'){
-      Variable_Descriptions <- data.table(var.names = var.names, `year(s)` = var.years)
-    }
-    if (dataset %in% c('birth', 'chars', 'death')){
-      Variable_Descriptions = unique(data.table(var.names = var.names))
-    }
-    if (dataset == 'pums'){
-      Variable_Descriptions = readRDS(paste0(baseDir, useFile))
-      Variable_Descriptions <- Variable_Descriptions[, .(var.names = varname, records, `year(s)` = format_time(year) )]
-    }
-
-  # Return object ----
-    return(Variable_Descriptions)
+  # Process dataset and return results ----
+  type_handler(config = config, year = year, mykey = mykey, analytic_only = analytic_only)
 }
 
+# list_dataset_columns_config ----
+#' Configuration settings for APDE datasets
+#'
+#' @description
+#' ___Internal function___ that provides configuration settings for each supported
+#' dataset in \code{\link{list_dataset_columns}}. New data sets can be added by
+#' including their configuration here.
+#'
+#' @param dataset Character vector of length 1. Dataset identifier.
+#'
+#' @return A list containing configuration settings for the specified dataset.
+#'
+#' @keywords internal
+list_dataset_columns_config <- function(dataset) {
+  # no need for dataset validation b/c validated in list_dataset_columns()
+  configs <- list(
+    # SQL-based datasets ----
+    birth = list(
+      type = "sql",
+      query = "SELECT top (0) * FROM [birth].[final_analytic]",
+      bonus_vars = NULL
+    ),
+    death = list(
+      type = "sql",
+      query = "SELECT top (0) * FROM [death].[final_analytic]",
+      bonus_vars = c('wastate', 'age6', 'race3', 'race4', 'bigcities',
+                     'hra20_name', 'chi_geo_region')
+    ),
+    chars = list(
+      type = "sql",
+      query = "SELECT TOP (0) * FROM [chars].[final_analytic]",
+      bonus_vars = c('wastate', 'yage4', 'age6', 'race3', 'race4')
+    ),
+
+    # Network-based datasets ----
+    brfss = list(
+      type = "brfss",
+      path = "//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds",
+      bonus_vars = c('hra20_id', 'hra20_name', 'chi_geo_region')
+    ),
+    hys = list(
+      type = "hys",
+      path = "//dphcifs/APDE-CDIP/HYS/releases/2021/best/hys_cols.csv",
+      valid_years = c(seq(2004, 2018, 2), 2021)
+    ),
+    pums = list(
+      type = "pums",
+      base_dir = "//dphcifs/APDE-CDIP/ACS/PUMS_data/"
+    )
+  )
+
+  return(configs[[dataset]])
+}
+
+# list_dataset_columns_sql ----
+#' Column Type Handler for SQL-based datasets
+#'
+#' @description
+#' ___Internal function___ that processes column names for SQL-based data
+#' (birth, death, chars). Adds any 'bonus' variables that will
+#' be created by the \code{\link{get_data}} functions. Use by
+#' \code{\link{list_dataset_columns}}.
+#'
+#' @inheritParams list_dataset_columns
+#' @param config List of configuration settings for the dataset that are defined
+#' by \code{\link{list_dataset_columns_config}}
+#'
+#' @return data.table with var.names column
+#'
+#' @keywords internal
+list_dataset_columns_sql <- function(config, year, mykey, analytic_only) {
+  # Connect to database and get column names
+  con <- validate_hhsaw_key(mykey)
+  var.names <- names(DBI::dbGetQuery(con, config$query))
+
+  # Add any bonus variables specific to this dataset
+  if(!is.null(config$bonus_vars)) {
+    var.names <- tolower(sort(c(var.names, config$bonus_vars)))
+  }
+
+  return(data.table(var.names = var.names))
+}
+
+# list_dataset_columns_brfss ----
+#' Column Type Handler for BRFSS dataset
+#'
+#' @description
+#' ___Internal function___ that processes the column names for the BRFSS data.
+#' Used by \code{\link{list_dataset_columns}}.
+#'
+#' @inheritParams list_dataset_columns_sql
+#'
+#' @return data.table with var.names and year(s) columns
+#'
+#' @keywords internal
+list_dataset_columns_brfss <- function(config, year, mykey, analytic_only) {
+  # Validate network path and read data
+  validate_network_path(config$path, is_directory = FALSE)
+  dat <- setDT(readRDS(config$path))
+
+  # Check if requested years are available
+  if(!all(year %in% unique(dat$chi_year))) {
+    stop(paste0("Invalid year(s) for BRFSS data. Available years: ",
+                format_time(unique(dat$chi_year)), "."))
+  }
+
+  # Filter to requested years
+  dat <- dat[chi_year %in% year]
+
+  # Remove columns that are 100% missing
+  na_cols <- dat[, which(sapply(.SD, function(x) all(is.na(x)))), .SDcols = names(dat)]
+  dat[, (na_cols) := NULL]
+
+  # Get variable names and determine years available for each
+  var.names <- names(dat)
+  var.years <- sapply(var.names, function(var) {
+    years_available <- unique(dat[!is.na(get(var)), chi_year])
+    format_time(years_available)
+  }, simplify = TRUE)
+
+  # Add bonus variables with their years
+  var.names <- sort(c(var.names, config$bonus_vars))
+  var.years <- c(var.years,
+                 setNames(rep(format_time(year), length(config$bonus_vars)),
+                          config$bonus_vars))
+
+  return(data.table(var.names = var.names, `year(s)` = var.years[var.names]))
+}
+
+# list_dataset_columns_hys ----
+#' Column Type Handler for HYS dataset
+#'
+#' @description
+#' ___Internal function___ that processes the column names for the HYS data. Used
+#' by \code{\link{list_dataset_columns}}.
+#'
+#' @inheritParams list_dataset_columns_sql
+#'
+#' @return data.table with var.names, analytic_ready, and year(s) columns
+#'
+#' @keywords internal
+list_dataset_columns_hys <- function(config, year, mykey, analytic_only) {
+  # Validate years against configured valid years
+  if(!all(year %in% config$valid_years)) {
+    stop("Invalid year(s) for Health Youth Survey data.")
+  }
+
+  # Read and process data
+  validate_network_path(config$path, is_directory = FALSE)
+  dat <- data.table::fread(config$path)
+  dat <- dat[year %in% year]
+
+  # Split variables by analytic ready status
+  var.names.ar <- dat[ar == TRUE, colname]
+  var.names.stg <- if(!analytic_only) dat[ar == FALSE, colname] else NULL
+  var.names <- c(var.names.ar, var.names.stg)
+  a_r <- c(rep(TRUE, length(var.names.ar)),
+           rep(FALSE, length(var.names.stg)))
+
+  return(data.table(var.names = var.names,
+                    analytic_ready = a_r,
+                    `year(s)` = format_time(year)))
+}
+
+# list_dataset_columns_pums ----
+#' Column Type Handler for PUMS dataset
+#'
+#' @description
+#' ___Internal function___ that processes column names for the PUMS data. Used
+#' by \code{\link{list_dataset_columns}}.
+#'
+#' @inheritParams list_dataset_columns_sql
+#'
+#' @return data.table with var.names, records, and year(s) columns
+#'
+#' @keywords internal
+list_dataset_columns_pums <- function(config, year, mykey, analytic_only) {
+  # Validate base directory exists
+  validate_network_path(config$base_dir, is_directory = TRUE)
+
+  # Get and filter available files
+  VNfiles <- list.files(config$base_dir, pattern = 'varnames.rds', recursive = TRUE)
+  VNfiles <- grep('experimental', VNfiles, value = TRUE, invert = TRUE)
+  VNyears <- gsub('_1_year|_5_year', '', gsub('/.*', '', VNfiles))
+
+  # Determine available year ranges
+  maxYear <- max(as.integer(grep("^[0-9]{4}$", VNyears, value = TRUE)))
+  minYear <- min(as.integer(grep("^[0-9]{4}$", VNyears, value = TRUE)))
+  max5Year <- max(as.integer(substr(grep('_', VNyears, value = TRUE), 1, 4)))
+  min5Year <- min(as.integer(substr(grep('_', VNyears, value = TRUE), 1, 4))) - 4
+
+  # Handle year selection and validation
+  if(is.null(year)) {
+    # Default to most recent year if none specified
+    year <- maxYear
+    useFile <- grep(paste0(year, '_1_year'), VNfiles, value = TRUE)
+  } else {
+    # Validate year format
+    if(!is.numeric(year) || !all(year == as.integer(year)) || !length(year) %in% c(1, 5)) {
+      stop("\n\U1F6D1 `year` must be an integer vector with one value or five continuous values")
+    }
+
+    if(length(year) == 1) {
+      # Single year validation
+      if(year == 2020) {
+        stop("\n\U1F6D1 `year` cannot equal 2020 due to COVID-19 pandemic survey disruptions")
+      }
+      if(year < minYear || year > maxYear) {
+        stop("\n\U1F6D1 Single `year` values must be >= ", minYear, " and <= ", maxYear)
+      }
+      useFile <- grep(paste0(year, '_1_year'), VNfiles, value = TRUE)
+    } else {
+      # Five year period validation
+      if(!all(diff(sort(year)) == 1)) {
+        stop("\n\U1F6D1 The `year` values are not continuous.")
+      }
+      if(min(year) < min5Year || max(year) > max5Year) {
+        stop("\n\U1F6D1 Five `year` values must be between ",
+             min5Year, ":", min5Year+4, " and ", max5Year-4, ":", max5Year)
+      }
+      useFile <- grep(paste0(max(year), "_", min(year), "_5_year"),
+                      VNfiles, value = TRUE)
+    }
+  }
+
+  # Read and validate data
+  var.names <- readRDS(paste0(config$base_dir, useFile))
+  if(!"records" %in% names(var.names)) {
+    stop("\n\U1F6D1 PUMS variable names file is missing required 'records' column")
+  }
+
+  return(var.names[, .(var.names = varname,
+                       records,
+                       `year(s)` = format_time(year))])
+}
 
 # list_ref_xwalk() ----
 #' View table of geographic pairs usable in the get_xwalk() function
