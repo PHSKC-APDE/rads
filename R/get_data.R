@@ -1009,12 +1009,8 @@ get_data_pums <- function(cols = NULL,
 
 # Get PUMS file availability ----
 baseDir <- "//dphcifs/APDE-CDIP/ACS/PUMS_data/"
-if (!dir.exists(baseDir)) {
-  stop("\n\U1F6D1 Unable to access directory: ", baseDir, "\n\n",
-       "Please verify:\n",
-       "1. You're connected to KC network\n",
-       "2. You have file permissions")
-} else {
+validate_network_path(baseDir, is_directory = TRUE)
+
   preppedFiles <- grep("\\.RData$", grep("prepped_R_files", list.files(baseDir, full.names = TRUE, recursive = TRUE), value = TRUE), value = TRUE, ignore.case = T)
   if (uniqueN(preppedFiles) == 0){
     stop("\n\U1F6D1 There are no available analytic ready RData files in: ", baseDir, "\n\n",
@@ -1022,7 +1018,6 @@ if (!dir.exists(baseDir)) {
          "* ", baseDir, "YYYY_1_year/prepped_R_files/YYYY_1_year_data.RData\n",
          "* ", baseDir, "YYYY_yyyy_5_year/prepped_R_files/YYYY_yyyy_5_year_data.RData")
   }
-}
 
 maxYear = max(as.integer(substr(gsub(baseDir, "", grep("1_year", preppedFiles, value = TRUE)), 1, 4)))
 minYear = min(as.integer(substr(gsub(baseDir, "", grep("1_year", preppedFiles, value = TRUE)), 1, 4)))
