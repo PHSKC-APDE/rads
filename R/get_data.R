@@ -258,14 +258,8 @@ get_data_brfss <- function(cols = NULL,
 
   # Load data ----
     myfile_path <- "//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds"
-    if (!file.exists(myfile_path)) {
-      stop("\n\U1F6D1 Unable to access file: ", myfile_path, "\n\n",
-           "Please verify:\n",
-           "1. You're connected to KC network\n",
-           "2. You have file permissions")
-    } else {
-      dt <- setDT(readRDS(myfile_path))
-    }
+    validate_network_path(myfile_path, is_directory = FALSE)
+    dt <- setDT(readRDS(myfile_path))
 
   # Validate arguments ----
     # Validate the `cols` argument
