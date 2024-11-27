@@ -997,8 +997,8 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_grad
 #'
 #'
 #' @import data.table
-#' @import srvyr
 #' @import dtsurvey
+#' @importFrom survey svrepdesign
 #' @export
 #'
 get_data_pums <- function(cols = NULL,
@@ -1006,18 +1006,19 @@ get_data_pums <- function(cols = NULL,
                           kingco = TRUE,
                           records = "person") {
 # Visible bindings for data.table/check global variables ----
+  chi_geo_kc <- serialno <- NULL
 
 # Get PUMS file availability ----
 baseDir <- "//dphcifs/APDE-CDIP/ACS/PUMS_data/"
 validate_network_path(baseDir, is_directory = TRUE)
 
-  preppedFiles <- grep("\\.RData$", grep("prepped_R_files", list.files(baseDir, full.names = TRUE, recursive = TRUE), value = TRUE), value = TRUE, ignore.case = T)
-  if (uniqueN(preppedFiles) == 0){
-    stop("\n\U1F6D1 There are no available analytic ready RData files in: ", baseDir, "\n\n",
-         "The standard file paths should have the form:\n",
-         "* ", baseDir, "YYYY_1_year/prepped_R_files/YYYY_1_year_data.RData\n",
-         "* ", baseDir, "YYYY_yyyy_5_year/prepped_R_files/YYYY_yyyy_5_year_data.RData")
-  }
+preppedFiles <- grep("household|person", grep("\\.rds$", grep("prepped_R_files", list.files(baseDir, full.names = TRUE, recursive = TRUE), value = TRUE), value = TRUE, ignore.case = T), value = T)
+if (uniqueN(preppedFiles) == 0){
+  stop("\n\U1F6D1 There are no available analytic ready RData files in: ", baseDir, "\n\n",
+       "The standard file paths should have the form:\n",
+       "- ", gsub('/', '\\\\', paste0(baseDir, "YYYY_1_year/prepped_R_files/YYYY_1_year_person.rds")), "\n",
+       "- ", gsub('/', '\\\\', paste0(baseDir, "YYYY_yyyy_5_year/prepped_R_files/YYYY_yyyy_5_year_household.rds")))
+}
 
 maxYear = max(as.integer(substr(gsub(baseDir, "", grep("1_year", preppedFiles, value = TRUE)), 1, 4)))
 minYear = min(as.integer(substr(gsub(baseDir, "", grep("1_year", preppedFiles, value = TRUE)), 1, 4)))
@@ -1053,8 +1054,6 @@ min5Year = min(as.integer(substr(gsub(baseDir, "", grep("5_year", preppedFiles, 
       stop("\n\U1F6D1 The `year` value is invalid.\n",
            "The minimum single year is ", minYear, " and the maximum single year is ", maxYear, ".\n",
            "The minimum five-year period is ", min5Year-4, ":", min5Year, " and the maximum is ", max5Year-4, ":", max5Year, ".")
-    } else if (length(useFile) > 1) {
-      stop("\n\U1F6D1 The `year` value returned more than one potential folder. Please report this to the rads team.")
     }
   }
 
@@ -1063,42 +1062,39 @@ if (length(records) != 1 || !records %in% c("person", "household", "combined")) 
   stop("\n\U1F6D1 `records` must have the value 'person', 'household', or 'combined'.")
 }
 
-### Load data for remaining validation ----
-  # function to load without disrupting the global environment
-  load_file <- function(file) {
-    tryCatch({
-      e <- new.env()
-      load(file, envir = e)
-      return(as.list(e))
-    }, error = function(e) {
-      stop(paste0("\n\U1F6D1 Failed to load data file: ", file))
-    })
-  }
-
-  tempdata <- load_file(useFile)
+### Load RDS data for remaining validation ----
   if (records == "person") {
-    dt <- tempdata$person.wa
-  } else if (records == "household") {
-    dt <- tempdata$household.wa
-  } else if (records == "combined") {
+    person_file <- useFile[grep("person", useFile)]
+    dt <- readRDS(person_file)
 
-    # Ensure serialno exists in both datasets
-    if (!all(c("serialno") %in% names(tempdata$person.wa)) ||
-        !all(c("serialno") %in% names(tempdata$household.wa))) {
+  } else if (records == "household") {
+    household_file <- useFile[grep("household", useFile)]
+    dt <- readRDS(household_file)
+
+  } else if (records == "combined") {
+    person_file <- useFile[grep("person", useFile)]
+    household_file <- useFile[grep("household", useFile)]
+
+    person_dt <- readRDS(person_file)
+    household_dt <- readRDS(household_file)
+
+    # Ensure serialno exists in both datasets (should be there, but you never know!)
+    if (!all(c("serialno") %in% names(person_dt)) ||
+        !all(c("serialno") %in% names(household_dt))) {
       stop("\n\U1F6D1 Required column 'serialno' missing from person or household data")
     }
 
     # Merge person and household data
     dt <- merge(
-      tempdata$person.wa,
-      tempdata$household.wa,
+      person_dt,
+      household_dt,
       by = "serialno",
       all.x = TRUE,
       suffixes = c("", "_hh")
     )
 
     # Verify combined has same number of rows as person level data
-    if (nrow(dt) != nrow(tempdata$person.wa)) {
+    if (nrow(dt) != nrow(person_dt)) {
       stop("\n\U1F6D1 Merge resulted in unexpected number of records")
     }
   }
@@ -1142,29 +1138,30 @@ if (length(records) != 1 || !records %in% c("person", "household", "combined")) 
       stop("\n\U1F6D1 Missing required weight columns")
     } else {weight_cols <- sort(weight_cols)}
 
-  if (records %in% c("person", "combined")) {  # Use person weights for combined data
-    dt <- srvyr::as_survey_rep(
-      dt,
-      weights = pwgtp,
+  if (records %in% c("person", "combined")) {
+    dt <- survey::svrepdesign(
+      data = dt,
+      weights = ~pwgtp,
+      repweights = dt[, grep("pwgtp[0-9]+", names(dt), value = TRUE), with = FALSE], # need matrix, not col names
+      type = "JK1",
       combined.weights = TRUE,
-      repweights = grep("pwgtp[0-9]+", names(dt), value = TRUE),
-      scale = 4 / 80,
-      rscales = rep( 1, 80 ),
-      mse = TRUE,
-      type = "JK1"
+      scale = 4/80,
+      rscales = rep(1, 80),
+      mse = TRUE
     )
   } else {
-    dt <- srvyr::as_survey_rep(
-      dt,
-      weights = wgtp,
+    dt <- survey::svrepdesign(
+      data = dt,
+      weights = ~wgtp,
+      repweights = dt[, grep("wgtp[0-9]+", names(dt), value = TRUE), with = FALSE],
+      type = "JK1",
       combined.weights = TRUE,
-      repweights = grep("wgtp[0-9]+", names(dt), value = TRUE),
-      scale = 4 / 80,
-      rscales = rep( 1, 80 ),
-      mse = TRUE,
-      type = "JK1"
+      scale = 4/80,
+      rscales = rep(1, 80),
+      mse = TRUE
     )
   }
+
   dt <- dtsurvey::dtrepsurvey(dt)
 
 # Return dtsurvey object ----
