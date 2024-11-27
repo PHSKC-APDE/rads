@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities.R
 \name{list_dataset_columns}
 \alias{list_dataset_columns}
-\title{List columns available for analysis for a particular dataset in RADS}
+\title{List columns available for analysis in APDE datasets}
 \usage{
 list_dataset_columns(
   dataset = NULL,
@@ -15,29 +15,56 @@ list_dataset_columns(
 \item{dataset}{Character vector of length 1. Identifies the dataset to be
 fetched. Use \code{\link{list_apde_data}} for available options.}
 
-\item{year}{Year(s) of dataset to check. Only applies to HYS and BRFSS data.
-Defaults to \code{year = 2021}.}
+\item{year}{Year(s) of dataset to check. Only applies to BRFSS, HYS, and PUMS data.
+For PUMS data, this is limited to a single year (e.g., 2023) or a continuous
+5-year period (e.g., 2018:2022). Defaults to \code{year = 2021}.}
 
 \item{mykey}{Character vector of length 1 OR a database connection. Identifies
-the keyring:: key that can be used to access the Health & Human Services
+the \code{keyring::} key that can be used to access the Health & Human Services
 Analytic Workspace (HHSAW). Defaults to \code{mykey = 'hhsaw'}.}
 
 \item{analytic_only}{Logical. Controls whether columns outside the analytic
-dataset should be returned. Only applies to HYS. Defaults to
+dataset should be returned. Only applies to HYS data. Defaults to
 \code{analytic_only = FALSE}.}
 }
 \value{
-A \code{data.table} with varying numbers of columns. Every dataset
-will return a \code{var.names} column, which is the variable name. When the
-dataset is 'brfss' or 'hys', it will also return a \code{years(s)} column. 'hys'
-also returns an \code{analytic_ready} column that identifies whether or not it is
-in the analytic ready dataset.
+A \code{data.table} with dataset-specific columns:
+\itemize{
+\item All datasets: 'var.names' (variable names)
+\item BRFSS/HYS/PUMS: Additional 'year(s)' column
+\item HYS only: 'analytic_ready' flag
+\item PUMS only: 'records' indicating household/person level
+}
 }
 \description{
-List columns available for analysis for a particular dataset in RADS
+Returns the available columns for a specified dataset. This function adapts to
+different data sources (SQL databases, network files) and handles various
+dataset-specific requirements like year validation and analytic-ready flags.
+}
+\details{
+This function handles multiple data sources with different requirements:
+\itemize{
+\item SQL-based (birth, death, chars): Accessed via HHSAW
+\item Network-based (BRFSS, HYS, PUMS): Need appropriate permissions
+}
+
+Network paths required:
+\itemize{
+\item BRFSS: '//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds'
+\item HYS: '//dphcifs/APDE-CDIP/HYS/releases/2021/best/hys_cols.csv'
+\item PUMS: '//dphcifs/APDE-CDIP/ACS/PUMS_data/' and subdirectories
+}
 }
 \examples{
 \donttest{
- list_dataset_columns('death')
+ # SQL-based data
+ list_dataset_columns('birth')
+ list_dataset_columns('chars', mykey = 'hhsaw')
+ list_dataset_columns('death', mykey = 'hhsaw')
+
+ # Network-based data
+ list_dataset_columns('hys', year = 2021, analytic_only = TRUE)
+ list_dataset_columns('brfss', year = 2014:2023)
+ list_dataset_columns('pums', year = 2018:2022)
 }
 }

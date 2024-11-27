@@ -258,14 +258,8 @@ get_data_brfss <- function(cols = NULL,
 
   # Load data ----
     myfile_path <- "//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds"
-    if (!file.exists(myfile_path)) {
-      stop("\n\U1F6D1 Unable to access file: ", myfile_path, "\n\n",
-           "Please verify:\n",
-           "1. You're connected to KC network\n",
-           "2. You have file permissions")
-    } else {
-      dt <- setDT(readRDS(myfile_path))
-    }
+    validate_network_path(myfile_path, is_directory = FALSE)
+    dt <- setDT(readRDS(myfile_path))
 
   # Validate arguments ----
     # Validate the `cols` argument
@@ -847,8 +841,12 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_grad
 
   stopifnot(all(year %in% c(seq(2004,2018,2), 2021, 2023)))
 
+  # Ensure directory is accessible
+  hysDir <- '//dphcifs/APDE-CDIP/HYS/releases/'
+  validate_network_path(hysDir, is_directory = TRUE)
+
   # pull the list of vars
-  vars = file.path('//dphcifs/APDE-CDIP/HYS/releases/',version, 'hys_cols.csv')
+  vars = file.path(hysDir, version, 'hys_cols.csv')
   vars = data.table::fread(vars)
 
   # subset by year
@@ -874,12 +872,12 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_grad
   arfp = c()
   sfp = c()
   if(any(vars[, ar])){
-    arfp = file.path('//dphcifs/APDE-CDIP/HYS/releases/',version, '/', paste0('hys_ar_', year, '.rds'))
+    arfp = file.path(hysDir, version, '/', paste0('hys_ar_', year, '.rds'))
     ardat = data.table::rbindlist(lapply(arfp, readRDS), use.names = T, fill = T)
 
   }
   if(any(!vars[, ar])){
-    sfp = file.path('//dphcifs/APDE-CDIP/HYS/releases/',version, '/', paste0('hys_stage_', year, '.rds'))
+    sfp = file.path(hysDir, version, '/', paste0('hys_stage_', year, '.rds'))
     sdat = data.table::rbindlist(lapply(sfp, readRDS), use.names = T, fill = T)
 
   }
@@ -922,5 +920,258 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_grad
 
   return(svy)
 }
+
+
+# get_data_pums() ----
+#' Get PUMS microdata from storage
+#'
+#' @description
+#' Retrieves American Community Survey (ACS) Public Use Microdata Sample (PUMS) data
+#' from storage. Can return person-level, household-level, or combined records
+#' with appropriate survey weights applied.
+#'
+#' @param cols Character vector specifying which columns to include in the
+#' returned data. If NULL, all columns will be included. Note that survey weight
+#' columns (wgtp/pwgtp) and chi_year are always included regardless of selection.
+#' Defaults to \code{cols = NULL}
+#' @param year Integer vector specifying which years to include in the data.
+#' Can be either a single year for 1-year estimates or five consecutive years
+#' for 5-year estimates. If NULL, the most recent single year available will be used.
+#' Note that 2020 is not available due to COVID-19 pandemic survey disruptions.
+#' Defaults to \code{year = NULL}
+#' @param kingco Logical indicating whether to restrict the data to King County
+#' records only. Defaults to \code{kingco = TRUE}
+#' @param records Character string specifying whether to return person-level,
+#' household-level, or combined records. Must be one of "person", "household",
+#' or "combined". When 'combined' is selected, person and household records are
+#' merged using the household identifier (serialno) and survey set for
+#' person-level analyses. Defaults to \code{records = 'person'}
+#'
+#' @details
+#' The function automatically applies the appropriate survey weights (person or
+#' household) based on the \code{records} parameter. For person-level and
+#' combined records, it uses the person weight (pwgtp) and its replicate weights.
+#' For household-level records, it uses the household weight (wgtp) and its
+#' replicate weights.
+#'
+#' The function uses the JK1 (jackknife) method for variance estimation with
+#' 80 replicate weights, following Census Bureau recommendations for PUMS data.
+#'
+#' When you select \code{records = "combined"}, household-level variables with
+#' the same names as person-level variables are given a '_hh' suffix to
+#' distinguish them. You are strongly encouraged to review the Census Bureau's
+#' [ACS PUMS documentation](https://www.census.gov/programs-surveys/acs/microdata.html)
+#' if you plan to set \code{records = "combined"}.
+#'
+#' @return
+#' Returns a survey-weighted \code{\link[dtsurvey]{dtsurvey}}/data.table object
+#' with the specified columns and years that is ready for use with
+#' \code{\link{calc}}.
+#'
+#' @references
+#' For information regarding the ACS PUMS ETL process, file locations, data
+#' dictionaries, etc., see: \url{https://github.com/PHSKC-APDE/svy_acs}
+#'
+#' @examples
+#' \donttest{
+#' # Get person-level data for specific columns from the most recent year
+#' pums_person <- get_data_pums(
+#'   cols = c("agep", "race4"),
+#'   kingco = TRUE
+#' )
+#'
+#' # Get household-level data for a 5-year period
+#' pums_households <- get_data_pums(
+#'   year = 2018:2022,
+#'   records = "household"
+#' )
+#'
+#' # Get combined person-household level data for WA State in 2022
+#' pums_combo <- get_data_pums(
+#'   year = 2022,
+#'   records = "combined",
+#'   kingco = FALSE
+#' )
+#' }
+#'
+#'
+#'
+#' @import data.table
+#' @import dtsurvey
+#' @importFrom survey svrepdesign
+#' @export
+#'
+get_data_pums <- function(cols = NULL,
+                          year = NULL,
+                          kingco = TRUE,
+                          records = "person") {
+# Visible bindings for data.table/check global variables ----
+  chi_geo_kc <- serialno <- NULL
+
+# Get PUMS file availability ----
+baseDir <- "//dphcifs/APDE-CDIP/ACS/PUMS_data/"
+validate_network_path(baseDir, is_directory = TRUE)
+
+preppedFiles <- grep("household|person", grep("\\.rds$", grep("prepped_R_files", list.files(baseDir, full.names = TRUE, recursive = TRUE), value = TRUE), value = TRUE, ignore.case = T), value = T)
+if (uniqueN(preppedFiles) == 0){
+  stop("\n\U1F6D1 There are no available analytic ready RData files in: ", baseDir, "\n\n",
+       "The standard file paths should have the form:\n",
+       "- ", gsub('/', '\\\\', paste0(baseDir, "YYYY_1_year/prepped_R_files/YYYY_1_year_person.rds")), "\n",
+       "- ", gsub('/', '\\\\', paste0(baseDir, "YYYY_yyyy_5_year/prepped_R_files/YYYY_yyyy_5_year_household.rds")))
+}
+
+maxYear = max(as.integer(substr(gsub(baseDir, "", grep("1_year", preppedFiles, value = TRUE)), 1, 4)))
+minYear = min(as.integer(substr(gsub(baseDir, "", grep("1_year", preppedFiles, value = TRUE)), 1, 4)))
+max5Year = max(as.integer(substr(gsub(baseDir, "", grep("5_year", preppedFiles, value = TRUE)), 1, 4)))
+min5Year = min(as.integer(substr(gsub(baseDir, "", grep("5_year", preppedFiles, value = TRUE)), 1, 4)))
+
+# Validate arguments ----
+## Validate the `year` argument ----
+  if (is.null(year)) {
+    year <- maxYear
+    useFile <- grep(paste0(year, "_1_year"), preppedFiles, value = TRUE)
+  } else {
+    # Check if year is numeric or can be converted to integer losslessly & is correct length
+    if (!is.numeric(year) || !all(year == as.integer(year)) || !length(year) %in% c(1, 5)) {
+      stop("\n\U1F6D1 `year` must be an integer vector with: \n one value (e.g., 2022), ",
+           "\n five continuous values (e.g., 2018:2022), or \n NULL for the most recent year.")
+    }
+
+    # Check if select years are available
+    if (length(year) == 1) {
+      if (year == 2020) {
+        stop("\n\U1F6D1 `year` cannot equal 2020 due to the COVID-19 pandemic survey disruptions.")
+      }
+      useFile <- grep(paste0(year, "_1_year"), preppedFiles, value = TRUE)
+    } else if (length(year) == 5) {
+      if (all(diff(sort(year)) != 1)) {
+        stop("\n\U1F6D1 the values of `year` are not continuous.")
+      }
+      useFile <- grep(paste0(max(year), "_", min(year), "_5_year"), preppedFiles, value = TRUE)
+    }
+
+    if (length(useFile) == 0) {
+      stop("\n\U1F6D1 The `year` value is invalid.\n",
+           "The minimum single year is ", minYear, " and the maximum single year is ", maxYear, ".\n",
+           "The minimum five-year period is ", min5Year-4, ":", min5Year, " and the maximum is ", max5Year-4, ":", max5Year, ".")
+    }
+  }
+
+## Validate the records argument ----
+if (length(records) != 1 || !records %in% c("person", "household", "combined")) {
+  stop("\n\U1F6D1 `records` must have the value 'person', 'household', or 'combined'.")
+}
+
+### Load RDS data for remaining validation ----
+  if (records == "person") {
+    person_file <- useFile[grep("person", useFile)]
+    dt <- readRDS(person_file)
+
+  } else if (records == "household") {
+    household_file <- useFile[grep("household", useFile)]
+    dt <- readRDS(household_file)
+
+  } else if (records == "combined") {
+    person_file <- useFile[grep("person", useFile)]
+    household_file <- useFile[grep("household", useFile)]
+
+    person_dt <- readRDS(person_file)
+    household_dt <- readRDS(household_file)
+
+    # Ensure serialno exists in both datasets (should be there, but you never know!)
+    if (!all(c("serialno") %in% names(person_dt)) ||
+        !all(c("serialno") %in% names(household_dt))) {
+      stop("\n\U1F6D1 Required column 'serialno' missing from person or household data")
+    }
+
+    # Merge person and household data
+    dt <- merge(
+      person_dt,
+      household_dt,
+      by = "serialno",
+      all.x = TRUE,
+      suffixes = c("", "_hh")
+    )
+
+    # Verify combined has same number of rows as person level data
+    if (nrow(dt) != nrow(person_dt)) {
+      stop("\n\U1F6D1 Merge resulted in unexpected number of records")
+    }
+  }
+
+## Validate the cols argument ----
+  if (is.null(cols)) {
+    cols <- names(dt)
+  } else {
+    cols <- unique(c(cols,
+                     "chi_year", # always include CHI year
+                     grep("wgtp", names(dt), value = TRUE))) # pwgtp = weights for person, wgtp = weights for household
+    missing_cols <- cols[!cols %in% names(dt)]
+    if (length(missing_cols) > 0) {
+      stop(sprintf("\n\U1F6D1 The following columns are not available in the dataset: %s",
+                   paste(missing_cols, collapse = ", ")))
+    }
+  }
+
+  if (isTRUE(kingco)) { cols <- unique(c(cols, "chi_geo_kc")) }
+
+## Validate the kingco argument ----
+  if (isTRUE(kingco) && !("chi_geo_kc" %in% names(dt))) {
+    stop("\n\U1F6D1 Column 'chi_geo_kc' not found in the dataset, required when `kingco` is TRUE.")
+  }
+  if (length(kingco) != 1 || !is.logical(kingco) || is.na(kingco)) {
+    stop("\n\U0001f6d1 `kingco` must be a logical (TRUE | FALSE, or equivalently, T | F).")
+  }
+
+# Subset the data ----
+  if (isTRUE(kingco)) {dt <- dt[chi_geo_kc == "King County"]} # subset KC before columns in case do not want column
+  dt <- dt[, c(cols), with = FALSE]
+
+# Survey set ----
+  # confirm all replicate weights exist
+    weight_cols <- if (records %in% c("person", "combined")) {
+      c("pwgtp", grep("pwgtp[0-9]+", names(dt), value = TRUE))
+    } else {
+      c("wgtp", grep("wgtp[0-9]+", names(dt), value = TRUE))
+    }
+    if (length(weight_cols) < 81) { # 1 base weight + 80 replicates
+      stop("\n\U1F6D1 Missing required weight columns")
+    } else {weight_cols <- sort(weight_cols)}
+
+  if (records %in% c("person", "combined")) {
+    dt <- survey::svrepdesign(
+      data = dt,
+      weights = ~pwgtp,
+      repweights = dt[, grep("pwgtp[0-9]+", names(dt), value = TRUE), with = FALSE], # need matrix, not col names
+      type = "JK1",
+      combined.weights = TRUE,
+      scale = 4/80,
+      rscales = rep(1, 80),
+      mse = TRUE
+    )
+  } else {
+    dt <- survey::svrepdesign(
+      data = dt,
+      weights = ~wgtp,
+      repweights = dt[, grep("wgtp[0-9]+", names(dt), value = TRUE), with = FALSE],
+      type = "JK1",
+      combined.weights = TRUE,
+      scale = 4/80,
+      rscales = rep(1, 80),
+      mse = TRUE
+    )
+  }
+
+  dt <- dtsurvey::dtrepsurvey(dt)
+
+# Return dtsurvey object ----
+  message("Your data was survey set with the following parameters is ready for rads::calc():\n",
+          " - record type = ", records, "\n",
+          " - valid years = ", format_time(year), "\n",
+          " - replicate weights = ", weight_cols[1], ", ",  weight_cols[2], " ... ", weight_cols[length(weight_cols)], " \n")
+
+  return(dt)
+}
+
 
 # The end ----
