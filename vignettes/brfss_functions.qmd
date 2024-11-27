@@ -8,13 +8,14 @@ editor: visual
 
 # Introduction
 
-The Behavioral Risk Factor Surveillance System (BRFSS) is a gold mine of public health data - but like any mine, you need the right tools to extract the value. Since BRFSS is a complex survey, analyses need to account for the survey design and weights to get accurate results. When we want to analyze multiple years together (which we often do to increase precision), we need to adjust those survey weights to avoid overestimating our population.
+The Behavioral Risk Factor Surveillance System (BRFSS) is a gold mine of public health data -- but like any mine, you need the right tools to extract the value. Since BRFSS is a complex survey, analyses need to account for the survey design and weights to get accurate results. The survey design includes stratification and weighting to ensure the sample represents the full population, accounting for who was more or less likely to be included in the survey. When we want to analyze multiple years together (which we often do to increase precision), we need to adjust those survey weights to avoid overestimating our population.
 
 This vignette will show you how to easily work with King County BRFSS data while properly handling all these survey design considerations. Don't worry - the functions do the heavy lifting for you! We'll cover everything from finding available variables to getting properly weighted estimates.
 
 Note that the [BRFSS ETL process has its own repository](https://github.com/PHSKC-APDE/BRFSS) and questions regarding the data should be directed to the data steward.
 
 # Load essential packages
+
 ```{r}
 #| warning: false
 #| message: false
@@ -87,10 +88,11 @@ There are two equivalent ways to get BRFSS data: using `get_data('brfss')` or `g
 Let's see both methods in action:
 
 ## Method 1: Using `get_data()`
+
 This is the general interface that you can use to access any of APDE's analytic ready data.
 
 ```{r}
-brfss_data1 <- get_data(
+brfss_full <- get_data(
   dataset = "brfss",
   cols = c("chi_year", "age", "race4", "chi_sex", "prediab1"),
   year = 2019:2023
@@ -100,7 +102,7 @@ brfss_data1 <- get_data(
 ## Method 2: Using `get_data_brfss()` directly
 
 ```{r}
-brfss_data2 <- get_data_brfss(
+brfss_full_alt <- get_data_brfss(
   cols = c("chi_year", "age", "race4", "chi_sex", "prediab1"),
   year = 2019:2023
 )
@@ -109,7 +111,7 @@ brfss_data2 <- get_data_brfss(
 ## Confirm that the two methods are identical
 
 ```{r}
-if(identical(brfss_data1, brfss_data2)){
+if(identical(brfss_full, brfss_full_alt)){
   cat('\U0001f642 The two methods provide identical BRFSS data')
 }
 ```
@@ -123,14 +125,14 @@ Since BRFSS weights are designed to represent the population, we can verify that
 ## Calculate the survey population at the beginning and end of the period
 
 ```{r}
-pop_2019 <- sum(brfss_data1[chi_year == 2019]$finalwt1)
-pop_2023 <- sum(brfss_data1[chi_year == 2023]$finalwt1)
+pop_2019 <- sum(brfss_full[chi_year == 2019]$finalwt1)
+pop_2023 <- sum(brfss_full[chi_year == 2023]$finalwt1)
 ```
 
 ## Calculate the adjusted population for the combined period
 
 ```{r}
-pop_adjusted <- sum(brfss_data1$default_wt)
+pop_adjusted <- sum(brfss_full$default_wt)
 ```
 
 ## Is the value of the adjusted population between that for 2019 and 2023?
@@ -250,8 +252,8 @@ brfss <- mitools::imputationList(brfss)
 
 You might need to use `pool_brfss_weights()` in two scenarios:
 
-1. When analyzing specific years where certain questions were asked
-2. When you need to restore proper survey settings after using non-data.table commands for data manipulation
+1.  When analyzing specific years where certain questions were asked
+2.  When you need to restore proper survey settings after using non-data.table commands for data manipulation
 
 While `get_data_brfss()` automatically creates weights and survey sets imported data, you can create new weights and re-survey set the data using `pool_brfss_weights()`. Here are brief argument descriptions, see the `pool_brfss_weights()` help file for details:
 
@@ -270,7 +272,7 @@ Let's see it in action:
 #| output: false
 # Create weights for odd years only
 brfss_odd_years <- pool_brfss_weights(
-  ph.data = brfss_data1,
+  ph.data = brfss_full,
   years = c(2019, 2021),
   new_wt_var = "odd_year_wt"  # Name for the new weight variable
 )
@@ -301,7 +303,7 @@ Now for the fun part - analyzing our data! The [`calc()`](https://github.com/PHS
 #| echo: true
 #| output: false
 prediab_by_group <- calc(
-  ph.data = brfss_data1,
+  ph.data = brfss_full,
   what = "prediab1",
   by = c("chi_sex", "race4"),
   metrics = c("mean", "rse"),
@@ -360,7 +362,69 @@ head(prediab_obese_hra20_sex)
 pretty_kable(head(prediab_obese_hra20_sex[!is.na(hra20_name)]))
 ```
 
+## Comparing `calc(..., where = ...)` with `pool_brfss_weights`
+
+Those with experience using `calc()` might be wondering, "Why would we need to use `pool_brfss_weights()` to analyze a subset of years when we could just use the `where` argument in `calc`?" The short answer is that the methods are identical -- as long as you are only interested in the mean, standard error, RSE, and confidence intervals. However, if you want to know the survey weighted number of people within a given demographic or with a condition, you need to use `pool_brfss_weights()`. The following example analyzing data for 2022 compares the results from the two methods.
+
+### Setting Up the Comparison
+
+```{r}
+#| echo: true
+#| output: false
+# Get 5 years of BRFSS data
+brfss_where <- get_data_brfss(cols = c('chi_year', 'obese'), year = 2019:2023)
+
+# Survey set a copy of the data for 2022
+brfss_pooled <- pool_brfss_weights(ph.data = brfss_where, years = 2022, new_wt_var = 'wt_2022')
+```
+
+Use `calc()` to generate 2022 obesity prevalence
+
+```{r}
+#| echo: true
+#| output: false
+method_where <- calc(ph.data = brfss_where,
+                    what = 'obese',
+                    where = chi_year == 2022,
+                    metrics = c("mean", "rse", "total"),
+                    proportion = TRUE )
+
+method_pooled <- calc(ph.data = brfss_pooled,
+                    what = 'obese',
+                    metrics = c("mean", "rse", "total"),
+                    proportion = TRUE )
+
+```
+
+### Comparing Mean Estimates
+
+Check if the mean, standard error, RSE, and CI values are equal
+
+```{r}
+#| echo: true
+#| output: true
+all.equal(method_where[, .(variable, mean, mean_se, mean_lower, mean_upper, rse)], 
+          method_pooled[, .(variable, mean, mean_se, mean_lower, mean_upper, rse)])
+
+```
+
+### Comparing Population Totals
+
+Check if the survey weighted 'total' values are equal
+
+```{r}
+#| echo: true
+#| output: true
+all.equal(method_where[, .(variable, total, total_se, total_lower, total_upper)], 
+          method_pooled[, .(variable, total, total_se, total_lower, total_upper)])
+```
+
+### Key Takeaway
+
+This shows us that the mean, standard error, RSE, and CI are identical for the two methods but the totals differ. Please remember, ***to get the correct survey weighted population you must use `pool_brfss_weights`***.
+
 ## Suppression & Reliability
+
 Please refer to the [APDE_SmallNumberUpdate.xlsx](https://kc1.sharepoint.com/:x:/r/teams/DPH-APDEData/_layouts/15/Doc.aspx?sourcedoc=%7B44562E46-6E45-44B1-9BAC-38EED75E9222%7D&file=APDE_SmallNumberUpdate.xlsx&action=default&mobileredirect=true&DefaultItemOpen=1) file on SharePoint for details.
 
 # Common Gotchas
@@ -371,7 +435,7 @@ Please refer to the [APDE_SmallNumberUpdate.xlsx](https://kc1.sharepoint.com/:x:
 
 3.  **Survey Design**: Always use [`calc()`](https://github.com/PHSKC-APDE/rads/wiki/calc) for analysis to ensure proper handling of the survey design. Don't calculate means or totals directly from the data.
 
-4.  **HRA / Region Analyses**: When working with HRAs or regions, you'll get an [`imputationList`](https://cran.r-project.org/web/packages/mitools/mitools.pdf). Don't worry - [`calc()`](https://github.com/PHSKC-APDE/rads/wiki/calc) knows how to handle this! Just analyze it like you would any other BRFSS data.
+4.  **HRA / Region Analyses**: When working with HRAs or regions, you'll get an [`imputationList`](https://cran.r-project.org/web/packages/mitools/mitools.pdf). Don't worry -- [`calc()`](https://github.com/PHSKC-APDE/rads/wiki/calc) knows how to handle this! Just analyze it like you would any other BRFSS data.
 
 # Conclusion
 

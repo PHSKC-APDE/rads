@@ -1,15 +1,16 @@
 # BRFSS Functions
 
-
 # Introduction
 
 The Behavioral Risk Factor Surveillance System (BRFSS) is a gold mine of
-public health data - but like any mine, you need the right tools to
+public health data – but like any mine, you need the right tools to
 extract the value. Since BRFSS is a complex survey, analyses need to
-account for the survey design and weights to get accurate results. When
-we want to analyze multiple years together (which we often do to
-increase precision), we need to adjust those survey weights to avoid
-overestimating our population.
+account for the survey design and weights to get accurate results. The
+survey design includes stratification and weighting to ensure the sample
+represents the full population, accounting for who was more or less
+likely to be included in the survey. When we want to analyze multiple
+years together (which we often do to increase precision), we need to
+adjust those survey weights to avoid overestimating our population.
 
 This vignette will show you how to easily work with King County BRFSS
 data while properly handling all these survey design considerations.
@@ -98,7 +99,7 @@ This is the general interface that you can use to access any of APDE’s
 analytic ready data.
 
 ``` r
-brfss_data1 <- get_data(
+brfss_full <- get_data(
   dataset = "brfss",
   cols = c("chi_year", "age", "race4", "chi_sex", "prediab1"),
   year = 2019:2023
@@ -113,7 +114,7 @@ brfss_data1 <- get_data(
 ## Method 2: Using `get_data_brfss()` directly
 
 ``` r
-brfss_data2 <- get_data_brfss(
+brfss_full_alt <- get_data_brfss(
   cols = c("chi_year", "age", "race4", "chi_sex", "prediab1"),
   year = 2019:2023
 )
@@ -127,7 +128,7 @@ brfss_data2 <- get_data_brfss(
 ## Confirm that the two methods are identical
 
 ``` r
-if(identical(brfss_data1, brfss_data2)){
+if(identical(brfss_full, brfss_full_alt)){
   cat('\U0001f642 The two methods provide identical BRFSS data')
 }
 ```
@@ -153,14 +154,14 @@ Let’s verify our weight adjustments are working as expected:
 ## Calculate the survey population at the beginning and end of the period
 
 ``` r
-pop_2019 <- sum(brfss_data1[chi_year == 2019]$finalwt1)
-pop_2023 <- sum(brfss_data1[chi_year == 2023]$finalwt1)
+pop_2019 <- sum(brfss_full[chi_year == 2019]$finalwt1)
+pop_2023 <- sum(brfss_full[chi_year == 2023]$finalwt1)
 ```
 
 ## Calculate the adjusted population for the combined period
 
 ``` r
-pop_adjusted <- sum(brfss_data1$default_wt)
+pop_adjusted <- sum(brfss_full$default_wt)
 ```
 
 ## Is the value of the adjusted population between that for 2019 and 2023?
@@ -366,7 +367,7 @@ Let’s see it in action:
 ``` r
 # Create weights for odd years only
 brfss_odd_years <- pool_brfss_weights(
-  ph.data = brfss_data1,
+  ph.data = brfss_full,
   years = c(2019, 2021),
   new_wt_var = "odd_year_wt"  # Name for the new weight variable
 )
@@ -398,7 +399,7 @@ examples:
 
 ``` r
 prediab_by_group <- calc(
-  ph.data = brfss_data1,
+  ph.data = brfss_full,
   what = "prediab1",
   by = c("chi_sex", "race4"),
   metrics = c("mean", "rse"),
@@ -407,14 +408,14 @@ prediab_by_group <- calc(
 head(prediab_by_group)
 ```
 
-| chi_sex | race4 | variable | mean | level | mean_se | mean_lower | mean_upper | rse |
-|:---|:---|:---|---:|:---|---:|---:|---:|---:|
-| Male | AIAN | prediab1 | 0.2284831 | NA | 0.1021132 | 0.0839714 | 0.4889464 | 44.691821 |
-| Male | Black | prediab1 | 0.1187814 | NA | 0.0235966 | 0.0796585 | 0.1734967 | 19.865542 |
-| Male | Asian | prediab1 | 0.1548570 | NA | 0.0167577 | 0.1247503 | 0.1906468 | 10.821374 |
-| Male | NHPI | prediab1 | 0.2287657 | NA | 0.1063999 | 0.0810745 | 0.4993124 | 46.510431 |
-| Male | Hispanic | prediab1 | 0.1363339 | NA | 0.0177889 | 0.1050209 | 0.1751559 | 13.048070 |
-| Male | White | prediab1 | 0.1048950 | NA | 0.0061697 | 0.0934014 | 0.1176195 | 5.881782 |
+| chi_sex | race4    | variable |      mean | level |   mean_se | mean_lower | mean_upper |       rse |
+|:--------|:---------|:---------|----------:|:------|----------:|-----------:|-----------:|----------:|
+| Male    | AIAN     | prediab1 | 0.2284831 | NA    | 0.1021132 |  0.0839714 |  0.4889464 | 44.691821 |
+| Male    | Black    | prediab1 | 0.1187814 | NA    | 0.0235966 |  0.0796585 |  0.1734967 | 19.865542 |
+| Male    | Asian    | prediab1 | 0.1548570 | NA    | 0.0167577 |  0.1247503 |  0.1906468 | 10.821374 |
+| Male    | NHPI     | prediab1 | 0.2287657 | NA    | 0.1063999 |  0.0810745 |  0.4993124 | 46.510431 |
+| Male    | Hispanic | prediab1 | 0.1363339 | NA    | 0.0177889 |  0.1050209 |  0.1751559 | 13.048070 |
+| Male    | White    | prediab1 | 0.1048950 | NA    | 0.0061697 |  0.0934014 |  0.1176195 |  5.881782 |
 
 ## Calculate prediabetes prevalence by HRA20 (using an [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf))
 
@@ -429,14 +430,14 @@ prediab_by_hra20 <- calc(
 head(prediab_by_hra20)
 ```
 
-| hra20_name | level | variable | rse | mean | mean_se | mean_lower | mean_upper |
-|:---|:---|:---|---:|---:|---:|---:|---:|
-| Auburn - North | NA | prediab1 | 21.95594 | 0.1099274 | 0.0333382 | 0.0430893 | 0.1767654 |
-| Auburn - South | NA | prediab1 | 39.77816 | 0.1099648 | 0.0494991 | 0.0095176 | 0.2104120 |
-| Bear Creek and Greater Sammamish | NA | prediab1 | 22.06666 | 0.1337885 | 0.0394263 | 0.0550953 | 0.2124817 |
-| Bellevue - Central | NA | prediab1 | 31.04421 | 0.1396632 | 0.0436696 | 0.0528487 | 0.2264776 |
-| Bellevue - Northeast | NA | prediab1 | 25.87562 | 0.1092822 | 0.0391424 | 0.0317412 | 0.1868232 |
-| Bellevue - South | NA | prediab1 | 21.43749 | 0.1690180 | 0.0409016 | 0.0882835 | 0.2497525 |
+| hra20_name                       | level | variable |      rse |      mean |   mean_se | mean_lower | mean_upper |
+|:---------------------------------|:------|:---------|---------:|----------:|----------:|-----------:|-----------:|
+| Auburn - North                   | NA    | prediab1 | 21.95594 | 0.1099274 | 0.0333382 |  0.0430893 |  0.1767654 |
+| Auburn - South                   | NA    | prediab1 | 39.77816 | 0.1099648 | 0.0494991 |  0.0095176 |  0.2104120 |
+| Bear Creek and Greater Sammamish | NA    | prediab1 | 22.06666 | 0.1337885 | 0.0394263 |  0.0550953 |  0.2124817 |
+| Bellevue - Central               | NA    | prediab1 | 31.04421 | 0.1396632 | 0.0436696 |  0.0528487 |  0.2264776 |
+| Bellevue - Northeast             | NA    | prediab1 | 25.87562 | 0.1092822 | 0.0391424 |  0.0317412 |  0.1868232 |
+| Bellevue - South                 | NA    | prediab1 | 21.43749 | 0.1690180 | 0.0409016 |  0.0882835 |  0.2497525 |
 
 As noted in the [calc()
 wiki](https://github.com/PHSKC-APDE/rads/wiki/calc#example-analyses-with-resampled-datamultiple-imputation),
@@ -462,14 +463,80 @@ prediab_obese_hra20_sex <- calc(
 head(prediab_obese_hra20_sex)
 ```
 
-| hra20_name | chi_sex | level | variable | rse | mean | mean_se | mean_lower | mean_upper |
-|:---|:---|:---|:---|---:|---:|---:|---:|---:|
-| Auburn - North | Male | NA | prediab1 | 33.80124 | 0.0956816 | 0.0396389 | 0.0166616 | 0.1747015 |
-| Auburn - North | Male | NA | prediab1 | 33.80124 | 0.2827067 | 0.0505252 | 0.1824743 | 0.3829391 |
-| Auburn - North | Male | NA | obese | 14.78364 | 0.0956816 | 0.0396389 | 0.0166616 | 0.1747015 |
-| Auburn - North | Male | NA | obese | 14.78364 | 0.2827067 | 0.0505252 | 0.1824743 | 0.3829391 |
-| Auburn - North | Female | NA | prediab1 | 28.32391 | 0.1230377 | 0.0509011 | 0.0210699 | 0.2250054 |
-| Auburn - North | Female | NA | prediab1 | 28.32391 | 0.3965369 | 0.0614569 | 0.2732766 | 0.5197973 |
+| hra20_name     | chi_sex | level | variable |      rse |      mean |   mean_se | mean_lower | mean_upper |
+|:---------------|:--------|:------|:---------|---------:|----------:|----------:|-----------:|-----------:|
+| Auburn - North | Male    | NA    | prediab1 | 33.80124 | 0.0956816 | 0.0396389 |  0.0166616 |  0.1747015 |
+| Auburn - North | Male    | NA    | prediab1 | 33.80124 | 0.2827067 | 0.0505252 |  0.1824743 |  0.3829391 |
+| Auburn - North | Male    | NA    | obese    | 14.78364 | 0.0956816 | 0.0396389 |  0.0166616 |  0.1747015 |
+| Auburn - North | Male    | NA    | obese    | 14.78364 | 0.2827067 | 0.0505252 |  0.1824743 |  0.3829391 |
+| Auburn - North | Female  | NA    | prediab1 | 28.32391 | 0.1230377 | 0.0509011 |  0.0210699 |  0.2250054 |
+| Auburn - North | Female  | NA    | prediab1 | 28.32391 | 0.3965369 | 0.0614569 |  0.2732766 |  0.5197973 |
+
+## Comparing `calc(..., where = ...)` with `pool_brfss_weights`
+
+Those with experience using `calc()` might be wondering, “Why would we
+need to use `pool_brfss_weights()` to analyze a subset of years when we
+could just use the `where` argument in `calc`?” The short answer is that
+the methods are identical – as long as you are only interested in the
+mean, standard error, RSE, and confidence intervals. However, if you
+want to know the survey weighted number of people within a given
+demographic or with a condition, you need to use `pool_brfss_weights()`.
+The following example analyzing data for 2022 compares the results from
+the two methods.
+
+### Setting Up the Comparison
+
+``` r
+# Get 5 years of BRFSS data
+brfss_where <- get_data_brfss(cols = c('chi_year', 'obese'), year = 2019:2023)
+
+# Survey set a copy of the data for 2022
+brfss_pooled <- pool_brfss_weights(ph.data = brfss_where, years = 2022, new_wt_var = 'wt_2022')
+```
+
+Use `calc()` to generate 2022 obesity prevalence
+
+``` r
+method_where <- calc(ph.data = brfss_where,
+                    what = 'obese',
+                    where = chi_year == 2022,
+                    metrics = c("mean", "rse", "total"),
+                    proportion = TRUE )
+
+method_pooled <- calc(ph.data = brfss_pooled,
+                    what = 'obese',
+                    metrics = c("mean", "rse", "total"),
+                    proportion = TRUE )
+```
+
+### Comparing Mean Estimates
+
+Check if the mean, standard error, RSE, and CI values are equal
+
+``` r
+all.equal(method_where[, .(variable, mean, mean_se, mean_lower, mean_upper, rse)], 
+          method_pooled[, .(variable, mean, mean_se, mean_lower, mean_upper, rse)])
+```
+
+    [1] TRUE
+
+### Comparing Population Totals
+
+Check if the survey weighted ‘total’ values are equal
+
+``` r
+all.equal(method_where[, .(variable, total, total_se, total_lower, total_upper)], 
+          method_pooled[, .(variable, total, total_se, total_lower, total_upper)])
+```
+
+    [1] "Column 'total': Mean relative difference: 2.30656"
+
+### Key Takeaway
+
+This shows us that the mean, standard error, RSE, and CI are identical
+for the two methods but the totals differ. Please remember, ***to get
+the correct survey weighted population you must use
+`pool_brfss_weights`***.
 
 ## Suppression & Reliability
 
@@ -496,7 +563,7 @@ file on SharePoint for details.
 4.  **HRA / Region Analyses**: When working with HRAs or regions, you’ll
     get an
     [`imputationList`](https://cran.r-project.org/web/packages/mitools/mitools.pdf).
-    Don’t worry -
+    Don’t worry –
     [`calc()`](https://github.com/PHSKC-APDE/rads/wiki/calc) knows how
     to handle this! Just analyze it like you would any other BRFSS data.
 
@@ -516,4 +583,4 @@ straightforward. Remember:
 
 Happy analyzing!
 
-– *Updated by dcolombara, 2024-11-22*
+– *Updated by dcolombara, 2024-11-27*
