@@ -674,6 +674,52 @@ test_that("pool_brfss_weights validates ph.data correctly", {
 
 })
 
+test_that("pool_brfss_weights replicates what we get with calc(where = )", {
+  # pull with survey setting for 6 years
+  dt_wt6yr <- get_data_brfss(year = 2018:2023, cols = c('chi_year', 'chi_sex', 'obese'))
+
+  # re-survey set for 5 years
+  dt_wt5yr <- pool_brfss_weights(ph.data = dt_wt6yr, years = c(2019:2023), new_wt_var = "wt_5yr")
+
+  # re-survey set for 1 year
+  dt_wt1yr <- pool_brfss_weights(ph.data = dt_wt6yr, years = c(2022), new_wt_var = "wt_1yr")
+
+  # 5 year estimates
+  est_5_std <- calc(ph.data = dt_wt5yr,
+                    what = 'obese',
+                    by = 'chi_sex',
+                    metrics = c("mean", "rse"),
+                    proportion = TRUE )
+
+  # 5 year estimates with `where`
+  est_5_alt <- calc(ph.data = dt_wt6yr,
+                    what = 'obese',
+                    by = 'chi_sex',
+                    where = chi_year %in% 2019:2023,
+                    metrics = c("mean", "rse"),
+                    proportion = TRUE )
+
+  # 1 year estimates
+  est_1_std <- calc(ph.data = dt_wt1yr,
+                    what = 'obese',
+                    by = 'chi_sex',
+                    metrics = c("mean", "rse"),
+                    proportion = TRUE )
+
+  # 1 year estimates with `where`
+  est_1_alt <- calc(ph.data = dt_wt6yr,
+                    what = 'obese',
+                    by = 'chi_sex',
+                    where = chi_year == 2022,
+                    metrics = c("mean", "rse"),
+                    proportion = TRUE )
+
+  # compare
+  expect_equal(est_1_std, est_1_alt)
+  expect_equal(est_5_std, est_5_alt)
+})
+
+
 # std_error() ----
 test_that('std_error',{
   expect_equal(std_error(c(seq(0, 400, 100), NA)), sd(c(seq(0, 400, 100), NA), na.rm = T) / sqrt(5))
