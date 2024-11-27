@@ -538,6 +538,142 @@ test_that("multi_t_test handles adjustment methods correctly", {
   expect_equal(result_bh$adjust_method[1], "Benjamini-Hochberg")
 })
 
+# pool_brfss_weights ----
+test_that('pool_brfss_weights data.table', {
+
+  # generate a standard BRFSS table that contains multiple years (and therefore used pool_brfss_weights)
+    brfss_table <- get_data_brfss(cols = c('chi_sex'), year = 2019:2023)
+
+  # check that the total new weight is between the total for the earliest and the latest years (because population is growing)
+    expect_true(sum(brfss_table$default_wt) > sum(brfss_table[chi_year == 2019]$finalwt1) &
+                  sum(brfss_table$default_wt) < sum(brfss_table[chi_year == 2023]$finalwt1))
+
+  # survey set (including creating new weights) for just a subset of the years
+    brfss_table2 <- pool_brfss_weights(ph.data = brfss_table, years = 2020:2021, new_wt_var = 'brfss2_wt')
+
+  # check that the total new weight total is between the total weights for 2020 & 20201
+    expect_true(sum(brfss_table2$brfss2_wt) > sum(brfss_table2[chi_year == 2020]$finalwt1) &
+                  sum(brfss_table2$brfss2_wt) < sum(brfss_table2[chi_year == 2021]$finalwt1))
+
+  # check that new weight is zero outside of the specified years
+    expect_equal(sum(brfss_table2[!chi_year %in% c(2020:2021)]$brfss2_wt), 0)
+
+  # check that object is still a dtsurvey / data.table object
+    expect_true(inherits(brfss_table2, 'dtsurvey'))
+    expect_true(inherits(brfss_table2, 'data.table'))
+})
+
+test_that('pool_brfss_weights mitools:imputation_list', {
+
+  # generate a standard BRFSS table that contains multiple years (and therefore used pool_brfss_weights)
+  brfss_miList <- get_data_brfss(cols = c('chi_geo_region'), year = 2019:2023)
+
+  # check that the total new weight is between the total for the earliest and the latest years (because population is growing)
+  expect_true(sum(brfss_miList$imputations[[1]]$default_wt) > sum(brfss_miList$imputations[[1]][chi_year == 2019]$finalwt1) &
+                sum(brfss_miList$imputations[[1]]$default_wt) < sum(brfss_miList$imputations[[1]][chi_year == 2023]$finalwt1))
+
+  # survey set (including creating new weights) for just a subset of the years
+  brfss_miList2 <- pool_brfss_weights(ph.data = brfss_miList, years = 2020:2021, new_wt_var = 'brfss2_wt')
+
+  # check that the total new weight total is between the total weights for 2020 & 20201
+  expect_true(sum(brfss_miList2$imputations[[1]]$brfss2_wt) > sum(brfss_miList2$imputations[[1]][chi_year == 2020]$finalwt1) &
+                sum(brfss_miList2$imputations[[1]]$brfss2_wt) < sum(brfss_miList2$imputations[[1]][chi_year == 2021]$finalwt1))
+
+  # check that new weight is zero outside of the specified years
+  expect_equal(sum(brfss_miList2$imputations[[1]][!chi_year %in% c(2020:2021)]$brfss2_wt), 0)
+
+  # check that object is still a dtsurvey / data.table object
+  expect_true(inherits(brfss_miList2$imputations[[1]], 'dtsurvey'))
+  expect_true(inherits(brfss_miList2$imputations[[1]], 'data.table'))
+  expect_true(inherits(brfss_miList2, 'imputationList'))
+})
+
+test_that("pool_brfss_weights correctly rescales weights using different methods", {
+  # Sample data
+  ph.data <- data.table(
+    chi_year = c(2019, 2019, 2020, 2020, 2021, 2021),
+    finalwt1 = c(100, 100, 150, 150, 250, 250),
+    x_ststr = c(1, 1, 2, 2, 3, 3)
+  )
+
+  # Test "simple" method
+  res_simple <- pool_brfss_weights(ph.data, years = 2019:2021, new_wt_var = "new_wt_simple", wt_method = "simple")
+  expect_s3_class(res_simple, "dtsurvey")
+
+  # Test "obs" method
+  res_obs <- pool_brfss_weights(ph.data, years = 2019:2021, new_wt_var = "new_wt_obs", wt_method = "obs")
+  expect_s3_class(res_obs, "dtsurvey")
+
+  # Test "simple" and "obs" produced the same new weights
+  # "simple" should give 1/3 for each because 3 years
+  # "obs" should give 1/3 for each because equal number of observations for each of three years
+  expect_equal(res_simple$new_wt_simple, res_obs$new_wt_obs)
+  expect_equal(res_simple$new_wt_simple, res_simple$finalwt1 / 3)
+
+  # Test "pop" method
+  res_pop <- pool_brfss_weights(ph.data, years = 2019:2021, new_wt_var = "new_wt_pop", wt_method = "pop")
+  expect_s3_class(res_pop, "dtsurvey")
+
+  # Test that "pop" apportioned according to sumy of year population
+  expect_equal(res_pop[chi_year == 2019][1]$new_wt_pop, 100*0.20) # 20% because 2019 pop = 200 out of 1000 total
+  expect_equal(res_pop[chi_year == 2020][1]$new_wt_pop, 150*0.30) # 30% because 2020 pop = 300 out of 1000 total
+  expect_equal(res_pop[chi_year == 2021][1]$new_wt_pop, 250*0.50) # 50% because 2021 pop = 500 out of 1000 total
+
+})
+
+test_that("pool_brfss_weights validates ph.data correctly", {
+  sample_data <- data.table(
+    chi_year = c(rep(2020, 10), rep(2021, 10), rep(2022, 10)),
+    finalwt1 = c(rep(NA, 10), 1:10, 11:20),
+    x_ststr = c(rep(NA, 10), letters[1:10], letters[11:20])
+  )
+
+  # Test for missing ph.data
+  expect_error(pool_brfss_weights(), "\n\U1F6D1 You must specify a dataset")
+
+  # Test for invalid ph.data types
+  expect_error(pool_brfss_weights("not_a_dataframe"), "\n\U1F6D1 'ph.data' must be a data.frame, data.table, or mitools imputationList")
+
+  # Test for missing year_var column
+  expect_error(pool_brfss_weights(sample_data[, -c("chi_year")]), "\n\U1F6D1 Column 'chi_year' not found in dataset")
+
+  # Test for missing specified years in ph.data
+  expect_error(pool_brfss_weights(sample_data, years = c(2019)), "\n\U1F6D1 The following years are not present in the dataset: 2019")
+
+  # Test for missing old_wt_var column
+  expect_error(pool_brfss_weights(sample_data[, -c("finalwt1")], years = 2020), "\n\U1F6D1 Weight variable 'finalwt1' not found in dataset")
+
+  # Test for non-numeric old_wt_var
+  expect_error(pool_brfss_weights(copy(sample_data)[, finalwt1 := as.character(finalwt1)], years = 2020), "\n\U1F6D1 Weight variable 'finalwt1' must be numeric")
+
+  # Test for NA values in old_wt_var for specified years
+  expect_error(pool_brfss_weights(sample_data, years = 2020), "\n\U1F6D1 Missing values found in weight variable 'finalwt1' for specified years")
+
+  # Test for non-positive values in old_wt_var for specified years
+  sample_data[, finalwt1 := ifelse(finalwt1 == 1, -1, finalwt1)]
+  expect_error(pool_brfss_weights(sample_data, years = 2021), "\n\U1F6D1 Weight variable 'finalwt1' must contain only positive values")
+
+  # Reset finalwt1 to positive values for further tests
+  sample_data[, finalwt1 := c(rep(NA, 10), 1:10, 11:20)]
+
+  # Test for existing new_wt_var column
+  expect_error(pool_brfss_weights(sample_data, new_wt_var = "finalwt1", years = 2021), "\n\U1F6D1 Column name 'finalwt1' already exists in dataset")
+
+  # Test for invalid wt_method
+  expect_error(pool_brfss_weights(sample_data, new_wt_var = "new_weight", wt_method = "invalid_method", years = 2021), "\n\U1F6D1 'wt_method' must be one of: 'obs', 'pop', or 'simple'")
+
+  # Test for missing strata column
+  expect_error(pool_brfss_weights(sample_data[, -c("x_ststr")], new_wt_var = 'new_weight', years = 2021), "'x_ststr' not found in dataset")
+
+  # Test for NA values in strata column for specified years
+  expect_error(pool_brfss_weights(sample_data, years = 2020, new_wt_var = 'new_weight'), "\n\U1F6D1 Missing values found in weight variable 'finalwt1' for specified years")
+
+  # Test for missing years
+  ss = get_data_brfss(cols = 'chi_year', year = c(2019, 2023), wt_method = 'simple')
+  expect_error(pool_brfss_weights(ph.data = ss, years = c(2019:2023), new_wt_var = 'new_weight'), "\n\U1F6D1 The following years are not present in the dataset: 2020-2022")
+
+})
+
 # std_error() ----
 test_that('std_error',{
   expect_equal(std_error(c(seq(0, 400, 100), NA)), sd(c(seq(0, 400, 100), NA), na.rm = T) / sqrt(5))

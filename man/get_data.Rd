@@ -4,20 +4,28 @@
 \alias{get_data}
 \title{Get (micro)data from APDE storage.}
 \usage{
-get_data(dataset, cols = NULL, year = 2018, ...)
+get_data(dataset, cols = NULL, year = 2021, ...)
 }
 \arguments{
-\item{dataset}{Character vector of length 1. Identifies the dataset to be fetched. Use \code{list_apde_data} for available options}
+\item{dataset}{Character vector of length 1. Identifies the dataset to be
+fetched. Use \code{list_apde_data} for available options}
 
-\item{cols}{Character vector of length >-1. Identifies which columns should be returned. NULL or NA returns all columns in the analytic dataset.
-See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.}
+\item{cols}{Character vector of length >=1. Identifies which columns should
+be returned. NULL returns all columns in the analytic dataset. See
+\code{\link{list_dataset_columns}} for more information on which columns are
+considered default by dataset.}
 
-\item{year}{Numeric vector. Identifies which years of data should be pulled}
+\item{year}{Numeric vector. Identifies which year(s) of data should be pulled}
 
-\item{...}{Additional named arguments based on the specific dataset. To see what these options should be, do \code{help(get_data_`dataset`)}}
+\item{...}{Additional named arguments based on the specific dataset. To see
+what these options should be, do \code{help(get_data_`dataset`)}}
 }
 \value{
-dataset either in data.table (adminstrative data) or svy_tbl (survey data) for further analysis/tabulation
+Typically a data.table (adminstrative data) or
+\code{\link[dtsurvey]{dtsurvey}} object (survey data) for further analysis.
+When requesting HRA or Region data from the BRFSS dataset, it will return an
+\code{\link[mitools]{imputationList}} comprised of
+survey-weighted \code{\link[dtsurvey]{dtsurvey}} objects.
 }
 \description{
 Simple front-end for pulling in standard APDE data
@@ -27,7 +35,7 @@ Simple front-end for pulling in standard APDE data
  test <- get_data(
           dataset = 'death',
           cols = c('chi_year', 'chi_geo_kc', 'chi_geo_seattle'),
-          year = c(2018))
+          year = c(2021))
 
  head(test)
 }
