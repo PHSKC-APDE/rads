@@ -1448,6 +1448,9 @@ list_dataset_columns_sql <- function(config, year, mykey, analytic_only) {
 #'
 #' @keywords internal
 list_dataset_columns_brfss <- function(config, year, mykey, analytic_only) {
+  # Visible bindings for data.table/check global variables ----
+  chi_year <- NULL
+
   # Validate network path and read data
   validate_network_path(config$path, is_directory = FALSE)
   dat <- setDT(readRDS(config$path))
@@ -1494,6 +1497,9 @@ list_dataset_columns_brfss <- function(config, year, mykey, analytic_only) {
 #'
 #' @keywords internal
 list_dataset_columns_hys <- function(config, year, mykey, analytic_only) {
+  # Visible bindings for data.table/check global variables ----
+  ar <- colname <- NULL
+
   # Validate years against configured valid years
   if(!all(year %in% config$valid_years)) {
     stop("Invalid year(s) for Health Youth Survey data.")
@@ -1529,6 +1535,9 @@ list_dataset_columns_hys <- function(config, year, mykey, analytic_only) {
 #'
 #' @keywords internal
 list_dataset_columns_pums <- function(config, year, mykey, analytic_only) {
+  # Visible bindings for data.table/check global variables ----
+  varname <- records <- NULL
+
   # Validate base directory exists
   validate_network_path(config$base_dir, is_directory = TRUE)
 
@@ -1583,9 +1592,9 @@ list_dataset_columns_pums <- function(config, year, mykey, analytic_only) {
     stop("\n\U1F6D1 PUMS variable names file is missing required 'records' column")
   }
 
-  return(var.names[, .(var.names = varname,
-                       records,
-                       `year(s)` = format_time(year))])
+  return(var.names[, list(var.names = varname,
+                          records,
+                          `year(s)` = format_time(year))])
 }
 
 # list_ref_xwalk() ----
