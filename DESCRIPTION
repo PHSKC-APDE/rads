@@ -22,6 +22,7 @@ Imports:
     odbc (>= 1.2.2),
     rads.data (>= 1.0.8.0),
     stats,
+    survey (>= 4.0),
     utf8 (>= 1.1.4),
     yaml (>= 2.2.1),
     utils
@@ -33,8 +34,7 @@ Suggests:
     rmarkdown, 
     markdown,
     testthat,
-    srvyr,
-    survey (>= 4.0)
+    srvyr
 VignetteBuilder: knitr
 Depends: 
     R (>= 2.10)
