@@ -4,7 +4,7 @@
 \alias{list_dataset_columns_sql}
 \title{Column Type Handler for SQL-based datasets}
 \usage{
-list_dataset_columns_sql(config, year, mykey, analytic_only)
+list_dataset_columns_sql(config, year, mykey, kingco, analytic_only)
 }
 \arguments{
 \item{config}{List of configuration settings for the dataset that are defined
@@ -17,6 +17,10 @@ For PUMS data, this is limited to a single year (e.g., 2023) or a continuous
 \item{mykey}{Character vector of length 1 OR a database connection. Identifies
 the \code{keyring::} key that can be used to access the Health & Human Services
 Analytic Workspace (HHSAW). Defaults to \code{mykey = 'hhsaw'}.}
+
+\item{kingco}{Logical. Toggle for King County (\code{TRUE}) or WA State
+(\code{FALSE}) column names. Only applys to BRFSS data. Defaults to
+\code{kingco = TRUE}.}
 
 \item{analytic_only}{Logical. Controls whether columns outside the analytic
 dataset should be returned. Only applies to HYS data. Defaults to

@@ -1272,6 +1272,9 @@ list_apde_data <- function(){
 #' @param mykey Character vector of length 1 OR a database connection. Identifies
 #' the \code{keyring::} key that can be used to access the Health & Human Services
 #' Analytic Workspace (HHSAW). Defaults to \code{mykey = 'hhsaw'}.
+#' @param kingco Logical. Toggle for King County (\code{TRUE}) or WA State
+#' (\code{FALSE}) column names. Only applys to BRFSS data. Defaults to
+#' \code{kingco = TRUE}.
 #' @param analytic_only Logical. Controls whether columns outside the analytic
 #' dataset should be returned. Only applies to HYS data. Defaults to
 #' \code{analytic_only = FALSE}.
@@ -1285,7 +1288,8 @@ list_apde_data <- function(){
 #'
 #' Network paths required:
 #' \itemize{
-#'   \item BRFSS: '//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds'
+#'   \item BRFSS (kingco = T): '//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds'
+#'   \item BRFSS (kingco = F): '//dphcifs/APDE-CDIP/BRFSS/WA/wa_final_analytic.rds'
 #'   \item HYS: '//dphcifs/APDE-CDIP/HYS/releases/2021/best/hys_cols.csv'
 #'   \item PUMS: '//dphcifs/APDE-CDIP/ACS/PUMS_data/' and subdirectories
 #' }
@@ -1318,6 +1322,7 @@ list_apde_data <- function(){
 list_dataset_columns <- function(dataset = NULL,
                                  year = 2021,
                                  mykey = 'hhsaw',
+                                 kingco = TRUE,
                                  analytic_only = FALSE) {
 
   # Visible bindings for data.table/check global variables ----
@@ -1349,7 +1354,7 @@ list_dataset_columns <- function(dataset = NULL,
                     stop("Unknown dataset type"))
 
   # Process dataset and return results ----
-  type_handler(config = config, year = year, mykey = mykey, analytic_only = analytic_only)
+  type_handler(config = config, year = year, mykey = mykey, kingco = kingco, analytic_only = analytic_only)
 }
 
 # list_dataset_columns_config ----
@@ -1389,7 +1394,8 @@ list_dataset_columns_config <- function(dataset) {
     # Network-based datasets ----
     brfss = list(
       type = "brfss",
-      path = "//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds",
+      path = c(KC = "//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds",
+               WA = "//dphcifs/APDE-CDIP/BRFSS/WA/wa_final_analytic.rds"),
       bonus_vars = c('hra20_id', 'hra20_name', 'chi_geo_region')
     ),
     hys = list(
@@ -1422,7 +1428,7 @@ list_dataset_columns_config <- function(dataset) {
 #' @return data.table with var.names column
 #'
 #' @keywords internal
-list_dataset_columns_sql <- function(config, year, mykey, analytic_only) {
+list_dataset_columns_sql <- function(config, year, mykey, kingco, analytic_only) {
   # Connect to database and get column names
   con <- validate_hhsaw_key(mykey)
   var.names <- names(DBI::dbGetQuery(con, config$query))
@@ -1447,40 +1453,42 @@ list_dataset_columns_sql <- function(config, year, mykey, analytic_only) {
 #' @return data.table with var.names and year(s) columns
 #'
 #' @keywords internal
-list_dataset_columns_brfss <- function(config, year, mykey, analytic_only) {
+list_dataset_columns_brfss <- function(config, year, mykey, kingco, analytic_only) {
   # Visible bindings for data.table/check global variables ----
   chi_year <- NULL
 
-  # Validate network path and read data
+  # Validate network path and read data ----
+  if(isTRUE(kingco)){config$path <- config$path[['KC']]} else {config$path <- config$path[['WA']]}
   validate_network_path(config$path, is_directory = FALSE)
   dat <- setDT(readRDS(config$path))
 
-  # Check if requested years are available
+  # Check if requested years are available ----
   if(!all(year %in% unique(dat$chi_year))) {
     stop(paste0("Invalid year(s) for BRFSS data. Available years: ",
                 format_time(unique(dat$chi_year)), "."))
   }
 
-  # Filter to requested years
+  # Filter to requested years ----
   dat <- dat[chi_year %in% year]
 
-  # Remove columns that are 100% missing
+  # Remove columns that are 100% missing ----
   na_cols <- dat[, which(sapply(.SD, function(x) all(is.na(x)))), .SDcols = names(dat)]
   dat[, (na_cols) := NULL]
 
-  # Get variable names and determine years available for each
+  # Get variable names and determine years available for each ----
   var.names <- names(dat)
   var.years <- sapply(var.names, function(var) {
     years_available <- unique(dat[!is.na(get(var)), chi_year])
     format_time(years_available)
   }, simplify = TRUE)
 
-  # Add bonus variables with their years
+  # Add bonus variables with their years ----
   var.names <- sort(c(var.names, config$bonus_vars))
   var.years <- c(var.years,
                  setNames(rep(format_time(year), length(config$bonus_vars)),
                           config$bonus_vars))
 
+  # return ----
   return(data.table(var.names = var.names, `year(s)` = var.years[var.names]))
 }
 
@@ -1496,7 +1504,7 @@ list_dataset_columns_brfss <- function(config, year, mykey, analytic_only) {
 #' @return data.table with var.names, analytic_ready, and year(s) columns
 #'
 #' @keywords internal
-list_dataset_columns_hys <- function(config, year, mykey, analytic_only) {
+list_dataset_columns_hys <- function(config, year, mykey, kingco, analytic_only) {
   # Visible bindings for data.table/check global variables ----
   ar <- colname <- NULL
 
@@ -1534,7 +1542,7 @@ list_dataset_columns_hys <- function(config, year, mykey, analytic_only) {
 #' @return data.table with var.names, records, and year(s) columns
 #'
 #' @keywords internal
-list_dataset_columns_pums <- function(config, year, mykey, analytic_only) {
+list_dataset_columns_pums <- function(config, year, mykey, kingco, analytic_only) {
   # Visible bindings for data.table/check global variables ----
   varname <- records <- NULL
 
@@ -2110,7 +2118,8 @@ multi_t_test <- function(means,
 #' Creates a \code{\link[dtsurvey]{dtsurvey}}/data.table object with properly adjusted
 #' survey weights for analyzing Behavioral Risk Factor
 #' Surveillance System (BRFSS) data across multiple years. The built-in BRFSS
-#' survey weight (\code{finalwt1}) is designed for single-year analyses. When
+#' survey weight (\code{finalwt1} for King County data and \code{x_llcpwt} for WA
+#' State data) is designed for single-year analyses. When
 #' analyzing BRFSS data across multiple years, the survey weights must be
 #' proportionately down scaled. This function provides three weight adjustment
 #' methods.
@@ -2122,7 +2131,8 @@ multi_t_test <- function(means,
 #' @param year_var Character string specifying the name of the column containing
 #' year values. Defaults to '\code{chi_year}'
 #' @param old_wt_var Character string specifying the name of the column
-#' containing the single year survey weights. Defaults to '\code{finalwt1}'
+#' containing the single year survey weights. Defaults to '\code{finalwt1}',
+#' which is used for King County data.
 #' @param new_wt_var Character string specifying the name for the new weight
 #' variable to be created
 #' @param wt_method Character string specifying the name of the method used
@@ -2150,7 +2160,7 @@ multi_t_test <- function(means,
 #' to create new weights when analyzing specific subsets of years. For example,
 #' some BRFSS questions are only asked in specific years, requiring custom weights
 #' to be calculated for those specific time periods. The original weight
-#' (\code{'finalwt1'}) will always be saved in order to allow this function to be
+#' will always be saved in order to allow this function to be
 #' used repeatedly on the same data set.
 #'
 #' When aggregating BRFSS data across years, WA DOH recommends including the
@@ -2356,6 +2366,7 @@ pool_brfss_weights <- function(
   # return ----
     message('Your data was survey set with the following parameters is ready for rads::calc():\n',
             ' - valid years = ', format_time(years), '\n',
+            ' - original survey weight = `', old_wt_var, '` \n',
             ' - adjusted survey weight = `', new_wt_var, '` \n',
             ' - strata = `', strata,'`\n')
 
