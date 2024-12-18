@@ -38,7 +38,9 @@ pretty_kable <- function(dt) {
 
 One quirk of BRFSS data is that not all questions are asked every year. Before diving into analysis, it's helpful to check which variables are available for your time period of interest. The `list_dataset_columns()` function makes this easy.
 
-For example, let's see what variables are available for 2023:
+Since the Washington State and King County datasets are distinct, you can specify which one you want with the `kingco` argument. When `kingco = TRUE`, you will receive the list of columns in the King County dataset. When `kingco = FALSE`, you will receive the list of columns in the Washington State dataset. The default is `kingco = TRUE`.
+
+For example, let's see what variables are available for 2023 King County data:
 
 ```{r}
 #| echo: true
@@ -80,10 +82,12 @@ Notice that the `year(s)` column is not constant because BRFSS does not ask ever
 
 There are two equivalent ways to get BRFSS data: using `get_data('brfss')` or `get_data_brfss()`. Both functions will:
 
-1.  Load the data you request
+1.  Load the data you request into memory
 2.  Automatically adjust weights if you're analyzing multiple years
 3.  Survey-set the data so it's ready for analysis
-4.  Return a [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey) object, which is a data.table friendly survey object
+4.  Return a [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey) object, which is a data.table friendly survey object analyzable with `rads::calc`
+
+As with `list_dataset_columns()`, by default you will receive King County data but can specify Washington State data with the `kingco = FALSE` argument.
 
 Let's see both methods in action:
 
@@ -99,7 +103,7 @@ brfss_full <- get_data(
 )
 ```
 
-## Method 2: Using `get_data_brfss()` directly
+## Method 2: Using `get_data_brfss()`
 
 ```{r}
 brfss_full_alt <- get_data_brfss(
@@ -108,34 +112,26 @@ brfss_full_alt <- get_data_brfss(
 )
 ```
 
-## Confirm that the two methods are identical
-
-```{r}
-if(identical(brfss_full, brfss_full_alt)){
-  cat('\U0001f642 The two methods provide identical BRFSS data')
-}
-```
-
-Both methods return an identical [`dtsurvey`](https://github.com/PHSKC-APDE/dtsurvey) object that's ready for analysis with [`calc()`](https://github.com/PHSKC-APDE/rads/wiki/calc).
+These methods return an identical [`dtsurvey`](https://github.com/PHSKC-APDE/dtsurvey) object that's ready for analysis with [`calc()`](https://github.com/PHSKC-APDE/rads/wiki/calc).
 
 Notice that the functions provide an informative message regarding the survey object parameters. These will be hidden in the examples below, but are always produced when getting or survey setting BRFSS data.
 
 Since BRFSS weights are designed to represent the population, we can verify that our multi-year weight adjustments are working properly by comparing population sizes. We expect the adjusted weights to represent an "average" population that falls between the earliest and latest years' populations since King County's population has been growing. Let's verify our weight adjustments are working as expected:
 
-## Calculate the survey population at the beginning and end of the period
+### Calculate the survey population at the beginning and end of the period
 
 ```{r}
 pop_2019 <- sum(brfss_full[chi_year == 2019]$finalwt1)
 pop_2023 <- sum(brfss_full[chi_year == 2023]$finalwt1)
 ```
 
-## Calculate the adjusted population for the combined period
+### Calculate the adjusted population for the combined period
 
 ```{r}
 pop_adjusted <- sum(brfss_full$default_wt)
 ```
 
-## Is the value of the adjusted population between that for 2019 and 2023?
+### Is the value of the adjusted population between that for 2019 and 2023?
 
 ```{r}
 if(pop_2023 > pop_adjusted & pop_adjusted > pop_2019){
@@ -149,7 +145,7 @@ BRFSS data presents a unique challenge when analyzing Health Reporting Areas (HR
 
 To handle this, we use a statistical technique called multiple imputation. When you request HRA-related columns (`hra20_id`, `hra20_name`, or `chi_geo_region`), the function returns an [`imputationList`](https://cran.r-project.org/web/packages/mitools/mitools.pdf) object containing 10 different versions of the data. Each version represents a different possible way that ZIP codes could be assigned to HRAs based on their overlap. This approach allows us to capture the uncertainty in our geographic assignments and incorporate it into our statistical estimates.
 
-Note: APDE decided to use 10 imputations based on an extensive empirical assessment by Daniel Casey. This is fixed in the ETL process and is not configurable.
+*Note:* APDE decided to use 10 imputations based on an extensive empirical assessment by Daniel Casey. This is fixed in the ETL process and is not configurable.
 
 ```{r message=FALSE}
 # Get data including HRA information
@@ -194,7 +190,7 @@ brfss <- get_data_brfss(
 inherits(brfss, "imputationList") # confirms it is an imputationList
 ```
 
-### 2. Keep the first imputed [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey)/data.table object
+### 2. Keep the first item in the list (a [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey)/data.table object)
 
 ```{r}
 brfss <- brfss$imputations[[1]]
@@ -362,11 +358,11 @@ head(prediab_obese_hra20_sex)
 pretty_kable(head(prediab_obese_hra20_sex[!is.na(hra20_name)]))
 ```
 
-## Comparing `calc(..., where = ...)` with `pool_brfss_weights`
+# Comparing `calc(..., where = ...)` with `pool_brfss_weights`
 
-Those with experience using `calc()` might be wondering, "Why would we need to use `pool_brfss_weights()` to analyze a subset of years when we could just use the `where` argument in `calc`?" The short answer is that the methods are identical -- as long as you are only interested in the mean, standard error, RSE, and confidence intervals. However, if you want to know the survey weighted number of people within a given demographic or with a condition, you need to use `pool_brfss_weights()`. The following example analyzing data for 2022 compares the results from the two methods.
+Those with experience using `calc()` might be wondering, "*Why would we need to use `pool_brfss_weights()` to analyze a subset of years when we could just use the `where` argument in `calc`?*" The short answer is that the methods are identical -- as long as you are only interested in the mean, standard error, RSE, and confidence intervals. However, if you want to know the survey weighted number of people within a given demographic or with a condition, you need to use `pool_brfss_weights()`. The following example analyzing data for 2022 compares the results from the two methods.
 
-### Setting Up the Comparison
+## Setting Up the Comparison
 
 ```{r}
 #| echo: true
@@ -396,7 +392,7 @@ method_pooled <- calc(ph.data = brfss_pooled,
 
 ```
 
-### Comparing Mean Estimates
+## Comparing Mean Estimates
 
 Check if the mean, standard error, RSE, and CI values are equal
 
@@ -408,7 +404,7 @@ all.equal(method_where[, .(variable, mean, mean_se, mean_lower, mean_upper, rse)
 
 ```
 
-### Comparing Population Totals
+## Comparing Population Totals
 
 Check if the survey weighted 'total' values are equal
 
@@ -419,11 +415,11 @@ all.equal(method_where[, .(variable, total, total_se, total_lower, total_upper)]
           method_pooled[, .(variable, total, total_se, total_lower, total_upper)])
 ```
 
-### Key Takeaway
+## Key Takeaway
 
-This shows us that the mean, standard error, RSE, and CI are identical for the two methods but the totals differ. Please remember, ***to get the correct survey weighted population you must use `pool_brfss_weights`***.
+This shows us that the mean, standard error, RSE, and CI are identical for the two methods but the totals differ. Please remember, *to get the correct survey weighted population you must use `pool_brfss_weights`*.
 
-## Suppression & Reliability
+# Suppression & Reliability
 
 Please refer to the [APDE_SmallNumberUpdate.xlsx](https://kc1.sharepoint.com/:x:/r/teams/DPH-APDEData/_layouts/15/Doc.aspx?sourcedoc=%7B44562E46-6E45-44B1-9BAC-38EED75E9222%7D&file=APDE_SmallNumberUpdate.xlsx&action=default&mobileredirect=true&DefaultItemOpen=1) file on SharePoint for details.
 
