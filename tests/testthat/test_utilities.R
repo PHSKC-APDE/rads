@@ -160,6 +160,29 @@ test_that('age_standardize ... errors & warnings',{
 
 })
 
+# as_table_brfss() ----
+test_that("confirm conversion to dtsurvey / data.table", {
+  testbrfss <- get_data_brfss(cols = 'chi_geo_region')
+
+  expect_true(inherits(testbrfss, 'imputationList'))
+
+  testbrfss <- as_table_brfss(testbrfss)
+
+  expect_true(inherits(testbrfss, 'data.table'))
+  expect_true(inherits(testbrfss, 'dtsurvey'))
+})
+
+# as_imputed_brfss() ----
+test_that("confirm conversion to mitools::imputationList", {
+  testbrfss <- as_table_brfss(get_data_brfss(cols = 'chi_geo_region'))
+
+  expect_true(inherits(testbrfss, 'dtsurvey'))
+
+  testbrfss <- as_imputed_brfss(testbrfss)
+
+  expect_true(inherits(testbrfss, 'imputationList'))
+})
+
 # calc_age ----
 test_that("calc_age gives expected ages", {
   expect_equal(calc_age(from = as.Date('1990-08-02'), to = as.Date('2024-08-01')), 33)

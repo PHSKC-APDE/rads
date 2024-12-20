@@ -357,6 +357,179 @@ age_standardize <- function (ph.data,
     return(my.rates)
 }
 
+# as_imputed_brfss() ----
+#' Convert modified BRFSS data.table to an imputationList
+#'
+#' @description
+#' Converts a modified BRFSS \code{\link[dtsurvey]{dtsurvey}}/data.table back into
+#' a \code{\link[mitools]{imputationList}} by creating multiple imputed datasets
+#' for HRA and region assignments. This is necessary after modifying variables in
+#' BRFSS data that contains HRA or region variables.
+#'
+#' @param ph.data A \code{\link[dtsurvey]{dtsurvey}}/data.table containing BRFSS
+#' survey data, typically created using \code{\link{as_table_brfss}}
+#'
+#' @details
+#' When working with BRFSS data that includes Health Reporting Area (HRA) or region
+#' variables, modifications to the data must be made on a single data.table.
+#' After modifications are complete, this function recreates the proper
+#' \code{\link[mitools]{imputationList}} structure required for analysis of
+#' HRA and region variables.
+#'
+#' This function:
+#' \itemize{
+#'   \item Creates 10 copies of your modified dataset
+#'   \item Assigns different HRA IDs to each copy based on ZIP code probabilities
+#'   \item Adds corresponding HRA names and region assignments
+#'   \item Combines the copies into an imputationList
+#' }
+#'
+#' @return
+#' Returns an \code{\link[mitools]{imputationList}} containing 10 imputed datasets,
+#' each a survey-weighted \code{\link[dtsurvey]{dtsurvey}}/data.table with
+#' different HRA and region assignments based on ZIP code probabilities.
+#'
+#' @examples
+#' \dontrun{
+#' # Starting with a modified BRFSS data.table
+#' brfss_table[, age_category := fcase(
+#'   age %in% 18:66, "working age",
+#'   age >= 67, "retirement age",
+#'   default = NA_character_
+#' )]
+#'
+#' # Convert back to imputationList for analysis
+#' brfss_imputed <- as_imputed_brfss(brfss_table)
+#'
+#' # Now ready for analysis with rads::calc()
+#' }
+#'
+#' @seealso \code{\link{as_table_brfss}} for converting an imputationList to a
+#' single data.table
+#'
+#' @import data.table
+#' @import mitools
+#' @export
+#'
+as_imputed_brfss <- function(ph.data) {
+  # Visible bindings for data.table/check global variables
+  hra20_id <- hra20_name <- region_name <- chi_geo_region <- NULL
+
+  # Validate input
+  if (!(is.data.frame(ph.data) || inherits(ph.data, "dtsurvey"))) {
+    stop("\n\U1F6D1 'ph.data' must be a data.frame, data.table, or dtsurvey object")
+  }
+
+  # Ensure required HRA ID columns exist
+  hra_cols <- paste0("hra20_id_", 1:10)
+  missing_cols <- hra_cols[!hra_cols %in% names(ph.data)]
+  if (length(missing_cols) > 0) {
+    stop(sprintf("\n\U1F6D1 Required columns for HRA imputation missing: %s",
+                 paste(missing_cols, collapse = ", ")))
+  }
+
+  # Check if spatial crosswalk data is available
+  if (!requireNamespace("rads.data", quietly = TRUE)) {
+    stop("\n\U1F6D1 Package 'rads.data' is required but not available")
+  }
+  tryCatch({
+    crosswalk_test <- rads.data::spatial_hra20_to_region20
+  }, error = function(e) {
+    stop("\n\U1F6D1 Required spatial crosswalk data 'spatial_hra20_to_region20' not found in rads.data package")
+  })
+
+  # Convert input to data.table if needed
+  ph.data <- as.data.table(ph.data)
+
+  # Create list of 10 imputed datasets
+  dt <- lapply(1:10, function(i) {
+    temp_dt <- copy(ph.data)
+    temp_dt[, hra20_id := get(paste0("hra20_id_", i))]
+    temp_dt <- merge(
+      temp_dt,
+      rads.data::spatial_hra20_to_region20[, c("hra20_id", "hra20_name", "region_name")],
+      by = "hra20_id",
+      all.x = TRUE,
+      all.y = FALSE
+    )
+    setnames(temp_dt, "region_name", "chi_geo_region")
+    return(temp_dt)
+  })
+
+  # Convert to imputationList
+  dt <- mitools::imputationList(dt)
+
+  message('Successfully created imputationList with 10 imputed datasets.\n',
+          'Data is now ready for analysis with rads::calc().')
+
+  return(dt)
+}
+
+# as_table_brfss() ----
+#' Convert BRFSS imputationList to a single data.table
+#'
+#' @description
+#' Converts a BRFSS \code{\link[mitools]{imputationList}} to a single
+#' \code{\link[dtsurvey]{dtsurvey}}/data.table by extracting the first imputed
+#' dataset. This is useful when you need to modify variables in BRFSS data that
+#' contains HRA or region variables.
+#'
+#' @param ph.data A \code{\link[mitools]{imputationList}} containing BRFSS survey data
+#'
+#' @details
+#' When working with BRFSS data that includes Health Reporting Area (HRA) or region
+#' variables, the data is stored as an \code{\link[mitools]{imputationList}} to
+#' account for ZIP codes that cross HRA boundaries. However, if you need to modify
+#' variables in your dataset, you must first convert to a single data.table, make
+#' your modifications, then convert back to an imputationList using
+#' \code{\link{as_imputed_brfss}}.
+#'
+#' @return
+#' Returns a survey-weighted \code{\link[dtsurvey]{dtsurvey}}/data.table object
+#' containing the first imputed dataset from the input imputationList.
+#'
+#' @examples
+#' \dontrun{
+#' # Get BRFSS data with HRA variables (returns an imputationList)
+#' brfss <- get_data_brfss(
+#'   cols = c("age", "hra20_id"),
+#'   year = 2019:2023
+#' )
+#'
+#' # Convert to single table for modification
+#' brfss_table <- as_table_brfss(brfss)
+#'
+#' # Now you can modify variables
+#' brfss_table[, age_category := fcase(
+#'   age %in% 18:66, "working age",
+#'   age >= 67, "retirement age",
+#'   default = NA_character_
+#' )]
+#' }
+#'
+#' @seealso \code{\link{as_imputed_brfss}} for converting back to an imputationList
+#'
+#' @import data.table
+#' @import dtsurvey
+#' @export
+#'
+as_table_brfss <- function(ph.data) {
+  # Validate input is an imputationList
+  if (!inherits(ph.data, "imputationList")) {
+    stop("\n\U1F6D1 'ph.data' must be an mitools imputationList")
+  }
+
+  # Return first imputed dataset
+  dt <- ph.data$imputations[[1]]
+
+  message('Successfully converted imputationList to a single dtsurvey/data.table.\n',
+          'Remember to use as_imputed_brfss() after making modifications.')
+
+  return(dt)
+}
+
+
+
 # calc_age() ----
 #' Proper calculation of age in years
 #'
