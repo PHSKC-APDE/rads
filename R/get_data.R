@@ -342,7 +342,6 @@ get_data_brfss <- function(cols = NULL,
       dt <- lapply(1:10, function(i) {
         temp_dt <- copy(dt)
         temp_dt[, hra20_id := get(paste0('hra20_id_', i))] # Create new hra20_id column from spatagg::assign_cases column
-        # temp_dt[, (paste0('hra20_id_', 1:10)) := NULL] # drop the columns hra20_id_1 to hra20_id_10
         temp_dt <- merge(temp_dt,
                          rads.data::spatial_hra20_to_region20[, c('hra20_id', 'hra20_name', 'region_name')],
                          by = 'hra20_id',

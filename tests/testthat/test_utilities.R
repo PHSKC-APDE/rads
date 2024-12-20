@@ -160,7 +160,7 @@ test_that('age_standardize ... errors & warnings',{
 
 })
 
-# as_table_brfss() ----
+# as_table_brfss() & as_imputed_brfss() ----
 test_that("confirm conversion to dtsurvey / data.table", {
   testbrfss <- get_data_brfss(cols = 'chi_geo_region')
 
@@ -172,7 +172,6 @@ test_that("confirm conversion to dtsurvey / data.table", {
   expect_true(inherits(testbrfss, 'dtsurvey'))
 })
 
-# as_imputed_brfss() ----
 test_that("confirm conversion to mitools::imputationList", {
   testbrfss <- as_table_brfss(get_data_brfss(cols = 'chi_geo_region'))
 
@@ -181,6 +180,30 @@ test_that("confirm conversion to mitools::imputationList", {
   testbrfss <- as_imputed_brfss(testbrfss)
 
   expect_true(inherits(testbrfss, 'imputationList'))
+})
+
+test_that("confirm conversion to imputationList restores all data", {
+  brfss <- get_data_brfss(cols = c('chi_geo_region', 'chi_sex', 'obese', 'chi_year'), year = 2023)
+  alpha = calc(brfss,
+               'obese',
+               by = c('chi_sex', 'chi_geo_region'),
+               metrics = 'mean')
+
+
+  brfss2 <- as_table_brfss(brfss)
+  beta = calc(brfss2,
+              'obese',
+              by = c('chi_sex', 'chi_geo_region'),
+              metrics = 'mean')
+
+  brfss3 <- as_imputed_brfss(brfss2) # restore back to imputationList
+  gamma = calc(brfss3,
+               'obese',
+               by = c('chi_sex', 'chi_geo_region'),
+               metrics = 'mean')
+
+  expect_identical(alpha, gamma)
+  expect_false(identical(alpha, beta))
 })
 
 # calc_age ----

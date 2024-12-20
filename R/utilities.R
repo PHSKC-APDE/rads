@@ -415,9 +415,12 @@ as_imputed_brfss <- function(ph.data) {
   # Visible bindings for data.table/check global variables
   hra20_id <- hra20_name <- region_name <- chi_geo_region <- NULL
 
+  # Make a deep copy of of ph.data before manipulating anything
+  ph.data <- copy(ph.data)
+
   # Validate input
-  if (!(is.data.frame(ph.data) || inherits(ph.data, "dtsurvey"))) {
-    stop("\n\U1F6D1 'ph.data' must be a data.frame, data.table, or dtsurvey object")
+  if (!(inherits(ph.data, "dtsurvey"))) {
+    stop("\n\U1F6D1 'ph.data' must be a dtsurvey object")
   }
 
   # Ensure required HRA ID columns exist
@@ -438,8 +441,8 @@ as_imputed_brfss <- function(ph.data) {
     stop("\n\U1F6D1 Required spatial crosswalk data 'spatial_hra20_to_region20' not found in rads.data package")
   })
 
-  # Convert input to data.table if needed
-  ph.data <- as.data.table(ph.data)
+  # Drop existing HRA or Region vars
+  ph.data[, intersect(c('hra20_id', 'hra20_name', 'chi_geo_region'), names(ph.data)) := NULL]
 
   # Create list of 10 imputed datasets
   dt <- lapply(1:10, function(i) {
@@ -520,7 +523,7 @@ as_table_brfss <- function(ph.data) {
   }
 
   # Return first imputed dataset
-  dt <- ph.data$imputations[[1]]
+  dt <- copy(ph.data$imputations[[1]]) # need a deep copy due to data.table assignment by reference
 
   message('Successfully converted an imputationList to a single dtsurvey/data.table.\n',
           'Remember to use as_imputed_brfss() after making modifications.')
