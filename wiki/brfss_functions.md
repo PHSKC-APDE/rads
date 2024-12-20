@@ -258,7 +258,7 @@ since we need to maintain consistency across all 10 imputed datasets.
 Here’s the step-by-step example that you can follow to help you in this
 process:
 
-### 1. Get your BRFSS (because you request HRA or region columns) [ImputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf)
+### 1. Get a BRFSS [ImputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf) (by requesting HRA or region columns)
 
 ``` r
 brfss <- get_data_brfss(
@@ -267,7 +267,7 @@ brfss <- get_data_brfss(
 )
 ```
 
-### 2. Convert it to a single [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey)/data.table
+### 2. Convert it to a regular [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey)/data.table
 
 ``` r
 brfss <- as_table_brfss(brfss)
@@ -276,11 +276,7 @@ brfss <- as_table_brfss(brfss)
     Successfully converted imputationList to a single dtsurvey/data.table.
     Remember to use as_imputed_brfss() after making modifications.
 
-### 3. Create or modify a variable
-
-In this step, the same guidelines apply that were mentioned in the
-‘Modifying a [dtsurvey](https://github.com/PHSKC-APDE/dtsurvey)’ section
-above.
+### 3. Create or modify a variables
 
 ``` r
 brfss[, age_category := fifelse(age <67, 'working age', 'retirement age')]

@@ -459,7 +459,7 @@ as_imputed_brfss <- function(ph.data) {
   # Convert to imputationList
   dt <- mitools::imputationList(dt)
 
-  message('Successfully created imputationList with 10 imputed datasets.\n',
+  message('Successfully created an imputationList with 10 imputed datasets.\n',
           'Data is now ready for analysis with rads::calc().')
 
   return(dt)
@@ -522,7 +522,7 @@ as_table_brfss <- function(ph.data) {
   # Return first imputed dataset
   dt <- ph.data$imputations[[1]]
 
-  message('Successfully converted imputationList to a single dtsurvey/data.table.\n',
+  message('Successfully converted an imputationList to a single dtsurvey/data.table.\n',
           'Remember to use as_imputed_brfss() after making modifications.')
 
   return(dt)
