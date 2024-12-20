@@ -3,3 +3,6 @@
 ^doc$
 ^Meta$
 ^data-raw$
+^wiki$
+^ref$
+^explorations$

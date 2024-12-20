@@ -25,7 +25,8 @@ calculation}
 year values. Defaults to '\code{chi_year}'}
 
 \item{old_wt_var}{Character string specifying the name of the column
-containing the single year survey weights. Defaults to '\code{finalwt1}'}
+containing the single year survey weights. Defaults to '\code{finalwt1}',
+which is used for King County data.}
 
 \item{new_wt_var}{Character string specifying the name for the new weight
 variable to be created}
@@ -61,7 +62,8 @@ In both cases, the new weight column will be specified by the value of
 Creates a \code{\link[dtsurvey]{dtsurvey}}/data.table object with properly adjusted
 survey weights for analyzing Behavioral Risk Factor
 Surveillance System (BRFSS) data across multiple years. The built-in BRFSS
-survey weight (\code{finalwt1}) is designed for single-year analyses. When
+survey weight (\code{finalwt1} for King County data and \code{x_llcpwt} for WA
+State data) is designed for single-year analyses. When
 analyzing BRFSS data across multiple years, the survey weights must be
 proportionately down scaled. This function provides three weight adjustment
 methods.
@@ -78,7 +80,7 @@ weights during the initial data download, you may need to use this function
 to create new weights when analyzing specific subsets of years. For example,
 some BRFSS questions are only asked in specific years, requiring custom weights
 to be calculated for those specific time periods. The original weight
-(\code{'finalwt1'}) will always be saved in order to allow this function to be
+will always be saved in order to allow this function to be
 used repeatedly on the same data set.
 
 When aggregating BRFSS data across years, WA DOH recommends including the

@@ -29,6 +29,13 @@ test_that('Load data birth', {
 
 # BRFSS ----
 test_that('Load data brfss', {
+  # confirm retrieval of different data based on kingco
+    kcbrfss <- get_data_brfss(cols = 'chi_year', year = 2023)
+    kcbrfsstoo <- get_data_brfss(cols = 'chi_year', year = 2023, kingco = TRUE)
+    wabrfss <- get_data_brfss(cols = 'chi_year', year = 2023, kingco = FALSE)
+    expect_identical(kcbrfss, kcbrfsstoo)
+    expect_gt(nrow(wabrfss), nrow(kcbrfss))
+
   # specify vars that do not need MI and for multiple years
     brfss0 <- get_data_brfss(cols = c('chi_sex'), year = 2019:2023)
     expect_true(inherits(brfss0, 'dtsurvey'))
