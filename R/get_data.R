@@ -186,9 +186,12 @@ get_data_birth <- function(cols = NA,
 #' @param year Integer vector specifying which years to include in the data.
 #' If NULL, the most recent year available in the data set will be used. Defaults
 #' to \code{year = NULL}
+#' @param kingco Logical. \code{TRUE} returns a dataset for King
+#' County analyses. \code{FALSE} returns a dataset for WA State
+#' analyses and \emph{should not be used for King County analyses}. Defaults to
+#' \code{kingco = TRUE}
 #' @param wt_method Character string specifying the name of the method used
 #' to rescale the weights when selecting multiple years. Options include:
-#'
 #' - '\code{obs}': Rescales weights based on the number of observations per year.
 #' This is WA DOH's recommendation
 #' - '\code{pop}': Rescales weights by the survey weighted population for each year
@@ -251,17 +254,30 @@ get_data_birth <- function(cols = NA,
 #'
 get_data_brfss <- function(cols = NULL,
                            year = NULL,
+                           kingco = TRUE,
                            wt_method = 'obs'){
-  # Visible bindings for data.table/check global variables ----
-    chi_year <- finalwt1 <- x_ststr <- hra20_id <- hra20_name <- NULL
-    chi_geo_region <- region_name <- NULL
 
-  # Load data ----
-    myfile_path <- "//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds"
+  # Visible bindings for data.table/check global variables ----
+    chi_year <- finalwt1 <- x_llcpwt <- x_ststr <- hra20_id <- hra20_name <- NULL
+    my_weight_var <- chi_geo_region <- region_name <- NULL
+
+  # Validate kingco and load data ----
+    if (length(kingco) != 1 || !is.logical(kingco) || is.na(kingco)) {
+      stop("\n\U0001f6d1 `kingco` must be a logical (TRUE | FALSE, or equivalently, T | F).")
+    }
+
+    if(isTRUE(kingco)){
+      myfile_path <- "//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds"
+      my_weight_var <- 'finalwt1'
+    } else {
+      myfile_path <- "//dphcifs/APDE-CDIP/BRFSS/WA/wa_final_analytic.rds"
+      my_weight_var <- 'x_llcpwt'
+    }
+
     validate_network_path(myfile_path, is_directory = FALSE)
     dt <- setDT(readRDS(myfile_path))
 
-  # Validate arguments ----
+  # Validate other arguments ----
     # Validate the `cols` argument
     if (!is.null(cols)) {
       cols <- unique(c(cols, 'chi_year'))
@@ -275,7 +291,11 @@ get_data_brfss <- function(cols = NULL,
       }
     } else {
       cols <- names(dt)
-      impute_cols <- c('hra20_id', 'hra20_name', 'chi_geo_region')
+      if(isTRUE(kingco)){
+        impute_cols <- c('hra20_id', 'hra20_name', 'chi_geo_region')
+      } else {
+        impute_cols <- NULL
+      }
       }
 
     # Validate the `year` argument
@@ -304,15 +324,15 @@ get_data_brfss <- function(cols = NULL,
     dt <- dt[chi_year %in% year]
 
     if(length(impute_cols) > 0){
-        dt <- dt[, unique(c(cols, 'finalwt1', 'x_ststr', grep('hra20_id', names(dt), value = T, ignore.case = T))), with = FALSE]
-    } else {dt <- dt[, unique(c(cols, 'finalwt1', 'x_ststr')), with = FALSE]}
+        dt <- dt[, unique(c(cols, my_weight_var, 'x_ststr', grep('hra20_id', names(dt), value = T, ignore.case = T))), with = FALSE]
+    } else {dt <- dt[, unique(c(cols, my_weight_var, 'x_ststr')), with = FALSE]}
 
   # Adjust weights and survey set ----
     dt <- pool_brfss_weights(
       ph.data = dt,
       years = year,
       year_var = 'chi_year',
-      old_wt_var = 'finalwt1',
+      old_wt_var = my_weight_var,
       new_wt_var = 'default_wt',
       wt_method = wt_method,
       strata = 'x_ststr')
@@ -322,7 +342,6 @@ get_data_brfss <- function(cols = NULL,
       dt <- lapply(1:10, function(i) {
         temp_dt <- copy(dt)
         temp_dt[, hra20_id := get(paste0('hra20_id_', i))] # Create new hra20_id column from spatagg::assign_cases column
-        # temp_dt[, (paste0('hra20_id_', 1:10)) := NULL] # drop the columns hra20_id_1 to hra20_id_10
         temp_dt <- merge(temp_dt,
                          rads.data::spatial_hra20_to_region20[, c('hra20_id', 'hra20_name', 'region_name')],
                          by = 'hra20_id',
@@ -337,6 +356,12 @@ get_data_brfss <- function(cols = NULL,
     }
 
   # Return object ----
+    if(isFALSE(kingco)){
+      message('\033[33m', 'Note!!\n',
+              'You submitted the argument ', '\033[36m', '`kingco = FALSE`', '\033[33m', ', which provides WA State data.\n',
+              'This data set cannot be used for King County, KC Regions, or KC HRAs.', '\033[0m')
+    }
+
     return(dt)
 }
 

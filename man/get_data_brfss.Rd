@@ -4,7 +4,7 @@
 \alias{get_data_brfss}
 \title{Get BRFSS microdata with adjusted weights from storage.}
 \usage{
-get_data_brfss(cols = NULL, year = NULL, wt_method = "obs")
+get_data_brfss(cols = NULL, year = NULL, kingco = TRUE, wt_method = "obs")
 }
 \arguments{
 \item{cols}{Character vector specifying which columns to include in the
@@ -15,6 +15,11 @@ returned data. If NULL, all columns identified by
 \item{year}{Integer vector specifying which years to include in the data.
 If NULL, the most recent year available in the data set will be used. Defaults
 to \code{year = NULL}}
+
+\item{kingco}{Logical. \code{TRUE} returns a dataset for King
+County analyses. \code{FALSE} returns a dataset for WA State
+analyses and \emph{should not be used for King County analyses}. Defaults to
+\code{kingco = TRUE}}
 
 \item{wt_method}{Character string specifying the name of the method used
 to rescale the weights when selecting multiple years. Options include:
