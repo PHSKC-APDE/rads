@@ -369,6 +369,11 @@ age_standardize <- function (ph.data,
 #' @param ph.data A \code{\link[dtsurvey]{dtsurvey}}/data.table containing BRFSS
 #' survey data, typically created using \code{\link{as_table_brfss}}
 #'
+#' @param impute_cols Character vector specifying which geographic imputation
+#' columns to retain in the output. Must be some combination of
+#' \code{'hra20_id'}, \code{'hra20_name'}, and \code{'chi_geo_region'}. Defaults
+#' to \code{impulte_cols = c('hra20_id', 'hra20_name', 'chi_geo_region')}
+#'
 #' @details
 #' When working with BRFSS data that includes Health Reporting Area (HRA) or region
 #' variables, modifications to the data must be made on a single data.table.
@@ -411,7 +416,8 @@ age_standardize <- function (ph.data,
 #' @import mitools
 #' @export
 #'
-as_imputed_brfss <- function(ph.data) {
+as_imputed_brfss <- function(ph.data,
+                             impute_cols = c('hra20_id', 'hra20_name', 'chi_geo_region')) {
   # Visible bindings for data.table/check global variables
   hra20_id <- hra20_name <- region_name <- chi_geo_region <- NULL
 
@@ -453,9 +459,11 @@ as_imputed_brfss <- function(ph.data) {
       rads.data::spatial_hra20_to_region20[, c("hra20_id", "hra20_name", "region_name")],
       by = "hra20_id",
       all.x = TRUE,
-      all.y = FALSE
+      all.y = FALSE,
+      sort = FALSE
     )
     setnames(temp_dt, "region_name", "chi_geo_region")
+    temp_dt <- temp_dt[, c(setdiff(c('hra20_id', 'hra20_name', 'chi_geo_region'), impute_cols)) := NULL]
     return(temp_dt)
   })
 
@@ -2521,22 +2529,7 @@ pool_brfss_weights <- function(
 
   # Create imputation list (if needed) ----
     if(miList == 1){
-
-      ph.data <- lapply(1:10, function(i) {
-        temp_dt <- copy(ph.data)
-        temp_dt[, hra20_id := get(paste0("hra20_id_", i))]
-        temp_dt <- merge(
-          temp_dt,
-          rads.data::spatial_hra20_to_region20[, c("hra20_id", "hra20_name", "region_name")],
-          by = "hra20_id",
-          all.x = TRUE,
-          all.y = FALSE
-        )
-        setnames(temp_dt, "region_name", "chi_geo_region")
-        return(temp_dt)
-      })
-
-      ph.data = mitools::imputationList(ph.data)
+      ph.data <- as_imputed_brfss(ph.data)
     }
 
   # return ----

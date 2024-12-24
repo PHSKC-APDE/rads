@@ -4,11 +4,19 @@
 \alias{as_imputed_brfss}
 \title{Convert modified BRFSS data.table to an imputationList}
 \usage{
-as_imputed_brfss(ph.data)
+as_imputed_brfss(
+  ph.data,
+  impute_cols = c("hra20_id", "hra20_name", "chi_geo_region")
+)
 }
 \arguments{
 \item{ph.data}{A \code{\link[dtsurvey]{dtsurvey}}/data.table containing BRFSS
 survey data, typically created using \code{\link{as_table_brfss}}}
+
+\item{impute_cols}{Character vector specifying which geographic imputation
+columns to retain in the output. Must be some combination of
+\code{'hra20_id'}, \code{'hra20_name'}, and \code{'chi_geo_region'}. Defaults
+to \code{impulte_cols = c('hra20_id', 'hra20_name', 'chi_geo_region')}}
 }
 \value{
 Returns an \code{\link[mitools]{imputationList}} containing 10 imputed datasets,
