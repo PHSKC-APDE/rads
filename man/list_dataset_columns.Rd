@@ -8,6 +8,7 @@ list_dataset_columns(
   dataset = NULL,
   year = 2021,
   mykey = "hhsaw",
+  kingco = TRUE,
   analytic_only = FALSE
 )
 }
@@ -22,6 +23,10 @@ For PUMS data, this is limited to a single year (e.g., 2023) or a continuous
 \item{mykey}{Character vector of length 1 OR a database connection. Identifies
 the \code{keyring::} key that can be used to access the Health & Human Services
 Analytic Workspace (HHSAW). Defaults to \code{mykey = 'hhsaw'}.}
+
+\item{kingco}{Logical. Toggle for King County (\code{TRUE}) or WA State
+(\code{FALSE}) column names. Only applys to BRFSS data. Defaults to
+\code{kingco = TRUE}.}
 
 \item{analytic_only}{Logical. Controls whether columns outside the analytic
 dataset should be returned. Only applies to HYS data. Defaults to
@@ -50,7 +55,8 @@ This function handles multiple data sources with different requirements:
 
 Network paths required:
 \itemize{
-\item BRFSS: '//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds'
+\item BRFSS (kingco = T): '//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds'
+\item BRFSS (kingco = F): '//dphcifs/APDE-CDIP/BRFSS/WA/wa_final_analytic.rds'
 \item HYS: '//dphcifs/APDE-CDIP/HYS/releases/2021/best/hys_cols.csv'
 \item PUMS: '//dphcifs/APDE-CDIP/ACS/PUMS_data/' and subdirectories
 }

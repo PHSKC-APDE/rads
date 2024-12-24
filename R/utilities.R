@@ -357,6 +357,182 @@ age_standardize <- function (ph.data,
     return(my.rates)
 }
 
+# as_imputed_brfss() ----
+#' Convert modified BRFSS data.table to an imputationList
+#'
+#' @description
+#' Converts a modified BRFSS \code{\link[dtsurvey]{dtsurvey}}/data.table back into
+#' a \code{\link[mitools]{imputationList}} by creating multiple imputed datasets
+#' for HRA and region assignments. This is necessary after modifying variables in
+#' BRFSS data that contains HRA or region variables.
+#'
+#' @param ph.data A \code{\link[dtsurvey]{dtsurvey}}/data.table containing BRFSS
+#' survey data, typically created using \code{\link{as_table_brfss}}
+#'
+#' @details
+#' When working with BRFSS data that includes Health Reporting Area (HRA) or region
+#' variables, modifications to the data must be made on a single data.table.
+#' After modifications are complete, this function recreates the proper
+#' \code{\link[mitools]{imputationList}} structure required for analysis of
+#' HRA and region variables.
+#'
+#' This function:
+#' \itemize{
+#'   \item Creates 10 copies of your modified dataset
+#'   \item Assigns different HRA IDs to each copy based on ZIP code probabilities
+#'   \item Adds corresponding HRA names and region assignments
+#'   \item Combines the copies into an imputationList
+#' }
+#'
+#' @return
+#' Returns an \code{\link[mitools]{imputationList}} containing 10 imputed datasets,
+#' each a survey-weighted \code{\link[dtsurvey]{dtsurvey}}/data.table with
+#' different HRA and region assignments based on ZIP code probabilities.
+#'
+#' @examples
+#' \dontrun{
+#' # Starting with a modified BRFSS data.table
+#' brfss_table[, age_category := fcase(
+#'   age %in% 18:66, "working age",
+#'   age >= 67, "retirement age",
+#'   default = NA_character_
+#' )]
+#'
+#' # Convert back to imputationList for analysis
+#' brfss_imputed <- as_imputed_brfss(brfss_table)
+#'
+#' # Now ready for analysis with rads::calc()
+#' }
+#'
+#' @seealso \code{\link{as_table_brfss}} for converting an imputationList to a
+#' single data.table
+#'
+#' @import data.table
+#' @import mitools
+#' @export
+#'
+as_imputed_brfss <- function(ph.data) {
+  # Visible bindings for data.table/check global variables
+  hra20_id <- hra20_name <- region_name <- chi_geo_region <- NULL
+
+  # Make a deep copy of of ph.data before manipulating anything
+  ph.data <- copy(ph.data)
+
+  # Validate input
+  if (!(inherits(ph.data, "dtsurvey"))) {
+    stop("\n\U1F6D1 'ph.data' must be a dtsurvey object")
+  }
+
+  # Ensure required HRA ID columns exist
+  hra_cols <- paste0("hra20_id_", 1:10)
+  missing_cols <- hra_cols[!hra_cols %in% names(ph.data)]
+  if (length(missing_cols) > 0) {
+    stop(sprintf("\n\U1F6D1 Required columns for HRA imputation missing: %s",
+                 paste(missing_cols, collapse = ", ")))
+  }
+
+  # Check if spatial crosswalk data is available
+  if (!requireNamespace("rads.data", quietly = TRUE)) {
+    stop("\n\U1F6D1 Package 'rads.data' is required but not available")
+  }
+  tryCatch({
+    crosswalk_test <- rads.data::spatial_hra20_to_region20
+  }, error = function(e) {
+    stop("\n\U1F6D1 Required spatial crosswalk data 'spatial_hra20_to_region20' not found in rads.data package")
+  })
+
+  # Drop existing HRA or Region vars
+  ph.data[, intersect(c('hra20_id', 'hra20_name', 'chi_geo_region'), names(ph.data)) := NULL]
+
+  # Create list of 10 imputed datasets
+  dt <- lapply(1:10, function(i) {
+    temp_dt <- copy(ph.data)
+    temp_dt[, hra20_id := get(paste0("hra20_id_", i))]
+    temp_dt <- merge(
+      temp_dt,
+      rads.data::spatial_hra20_to_region20[, c("hra20_id", "hra20_name", "region_name")],
+      by = "hra20_id",
+      all.x = TRUE,
+      all.y = FALSE
+    )
+    setnames(temp_dt, "region_name", "chi_geo_region")
+    return(temp_dt)
+  })
+
+  # Convert to imputationList
+  dt <- mitools::imputationList(dt)
+
+  message('Successfully created an imputationList with 10 imputed datasets.\n',
+          'Data is now ready for analysis with rads::calc().')
+
+  return(dt)
+}
+
+# as_table_brfss() ----
+#' Convert BRFSS imputationList to a single data.table
+#'
+#' @description
+#' Converts a BRFSS \code{\link[mitools]{imputationList}} to a single
+#' \code{\link[dtsurvey]{dtsurvey}}/data.table by extracting the first imputed
+#' dataset. This is useful when you need to modify variables in BRFSS data that
+#' contains HRA or region variables.
+#'
+#' @param ph.data A \code{\link[mitools]{imputationList}} containing BRFSS survey data
+#'
+#' @details
+#' When working with BRFSS data that includes Health Reporting Area (HRA) or region
+#' variables, the data is stored as an \code{\link[mitools]{imputationList}} to
+#' account for ZIP codes that cross HRA boundaries. However, if you need to modify
+#' variables in your dataset, you must first convert to a single data.table, make
+#' your modifications, then convert back to an imputationList using
+#' \code{\link{as_imputed_brfss}}.
+#'
+#' @return
+#' Returns a survey-weighted \code{\link[dtsurvey]{dtsurvey}}/data.table object
+#' containing the first imputed dataset from the input imputationList.
+#'
+#' @examples
+#' \dontrun{
+#' # Get BRFSS data with HRA variables (returns an imputationList)
+#' brfss <- get_data_brfss(
+#'   cols = c("age", "hra20_id"),
+#'   year = 2019:2023
+#' )
+#'
+#' # Convert to single table for modification
+#' brfss_table <- as_table_brfss(brfss)
+#'
+#' # Now you can modify variables
+#' brfss_table[, age_category := fcase(
+#'   age %in% 18:66, "working age",
+#'   age >= 67, "retirement age",
+#'   default = NA_character_
+#' )]
+#' }
+#'
+#' @seealso \code{\link{as_imputed_brfss}} for converting back to an imputationList
+#'
+#' @import data.table
+#' @import dtsurvey
+#' @export
+#'
+as_table_brfss <- function(ph.data) {
+  # Validate input is an imputationList
+  if (!inherits(ph.data, "imputationList")) {
+    stop("\n\U1F6D1 'ph.data' must be an mitools imputationList")
+  }
+
+  # Return first imputed dataset
+  dt <- copy(ph.data$imputations[[1]]) # need a deep copy due to data.table assignment by reference
+
+  message('Successfully converted an imputationList to a single dtsurvey/data.table.\n',
+          'Remember to use as_imputed_brfss() after making modifications.')
+
+  return(dt)
+}
+
+
+
 # calc_age() ----
 #' Proper calculation of age in years
 #'
@@ -1272,6 +1448,9 @@ list_apde_data <- function(){
 #' @param mykey Character vector of length 1 OR a database connection. Identifies
 #' the \code{keyring::} key that can be used to access the Health & Human Services
 #' Analytic Workspace (HHSAW). Defaults to \code{mykey = 'hhsaw'}.
+#' @param kingco Logical. Toggle for King County (\code{TRUE}) or WA State
+#' (\code{FALSE}) column names. Only applys to BRFSS data. Defaults to
+#' \code{kingco = TRUE}.
 #' @param analytic_only Logical. Controls whether columns outside the analytic
 #' dataset should be returned. Only applies to HYS data. Defaults to
 #' \code{analytic_only = FALSE}.
@@ -1285,7 +1464,8 @@ list_apde_data <- function(){
 #'
 #' Network paths required:
 #' \itemize{
-#'   \item BRFSS: '//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds'
+#'   \item BRFSS (kingco = T): '//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds'
+#'   \item BRFSS (kingco = F): '//dphcifs/APDE-CDIP/BRFSS/WA/wa_final_analytic.rds'
 #'   \item HYS: '//dphcifs/APDE-CDIP/HYS/releases/2021/best/hys_cols.csv'
 #'   \item PUMS: '//dphcifs/APDE-CDIP/ACS/PUMS_data/' and subdirectories
 #' }
@@ -1318,6 +1498,7 @@ list_apde_data <- function(){
 list_dataset_columns <- function(dataset = NULL,
                                  year = 2021,
                                  mykey = 'hhsaw',
+                                 kingco = TRUE,
                                  analytic_only = FALSE) {
 
   # Visible bindings for data.table/check global variables ----
@@ -1349,7 +1530,7 @@ list_dataset_columns <- function(dataset = NULL,
                     stop("Unknown dataset type"))
 
   # Process dataset and return results ----
-  type_handler(config = config, year = year, mykey = mykey, analytic_only = analytic_only)
+  type_handler(config = config, year = year, mykey = mykey, kingco = kingco, analytic_only = analytic_only)
 }
 
 # list_dataset_columns_config ----
@@ -1389,7 +1570,8 @@ list_dataset_columns_config <- function(dataset) {
     # Network-based datasets ----
     brfss = list(
       type = "brfss",
-      path = "//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds",
+      path = c(KC = "//dphcifs/APDE-CDIP/BRFSS/prog_all/final_analytic.rds",
+               WA = "//dphcifs/APDE-CDIP/BRFSS/WA/wa_final_analytic.rds"),
       bonus_vars = c('hra20_id', 'hra20_name', 'chi_geo_region')
     ),
     hys = list(
@@ -1422,7 +1604,7 @@ list_dataset_columns_config <- function(dataset) {
 #' @return data.table with var.names column
 #'
 #' @keywords internal
-list_dataset_columns_sql <- function(config, year, mykey, analytic_only) {
+list_dataset_columns_sql <- function(config, year, mykey, kingco, analytic_only) {
   # Connect to database and get column names
   con <- validate_hhsaw_key(mykey)
   var.names <- names(DBI::dbGetQuery(con, config$query))
@@ -1447,40 +1629,42 @@ list_dataset_columns_sql <- function(config, year, mykey, analytic_only) {
 #' @return data.table with var.names and year(s) columns
 #'
 #' @keywords internal
-list_dataset_columns_brfss <- function(config, year, mykey, analytic_only) {
+list_dataset_columns_brfss <- function(config, year, mykey, kingco, analytic_only) {
   # Visible bindings for data.table/check global variables ----
   chi_year <- NULL
 
-  # Validate network path and read data
+  # Validate network path and read data ----
+  if(isTRUE(kingco)){config$path <- config$path[['KC']]} else {config$path <- config$path[['WA']]}
   validate_network_path(config$path, is_directory = FALSE)
   dat <- setDT(readRDS(config$path))
 
-  # Check if requested years are available
+  # Check if requested years are available ----
   if(!all(year %in% unique(dat$chi_year))) {
     stop(paste0("Invalid year(s) for BRFSS data. Available years: ",
                 format_time(unique(dat$chi_year)), "."))
   }
 
-  # Filter to requested years
+  # Filter to requested years ----
   dat <- dat[chi_year %in% year]
 
-  # Remove columns that are 100% missing
+  # Remove columns that are 100% missing ----
   na_cols <- dat[, which(sapply(.SD, function(x) all(is.na(x)))), .SDcols = names(dat)]
   dat[, (na_cols) := NULL]
 
-  # Get variable names and determine years available for each
+  # Get variable names and determine years available for each ----
   var.names <- names(dat)
   var.years <- sapply(var.names, function(var) {
     years_available <- unique(dat[!is.na(get(var)), chi_year])
     format_time(years_available)
   }, simplify = TRUE)
 
-  # Add bonus variables with their years
+  # Add bonus variables with their years ----
   var.names <- sort(c(var.names, config$bonus_vars))
   var.years <- c(var.years,
                  setNames(rep(format_time(year), length(config$bonus_vars)),
                           config$bonus_vars))
 
+  # return ----
   return(data.table(var.names = var.names, `year(s)` = var.years[var.names]))
 }
 
@@ -1496,7 +1680,7 @@ list_dataset_columns_brfss <- function(config, year, mykey, analytic_only) {
 #' @return data.table with var.names, analytic_ready, and year(s) columns
 #'
 #' @keywords internal
-list_dataset_columns_hys <- function(config, year, mykey, analytic_only) {
+list_dataset_columns_hys <- function(config, year, mykey, kingco, analytic_only) {
   # Visible bindings for data.table/check global variables ----
   ar <- colname <- NULL
 
@@ -1534,7 +1718,7 @@ list_dataset_columns_hys <- function(config, year, mykey, analytic_only) {
 #' @return data.table with var.names, records, and year(s) columns
 #'
 #' @keywords internal
-list_dataset_columns_pums <- function(config, year, mykey, analytic_only) {
+list_dataset_columns_pums <- function(config, year, mykey, kingco, analytic_only) {
   # Visible bindings for data.table/check global variables ----
   varname <- records <- NULL
 
@@ -2110,7 +2294,8 @@ multi_t_test <- function(means,
 #' Creates a \code{\link[dtsurvey]{dtsurvey}}/data.table object with properly adjusted
 #' survey weights for analyzing Behavioral Risk Factor
 #' Surveillance System (BRFSS) data across multiple years. The built-in BRFSS
-#' survey weight (\code{finalwt1}) is designed for single-year analyses. When
+#' survey weight (\code{finalwt1} for King County data and \code{x_llcpwt} for WA
+#' State data) is designed for single-year analyses. When
 #' analyzing BRFSS data across multiple years, the survey weights must be
 #' proportionately down scaled. This function provides three weight adjustment
 #' methods.
@@ -2122,7 +2307,8 @@ multi_t_test <- function(means,
 #' @param year_var Character string specifying the name of the column containing
 #' year values. Defaults to '\code{chi_year}'
 #' @param old_wt_var Character string specifying the name of the column
-#' containing the single year survey weights. Defaults to '\code{finalwt1}'
+#' containing the single year survey weights. Defaults to '\code{finalwt1}',
+#' which is used for King County data.
 #' @param new_wt_var Character string specifying the name for the new weight
 #' variable to be created
 #' @param wt_method Character string specifying the name of the method used
@@ -2150,7 +2336,7 @@ multi_t_test <- function(means,
 #' to create new weights when analyzing specific subsets of years. For example,
 #' some BRFSS questions are only asked in specific years, requiring custom weights
 #' to be calculated for those specific time periods. The original weight
-#' (\code{'finalwt1'}) will always be saved in order to allow this function to be
+#' will always be saved in order to allow this function to be
 #' used repeatedly on the same data set.
 #'
 #' When aggregating BRFSS data across years, WA DOH recommends including the
@@ -2356,6 +2542,7 @@ pool_brfss_weights <- function(
   # return ----
     message('Your data was survey set with the following parameters is ready for rads::calc():\n',
             ' - valid years = ', format_time(years), '\n',
+            ' - original survey weight = `', old_wt_var, '` \n',
             ' - adjusted survey weight = `', new_wt_var, '` \n',
             ' - strata = `', strata,'`\n')
 
