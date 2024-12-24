@@ -339,20 +339,7 @@ get_data_brfss <- function(cols = NULL,
 
   # Create an imputation list if requesting HRA or region (because xwalked from ZIP codes) ----
     if(length(impute_cols) > 0){
-      dt <- lapply(1:10, function(i) {
-        temp_dt <- copy(dt)
-        temp_dt[, hra20_id := get(paste0('hra20_id_', i))] # Create new hra20_id column from spatagg::assign_cases column
-        temp_dt <- merge(temp_dt,
-                         rads.data::spatial_hra20_to_region20[, c('hra20_id', 'hra20_name', 'region_name')],
-                         by = 'hra20_id',
-                         all.x = T,
-                         all.y = F)
-        setnames(temp_dt, 'region_name', 'chi_geo_region')
-        temp_dt <- temp_dt[, c(setdiff(c('hra20_id', 'hra20_name', 'chi_geo_region'), impute_cols)) := NULL]
-        return(temp_dt)
-      })
-
-      dt <- mitools::imputationList(dt) # convert generic R list of tables to mitools::imputationList
+      dt <- as_imputed_brfss(dt, impute_cols = impute_cols)
     }
 
   # Return object ----
