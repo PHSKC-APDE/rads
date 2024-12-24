@@ -273,7 +273,7 @@ brfss <- get_data_brfss(
 brfss <- as_table_brfss(brfss)
 ```
 
-    Successfully converted imputationList to a single dtsurvey/data.table.
+    Successfully converted an imputationList to a single dtsurvey/data.table.
     Remember to use as_imputed_brfss() after making modifications.
 
 ### 3. Create or modify a variables
@@ -288,7 +288,7 @@ brfss[, age_category := fifelse(age <67, 'working age', 'retirement age')]
 brfss <- as_imputed_brfss(brfss)
 ```
 
-    Successfully created imputationList with 10 imputed datasets.
+    Successfully created an imputationList with 10 imputed datasets.
     Data is now ready for analysis with rads::calc().
 
 # Survey Setting and Creating Custom Weights
@@ -515,4 +515,4 @@ straightforward. Remember:
 
 Happy analyzing!
 
-– *Updated by dcolombara, 2024-12-19*
+– *Updated by dcolombara, 2024-12-20*

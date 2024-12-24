@@ -145,6 +145,7 @@ To handle this, we use a statistical technique called multiple imputation. When 
 *Note:* APDE decided to use 10 imputations based on an extensive empirical assessment to balance between statistical accuracy and computational efficiency. This is fixed in the ETL process and is not configurable.
 
 ## Get data including HRAs
+
 ```{r message=FALSE}
 brfss_hra <- get_data_brfss(
   cols = c("chi_year", "age", "race4", "chi_sex", "prediab1", "obese", "hra20_name"),
@@ -153,6 +154,7 @@ brfss_hra <- get_data_brfss(
 ```
 
 ## Confim we generated an imputationList of 10 dtsurvey objects
+
 ```{r message=FALSE}
 inherits(brfss_hra, "imputationList") & 
    length(brfss_hra$imputations) == 10 & 
@@ -323,6 +325,7 @@ Those with experience using `calc()` might be wondering, "*Why would we need to 
 ## Setting Up the Comparison
 
 ### Generate 2022 Obesity prevalence:`where` Method
+
 ```{r}
 #| echo: true
 #| output: false
@@ -336,6 +339,7 @@ method_where <- calc(ph.data = brfss_where,
 ```
 
 ### Generate 2022 Obesity prevalence:`pool_brfss_weights` Method
+
 ```{r}
 #| echo: true
 #| output: false
