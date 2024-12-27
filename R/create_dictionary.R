@@ -387,7 +387,7 @@ create_dictionary <- function(ph.data,
 
     if (nrow(unmatched_rows) > 0) {
       warning(
-        paste0("\n\U26A0 The following rows in ph.data do not have a match in",
+        paste0("\n\U26A0 The following rows in ph.data do not have a match in ",
                "ph.ref and WILL *NOT* be included in the dictionary: \n"),
         paste0(
           "     source: ",
