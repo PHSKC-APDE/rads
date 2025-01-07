@@ -545,10 +545,20 @@ test_that('Resample approach', {
   expect_equal(unname(SE(r9.1)), r9.2$mean_se)
 
   # With no variation in one of the groups, this time as a svyby
-  r11.1 = mitools::MIcombine(with(misur, svyby(~ysw_test_novar, ~random3 + stype_test_novar, svymean, design = sub_misur)))
-  r11.2 = calc(midat, 'ysw_test_novar', by = c('random3', 'stype_test_novar'), metrics = c('mean', 'vcov'))
-  expect_equal(unname(coef(r11.1)), r11.2$mean)
-  expect_equal(unname(SE(r11.1)), r11.2$mean_se)
+  expect_error(r11.1 = mitools::MIcombine(with(misur, svyby(~ysw_test_novar, ~random3 + stype_test_novar, svymean, design = sub_misur))))
+  r11.2 = calc(midat, 'ysw_test_novar', by = c('random3', 'stype_test_novar'), metrics = c('mean', 'numerator'))
+  expect_true(r11.2[random3 == 1 & stype_test_novar %in% c('H', 'M'), all(is.na(mean))])
+
+  #factor var
+  r12.1 = mitools::MIcombine(with(misur, svymean(~random_fact,design = misur)))
+  r12.2 = calc(midat, 'random_fact', metrics = c('mean'))
+  expect_equal(unname(coef(r12.1)), r12.2$mean)
+  expect_equal(unname(SE(r12.1)), r12.2$mean_se)
+
+  # factor var with missingness in the iterations
+  ## TODO: Check to make sure the vcov stuff makes sense -- right now it assumes that are all the same
+  expect_error(r13.1 = mitools::MIcombine(with(misur, svyby(~stype_test_novar, ~random3, svymean, design = sub_misur))))
+  r13.2 = calc(midat, 'stype_test_novar', by = c('random3'), metrics = c('mean', 'numerator'))
 
 
 
