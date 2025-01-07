@@ -420,9 +420,23 @@ test_that('Resample approach', {
   # Create several iterations of an "imputed" or resampled dataset
   midat = lapply(1:10, function(x){
     r = apiclus1
+
+    # Some random group assignments
     r$random = sample(1:5, nrow(r), T)
     r$random3 = sample(1:3, nrow(r), T)
     r$random_fact = factor(r$random)
+
+    # Make some variables to test various edge cases
+    # Test what happens when there is no variation within a group
+    r$ysw_test_novar = r$ysw
+    if(x %in% c(1,4)) r$ysw_test_novar[r$random3 == 1] <- 0 # all 0 in random3 subgroup 1 for iterations 1 and 4
+
+    ## The target variable is all the same in a given grouper
+    ## This will be a double group by
+    r$stype_test_novar = r$stype
+    if(x %in% c(2,5)) r$stype_test_novar[r$random3 == 1] <- 'E' # all E in random3 subgroup 1 for iterations 1 and 4
+
+    # Test what happens where there is no combination within a group
     dtsurvey(r, 'dnum', weight = 'pw')
 
   })
@@ -437,7 +451,7 @@ test_that('Resample approach', {
   # r1.1 tests micombine with base survey package
   r1.1 = mitools::MIcombine(with(misur, svymean(~api00,design = misur)))
   #r1.2 is calc routine for imputationList
-  r1.2 = calc(midat, 'api00', metrics = c('mean', 'vcov'))
+  r1.2 = calc(midat, 'api00', metrics = c('mean'))
   #r1.3 is the normal way of using calc with a dtsurvey
   r1.3 = calc(midat$imputations[[1]], 'api00')
 
@@ -522,6 +536,21 @@ test_that('Resample approach', {
   expect_equal(unname(SE(r8.1)), r8.2$mean_se)
   expect_equal(r8.1sum$`(lower`, r8.2$mean_lower)
   expect_equal(r8.1sum$`upper)`, r8.2$mean_upper)
+
+
+  # With no variation in one of the groups (albeit, its not being accessed here)
+  r9.1 = mitools::MIcombine(with(misur, svymean(~ysw_test_novar,design = misur)))
+  r9.2 = calc(midat, 'ysw_test_novar', metrics = c('mean', 'vcov'))
+  expect_equal(unname(coef(r9.1)), r9.2$mean)
+  expect_equal(unname(SE(r9.1)), r9.2$mean_se)
+
+  # With no variation in one of the groups, this time as a svyby
+  r11.1 = mitools::MIcombine(with(misur, svyby(~ysw_test_novar, ~random3 + stype_test_novar, svymean, design = sub_misur)))
+  r11.2 = calc(midat, 'ysw_test_novar', by = c('random3', 'stype_test_novar'), metrics = c('mean', 'vcov'))
+  expect_equal(unname(coef(r11.1)), r11.2$mean)
+  expect_equal(unname(SE(r11.1)), r11.2$mean_se)
+
+
 
 })
 
