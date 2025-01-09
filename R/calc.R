@@ -327,9 +327,9 @@ calc.imputationList = function(ph.data,
     if(v %in% c('vcov', 'unique.time')){
       f = data.table::first
     }else{
-      f = mean
+      f = function(x) mean(x, na.rm = T)
     }
-    f(get(v), na.rm = T)
+    f(get(v))
   }) , keyby = c(by, 'variable', 'level')]
 
   setnames(non_mi, c(c(by, 'variable', 'level'), vars))
