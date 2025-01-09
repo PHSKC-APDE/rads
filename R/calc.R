@@ -211,6 +211,19 @@ calc.imputationList = function(ph.data,
   isfactor = !all(is.na(res[[1]][,level]))
   res = lapply(seq_along(res), function(i) res[[i]][, `_miiter` := i])
   res = rbindlist(res)
+  print_and_capture <- function(x)
+  {
+    paste(capture.output(print(x)), collapse = "\n")
+  }
+
+  misdat = res[mean_se == 0 | is.na(mean_se), .SD, .SDcols = c('_miiter', 'variable', 'level', by)]
+
+  if(nrow(misdat)){
+    oot = print_and_capture((head(misdat, 10)))
+    msg = paste0(nrow(misdat), ' permutations have a no variance (or NA). The first 10 are presented below. This usually will occur when there is no variation within a given combination of by variables (or factor levels) within one of the iterations. \n \n',
+                 oot, collapse = ' ')
+    warning(msg)
+  }
 
 
   mi_res = lapply(intersect(c('mean', 'total'), names(res)), function(vvv){
