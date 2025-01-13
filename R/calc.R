@@ -128,7 +128,8 @@ calc.grouped_df <- function(ph.data, ...){
 #' @noRd
 #' @export
 #' @importFrom mitools MIcombine
-#' @importFrom stats coef qt
+#' @importFrom stats coef qt as.formula
+#' @importFrom utils head
 calc.imputationList = function(ph.data,
                                what = NULL,
                                where = NULL, #this is a change from the main calc framework
@@ -145,7 +146,7 @@ calc.imputationList = function(ph.data,
   call = match.call()
 
   # visible bindings ----
-  level <- lower <- upper <- se <- NULL
+  level <- lower <- upper <- se <- `_miiter` <- `mean_se` <-  NULL
 
   # dots = list()
   # dots = list(...)
@@ -218,7 +219,7 @@ calc.imputationList = function(ph.data,
 
   misdat = res[mean_se == 0 | is.na(mean_se), .SD, .SDcols = c('_miiter', 'variable', 'level', by)]
 
-  if(nrow(misdat)){
+  if(nrow(misdat) > 0){
     oot = print_and_capture((head(misdat, 10)))
     msg = paste0(nrow(misdat), ' permutations have a no variance (or NA). The first 10 are presented below. This usually will occur when there is no variation within a given combination of by variables (or factor levels) within one of the iterations. \n \n',
                  oot, collapse = ' ')
