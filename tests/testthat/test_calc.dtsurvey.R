@@ -420,9 +420,25 @@ test_that('Resample approach', {
   # Create several iterations of an "imputed" or resampled dataset
   midat = lapply(1:10, function(x){
     r = apiclus1
+
+    # Some random group assignments
     r$random = sample(1:5, nrow(r), T)
     r$random3 = sample(1:3, nrow(r), T)
     r$random_fact = factor(r$random)
+
+    # Make some variables to test various edge cases
+    # Test what happens when there is no variation within a group
+    r$ysw_test_novar = r$ysw
+    if(x %in% c(1,4)) r$ysw_test_novar[r$random3 == 1] <- 0 # all 0 in random3 subgroup 1 for iterations 1 and 4
+
+    ## The target variable is all the same in a given grouper
+    ## This will be a double group by
+    r$stype_test_novar = r$stype
+    if(x %in% c(2,5)) r$stype_test_novar[r$random3 == 1] <- 'E' # all E in random3 subgroup 1 for iterations 1 and 4
+
+    r$m_bin = as.numeric(r$stype_test_novar == 'M')
+
+    # Test what happens where there is no combination within a group
     dtsurvey(r, 'dnum', weight = 'pw')
 
   })
@@ -437,7 +453,7 @@ test_that('Resample approach', {
   # r1.1 tests micombine with base survey package
   r1.1 = mitools::MIcombine(with(misur, svymean(~api00,design = misur)))
   #r1.2 is calc routine for imputationList
-  r1.2 = calc(midat, 'api00', metrics = c('mean', 'vcov'))
+  r1.2 = calc(midat, 'api00', metrics = c('mean'))
   #r1.3 is the normal way of using calc with a dtsurvey
   r1.3 = calc(midat$imputations[[1]], 'api00')
 
@@ -468,9 +484,9 @@ test_that('Resample approach', {
   expect_equal(r3.1sum$`upper)`, r3.2$mean_upper)
 
   # imputed variable as factor metric with non imputed by
-  r4.1 = mitools::MIcombine(with(misur, svyby(~random_fact, ~stype, svymean, design = misur)))
-  r4.2 = calc(midat, 'random_fact', metrics = c('mean'), by = 'stype')
-  setorder(r4.2, level, stype)
+  r4.1 = mitools::MIcombine(with(misur, svyby(~random_fact, ~awards, svymean, design = misur)))
+  r4.2 = calc(midat, 'random_fact', metrics = c('mean'), by = 'awards')
+  setorder(r4.2, level, awards)
   r4.1sum = summary(r4.1)
 
   expect_equal(unname(coef(r4.1)), r4.2$mean)
@@ -490,9 +506,9 @@ test_that('Resample approach', {
   expect_equal(r5.1sum$`upper)`, r5.2$mean_upper)
 
   # imputed variable as factor metric with imputed by and non imputed by
-  r6.1 = mitools::MIcombine(with(misur, svyby(~random_fact, ~random3+stype, svymean, design = misur)))
-  r6.2 = calc(midat, 'random_fact', metrics = c('mean', 'vcov'), by = c('random3', 'stype'))
-  setorder(r6.2, level, stype,random3)
+  r6.1 = mitools::MIcombine(with(misur, svyby(~random_fact, ~random3+awards, svymean, design = misur)))
+  r6.2 = calc(midat, 'random_fact', metrics = c('mean', 'vcov'), by = c('random3', 'awards'))
+  setorder(r6.2, level, awards,random3)
   r6.1sum = summary(r6.1)
 
   expect_equal(unname(coef(r6.1)), r6.2$mean)
@@ -501,9 +517,9 @@ test_that('Resample approach', {
   expect_equal(r6.1sum$`upper)`, r6.2$mean_upper)
 
   # imputed variable as numeric metric with imputed by and non imputed by
-  r7.1 = mitools::MIcombine(with(misur, svyby(~random, ~random3+stype, svymean, design = misur)))
-  r7.2 = calc(midat, 'random', metrics = c('mean', 'vcov'), by = c('random3', 'stype'))
-  setorder(r7.2, level, stype,random3)
+  r7.1 = mitools::MIcombine(with(misur, svyby(~random, ~random3+awards, svymean, design = misur)))
+  r7.2 = calc(midat, 'random', metrics = c('mean', 'vcov'), by = c('random3', 'awards'))
+  setorder(r7.2, level, awards,random3)
   r7.1sum = summary(r7.1)
 
   expect_equal(unname(coef(r7.1)), r7.2$mean)
@@ -522,6 +538,33 @@ test_that('Resample approach', {
   expect_equal(unname(SE(r8.1)), r8.2$mean_se)
   expect_equal(r8.1sum$`(lower`, r8.2$mean_lower)
   expect_equal(r8.1sum$`upper)`, r8.2$mean_upper)
+
+
+  # With no variation in one of the groups (albeit, its not being accessed here)
+  r9.1 = mitools::MIcombine(with(misur, svymean(~ysw_test_novar,design = misur)))
+  r9.2 = calc(midat, 'ysw_test_novar', metrics = c('mean', 'vcov'))
+  expect_equal(unname(coef(r9.1)), r9.2$mean)
+  expect_equal(unname(SE(r9.1)), r9.2$mean_se)
+
+  # With no variation in one of the groups, this time as a svyby
+  expect_error(r11.1 = mitools::MIcombine(with(misur, svyby(~ysw_test_novar, ~random3 + stype_test_novar, svymean, design = sub_misur))))
+  r11.2 = expect_warning(calc(midat, 'ysw_test_novar', by = c('random3', 'stype_test_novar'), metrics = c('mean', 'numerator')))
+  expect_true(r11.2[random3 == 1 & stype_test_novar %in% c('H', 'M'), all(is.na(mean))])
+
+  #factor var
+  r12.1 = mitools::MIcombine(with(misur, svymean(~random_fact,design = misur)))
+  r12.2 = calc(midat, 'random_fact', metrics = c('mean'))
+  expect_equal(unname(coef(r12.1)), r12.2$mean)
+  expect_equal(unname(SE(r12.1)), r12.2$mean_se)
+
+  # factor var with missingness in the iterations
+  ## TODO: Check to make sure the vcov stuff makes sense -- right now it assumes that are all the same
+  expect_error(r13.1 = mitools::MIcombine(with(misur, svyby(~stype_test_novar, ~random3, svymean, design = sub_misur))))
+  r13.2 = expect_warning(calc(midat, 'stype_test_novar', by = c('random3'),  metrics = c('mean', 'numerator', 'ndistinct', 'obs', 'median')))
+  r13.3 = expect_warning(calc(midat, 'm_bin', by = c('random3'), metrics = c('mean', 'numerator', 'ndistinct', 'obs', 'median')))
+
+  expect_equal(r13.2[level == 'M', mean], r13.3[,mean])
+
 
 })
 
