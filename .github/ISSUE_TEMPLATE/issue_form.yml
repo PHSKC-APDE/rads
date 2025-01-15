@@ -1,0 +1,63 @@
+name: Submit an Issue
+description: Report bugs, feature requests, etc. 
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to create a detailed issue! For examples of good vs bad issues, check our [detailed guidelines](https://github.com/PHSKC-APDE/rads/blob/main/.github/ISSUE_TEMPLATE/ISSUE_GUIDELINES.md).
+  - type: textarea
+    id: problem-synopsis
+    attributes:
+      label: Problem Synopsis
+      description: What exactly is the problem? Copy and paste any error messages.
+      placeholder: |
+        Example: "When running calc() inside rbindlist(lapply()), I get the error: 'Error in smean.character (employ, na.rm = T, var_type = c("se", "ci"))'"
+    validations:
+      required: true
+  - type: textarea
+    id: attempted-solutions
+    attributes:
+      label: Attempted Solutions
+      description: What have you already tried to fix this problem?
+      placeholder: |
+        Example: "I tried running the code outside of rbindlist(lapply()) and it worked..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected-output
+    attributes:
+      label: Expected Output
+      description: What exactly did you expect as the output? (A list? A data.frame? etc.)
+    validations:
+      required: true
+  - type: textarea
+    id: minimal-code
+    attributes:
+      label: Minimal Code Example
+      description: Include only the code necessary to reproduce the issue.
+      render: R
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Information
+      description: |
+        - R version
+        - Package versions for relevant dependencies
+        - Random seeds if applicable
+      value: |
+        R version:
+        Relevant package versions:
+        - package1:
+        - package2:
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        ### File Paths
+        **_Remember!_** If your code references files:
+        - Remove all references to your C:\ drive
+        - Use full file paths instead of mappings
+        Example: `//dphcifs/APDE-CDIP/Shapefiles` instead of `A:/Shapefiles`
