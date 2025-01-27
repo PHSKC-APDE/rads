@@ -553,7 +553,7 @@ test_that('Resample approach', {
 
   #factor var
   r12.1 = mitools::MIcombine(with(misur, svymean(~random_fact,design = misur)))
-  r12.2 = calc(midat, 'random_fact', metrics = c('mean'))
+  r12.2 = (calc(midat, 'random_fact', metrics = c('mean')))
   expect_equal(unname(coef(r12.1)), r12.2$mean)
   expect_equal(unname(SE(r12.1)), r12.2$mean_se)
 
