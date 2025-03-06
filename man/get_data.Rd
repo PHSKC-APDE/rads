@@ -34,7 +34,7 @@ Simple front-end for pulling in standard APDE data
 \donttest{
  test <- get_data(
           dataset = 'death',
-          cols = c('chi_year', 'chi_geo_kc', 'chi_geo_seattle'),
+          cols = c('chi_year', 'chi_geo_kc', 'chi_geo_region'),
           year = c(2021))
 
  head(test)
