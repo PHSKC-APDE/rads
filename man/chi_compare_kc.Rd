@@ -4,24 +4,17 @@
 \alias{chi_compare_kc}
 \title{Compare CHI standard tabular results to the King County average for the same year within a given data set}
 \usage{
-chi_compare_kc(
-  orig,
-  linkage.vars = c("indicator_key"),
-  new.col.name = "comparison_with_kc"
-)
+chi_compare_kc(...)
 }
 \arguments{
-\item{orig}{Character vector of length 1. Identifies the data.table/data.frame to be fetched. Note the table must have the following columns:
-'result', 'lower_bound', & 'upper_bound' and all three must be numeric}
-
-\item{linkage.vars}{Character vector of length 1. It is the name of the column that you will use for merging.}
-
-\item{new.col.name}{Character vector of length 1. It is the name of the column containing the comparison results.}
-}
-\value{
-data.table comprised of the original data.table and two additional columns ... 'significance' and 'comparison_with_kc' (or alternatively specified name)
+\item{...}{Not used.}
 }
 \description{
-\strong{!!!STOP!!! This function has been deprecated!} Please use
+\strong{!!!STOP!!! This function has been deprecated.} Please use
 \link{compare_estimate} instead.
 }
+\section{Deprecation}{
+
+Please use \link{compare_estimate} instead.
+}
+

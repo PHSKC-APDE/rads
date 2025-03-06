@@ -571,170 +571,91 @@ calc_age <- function(from, to) {
 }
 
 # chi_cols() ----
-#
 #' Vector of standard CHI / Tableau Ready columns
 #'
-#' @examples
-#' print(chi_cols())
+#' @description
+#' \strong{!!!STOP!!! This function has been deprecated.} Please use
+#' \code{apde.chi.tools::chi_get_cols()} instead.
+#'
+#' @param ... Not used.
+#'
+#' @section Deprecation:
+#' Please use \code{apde.chi.tools::chi_get_cols()} instead.
 #'
 #' @export
-chi_cols = function(){
-  chi.yaml <- yaml::yaml.load(httr::GET(url = "https://raw.githubusercontent.com/PHSKC-APDE/rads/main/ref/chi_qa.yaml"))
-  chi_colnames <- names(chi.yaml$vars)
+chi_cols <- function(...) {
+  stop("\n\U1F6D1 chi_cols() has been replaced. \nPlease use apde.chi.tools::chi_get_cols() instead.", call. = FALSE)
 }
 
 # chi_compare_est() ----
 #' Compare two data.frames with properly formatted CHI data
-#' @param OLD Character vector of length 1. Identifies the data.table/data.frame that you want to use as a reference
 #'
-#' @param NEW Character vector of length 1. Identifies the data.table/data.frame that you are interested in validating
+#' @description
+#' \strong{!!!STOP!!! This function has been deprecated.} Please use
+#' \code{apde.chi.tools::chi_compare_estimates()} instead.
 #'
-#' @param OLD.year Character vector of length 1. Specifies the exact year that you want to use in the OLD data
+#' @param ... Not used.
 #'
-#' @param NEW.year Character vector of length 1. Specifies the exact year that you want to use in the NEW data
-#'
-#' @param META Character vector of length 1. OPTIONAL ... identifies the data.table/data.frame containing the metadata for
-#' the NEW data.frame
-#'
-#' @importFrom data.table data.table setnames ":=" setDT copy
+#' @section Deprecation:
+#' Please use \code{apde.chi.tools::chi_compare_estimates()} instead.
 #'
 #' @export
-#' @return A simple printed statement, either identifying incompatible column types or a statement of success
 #'
-chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = NULL, META = NULL){
-
-  #Bindings for data.table/check global variables
-  indicator_key <- result_type <- relative.diff <- result.x <- result.y <- absolute.diff <- cat1 <- tab <-  NULL
-  # Check inputs ----
-  # Check if necessary arguments are present
-  if(is.null(OLD)){stop("You must provide 'OLD', i.e., the name of the table with the OLD data")}
-  if(is.null(NEW)){stop("You must provide 'NEW', i.e., the name of the table with the NEW data")}
-  if(is.null(OLD.year)){stop("You must provide 'OLD.year', i.e., the year of interest in the OLD data")}
-  if(is.null(NEW.year)){stop("You must provide 'NEW.year', i.e., the year of interest in the NEW data")}
-
-  # Check if objects are data.frames & make into data.table if need be
-  if(is.data.frame(OLD) == FALSE){
-    stop("'OLD' must be a data.frame or a data.table")
-  }else{OLD <- data.table::setDT(copy(OLD))}
-
-
-  if(is.data.frame(NEW) == FALSE){
-    stop("'NEW' must be a data.frame or a data.table")
-  }else{NEW <- data.table::setDT(copy(NEW))}
-
-  if(!is.null(META)){
-    if(is.data.frame(META) == FALSE){
-      stop("'META' must be a data.frame or a data.table")
-    }else{META <- data.table::setDT(copy(META))}
-  }
-
-  # Process data ----
-  # If metadata provided, add it to the columns to help interpret the output
-  if(!is.null(META)){
-    NEW <- merge(NEW, META[, list(indicator_key, result_type)], by = "indicator_key", all.x = TRUE, all.y = FALSE)
-  } else { NEW[, result_type := "Metadata not provided"]}
-
-  # Merge old and new data based on identifiers
-  comp <- merge(copy(OLD[year == OLD.year]),
-                copy(NEW[year == NEW.year]),
-                by = c("indicator_key", "tab",
-                       "cat1", "cat1_group", "cat1_varname",
-                       "cat2", "cat2_group", "cat2_varname"),
-                all = T)
-
-  # calculate percent differences between old (x) and new(y)
-  comp[, relative.diff := round2(abs((result.x - result.y) / result.x)*100, 1)]
-  comp[result_type != "rate", absolute.diff := round2(abs(result.x - result.y)*100, 1)]
-  comp[result_type == "rate", absolute.diff := round2(abs(result.x - result.y), 1)]
-  comp <- comp[!is.na(absolute.diff)]  # drop if absolute difference is NA
-
-  # order variables
-  comp <- comp[, c("absolute.diff", "relative.diff", "result_type",
-                   "indicator_key", "tab",
-                   "cat1", "cat1_group", "cat1_varname",
-                   "cat2", "cat2_group", "cat2_varname", "year.x", "year.y",
-                   "result.x", "result.y", "lower_bound.x", "lower_bound.y",
-                   "upper_bound.x", "upper_bound.y",
-                   "numerator.x", "numerator.y", "denominator.x", "denominator.y",
-                   "se.x", "se.y")]
-
-  # rename suffixes
-  setnames(comp, names(comp), gsub("\\.x$", ".OLD", names(comp)))
-  setnames(comp, names(comp), gsub("\\.y$", ".NEW", names(comp)))
-
-  # order based on percent difference
-  setorder(comp, -absolute.diff)
-
-  # return object ----
-  return(comp)
-
+chi_compare_est <- function(...) {
+  stop("\n\U1F6D1 chi_compare_est() has been replaced. \nPlease use apde.chi.tools::chi_compare_estimates() instead.", call. = FALSE)
 }
 
 # chi_compare_kc() ----
 #' Compare CHI standard tabular results to the King County average for the same year within a given data set
-#' @description
-#' \strong{!!!STOP!!! This function has been deprecated!} Please use
-#' \link{compare_estimate} instead.
-#' @param orig Character vector of length 1. Identifies the data.table/data.frame to be fetched. Note the table must have the following columns:
-#' 'result', 'lower_bound', & 'upper_bound' and all three must be numeric
-#' @param new.col.name Character vector of length 1. It is the name of the column containing the comparison results.
-#' @param linkage.vars Character vector of length 1. It is the name of the column that you will use for merging.
 #'
-#' @importFrom data.table setnames ":=" setDT
+#' @description
+#' \strong{!!!STOP!!! This function has been deprecated.} Please use
+#' \link{compare_estimate} instead.
+#'
+#'
+#' @param ... Not used.
+#'
+#' @section Deprecation:
+#' Please use \link{compare_estimate} instead.
 #'
 #' @export
-#' @return data.table comprised of the original data.table and two additional columns ... 'significance' and 'comparison_with_kc' (or alternatively specified name)
-chi_compare_kc <- function(orig,
-                           linkage.vars = c("indicator_key"),
-                           new.col.name = "comparison_with_kc"){
-
-  #Deprecation warning
-  .Deprecated("compare_estimate")
-
-  #Bindings for data.table/check global variables
-  cat1 <- cat1_varname <- result <- comp.result <- lower_bound <- comp.upper_bound <- upper_bound <- comp.lower_bound <- significance <- tab <- comparator_vars <- NULL
-
-  #Copy & subset comparator data
-  data.table::setDT(copy(orig))
-
-  #Copy & subset comparator data
-  comparator_vars <- c(linkage.vars, "year", "result", "lower_bound", "upper_bound")
-  comparator <- unique(orig[cat1=="King County" & tab!="crosstabs", (comparator_vars), with = F])
-  data.table::setnames(comparator, c("result", "lower_bound", "upper_bound"), c("comp.result", "comp.lower_bound", "comp.upper_bound"))
-
-  #Merge comparator data onto all other data
-  orig <- merge(orig, comparator, by=c(linkage.vars, "year"), all.x = TRUE, all.y = TRUE)
-
-  #Compare estimates with comparator
-  if(sum(grepl(new.col.name, names(orig))) > 0){orig[, c(new.col.name) := NULL]}
-  orig[result == comp.result, c(new.col.name) := "no different"]
-  orig[result > comp.result, c(new.col.name) := "higher"]
-  orig[result < comp.result, c(new.col.name) := "lower"]
-
-  #According to APDE protocol, we check for overlapping CI rather than SE and Z scores
-  if(sum(grepl("significance", names(orig))) > 0){orig[, significance := NULL]}
-  orig[, significance := NA_character_]
-  orig[(lower_bound > comp.upper_bound) | (upper_bound < comp.lower_bound), significance := "*"]
-
-  #Keep comparison only if statistically significant
-  orig[is.na(significance), c(new.col.name) := "no different"]
-
-  #Drop KC level estimates that were just used for the comparisons
-  orig[, c("comp.result", "comp.upper_bound", "comp.lower_bound") := NULL]
-
-  return(orig)
+#'
+chi_compare_kc <- function(...) {
+  stop("\n\U1F6D1 chi_compare_kc() has been replaced. \nPlease use rads::compare_estimate() instead.", call. = FALSE)
 }
 
 # chi_metadata_cols() ----
 #' Vector of standard CHI / Tableau Ready metadata columns
 #'
-#' @examples
-#' print(chi_metadata_cols())
+#' @description
+#' \strong{!!!STOP!!! This function has been deprecated.} Please use
+#' \code{names(apde.chi.tools::chi_get_yaml()$metadata)} instead.
+#'
+#' @param ... Not used.
+#'
+#' @section Deprecation:
+#' Please use \code{names(apde.chi.tools::chi_get_yaml()$metadata)} instead.
 #'
 #' @export
-chi_metadata_cols = function(){
-  chi.yaml <- yaml::yaml.load(httr::GET(url = "https://raw.githubusercontent.com/PHSKC-APDE/rads/main/ref/chi_qa.yaml"))
-  chi_metanames <- names(chi.yaml$metadata)
+chi_metadata_cols <- function(...) {
+  stop("\n\U1F6D1 chi_metadata_cols() has been replaced. \nPlease use names(apde.chi.tools::chi_get_yaml()$metadata) instead.", call. = FALSE)
+}
+
+# chi_qa() ----
+#' QA for CHI/Tableau ready standards using R
+#'
+#' @description
+#' \strong{!!!STOP!!! This function has been deprecated.} Please use
+#' \code{apde.chi.tools::chi_qa_tro()} instead.
+#'
+#' @param ... Not used.
+#'
+#' @section Deprecation:
+#' Please use \code{apde.chi.tools::chi_qa_tro()} instead.
+#'
+#' @export
+chi_qa <- function(...) {
+  stop("\n\U1F6D1 chi_qa() has been replaced. \nPlease use apde.chi.tools::chi_qa_tro() instead.", call. = FALSE)
 }
 
 # compare_estimate() ----

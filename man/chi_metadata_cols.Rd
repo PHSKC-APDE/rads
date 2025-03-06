@@ -4,12 +4,17 @@
 \alias{chi_metadata_cols}
 \title{Vector of standard CHI / Tableau Ready metadata columns}
 \usage{
-chi_metadata_cols()
+chi_metadata_cols(...)
+}
+\arguments{
+\item{...}{Not used.}
 }
 \description{
-Vector of standard CHI / Tableau Ready metadata columns
+\strong{!!!STOP!!! This function has been deprecated.} Please use
+\code{names(apde.chi.tools::chi_get_yaml()$metadata)} instead.
 }
-\examples{
-print(chi_metadata_cols())
+\section{Deprecation}{
 
+Please use \code{names(apde.chi.tools::chi_get_yaml()$metadata)} instead.
 }
+
