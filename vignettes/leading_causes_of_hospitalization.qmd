@@ -53,6 +53,13 @@ library(rads)
 library(data.table)
 ```
 
+```{r}
+#| echo: false
+pretty_kable <- function(dt) { 
+  knitr::kable(dt, format = 'markdown')
+}
+```
+
 ## (2) Get data
 
 Pull the relevant years of inpatient data from SQL ...
@@ -213,9 +220,14 @@ Take a peek at the final counts table ...
 
 ```{r}
 #| echo: true
-#| warning: false
-
+#| output: false
 head(counts[hospitalizations >= 10]); tail(counts[hospitalizations >= 10])
+```
+
+```{r}
+#| echo: false
+pretty_kable(head(counts[hospitalizations >= 10]))
+pretty_kable(tail(counts[hospitalizations >= 10]))
 ```
 
 ### Ensure the count table has a row for every permutation of factors
@@ -282,9 +294,13 @@ Take a peek at the rates ...
 
 ```{r}
 #| echo: true
-#| warning: false
-
+#| output: false
 head(rates[count >= 10])
+```
+
+```{r}
+#| echo: false
+pretty_kable(head(rates[count >= 10]))
 ```
 
 ## (6) Identify leading causes based on COUNTS (using random ties method)
@@ -316,11 +332,15 @@ View the top three leading causes of hospitalization by gender ...
 
 ```{r}
 #| echo: true
-#| warning: false
-
+#| output: false
 print(ranking[count >= 10, .SD[1:4], gender])
+```
+
+```{r}
+#| echo: false
+pretty_kable(ranking[count >= 10, .SD[1:4], gender])
 ```
 
 ## :star2: Finished!
 
--- *`r paste0('Updated by ', Sys.getenv('USERNAME'), ', ', format(Sys.time(), '%B %d, %Y'))`*
+-- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'))`*

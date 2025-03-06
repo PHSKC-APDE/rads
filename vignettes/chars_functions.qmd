@@ -177,7 +177,8 @@ Note that the number of hospitalizations has increased (`r detailed$hospitalizat
   kable(midlevel, format = "markdown")
 ```
 
-When using the midlevel aggregation, we see that our count increased yet again (`r midlevel$hospitalizations` \> `r detailed$hospitalizations`). This is because there are `r nrow(chars_icd_ccs()[midlevel == 'Hypertension', .N, detailed])` detailed level aggregations that are combined into this single midlevel value. We can see this when we type `unique(chars_icd_ccs()[midlevel == 'Hypertension']$detailed)`, which returns: 
+When using the midlevel aggregation, we see that our count increased yet again (`r midlevel$hospitalizations` \> `r detailed$hospitalizations`). This is because there are `r nrow(chars_icd_ccs()[midlevel == 'Hypertension', .N, detailed])` detailed level aggregations that are combined into this single midlevel value. We can see this when we type `unique(chars_icd_ccs()[midlevel == 'Hypertension']$detailed)`, which returns:
+
 ```{r}
 #| echo: FALSE
   unique(chars_icd_ccs()[midlevel == 'Hypertension']$detailed)
@@ -211,7 +212,7 @@ Since there are even fewer CCSR broad categories (`r nrow(chars_icd_ccs(ref_type
   kable(superlevel, format = "markdown")
 ```
 
-Again, there are even fewer superlevel categories, so it further aggregates individual causes of hospitalization. 
+Again, there are even fewer superlevel categories, so it further aggregates individual causes of hospitalization.
 
 # chars_injury_matrix()
 
@@ -370,3 +371,5 @@ These tables show that there is a huge difference in the number of hospitalizati
 We know this was a lot to process. The good news is that this vignette isn't going anywhere. If you remember (a) that this vignette exists and (b) where to find it, you'll be in good shape to take on standard CHARS analyses in the future.
 
 If you've read through this vignette and the corresponding help files and are still confused, please feel free to reach out for assistance. You may have found a bug, who knows? Good luck!
+
+-- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'))`*

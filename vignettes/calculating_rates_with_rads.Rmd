@@ -1,12 +1,7 @@
 ---
 title: "Calculating rates with rads"
 output:
-  html_document:
-    df_print: paged
-  rmarkdown::html_vignette: default
   github_document: default
-  urlcolor: blue
-  pdf_document: default
 vignette: |
   %\VignetteEngine{knitr::knitr} %\VignetteIndexEntry{calculating_rates_with_rads}
 ---
@@ -14,6 +9,12 @@ vignette: |
 ```{r, echo = F, message=FALSE, warning=FALSE}
 library(rads)
 library(data.table)
+```
+
+```{r, echo=FALSE}
+pretty_kable <- function(dt) { 
+  knitr::kable(dt, format = 'markdown')
+}
 ```
 
 # Introduction
@@ -74,7 +75,7 @@ We will pull down the relevant death data using `rads::get_data_death` and use `
 Let's use `rads` to get our death data and check if it seems reasonable:
 
 ```{r}
-deaths <- get_data_death(cols = c('chi_age', 'chi_year', 'chi_geo_seattle', 
+deaths <- get_data_death(cols = c('chi_age', 'chi_year', 'nonseattle', 
                                   'underlying_cod_code'), 
                                year = c(2016:2020), 
                                kingco = T)
@@ -84,7 +85,7 @@ nrow(deaths) # should be ~65,000 based on apriori knowledge
 
 We see that the column names and the number of rows are what we expected. Now, let's identify the deaths from falls using the `rads::death_injury_matrix_count` function. To learn about this function, type `?death_injury_matrix_count` in your console or walk through the [death_functions wiki](https://github.com/PHSKC-APDE/rads/wiki). For now, just trust that this is the correct syntax:
 
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
 deaths <- death_injury_matrix_count(ph.data = deaths,
                                intent = "*", # all five intents
                                mechanism = "fall",
@@ -92,14 +93,21 @@ deaths <- death_injury_matrix_count(ph.data = deaths,
                                kingco = F, # False because already subset
                                group_by = 'chi_age') 
 head(deaths[deaths >9]) # only display non-suppressed data
+```
 
+```{r, echo=FALSE}
+pretty_kable(head(deaths[deaths >9]))
 ```
 
 Glancing at the output from the `death_injury_matrix_count` function, we see the that we have **aggregated** `deaths` by `chi_age` and stratified by `intent`. This is all we really need. Let's tidy our data set and rename the two essential columns at the same time:
 
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
 deaths <- deaths[, .(intent, age = chi_age, count = deaths)]
 head(deaths[count >9]) # only display non-suppressed data
+```
+
+```{r, echo=FALSE}
+pretty_kable(head(deaths[count >9]))
 ```
 
 The table above confirms shows that we created a summary table of event (fall deaths) counts by age and intent. Congratulations, you've completed step 1.
@@ -108,23 +116,31 @@ The table above confirms shows that we created a summary table of event (fall de
 
 We can easily get the corresponding population data using [rads::get_population()](https://github.com/PHSKC-APDE/rads/wiki/get_population)
 
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
 population <- rads::get_population(years = c(2016:2020), 
                                    geo_type = 'kc', 
                                    group_by = c('ages'))
 head(population)
 ```
 
+```{r, echo=FALSE}
+pretty_kable(head(population))
+```
+
 The essential columns of interest are `pop` and `age`, so let's drop the other columns.
 
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
 population <- population[, .(age, pop)]
 head(population)
 ```
 
+```{r, echo=FALSE}
+pretty_kable(head(population))
+```
+
 Since we are interested in strata (i.e., `intent`), we will need a complete set of population data for each strata.
 
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
 population <- rbindlist(lapply(X = 1:length(unique(deaths$intent)),
                                FUN = function(X){
                                  temp <- copy(population)[, intent := unique(deaths$intent)[X]]
@@ -132,11 +148,15 @@ population <- rbindlist(lapply(X = 1:length(unique(deaths$intent)),
 population[, .N, intent] # confirm that have 101 rows per intent
 ```
 
+```{r, echo=FALSE}
+pretty_kable(population[, .N, intent])
+```
+
 ### STEP 3: **Merge** the denominators onto the numerators
 
 The title says it all:
 
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
 deaths <- merge(deaths, 
                 population, 
                 by = c('age', 'intent'), 
@@ -146,11 +166,15 @@ deaths[is.na(count), count := 0] # formally set rows with zero counts to zero
 head(deaths[count > 9]) # only display non-suppressed data
 ```
 
+```{r, echo=FALSE}
+pretty_kable(head(deaths[count > 9]))
+```
+
 ### STEP 4: Use [rads::age_standardize()](https://github.com/PHSKC-APDE/rads/wiki/age_standardize)
 
 The documentation tells us that `rads::age_standardize` needs a data set with either an `age` or `agecat` column. Since we have the former, we are good to go as long as we choose the correct reference population. Typing `list_ref_pop` will show you all the available reference populations, however we already know that that DOH uses the 2000 US standard population with 11 age groups, so we can plug that into the function.
 
-```{r message=FALSE, warning=FALSE}
+```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
 est <- age_standardize(ph.data = deaths,
                        ref.popname = "2000 U.S. Std Population (11 age groups)",
                        collapse = T,
@@ -160,6 +184,10 @@ est <- age_standardize(ph.data = deaths,
                        conf.level = 0.95, 
                        group_by = 'intent')
 head(est)
+```
+
+```{r, echo=FALSE}
+pretty_kable(head(est))
 ```
 
 Here we see that the King County **crude** and **adjusted** fall death rates can differ substantially (e.g., Unintentional) or slightly (e.g., Undetermined). 
@@ -191,8 +219,14 @@ deaths <- merge(deaths, xwalk,
 deaths <- deaths[, .(age = chi_age, underlying_cod_code, Region = region10)]
 
 nrow(deaths[is.na(Region)]) # rows with missing Region information
-head(deaths)
+```
 
+```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
+head(deaths)
+```
+
+```{r, echo=FALSE}
+pretty_kable(head(deaths))
 ```
 
 As you can see, there are few rows where the death data are missing a Region (due to a missing HRA). For simplicity sake, let's drop these rows.
@@ -204,15 +238,23 @@ deaths <- deaths[!is.na(Region)]
 
 Remember that step 1 is supposed to create a **summary** table. So, let's collapse/aggregate/sum the data to get the count of deaths by age and region:
 
-```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
 deaths <- deaths[, .(count = .N), .(age, Region)]
 head(deaths)
 ```
 
+```{r, echo=FALSE}
+pretty_kable(head(deaths))
+```
+
 Finally, let's take a peak at the number of deaths by region:
 
-```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
 deaths[, sum(count), Region]
+```
+
+```{r, echo=FALSE}
+pretty_kable(deaths[, sum(count), Region])
 ```
 
 This table of deaths by region shows that the number of deaths in South King County is five times higher than those in North King County (`r deaths[Region == 'South', .(total = sum(count))][['total']]` vs. `r deaths[Region == 'North', .(total = sum(count))][['total']]`). Does that mean the death *rates* in South King County are five times higher than those in North King County? Let's get the corresponding population data and find out.
@@ -221,32 +263,43 @@ This table of deaths by region shows that the number of deaths in South King Cou
 
 We again use [rads::get_population()](https://github.com/PHSKC-APDE/rads/wiki/get_population) to the necessary population data
 
-```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
 population <- rads::get_population(years = c(2019), 
                                    geo_type = 'region', 
                                    group_by = c('ages', 'geo_id'))
 head(population)
 ```
 
+```{r, echo=FALSE}
+pretty_kable(head(population))
+```
+
 The key columns of interest are `pop`, `geo_id` (which has our regions), and `age`. The other columns are all constants, so let's just keep what we need.
 
-```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
 population <- population[, .(Region = geo_id, age, pop)]
 head(population)
+```
 
+```{r, echo=FALSE}
+pretty_kable(head(population))
 ```
 
 Note that, unlike in the example above, we already have a complete population data set (ages 0 to 100) for each strata.
 
-```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
 population[, .N, Region]
+```
+
+```{r, echo=FALSE}
+pretty_kable(population[, .N, Region])
 ```
 
 ### STEP 3: **Merge** the denominators onto the numerators
 
 Just do it!
 
-```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
 deaths <- merge(deaths, 
                 population, 
                 by = c('Region', 'age'), 
@@ -256,9 +309,13 @@ deaths[is.na(count), count := 0] # set rows with zero counts to zero
 head(deaths)
 ```
 
+```{r, echo=FALSE}
+pretty_kable(head(deaths))
+```
+
 ### STEP 4: Use [rads::age_standardize()](https://github.com/PHSKC-APDE/rads/wiki/age_standardize)
 
-```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
 est <- age_standardize(ph.data = deaths,
                        ref.popname = "2000 U.S. Std Population (11 age groups)",
                        collapse = T,
@@ -268,6 +325,10 @@ est <- age_standardize(ph.data = deaths,
                        conf.level = 0.95, 
                        group_by = 'Region')
 head(est)
+```
+
+```{r, echo=FALSE}
+pretty_kable(head(est))
 ```
 
 Here we see that the the **crude rate is lower** in South King County (`r est[Region=="South"]$crude.rate`) compared to North King County (`r est[Region=="North"]$crude.rate`). This flips the relationship we saw with the counts (`r est[Region=="South"]$count` vs `r est[Region=="North"]$count`), but does not account for differences in the population structure in the two regions. In contrast, the **adjusted rate is higher** in South King County (`r est[Region=="South"]$adj.rate`) vs. North King County(`r est[Region=="North"]$adj.rate`) .
@@ -287,3 +348,6 @@ We hope this vignettes has convinced you of two things:
     4.  Use `rads::age_standardize()`
 
 If you've walked through this vignette and more or less understood what's going on, you're in good shape! If you're still confused, please walk through it again and then reach out if you still have questions. Good luck!
+
+-- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'))`*
+
