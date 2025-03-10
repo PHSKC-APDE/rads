@@ -29,7 +29,7 @@ library(data.table)
 
 # function to beautify tables
 library(kableExtra)
-pretty_kable <- function(dt) { 
+pretty_kable <- function(dt) {
   knitr::kable(dt, format = 'markdown')
 }
 ```
@@ -156,8 +156,8 @@ brfss_hra <- get_data_brfss(
 ## Confim we generated an imputationList of 10 dtsurvey objects
 
 ```{r message=FALSE}
-inherits(brfss_hra, "imputationList") & 
-   length(brfss_hra$imputations) == 10 & 
+inherits(brfss_hra, "imputationList") &
+   length(brfss_hra$imputations) == 10 &
    inherits(brfss_hra$imputations[[1]], "dtsurvey")
 ```
 
@@ -284,7 +284,7 @@ prediab_by_hra20 <- calc(
   what = "prediab1",
   by = c("hra20_name"),
   metrics = c("mean", "rse"),
-  proportion = TRUE  
+  proportion = TRUE
 )
 head(prediab_by_hra20)
 ```
@@ -307,7 +307,7 @@ prediab_obese_hra20_sex <- calc(
   what = c("prediab1", "obese"),
   by = c("hra20_name", "chi_sex"),
   metrics = c("mean", "rse"),
-  proportion = TRUE  
+  proportion = TRUE
 )
 head(prediab_obese_hra20_sex)
 ```
@@ -361,7 +361,7 @@ method_pooled <- calc(ph.data = brfss_pooled,
 ```{r}
 #| echo: true
 #| output: true
-all.equal(method_where[, .(variable, mean, mean_se, mean_lower, mean_upper, rse)], 
+all.equal(method_where[, .(variable, mean, mean_se, mean_lower, mean_upper, rse)],
           method_pooled[, .(variable, mean, mean_se, mean_lower, mean_upper, rse)])
 
 ```
@@ -371,7 +371,7 @@ all.equal(method_where[, .(variable, mean, mean_se, mean_lower, mean_upper, rse)
 ```{r}
 #| echo: true
 #| output: true
-all.equal(method_where[, .(variable, total, total_se, total_lower, total_upper)], 
+all.equal(method_where[, .(variable, total, total_se, total_lower, total_upper)],
           method_pooled[, .(variable, total, total_se, total_lower, total_upper)])
 ```
 
@@ -396,4 +396,4 @@ Working with BRFSS data requires careful attention to survey weights and design,
 
 Happy analyzing!
 
--- *`r paste0("Updated by ", Sys.getenv("USERNAME"), ", ", Sys.Date())`*
+-- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'))`*

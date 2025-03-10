@@ -13,6 +13,13 @@ vignette: |
 ```{r, echo = F, message=FALSE}
 library(rads)
 ```
+
+```{r, echo=FALSE}
+pretty_kable <- function(dt) { 
+  knitr::kable(dt, format = 'markdown')
+}
+```
+
 ## Introduction
 
 
@@ -27,8 +34,12 @@ list_ref_pop()[1:5]
 
 The first one is the default reference population used by APDE and WA DOH. Taking a peek behind the curtain shows that each reference standard is a simple table of age ranges with their corresponding populations. 
 
-```{r}
+```{r, echo=TRUE, results='hide'}
 get_ref_pop("2000 U.S. Std Population (11 age groups)")[, 1:4]
+```
+
+```{r, echo=FALSE}
+pretty_kable(get_ref_pop("2000 U.S. Std Population (11 age groups)")[, 1:4])
 ```
 
 
@@ -70,7 +81,7 @@ Your dataset must have the following three columns ...
 
 ## Example #1: The Basics
 **Create synthetic line level data for a cohort 51 to 60 years of age with a binary indicator for disease status**
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, echo=TRUE, results='hide'}
 library(data.table)
 set.seed(98104)
 
@@ -82,8 +93,12 @@ temp1 <- data.table(
 head(temp1)
 ```
 
+```{r, echo=FALSE}
+pretty_kable(head(temp1))
+```
+
 **Run age_standardize with APDE's default reference population**
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, echo=TRUE, eval=FALSE}
 age_standardize(ph.data = temp1,
                 ref.popname = "2000 U.S. Std Population (11 age groups)", 
                 collapse = T,
@@ -92,6 +107,17 @@ age_standardize(ph.data = temp1,
                 per = 1000, 
                 conf.level = 0.95)[]
 ```
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE, eval=TRUE}
+pretty_kable(age_standardize(ph.data = temp1,
+                ref.popname = "2000 U.S. Std Population (11 age groups)", 
+                collapse = T,
+                my.count = "disease", 
+                my.pop = "pop", 
+                per = 1000, 
+                conf.level = 0.95)[])
+```
+
 *Does anything seem fishy? Think for a moment ...* 
 
 * **count** is the number of events that occured (i.e., the numerator)
@@ -107,13 +133,17 @@ age_standardize(ph.data = temp1,
 The problem is that the population is too big. Eyeballing the output when we created the dataset above, we see that the total population for those 51 to 60 would have to be less than 10,000 (10 age groups with max 1,000 population for each). In this case it is almost 1 million! In the description of the arguments above, it specifies that we need to ***use aggregated count data***. Now you see why. Ignoring that detail caused us to inflate the population (and therefore deflate the rate and CI) by 1000x.
 
 **Aggregate (sum) the line level data**
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, echo=TRUE, results='hide'}
 temp1 <- temp1[, .(disease = sum(disease)), by = c("age", "pop")]
 head(temp1)
 ```
 
+```{r, echo=FALSE}
+pretty_kable(head(temp1))
+```
+
 **Run age_standardize again << this time with aggregated disease events**
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, echo=TRUE, results='hide'}
 ex1.1 <- age_standardize(ph.data = temp1,
                       ref.popname = "2000 U.S. Std Population (11 age groups)", 
                       collapse = T,
@@ -124,9 +154,13 @@ ex1.1 <- age_standardize(ph.data = temp1,
 head(ex1.1)
 ```
 
+```{r, echo=FALSE}
+pretty_kable(head(ex1.1))
+```
+
 Now that count, pop, and rates seem reasonable, let's see what happens if we change the reference population. We'll arbitrarily set the references population to the 36th in the list provided by `list_ref_pop()` (i.e., 'World (WHO 2000-2025) Std Million (single ages to 99)'). 
 
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, echo=TRUE, results='hide'}
 ex1.2 <- age_standardize(ph.data = temp1,
                       ref.popname = list_ref_pop()[36], 
                       collapse = T,
@@ -136,13 +170,18 @@ ex1.2 <- age_standardize(ph.data = temp1,
                       conf.level = 0.95)
 head(ex1.2)
 ```
+
+```{r, echo=FALSE}
+pretty_kable(head(ex1.2))
+```
+
 As we'd expect, the crude rates are identical since the reference population is irrelevant for those calculations (`r ex1.1$crude.rate` vs `r ex1.2$crude.rate`). However, the age-standardized rates changed from `r ex1.1$adj.rate` to `r ex1.2$adj.rate`. Remember, if you want to compare your age-adjusted rates to those published by other health jurisdictions, it's important that you use the same reference population.
 
 ***
 
 ## Example #2: Stratification
 **Let's create a new dataset, with counts aggregated by age and gender (F|M)**
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, echo=TRUE, results='hide'}
 set.seed(98104)
 temp2 <- data.table(
   gender = sample(c('F', 'M'), 20000, replace = T), 
@@ -154,8 +193,12 @@ setorder(temp2, age, gender)
 head(temp2)
 ```
 
+```{r, echo=FALSE}
+pretty_kable(head(temp2))
+```
+
 **Let's examine the overall rates**
-```{r, warning = FALSE, message = FALSE}
+```{r, warning = FALSE, message = FALSE, echo=TRUE, results='hide'}
 ex2.1 <- age_standardize(ph.data = temp2,
                        collapse = T,
                        my.count = "disease", 
@@ -166,10 +209,15 @@ ex2.1 <- age_standardize(ph.data = temp2,
 head(ex2.1)
 ```
 
+```{r, echo=FALSE}
+pretty_kable(head(ex2.1))
+```
+
 Notice that we didn't include the `ref.popname` argument. When it is not specified, `age_standardize()` uses the default which is `list_ref_pop()[1]` (i.e, `r list_ref_pop()[1]`).
 
 **Now let's run the same analysis, but stratified by gender**
-```{r, warning = FALSE, message = FALSE}
+
+```{r, warning = FALSE, message = FALSE, echo=TRUE, results='hide'}
 ex2.2 <- age_standardize(ph.data = temp2,
                        collapse = T,
                        my.count = "disease", 
@@ -180,6 +228,11 @@ ex2.2 <- age_standardize(ph.data = temp2,
 
 head(ex2.2)
 ```
+
+```{r, echo=FALSE}
+pretty_kable(head(ex2.2))
+```
+
 Here we see that the crude rates are nearly identical (`r ex2.2[gender == 'F']$crude.rate` vs `r ex2.2[gender == 'M']$crude.rate`), but the adjusted rate is higher for females (`r ex2.2[gender == 'F']$adj.rate` vs `r ex2.2[gender == 'M']$adj.rate`).
 
 ***
@@ -188,27 +241,37 @@ Here we see that the crude rates are nearly identical (`r ex2.2[gender == 'F']$c
 **Create a reference population for the gendered dataset above**
 
 To keep things simple, we will create a reference population based on single ages rather than age bins. As specified in the arguments description above, we will name the standard population column 'stdpop'.
-```{r, warning=FALSE, message=FALSE}
+
+```{r, warning=FALSE, message=FALSE, echo=TRUE, results='hide'}
 set.seed(98104)
 new.standard <- unique(temp2[, .(gender, age)])
 new.standard[, stdpop := fifelse(gender == 'M', 
                                  sample(7800:16000, 1, replace = T), 
                                  sample(10000:20000, 1, replace = T))]
-
 head(new.standard)
 ```
 
+```{r, echo=FALSE}
+pretty_kable(head(new.standard))
+```
+
 **Merge the standard population onto the data**
-```{r, warning=FALSE, message=FALSE}
+
+```{r, warning=FALSE, message=FALSE, echo=TRUE, results='hide'}
 temp3 <- merge(temp2, new.standard, by = c("age", "gender"), all = T)
 
 head(temp3)
 ```
 
+```{r, echo=FALSE}
+pretty_kable(head(temp3))
+```
+
 **Calculate the rates when `ref.pop = "none"`**
 
 The data set already contains a `stdpop` column, so we can set `ref.popname = "none"`. Also note that I need to specify `collapse = F` because the function expects data to be pre-aggregated when I have the column `stdpop`.
-```{r, warning = FALSE, message = FALSE}
+
+```{r, warning = FALSE, message = FALSE, echo=FALSE, results='hide'}
 ex3.1 <- age_standardize(ph.data = temp3,
                        ref.popname = "none",
                        collapse = F,
@@ -218,6 +281,10 @@ ex3.1 <- age_standardize(ph.data = temp3,
                        conf.level = 0.95, 
                        group_by = "gender")
 
+head(ex3.1)
+```
+
+```{r, warning = FALSE, message = FALSE, echo=FALSE}
 head(ex3.1)
 ```
 
@@ -235,7 +302,8 @@ temp4 <- copy(temp2)
 ```
 
 **Collapse the data down to the same age bins (`agecat`) as those used in the default APDE standard reference population**
-```{r, warning=FALSE, message=FALSE}
+
+```{r, warning=FALSE, message=FALSE, eval=TRUE, results='hide'}
 temp4[age == 0, agecat := "0"]
 temp4[age %in% 1:4, agecat := "1-4 years"]
 temp4[age %in% 5:14, agecat := "5-14 years"]
@@ -253,8 +321,12 @@ temp4 <- temp4[, .(count = sum(disease), pop = sum(pop)), .(agecat, gender)]
 head(temp4[])
 ```
 
+```{r, warning=FALSE, message=FALSE, eval=TRUE}
+head(temp4[])
+```
+
 **Now run age_standardize with `collapse = F`**
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, eval=TRUE, results='hide'}
 ex4.1 <- age_standardize(ph.data = copy(temp4),
                          ref.popname = "2000 U.S. Std Population (11 age groups)",
                          collapse = F, # because already collapsed
@@ -264,6 +336,10 @@ ex4.1 <- age_standardize(ph.data = copy(temp4),
                          conf.level = 0.95, 
                          group_by = "gender")
 
+head(ex4.1)
+```
+
+```{r, warning=FALSE, message=FALSE, eval=TRUE}
 head(ex4.1)
 ```
 
@@ -280,7 +356,7 @@ You quickly pull up [CHAT](https://www.doh.wa.gov/ForPublicHealthandHealthcarePr
 
 **Get birth counts for 13 to 19 year olds in 2019**
 
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, eval=TRUE, results='hide'}
   kcbirth <- get_data_birth(cols = c("chi_age", "chi_year"), year = 2019, kingco = T)
   wabirth <- get_data_birth(cols = c("chi_age", "chi_year"), year = 2019, kingco = F)
   
@@ -292,11 +368,14 @@ You quickly pull up [CHAT](https://www.doh.wa.gov/ForPublicHealthandHealthcarePr
   setorder(births, geo, chi_age)
   setnames(births, "chi_age", "age")
   head(births)
+```
 
+```{r, warning=FALSE, message=FALSE, eval=TRUE}
+head(births)
 ```
 
 **Get the female populations corresponding to the birth counts**
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, eval=TRUE, results='hide'}
   kcpop <- get_population(kingco = T, years = 2019, ages = 13:19, 
                           genders = "Female", group_by = "ages", 
                           geo_vintage = 2020, census_vintage = 2020)
@@ -312,6 +391,10 @@ You quickly pull up [CHAT](https://www.doh.wa.gov/ForPublicHealthandHealthcarePr
   head(pop)
 ```
 
+```{r, warning=FALSE, message=FALSE, eval=TRUE}
+head(pop)
+```
+
 **Merge population onto to birth counts**
 ```{r, warning=FALSE, message=FALSE}
   temp5 <- merge(births, pop, by = c("age", "geo"), all = T)
@@ -319,9 +402,12 @@ You quickly pull up [CHAT](https://www.doh.wa.gov/ForPublicHealthandHealthcarePr
   head(temp5)
 ```
   
+```{r, warning=FALSE, message=FALSE, eval=TRUE}
+head(temp5)
+```
   
 **Run `age_standardize()`**
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, eval=TRUE, results='hide'}
   ex5.1 <- age_standardize(ph.data = temp5,
                            ref.popname = "World (WHO 2000-2025) Std Million (single ages to 84)", 
                            collapse = T,
@@ -340,4 +426,4 @@ According to your analysis, the crude King County teen birth rate is approximate
 
 If you've walked through this vignette and more or less understood what's going on, you're in good shape! If you're still confused, please walk through it again and then reach out if you still have questions. Good luck!
 
--- *`r paste0("Updated by ", Sys.getenv("USERNAME"), ", ", Sys.Date())`*
+-- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'))`*

@@ -63,6 +63,13 @@ library(rads)
 library(data.table)
 ```
 
+```{r}
+#| echo: false
+pretty_kable <- function(dt) { 
+  knitr::kable(dt, format = 'markdown')
+}
+```
+
 ## (2) Get data
 
 ### Non-infant deaths (ages ≥ 1)
@@ -178,9 +185,14 @@ infdeath_groups <- rads.data::icd_nchs130causes_raw[, .(cause = leading.cause.gr
 Take a peek at one of the reference tables you just created ...
 
 ```{r}
-#| warning: false
 #| echo: true
+#| output: false
 head(death_groups)
+```
+
+```{r}
+#| echo: false
+pretty_kable(head(death_groups))
 ```
 
 As you can see with Tuberculosis in rows 4 & 5, multiple `causeid`s will sometimes be rolled up into one of the `r uniqueN(death_groups$cause)` `cause` values. Therefore the `cause` values allow us to aggregate the `causeid` values into fewer categories.
@@ -248,9 +260,14 @@ death_count <- death_count[ ,
 Take a peek at the tidied table of non-infant death counts
 
 ```{r}
-#| warning: false
 #| echo: true
+#| output: false
 head(death_count[deaths >= 10]) # suppress view
+```
+
+```{r}
+#| echo: false
+pretty_kable(head(death_count[deaths >= 10]))
 ```
 
 ### Infant deaths (ages\< 1)
@@ -309,9 +326,14 @@ infdeath_count <- infdeath_count[ ,
 Take a peek at the tidied table of infant death counts
 
 ```{r}
-#| warning: false
 #| echo: true
+#| output: false
 head(infdeath_count[deaths >= 10]) # suppress view
+```
+
+```{r}
+#| echo: false
+pretty_kable(head(infdeath_count[deaths >= 10]))
 ```
 
 ## (4) Merge corresponding population onto the count data
@@ -382,7 +404,13 @@ Take a peek at the non-infant rates ...
 ```{r}
 #| warning: false
 #| echo: true
+#| results: hide
 head(rates[count >= 10]) # suppress view
+```
+
+```{r}
+#| echo: false
+pretty_kable(head(rates[count >= 10]))
 ```
 
 ### Infant deaths (ages\< 1)
@@ -413,7 +441,13 @@ Take a peek at the infant rates ...
 ```{r}
 #| warning: false
 #| echo: true
+#| results: hide
 head(infrates[count >= 10]) # suppress view
+```
+
+```{r}
+#| echo: false
+pretty_kable(head(infrates[count >= 10]))
 ```
 
 ## (6) Identify leading causes based on COUNTS (using random ties method)
@@ -436,11 +470,17 @@ setorder(ranking, gender, ranking)
 View the top three leading causes of death by gender ...
 
 ```{r}
-#| warning: false
 #| echo: true
-
+#| eval: false
 # Infant causes of death
 print(ranking[count >= 10, .SD[1:4], gender])
+```
+
+```{r}
+#| warning: false
+#| echo: false
+#| eval: true
+pretty_kable(ranking[count >= 10, .SD[1:4], gender])
 ```
 
 ### Infant deaths (ages\< 1)
@@ -461,13 +501,19 @@ setorder(infranking, gender, ranking)
 View the top three leading causes of death by gender ...
 
 ```{r}
-#| warning: false
 #| echo: true
-
+#| eval: false
 # Infant causes of death
 print(infranking[count >= 10, .SD[1:4], gender])
 ```
 
+```{r}
+#| warning: false
+#| echo: false
+#| eval: true
+pretty_kable(infranking[count >= 10, .SD[1:4], gender])
+```
+
 ## :star2: Finished!
 
--- *`r paste0("Updated by ", Sys.getenv("USERNAME"), ", ", Sys.Date())`*
+-- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'))`*

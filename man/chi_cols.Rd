@@ -4,12 +4,17 @@
 \alias{chi_cols}
 \title{Vector of standard CHI / Tableau Ready columns}
 \usage{
-chi_cols()
+chi_cols(...)
+}
+\arguments{
+\item{...}{Not used.}
 }
 \description{
-Vector of standard CHI / Tableau Ready columns
+\strong{!!!STOP!!! This function has been deprecated.} Please use
+\code{apde.chi.tools::chi_get_cols()} instead.
 }
-\examples{
-print(chi_cols())
+\section{Deprecation}{
 
+Please use \code{apde.chi.tools::chi_get_cols()} instead.
 }
+
