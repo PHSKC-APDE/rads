@@ -36,9 +36,10 @@ Let's explore each of these functions with examples to demonstrate their usage a
 
 First, let's load the necessary packages:
 
-```{r echo=FALSE}
+```{r}
 #| warning: false
 #| message: false
+#| echo: false
 library(kableExtra)
 
 # function to beautify tables
@@ -60,7 +61,9 @@ The `calc_age()` function calculates age in years based on two dates. This funct
 
 ### `calc_age` is better than subtracting the years
 
-```{r echo=TRUE, results='hide'}
+```{r}
+#| echo: true
+#| results: 'hide'
 birth_date <- as.Date("1990-08-02")
 current_date <- as.Date("2024-08-01")
 simple_age <- year(current_date) - year(birth_date)
@@ -69,13 +72,16 @@ proper_age <- calc_age(from = birth_date, to = current_date)
 head(data.table(birth_date, current_date, simple_age, proper_age))
 ```
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(data.table(birth_date, current_date, simple_age, proper_age)))
 ```
 
 ### `calc_age` is better than days / 365.25
 
-```{r echo=TRUE, results='hide'}
+```{r}
+#| echo: true
+#| results: 'hide'
 dates <- data.table(
   birth = seq.Date(as.Date('2000-02-25'), as.Date('2000-03-02'), 1), 
   death = seq.Date(as.Date('2024-03-02'), as.Date('2024-02-25'), -1))
@@ -85,7 +91,8 @@ dates[, proper_age := calc_age(birth, death)]
 head(dates)
 ```
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(dates))
 ```
 
@@ -93,7 +100,9 @@ pretty_kable(head(dates))
 
 `convert_to_date()` attempts to convert various US style date formats to R Dates.
 
-```{r echo=TRUE, results='hide'}
+```{r}
+#| echo: true
+#| results: 'hide'
 dates <- data.table(orig = c("2024-07-25", "07/26/2024", 
                              "07-27-2024", "20240728", 
                              "29 July, 2024", "July 30, 2024"))
@@ -103,7 +112,8 @@ dates[, simple_dates := as.Date(orig)]
 head(dates)
 ```
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(dates))
 ```
 
@@ -117,7 +127,9 @@ The `create_dictionary()` function generates a comprehensive data dictionary for
 
 Let's create a sample dataset and generate a dictionary:
 
-```{r echo=TRUE, results='hide'}
+```{r}
+#| echo: true
+#| results: 'hide'
 dt <- data.table(
   name = c("Alicia", "Bianca", "Clarence", "Dwane", "Eve"),
   gender = factor(c("F", "M", "M", "M", "F")),
@@ -130,7 +142,8 @@ dict <- create_dictionary(ph.data = dt, source = "sample_data")
 head(dict, 10)
 ```
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(dict, 10))
 ```
 
@@ -138,7 +151,9 @@ pretty_kable(head(dict, 10))
 
 You can suppress sample values for sensitive columns:
 
-```{r echo=TRUE, results='hide'}
+```{r}
+#| echo: true
+#| results: 'hide'
 dict_suppressed <- create_dictionary(ph.data = dt, 
                                      source = "sample_data", 
                                      suppress = c("name"))
@@ -146,7 +161,8 @@ dict_suppressed <- create_dictionary(ph.data = dt,
 head(dict_suppressed, 10)
 ```
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(dict_suppressed, 10))
 ```
 
@@ -154,7 +170,9 @@ pretty_kable(head(dict_suppressed, 10))
 
 You can include additional descriptions and notes using a reference table:
 
-```{r echo=TRUE, results='hide'}
+```{r}
+#| echo: true
+#| results: 'hide'
 ref_table <- data.table(
   source = rep("sample_data", 4),
   varname = c("name", "age", "gender", "score"),
@@ -171,7 +189,8 @@ dict_with_ref <- create_dictionary(ph.data = dt,
 head(dict_with_ref, 8)
 ```
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(dict_with_ref, 8))
 ```
 
@@ -179,7 +198,9 @@ pretty_kable(head(dict_with_ref, 8))
 
 For datasets with many unique values, create_dictionary() provides summaries:
 
-```{r echo=TRUE, results='hide'}
+```{r}
+#| echo: true
+#| results: 'hide'
 set.seed(98104)
 large_dt <- data.table(
   id = 1:1000,
@@ -193,7 +214,8 @@ large_dict <- create_dictionary(ph.data = large_dt,
 head(large_dict, 8)
 ```
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(large_dict, 8))
 ```
 
@@ -201,7 +223,9 @@ pretty_kable(head(large_dict, 8))
 
 These functions format numeric values (including dates) into human-readable time chunks. They are often used for summarizing years and can be used for identifying unexpected gaps.
 
-```{r echo=TRUE, results='hide'}
+```{r}
+#| echo: true
+#| results: 'hide'
 years <- c(2001:2003, 
            2005, 
            2008, 
@@ -218,7 +242,8 @@ dt <- data.table(desc = c('format_time', 'format_time_simple', '',
 head(dt)
 ```
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(dt))
 ```
 
@@ -227,6 +252,8 @@ pretty_kable(head(dt))
 `generate_yaml()` generates a YAML file for SQL loading based on a data.frame or data.table.
 
 ```{r, echo=TRUE, eval=FALSE, results='hide'}
+#| echo: true
+#| results: 'hide'
 data <- data.table(
   id = 1:5,
   name = c("Alicia", "Bianca", "Clarence", "Dwane", "Eve"),
@@ -237,7 +264,8 @@ yaml_output <- generate_yaml(data, schema = "dbo", table = "example_table", data
 print(yaml_output)
 ```
 
-```{r, echo=FALSE, results='show'}
+```{r}
+#| echo: false
 data <- data.table(
   id = 1:5,
   name = c("Alicia", "Bianca", "Clarence", "Dwane", "Eve"),
@@ -250,7 +278,8 @@ print(yaml_output)
 
 The output can be be used to specify the field_types for the `tsql_validate_field_types()` and `tsql_chunk_loader()` functions described below.
 
-```{r echo=TRUE, results='show'}
+```{r}
+#| echo: true
 field_types <- unlist(yaml_output$vars)
 print(field_types)
 ```
@@ -263,7 +292,9 @@ The `multi_t_test()` function performs t-tests comparing multiple groups against
 
 Let's create a sample dataset and use `multi_t_test()` to compare birthweights across different maternal age groups:
 
-```{r echo=TRUE, results='hide'}
+```{r}
+#| echo: true
+#| results: 'hide'
 # Sample data
 age_groups <- c("18-24", "25-29", "30-34", "35-39", "40+")
 birthweight_means <- c(3150, 3450, 3400, 3250, 3100)  # in grams
@@ -286,7 +317,8 @@ birthweight_comparison[, Age_Group := age_groups]
 head(birthweight_comparison)
 ```
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(birthweight_comparison))
 ```
 
@@ -309,7 +341,9 @@ pretty_kable(head(birthweight_comparison))
 
 `round2()` rounds numbers the way we learned in elementary school: if the digit to the right of the rounding position is 5 or greater, round up; otherwise, round down. ***Note!*** *Base R's `round` function follows a different logic (IEC 60559 / IEEE 754 standards), which specifies rounding to the nearest even number.*
 
-```{r echo=TRUE, results='hide'}
+```{r}
+#| echo: true
+#| results: 'hide'
 set.seed(98104)
 dt <- data.table(orig = seq(0.5, 5.5, 1))
 dt[, round2 := round2(orig)]
@@ -318,7 +352,8 @@ dt[round2 != baseR, different := '*']
 head(dt)
 ```
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(dt))
 ```
 
@@ -335,19 +370,43 @@ round2(123456, -3)
 
 `string_clean()` cleans string and factor columns in a data.frame or data.table. It eliminates random white spaces and pseudo-white spaces and sets blanks to true NA.
 
-```{r echo=TRUE, results='show'}
+```{r}
+#| echo: true
 # create table 
 dt <- data.table(
   name = c(" John   ", "Jane  Doe", "Bob Smith", "  ", "  Edward  Jenner"),
-  category = factor(c("A ", "   B", "", "D", "E      "))
+  category = c("A ", "   B", "", "D", "E      ")
 )
+print(dt$category)
+```
+
+```{r}
+#| echo: true
+#| results: 'hide'
 head(dt)
 ```
 
-```{r echo=TRUE, results='show'}
+```{r}
+#| echo: false
+pretty_kable(head(dt))
+```
+
+```{r}
+#| echo: true
 # clean table
 string_clean(dt)
+print(dt$category)
+```
+
+```{r}
+#| echo: true
+#| results: 'hide'
 head(dt)
+```
+
+```{r}
+#| echo: false
+pretty_kable(head(dt))
 ```
 
 ## std_error() {#std_error}
@@ -356,7 +415,9 @@ head(dt)
 
 ### Use with a vector
 
-```{r echo=TRUE, results='show'}
+```{r}
+#| echo: true
+
 set.seed(98104)
 x <- rnorm(1000)
 se <- std_error(x)
@@ -365,7 +426,8 @@ print(paste("Standard Error:", round2(se, 5)))
 
 ### Use with a data.table / data.frame
 
-```{r echo=TRUE, results='show'}
+```{r}
+#| echo: true
 set.seed(98104)
 dt <- data.table(x = rnorm(1000), y = rnorm(1000))
 se <- std_error(dt)
@@ -375,7 +437,8 @@ print(se)
 
 ### Use with a list
 
-```{r echo=TRUE, results='show'}
+```{r}
+#| echo: true
 set.seed(98104)
 mylist <- list(x = rnorm(1000), y = rnorm(1000))
 se <- std_error(mylist) # returns a list with the standard errors
@@ -387,7 +450,9 @@ print(se)
 
 `substrRight()` extracts a substring from the right side of a string. It complements the base R function `substr`.
 
-```{r echo=TRUE, results='show'}
+```{r}
+#| echo: true
+
 text <- "Hello, World!"
 substr_right <- substrRight(text, 2, 6)
 print(substr_right)
@@ -401,7 +466,9 @@ This function is useful when you need to extract the right hand portions of stri
 
 ### A successful validation
 
-```{r echo=TRUE, results='hide'}
+```{r}
+#| echo: true
+#| results: 'hide'
 dt <- data.table(
   id = 1:5,
   name = c("Alicia", "Bianca", "Clarence", "Dwane", "Eve"),
@@ -417,13 +484,16 @@ validation_result <- tsql_validate_field_types(dt, field_types)
 head(validation_result)
 ```
 
-```{r echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(validation_result))
 ```
 
 ### A failed validation
 
-```{r error=TRUE, echo=TRUE, results='show'}
+```{r}
+#| echo: true
+#| error: true
 dt <- data.table(
   id = 1:5,
   name = c("Alicia", "Bianca", "Clarence", "Dwane", "Eve"),
@@ -451,7 +521,9 @@ Benefits include:
 -   Allows SQL data type specification and validation
 -   Verifies complete data upload
 
-```{r echo=TRUE, results='show'}
+```{r}
+#| echo: true
+
  mydt = data.table(col1 = 1:10000L,  # create integer
                    col2 = 1:10000/3) # create float
  mydt[, col3 := as.Date(Sys.Date()) - col1] # create date
@@ -478,7 +550,8 @@ Benefits include:
 
 `validate_hhsaw_key()` validates HHSAW keys **and** opens a connection to HHSAW when possible.
 
-```{r echo=TRUE, results='show'}
+```{r}
+#| echo: true
  myConnection <- validate_hhsaw_key(hhsaw_key = 'hhsaw')
  print(myConnection)
 ```
@@ -489,4 +562,4 @@ These utility functions provide tools for common data manipulation and analysis 
 
 Remember to consult the individual function documentation for more detailed information on usage and parameters. Happy coding!
 
--- *`r paste0("Updated by ", Sys.getenv("USERNAME"), ", ", Sys.Date())`*
+-- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'))`*
