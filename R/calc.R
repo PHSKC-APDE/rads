@@ -151,7 +151,7 @@ calc.imputationList = function(ph.data,
   # dots = list()
   # dots = list(...)
   # dot_nms = names(dots)
-  if(!is.character(what) && length(what) >1) stop('When `ph.data` is an imputationList, only one value of `what` can be specified')
+  if(length(what) >1) stop('When `ph.data` is an imputationList, only one value of `what` can be specified')
 
   # make sure metrics is specified
   if(!'metrics' %in% names(call)){
