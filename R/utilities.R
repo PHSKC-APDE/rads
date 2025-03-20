@@ -115,7 +115,7 @@ age_standardize <- function (ph.data,
 {
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
     ph.data.name <- age <- age_start <- age_end <- agecat <- count <- pop <-
-      stdpop <- reference_pop <- adj.lci <- adj.uci <- NULL
+      stdpop <- reference_pop <- adj.lci <- adj.uci <- complete <- id <- NULL
 
     ph.data.name <- deparse(substitute(ph.data))
     ph.data <- copy(ph.data)
@@ -225,7 +225,7 @@ age_standardize <- function (ph.data,
             }
           } else {
 
-            age_chk = ph.data[, .(complete = all(1:100 %in% age), missing = list(setdiff(1:100, age))), by = group_by]
+            age_chk = ph.data[, list(complete = all(1:100 %in% age), missing = list(setdiff(1:100, age))), by = group_by]
             age_chk = age_chk[complete == F]
             age_chk[, id := .I]
             age_chk = split(age_chk, by = 'id')
@@ -1028,7 +1028,7 @@ format_time_simple <- function(x){
 generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL, table = NULL){
 
   #Bindings for data.table/check global variables
-  vartype <- binary <- varname <- i <- varlength <- sql <- '.' <- NULL
+  vartype <- binary <- varname <- i <- varlength <- sql <- NULL
 
   mi.outfile = 0
 
@@ -1118,7 +1118,7 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
   mydict[sql == "NVARCHAR", sql := paste0(sql, "(", varlength, ")")]
   mydict[, sql := paste0("    ", varname, ": ", sql)]
   setorder(mydict, varname) # sort in same order as the data.table
-  mydict <- mydict[, .(sql)]
+  mydict <- mydict[, list(sql)]
 
   if(!is.null(datasource)){
     header <- data.table(
@@ -1209,7 +1209,7 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
 #' to further collapse/aggregate/sum, you'll need to properly account for error
 #' propagation. Here is a line of \code{data.table} code as an example:
 #' ```
-#' DT[, .(estimate = sum(estimate), stderror = sqrt(sum(stderror)^2)), c(group_by_vars)]
+#' DT[, list(estimate = sum(estimate), stderror = sqrt(sum(stderror)^2)), c(group_by_vars)]
 #' ```
 #'
 #' @return a data.table with two columns of geographic identifiers
@@ -1738,11 +1738,11 @@ list_dataset_columns_pums <- function(config, year, mykey, kingco, analytic_only
 #' }
 list_ref_xwalk <- function(){
   # bindings for data.table/check global variables ----
-  ref_get_xwalk <- input <- output <- '.' <-  NULL
+  ref_get_xwalk <- input <- output <- NULL
   data("ref_get_xwalk", envir=environment()) # import ref_get_xwalk from /data as a promise
   geodt <- copy(ref_get_xwalk) # evaluate / import the promise
   geodt <- string_clean(geodt)
-  geodt <- geodt[, .(geo1 = input, geo2 = output)]
+  geodt <- geodt[, list(geo1 = input, geo2 = output)]
   return(geodt)
 }
 
@@ -2587,7 +2587,7 @@ sql_clean <- function(dat = NULL, stringsAsFactors = FALSE){
 #' )
 #' std_error(c(seq(0, 400, 100), NA)) # expected value for mygroup == A
 #' std_error(c(seq(1000, 1800, 200), NA)) # expected value for mygroup == B
-#' temp1[, .(sem = std_error(x)), by = 'mygroup'][] # view summary table
+#' temp1[, list(sem = std_error(x)), by = 'mygroup'][] # view summary table
 #' temp1[, sem := std_error(x), by = 'mygroup'][] # save results in the original
 #' }
 #'
