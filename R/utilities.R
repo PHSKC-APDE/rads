@@ -18,38 +18,62 @@ options("scipen"=999) # turn off scientific notation
 #'  per = 100, conf.level = 0.95)[]
 #' }
 #' @importFrom stats qgamma
-adjust_direct <- function (count, pop, stdpop, per = 100000, conf.level = 0.95)
-{
+adjust_direct <- function(count, pop, stdpop, per = 100000, conf.level = 0.95) {
   # adapted from epitools v0.5-10.1 :: ageadjust.direct & survival 3.2-7 :: cipoisson
 
-  # logic checks ----
-  if((length(count)==length(pop) & length(pop)==length(stdpop)) != T){stop("The length of `count`, `pop`, and `stdpop` must be equal.")}
-  if( !class(per) %in% c("numeric", "integer")){stop(paste0("The `per` argument ('", per, "') you entered is invalid. It must be a positive integer, e.g., 100000."))}
-  if( per%%1 != 0 | (per%%1 == 0 & per <= 0)){stop(paste0("The `per` argument (", per, ") you entered is invalid. It must be a positive integer, e.g., 100000."))}
-  if( !class(conf.level) %in% c("numeric")){stop(paste0("`conf.level` (", conf.level, ") should be a two digit decimal between 0.00 & 0.99"))}
-  if( (100*conf.level)%% 1 != 0 | !(0<=conf.level & conf.level<=0.99)){stop(paste0("`conf.level` (", conf.level, ") should be a two digit decimal between 0.00 & 0.99"))}
+  # Validate arguments ----
+  n_count <- length(count)
+  if(n_count != length(pop) || n_count != length(stdpop)) {
+    stop("The length of `count`, `pop`, and `stdpop` must be equal.")
+  }
 
-  # basic calculations ----
+  if(!is.numeric(per) || per <= 0 || per %% 1 != 0) {
+    stop("The `per` argument must be a positive integer, e.g., 100000.")
+  }
+
+  if(!is.numeric(conf.level) || conf.level < 0 || conf.level > 0.99) {
+    stop("'conf.level' should be a decimal between 0.00 & 0.99")
+  }
+
+  # Calculate sums used multiple times ----
+  sum_count <- sum(count)
+  sum_pop <- sum(pop)
+  sum_stdpop <- sum(stdpop)
+
+  # Basic calculations ----
   rate <- count/pop
   alpha <- 1 - conf.level
-  cruderate <- sum(count)/sum(pop)
-  stdwt <- stdpop/sum(stdpop)
+  cruderate <- sum_count/sum_pop
+  stdwt <- stdpop/sum_stdpop
 
-  # calc exact poisson CI for crude rates ----
-  dummycount <- ifelse(sum(count) == 0, 1, sum(count))
-  crude.lci <- ifelse(sum(count) == 0, 0, qgamma(alpha/2, dummycount)) / sum(pop)
-  crude.uci <- qgamma(1 - alpha/2, sum(count) + 1) / sum(pop)
+  # Calculate exact poisson CI for crude rates ----
+  dummycount <- if(sum_count == 0) 1 else sum_count
+  crude.lci <- if(sum_count == 0) 0 else qgamma(alpha/2, dummycount)/sum_pop
+  crude.uci <- qgamma(1 - alpha/2, sum_count + 1)/sum_pop
 
-  # calc exact CI for adjusted rates ----
+  # Calculate exact CI for adjusted rates ----
   dsr <- sum(stdwt * rate)
   dsr.var <- sum((stdwt^2) * (count/pop^2))
   wm <- max(stdwt/pop)
-  gamma.lci <- qgamma(alpha/2, shape = (dsr^2)/dsr.var, scale = dsr.var/dsr)
-  gamma.uci <- qgamma(1 - alpha/2, shape = ((dsr + wm)^2)/(dsr.var +
-                                                             wm^2), scale = (dsr.var + wm^2)/(dsr + wm))
-  # prep output ----
-  adjusted <- per*c(crude.rate = cruderate, crude.lci = crude.lci, crude.uci = crude.uci, adj.rate = dsr, adj.lci = gamma.lci, adj.uci = gamma.uci)
-  adjusted <- c(count = sum(count), pop = sum(pop), adjusted)
+
+  shape_lower <- (dsr^2)/dsr.var
+  scale_lower <- dsr.var/dsr
+  gamma.lci <- qgamma(alpha/2, shape = shape_lower, scale = scale_lower)
+
+  shape_upper <- ((dsr + wm)^2)/(dsr.var + wm^2)
+  scale_upper <- (dsr.var + wm^2)/(dsr + wm)
+  gamma.uci <- qgamma(1 - alpha/2, shape = shape_upper, scale = scale_upper)
+
+  # Prep output ----
+  adjusted <- c(count = sum_count,
+                pop = sum_pop,
+                crude.rate = per * cruderate,
+                crude.lci = per * crude.lci,
+                crude.uci = per * crude.uci,
+                adj.rate = per * dsr,
+                adj.lci = per * gamma.lci,
+                adj.uci = per * gamma.uci
+  )
 }
 
 # age_standardize() ----
