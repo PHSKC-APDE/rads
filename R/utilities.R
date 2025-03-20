@@ -224,36 +224,20 @@ age_standardize <- function (ph.data,
                       immediate. = TRUE, call. = FALSE)
             }
           } else {
-          # Now more complicated case where group_by variables are given
-            group_combos <- unique(ph.data[, group_by, with = FALSE])
 
-            # Initialize a list to store results of tests for each table defined by group_combos
-            missing_ranges <- vector("list", nrow(group_combos))
+            age_chk = ph.data[, .(complete = all(1:100 %in% age), missing = list(setdiff(1:100, age))), by = group_by]
+            age_chk = age_chk[complete == F]
+            age_chk[, id := .I]
+            age_chk = split(age_chk, by = 'id')
 
-            # Check each group combination
-            for (i in 1:nrow(group_combos)) {
-              group_data <- ph.data
-              for (col in group_by) {
-                group_data <- group_data[group_data[[col]] == group_combos[[col]][i], ] # repeated filtering for however many group_by vars are specified
-              }
-              check_result <- check_full_age_range(group_data) # use the function created above
-              missing_ranges[[i]] <- list(
-                group = as.list(group_combos[i, ]),
-                full_range = check_result$full_range, # the T | F indicator from check_full_age_range()
-                missing = check_result$missing # the specific missing ages from check_full_age_range()
-              )
-            }
 
-            # subset the list of test for each group combination to keep when full_range != TRUE (i.e., FALSE, i.e., there are missing numbers)
-            groups_missing_ages <- missing_ranges[!sapply(missing_ranges, function(x) x$full_range)]
-
-            if (length(groups_missing_ages) > 0) {
+            if (length(age_chk) > 0) {
               warning_message <- paste0("\n\U00026A0 Some groups in ph.data (", ph.data.name, ") do not have the full range of ages from 0 to 100:\n")
-              for (group in groups_missing_ages) { # identify issues one item of the list (i.e., one group combo) at a time
-                group_desc <- paste(names(group$group), group$group, sep = "=", collapse = ", ")
+              for (group in age_chk) { # identify issues one item of the list (i.e., one group combo) at a time
+                group_desc <- paste(group[, .SD, .SDcols = group_by], sep = "=", collapse = ", ")
                 warning_message <- paste0(warning_message,
                                           "  Group (", group_desc, ") is missing ages: ",
-                                          paste(group$missing, collapse = ", "), "\n")
+                                          paste(group$missing[[1]], collapse = ", "), "\n")
               }
               warning_message <- paste0(warning_message,
                                         "This may affect the accuracy of your age-adjusted rates.\n",
