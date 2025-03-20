@@ -53,7 +53,7 @@ for(rmd_file in rmds) {
 # Push changes to https://github.com/PHSKC-APDE/rads.wiki.git
 system('git add .')
 system('git commit -m "Update wiki from automated process"')
-system('git push origin master')  # Using master as specified for your wiki
+system('git push origin master')
 
 
 # Clean up
