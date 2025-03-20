@@ -126,7 +126,7 @@ test_that('age_standardize ... errors & warnings',{
                                  per = 100000,
                                  conf.level = 0.95,
                                  group_by = c('height', 'weight', 'gender')),
-                 'Group \\(height=Tall, weight=Light, gender=F\\) is missing ages: 20, 21, 22, 23, 24, 25')
+                 'Group \\(Tall, Light, F\\) is missing ages: 20, 21, 22, 23, 24, 25')
 
   # test if fails when have mismatched aggregated data
   set.seed(98104)

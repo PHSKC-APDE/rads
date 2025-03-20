@@ -22,6 +22,12 @@ Begin by loading the [`rads`](https://github.com/PHSKC-APDE/rads) package/librar
 library(rads)
 ```
 
+```{r, echo=FALSE}
+pretty_kable <- function(dt) { 
+  knitr::kable(dt, format = 'markdown')
+}
+```
+
 The analytic ready birth data is stored in on Azure Server 16 (`[birth].[final_analytic]`). The `get_data_birth()` function will allow you to pull data from the SQL server with minimal fuss. To see the possible arguments that you can pass, use the `args()` function by typing the following:
 
 ```{r}
@@ -48,10 +54,10 @@ Let's try the function to see how it works by loading the year and King County c
 birth <- get_data_birth(cols = c("chi_year", "chi_geo_kc"), year = c(2019), kingco = F)
 ```
 
-We can confirm the `birth` object is in our environment by typing `ls()`
+We can confirm the `birth` object is in our environment using `exists()`
 
 ```{r}
-ls() 
+exists('birth') 
 ```
 
 To identify the class of the `birth` object and to confirm that our columns are present, we can type `str(birth)`
@@ -68,16 +74,24 @@ dim(birth)
 
 Use the `head()` command to take a peak at the first 6 lines of the `birth` table
 
-```{r}
+```{r, echo=TRUE, results='hide'}
 head(birth) 
+```
+
+```{r, echo=FALSE}
+pretty_kable(head(birth))
 ```
 
 ## Save time by identifying columns of interest
 
 As mentioned and demonstrated above, you can use the `cols` argument to save time by downloading a limited data set from the SQL servers. However, to do so, you need to know the column names. This is why we've created the`list_dataset_columns()` function. The sole argument is the name of the dataset (e.g., 'birth', 'chars', etc.) and the output is a table with all of the variable names.
 
-```{r}
+```{r, echo=TRUE, results='hide'}
 head(list_dataset_columns('birth'))
+```
+
+```{r, echo=FALSE}
+pretty_kable(head(list_dataset_columns('birth')))
 ```
 
 ## Loading data with get_data()
@@ -101,4 +115,4 @@ data.table::fsetequal(birth, birth2)
 list_apde_data()
 ```
 
--- *`r paste0("Updated by ", Sys.getenv("USERNAME"), ", ", Sys.Date())`*
+-- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'))`*

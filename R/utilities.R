@@ -18,38 +18,62 @@ options("scipen"=999) # turn off scientific notation
 #'  per = 100, conf.level = 0.95)[]
 #' }
 #' @importFrom stats qgamma
-adjust_direct <- function (count, pop, stdpop, per = 100000, conf.level = 0.95)
-{
+adjust_direct <- function(count, pop, stdpop, per = 100000, conf.level = 0.95) {
   # adapted from epitools v0.5-10.1 :: ageadjust.direct & survival 3.2-7 :: cipoisson
 
-  # logic checks ----
-  if((length(count)==length(pop) & length(pop)==length(stdpop)) != T){stop("The length of `count`, `pop`, and `stdpop` must be equal.")}
-  if( !class(per) %in% c("numeric", "integer")){stop(paste0("The `per` argument ('", per, "') you entered is invalid. It must be a positive integer, e.g., 100000."))}
-  if( per%%1 != 0 | (per%%1 == 0 & per <= 0)){stop(paste0("The `per` argument (", per, ") you entered is invalid. It must be a positive integer, e.g., 100000."))}
-  if( !class(conf.level) %in% c("numeric")){stop(paste0("`conf.level` (", conf.level, ") should be a two digit decimal between 0.00 & 0.99"))}
-  if( (100*conf.level)%% 1 != 0 | !(0<=conf.level & conf.level<=0.99)){stop(paste0("`conf.level` (", conf.level, ") should be a two digit decimal between 0.00 & 0.99"))}
+  # Validate arguments ----
+  n_count <- length(count)
+  if(n_count != length(pop) || n_count != length(stdpop)) {
+    stop("The length of `count`, `pop`, and `stdpop` must be equal.")
+  }
 
-  # basic calculations ----
+  if(!is.numeric(per) || per <= 0 || per %% 1 != 0) {
+    stop("The `per` argument must be a positive integer, e.g., 100000.")
+  }
+
+  if(!is.numeric(conf.level) || conf.level < 0 || conf.level > 0.99) {
+    stop("'conf.level' should be a decimal between 0.00 & 0.99")
+  }
+
+  # Calculate sums used multiple times ----
+  sum_count <- sum(count)
+  sum_pop <- sum(pop)
+  sum_stdpop <- sum(stdpop)
+
+  # Basic calculations ----
   rate <- count/pop
   alpha <- 1 - conf.level
-  cruderate <- sum(count)/sum(pop)
-  stdwt <- stdpop/sum(stdpop)
+  cruderate <- sum_count/sum_pop
+  stdwt <- stdpop/sum_stdpop
 
-  # calc exact poisson CI for crude rates ----
-  dummycount <- ifelse(sum(count) == 0, 1, sum(count))
-  crude.lci <- ifelse(sum(count) == 0, 0, qgamma(alpha/2, dummycount)) / sum(pop)
-  crude.uci <- qgamma(1 - alpha/2, sum(count) + 1) / sum(pop)
+  # Calculate exact poisson CI for crude rates ----
+  dummycount <- if(sum_count == 0) 1 else sum_count
+  crude.lci <- if(sum_count == 0) 0 else qgamma(alpha/2, dummycount)/sum_pop
+  crude.uci <- qgamma(1 - alpha/2, sum_count + 1)/sum_pop
 
-  # calc exact CI for adjusted rates ----
+  # Calculate exact CI for adjusted rates ----
   dsr <- sum(stdwt * rate)
   dsr.var <- sum((stdwt^2) * (count/pop^2))
   wm <- max(stdwt/pop)
-  gamma.lci <- qgamma(alpha/2, shape = (dsr^2)/dsr.var, scale = dsr.var/dsr)
-  gamma.uci <- qgamma(1 - alpha/2, shape = ((dsr + wm)^2)/(dsr.var +
-                                                             wm^2), scale = (dsr.var + wm^2)/(dsr + wm))
-  # prep output ----
-  adjusted <- per*c(crude.rate = cruderate, crude.lci = crude.lci, crude.uci = crude.uci, adj.rate = dsr, adj.lci = gamma.lci, adj.uci = gamma.uci)
-  adjusted <- c(count = sum(count), pop = sum(pop), adjusted)
+
+  shape_lower <- (dsr^2)/dsr.var
+  scale_lower <- dsr.var/dsr
+  gamma.lci <- qgamma(alpha/2, shape = shape_lower, scale = scale_lower)
+
+  shape_upper <- ((dsr + wm)^2)/(dsr.var + wm^2)
+  scale_upper <- (dsr.var + wm^2)/(dsr + wm)
+  gamma.uci <- qgamma(1 - alpha/2, shape = shape_upper, scale = scale_upper)
+
+  # Prep output ----
+  adjusted <- c(count = sum_count,
+                pop = sum_pop,
+                crude.rate = per * cruderate,
+                crude.lci = per * crude.lci,
+                crude.uci = per * crude.uci,
+                adj.rate = per * dsr,
+                adj.lci = per * gamma.lci,
+                adj.uci = per * gamma.uci
+  )
 }
 
 # age_standardize() ----
@@ -115,7 +139,7 @@ age_standardize <- function (ph.data,
 {
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
     ph.data.name <- age <- age_start <- age_end <- agecat <- count <- pop <-
-      stdpop <- reference_pop <- adj.lci <- adj.uci <- NULL
+      stdpop <- reference_pop <- adj.lci <- adj.uci <- complete <- id <- NULL
 
     ph.data.name <- deparse(substitute(ph.data))
     ph.data <- copy(ph.data)
@@ -224,36 +248,20 @@ age_standardize <- function (ph.data,
                       immediate. = TRUE, call. = FALSE)
             }
           } else {
-          # Now more complicated case where group_by variables are given
-            group_combos <- unique(ph.data[, group_by, with = FALSE])
 
-            # Initialize a list to store results of tests for each table defined by group_combos
-            missing_ranges <- vector("list", nrow(group_combos))
+            age_chk = ph.data[, list(complete = all(1:100 %in% age), missing = list(setdiff(1:100, age))), by = group_by]
+            age_chk = age_chk[complete == F]
+            age_chk[, id := .I]
+            age_chk = split(age_chk, by = 'id')
 
-            # Check each group combination
-            for (i in 1:nrow(group_combos)) {
-              group_data <- ph.data
-              for (col in group_by) {
-                group_data <- group_data[group_data[[col]] == group_combos[[col]][i], ] # repeated filtering for however many group_by vars are specified
-              }
-              check_result <- check_full_age_range(group_data) # use the function created above
-              missing_ranges[[i]] <- list(
-                group = as.list(group_combos[i, ]),
-                full_range = check_result$full_range, # the T | F indicator from check_full_age_range()
-                missing = check_result$missing # the specific missing ages from check_full_age_range()
-              )
-            }
 
-            # subset the list of test for each group combination to keep when full_range != TRUE (i.e., FALSE, i.e., there are missing numbers)
-            groups_missing_ages <- missing_ranges[!sapply(missing_ranges, function(x) x$full_range)]
-
-            if (length(groups_missing_ages) > 0) {
+            if (length(age_chk) > 0) {
               warning_message <- paste0("\n\U00026A0 Some groups in ph.data (", ph.data.name, ") do not have the full range of ages from 0 to 100:\n")
-              for (group in groups_missing_ages) { # identify issues one item of the list (i.e., one group combo) at a time
-                group_desc <- paste(names(group$group), group$group, sep = "=", collapse = ", ")
+              for (group in age_chk) { # identify issues one item of the list (i.e., one group combo) at a time
+                group_desc <- paste(group[, .SD, .SDcols = group_by], sep = "=", collapse = ", ")
                 warning_message <- paste0(warning_message,
                                           "  Group (", group_desc, ") is missing ages: ",
-                                          paste(group$missing, collapse = ", "), "\n")
+                                          paste(group$missing[[1]], collapse = ", "), "\n")
               }
               warning_message <- paste0(warning_message,
                                         "This may affect the accuracy of your age-adjusted rates.\n",
@@ -571,170 +579,91 @@ calc_age <- function(from, to) {
 }
 
 # chi_cols() ----
-#
 #' Vector of standard CHI / Tableau Ready columns
 #'
-#' @examples
-#' print(chi_cols())
+#' @description
+#' \strong{!!!STOP!!! This function has been deprecated.} Please use
+#' \code{apde.chi.tools::chi_get_cols()} instead.
+#'
+#' @param ... Not used.
+#'
+#' @section Deprecation:
+#' Please use \code{apde.chi.tools::chi_get_cols()} instead.
 #'
 #' @export
-chi_cols = function(){
-  chi.yaml <- yaml::yaml.load(httr::GET(url = "https://raw.githubusercontent.com/PHSKC-APDE/rads/main/ref/chi_qa.yaml"))
-  chi_colnames <- names(chi.yaml$vars)
+chi_cols <- function(...) {
+  stop("\n\U1F6D1 chi_cols() has been replaced. \nPlease use apde.chi.tools::chi_get_cols() instead.", call. = FALSE)
 }
 
 # chi_compare_est() ----
 #' Compare two data.frames with properly formatted CHI data
-#' @param OLD Character vector of length 1. Identifies the data.table/data.frame that you want to use as a reference
 #'
-#' @param NEW Character vector of length 1. Identifies the data.table/data.frame that you are interested in validating
+#' @description
+#' \strong{!!!STOP!!! This function has been deprecated.} Please use
+#' \code{apde.chi.tools::chi_compare_estimates()} instead.
 #'
-#' @param OLD.year Character vector of length 1. Specifies the exact year that you want to use in the OLD data
+#' @param ... Not used.
 #'
-#' @param NEW.year Character vector of length 1. Specifies the exact year that you want to use in the NEW data
-#'
-#' @param META Character vector of length 1. OPTIONAL ... identifies the data.table/data.frame containing the metadata for
-#' the NEW data.frame
-#'
-#' @importFrom data.table data.table setnames ":=" setDT copy
+#' @section Deprecation:
+#' Please use \code{apde.chi.tools::chi_compare_estimates()} instead.
 #'
 #' @export
-#' @return A simple printed statement, either identifying incompatible column types or a statement of success
 #'
-chi_compare_est <- function(OLD = NULL, NEW = NULL, OLD.year = NULL, NEW.year = NULL, META = NULL){
-
-  #Bindings for data.table/check global variables
-  indicator_key <- result_type <- relative.diff <- result.x <- result.y <- absolute.diff <- cat1 <- tab <-  NULL
-  # Check inputs ----
-  # Check if necessary arguments are present
-  if(is.null(OLD)){stop("You must provide 'OLD', i.e., the name of the table with the OLD data")}
-  if(is.null(NEW)){stop("You must provide 'NEW', i.e., the name of the table with the NEW data")}
-  if(is.null(OLD.year)){stop("You must provide 'OLD.year', i.e., the year of interest in the OLD data")}
-  if(is.null(NEW.year)){stop("You must provide 'NEW.year', i.e., the year of interest in the NEW data")}
-
-  # Check if objects are data.frames & make into data.table if need be
-  if(is.data.frame(OLD) == FALSE){
-    stop("'OLD' must be a data.frame or a data.table")
-  }else{OLD <- data.table::setDT(copy(OLD))}
-
-
-  if(is.data.frame(NEW) == FALSE){
-    stop("'NEW' must be a data.frame or a data.table")
-  }else{NEW <- data.table::setDT(copy(NEW))}
-
-  if(!is.null(META)){
-    if(is.data.frame(META) == FALSE){
-      stop("'META' must be a data.frame or a data.table")
-    }else{META <- data.table::setDT(copy(META))}
-  }
-
-  # Process data ----
-  # If metadata provided, add it to the columns to help interpret the output
-  if(!is.null(META)){
-    NEW <- merge(NEW, META[, list(indicator_key, result_type)], by = "indicator_key", all.x = TRUE, all.y = FALSE)
-  } else { NEW[, result_type := "Metadata not provided"]}
-
-  # Merge old and new data based on identifiers
-  comp <- merge(copy(OLD[year == OLD.year]),
-                copy(NEW[year == NEW.year]),
-                by = c("indicator_key", "tab",
-                       "cat1", "cat1_group", "cat1_varname",
-                       "cat2", "cat2_group", "cat2_varname"),
-                all = T)
-
-  # calculate percent differences between old (x) and new(y)
-  comp[, relative.diff := round2(abs((result.x - result.y) / result.x)*100, 1)]
-  comp[result_type != "rate", absolute.diff := round2(abs(result.x - result.y)*100, 1)]
-  comp[result_type == "rate", absolute.diff := round2(abs(result.x - result.y), 1)]
-  comp <- comp[!is.na(absolute.diff)]  # drop if absolute difference is NA
-
-  # order variables
-  comp <- comp[, c("absolute.diff", "relative.diff", "result_type",
-                   "indicator_key", "tab",
-                   "cat1", "cat1_group", "cat1_varname",
-                   "cat2", "cat2_group", "cat2_varname", "year.x", "year.y",
-                   "result.x", "result.y", "lower_bound.x", "lower_bound.y",
-                   "upper_bound.x", "upper_bound.y",
-                   "numerator.x", "numerator.y", "denominator.x", "denominator.y",
-                   "se.x", "se.y")]
-
-  # rename suffixes
-  setnames(comp, names(comp), gsub("\\.x$", ".OLD", names(comp)))
-  setnames(comp, names(comp), gsub("\\.y$", ".NEW", names(comp)))
-
-  # order based on percent difference
-  setorder(comp, -absolute.diff)
-
-  # return object ----
-  return(comp)
-
+chi_compare_est <- function(...) {
+  stop("\n\U1F6D1 chi_compare_est() has been replaced. \nPlease use apde.chi.tools::chi_compare_estimates() instead.", call. = FALSE)
 }
 
 # chi_compare_kc() ----
 #' Compare CHI standard tabular results to the King County average for the same year within a given data set
-#' @description
-#' \strong{!!!STOP!!! This function has been deprecated!} Please use
-#' \link{compare_estimate} instead.
-#' @param orig Character vector of length 1. Identifies the data.table/data.frame to be fetched. Note the table must have the following columns:
-#' 'result', 'lower_bound', & 'upper_bound' and all three must be numeric
-#' @param new.col.name Character vector of length 1. It is the name of the column containing the comparison results.
-#' @param linkage.vars Character vector of length 1. It is the name of the column that you will use for merging.
 #'
-#' @importFrom data.table setnames ":=" setDT
+#' @description
+#' \strong{!!!STOP!!! This function has been deprecated.} Please use
+#' \link{compare_estimate} instead.
+#'
+#'
+#' @param ... Not used.
+#'
+#' @section Deprecation:
+#' Please use \link{compare_estimate} instead.
 #'
 #' @export
-#' @return data.table comprised of the original data.table and two additional columns ... 'significance' and 'comparison_with_kc' (or alternatively specified name)
-chi_compare_kc <- function(orig,
-                           linkage.vars = c("indicator_key"),
-                           new.col.name = "comparison_with_kc"){
-
-  #Deprecation warning
-  .Deprecated("compare_estimate")
-
-  #Bindings for data.table/check global variables
-  cat1 <- cat1_varname <- result <- comp.result <- lower_bound <- comp.upper_bound <- upper_bound <- comp.lower_bound <- significance <- tab <- comparator_vars <- NULL
-
-  #Copy & subset comparator data
-  data.table::setDT(copy(orig))
-
-  #Copy & subset comparator data
-  comparator_vars <- c(linkage.vars, "year", "result", "lower_bound", "upper_bound")
-  comparator <- unique(orig[cat1=="King County" & tab!="crosstabs", (comparator_vars), with = F])
-  data.table::setnames(comparator, c("result", "lower_bound", "upper_bound"), c("comp.result", "comp.lower_bound", "comp.upper_bound"))
-
-  #Merge comparator data onto all other data
-  orig <- merge(orig, comparator, by=c(linkage.vars, "year"), all.x = TRUE, all.y = TRUE)
-
-  #Compare estimates with comparator
-  if(sum(grepl(new.col.name, names(orig))) > 0){orig[, c(new.col.name) := NULL]}
-  orig[result == comp.result, c(new.col.name) := "no different"]
-  orig[result > comp.result, c(new.col.name) := "higher"]
-  orig[result < comp.result, c(new.col.name) := "lower"]
-
-  #According to APDE protocol, we check for overlapping CI rather than SE and Z scores
-  if(sum(grepl("significance", names(orig))) > 0){orig[, significance := NULL]}
-  orig[, significance := NA_character_]
-  orig[(lower_bound > comp.upper_bound) | (upper_bound < comp.lower_bound), significance := "*"]
-
-  #Keep comparison only if statistically significant
-  orig[is.na(significance), c(new.col.name) := "no different"]
-
-  #Drop KC level estimates that were just used for the comparisons
-  orig[, c("comp.result", "comp.upper_bound", "comp.lower_bound") := NULL]
-
-  return(orig)
+#'
+chi_compare_kc <- function(...) {
+  stop("\n\U1F6D1 chi_compare_kc() has been replaced. \nPlease use rads::compare_estimate() instead.", call. = FALSE)
 }
 
 # chi_metadata_cols() ----
 #' Vector of standard CHI / Tableau Ready metadata columns
 #'
-#' @examples
-#' print(chi_metadata_cols())
+#' @description
+#' \strong{!!!STOP!!! This function has been deprecated.} Please use
+#' \code{names(apde.chi.tools::chi_get_yaml()$metadata)} instead.
+#'
+#' @param ... Not used.
+#'
+#' @section Deprecation:
+#' Please use \code{names(apde.chi.tools::chi_get_yaml()$metadata)} instead.
 #'
 #' @export
-chi_metadata_cols = function(){
-  chi.yaml <- yaml::yaml.load(httr::GET(url = "https://raw.githubusercontent.com/PHSKC-APDE/rads/main/ref/chi_qa.yaml"))
-  chi_metanames <- names(chi.yaml$metadata)
+chi_metadata_cols <- function(...) {
+  stop("\n\U1F6D1 chi_metadata_cols() has been replaced. \nPlease use names(apde.chi.tools::chi_get_yaml()$metadata) instead.", call. = FALSE)
+}
+
+# chi_qa() ----
+#' QA for CHI/Tableau ready standards using R
+#'
+#' @description
+#' \strong{!!!STOP!!! This function has been deprecated.} Please use
+#' \code{apde.chi.tools::chi_qa_tro()} instead.
+#'
+#' @param ... Not used.
+#'
+#' @section Deprecation:
+#' Please use \code{apde.chi.tools::chi_qa_tro()} instead.
+#'
+#' @export
+chi_qa <- function(...) {
+  stop("\n\U1F6D1 chi_qa() has been replaced. \nPlease use apde.chi.tools::chi_qa_tro() instead.", call. = FALSE)
 }
 
 # compare_estimate() ----
@@ -1123,7 +1052,7 @@ format_time_simple <- function(x){
 generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL, table = NULL){
 
   #Bindings for data.table/check global variables
-  vartype <- binary <- varname <- i <- varlength <- sql <- '.' <- NULL
+  vartype <- binary <- varname <- i <- varlength <- sql <- NULL
 
   mi.outfile = 0
 
@@ -1213,7 +1142,7 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
   mydict[sql == "NVARCHAR", sql := paste0(sql, "(", varlength, ")")]
   mydict[, sql := paste0("    ", varname, ": ", sql)]
   setorder(mydict, varname) # sort in same order as the data.table
-  mydict <- mydict[, .(sql)]
+  mydict <- mydict[, list(sql)]
 
   if(!is.null(datasource)){
     header <- data.table(
@@ -1304,7 +1233,7 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
 #' to further collapse/aggregate/sum, you'll need to properly account for error
 #' propagation. Here is a line of \code{data.table} code as an example:
 #' ```
-#' DT[, .(estimate = sum(estimate), stderror = sqrt(sum(stderror)^2)), c(group_by_vars)]
+#' DT[, list(estimate = sum(estimate), stderror = sqrt(sum(stderror)^2)), c(group_by_vars)]
 #' ```
 #'
 #' @return a data.table with two columns of geographic identifiers
@@ -1833,11 +1762,11 @@ list_dataset_columns_pums <- function(config, year, mykey, kingco, analytic_only
 #' }
 list_ref_xwalk <- function(){
   # bindings for data.table/check global variables ----
-  ref_get_xwalk <- input <- output <- '.' <-  NULL
+  ref_get_xwalk <- input <- output <- NULL
   data("ref_get_xwalk", envir=environment()) # import ref_get_xwalk from /data as a promise
   geodt <- copy(ref_get_xwalk) # evaluate / import the promise
   geodt <- string_clean(geodt)
-  geodt <- geodt[, .(geo1 = input, geo2 = output)]
+  geodt <- geodt[, list(geo1 = input, geo2 = output)]
   return(geodt)
 }
 
@@ -2682,7 +2611,7 @@ sql_clean <- function(dat = NULL, stringsAsFactors = FALSE){
 #' )
 #' std_error(c(seq(0, 400, 100), NA)) # expected value for mygroup == A
 #' std_error(c(seq(1000, 1800, 200), NA)) # expected value for mygroup == B
-#' temp1[, .(sem = std_error(x)), by = 'mygroup'][] # view summary table
+#' temp1[, list(sem = std_error(x)), by = 'mygroup'][] # view summary table
 #' temp1[, sem := std_error(x), by = 'mygroup'][] # save results in the original
 #' }
 #'

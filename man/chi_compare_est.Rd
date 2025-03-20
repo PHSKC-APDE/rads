@@ -4,29 +4,17 @@
 \alias{chi_compare_est}
 \title{Compare two data.frames with properly formatted CHI data}
 \usage{
-chi_compare_est(
-  OLD = NULL,
-  NEW = NULL,
-  OLD.year = NULL,
-  NEW.year = NULL,
-  META = NULL
-)
+chi_compare_est(...)
 }
 \arguments{
-\item{OLD}{Character vector of length 1. Identifies the data.table/data.frame that you want to use as a reference}
-
-\item{NEW}{Character vector of length 1. Identifies the data.table/data.frame that you are interested in validating}
-
-\item{OLD.year}{Character vector of length 1. Specifies the exact year that you want to use in the OLD data}
-
-\item{NEW.year}{Character vector of length 1. Specifies the exact year that you want to use in the NEW data}
-
-\item{META}{Character vector of length 1. OPTIONAL ... identifies the data.table/data.frame containing the metadata for
-the NEW data.frame}
-}
-\value{
-A simple printed statement, either identifying incompatible column types or a statement of success
+\item{...}{Not used.}
 }
 \description{
-Compare two data.frames with properly formatted CHI data
+\strong{!!!STOP!!! This function has been deprecated.} Please use
+\code{apde.chi.tools::chi_compare_estimates()} instead.
 }
+\section{Deprecation}{
+
+Please use \code{apde.chi.tools::chi_compare_estimates()} instead.
+}
+
