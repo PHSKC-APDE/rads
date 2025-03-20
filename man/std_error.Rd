@@ -25,7 +25,7 @@ mygroup = c(rep("A", 5), rep("B", 6))
 )
 std_error(c(seq(0, 400, 100), NA)) # expected value for mygroup == A
 std_error(c(seq(1000, 1800, 200), NA)) # expected value for mygroup == B
-temp1[, .(sem = std_error(x)), by = 'mygroup'][] # view summary table
+temp1[, list(sem = std_error(x)), by = 'mygroup'][] # view summary table
 temp1[, sem := std_error(x), by = 'mygroup'][] # save results in the original
 }
 

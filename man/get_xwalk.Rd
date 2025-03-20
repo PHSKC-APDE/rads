@@ -74,7 +74,7 @@ for further analysis. However, if you're merging on to pre-aggregated data,
 to further collapse/aggregate/sum, you'll need to properly account for error
 propagation. Here is a line of \code{data.table} code as an example:
 
-\if{html}{\out{<div class="sourceCode">}}\preformatted{DT[, .(estimate = sum(estimate), stderror = sqrt(sum(stderror)^2)), c(group_by_vars)]
+\if{html}{\out{<div class="sourceCode">}}\preformatted{DT[, list(estimate = sum(estimate), stderror = sqrt(sum(stderror)^2)), c(group_by_vars)]
 }\if{html}{\out{</div>}}
 }
 }
