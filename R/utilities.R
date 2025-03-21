@@ -226,13 +226,13 @@ age_standardize <- function (ph.data,
           } else {
 
             age_chk = ph.data[, .(complete = all(1:100 %in% age), missing = list(setdiff(1:100, age))), by = group_by]
-            age_chk = age_chk[complete == F]
+            age_chk = age_chk[complete == F][1:min(c(nrow(age_chk), 5))]
             age_chk[, id := .I]
             age_chk = split(age_chk, by = 'id')
 
 
             if (length(age_chk) > 0) {
-              warning_message <- paste0("\n\U00026A0 Some groups in ph.data (", ph.data.name, ") do not have the full range of ages from 0 to 100:\n")
+              warning_message <- paste0("\n\U00026A0 Some groups in ph.data (", ph.data.name, ") do not have the full range of ages from 0 to 100:. The first (up to) 5 are displayed: \n")
               for (group in age_chk) { # identify issues one item of the list (i.e., one group combo) at a time
                 group_desc <- paste(group[, .SD, .SDcols = group_by], sep = "=", collapse = ", ")
                 warning_message <- paste0(warning_message,
