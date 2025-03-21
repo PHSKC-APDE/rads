@@ -565,6 +565,9 @@ test_that('Resample approach', {
 
   expect_equal(r13.2[level == 'M', mean], r13.3[,mean])
 
+  # Multiple values in `what` break
+  expect_error(calc(midat, c('random_fact', 'random'), metrics = c('mean')))
+
 
 })
 

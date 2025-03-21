@@ -18,38 +18,62 @@ options("scipen"=999) # turn off scientific notation
 #'  per = 100, conf.level = 0.95)[]
 #' }
 #' @importFrom stats qgamma
-adjust_direct <- function (count, pop, stdpop, per = 100000, conf.level = 0.95)
-{
+adjust_direct <- function(count, pop, stdpop, per = 100000, conf.level = 0.95) {
   # adapted from epitools v0.5-10.1 :: ageadjust.direct & survival 3.2-7 :: cipoisson
 
-  # logic checks ----
-  if((length(count)==length(pop) & length(pop)==length(stdpop)) != T){stop("The length of `count`, `pop`, and `stdpop` must be equal.")}
-  if( !class(per) %in% c("numeric", "integer")){stop(paste0("The `per` argument ('", per, "') you entered is invalid. It must be a positive integer, e.g., 100000."))}
-  if( per%%1 != 0 | (per%%1 == 0 & per <= 0)){stop(paste0("The `per` argument (", per, ") you entered is invalid. It must be a positive integer, e.g., 100000."))}
-  if( !class(conf.level) %in% c("numeric")){stop(paste0("`conf.level` (", conf.level, ") should be a two digit decimal between 0.00 & 0.99"))}
-  if( (100*conf.level)%% 1 != 0 | !(0<=conf.level & conf.level<=0.99)){stop(paste0("`conf.level` (", conf.level, ") should be a two digit decimal between 0.00 & 0.99"))}
+  # Validate arguments ----
+  n_count <- length(count)
+  if(n_count != length(pop) || n_count != length(stdpop)) {
+    stop("The length of `count`, `pop`, and `stdpop` must be equal.")
+  }
 
-  # basic calculations ----
+  if(!is.numeric(per) || per <= 0 || per %% 1 != 0) {
+    stop("The `per` argument must be a positive integer, e.g., 100000.")
+  }
+
+  if(!is.numeric(conf.level) || conf.level < 0 || conf.level > 0.99) {
+    stop("'conf.level' should be a decimal between 0.00 & 0.99")
+  }
+
+  # Calculate sums used multiple times ----
+  sum_count <- sum(count)
+  sum_pop <- sum(pop)
+  sum_stdpop <- sum(stdpop)
+
+  # Basic calculations ----
   rate <- count/pop
   alpha <- 1 - conf.level
-  cruderate <- sum(count)/sum(pop)
-  stdwt <- stdpop/sum(stdpop)
+  cruderate <- sum_count/sum_pop
+  stdwt <- stdpop/sum_stdpop
 
-  # calc exact poisson CI for crude rates ----
-  dummycount <- ifelse(sum(count) == 0, 1, sum(count))
-  crude.lci <- ifelse(sum(count) == 0, 0, qgamma(alpha/2, dummycount)) / sum(pop)
-  crude.uci <- qgamma(1 - alpha/2, sum(count) + 1) / sum(pop)
+  # Calculate exact poisson CI for crude rates ----
+  dummycount <- if(sum_count == 0) 1 else sum_count
+  crude.lci <- if(sum_count == 0) 0 else qgamma(alpha/2, dummycount)/sum_pop
+  crude.uci <- qgamma(1 - alpha/2, sum_count + 1)/sum_pop
 
-  # calc exact CI for adjusted rates ----
+  # Calculate exact CI for adjusted rates ----
   dsr <- sum(stdwt * rate)
   dsr.var <- sum((stdwt^2) * (count/pop^2))
   wm <- max(stdwt/pop)
-  gamma.lci <- qgamma(alpha/2, shape = (dsr^2)/dsr.var, scale = dsr.var/dsr)
-  gamma.uci <- qgamma(1 - alpha/2, shape = ((dsr + wm)^2)/(dsr.var +
-                                                             wm^2), scale = (dsr.var + wm^2)/(dsr + wm))
-  # prep output ----
-  adjusted <- per*c(crude.rate = cruderate, crude.lci = crude.lci, crude.uci = crude.uci, adj.rate = dsr, adj.lci = gamma.lci, adj.uci = gamma.uci)
-  adjusted <- c(count = sum(count), pop = sum(pop), adjusted)
+
+  shape_lower <- (dsr^2)/dsr.var
+  scale_lower <- dsr.var/dsr
+  gamma.lci <- qgamma(alpha/2, shape = shape_lower, scale = scale_lower)
+
+  shape_upper <- ((dsr + wm)^2)/(dsr.var + wm^2)
+  scale_upper <- (dsr.var + wm^2)/(dsr + wm)
+  gamma.uci <- qgamma(1 - alpha/2, shape = shape_upper, scale = scale_upper)
+
+  # Prep output ----
+  adjusted <- c(count = sum_count,
+                pop = sum_pop,
+                crude.rate = per * cruderate,
+                crude.lci = per * crude.lci,
+                crude.uci = per * crude.uci,
+                adj.rate = per * dsr,
+                adj.lci = per * gamma.lci,
+                adj.uci = per * gamma.uci
+  )
 }
 
 # age_standardize() ----
@@ -115,7 +139,7 @@ age_standardize <- function (ph.data,
 {
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
     ph.data.name <- age <- age_start <- age_end <- agecat <- count <- pop <-
-      stdpop <- reference_pop <- adj.lci <- adj.uci <- NULL
+      stdpop <- reference_pop <- adj.lci <- adj.uci <- complete <- id <- NULL
 
     ph.data.name <- deparse(substitute(ph.data))
     ph.data <- copy(ph.data)
@@ -224,7 +248,6 @@ age_standardize <- function (ph.data,
                       immediate. = TRUE, call. = FALSE)
             }
           } else {
-
             age_chk = ph.data[, .(complete = all(1:100 %in% age), missing = list(setdiff(1:100, age))), by = group_by]
             age_chk = age_chk[complete == F][1:min(c(nrow(age_chk), 5))]
             age_chk[, id := .I]
@@ -1028,7 +1051,7 @@ format_time_simple <- function(x){
 generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL, table = NULL){
 
   #Bindings for data.table/check global variables
-  vartype <- binary <- varname <- i <- varlength <- sql <- '.' <- NULL
+  vartype <- binary <- varname <- i <- varlength <- sql <- NULL
 
   mi.outfile = 0
 
@@ -1118,7 +1141,7 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
   mydict[sql == "NVARCHAR", sql := paste0(sql, "(", varlength, ")")]
   mydict[, sql := paste0("    ", varname, ": ", sql)]
   setorder(mydict, varname) # sort in same order as the data.table
-  mydict <- mydict[, .(sql)]
+  mydict <- mydict[, list(sql)]
 
   if(!is.null(datasource)){
     header <- data.table(
@@ -1209,7 +1232,7 @@ generate_yaml <- function(mydt, outfile = NULL, datasource = NULL, schema = NULL
 #' to further collapse/aggregate/sum, you'll need to properly account for error
 #' propagation. Here is a line of \code{data.table} code as an example:
 #' ```
-#' DT[, .(estimate = sum(estimate), stderror = sqrt(sum(stderror)^2)), c(group_by_vars)]
+#' DT[, list(estimate = sum(estimate), stderror = sqrt(sum(stderror)^2)), c(group_by_vars)]
 #' ```
 #'
 #' @return a data.table with two columns of geographic identifiers
@@ -1738,11 +1761,11 @@ list_dataset_columns_pums <- function(config, year, mykey, kingco, analytic_only
 #' }
 list_ref_xwalk <- function(){
   # bindings for data.table/check global variables ----
-  ref_get_xwalk <- input <- output <- '.' <-  NULL
+  ref_get_xwalk <- input <- output <- NULL
   data("ref_get_xwalk", envir=environment()) # import ref_get_xwalk from /data as a promise
   geodt <- copy(ref_get_xwalk) # evaluate / import the promise
   geodt <- string_clean(geodt)
-  geodt <- geodt[, .(geo1 = input, geo2 = output)]
+  geodt <- geodt[, list(geo1 = input, geo2 = output)]
   return(geodt)
 }
 
@@ -2587,7 +2610,7 @@ sql_clean <- function(dat = NULL, stringsAsFactors = FALSE){
 #' )
 #' std_error(c(seq(0, 400, 100), NA)) # expected value for mygroup == A
 #' std_error(c(seq(1000, 1800, 200), NA)) # expected value for mygroup == B
-#' temp1[, .(sem = std_error(x)), by = 'mygroup'][] # view summary table
+#' temp1[, list(sem = std_error(x)), by = 'mygroup'][] # view summary table
 #' temp1[, sem := std_error(x), by = 'mygroup'][] # save results in the original
 #' }
 #'
