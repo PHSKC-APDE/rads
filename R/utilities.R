@@ -98,6 +98,7 @@ adjust_direct <- function(count, pop, stdpop, per = 100000, conf.level = 0.95) {
 #' @param per Integer vector of length 1. A multiplier for all rates and CI, e.g., when per = 1000, the rates are per 1000 people
 #' @param conf.level A numeric vector of length 1. The confidence interval used in the calculations.
 #' @param group_by Character vector of indeterminate length. By which variable(s) do you want to stratify the rate results, if any?
+#' @param diagnostic_report if group_by is used and there are groups with missing ages, return diagnostic report instead of normal results
 #'
 #' @return a data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'group_by' variable(s) -- if any
 #' @export
@@ -135,234 +136,233 @@ age_standardize <- function (ph.data,
                              my.pop = "pop",
                              per = 100000,
                              conf.level = 0.95,
-                             group_by = NULL)
-{
+                             group_by = NULL,
+                             diagnostic_report = F) {
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-    ph.data.name <- age <- age_start <- age_end <- agecat <- count <- pop <-
-      stdpop <- reference_pop <- adj.lci <- adj.uci <- complete <- id <- NULL
+  ph.data.name <- age <- age_start <- age_end <- agecat <- count <- pop <-
+    stdpop <- reference_pop <- adj.lci <- adj.uci <- complete <- id <- NULL
 
-    ph.data.name <- deparse(substitute(ph.data))
-    ph.data <- copy(ph.data)
+  ph.data.name <- deparse(substitute(ph.data))
+  ph.data <- copy(ph.data)
 
   # Logic checks ----
-    # Check that ph.data is a data.frame or data.table ----
-      if( inherits(ph.data, "data.frame") == FALSE){stop("\n\U1F6D1 ph.data must be a data.frame or a data.table containing both counts and population data.")}
-      if( inherits(ph.data, "data.table") == FALSE){setDT(ph.data)}
+  # Check that ph.data is a data.frame or data.table ----
+  if( inherits(ph.data, "data.frame") == FALSE){stop("\n\U1F6D1 ph.data must be a data.frame or a data.table containing both counts and population data.")}
+  if( inherits(ph.data, "data.table") == FALSE){setDT(ph.data)}
 
-    # Check that ph.data has either 'age' or 'agecat' ----
-      age_exists <- "age" %in% names(ph.data)
-      agecat_exists <- "agecat" %in% names(ph.data)
+  # Check that ph.data has either 'age' or 'agecat' ----
+  age_exists <- "age" %in% names(ph.data)
+  agecat_exists <- "agecat" %in% names(ph.data)
 
-      if (age_exists && agecat_exists) {
-        stop("\n\U1F6D1 Both 'age' and 'agecat' columns are present, but only one is needed. Please check your data.")
-      } else if (!age_exists && !agecat_exists) {
-        stop("\n\U1F6D1 Neither 'age' nor 'agecat' columns are present. Please check your data.")
-      } else if (age_exists) {
-        # Check if 'age' is integer or can be converted to integer without loss
-        if (!is.integer(ph.data$age) & is.numeric(ph.data$age)) {
-          if (all(ph.data$age == floor(ph.data$age))) {
-            ph.data[, age := as.integer(age)]
-          } else {
-          stop("\n\U1F6D1 The 'age' column is not an integer and cannot be converted to integer without loss of data.")
-          }
-        }
-      } else if (agecat_exists) {
-        # Check if 'agecat' is character or factor
-        if (!is.character(ph.data$agecat)) {
-          if (is.factor(ph.data$agecat)) {
-            ph.data[, agecat := as.character(agecat)]
-          } else {
-            stop("\n\U1F6D1 The 'agecat' column is neither character nor factor.")
-          }
-        }
+  if (age_exists && agecat_exists) {
+    stop("\n\U1F6D1 Both 'age' and 'agecat' columns are present, but only one is needed. Please check your data.")
+  } else if (!age_exists && !agecat_exists) {
+    stop("\n\U1F6D1 Neither 'age' nor 'agecat' columns are present. Please check your data.")
+  } else if (age_exists) {
+    # Check if 'age' is integer or can be converted to integer without loss
+    if (!is.integer(ph.data$age) & is.numeric(ph.data$age)) {
+      if (all(ph.data$age == floor(ph.data$age))) {
+        ph.data[, age := as.integer(age)]
+      } else {
+        stop("\n\U1F6D1 The 'age' column is not an integer and cannot be converted to integer without loss of data.")
       }
+    }
+  } else if (agecat_exists) {
+    # Check if 'agecat' is character or factor
+    if (!is.character(ph.data$agecat)) {
+      if (is.factor(ph.data$agecat)) {
+        ph.data[, agecat := as.character(agecat)]
+      } else {
+        stop("\n\U1F6D1 The 'agecat' column is neither character nor factor.")
+      }
+    }
+  }
 
-    # Check arguments needed for adjust_direct ----
-      if(! my.count %in% colnames(ph.data)){
-        stop(paste0("\n\U1F6D1 The column '", my.count, "' does not exist in ph.data.\n",
-                    "ph.data must have a column indicating the count of events (e.g., deaths, births, etc.) and is typically named 'count'.\n",
-                    "If such a column exists with a different name, you need to specify it in the `my.count` argument. e.g., my.count = 'deaths'."))
-        }
+  # Check arguments needed for adjust_direct ----
+  if(! my.count %in% colnames(ph.data)){
+    stop(paste0("\n\U1F6D1 The column '", my.count, "' does not exist in ph.data.\n",
+                "ph.data must have a column indicating the count of events (e.g., deaths, births, etc.) and is typically named 'count'.\n",
+                "If such a column exists with a different name, you need to specify it in the `my.count` argument. e.g., my.count = 'deaths'."))
+  }
 
-      if(! my.pop %in% colnames(ph.data)){
-        stop(paste0("\n\U1F6D1 The column '", my.pop, "' does not exist in ph.data.\n",
-                    "ph.data must have a column for the population denominator correspondnig to the given demographics. It is typically named 'pop'.\n",
-                    "If such a column exists with a different name, you need to specify it in the `my.pop` argument. e.g., my.pop = 'wapop'."))
-        }
+  if(! my.pop %in% colnames(ph.data)){
+    stop(paste0("\n\U1F6D1 The column '", my.pop, "' does not exist in ph.data.\n",
+                "ph.data must have a column for the population denominator correspondnig to the given demographics. It is typically named 'pop'.\n",
+                "If such a column exists with a different name, you need to specify it in the `my.pop` argument. e.g., my.pop = 'wapop'."))
+  }
 
-    # Ensure the reference population exists ----
-      if(is.null(ref.popname)){ref.popname <- "2000 U.S. Std Population (11 age groups)"}
-      if(! ref.popname %in% c( list_ref_pop(), "none")){
-        stop(strwrap(paste0("\n\U1F6D1 ref.popname ('", ref.popname, "') is not a valid reference population name.
+  # Ensure the reference population exists ----
+  if(is.null(ref.popname)){ref.popname <- "2000 U.S. Std Population (11 age groups)"}
+  if(! ref.popname %in% c( list_ref_pop(), "none")){
+    stop(strwrap(paste0("\n\U1F6D1 ref.popname ('", ref.popname, "') is not a valid reference population name.
               The names of standardized reference populations can be viewed by typing `list_ref_pop()`.
               If ph.data is already aggregated/collapsed and has a relevant 'stdpop' column, please set ref.popname = 'none'"), prefix = " ", initial = ""))}
 
-      if(ref.popname == "none" & !"stdpop" %in% colnames(ph.data)){stop("\n\U1F6D1 When specifying ref.popname = 'none', ph.data must have a column named 'stdpop' with the reference standard population data.")}
+  if(ref.popname == "none" & !"stdpop" %in% colnames(ph.data)){stop("\n\U1F6D1 When specifying ref.popname = 'none', ph.data must have a column named 'stdpop' with the reference standard population data.")}
 
-      if(ref.popname == "none" & collapse == T){stop(strwrap("\n\U1F6D1 When ref.popname = 'none', collapse should equal F.
+  if(ref.popname == "none" & collapse == T){stop(strwrap("\n\U1F6D1 When ref.popname = 'none', collapse should equal F.
                                                                       Selecting ref.popname = 'none' expects that ph.data has already been collapsed/aggregated and has a 'stdpop' column."), prefix = " ", initial = "")}
 
   # Standardize column names ----
-    # purposefully did not use setnames() because it is possible that count | pop already exists and are intentionally using different columns for this function
-      ph.data[, "count" := get(my.count)]
-      ph.data[, "pop" := get(my.pop)]
+  # purposefully did not use setnames() because it is possible that count | pop already exists and are intentionally using different columns for this function
+  ph.data[, "count" := get(my.count)]
+  ph.data[, "pop" := get(my.pop)]
 
   # Check ranges for age, count, and population ----
-    # Check age ----
-      if(!"agecat" %in% names(ph.data)){ # if given agecat, ignore these tests for single years of age
-        # check for missing ages ----
-          if(nrow(ph.data[is.na(age)]) > 0){
-            stop(paste0("\n\U1F6D1 ph.data (", ph.data.name, ") contains at least one row where age is missing.\nCorrect the data and try again."))
-          }
+  # Check age ----
+  if(!"agecat" %in% names(ph.data)){ # if given agecat, ignore these tests for single years of age
+    # check for missing ages ----
+    if(nrow(ph.data[is.na(age)]) > 0){
+      stop(paste0("\n\U1F6D1 ph.data (", ph.data.name, ") contains at least one row where age is missing.\nCorrect the data and try again."))
+    }
 
-        # check for ages > 100 ----
-          if(nrow(ph.data[age > 100]) > 0){
-            warning(paste0("\n\U00026A0 ph.data (", ph.data.name, ") contains at least one row where age is greater than 100.\n",
-                           "Those values have automatically been recoded to 100 because population pulled from\n",
-                           "get_population() is top coded to 100 and reference populations are usually top coded at 85."),
-                    immediate. = TRUE, call. = FALSE)
-            ph.data[age > 100, age := 100]
-          }
+    # check for ages > 100 ----
+    if(nrow(ph.data[age > 100]) > 0){
+      warning(paste0("\n\U00026A0 ph.data (", ph.data.name, ") contains at least one row where age is greater than 100.\n",
+                     "Those values have automatically been recoded to 100 because population pulled from\n",
+                     "get_population() is top coded to 100 and reference populations are usually top coded at 85."),
+              immediate. = TRUE, call. = FALSE)
+      ph.data[age > 100, age := 100]
+    }
 
-        # check for negative ages ----
-          if(nrow(ph.data[age < 0]) > 0){
-            stop(paste0("\n\U1F6D1 ph.data (", ph.data.name, ") contains at least one row where age is negative.\nCorrect the data and try again."))
-          }
+    # check for negative ages ----
+    if(nrow(ph.data[age < 0]) > 0){
+      stop(paste0("\n\U1F6D1 ph.data (", ph.data.name, ") contains at least one row where age is negative.\nCorrect the data and try again."))
+    }
 
-        # Check for full range of ages (0 to 100) overall and within groups ----
-          # simple function to check whether all ages are present (T | F) and which ones are missing (if any)
-            check_full_age_range <- function(tempx) {
-              actual_ages <- sort(unique(tempx$age))
-              missing_ages <- setdiff(0:100, actual_ages)
-              return(list(full_range = length(missing_ages) == 0, missing = missing_ages))
-            }
+    # Check for full range of ages (0 to 100) overall and within groups ----
+    # simple function to check whether all ages are present (T | F) and which ones are missing (if any)
+    check_full_age_range <- function(tempx) {
+      actual_ages <- sort(unique(tempx$age))
+      missing_ages <- setdiff(0:100, actual_ages)
+      return(list(full_range = length(missing_ages) == 0, missing = missing_ages))
+    }
 
-          # Simple check when group_by not specified
-          if (is.null(group_by)) {
-            check_result <- check_full_age_range(ph.data)
-            if (!check_result$full_range) {
-              warning(paste0("\n\U00026A0 ph.data (", ph.data.name, ") does not have the full range of ages from 0 to 100.\n",
-                             "Missing ages: ", paste(check_result$missing, collapse = ", "), "\n",
-                             "This may affect the accuracy of your age-adjusted rates.\n",
-                             "Consider adding missing ages with zero counts and the appropriate population."),
-                      immediate. = TRUE, call. = FALSE)
-            }
-          } else {
+    # Simple check when group_by not specified
 
-            age_chk = ph.data[, list(complete = all(1:100 %in% age), missing = list(setdiff(1:100, age))), by = group_by]
-            age_chk = age_chk[complete == F]
-            age_chk[, id := .I]
-            age_chk = split(age_chk, by = 'id')
+    if (is.null(group_by)) {
+      check_result <- check_full_age_range(ph.data)
+      if (!check_result$full_range) {
+        warning(paste0("\n\U00026A0 ph.data (", ph.data.name, ") does not have the full range of ages from 0 to 100.\n",
+                       "Missing ages: ", paste(check_result$missing, collapse = ", "), "\n",
+                       "This may affect the accuracy of your age-adjusted rates.\n",
+                       "Consider adding missing ages with zero counts and the appropriate population."),
+                immediate. = TRUE, call. = FALSE)
 
+      }
+    } else {
+      age_chk = ph.data[, list(complete = all(1:100 %in% age), missing = list(setdiff(1:100, age))), by = group_by]
+      age_chk = age_chk[complete == F]
+      age_chk[, id := .I]
+      if (length(age_chk) > 0) {
+        warning_message <- paste0("\n\U00026A0 multiple groups in ph.data (", ph.data.name, ") do not have the full range of ages from 0 to 100:\n",
+                                  "This may affect the accuracy of your age-adjusted rates.\n",
+                                  "Consider adding missing ages with zero counts and the appropriate population.\n",
+                                  "Rerun age_standardize(..., diagnostic_report = T) will return a table of affected groups and ages instead of the normal output.")
+      }
+      warning(warning_message, immediate. = TRUE, call. = FALSE)
 
-            if (length(age_chk) > 0) {
-              warning_message <- paste0("\n\U00026A0 Some groups in ph.data (", ph.data.name, ") do not have the full range of ages from 0 to 100:\n")
-              for (group in age_chk) { # identify issues one item of the list (i.e., one group combo) at a time
-                group_desc <- paste(group[, .SD, .SDcols = group_by], sep = "=", collapse = ", ")
-                warning_message <- paste0(warning_message,
-                                          "  Group (", group_desc, ") is missing ages: ",
-                                          paste(group$missing[[1]], collapse = ", "), "\n")
-              }
-              warning_message <- paste0(warning_message,
-                                        "This may affect the accuracy of your age-adjusted rates.\n",
-                                        "Consider adding missing ages with zero counts and the appropriate population.")
-              warning(warning_message, immediate. = TRUE, call. = FALSE)
-            }
-          }
+      if(diagnostic_report) {
+        return(age_chk)
       }
 
-    # Check agecat ----
-      if("agecat" %in% names(ph.data)){
-        if(!identical(sort(unique(ph.data$agecat)),
-                      sort(unique(get_ref_pop(ref.popname)[['agecat']])))){
-          stop("\n\U1F6D1 STOP and fix your code!\nThe agecat values in ph.data must match those in your reference \npopulation {",ref.popname, "} exactly.")
-        }
-      }
 
-    # Check count ----
-      if(nrow(ph.data[is.na(count)]) > 0){
-        warning(paste0("\U00026A0 ph.data (", ph.data.name, ") contains at least one row where my.count is missing.
+    }
+
+  }
+
+  # Check agecat ----
+  if("agecat" %in% names(ph.data)){
+    if(!identical(sort(unique(ph.data$agecat)),
+                  sort(unique(get_ref_pop(ref.popname)[['agecat']])))){
+      stop("\n\U1F6D1 STOP and fix your code!\nThe agecat values in ph.data must match those in your reference \npopulation {",ref.popname, "} exactly.")
+    }
+  }
+
+  # Check count ----
+  if(nrow(ph.data[is.na(count)]) > 0){
+    warning(paste0("\U00026A0 ph.data (", ph.data.name, ") contains at least one row where my.count is missing.
                     Those values have been replaced with zero."))
-        ph.data[is.na(count), count := 0]
-      }
-      if(nrow(ph.data[count < 0]) > 0){
-        stop(paste0("\U0001f47f ph.data (", ph.data.name, ") contains at least one row where my.count is negative.
+    ph.data[is.na(count), count := 0]
+  }
+  if(nrow(ph.data[count < 0]) > 0){
+    stop(paste0("\U0001f47f ph.data (", ph.data.name, ") contains at least one row where my.count is negative.
                         Correct the data and try again."))
-      }
+  }
 
-    # Check population ----
-      if(nrow(ph.data[is.na(pop)]) > 0){
-        stop(paste0("\U0001f47f ph.data (", ph.data.name, ") contains at least one row where my.pop is missing.
+  # Check population ----
+  if(nrow(ph.data[is.na(pop)]) > 0){
+    stop(paste0("\U0001f47f ph.data (", ph.data.name, ") contains at least one row where my.pop is missing.
                      Correct the data and try again."))
-      }
-      if(nrow(ph.data[pop < 0]) > 0){
-        stop(paste0("\U0001f47f ph.data (", ph.data.name, ") contains at least one row where my.pop is negative.
+  }
+  if(nrow(ph.data[pop < 0]) > 0){
+    stop(paste0("\U0001f47f ph.data (", ph.data.name, ") contains at least one row where my.pop is negative.
                         Correct the data and try again."))
-      }
+  }
 
-    # Check count vs population ----
-      if(nrow(ph.data[count > pop]) > 0 ){
-        warning(paste0("\U00026A0 ph.data (", ph.data.name, ") contains at least one row where the count is greater than the population.
+  # Check count vs population ----
+  if(nrow(ph.data[count > pop]) > 0 ){
+    warning(paste0("\U00026A0 ph.data (", ph.data.name, ") contains at least one row where the count is greater than the population.
                         This may be correct because OFM populations are just estimates. However, you are encouraged to check the data."))
-      }
+  }
 
   # Collapse ph.data to match standard population bins ----
-    if(collapse==T){
-      if(! "age" %in% colnames(ph.data)){stop(strwrap("\n\U1F6D1 When collapse = T, ph.data must have a column named 'age' where age is an integer.
+  if(collapse==T){
+    if(! "age" %in% colnames(ph.data)){stop(strwrap("\n\U1F6D1 When collapse = T, ph.data must have a column named 'age' where age is an integer.
                                                           This is necessary to generate age bins that align with the selected standard
                                                           reference population. If ph.data already has an 'agecat' column that is formatted
                                                           identically to that in the standard reference population, set collapse = F"), prefix = " ", initial = "")}
-      if(is.numeric(ph.data$age) == F){stop("\n\U1F6D1 When collapse = T, the 'age' column must be comprised entirely of integers")}
-      if(sum(as.numeric(ph.data$age) %% 1) != 0){stop("\n\U1F6D1 When collapse = T, the 'age' column must be comprised entirely of integers")}
-      if("agecat" %in% colnames(ph.data)){stop(strwrap("\n\U1F6D1 When collapse = T, a new column named 'agecat' is created to match that in the standard reference population.
+    if(is.numeric(ph.data$age) == F){stop("\n\U1F6D1 When collapse = T, the 'age' column must be comprised entirely of integers")}
+    if(sum(as.numeric(ph.data$age) %% 1) != 0){stop("\n\U1F6D1 When collapse = T, the 'age' column must be comprised entirely of integers")}
+    if("agecat" %in% colnames(ph.data)){stop(strwrap("\n\U1F6D1 When collapse = T, a new column named 'agecat' is created to match that in the standard reference population.
                                                     ph.data already has a column named 'agecat' and it will not be automatically overwritten.
                                                     If you are sure you want to create a new column named 'agecat', delete the existing column in ph.data and run again."),
                                              prefix = " ", initial = "")}
-      my.ref.pop <- get_ref_pop(ref.popname)
-      for(z in seq(1, nrow(my.ref.pop))){
-        ph.data[age %in% my.ref.pop[z, age_start]:my.ref.pop[z, age_end], agecat := my.ref.pop[z, agecat]]
-      }
-      if(!is.null(group_by)){ph.data <- ph.data[, list(count = sum(count), pop = sum(pop)), by = c("agecat", group_by)]}
-      if(is.null(group_by)){ph.data <- ph.data[, list(count = sum(count), pop = sum(pop)), by = "agecat"]}
+    my.ref.pop <- get_ref_pop(ref.popname)
+    for(z in seq(1, nrow(my.ref.pop))){
+      ph.data[age %in% my.ref.pop[z, age_start]:my.ref.pop[z, age_end], agecat := my.ref.pop[z, agecat]]
     }
+    if(!is.null(group_by)){ph.data <- ph.data[, list(count = sum(count), pop = sum(pop)), by = c("agecat", group_by)]}
+    if(is.null(group_by)){ph.data <- ph.data[, list(count = sum(count), pop = sum(pop)), by = "agecat"]}
+  }
 
   # Hack when pop < count in age collapsed data ----
-    if(nrow(ph.data[pop < count]) > 0){
-      warning(paste0("\U00026A0
+  if(nrow(ph.data[pop < count]) > 0){
+    warning(paste0("\U00026A0
       When ph.data (", ph.data.name, ") was collapsed to match the standard
       population, the aggregate `count` was greater than the aggreate `pop` for
       the following age group(s): ",
-      sort(paste(unique(ph.data[pop < count]$agecat), collapse = ', ')), ". In these rows, the
+                   sort(paste(unique(ph.data[pop < count]$agecat), collapse = ', ')), ". In these rows, the
       `pop` was ascribed the `count` value. This is necessary to calculate
       the age adjusted rate and only nomimally biases the calculated rates since
       the counts are typically small."))
 
-      ph.data[pop < count, pop := count]
-    }
+    ph.data[pop < count, pop := count]
+  }
 
   # Hack when pop == 0 ----
-    if(nrow(ph.data[pop ==0]) > 0){
-      ph.data[pop == 0, pop := 1]
-    }
+  if(nrow(ph.data[pop ==0]) > 0){
+    ph.data[pop == 0, pop := 1]
+  }
 
   # Merge standard pop onto count data ----
-    if(ref.popname != "none"){
-      ph.data <- merge(ph.data, get_ref_pop(ref.popname)[, list(agecat, stdpop = pop)], by = "agecat")
-    }
+  if(ref.popname != "none"){
+    ph.data <- merge(ph.data, get_ref_pop(ref.popname)[, list(agecat, stdpop = pop)], by = "agecat")
+  }
 
   # Calculate crude & adjusted rates with CI ----
-    if(!is.null(group_by)){my.rates <- ph.data[, as.list(adjust_direct(count = count, pop = pop, stdpop = stdpop, conf.level = as.numeric(conf.level), per = per)), by = group_by]}
-    if( is.null(group_by)){my.rates <- ph.data[, as.list(adjust_direct(count = count, pop = pop, stdpop = stdpop, conf.level = as.numeric(conf.level), per = per))]}
+  if(!is.null(group_by)){my.rates <- ph.data[, as.list(adjust_direct(count = count, pop = pop, stdpop = stdpop, conf.level = as.numeric(conf.level), per = per)), by = group_by]}
+  if( is.null(group_by)){my.rates <- ph.data[, as.list(adjust_direct(count = count, pop = pop, stdpop = stdpop, conf.level = as.numeric(conf.level), per = per))]}
 
   # Tidy results ----
-    rate_estimates <- c("crude.rate", "crude.lci", "crude.uci", "adj.rate", "adj.lci", "adj.uci")
-    my.rates[, c(rate_estimates) := lapply(.SD, rads::round2, 2), .SDcols = rate_estimates]
-    my.rates[, reference_pop := ref.popname]
-    my.rates[is.nan(adj.lci) & count == 0, adj.lci := 0]
-    if(ref.popname == "none"){my.rates[, reference_pop := paste0("stdpop column in `", ph.data.name, "`")]}
+  rate_estimates <- c("crude.rate", "crude.lci", "crude.uci", "adj.rate", "adj.lci", "adj.uci")
+  my.rates[, c(rate_estimates) := lapply(.SD, rads::round2, 2), .SDcols = rate_estimates]
+  my.rates[, reference_pop := ref.popname]
+  my.rates[is.nan(adj.lci) & count == 0, adj.lci := 0]
+  if(ref.popname == "none"){my.rates[, reference_pop := paste0("stdpop column in `", ph.data.name, "`")]}
 
   # Return object ----
-    return(my.rates)
+  return(my.rates)
 }
 
 # as_imputed_brfss() ----
