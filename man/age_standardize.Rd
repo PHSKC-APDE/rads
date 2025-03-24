@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities.R
 \name{age_standardize}
 \alias{age_standardize}
-\title{Calculate age standardized rates from a data.table with age, counts, and population columns. (Built on adjust_direct())}
+\title{Calculate age standardized rates from a data.table with age, counts, and population columns}
 \usage{
 age_standardize(
   ph.data,
@@ -12,26 +12,37 @@ age_standardize(
   my.pop = "pop",
   per = 100000,
   conf.level = 0.95,
-  group_by = NULL
+  group_by = NULL,
+  diagnostic_report = F
 )
 }
 \arguments{
 \item{ph.data}{a data.table or data.frame containing the data to be age-standardized.}
 
-\item{ref.popname}{Character vector of length 1. Only valid options are those in list_ref_pop() and
-"none" (when standard population already exists in ph.data)}
+\item{ref.popname}{Character vector of length 1. Only valid options are those
+in \code{\link{list_ref_pop}} and "none" (when standard population already exists in ph.data)}
 
-\item{collapse}{Logical vector of length 1. Do you want to collapse ph.data ages to match those in ref.popname?}
+\item{collapse}{Logical vector of length 1. Do you want to collapse ph.data ages
+to match those in \code{ref.popname}?}
 
-\item{my.count}{Character vector of length 1. Identifies the column with the count data aggregated by the given demographics.}
+\item{my.count}{Character vector of length 1. Identifies the column with the
+count data aggregated by the given demographics.}
 
-\item{my.pop}{Character vector of length 1. Identifies the column with the population corresponding to the given demographics.}
+\item{my.pop}{Character vector of length 1. Identifies the column with the
+population corresponding to the given demographics.}
 
-\item{per}{Integer vector of length 1. A multiplier for all rates and CI, e.g., when per = 1000, the rates are per 1000 people}
+\item{per}{Integer vector of length 1. A multiplier for all rates and CI, e.g.,
+when per = 1000, the rates are per 1000 people}
 
-\item{conf.level}{A numeric vector of length 1. The confidence interval used in the calculations.}
+\item{conf.level}{A numeric vector of length 1. The confidence interval used
+in the calculations.}
 
-\item{group_by}{Character vector of indeterminate length. By which variable(s) do you want to stratify the rate results, if any?}
+\item{group_by}{Character vector of indeterminate length. By which variable(s)
+do you want to stratify the rate results, if any?}
+
+\item{diagnostic_report}{If \code{group_by} is used and there are groups with missing ages,
+setting \code{diagnostic_report = TRUE} returns a diagnostic table instead of normal results.
+Use this option if a warning about missing age groups appears when running the function normally.}
 }
 \value{
 a data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'group_by' variable(s) -- if any
@@ -42,7 +53,7 @@ Calculate age standardized rates from a data.table with age, counts, and populat
 Your dataset must have the following three columns ...
 \itemize{
 \item 'age' or 'agecat': 'age' in single years (if collapse = T) or 'agecat' with the same age bins as your selected reference population (if collapse = F)
-\item an aggregated count for the event (e.g., disease) for which you want to find an age standardized rate
+\item an \bold{aggregated} count for the event (e.g., disease) for which you want to find an age standardized rate
 \item the population corresponding to the age or agecat in your original data
 }
 }
@@ -72,4 +83,7 @@ group_by = "sex")[]
 }
 \references{
 \url{https://github.com/PHSKC-APDE/rads/wiki/age_standardize}
+}
+\seealso{
+\code{\link{adjust_direct}} for calculating crude and directly adjusted rates.
 }

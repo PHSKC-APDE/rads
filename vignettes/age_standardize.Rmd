@@ -69,6 +69,8 @@ Arguments are the values that we send to a function when it is called. The stand
 
 8)  `group_by` \<- a character vector, specifies the variable(s) by which to stratify the rate results (if any). The default is NULL (i.e., no stratification)
 
+9)  `diagnostic_report` \<- If `group_by` is used and there are groups with missing ages, setting `diagnostic_report = TRUE` returns a diagnostic table instead of normal results. Use this option if a warning about missing age groups appears when running the function normally.
+
 ## Preparing your dataset
 
 Your dataset must have the following three columns ...

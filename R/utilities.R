@@ -77,7 +77,7 @@ adjust_direct <- function(count, pop, stdpop, per = 100000, conf.level = 0.95) {
 }
 
 # age_standardize() ----
-#' Calculate age standardized rates from a data.table with age, counts, and population columns. (Built on adjust_direct())
+#' Calculate age standardized rates from a data.table with age, counts, and population columns
 #'
 #' @description
 #' Calculate age standardized rates from a data.table with age, counts, and population columns.
@@ -85,22 +85,33 @@ adjust_direct <- function(count, pop, stdpop, per = 100000, conf.level = 0.95) {
 #' Your dataset must have the following three columns ...
 #' \itemize{
 #' \item 'age' or 'agecat': 'age' in single years (if collapse = T) or 'agecat' with the same age bins as your selected reference population (if collapse = F)
-#' \item an aggregated count for the event (e.g., disease) for which you want to find an age standardized rate
+#' \item an \bold{aggregated} count for the event (e.g., disease) for which you want to find an age standardized rate
 #' \item the population corresponding to the age or agecat in your original data
 #' }
 #'
 #' @param ph.data a data.table or data.frame containing the data to be age-standardized.
-#' @param ref.popname Character vector of length 1. Only valid options are those in list_ref_pop() and
-#' "none" (when standard population already exists in ph.data)
-#' @param collapse Logical vector of length 1. Do you want to collapse ph.data ages to match those in ref.popname?
-#' @param my.count Character vector of length 1. Identifies the column with the count data aggregated by the given demographics.
-#' @param my.pop Character vector of length 1. Identifies the column with the population corresponding to the given demographics.
-#' @param per Integer vector of length 1. A multiplier for all rates and CI, e.g., when per = 1000, the rates are per 1000 people
-#' @param conf.level A numeric vector of length 1. The confidence interval used in the calculations.
-#' @param group_by Character vector of indeterminate length. By which variable(s) do you want to stratify the rate results, if any?
-#' @param diagnostic_report if group_by is used and there are groups with missing ages, return diagnostic report instead of normal results
+#' @param ref.popname Character vector of length 1. Only valid options are those
+#' in \code{\link{list_ref_pop}} and "none" (when standard population already exists in ph.data)
+#' @param collapse Logical vector of length 1. Do you want to collapse ph.data ages
+#' to match those in `ref.popname`?
+#' @param my.count Character vector of length 1. Identifies the column with the
+#' count data aggregated by the given demographics.
+#' @param my.pop Character vector of length 1. Identifies the column with the
+#' population corresponding to the given demographics.
+#' @param per Integer vector of length 1. A multiplier for all rates and CI, e.g.,
+#' when per = 1000, the rates are per 1000 people
+#' @param conf.level A numeric vector of length 1. The confidence interval used
+#' in the calculations.
+#' @param group_by Character vector of indeterminate length. By which variable(s)
+#' do you want to stratify the rate results, if any?
+#' @param diagnostic_report If `group_by` is used and there are groups with missing ages,
+#' setting `diagnostic_report = TRUE` returns a diagnostic table instead of normal results.
+#' Use this option if a warning about missing age groups appears when running the function normally.
 #'
 #' @return a data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'group_by' variable(s) -- if any
+#'
+#' @seealso \code{\link{adjust_direct}} for calculating crude and directly adjusted rates.
+#'
 #' @export
 #' @name age_standardize
 #' @references \url{https://github.com/PHSKC-APDE/rads/wiki/age_standardize}
@@ -219,7 +230,7 @@ age_standardize <- function (ph.data,
     # check for ages > 100 ----
     if(nrow(ph.data[age > 100]) > 0){
       warning(paste0("\n\U00026A0 ph.data (", ph.data.name, ") contains at least one row where age is greater than 100.\n",
-                     "Those values have automatically been recoded to 100 because population pulled from\n",
+                     "Those values have been recoded to 100 because population pulled from\n",
                      "get_population() is top coded to 100 and reference populations are usually top coded at 85."),
               immediate. = TRUE, call. = FALSE)
       ph.data[age > 100, age := 100]
@@ -238,13 +249,12 @@ age_standardize <- function (ph.data,
       return(list(full_range = length(missing_ages) == 0, missing = missing_ages))
     }
 
-    # Simple check when group_by not specified
-
+    # Identify when missing ages
     if (is.null(group_by)) {
       check_result <- check_full_age_range(ph.data)
       if (!check_result$full_range) {
         warning(paste0("\n\U00026A0 ph.data (", ph.data.name, ") does not have the full range of ages from 0 to 100.\n",
-                       "Missing ages: ", paste(check_result$missing, collapse = ", "), "\n",
+                       "Missing ages: ", format_time(check_result$missing), "\n",
                        "This may affect the accuracy of your age-adjusted rates.\n",
                        "Consider adding missing ages with zero counts and the appropriate population."),
                 immediate. = TRUE, call. = FALSE)
@@ -252,23 +262,44 @@ age_standardize <- function (ph.data,
       }
     } else {
       age_chk = ph.data[, list(complete = all(0:100 %in% age), missing = list(setdiff(0:100, age))), by = group_by]
-      age_chk = age_chk[complete == F]
-      age_chk[, id := .I]
-      if (length(age_chk) > 0) {
-        warning_message <- paste0("\n\U00026A0 multiple groups in ph.data (", ph.data.name, ") do not have the full range of ages from 0 to 100:\n",
-                                  "This may affect the accuracy of your age-adjusted rates.\n",
-                                  "Consider adding missing ages with zero counts and the appropriate population.\n",
-                                  "Rerun age_standardize(..., diagnostic_report = T) will return a table of affected groups and ages instead of the normal output.")
-      }
-      warning(warning_message, immediate. = TRUE, call. = FALSE)
+      age_chk = age_chk[complete == F][, complete := NULL]
+      age_chk[, missing := vapply(missing, function(x) format_time(unlist(x)), character(1))] # better formatting in table of missing
 
       if(diagnostic_report) {
+        message(
+          "\U0001F50D Returning diagnostic report instead of age-standardized rates.\n",
+          "\u26A0\ufe0f ", format(nrow(age_chk), big.mark = ','),
+          " group(s) have missing age ranges. Consider addressing these gaps before proceeding."
+        )
         return(age_chk)
       }
 
+      if (nrow(age_chk) %in% 1:5) {
+        table_output <- paste(capture.output(print(age_chk, row.names = FALSE, class = FALSE, print.keys = FALSE)), collapse = "\n")
 
+        warning_message <- paste0(
+          "\n\U00026A0 Missing ages detected in ", ph.data.name, " for these groups:\n\n",
+          table_output,
+          "\n\nThis may affect the accuracy of your age-adjusted rates.\n",
+          "Consider adding missing ages with zero counts and the appropriate population."
+        )
+
+        warning(warning_message, immediate. = TRUE, call. = FALSE)
+      }
+
+      if (nrow(age_chk) > 6) {
+        warning_message <- paste0(
+          "\n\U00026A0 Missing ages detected in ", ph.data.name, " for ",
+          format(nrow(age_chk), big.mark = ','), " groups.\n",
+          "This may affect the accuracy of your age-adjusted rates.\n",
+          "Consider adding missing ages with zero counts and the appropriate population.\n",
+          "Rerun age_standardize(..., diagnostic_report = T) will return a table of affected groups and ages instead of the normal output."
+        )
+
+        warning(warning_message, immediate. = TRUE, call. = FALSE)
+
+      }
     }
-
   }
 
   # Check agecat ----
