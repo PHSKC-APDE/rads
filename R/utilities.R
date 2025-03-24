@@ -251,7 +251,7 @@ age_standardize <- function (ph.data,
 
       }
     } else {
-      age_chk = ph.data[, list(complete = all(1:100 %in% age), missing = list(setdiff(1:100, age))), by = group_by]
+      age_chk = ph.data[, list(complete = all(0:100 %in% age), missing = list(setdiff(0:100, age))), by = group_by]
       age_chk = age_chk[complete == F]
       age_chk[, id := .I]
       if (length(age_chk) > 0) {
