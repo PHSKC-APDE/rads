@@ -231,7 +231,7 @@ chars_injury_matrix_count<- function(ph.data = NULL,
         if(nrow(setDT(quiet(list_dataset_columns('chars')))[grepl('^intent_', var.names)]) >
            length(grep('^intent_', names(ph.data), value = T))){
           mi_col_intent <- setdiff(setDT(list_dataset_columns('chars'))[grepl('^intent_', var.names)]$var.names, grep('^intent_', names(ph.data), value = T))
-          warning(paste0("\n\U00026A0 ph.data is missing the following `intent_**` columns: ", paste0(mi_col_intent, collapse = ', '), ". This may impact the completeness of your results."))
+          warning(paste0("\n\u26A0\ufe0f ph.data is missing the following `intent_**` columns: ", paste0(mi_col_intent, collapse = ', '), ". This may impact the completeness of your results."))
         }
 
     # mechanism ----
@@ -245,7 +245,7 @@ chars_injury_matrix_count<- function(ph.data = NULL,
         if(nrow(setDT(quiet(list_dataset_columns('chars')))[grepl('^mechanism_', var.names)]) >
            length(grep('^mechanism_', names(ph.data), value = T))){
           mi_col_mechanism <- setdiff(setDT(list_dataset_columns('chars'))[grepl('^mechanism_', var.names)]$var.names, grep('^mechanism_', names(ph.data), value = T))
-          warning(paste0("\n\U00026A0 ph.data is missing the following `mechanism_**` columns: ", paste0(mi_col_mechanism, collapse = ', '), ". This may impact the completeness of your results."))
+          warning(paste0("\n\u26A0\ufe0f ph.data is missing the following `mechanism_**` columns: ", paste0(mi_col_mechanism, collapse = ', '), ". This may impact the completeness of your results."))
         }
 
     # group_by ----
@@ -768,7 +768,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
         ph.data[, (icdcol) := toupper(get(icdcol))]
 
         if(length(grep("\\.|-", ph.data[[icdcol]], value = T) >0 )){
-          warning(paste0("\U00026A0 There is at least one row where `icdcol` (",
+          warning(paste0("\u26A0\ufe0f There is at least one row where `icdcol` (",
           icdcol, ") contains a hyphen (-), period (.), space or some other ",
           "non alpha-numeric character. These characters will be deleted, e.g., ",
           "A85.2 will become A852. This is necessary because causeids in ",
@@ -780,7 +780,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
         if(icdcm_version == 10){
           if(nrow(ph.data[is.na(get(icdcol)) | !grepl("^[A-Z][0-9]", get(icdcol))]) > 0){
             problem.icds <- ph.data[is.na(get(icdcol)) | !grepl("^[A-Z][0-9]", get(icdcol)), ][[icdcol]]
-            warning(paste0("\U00026A0 There is/are ", length(problem.icds), " row(s) where `icdcol` (",
+            warning(paste0("\u26A0\ufe0f There is/are ", length(problem.icds), " row(s) where `icdcol` (",
             icdcol, ") does not follow the proper ICD-10-CM pattern. All ICD-10-CMs that do not begin with a ",
             "single capital letter followed by a number have been replaced with NA."))
             ph.data[!grepl("^[A-Z][0-9]", get(icdcol)) , paste0(icdcol) := NA]

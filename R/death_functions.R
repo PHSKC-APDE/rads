@@ -437,7 +437,7 @@ death_icd10_clean <- function(icdcol){
 
   # Check for hyphens and periods which are sometimes present
   if(length(grep("\\.|-", icdcol, value = T) > 0 )){
-    warning(paste0("\n\U00026A0 There is at least one row where `icdcol` contains a hyphen (-), period (.), " ,
+    warning(paste0("\n\u26A0\ufe0f There is at least one row where `icdcol` contains a hyphen (-), period (.), " ,
                    "\nspace or some other non alpha-numeric character. These characters have been deleted, ",
                    "\ne.g., A85.2 will become A852. This is necessary because rads death functions expect",
                    "\npure alpha numeric ICD codes."
@@ -450,7 +450,7 @@ death_icd10_clean <- function(icdcol){
   problem.icds <- grep("^[A-Z].*[0-9]$", icdcol, value = TRUE, invert = TRUE)
   problem.icds <- problem.icds[!is.na(problem.icds)]
   if (length(problem.icds) > 0) {
-    warning(paste0("\n\U00026A0  There is/are ", length(problem.icds), " value(s) in `icdcol` that do not follow the proper ",
+    warning(paste0("\n\u26A0\ufe0f  There is/are ", length(problem.icds), " value(s) in `icdcol` that do not follow the proper ",
                    "\nICD pattern. All ICDs that do not begin with a letter and end with",
                    "\na numeric have been replaced with NA."))
     icdcol[!grepl("^[A-Z].*[0-9]$", icdcol)] <- NA
@@ -1524,7 +1524,7 @@ death_xxx_count <- function(ph.data,
       }
 
       if (!is.null(cause) & !is.null(causeids)){
-        message('\U00026A0 You specified both a cause and causeid argument. The causes will replace the causeids.')
+        message('\u26A0\ufe0f You specified both a cause and causeid argument. The causes will replace the causeids.')
         causeids <- NULL
         }
 
@@ -1734,7 +1734,7 @@ death_xxx_count <- function(ph.data,
   # Message about COVID-19 if selected causeid 17 ----
     if (nchsnum == 113 && 17 %in% x_combo$causeid) {
       message(
-        "\U00026A0 You selected causeid == 17 (Other and unspecified infectious and parasitic diseases...).
+        "\u26A0\ufe0f You selected causeid == 17 (Other and unspecified infectious and parasitic diseases...).
             COVID-19 (U07.1) has been EXCLUDED from this cause, following the example of WA DOH. Note
             however that, as of October 2020, CDC INCLUDES COVID-19 (U07.1) in causeid == 17. In
             other words, APDE followed WA DOH's decision since we provide a separate row for COVID-19."
@@ -2064,7 +2064,7 @@ life_table <- function(ph.data,
       if(nrow(ph.data[grepl('[0-9]+', get(myages)) & mx == 0]) > 0){
 
         warning(paste0(
-          "\n\U00026A0",
+          "\n\u26A0\ufe0f",
           "\nWarning: Zero deaths detected in one or more oldest age groups (e.g., `", myages, "==", unique(ph.data[istart == max(istart)][[myages]]), "`).",
           "\nThis may indicate an error in data preparation or reflect small population sizes.\n",
           "\nThe function has provided modeled `mx` values, affecting `Tx` and `ex` calculations,",
@@ -2159,7 +2159,7 @@ life_table <- function(ph.data,
       fill_variance <- function(ph.data.sub){
         obs.variances <- sort(ph.data.sub[!is.nan(qx_variance) & qx_variance != 0]$qx_variance)
         if(length(obs.variances) < 0.5*nrow(ph.data.sub)){
-          warning(paste0("\U00026A0 You have ", nrow(ph.data.sub[is.nan(qx_variance)]), " rows where the variance of the probability of dying in the interval is NaN, probably due to zero deaths.",
+          warning(paste0("\u26A0\ufe0f You have ", nrow(ph.data.sub[is.nan(qx_variance)]), " rows where the variance of the probability of dying in the interval is NaN, probably due to zero deaths.",
                          "\n This is more than 50% of your age groups, which means your population is likely too small for meaningful life expectancy calculations.",
                          "\n The variances will be filled with the median of the measured variances, but be cautious in using / interpreting the estimates.",
                          "\n If this message is repeated, it is because this problem occurs in more than one of your tables defined by the `group_by` argument."))
@@ -2505,13 +2505,13 @@ life_table_prep <- function(ph.data,
       ph.data <- data.table::setDT(data.table::copy(ph.data)) # to prevent changing of original by reference
 
       if(length(intersect(c("start", "end", "dob", "dod"), names(ph.data))) > 1){
-        warning("\n\U00026A0 ph.data has a column named 'start', 'end', 'dob', or 'dod' which was overwritten by this function. \nTo preserve your columns, rename them, and run this function again.")}
+        warning("\n\u26A0\ufe0f ph.data has a column named 'start', 'end', 'dob', or 'dod' which was overwritten by this function. \nTo preserve your columns, rename them, and run this function again.")}
 
     # cuts ----
       if(isTRUE(any(is.na(cuts))) || is.null(cuts) || !is.numeric(cuts)){stop("\n\U0001f47f 'cuts' must be specified as a numeric vector and cannot contain any NA's.")}
       if(length(cuts) <= 1){stop("\n\U0001f47f 'cuts' should be a numeric vector of length >1 and typically of length ~20.")}
       if(min(cuts) < 0){stop("\n\U0001f47f The minimum age in 'cuts' should be zero.")}
-      if(max(cuts) > 100){warning("\n\U00026A0 You're maximum age in 'cuts' is greater than 100. \nYou do not have to change this, but know that ages are top coded at 100.")}
+      if(max(cuts) > 100){warning("\n\u26A0\ufe0f You're maximum age in 'cuts' is greater than 100. \nYou do not have to change this, but know that ages are top coded at 100.")}
 
     # dobvar ----
       if(dobvar == "dobvar"){
@@ -2526,7 +2526,7 @@ life_table_prep <- function(ph.data,
       if(!dodvar %in% names(ph.data)){stop("\n\U0001f47f 'dodvar' must specify the name of a date of death column that exists in ph.data.")}
 
       if(nrow(ph.data[get(dodvar) < get(dobvar)]) > 0){
-        warning(paste0("\n\U00026A0 There are ", nrow(ph.data[dodvar < dobvar]), " rows where 'dodvar' is less than 'dobvar'. \nThese date pairs had their values set to NA and will only contribute indirectly to the life_table calculations."))
+        warning(paste0("\n\u26A0\ufe0f There are ", nrow(ph.data[dodvar < dobvar]), " rows where 'dodvar' is less than 'dobvar'. \nThese date pairs had their values set to NA and will only contribute indirectly to the life_table calculations."))
         ph.data[get(dodvar) < get(dobvar), paste0(dodvar) := NA]
         ph.data[get(dodvar) < get(dobvar), paste0(dobvar) := NA]
       }
@@ -2547,8 +2547,8 @@ life_table_prep <- function(ph.data,
     # confirm that dob and dod are legitimate
     dob_na <- nrow(ph.data[is.na(dob)])/nrow(ph.data)
     dod_na <- nrow(ph.data[is.na(dod)])/nrow(ph.data)
-    if(dob_na > 0.01){warning("\n\U00026A0 More than 1% of the date of birth values are missing. \nPlease check that your variable is of class Date or is of class character in the form 'YYYY-MM-DD' or 'YYYY/MM/DD'. \nDeaths with unknown dob will be distributed proportionately among deaths with known dates of birth.")}
-    if(dod_na > 0.01){warning("\n\U00026A0 More than 1% of the date of death values are missing. \nPlease check that your variable is of class Date or is of class character in the form 'YYYY-MM-DD' or 'YYYY/MM/DD'.")}
+    if(dob_na > 0.01){warning("\n\u26A0\ufe0f More than 1% of the date of birth values are missing. \nPlease check that your variable is of class Date or is of class character in the form 'YYYY-MM-DD' or 'YYYY/MM/DD'. \nDeaths with unknown dob will be distributed proportionately among deaths with known dates of birth.")}
+    if(dod_na > 0.01){warning("\n\u26A0\ufe0f More than 1% of the date of death values are missing. \nPlease check that your variable is of class Date or is of class character in the form 'YYYY-MM-DD' or 'YYYY/MM/DD'.")}
 
   # Properly calculate age at death ----
     ph.data[, death_age := rads::calc_age(dob, dod)]

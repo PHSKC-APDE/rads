@@ -229,7 +229,7 @@ age_standardize <- function (ph.data,
 
     # check for ages > 100 ----
     if(nrow(ph.data[age > 100]) > 0){
-      warning(paste0("\n\U00026A0 ph.data (", ph.data.name, ") contains at least one row where age is greater than 100.\n",
+      warning(paste0("\n\u26A0\ufe0f ph.data (", ph.data.name, ") contains at least one row where age is greater than 100.\n",
                      "Those values have been recoded to 100 because population pulled from\n",
                      "get_population() is top coded to 100 and reference populations are usually top coded at 85."),
               immediate. = TRUE, call. = FALSE)
@@ -253,7 +253,7 @@ age_standardize <- function (ph.data,
     if (is.null(group_by)) {
       check_result <- check_full_age_range(ph.data)
       if (!check_result$full_range) {
-        warning(paste0("\n\U00026A0 ph.data (", ph.data.name, ") does not have the full range of ages from 0 to 100.\n",
+        warning(paste0("\n\u26A0\ufe0f ph.data (", ph.data.name, ") does not have the full range of ages from 0 to 100.\n",
                        "Missing ages: ", format_time(check_result$missing), "\n",
                        "This may affect the accuracy of your age-adjusted rates.\n",
                        "Consider adding missing ages with zero counts and the appropriate population."),
@@ -278,7 +278,7 @@ age_standardize <- function (ph.data,
         table_output <- paste(capture.output(print(age_chk, row.names = FALSE, class = FALSE, print.keys = FALSE)), collapse = "\n")
 
         warning_message <- paste0(
-          "\n\U00026A0 Missing ages detected in ", ph.data.name, " for these groups:\n\n",
+          "\n\u26A0\ufe0f Missing ages detected in ", ph.data.name, " for these groups:\n\n",
           table_output,
           "\n\nThis may affect the accuracy of your age-adjusted rates.\n",
           "Consider adding missing ages with zero counts and the appropriate population."
@@ -289,7 +289,7 @@ age_standardize <- function (ph.data,
 
       if (nrow(age_chk) > 6) {
         warning_message <- paste0(
-          "\n\U00026A0 Missing ages detected in ", ph.data.name, " for ",
+          "\n\u26A0\ufe0f Missing ages detected in ", ph.data.name, " for ",
           format(nrow(age_chk), big.mark = ','), " groups.\n",
           "This may affect the accuracy of your age-adjusted rates.\n",
           "Consider adding missing ages with zero counts and the appropriate population.\n",
@@ -312,7 +312,7 @@ age_standardize <- function (ph.data,
 
   # Check count ----
   if(nrow(ph.data[is.na(count)]) > 0){
-    warning(paste0("\U00026A0 ph.data (", ph.data.name, ") contains at least one row where my.count is missing.
+    warning(paste0("\u26A0\ufe0f ph.data (", ph.data.name, ") contains at least one row where my.count is missing.
                     Those values have been replaced with zero."))
     ph.data[is.na(count), count := 0]
   }
@@ -333,7 +333,7 @@ age_standardize <- function (ph.data,
 
   # Check count vs population ----
   if(nrow(ph.data[count > pop]) > 0 ){
-    warning(paste0("\U00026A0 ph.data (", ph.data.name, ") contains at least one row where the count is greater than the population.
+    warning(paste0("\u26A0\ufe0f ph.data (", ph.data.name, ") contains at least one row where the count is greater than the population.
                         This may be correct because OFM populations are just estimates. However, you are encouraged to check the data."))
   }
 
@@ -359,7 +359,7 @@ age_standardize <- function (ph.data,
 
   # Hack when pop < count in age collapsed data ----
   if(nrow(ph.data[pop < count]) > 0){
-    warning(paste0("\U00026A0
+    warning(paste0("\u26A0\ufe0f
       When ph.data (", ph.data.name, ") was collapsed to match the standard
       population, the aggregate `count` was greater than the aggreate `pop` for
       the following age group(s): ",
@@ -915,7 +915,7 @@ convert_to_date <- function(x, origin = "1899-12-30") {
                                             "%d %B, %Y", "%Y-%m-%d %H:%M:%S",
                                             "%Y/%m/%d %H:%M:%S"))))
     if (all(is.na(date_out))) {
-      warning('\n\U00026A0 `', x_name, '` cannot be converted to a date. Your original data will be returned.')
+      warning('\n\u26A0\ufe0f `', x_name, '` cannot be converted to a date. Your original data will be returned.')
       return(x_orig)
     } else {return(date_out)}
   }
@@ -2109,7 +2109,7 @@ multi_t_test <- function(means,
         stop("\n\U1F6D1 'n' must be a numeric vector of positive values.")
       }
       if (any(n < 30)) {
-        warning("\n\U00026A0 Some sample sizes are below 30. ",
+        warning("\n\u26A0\ufe0f Some sample sizes are below 30. ",
                 "Results may be unreliable, especially with the 'estimated' df_method. ",
                 "Consider using a different df_method if appropriate.")
       }
@@ -2154,17 +2154,17 @@ multi_t_test <- function(means,
       # falls within 2 SD of the mean in a normal distribution
       estimated_sd <- (max(means) - min(means)) / 4
       n <- round((estimated_sd / ses)^2)
-      warning("\U00026A0 Sample sizes are estimated from standard errors and the range of means.\n",
+      warning("\u26A0\ufe0f Sample sizes are estimated from standard errors and the range of means.\n",
               "Use with caution. ", "Please provide the sample sizes {`n`} if known.")
 
       if (k < 10) {
-        warning("\n\U00026A0 The number of groups is small (< 10). ",
+        warning("\n\u26A0\ufe0f The number of groups is small (< 10). ",
                 "This may affect the reliability of estimated sample sizes.\n",
                 "Consider providing actual sample sizes if available.")
       }
 
       if (any(n < 30)) {
-        warning("\n\U00026A0 Some estimated sample sizes are below 30. ",
+        warning("\n\u26A0\ufe0f Some estimated sample sizes are below 30. ",
                 "Results may be unreliable, especially with the 'estimated' df_method. ",
                 "Consider using actual sample sizes or a different df_method.")
       }
@@ -2620,7 +2620,7 @@ string_clean <- function(dat = NULL,
 sql_clean <- function(dat = NULL, stringsAsFactors = FALSE){
   .Deprecated("string_clean")
 
-  warning("\n\U00026A0 As a courtesy, `sql_clean` remains operational for the time being.\n",
+  warning("\n\u26A0\ufe0f As a courtesy, `sql_clean` remains operational for the time being.\n",
           "Good things don't last forever. \nPlease update your code.",
           immediate. = FALSE)
 
@@ -2655,7 +2655,7 @@ std_error <- function(x) {
     se <- sd(x, na.rm = TRUE) / sqrt(sum(!is.na(x))) # standard error or mean is sd / sqrt(# samples)
 
     if (is.nan(se) || is.infinite(se)) {
-      warning("\n\U00026A0 Calculation resulted in NaN or Inf. Check your input data.")
+      warning("\n\u26A0\ufe0f Calculation resulted in NaN or Inf. Check your input data.")
     }
 
     return(se)
@@ -2944,7 +2944,7 @@ tsql_validate_field_types <- function(ph.data = NULL,
       # report if column is all NA
       na_cols <- ph.data[, lapply(.SD, function(x) all(is.na(x))), .SDcols = names(ph.data)]
       na_cols <- names(na_cols)[as.logical(na_cols)]
-      if(length(na_cols) > 0){warning('\U00026A0 Validation may be flawed for the following variables because they are 100% missing: ', paste0(na_cols, collapse = ', '))}
+      if(length(na_cols) > 0){warning('\u26A0\ufe0f Validation may be flawed for the following variables because they are 100% missing: ', paste0(na_cols, collapse = ', '))}
 
       # report back overall validation
       if (all(validation_results$is_valid)) {
