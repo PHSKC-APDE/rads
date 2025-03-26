@@ -2156,25 +2156,46 @@ life_table <- function(ph.data,
     # when have zero deaths, would have 0/0 (undefined) as variance, so ascribe the median of the
     # observed variances (except zero for 85+)
     # first create small function
-      fill_variance <- function(ph.data.sub){
+      fill_variance <- function(ph.data.sub, group_by = NULL){
+        # Get the group identification if group_by is provided
+        group_text <- ""
+        if(!is.null(group_by) && length(group_by) > 0) {
+          # Create a vector of "column = value" pairs
+          group_pairs <- sapply(group_by, function(col) {
+            val <- unique(ph.data.sub[[col]])
+            if(length(val) == 1) {  # Most common case - one value per split group
+              paste0(col, " = ", val)
+            } else {
+              # Handle unlikely case of multiple values in what should be a unique group
+              paste0(col, " = [", paste(val, collapse = ", "), "]")
+            }
+          })
+
+          # Join the pairs with commas
+          group_text <- paste0(" for ", paste(group_pairs, collapse = ", "))
+        }
+
         obs.variances <- sort(ph.data.sub[!is.nan(qx_variance) & qx_variance != 0]$qx_variance)
         if(length(obs.variances) < 0.5*nrow(ph.data.sub)){
-          warning(paste0("\u26A0\ufe0f You have ", nrow(ph.data.sub[is.nan(qx_variance)]), " rows where the variance of the probability of dying in the interval is NaN, probably due to zero deaths.",
-                         "\n This is more than 50% of your age groups, which means your population is likely too small for meaningful life expectancy calculations.",
-                         "\n The variances will be filled with the median of the measured variances, but be cautious in using / interpreting the estimates.",
-                         "\n If this message is repeated, it is because this problem occurs in more than one of your tables defined by the `group_by` argument.\n"))
-          }
+          warning(paste0(
+            "\u26A0\ufe0f Small population issue", group_text, ".\n",
+            "Found ", nrow(ph.data.sub[is.nan(qx_variance)]), " age groups where the variance of the probability of dying in the interval was NaN.\n",
+            "This exceeds 50% of age groups and is likely due to zero deaths in these age groups.\n",
+            "The median variance will be used as an approximation.\n",
+            "Life expectancy calculations may be unreliable.\n"
+          ))
+        }
         ph.data.sub[is.nan(qx_variance), qx_variance := median(obs.variances)]
         return(ph.data.sub)
       }
 
     # Then apply fill.variance() function
       if(is.null(group_by)){
-        ph.data <- fill_variance(ph.data.sub = ph.data)
+        ph.data <- fill_variance(ph.data.sub = ph.data, group_by)
       } else {
         ph.split <- split(ph.data, by = group_by) # create a list of tables with unique combo of group_by values
         ph.data <- rbindlist(lapply(ph.split,
-                                    FUN = function(x) fill_variance(ph.data.sub = x)), use.names = T)
+                                    FUN = function(x) fill_variance(ph.data.sub = x, group_by)), use.names = T)
       }
 
   ph.data[, px_variance := qx_variance] # Chiang 3.6, variance prob(survival) == variance of prob(death)
@@ -2414,12 +2435,12 @@ life_table_predict_mx <- function(ph.data = ph.data,
         "\n\U1F6D1 Your oldest age bin for at least one of your groups had zero deaths. This results in ",
         "\nan age specific death rate (mx) of zero for the oldest age group, which causes problems ",
         "\nin life table calculations. To get around this problem, we tried to extrapolate mx for ",
-        "\nthe oldest age bin based on on the mx for other age bins for those above 30. However, the ",
-        "\nfollowing group(s) also have mx == 0 for at least one other age group and thereby preventing ",
-        "\nthe ability to model mx for the oldest age group:\n",
+        "\nthe oldest age bin based on the mx for age bins above 30 years old. However, the ",
+        "\nfollowing group(s) also have mx == 0 for at least one other age bin, which prevents ",
+        "\n us from modeling mx for the oldest age bin:\n",
         problematic_groups,
-        "\nThis almost certainly mans that your population is too small for life table estimation.",
-        "\nPlease drop these group(s) from the analysis or ensure the data is correct."
+        "\nThis almost certainly means that your population is too small for life table estimation.",
+        "\nPlease drop these groups from the analysis or ensure the data is correct."
       )
 
       # Stop the function and inform the user
