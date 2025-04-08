@@ -146,7 +146,7 @@ get_data_birth <- function(cols = NA,
   # pull columns and years from SQL ----
     validyears <- glue::glue_sql_collapse(year, sep=", ")
 
-    if(kingco == T){
+    if(isTRUE(kingco)){
         kco_sub <- SQL(" AND chi_geo_kc = 'King County'")
     }else{
         kco_sub = SQL('')
@@ -497,10 +497,10 @@ get_data_chars <- function(cols = NA,
       validyears <- glue::glue_sql_collapse(year, sep=", ")
       query.string <- glue_sql('select {DBI::SQL(cols)} from {`mysqltable`} where chi_year in ({`validyears`*})', .con = con)
 
-      if(inpatient == T){query.string <- glue:: glue_sql (query.string, " AND STAYTYPE = 1", .con = con)}
-      if(deaths == F){query.string <- glue:: glue_sql (query.string, " AND STATUS != 20", .con = con)} # 20 means Expired / did not recover
-      if(wastate == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_wastate = 1", .con = con)}
-      if(kingco == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 1", .con = con)}
+      if(isTRUE(inpatient)){query.string <- glue:: glue_sql (query.string, " AND STAYTYPE = 1", .con = con)}
+      if(isFALSE(deaths)){query.string <- glue:: glue_sql (query.string, " AND STATUS != 20", .con = con)} # 20 means Expired / did not recover
+      if(isTRUE(wastate)){query.string <- glue:: glue_sql (query.string, " AND chi_geo_wastate = 1", .con = con)}
+      if(isTRUE(kingco)){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 1", .con = con)}
       if(kingco == 'zip'){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kczip = 1", .con = con)}
 
       dat <- data.table::setDT(DBI::dbGetQuery(con, query.string))
@@ -511,7 +511,7 @@ get_data_chars <- function(cols = NA,
   # Top code age (if wanted) ----
       if( 'chi_age' %in% cols | 'chi_age' %in% names(dat) ){
         dat[chi_age < 0, chi_age := NA] # cannot have a negative age (due to 9999 as year of birth)
-        if(topcode == T){
+        if(isTRUE(topcode)){
           dat[chi_age > 100, chi_age := 100] # top code to 100 to match population data
         }
       }
@@ -557,7 +557,7 @@ get_data_chars <- function(cols = NA,
                                 default = NA_character_)]
     }
     if('wastate' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
-      dat[chi_geo_wastate == TRUE, wastate := 'Washington State']
+      dat[isTRUE(chi_geo_wastate), wastate := 'Washington State']
     }
     if('yage4' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
       dat[, yage4 := fcase(age %in% 0:4, '0-4',
@@ -580,7 +580,7 @@ get_data_chars <- function(cols = NA,
     }
     if('race3' %in% original.cols | (length(original.cols) == 1 && is.na(original.cols))){
       dat[, race3 := chi_race_6]
-      dat[chi_race_aic_hisp == T, race3_hispanic := 'Hispanic']
+      dat[isTRUE(chi_race_aic_hisp), race3_hispanic := 'Hispanic']
     }
 
   # reorder table ----
@@ -613,7 +613,7 @@ get_data_chars <- function(cols = NA,
 #'
 #' @param kingco logical. Return dataset for analyses where county of decedent's residence is King County.
 #'
-#' Default = T
+#' Default = TRUE
 #'
 #' @param version Character vector of length 1. Either 'final' or 'stage'.
 #'
@@ -621,12 +621,18 @@ get_data_chars <- function(cols = NA,
 #'
 #' @param topcode logical. Whether to top code chi_age at 100 to match population data.
 #'
-#' Default = T
+#' Default = TRUE
 #'
 #' @param mykey Character vector of length 1. Identifies the keyring:: 'service'
 #' name that can be used to access the Health & Human Services Analytic Workspace (HHSAW).
 #'
 #' Default == 'hhsaw'
+#'
+#' @param include_prelim logical. Whether to include preliminary data.
+#'   WARNING: Keep as FALSE for production use. Preliminary data is
+#'   incomplete and unsuitable for analysis.
+#'
+#' Default = FALSE
 #'
 #' @return a single data.table
 #'
@@ -651,10 +657,11 @@ get_data_chars <- function(cols = NA,
 #' }
 get_data_death <- function(cols = NA,
                            year = NA,
-                           kingco = T,
+                           kingco = TRUE,
                            version = 'final',
-                           topcode = T,
-                           mykey = 'hhsaw'){
+                           topcode = TRUE,
+                           mykey = 'hhsaw',
+                           include_prelim = FALSE){
   # Visible bindings for data.table/check global variables ----
     chi_age <- chi_geo_kc <- chi_year <- NULL
 
@@ -679,6 +686,9 @@ get_data_death <- function(cols = NA,
     if(!is.logical(topcode) || length(topcode) != 1 || is.na(topcode)){
       stop('\n\U0001f6d1 `topcode` must be a logical (TRUE | FALSE, or equivalently, T | F).')
     }
+    if(!is.logical(include_prelim) || length(include_prelim) != 1 || is.na(include_prelim)){
+      stop('\n\U0001f6d1 `include_prelim` must be a logical (TRUE | FALSE, or equivalently, T | F).')
+    }
 
   # Validate mykey ----
       con <- validate_hhsaw_key(hhsaw_key = mykey)
@@ -686,9 +696,13 @@ get_data_death <- function(cols = NA,
   # create SQL table name
     mysqltable <- DBI::Id(schema = 'death', table = paste0(version, '_analytic'))
 
-  # Get list of all colnames from SQL ----
+  # Get list of all colnames & years from SQL ----
       death.names <- tolower(names(DBI::dbGetQuery(con, glue::glue_sql("SELECT TOP (0) * FROM {`mysqltable`}", .con = con))))
-      death.years <- sort(unique(DBI::dbGetQuery(con, glue::glue_sql("SELECT DISTINCT chi_year FROM {`mysqltable`}",.con = con))$chi_year))
+      if(isTRUE(include_prelim)){
+        death.years <- sort(unique(DBI::dbGetQuery(con, glue::glue_sql("SELECT DISTINCT chi_year FROM {`mysqltable`}",.con = con))$chi_year))
+      } else {
+        death.years <- sort(unique(DBI::dbGetQuery(con, glue::glue_sql("SELECT DISTINCT chi_year FROM {`mysqltable`} WHERE apde_file_status = 'F'",.con = con))$chi_year))
+      }
 
   # Identify columns and years to pull from SQL ----
       cols <- tolower(cols)
@@ -718,14 +732,16 @@ get_data_death <- function(cols = NA,
       validyears <- glue::glue_sql_collapse(year, sep = ", ")
       query.string <- glue_sql('select {DBI::SQL(cols)} from {`mysqltable`} where chi_year in ({`validyears`*})', .con = con)
 
-      if(kingco == T){query.string <- paste0(query.string, " AND chi_geo_kc = 'King County'")}
+      if(isTRUE(kingco)){query.string <- paste0(query.string, " AND chi_geo_kc = 'King County'")}
+
+      if(isFALSE(include_prelim)){query.string <- paste0(query.string, "AND apde_file_status = 'F'")}
 
       dat <- data.table::as.data.table(DBI::dbGetQuery(con, query.string))
 
   # Top code age (if wanted) ----
       if('chi_age' %in% names(dat) ){
         dat[chi_age < 0, chi_age := NA] # cannot have a negative age (due to 9999 as year of birth)
-        if(topcode == T){
+        if(isTRUE(topcode)){
           dat[chi_age > 100, chi_age := 100] # top code to 100 to match population data
         }
       }
@@ -825,7 +841,7 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_grad
   }
 
   #create the survey object
-  if(kingco == TRUE){
+  if(isTRUE(kingco)){
     dat <- dat[chi_geo_kc == 1,]
   }else{
     warning('Survey will be set to self-weighting so that rows outside of KC do not get dropped for having weights of 0')
