@@ -7,10 +7,11 @@
 get_data_death(
   cols = NA,
   year = NA,
-  kingco = T,
+  kingco = TRUE,
   version = "final",
-  topcode = T,
-  mykey = "hhsaw"
+  topcode = TRUE,
+  mykey = "hhsaw",
+  include_prelim = FALSE
 )
 }
 \arguments{
@@ -27,7 +28,7 @@ Default = NA}
 
 \item{kingco}{logical. Return dataset for analyses where county of decedent's residence is King County.
 
-Default = T}
+Default = TRUE}
 
 \item{version}{Character vector of length 1. Either 'final' or 'stage'.
 
@@ -35,12 +36,18 @@ Default = 'final'}
 
 \item{topcode}{logical. Whether to top code chi_age at 100 to match population data.
 
-Default = T}
+Default = TRUE}
 
 \item{mykey}{Character vector of length 1. Identifies the keyring:: 'service'
 name that can be used to access the Health & Human Services Analytic Workspace (HHSAW).
 
 Default == 'hhsaw'}
+
+\item{include_prelim}{logical. Whether to include preliminary data.
+WARNING: Keep as FALSE for production use. Preliminary data is
+incomplete and unsuitable for analysis.
+
+Default = FALSE}
 }
 \value{
 a single data.table
