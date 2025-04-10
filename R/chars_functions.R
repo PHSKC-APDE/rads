@@ -231,7 +231,7 @@ chars_injury_matrix_count<- function(ph.data = NULL,
         if(nrow(setDT(quiet(list_dataset_columns('chars')))[grepl('^intent_', var.names)]) >
            length(grep('^intent_', names(ph.data), value = T))){
           mi_col_intent <- setdiff(setDT(list_dataset_columns('chars'))[grepl('^intent_', var.names)]$var.names, grep('^intent_', names(ph.data), value = T))
-          warning(paste0("\n\U00026A0 ph.data is missing the following `intent_**` columns: ", paste0(mi_col_intent, collapse = ', '), ". This may impact the completeness of your results."))
+          warning(paste0("\n\u26A0\ufe0f ph.data is missing the following `intent_**` columns: ", paste0(mi_col_intent, collapse = ', '), ". This may impact the completeness of your results."))
         }
 
     # mechanism ----
@@ -245,7 +245,7 @@ chars_injury_matrix_count<- function(ph.data = NULL,
         if(nrow(setDT(quiet(list_dataset_columns('chars')))[grepl('^mechanism_', var.names)]) >
            length(grep('^mechanism_', names(ph.data), value = T))){
           mi_col_mechanism <- setdiff(setDT(list_dataset_columns('chars'))[grepl('^mechanism_', var.names)]$var.names, grep('^mechanism_', names(ph.data), value = T))
-          warning(paste0("\n\U00026A0 ph.data is missing the following `mechanism_**` columns: ", paste0(mi_col_mechanism, collapse = ', '), ". This may impact the completeness of your results."))
+          warning(paste0("\n\u26A0\ufe0f ph.data is missing the following `mechanism_**` columns: ", paste0(mi_col_mechanism, collapse = ', '), ". This may impact the completeness of your results."))
         }
 
     # group_by ----
@@ -552,6 +552,17 @@ chars_icd_ccs <- function(ref_type = 'all',
 #'
 #' The default is \code{icdcm_version = 10}.
 #'
+#' @param CMtable An optional data.table containing the reference table of ICD codes
+#' and their classifications. This should come from \code{\link{chars_icd_ccs}}
+#' and have the following columns: \code{icdcm_code}, \code{icdcm}, \code{superlevel},
+#' \code{broad}, \code{midlevel}, \code{detailed}, and \code{icdcm_version}. If
+#' provided, the function will use this table instead of making a new call to
+#' \code{\link{chars_icd_ccs}}, which can significantly improve performance when
+#' making multiple calls to this function.
+#'
+#' The default is \code{CMtable = NULL}, which means the function will fetch the reference
+#' table from the database using \code{\link{chars_icd_ccs}}.
+#'
 #' @param icdcm a character vector of length 1. An ICD CM description OR code.
 #' It is case agnostic and works with partial strings. For example, both
 #' 'rotavira' & 'A080' would provide the results for 'Rotaviral enteritis' for
@@ -626,7 +637,7 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' @name chars_icd_ccs_count
 #'
 #' @examples
-#' # example: 2019 King County hospitalizations for chemotherapy, by sex
+#' # example #1: 2019 King County hospitalizations for chemotherapy, by sex
 #' \donttest{
 #' blah = get_data_chars(year = 2019, kingco = TRUE)
 #' myresult <- chars_icd_ccs_count(ph.data = blah,
@@ -635,10 +646,24 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' print(myresult)
 #' }
 #'
+#' # example #2: 2022 King County hospitalizations for asthma using
+#' # an external reference table
+#' \donttest{
+#' myrefTable <- chars_icd_ccs()
+#'
+#' mydata = get_data_chars(year = 2022, kingco = TRUE)
+#' myresult <- chars_icd_ccs_count(ph.data = mydata,
+#'                                 CMtable = myrefTable,
+#'                                 detailed = 'asthma',
+#'                                 group_by = c('chi_sex'))
+#' print(myresult)
+#' }
+#'
 #' @import data.table rads.data
 #'
 chars_icd_ccs_count <- function(ph.data = NULL,
                                 icdcm_version = 10,
+                                CMtable = NULL,
                                 icdcm = NULL,
                                 superlevel = NULL,
                                 broad = NULL,
@@ -650,7 +675,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
                                 mykey = 'hhsaw'){
 
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-    CMtable <- CMtable.expanded <- filter.count <- problem.icds <- superlevel_desc <- broad_desc <-
+    CMtable_cols <- CMtable.expanded <- filter.count <- problem.icds <- superlevel_desc <- broad_desc <-
       midlevel_desc <- detailed_desc <- chi_geo_kc <- hospitalizations <- icdcm_code <- KeepMe <-
       icdcm_desc <- icdcm_code <- query.group <- diag1 <- intent_ignore <-
       chars_injury_matrix_count <- mechanism_ignore <- dummy <- NULL
@@ -668,6 +693,22 @@ chars_icd_ccs_count <- function(ph.data = NULL,
     # icdcm_version ----
         if(!icdcm_version %in% c(9, 10) | length(icdcm_version) != 1){stop("\n \U0001f47f the `icdcm_version` argument is limited to the integers '9' OR '10'")}
 
+    # CMtable ----
+        if (!is.null(CMtable)){
+          if (!is.data.frame(CMtable)) {
+            stop("\n\U0001f47f `CMtable` must be the unquoted name of a data.frame or data.table, typically from rads::chars_icd_ccs()")
+          }
+          if (!data.table::is.data.table(CMtable)) {
+            data.table::setDT(CMtable)
+          }
+
+          CMtable_cols <- c("icdcm_code", "icdcm", "superlevel", "broad", "midlevel", "detailed", "icdcm_version")
+          if (!identical(sort(CMtable_cols), sort(names(CMtable)))){
+            stop(paste0("\n\U0001f47f CMtable must have the following columns as specified in rads::chars_icd_ccs:",
+                        "\n ", paste(CMtable_cols, collapse = ', ')))
+          }
+        }
+
     # seq_no (unique identifier) ----
         if(!'seq_no' %in% names(ph.data)){
           stop("\U2620\U0001f47f\U2620\nph.data must contain the 'seq_no' column, which is the unique identifier.")}
@@ -679,7 +720,9 @@ chars_icd_ccs_count <- function(ph.data = NULL,
           stop("\n\U0001f47f `icdcm`, `superlevel`, `broad`, `midlevel`, and `detailed` are all NULL. This doesn't make sense! Specify a value for at least one of these arguments.")
         }
 
-        CMtable <- chars_icd_ccs(icdcm_version = icdcm_version) # reference table of all potential search terms for this function
+        if(is.null(CMtable)){
+          CMtable <- chars_icd_ccs(icdcm_version = icdcm_version) # reference table of all potential search terms for this function
+        }
         CMtable <- CMtable[, list(icdcm_code, icdcm_desc = icdcm, superlevel_desc = superlevel, broad_desc = broad, midlevel_desc = midlevel, detailed_desc = detailed)]
 
         filter.count <- sum(!is.null(icdcm), !is.null(superlevel), !is.null(broad), !is.null(midlevel), !is.null(detailed))
@@ -768,7 +811,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
         ph.data[, (icdcol) := toupper(get(icdcol))]
 
         if(length(grep("\\.|-", ph.data[[icdcol]], value = T) >0 )){
-          warning(paste0("\U00026A0 There is at least one row where `icdcol` (",
+          warning(paste0("\u26A0\ufe0f There is at least one row where `icdcol` (",
           icdcol, ") contains a hyphen (-), period (.), space or some other ",
           "non alpha-numeric character. These characters will be deleted, e.g., ",
           "A85.2 will become A852. This is necessary because causeids in ",
@@ -780,7 +823,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
         if(icdcm_version == 10){
           if(nrow(ph.data[is.na(get(icdcol)) | !grepl("^[A-Z][0-9]", get(icdcol))]) > 0){
             problem.icds <- ph.data[is.na(get(icdcol)) | !grepl("^[A-Z][0-9]", get(icdcol)), ][[icdcol]]
-            warning(paste0("\U00026A0 There is/are ", length(problem.icds), " row(s) where `icdcol` (",
+            warning(paste0("\u26A0\ufe0f There is/are ", length(problem.icds), " row(s) where `icdcol` (",
             icdcol, ") does not follow the proper ICD-10-CM pattern. All ICD-10-CMs that do not begin with a ",
             "single capital letter followed by a number have been replaced with NA."))
             ph.data[!grepl("^[A-Z][0-9]", get(icdcol)) , paste0(icdcol) := NA]

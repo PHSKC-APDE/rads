@@ -8,6 +8,7 @@
 chars_icd_ccs_count(
   ph.data = NULL,
   icdcm_version = 10,
+  CMtable = NULL,
   icdcm = NULL,
   superlevel = NULL,
   broad = NULL,
@@ -33,6 +34,17 @@ version that you want to reference. Acceptable options include: \code{9}
 & \code{10}.
 
 The default is \code{icdcm_version = 10}.}
+
+\item{CMtable}{An optional data.table containing the reference table of ICD codes
+and their classifications. This should come from \code{\link{chars_icd_ccs}}
+and have the following columns: \code{icdcm_code}, \code{icdcm}, \code{superlevel},
+\code{broad}, \code{midlevel}, \code{detailed}, and \code{icdcm_version}. If
+provided, the function will use this table instead of making a new call to
+\code{\link{chars_icd_ccs}}, which can significantly improve performance when
+making multiple calls to this function.
+
+The default is \code{CMtable = NULL}, which means the function will fetch the reference
+table from the database using \code{\link{chars_icd_ccs}}.}
 
 \item{icdcm}{a character vector of length 1. An ICD CM description OR code.
 It is case agnostic and works with partial strings. For example, both
@@ -135,11 +147,24 @@ give results because sarcomas are type of cancers. However,
 error because your resulting table will have zero rows.
 }
 \examples{
-# example: 2019 King County hospitalizations for chemotherapy, by sex
+# example #1: 2019 King County hospitalizations for chemotherapy, by sex
 \donttest{
 blah = get_data_chars(year = 2019, kingco = TRUE)
 myresult <- chars_icd_ccs_count(ph.data = blah,
                                 detailed = 'headache',
+                                group_by = c('chi_sex'))
+print(myresult)
+}
+
+# example #2: 2022 King County hospitalizations for asthma using
+# an external reference table
+\donttest{
+myrefTable <- chars_icd_ccs()
+
+mydata = get_data_chars(year = 2022, kingco = TRUE)
+myresult <- chars_icd_ccs_count(ph.data = mydata,
+                                CMtable = myrefTable,
+                                detailed = 'asthma',
                                 group_by = c('chi_sex'))
 print(myresult)
 }

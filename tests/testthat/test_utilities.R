@@ -47,6 +47,16 @@ test_that('age_standardize ... valid output',{
   temp.dt2 <- data.table(sex = c(rep("M", 11), rep("F", 11)), age = rep(50:60, 2),
                       count = c(25:35, 26:36), pop = c(seq(1000, 900, -10), seq(1100, 1000, -10)),
                       stdpop = rep(1000, 22))
+
+  expect_message(age_standardize(ph.data = temp.dt2, ref.popname = "none", collapse = F, my.count = "count",
+                                 my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex", diagnostic_report = TRUE),
+                 'Returning diagnostic report instead of age-standardized rates')
+
+  diagreport <- suppressMessages(age_standardize(ph.data = temp.dt2, ref.popname = "none", collapse = F, my.count = "count",
+                                my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex", diagnostic_report = TRUE))
+  expect_identical(unique(diagreport$missing), '0-49, 61-100')
+  expect_identical(sort(unique(diagreport$sex)), c('F', 'M'))
+
   temp.agestd2 <- suppressWarnings(age_standardize(ph.data = temp.dt2, ref.popname = "none", collapse = F, my.count = "count",
                   my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex"))
 
@@ -126,7 +136,33 @@ test_that('age_standardize ... errors & warnings',{
                                  per = 100000,
                                  conf.level = 0.95,
                                  group_by = c('height', 'weight', 'gender')),
-                 'Group \\(Tall, Light, F\\) is missing ages: 20, 21, 22, 23, 24, 25')
+                 'Missing ages detected in tempy for 7 groups.')
+
+  # Warnings when only two groups
+  temp.dt2 <- data.table(sex = c(rep("M", 11), rep("F", 11)), age = rep(50:60, 2),
+                         count = c(25:35, 26:36), pop = c(seq(1000, 900, -10), seq(1100, 1000, -10)),
+                         stdpop = rep(1000, 22))
+
+  expect_warning(age_standardize(ph.data = temp.dt2,
+                                 ref.popname = "none",
+                                 collapse = F,
+                                 my.count = "count",
+                                 my.pop = "pop",
+                                 per = 1000,
+                                 conf.level = 0.95,
+                                 group_by = "sex"),
+                 'Missing ages detected in temp.dt2 for these groups:')
+
+  expect_warning(age_standardize(ph.data = temp.dt2,
+                                 ref.popname = "none",
+                                 collapse = F,
+                                 my.count = "count",
+                                 my.pop = "pop",
+                                 per = 1000,
+                                 conf.level = 0.95,
+                                 group_by = "sex"),
+                 'M 0-49, 61-100')
+
 
   # test if fails when have mismatched aggregated data
   set.seed(98104)

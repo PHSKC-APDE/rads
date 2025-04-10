@@ -437,7 +437,7 @@ death_icd10_clean <- function(icdcol){
 
   # Check for hyphens and periods which are sometimes present
   if(length(grep("\\.|-", icdcol, value = T) > 0 )){
-    warning(paste0("\n\U00026A0 There is at least one row where `icdcol` contains a hyphen (-), period (.), " ,
+    warning(paste0("\n\u26A0\ufe0f There is at least one row where `icdcol` contains a hyphen (-), period (.), " ,
                    "\nspace or some other non alpha-numeric character. These characters have been deleted, ",
                    "\ne.g., A85.2 will become A852. This is necessary because rads death functions expect",
                    "\npure alpha numeric ICD codes."
@@ -450,7 +450,7 @@ death_icd10_clean <- function(icdcol){
   problem.icds <- grep("^[A-Z].*[0-9]$", icdcol, value = TRUE, invert = TRUE)
   problem.icds <- problem.icds[!is.na(problem.icds)]
   if (length(problem.icds) > 0) {
-    warning(paste0("\n\U00026A0  There is/are ", length(problem.icds), " value(s) in `icdcol` that do not follow the proper ",
+    warning(paste0("\n\u26A0\ufe0f  There is/are ", length(problem.icds), " value(s) in `icdcol` that do not follow the proper ",
                    "\nICD pattern. All ICDs that do not begin with a letter and end with",
                    "\na numeric have been replaced with NA."))
     icdcol[!grepl("^[A-Z].*[0-9]$", icdcol)] <- NA
@@ -1524,7 +1524,7 @@ death_xxx_count <- function(ph.data,
       }
 
       if (!is.null(cause) & !is.null(causeids)){
-        message('\U00026A0 You specified both a cause and causeid argument. The causes will replace the causeids.')
+        message('\u26A0\ufe0f You specified both a cause and causeid argument. The causes will replace the causeids.')
         causeids <- NULL
         }
 
@@ -1734,7 +1734,7 @@ death_xxx_count <- function(ph.data,
   # Message about COVID-19 if selected causeid 17 ----
     if (nchsnum == 113 && 17 %in% x_combo$causeid) {
       message(
-        "\U00026A0 You selected causeid == 17 (Other and unspecified infectious and parasitic diseases...).
+        "\u26A0\ufe0f You selected causeid == 17 (Other and unspecified infectious and parasitic diseases...).
             COVID-19 (U07.1) has been EXCLUDED from this cause, following the example of WA DOH. Note
             however that, as of October 2020, CDC INCLUDES COVID-19 (U07.1) in causeid == 17. In
             other words, APDE followed WA DOH's decision since we provide a separate row for COVID-19."
@@ -2061,10 +2061,12 @@ life_table <- function(ph.data,
     ph.data[mx > 1, mx := 1] # due to small numbers, it is possible for #deaths>#pop, especially for single old age groups. Probability > 100% illogical.
 
     # Use predicted mx for highest age group if necessary
-      if(nrow(ph.data[grepl('[0-9]+', get(myages)) & mx == 0]) > 0){
+      if(nrow(ph.data[grepl('[0-9]+\\+', get(myages)) & mx == 0]) > 0){
+
+        mxPredicted <- life_table_predict_mx(ph.data, group_by, myages)
 
         warning(paste0(
-          "\n\U00026A0",
+          "\n\u26A0\ufe0f",
           "\nWarning: Zero deaths detected in one or more oldest age groups (e.g., `", myages, "==", unique(ph.data[istart == max(istart)][[myages]]), "`).",
           "\nThis may indicate an error in data preparation or reflect small population sizes.\n",
           "\nThe function has provided modeled `mx` values, affecting `Tx` and `ex` calculations,",
@@ -2072,8 +2074,6 @@ life_table <- function(ph.data,
           "\noldest age group are based soley on modeled deaths and should be interpreted cautiously.",
           "\n\nPlease double-check your data preparation and consider whether life table calculations ",
           "\nare appropriate for your population size."))
-
-        mxPredicted <- life_table_predict_mx(ph.data, group_by, myages)
 
         if(is.null(group_by)){
           ph.data <- merge(ph.data,
@@ -2156,25 +2156,46 @@ life_table <- function(ph.data,
     # when have zero deaths, would have 0/0 (undefined) as variance, so ascribe the median of the
     # observed variances (except zero for 85+)
     # first create small function
-      fill_variance <- function(ph.data.sub){
+      fill_variance <- function(ph.data.sub, group_by = NULL){
+        # Get the group identification if group_by is provided
+        group_text <- ""
+        if(!is.null(group_by) && length(group_by) > 0) {
+          # Create a vector of "column = value" pairs
+          group_pairs <- sapply(group_by, function(col) {
+            val <- unique(ph.data.sub[[col]])
+            if(length(val) == 1) {  # Most common case - one value per split group
+              paste0(col, " = ", val)
+            } else {
+              # Handle unlikely case of multiple values in what should be a unique group
+              paste0(col, " = [", paste(val, collapse = ", "), "]")
+            }
+          })
+
+          # Join the pairs with commas
+          group_text <- paste0(" for ", paste(group_pairs, collapse = ", "))
+        }
+
         obs.variances <- sort(ph.data.sub[!is.nan(qx_variance) & qx_variance != 0]$qx_variance)
         if(length(obs.variances) < 0.5*nrow(ph.data.sub)){
-          warning(paste0("\U00026A0 You have ", nrow(ph.data.sub[is.nan(qx_variance)]), " rows where the variance of the probability of dying in the interval is NaN, probably due to zero deaths.",
-                         "\n This is more than 50% of your age groups, which means your population is likely too small for meaningful life expectancy calculations.",
-                         "\n The variances will be filled with the median of the measured variances, but be cautious in using / interpreting the estimates.",
-                         "\n If this message is repeated, it is because this problem occurs in more than one of your tables defined by the `group_by` argument."))
-          }
+          warning(paste0(
+            "\u26A0\ufe0f Small population issue", group_text, ".\n",
+            "Found ", nrow(ph.data.sub[is.nan(qx_variance)]), " age groups where the variance of the probability of dying in the interval was NaN.\n",
+            "This exceeds 50% of age groups and is likely due to zero deaths in these age groups.\n",
+            "The median variance will be used as an approximation.\n",
+            "Life expectancy calculations may be unreliable.\n"
+          ))
+        }
         ph.data.sub[is.nan(qx_variance), qx_variance := median(obs.variances)]
         return(ph.data.sub)
       }
 
     # Then apply fill.variance() function
       if(is.null(group_by)){
-        ph.data <- fill_variance(ph.data.sub = ph.data)
+        ph.data <- fill_variance(ph.data.sub = ph.data, group_by)
       } else {
         ph.split <- split(ph.data, by = group_by) # create a list of tables with unique combo of group_by values
         ph.data <- rbindlist(lapply(ph.split,
-                                    FUN = function(x) fill_variance(ph.data.sub = x)), use.names = T)
+                                    FUN = function(x) fill_variance(ph.data.sub = x, group_by)), use.names = T)
       }
 
   ph.data[, px_variance := qx_variance] # Chiang 3.6, variance prob(survival) == variance of prob(death)
@@ -2206,6 +2227,7 @@ life_table <- function(ph.data,
   # divide ex_temp_cumsum by lx^2 to get sample variance
     ph.data[, ex_variance := ex_temp_cumsum / lx^2]
 
+  # Variance for oldest age interval (Silcocks' formula) ----
   # variance for oldest age interval cannot be calculated using the Chiang method
   # and is assumed to be zero because qx for the oldest interval == 1.00.
   # CDC follows Silcocks' approximation, not Chiang's assumption, which is what we will use here.
@@ -2328,7 +2350,7 @@ life_table <- function(ph.data,
 #'            ages = c("35-44", "45-54", "55-64", "65-74", "75-84", "85+"),
 #'            istart = c(35, 45, 55, 65, 75, 85),
 #'            gender = rep("Both", 6),
-#'            mx = c(0.001947, 0.003959, 0.008867, 0.017833, 0.043861, 0.134507)
+#'            mx = c(0.001947, 0.003959, 0.008867, 0.017833, 0.043861, 0)
 #' )
 #'
 #' # generate predictions ----
@@ -2354,10 +2376,18 @@ life_table_predict_mx <- function(ph.data = ph.data,
                                   myages = myages,
                                   empirical_adjustment_factor = 1.8) {
   # Global variables used by data.table declared as NULL here to play nice with devtools::check()
-  istart <- mx <- NULL
+  istart <- mx <- any_zero_mx <- mygroup <- NULL
 
   # Filter for ages 30 and above, excluding the highest age group
-  ph.data_2mod <- ph.data[istart >= 30 & istart < max(istart)]
+  if (is.null(group_by)) {
+    ph.data_2mod <- copy(ph.data)[istart >= 30 & istart < max(istart)]
+  } else {
+    ph.data_2mod <- copy(ph.data)
+    ph.data_2mod[, mygroup := .GRP, by = c(group_by)]
+    ph.data_2mod <- ph.data_2mod[mygroup %in% ph.data_2mod[grepl('[0-9]+\\+', get(myages)) & mx == 0]$mygroup]
+    ph.data_2mod[, mygroup := NULL]
+    ph.data_2mod <- ph.data_2mod[istart >= 30 & istart < max(istart)]
+  }
 
   # Identify the maximum istart value
   max_istart <- max(ph.data$istart)
@@ -2377,11 +2407,46 @@ life_table_predict_mx <- function(ph.data = ph.data,
     return(predicted_mx)
   }
 
+  # Function to check if any group has mx == 0
+  check_for_zero_mx <- function(tempdt, group_by) {
+    # Check for groups where any mx is zero
+    zero_mx_groups <- tempdt[, list(any_zero_mx = any(mx == 0)), by = group_by]
+
+    # Filter for groups where any mx is zero
+    problematic_groups <- zero_mx_groups[any_zero_mx == TRUE]
+
+    # Return the problematic groups
+    return(problematic_groups)
+  }
+
   if (is.null(group_by)) {
     # If no strata variables, perform extrapolation on entire dataset
     result <- data.table(ages = unique(ph.data[istart == max(istart)][[myages]]),
                          predicted_mx = extrapolate_group(ph.data_2mod))
   } else {
+    # Check for groups with mx == 0
+    problematic_groups <- check_for_zero_mx(ph.data_2mod, group_by)[, any_zero_mx := NULL]
+
+    if (nrow(problematic_groups) > 0) {
+      # Generate a message listing the problematic groups
+      problematic_groups <- paste(capture.output(print(problematic_groups, row.names = FALSE, class = FALSE, print.keys = FALSE)), collapse = "\n")
+
+      problematic_groups_message <- paste0(
+        "\n\U1F6D1 Your oldest age bin for at least one of your groups had zero deaths. This results in ",
+        "\nan age specific death rate (mx) of zero for the oldest age group, which causes problems ",
+        "\nin life table calculations. To get around this problem, we tried to extrapolate mx for ",
+        "\nthe oldest age bin based on the mx for age bins above 30 years old. However, the ",
+        "\nfollowing group(s) also have mx == 0 for at least one other age bin, which prevents ",
+        "\n us from modeling mx for the oldest age bin:\n",
+        problematic_groups,
+        "\nThis almost certainly means that your population is too small for life table estimation.",
+        "\nPlease drop these groups from the analysis or ensure the data is correct."
+      )
+
+      # Stop the function and inform the user
+      stop(paste(problematic_groups_message))
+    }
+
     # Perform extrapolation within each stratum
     result <- ph.data_2mod[, list(ages = unique(ph.data[istart == max(istart)][[myages]]),
                                   predicted_mx = extrapolate_group(.SD)),
@@ -2505,13 +2570,13 @@ life_table_prep <- function(ph.data,
       ph.data <- data.table::setDT(data.table::copy(ph.data)) # to prevent changing of original by reference
 
       if(length(intersect(c("start", "end", "dob", "dod"), names(ph.data))) > 1){
-        warning("\n\U00026A0 ph.data has a column named 'start', 'end', 'dob', or 'dod' which was overwritten by this function. \nTo preserve your columns, rename them, and run this function again.")}
+        warning("\n\u26A0\ufe0f ph.data has a column named 'start', 'end', 'dob', or 'dod' which was overwritten by this function. \nTo preserve your columns, rename them, and run this function again.")}
 
     # cuts ----
       if(isTRUE(any(is.na(cuts))) || is.null(cuts) || !is.numeric(cuts)){stop("\n\U0001f47f 'cuts' must be specified as a numeric vector and cannot contain any NA's.")}
       if(length(cuts) <= 1){stop("\n\U0001f47f 'cuts' should be a numeric vector of length >1 and typically of length ~20.")}
       if(min(cuts) < 0){stop("\n\U0001f47f The minimum age in 'cuts' should be zero.")}
-      if(max(cuts) > 100){warning("\n\U00026A0 You're maximum age in 'cuts' is greater than 100. \nYou do not have to change this, but know that ages are top coded at 100.")}
+      if(max(cuts) > 100){warning("\n\u26A0\ufe0f You're maximum age in 'cuts' is greater than 100. \nYou do not have to change this, but know that ages are top coded at 100.")}
 
     # dobvar ----
       if(dobvar == "dobvar"){
@@ -2526,7 +2591,7 @@ life_table_prep <- function(ph.data,
       if(!dodvar %in% names(ph.data)){stop("\n\U0001f47f 'dodvar' must specify the name of a date of death column that exists in ph.data.")}
 
       if(nrow(ph.data[get(dodvar) < get(dobvar)]) > 0){
-        warning(paste0("\n\U00026A0 There are ", nrow(ph.data[dodvar < dobvar]), " rows where 'dodvar' is less than 'dobvar'. \nThese date pairs had their values set to NA and will only contribute indirectly to the life_table calculations."))
+        warning(paste0("\n\u26A0\ufe0f There are ", nrow(ph.data[dodvar < dobvar]), " rows where 'dodvar' is less than 'dobvar'. \nThese date pairs had their values set to NA and will only contribute indirectly to the life_table calculations."))
         ph.data[get(dodvar) < get(dobvar), paste0(dodvar) := NA]
         ph.data[get(dodvar) < get(dobvar), paste0(dobvar) := NA]
       }
@@ -2547,8 +2612,8 @@ life_table_prep <- function(ph.data,
     # confirm that dob and dod are legitimate
     dob_na <- nrow(ph.data[is.na(dob)])/nrow(ph.data)
     dod_na <- nrow(ph.data[is.na(dod)])/nrow(ph.data)
-    if(dob_na > 0.01){warning("\n\U00026A0 More than 1% of the date of birth values are missing. \nPlease check that your variable is of class Date or is of class character in the form 'YYYY-MM-DD' or 'YYYY/MM/DD'. \nDeaths with unknown dob will be distributed proportionately among deaths with known dates of birth.")}
-    if(dod_na > 0.01){warning("\n\U00026A0 More than 1% of the date of death values are missing. \nPlease check that your variable is of class Date or is of class character in the form 'YYYY-MM-DD' or 'YYYY/MM/DD'.")}
+    if(dob_na > 0.01){warning("\n\u26A0\ufe0f More than 1% of the date of birth values are missing. \nPlease check that your variable is of class Date or is of class character in the form 'YYYY-MM-DD' or 'YYYY/MM/DD'. \nDeaths with unknown dob will be distributed proportionately among deaths with known dates of birth.")}
+    if(dod_na > 0.01){warning("\n\u26A0\ufe0f More than 1% of the date of death values are missing. \nPlease check that your variable is of class Date or is of class character in the form 'YYYY-MM-DD' or 'YYYY/MM/DD'.")}
 
   # Properly calculate age at death ----
     ph.data[, death_age := rads::calc_age(dob, dod)]

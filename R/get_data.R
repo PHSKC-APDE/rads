@@ -26,7 +26,7 @@
 #' \donttest{
 #'  test <- get_data(
 #'           dataset = 'death',
-#'           cols = c('chi_year', 'chi_geo_kc', 'chi_geo_region'),
+#'           cols = c('chi_year', 'chi_sex'),
 #'           year = c(2021))
 #'
 #'  head(test)
@@ -146,7 +146,7 @@ get_data_birth <- function(cols = NA,
   # pull columns and years from SQL ----
     validyears <- glue::glue_sql_collapse(year, sep=", ")
 
-    if(kingco == T){
+    if(isTRUE(kingco)){
         kco_sub <- SQL(" AND chi_geo_kc = 'King County'")
     }else{
         kco_sub = SQL('')
@@ -497,10 +497,10 @@ get_data_chars <- function(cols = NA,
       validyears <- glue::glue_sql_collapse(year, sep=", ")
       query.string <- glue_sql('select {DBI::SQL(cols)} from {`mysqltable`} where chi_year in ({`validyears`*})', .con = con)
 
-      if(inpatient == T){query.string <- glue:: glue_sql (query.string, " AND STAYTYPE = 1", .con = con)}
-      if(deaths == F){query.string <- glue:: glue_sql (query.string, " AND STATUS != 20", .con = con)} # 20 means Expired / did not recover
-      if(wastate == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_wastate = 1", .con = con)}
-      if(kingco == T){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 1", .con = con)}
+      if(isTRUE(inpatient)){query.string <- glue:: glue_sql (query.string, " AND STAYTYPE = 1", .con = con)}
+      if(isFALSE(deaths)){query.string <- glue:: glue_sql (query.string, " AND STATUS != 20", .con = con)} # 20 means Expired / did not recover
+      if(isTRUE(wastate)){query.string <- glue:: glue_sql (query.string, " AND chi_geo_wastate = 1", .con = con)}
+      if(isTRUE(kingco)){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 1", .con = con)}
       if(kingco == 'zip'){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kczip = 1", .con = con)}
 
       dat <- data.table::setDT(DBI::dbGetQuery(con, query.string))
@@ -511,7 +511,7 @@ get_data_chars <- function(cols = NA,
   # Top code age (if wanted) ----
       if( 'chi_age' %in% cols | 'chi_age' %in% names(dat) ){
         dat[chi_age < 0, chi_age := NA] # cannot have a negative age (due to 9999 as year of birth)
-        if(topcode == T){
+        if(isTRUE(topcode)){
           dat[chi_age > 100, chi_age := 100] # top code to 100 to match population data
         }
       }
@@ -557,7 +557,7 @@ get_data_chars <- function(cols = NA,
                                 default = NA_character_)]
     }
     if('wastate' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
-      dat[chi_geo_wastate == TRUE, wastate := 'Washington State']
+      dat[isTRUE(chi_geo_wastate), wastate := 'Washington State']
     }
     if('yage4' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
       dat[, yage4 := fcase(age %in% 0:4, '0-4',
@@ -580,7 +580,7 @@ get_data_chars <- function(cols = NA,
     }
     if('race3' %in% original.cols | (length(original.cols) == 1 && is.na(original.cols))){
       dat[, race3 := chi_race_6]
-      dat[chi_race_aic_hisp == T, race3_hispanic := 'Hispanic']
+      dat[isTRUE(chi_race_aic_hisp), race3_hispanic := 'Hispanic']
     }
 
   # reorder table ----
@@ -601,31 +601,38 @@ get_data_chars <- function(cols = NA,
 # get_data_death() ----
 #' Get Death microdata from storage.
 #'
-#' @param cols Character vector of length >=1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
-#'     See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.
+#' @param cols Character vector of length >=1. Identifies which columns should be
+#' returned. NA returns all columns in the analytic dataset. See
+#' \code{\link{list_dataset_columns}} for more information on which columns are
+#' considered default by dataset.
 #'
 #' Default = NA
-#' @param year Numeric vector. Identifies which years of data should be pulled. Defaults to the most recent year.
+#' @param year Numeric vector. Identifies which years of data should be pulled. NA returns the most recent year.
 #'
-#' Default = most recent year only
+#' Default = NA
 #'
 #' @param kingco logical. Return dataset for analyses where county of decedent's residence is King County.
 #'
-#' Default = T
+#' Default = TRUE
 #'
 #' @param version Character vector of length 1. Either 'final' or 'stage'.
 #'
 #' Default = 'final'
 #'
-#' @param topcode logical. Do you want to top code chi_age at 100 to match population data?
+#' @param topcode logical. Whether to top code chi_age at 100 to match population data.
 #'
-#' Default = T
+#' Default = TRUE
 #'
-#' @param mykey Character vector of length 1. Identifies
-#' the keyring:: 'service' name that can be used to access the Health & Human Services
-#' Analytic Workspace (HHSAW).
+#' @param mykey Character vector of length 1. Identifies the keyring:: 'service'
+#' name that can be used to access the Health & Human Services Analytic Workspace (HHSAW).
 #'
 #' Default == 'hhsaw'
+#'
+#' @param include_prelim logical. Whether to include preliminary data.
+#'   WARNING: Keep as FALSE for production use. Preliminary data is
+#'   incomplete and unsuitable for analysis.
+#'
+#' Default = FALSE
 #'
 #' @return a single data.table
 #'
@@ -639,7 +646,7 @@ get_data_chars <- function(cols = NA,
 #'
 #' \donttest{
 #'  test <- get_data_death(
-#'           cols = c('chi_year', 'chi_geo_kc', 'chi_sex'),
+#'           cols = c('chi_year', 'race4', 'chi_sex'),
 #'           year = c(2019),
 #'           kingco = TRUE,
 #'           version = 'final',
@@ -650,26 +657,38 @@ get_data_chars <- function(cols = NA,
 #' }
 get_data_death <- function(cols = NA,
                            year = NA,
-                           kingco = T,
+                           kingco = TRUE,
                            version = 'final',
-                           topcode = T,
-                           mykey = 'hhsaw'){
-
-  chi_age <- date_of_birth <- date_of_death <- age_years <- chi_race_eth7 <- NULL
-  chi_race_6 <- chi_race_eth8 <- chi_race_7 <- geo_id_code <- chi_sex <-  NULL
-  age6 <- chi_geo_kc <- chi_geo_wastate <- chi_race_hisp <- geo_id <- geo_type <- NULL
-  race3 <- race3_hispanic <- race4 <- wastate <- bigcities <- chi_geo_bigcities <- NULL
-  hra20_name <- chi_geo_hra2020_long <- chi_geo_region <- chi_geo_reg2020_name <- NULL
+                           topcode = TRUE,
+                           mykey = 'hhsaw',
+                           include_prelim = FALSE){
+  # Visible bindings for data.table/check global variables ----
+    chi_age <- chi_geo_kc <- chi_year <- NULL
 
   # Validate arguments other than mykey ----
     if(!(length(cols) == 1 && is.na(cols))){
-      if(!is.character(cols)){stop('\n\U0001f6d1 `cols` must specify a vector of variables or be NA (to get all possible columns).')}
+      if(!is.character(cols)){
+        stop('\n\U0001f6d1 `cols` must specify a vector of variables or be NA (to get all possible columns).')
+        }
     }
     if(!(length(year) == 1 && is.na(year))){
-      if( (!is.numeric(year)) | sum(year%%1) != 0 ) {stop('\n\U0001f6d1 `year` must specify a vector of integers (e.g., c(2017, 2019)) or be NA (to get the most recent year).')}
+      if( (!is.numeric(year)) | sum(year%%1) != 0 ) {
+        stop('\n\U0001f6d1 `year` must specify a vector of integers (e.g., c(2017, 2019)) or be NA (to get the most recent year).')
+        }
     }
-    if((length(kingco) == 1 && is.na(kingco)) | !is.logical(kingco)){stop('\n\U0001f6d1 `kingco` must be a logical (TRUE | FALSE, or equivalently, T | F).')}
-    if((length(topcode) == 1 && is.na(topcode)) | !is.logical(topcode)){stop('\n\U0001f6d1 `topcode` must be a logical (TRUE | FALSE, or equivalently, T | F).')}
+    if(!is.logical(kingco) || length(kingco) != 1 || is.na(kingco)){
+      stop('\n\U0001f6d1 `kingco` must be a logical (TRUE | FALSE, or equivalently, T | F).')
+      }
+    if(!is.character(version) || length(version) != 1 ||
+       !(tolower(version) %in% c('final', 'stage'))){
+      stop('\n\U0001f6d1 `version` must be either "final" or "stage".')
+    }
+    if(!is.logical(topcode) || length(topcode) != 1 || is.na(topcode)){
+      stop('\n\U0001f6d1 `topcode` must be a logical (TRUE | FALSE, or equivalently, T | F).')
+    }
+    if(!is.logical(include_prelim) || length(include_prelim) != 1 || is.na(include_prelim)){
+      stop('\n\U0001f6d1 `include_prelim` must be a logical (TRUE | FALSE, or equivalently, T | F).')
+    }
 
   # Validate mykey ----
       con <- validate_hhsaw_key(hhsaw_key = mykey)
@@ -677,35 +696,27 @@ get_data_death <- function(cols = NA,
   # create SQL table name
     mysqltable <- DBI::Id(schema = 'death', table = paste0(version, '_analytic'))
 
-  # Get list of all colnames from SQL ----
+  # Get list of all colnames & years from SQL ----
       death.names <- tolower(names(DBI::dbGetQuery(con, glue::glue_sql("SELECT TOP (0) * FROM {`mysqltable`}", .con = con))))
-      death.years <- sort(unique(DBI::dbGetQuery(con, glue::glue_sql("SELECT DISTINCT chi_year FROM {`mysqltable`}",.con = con))$chi_year))
+      if(isTRUE(include_prelim)){
+        death.years <- sort(unique(DBI::dbGetQuery(con, glue::glue_sql("SELECT DISTINCT chi_year FROM {`mysqltable`}",.con = con))$chi_year))
+      } else {
+        death.years <- sort(unique(DBI::dbGetQuery(con, glue::glue_sql("SELECT DISTINCT chi_year FROM {`mysqltable`} WHERE apde_file_status = 'F'",.con = con))$chi_year))
+      }
 
   # Identify columns and years to pull from SQL ----
       cols <- tolower(cols)
       if(!all(is.na(cols))){
-        # for custom CHI/CHNA vars
-        original.cols <- copy(cols)
-        var.2.calc <- c()
-        if('age6' %in% cols){cols <- c(cols, 'chi_age'); var.2.calc=c(var.2.calc, 'age6')}
-        if('bigcities' %in% cols){cols <- c(cols, 'chi_geo_bigcities'); var.2.calc=c(var.2.calc, 'bigcities')}
-        if('chi_geo_region' %in% cols){cols <- c(cols, 'chi_geo_reg2020_name'); var.2.calc=c(var.2.calc, 'chi_geo_region')}
-        if('hra20_name' %in% cols){cols <- c(cols, 'chi_geo_hra2020_long'); var.2.calc=c(var.2.calc, 'hra20_name')}
-        if('race3' %in% cols){cols <- c(cols, 'chi_race_6', 'chi_race_hisp'); var.2.calc=c(var.2.calc, 'race3')}
-        if('race4' %in% cols){cols <- c(cols, 'chi_race_eth7'); var.2.calc=c(var.2.calc, 'race4')}
-        if('wastate' %in% cols){cols <- c(cols, 'chi_geo_wastate'); var.2.calc=c(var.2.calc, 'wastate')}
-        cols <-  unique(setdiff(cols, var.2.calc))
-        # generic vars
+        # convert user defined vector of columns to a SQL statement
         invalid.cols <- setdiff(cols, death.names)
         valid.cols <- intersect(death.names, cols)
         if(length(valid.cols) > 0){cols <- glue::glue_sql_collapse(valid.cols, sep=", ")}
-        if(length(invalid.cols) > 0){message(paste0("The following column names do not exist in the chars data and have not been extracted: ", paste0(invalid.cols, collapse = ", ")))}
-        if(length(valid.cols) == 0){stop("chars data cannot be extracted because no valid column names have been submitted. To get all columns, use the argument 'cols = NA'")}
+        if(length(invalid.cols) > 0){message(paste0("The following column names do not exist in the death data and have not been extracted: ", paste0(invalid.cols, collapse = ", ")))}
+        if(length(valid.cols) == 0){stop("death data cannot be extracted because no valid column names have been submitted. To get all columns, use the argument 'cols = NA'")}
       }
 
       if(all(is.na(cols))){
-        original.cols <- copy(cols)
-        cols <- glue::glue_sql_collapse("*", sep = ', ')
+        cols <- glue::glue_sql("*")
         }
 
       if(length(year) == 1 && is.na(year)){
@@ -718,110 +729,36 @@ get_data_death <- function(cols = NA,
       if(length(invalid.year)>0){message(paste0("The following years do not exist in the death data and have not been extracted: ", format_time(invalid.year)))}
 
   # Pull columns and years from SQL ----
-      validyears <- glue::glue_sql_collapse(year, sep=", ")
+      validyears <- glue::glue_sql_collapse(year, sep = ", ")
       query.string <- glue_sql('select {DBI::SQL(cols)} from {`mysqltable`} where chi_year in ({`validyears`*})', .con = con)
 
-      if(kingco == T){query.string <- paste0(query.string, " AND chi_geo_kc = 1")}
+      if(isTRUE(kingco)){query.string <- paste0(query.string, " AND chi_geo_kc = 'King County'")}
 
-      dat <- data.table::setDT(DBI::dbGetQuery(con, query.string))
+      if(isFALSE(include_prelim)){query.string <- paste0(query.string, "AND apde_file_status = 'F'")}
 
-      datevars <- DBI::dbGetQuery(con, "SELECT ColumnName FROM [death].[crosswalk_fields] WHERE ColumnType = 'Date'")[]$ColumnName
-      datevars <- intersect(datevars, names(dat)) # names of all date variables that are in actual dataset
+      dat <- data.table::as.data.table(DBI::dbGetQuery(con, query.string))
 
   # Top code age (if wanted) ----
-      if( 'chi_age' %in% cols | 'chi_age' %in% names(dat) ){
+      if('chi_age' %in% names(dat) ){
         dat[chi_age < 0, chi_age := NA] # cannot have a negative age (due to 9999 as year of birth)
-        if(topcode == T){
+        if(isTRUE(topcode)){
           dat[chi_age > 100, chi_age := 100] # top code to 100 to match population data
         }
       }
 
+  # Identify and format class == DATE ----
+      datevars <- DBI::dbGetQuery(con, "select column_name FROM death.ref_column_list  WHERE table_name = 'analytic' AND column_type = 'DATE'")[]$column_name
+      datevars <- intersect(datevars, names(dat)) # names of all date variables that are in actual dataset
+
+      if(length(datevars) > 0){
+        dat[, (datevars) := lapply(.SD, function(x) as.Date(as.character(x))), .SDcols = datevars]
+      }
 
   # Format string variables due to SQL import quirks ----
-      original.order <- names(dat)
+      # Clean string variables to handle SQL import quirks like extra whitespace and encoding issues
+      string_clean(dat, stringsAsFactors = FALSE) # clean random white spaces
 
-      if(length(datevars > 0)){
-        for(i in 1:length(datevars)){
-          dat[, datevars[i] := as.Date(as.character(get(datevars[i])))]
-        }
-      }
-
-      string_clean(dat, stringsAsFactors = FALSE) # clean random white spaces and change strings to factors
-
-  # Label race_ethnicity data ----
-      if( 'chi_race_eth7' %in% cols | 'chi_race_eth7' %in% names(dat) ){
-        dat[, chi_race_eth7 := factor(chi_race_eth7,
-                                    levels = c(2, 1, 5, 7, 8, 6, 3),
-                                    labels = c("Black", "White", "Multiple", "Asian", "NHPI", "Hispanic", "AIAN"))]
-      }
-      if( 'chi_race_eth8' %in% cols | 'chi_race_eth8' %in% names(dat) ){
-        dat[, chi_race_eth8 := factor(chi_race_eth8,
-                                      levels = c(2, 1, 5, 7, 8, 6, 3, 9),
-                                      labels = c("Black", "White", "Multiple", "Asian", "NHPI", "Hispanic", "AIAN", "Oth/unk"))]
-      }
-      if( 'chi_race_6' %in% cols | 'chi_race_6' %in% names(dat) ){
-        dat[, chi_race_6 := factor(chi_race_6,
-                                      levels = c(3, 6, 4, 2, 1, 5),
-                                      labels = c("Black", "White", "Multiple", "Asian", "AIAN", "NHPI"))]
-      }
-      if( 'chi_race_7' %in% cols | 'chi_race_7' %in% names(dat) ){
-        dat[, chi_race_7 := factor(chi_race_7,
-                                   levels = c(3, 6, 4, 2, 1, 5, 9),
-                                   labels = c("Black", "White", "Multiple", "Asian", "AIAN", "NHPI", "Oth/unk"))]
-      }
-
-  # Label gender ----
-      if("chi_sex" %in% names(dat)){
-        dat[, chi_sex := factor(chi_sex, levels = 0:1, labels = c("Female", "Male"))]
-      }
-
-  # Create custom CHI vars if requested ----
-      if('bigcities' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
-        dat[, bigcities := chi_geo_bigcities]
-      }
-      if('chi_geo_kc' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
-        dat[, chi_geo_kc := as.character(chi_geo_kc)]
-        dat[, chi_geo_kc := fcase(chi_geo_kc=='TRUE', 'King County',
-                                  default = NA_character_)]
-      }
-      if('hra20_name' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
-        dat[, hra20_name := chi_geo_hra2020_long]
-      }
-      if('chi_geo_region' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
-        dat[, chi_geo_region := chi_geo_reg2020_name]
-      }
-      if('wastate' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
-        dat[chi_geo_wastate == TRUE, wastate := 'Washington State']
-      }
-      if('age6' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
-        dat[, age6 := fcase(chi_age %in% 0:17, '<18',
-                            chi_age %in% 18:24, '18-24',
-                            chi_age %in% 25:44, '25-44',
-                            chi_age %in% 45:64, '45-64',
-                            chi_age %in% 65:74, '65-74',
-                            chi_age >= 75, '75+',
-                            default = NA_character_)]
-      }
-      if('race4' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
-        dat[, race4 := chi_race_eth7]
-      }
-      if('race3' %in% original.cols | (length(original.cols) == 1 && is.na(original.cols))){
-        dat[, race3 := chi_race_6]
-        dat[chi_race_hisp == 1, race3_hispanic := 'Hispanic']
-      }
-
-
-  # reorder table ----
-      if(!(length(original.cols) == 1 && is.na(original.cols))){
-        if('race3_hispanic' %in% names(dat)){
-          original.cols <- c(original.cols, 'race3_hispanic')
-        }
-        dat <- dat[, original.cols, with = F]
-      }
-
-      setDT(dat) # set it as a data.table again b/c otherwise, ascribing the new class above makes a copy
-
-  # return object ----
+  # Return object ----
       return(dat)
 }
 
@@ -904,7 +841,7 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_grad
   }
 
   #create the survey object
-  if(kingco == TRUE){
+  if(isTRUE(kingco)){
     dat <- dat[chi_geo_kc == 1,]
   }else{
     warning('Survey will be set to self-weighting so that rows outside of KC do not get dropped for having weights of 0')

@@ -568,7 +568,7 @@ library('testthat')
     expect_equal(result, expected)
   })
 
-# Check life_table ----
+# Check life_table (basic) ----
   # life_table() create data ----
   # Test with 1970 CA Abridged Death Data
   # Chiang, Chin Long & World Health Organization. (1979).
@@ -720,6 +720,50 @@ library('testthat')
     expect_lte(sum(dtna_table$deaths), (sum(test1$deaths) + 16000 + 3)) # allow some buffer for rounding
     expect_gte(sum(dtna_table$deaths), (sum(test1$deaths) + 16000 - 3)) # allow some buffer for rounding
   })
+
+# Check life_table (with group_by) ----
+  # life_table() create data ----
+    dt <- data.table(
+      sex = "Male",
+      city = "Gotham",
+      ages = c("0-1", "1-5", "5-10", "10-15", "15-18", "18-20", "20-25", "25-30",
+               "30-35", "35-40", "40-45", "45-50", "50-55", "55-60", "60-65",
+               "65-70", "70-75", "75-80", "80-85", "85+"),
+      deaths = c(10, 10, 10, 0, 10, 10, 30, 10, 100, 90, 120, 140, 190, 190,
+                 420, 580, 560, 760, 830, 1960),
+      fraction = c(0, 0.352877, 0.621634, 0, 0.709589, 0.037443, 0.411568,
+                   0.822831, 0.308035, 0.330746, 0.448096, 0.422047, 0.468697,
+                   0.364526, 0.43501, 0.435655, 0.467277, 0.39805, 0.344557, 0.376492),
+      pop = c(6990, 29870, 41350, 41560, 25360, 15100, 33890, 44780, 57660,
+              59310, 56660, 45910, 45870, 42060, 43130, 39220, 30090, 19660,
+              11030, 10320)
+    )
+
+  # life_table() create output ----
+    test1 <- life_table(ph.data = copy(dt)[], group_by=c('sex', 'city'))
+    test2 <- suppressWarnings(life_table(ph.data = copy(dt)[ages %in% c('80-85'), deaths := 0], group_by=c('sex', 'city')))
+    test3 <- suppressWarnings(life_table(ph.data = copy(dt)[ages %in% c('85+'), deaths := 0], group_by=c('sex', 'city')))
+    test4 <- suppressWarnings(life_table(ph.data = copy(dt)[as.numeric(substr(ages, 1, 2)) <=60 , deaths := 0], group_by=c('sex', 'city')))
+
+  # life_table() tests ----
+    expect_no_warning(life_table(ph.data = copy(dt)[], group_by=c('sex', 'city')))
+    expect_no_warning(life_table(ph.data = copy(dt)[ages %in% c('80-85'), deaths := 0], group_by=c('sex', 'city')))
+    expect_warning(life_table(ph.data = copy(dt)[ages %in% c('85+'), deaths := 0], group_by=c('sex', 'city')),
+                   "function has provided modeled `mx` values")
+    expect_warning(life_table(ph.data = copy(dt)[as.numeric(substr(ages, 1, 2)) <=60 , deaths := 0], group_by=c('sex', 'city')),
+                   "Small population issue for sex = Male, city = Gotham")
+    expect_error(life_table(ph.data = copy(dt)[ages %in% c('80-85', '85+'), deaths := 0], group_by=c('sex', 'city')),
+                 "This almost certainly means that your population is too small for life table estimation")
+
+    # when set deaths to zero for second oldest group, expect life expectancy to bump up
+    expect_gt(test2[1]$ex, test1[1]$ex)
+
+    # when set deaths to zero for oldest group, also expect life expectancy to bump up
+    expect_gt(test3[1]$ex, test1[1]$ex)
+
+    # When drop all deaths for those under 60, expect a large jump in life expectancy
+    expect_gt(test4[1]$ex - test1[1]$ex, test1[2]$ex - test1[1]$ex)
+    expect_gt(test4[1]$ex - test1[1]$ex, test1[3]$ex - test1[1]$ex)
 
 # Check life_table_predict_mx ----
   # life_table_predict_mx is used by life_table when have missing or zero deaths
