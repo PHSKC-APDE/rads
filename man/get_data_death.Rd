@@ -7,39 +7,47 @@
 get_data_death(
   cols = NA,
   year = NA,
-  kingco = T,
+  kingco = TRUE,
   version = "final",
-  topcode = T,
-  mykey = "hhsaw"
+  topcode = TRUE,
+  mykey = "hhsaw",
+  include_prelim = FALSE
 )
 }
 \arguments{
-\item{cols}{Character vector of length >=1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
-See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.
+\item{cols}{Character vector of length >=1. Identifies which columns should be
+returned. NA returns all columns in the analytic dataset. See
+\code{\link{list_dataset_columns}} for more information on which columns are
+considered default by dataset.
 
 Default = NA}
 
-\item{year}{Numeric vector. Identifies which years of data should be pulled. Defaults to the most recent year.
+\item{year}{Numeric vector. Identifies which years of data should be pulled. NA returns the most recent year.
 
-Default = most recent year only}
+Default = NA}
 
 \item{kingco}{logical. Return dataset for analyses where county of decedent's residence is King County.
 
-Default = T}
+Default = TRUE}
 
 \item{version}{Character vector of length 1. Either 'final' or 'stage'.
 
 Default = 'final'}
 
-\item{topcode}{logical. Do you want to top code chi_age at 100 to match population data?
+\item{topcode}{logical. Whether to top code chi_age at 100 to match population data.
 
-Default = T}
+Default = TRUE}
 
-\item{mykey}{Character vector of length 1. Identifies
-the keyring:: 'service' name that can be used to access the Health & Human Services
-Analytic Workspace (HHSAW).
+\item{mykey}{Character vector of length 1. Identifies the keyring:: 'service'
+name that can be used to access the Health & Human Services Analytic Workspace (HHSAW).
 
 Default == 'hhsaw'}
+
+\item{include_prelim}{logical. Whether to include preliminary data.
+WARNING: Keep as FALSE for production use. Preliminary data is
+incomplete and unsuitable for analysis.
+
+Default = FALSE}
 }
 \value{
 a single data.table
@@ -51,7 +59,7 @@ Get Death microdata from storage.
 
 \donttest{
  test <- get_data_death(
-          cols = c('chi_year', 'chi_geo_kc', 'chi_sex'),
+          cols = c('chi_year', 'race4', 'chi_sex'),
           year = c(2019),
           kingco = TRUE,
           version = 'final',

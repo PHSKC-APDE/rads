@@ -201,7 +201,7 @@ In this example we will calculate the adjusted rate of deaths from any cause by 
 ```{r message=FALSE, warning=FALSE}
 deaths <- get_data_death(cols = c('chi_age', 
                                   'chi_year',
-                                  'chi_geo_hra2010_short', 
+                                  'apde_geo_hra2010_short', 
                                   'underlying_cod_code'), 
                                year = c(2019), 
                                kingco = T)
@@ -213,7 +213,7 @@ Now let's crosswalk from King County HRAs to Regions using `rads::get_walk()`.
 xwalk <- rads::get_xwalk(geo1 = 'region10', geo2 = 'hra10')
 
 deaths <- merge(deaths, xwalk, 
-                by.x = "chi_geo_hra2010_short", by.y = "hra10", 
+                by.x = "apde_geo_hra2010_short", by.y = "hra10", 
                 all.x = T, all.y = F)
 
 deaths <- deaths[, .(age = chi_age, underlying_cod_code, Region = region10)]
