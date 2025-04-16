@@ -26,11 +26,8 @@ Default = NA}
 
 Default = most recent year only}
 
-\item{kingco}{logical OR 'zip'.
-
-When \code{kingco = T},  returns dataset where the patient county is King County -- based on country code.
-
-When \code{kingco = 'zip'}, returns a dataset where the patient county is King County -- based on zip code.
+\item{kingco}{logical. When \code{kingco = T}, returns dataset where the patient
+residence county is King County -- based on \strong{truncated ZIP codes 980## and 981##}.
 
 Default = T}
 

@@ -362,11 +362,8 @@ get_data_brfss <- function(cols = NULL,
 #' @param year Numeric vector. Identifies which years of data should be pulled. Defaults to the most recent year.
 #'
 #' Default = most recent year only
-#' @param kingco logical OR 'zip'.
-#'
-#' When `kingco = T`,  returns dataset where the patient county is King County -- based on country code.
-#'
-#' When `kingco = 'zip'`, returns a dataset where the patient county is King County -- based on zip code.
+#' @param kingco logical. When `kingco = T`, returns dataset where the patient
+#' residence county is King County -- based on \strong{truncated ZIP codes 980## and 981##}.
 #'
 #' Default = T
 #'
@@ -461,28 +458,17 @@ get_data_chars <- function(cols = NA,
 
   # Identify columns and years to pull from SQL ----
       cols <- tolower(cols)
-      if(!all(is.na(cols))){
-        # for custom CHI/CHNA vars
-          original.cols <- copy(cols)
-          var.2.calc <- c()
-          if('wastate' %in% cols){cols <- c(cols, 'chi_geo_wastate'); var.2.calc=c(var.2.calc, 'wastate')}
-          if('yage4' %in% cols){cols <- c(cols, 'age'); var.2.calc=c(var.2.calc, 'yage4')}
-          if('age6' %in% cols){cols <- c(cols, 'age'); var.2.calc=c(var.2.calc, 'age6')}
-          if('race3' %in% cols){cols <- c(cols, 'chi_race_6', 'chi_race_aic_hisp'); var.2.calc=c(var.2.calc, 'race3')}
-          if('race4' %in% cols){cols <- c(cols, 'chi_race_eth7'); var.2.calc=c(var.2.calc, 'race4')}
-          cols <-  unique(setdiff(cols, var.2.calc))
-        # generic vars
-          invalid.cols <- setdiff(cols, chars.names)
-          valid.cols <- intersect(chars.names, cols)
-          if(length(valid.cols) > 0){cols <- glue::glue_sql_collapse(valid.cols, sep=", ")}
-          if(length(invalid.cols) > 0){message(paste0("The following column names do not exist in the chars data and have not been extracted: ", paste0(invalid.cols, collapse = ", ")))}
-          if(length(valid.cols) == 0){stop("chars data cannot be extracted because no valid column names have been submitted. To get all columns, use the argument 'cols = NA'")}
-      }
-      if(all(is.na(cols))){
-        original.cols <- copy(cols)
-        cols <- glue::glue_sql_collapse("*", sep = ', ')
-        }
+      original.cols <- copy(cols)
 
+      if(all(is.na(cols))){
+        cols <- glue::glue_sql_collapse("*", sep = ', ')
+      } else {
+        invalid.cols <- setdiff(cols, chars.names)
+        valid.cols <- intersect(chars.names, cols)
+        if(length(valid.cols) == 0){stop("chars data cannot be extracted because no valid column names have been submitted. To get all columns, use the argument 'cols = NA'")}
+        if(length(valid.cols) > 0){cols <- glue::glue_sql_collapse(valid.cols, sep=", ")}
+        if(length(invalid.cols) > 0){message(paste0("The following column names do not exist in the chars data and have not been extracted: ", paste0(invalid.cols, collapse = ", ")))}
+      }
 
       if(length(year) == 1 && is.na(year)){
         year = max(chars.years)
@@ -499,9 +485,8 @@ get_data_chars <- function(cols = NA,
 
       if(isTRUE(inpatient)){query.string <- glue:: glue_sql (query.string, " AND STAYTYPE = 1", .con = con)}
       if(isFALSE(deaths)){query.string <- glue:: glue_sql (query.string, " AND STATUS != 20", .con = con)} # 20 means Expired / did not recover
-      if(isTRUE(wastate)){query.string <- glue:: glue_sql (query.string, " AND chi_geo_wastate = 1", .con = con)}
-      if(isTRUE(kingco)){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 1", .con = con)}
-      if(kingco == 'zip'){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kczip = 1", .con = con)}
+      if(isTRUE(wastate)){query.string <- glue:: glue_sql (query.string, " AND wastate = 'Washington State'", .con = con)}
+      if(isTRUE(kingco)){query.string <- glue:: glue_sql (query.string, " AND chi_geo_kc = 'King County'", .con = con)}
 
       dat <- data.table::setDT(DBI::dbGetQuery(con, query.string))
       setnames(dat, tolower(names(dat)))
@@ -520,68 +505,8 @@ get_data_chars <- function(cols = NA,
       original.order <- names(dat)
 
       string_clean(dat, stringsAsFactors = F) # clean random white spaces and ensure all factors are strings
-      string.vars <- setdiff(names(dat)[sapply(dat, is.character)], c('diag1', 'proc1', 'ecode1'))
+      string.vars <- setdiff(names(dat)[sapply(dat, is.character)], c('diag1', 'proc1', 'ecode1', unique(rads.data::misc_chi_byvars[]$varname)))
       if(length(string.vars) > 0){dat[, (string.vars) := lapply(.SD, tolower), .SDcols = string.vars]}
-
-  # Label race_ethnicity data ----
-      if( 'chi_race_eth7' %in% cols | 'chi_race_eth7' %in% names(dat) ){
-        dat[, chi_race_eth7 := factor(chi_race_eth7,
-                                      levels = c(2, 1, 5, 7, 8, 6, 3),
-                                      labels = c("Black", "White", "Multiple", "Asian", "NHPI", "Hispanic", "AIAN"))]
-      }
-      if( 'chi_race_eth8' %in% cols | 'chi_race_eth8' %in% names(dat) ){
-        dat[, chi_race_eth8 := factor(chi_race_eth8,
-                                      levels = c(2, 1, 5, 7, 8, 6, 3, 9),
-                                      labels = c("Black", "White", "Multiple", "Asian", "NHPI", "Hispanic", "AIAN", "Oth/unk"))]
-      }
-      if( 'chi_race_6' %in% cols | 'chi_race_6' %in% names(dat) ){
-        dat[, chi_race_6 := factor(chi_race_6,
-                                   levels = c(3, 6, 4, 2, 1, 5),
-                                   labels = c("Black", "White", "Multiple", "Asian", "AIAN", "NHPI"))]
-      }
-      if( 'chi_race_7' %in% cols | 'chi_race_7' %in% names(dat) ){
-        dat[, chi_race_7 := factor(chi_race_7,
-                                   levels = c(3, 6, 4, 2, 1, 5, 9),
-                                   labels = c("Black", "White", "Multiple", "Asian", "AIAN", "NHPI", "Oth/unk"))]
-      }
-
-  # Label gender ----
-      if( 'chi_sex' %in% cols | 'chi_sex' %in% names(dat) ){
-        dat[, chi_sex := factor(chi_sex, levels = 0:1, labels = c("Female", "Male"))]
-      }
-
-  # Create custom CHI vars if requested ----
-    if('chi_geo_kc' %in% names(dat)){
-      dat[, chi_geo_kc := as.character(chi_geo_kc)]
-      dat[, chi_geo_kc := fcase(chi_geo_kc=='TRUE', 'King County',
-                                default = NA_character_)]
-    }
-    if('wastate' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
-      dat[isTRUE(chi_geo_wastate), wastate := 'Washington State']
-    }
-    if('yage4' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
-      dat[, yage4 := fcase(age %in% 0:4, '0-4',
-                           age %in% 5:9, '5-9',
-                           age %in% 10:14, '10-14',
-                           age %in% 15:17, '15-17',
-                           default = NA_character_)]
-    }
-    if('age6' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
-      dat[, age6 := fcase(age %in% 0:17, '<18',
-                          age %in% 18:24, '18-24',
-                          age %in% 25:44, '25-44',
-                          age %in% 45:64, '45-64',
-                          age %in% 65:74, '65-74',
-                          age >= 75, '75+',
-                          default = NA_character_)]
-    }
-    if('race4' %in% original.cols || (length(original.cols) == 1 && is.na(original.cols))){
-      dat[, race4 := chi_race_eth7]
-    }
-    if('race3' %in% original.cols | (length(original.cols) == 1 && is.na(original.cols))){
-      dat[, race3 := chi_race_6]
-      dat[isTRUE(chi_race_aic_hisp), race3_hispanic := 'Hispanic']
-    }
 
   # reorder table ----
       if(!(length(original.cols) == 1 && is.na(original.cols))){

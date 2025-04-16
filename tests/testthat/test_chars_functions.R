@@ -58,7 +58,8 @@ library('testthat')
                                              kingco = F)
       expect_equal(nrow(detailed.result), 1)
       expect_equal(sort(names(detailed.result)), sort(c('detailed_desc', 'hospitalizations')))
-      expect_equal(sum(detailed.result$hospitalizations), 63) # confirmed vs CHAT
+      expect_equal(sum(detailed.result$hospitalizations),
+                   nrow(charsdata[diag1 %in% chars_icd_ccs()[grepl('cystic fibrosis', detailed, ignore.case = T)]$icdcm_cod]))
 
     # test midlevel argument ----
       midlevel.result <- chars_icd_ccs_count(ph.data = charsdata,
@@ -88,7 +89,8 @@ library('testthat')
                                              group_by = 'chi_sex')
       expect_equal(nrow(group_by.result), 2)
       expect_equal(sort(names(group_by.result)), sort(c('chi_sex', 'detailed_desc', 'hospitalizations')))
-      expect_equal(sum(group_by.result$hospitalizations), 82) # confirmed vs CHAT
+      expect_equal(sum(group_by.result$hospitalizations),
+                   nrow(charsdata[diag1 %in% chars_icd_ccs()[grepl('chronic kidney disease', detailed, ignore.case = T)]$icdcm_cod]))
 
     # test valid combination of search terms (and confirm search is case insensitive) ----
       multi.result <- chars_icd_ccs_count(ph.data = charsdata,

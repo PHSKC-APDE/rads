@@ -15,7 +15,7 @@ ccs <- rads::chars_icd_ccs(icdcm_version = 10)
 
 -   In early 2024, APDE created a generalized reference table for categorizing ICD-9/10-CM codes (`kcitazrhpasqlprp16.azds.kingcounty.gov` \>\> `[hhs_analytics_workspace].[ref].[icdcm_codes]`). This table, accessible through `rads::chars_icd_ccs()`, was designed to ensure uniformity in analyzing claims data across various projects, including analyses of the leading causes of hospitalization.
 
--   The [AHRQ](https://www.ahrq.gov/) sponsors the [Healthcare Cost and Utilization Project (HCUP)](https://hcup-us.ahrq.gov/), a Federal-State-Industry partnership which develops databases and software tools for health care data. HCUP developed the '[Clinical Classifications Software Refined (CCSR)](https://hcup-us.ahrq.gov/toolssoftware/ccsr/dxccsr.jsp) for ICD-10-CM diagnoses, which aggregates more than 70,000 ICD-10-CM diagnosis codes into over 530 clinically meaningful categories.' The CCSR is the inspiration for the 'CCS' table available through `rads::chars_icd_ccs()` / `[ref].[icdcm_codes]`. As of `r format(Sys.time(), '%B %d, %Y')`, the CCS table provides the aggregation of `r format(nrow(rads::chars_icd_ccs(icdcm_version = 9)), big.mark = ',')` ICD-9-CM codes and `r format(nrow(ccs), big.mark = ',')` ICD-10-CM codes into `r data.table::uniqueN(ccs$superlevel)` `superlevel`, `r data.table::uniqueN(ccs$broad)` `broad` level, `r data.table::uniqueN(ccs$midlevel)` `midlevel`, and `r data.table::uniqueN(ccs$detailed)` `detailed` level categories.
+-   The [AHRQ](https://www.ahrq.gov/) sponsors the [Healthcare Cost and Utilization Project (HCUP)](https://hcup-us.ahrq.gov/), a Federal-State-Industry partnership which develops databases and software tools for health care data. HCUP developed the '[Clinical Classifications Software Refined (CCSR)](https://hcup-us.ahrq.gov/toolssoftware/ccsr/dxccsr.jsp) for ICD-10-CM diagnoses, which aggregates more than 70,000 ICD-10-CM diagnosis codes into over 530 clinically meaningful categories.' The CCSR is the inspiration for the 'CCS' table available through `rads::chars_icd_ccs()` and `[ref].[icdcm_codes]`. As of `r format(Sys.time(), '%B %d, %Y')`, the CCS table provides the aggregation of `r format(nrow(rads::chars_icd_ccs(icdcm_version = 9)), big.mark = ',')` ICD-9-CM codes and `r format(nrow(ccs), big.mark = ',')` ICD-10-CM codes into `r data.table::uniqueN(ccs$superlevel)` `superlevel`, `r data.table::uniqueN(ccs$broad)` `broad` level, `r data.table::uniqueN(ccs$midlevel)` `midlevel`, and `r data.table::uniqueN(ccs$detailed)` `detailed` level categories.
 
 -   The CCS `detailed` level categorizations form the basis for our leading causes of hospitalization analyses because they most closely resemble those used in [AHRQ](https://www.ahrq.gov/) publications on the same topic (e.g., [this 2018 report)](https://hcup-us.ahrq.gov/reports/statbriefs/sb277-Top-Reasons-Hospital-Stays-2018.pdf). However, when calculating the leading causes of hospitalization, there are two necessary modifications to the `detailed` categorization. First, consistent with AHRQ's approach in examining '*non-maternal, non-neonatal inpatient stays*', we omit all hospitalizations related to pregnancy and childbirth. Second, following historical discussions with our community partners, it was agreed that the *intent* of injuries holds more significance than the *mechanism*. Consequently, we employ an injury matrix to count injuries by their *intent*, and we exclude injuries from the main analysis to avoid duplicative counting.
 
@@ -23,7 +23,7 @@ ccs <- rads::chars_icd_ccs(icdcm_version = 10)
 
 -   Additional relevant information regarding analysis of hospitalization data may be available in the [APDE Analysis Guide](https://kc1.sharepoint.com/:w:/r/teams/DPH-APDEData/_layouts/15/Doc.aspx?sourcedoc=%7BA49D6E2C-6FF4-49E9-95D4-7AE7B2C34E5D%7D&file=APDE_Analysis_Guide.docx&action=default&mobileredirect=true).
 
--   The [CHARS directory in the CHI repo](https://github.com/PHSKC-APDE/chi/tree/main/chars) has the code used to create the leading causes of death for CHNA / CHI. It is somewhat complex because of the various iterations needed for these projects. However, underneath the complexity, it *should* follow the structure described above.
+-   The [CHARS directory in the CHI repo](https://github.com/PHSKC-APDE/chi/tree/main/chars) has the code used to create the leading causes of hospitalization for CHNA / CHI. It is somewhat complex because of the various iterations needed for these projects. However, underneath the complexity, it *should* follow the structure described above.
 
 ### Overview
 
@@ -87,7 +87,8 @@ Split off the the chars data that will be used with `rads::chars_icd_ccs_count`
 # Identify and save the non-external cause data
 chars_non_injury <- chars[!(injury_nature_narrow == 1 &
                               !is.na(injury_intent) &
-                              !is.na(injury_mechanism))]
+                              !is.na(injury_mechanism)) &
+                            !is.na(diag1)] # cannot use without diagnosis code
 ```
 
 ## (3) Get counts
@@ -185,11 +186,13 @@ counts_ccs <- counts_ccs[detailed_desc %in% detailed.causes]
 ```{r}
 #| warning: false
 
-# Tidy CCS table
+# Merge on superlevel designation
 counts_ccs <- merge(counts_ccs, 
-                    unique(rads::chars_icd_ccs()[, .(detailed, superlevel)]), # merge on superlevel
+                    unique(rads::chars_icd_ccs()[, .(detailed, superlevel)]), 
                     by.x = 'detailed_desc', by.y = 'detailed', 
                     all.x = TRUE, all.y = FALSE)
+
+# Tidy CCS table
 counts_ccs <- counts_ccs[, .(cause_category = superlevel, 
                              cause = detailed_desc, 
                              gender = chi_sex, 
@@ -211,6 +214,9 @@ counts <- rbind(counts_any,
 
 # Drop if missing gender because cannot merge with population
 counts <- counts[!is.na(gender)]
+
+# Drop if missing age because cannot be used for age standardization
+counts <- counts[!is.na(age)]
 
 # Make sure age is an integer for merging with population
 counts[, age := as.integer(age)] 
@@ -239,7 +245,7 @@ When you generated `counts_any` above, there was no guarantee that you had a cou
 
 # Get unique components for creation of dummy table
 category_cause <- unique(counts[, .(cause_category, cause)]) 
-gender_age <- CJ(gender = unique(counts$gender), age = 0:100) # cross join gender & age
+gender_age <- CJ(gender = unique(counts$gender), age = 0:100) 
 
 # Generate the dummy table
 dummy <- merge(category_cause[, constant := 1], 
@@ -260,20 +266,30 @@ counts[is.na(hospitalizations), hospitalizations := 0]
 
 ## (4) Merge corresponding population onto the count data
 
-Be sure that your call to rads::get_population provides the same years and demographic strata that you have in your death counts!
+Be sure that your call to `rads::get_population` provides the same years and demographic strata that you have in your death counts!
+
+Also ***remember that King County in CHARS data is defined by truncated ZIP codes (980## and 981##)*** and the population denominator should be defined the same way.
 
 ```{r}
 #| warning: false
+# Get ZIP code level population data
+pop <- get_population(kingco = FALSE,
+                      years = 2017:2021,
+                      geo_type = 'zip', 
+                      group_by = c('ages', 'genders'))
 
-# Get corresponding population
-pop <- get_population(years = 2017:2021, group_by = c('genders', 'ages'))
-pop <- pop[, .(pop, age, gender)]
+# Subset to ZIP that begin with 980/981
+pop <- pop[grepl('^980|^981', geo_id)]
+
+# Sum the population across all these ZIP codes by gender and age
+pop <- pop[, .(pop = sum(pop)), .(gender, age)]
 
 # Merge the population data onto the count data
 combo <- merge(counts, 
                pop, 
                by = c('age', 'gender'), 
                all = TRUE)
+
 ```
 
 ## (5) Calculate age standardized rates
@@ -295,7 +311,7 @@ Take a peek at the rates ...
 ```{r}
 #| echo: true
 #| output: false
-head(rates[count >= 10])
+head(rates)
 ```
 
 ```{r}
@@ -303,13 +319,16 @@ head(rates[count >= 10])
 pretty_kable(head(rates[count >= 10]))
 ```
 
-## (6) Identify leading causes based on COUNTS (using random ties method)
+## (6) Identify leading causes based on RATES (using random ties method)
+
+:bangbang: Prior to 2023 APDE ranked leading causes based on COUNTS. However, DOH's change to providing truncated ZIP codes inflates the counts because the ZIP codes we use to define the county are known to span into some adjoining counties. We therefore rank the causes of hospitalization by RATES.
 
 ```{r}
 #| warning: false
 
 # Create ranking (minus one, because want 'All causes' to have a rank of zero)
-ranking <- rates[, ranking := frank(-count, ties.method = 'dense') -1, .(gender)]
+ranking <- rates[, ranking := frank(-adj.rate, ties.method = 'dense') -1, 
+                 .(gender)]
 
 # Keep top 10 rankings
 ranking <- ranking[ranking %in% 0:10]
@@ -326,6 +345,10 @@ ranking <- ranking[, .(gender,
                        rate = adj.rate, 
                        rate_lower = adj.lci, 
                        rate_upper = adj.uci)]
+
+# Replace the count with NA to prevent misinterpretation
+ranking[, count := NA]
+
 ```
 
 View the top three leading causes of hospitalization by gender ...
@@ -333,14 +356,14 @@ View the top three leading causes of hospitalization by gender ...
 ```{r}
 #| echo: true
 #| output: false
-print(ranking[count >= 10, .SD[1:4], gender])
+print(ranking[, .SD[1:4], gender])
 ```
 
 ```{r}
 #| echo: false
-pretty_kable(ranking[count >= 10, .SD[1:4], gender])
+pretty_kable(ranking[, .SD[1:4], gender])
 ```
 
 ## :star2: Finished!
 
--- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'))`*
+-- *``r paste0('Updated ', format(Sys.time(), '%B %d, %Y'), ' (rads v', packageVersion('rads'), ')')`*
