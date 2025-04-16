@@ -89,7 +89,6 @@ calc <- function(ph.data, ...) {
 }
 
 #' @noRd
-#' @export
 calc.data.frame <- function(ph.data, ...){
 
   # Catch data.frame, and send it as a dtadmin
@@ -101,7 +100,6 @@ calc.data.frame <- function(ph.data, ...){
 }
 
 #' @noRd
-#' @export
 calc.survey.design2 <- function(ph.data, ...){
 
   ph.data = dtsurvey::as.dtsurvey(ph.data)
@@ -112,21 +110,18 @@ calc.survey.design2 <- function(ph.data, ...){
 }
 
 #' @noRd
-#' @export
 calc.svyrep.design <- function(ph.data, ...){
   ph.data = dtsurvey::dtrepsurvey(ph.data)
   calc(ph.data, ...)
 }
 
 #' @noRd
-#' @export
 calc.grouped_df <- function(ph.data, ...){
   stop("calc doesn't know how to handle `grouped_df` objects. Likely, you have a dplyr::group_by somewhere higher up in the code.
        Instead of grouping before running calc, use the `by` argument in calc")
 }
 
 #' @noRd
-#' @export
 #' @importFrom mitools MIcombine
 #' @importFrom stats coef qt as.formula
 #' @importFrom utils head
