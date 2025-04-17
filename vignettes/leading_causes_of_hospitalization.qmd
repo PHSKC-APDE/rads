@@ -366,4 +366,4 @@ pretty_kable(ranking[, .SD[1:4], gender])
 
 ## :star2: Finished!
 
--- *``r paste0('Updated ', format(Sys.time(), '%B %d, %Y'), ' (rads v', packageVersion('rads'), ')')`*
+-- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'), ' (rads v', packageVersion('rads'), ')')`*

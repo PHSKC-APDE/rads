@@ -402,4 +402,4 @@ We know this was a lot to process. The good news is that this vignette isn't goi
 
 If you've read through this vignette and the corresponding help files and are still confused, please feel free to reach out for assistance. You may have found a bug, who knows? Good luck!
 
--- *``r paste0('Updated ', format(Sys.time(), '%B %d, %Y'), ' (rads v', packageVersion('rads'), ')')`*
+-- *\``r paste0('Updated ', format(Sys.time(), '%B %d, %Y'), ' (rads v', packageVersion('rads'), ')')`*

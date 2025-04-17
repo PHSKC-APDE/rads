@@ -449,4 +449,4 @@ According to your analysis, the crude King County teen birth rate is approximate
 
 If you've walked through this vignette and more or less understood what's going on, you're in good shape! If you're still confused, please walk through it again and then reach out if you still have questions. Good luck!
 
--- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'))`*
+-- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'), ' (rads v', packageVersion('rads'), ')')`*
