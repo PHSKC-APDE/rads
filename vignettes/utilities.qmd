@@ -562,4 +562,4 @@ These utility functions provide tools for common data manipulation and analysis 
 
 Remember to consult the individual function documentation for more detailed information on usage and parameters. Happy coding!
 
--- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'))`*
+-- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'), ' (rads v', packageVersion('rads'), ')')`*

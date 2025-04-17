@@ -42,27 +42,57 @@ library(kableExtra)
 
 # get_data_chars()
 
-`get_data_chars()` takes four potential arguments:
+`get_data_chars()` takes nine potential arguments:
 
--   `cols`: the names of the columns that you want to download. You will dramatically speed up the download time if you only specify the columns of genuine interest. However, calculation of CHARS injuries uses many columns, not just the `DIAG1` column. So, if you are interested in injuries, you might want to tough it out and download all the relevant years of CHARS data.
+-   `cols`: character. the names of the columns that you want to download. You will dramatically speed up the download time if you only specify the columns of genuine interest. However, calculation of CHARS injuries uses many columns, not just the `DIAG1` column. So, if you are interested in injuries, you might want to tough it out and download all the relevant years of CHARS data.
 -   `year`: the year(s) of interest, from 2012 to the present.
--   `kingco`: logical (T\|F) OR 'zip'. True or false specifies whether to limit the download to King County, based on the county of residence variable. If you pass `kingco = 'zip'`, it will download King County, but will define it based on zip codes instead.
+-   `kingco`: logical (T\|F) . True or false specifies whether to limit the download to King County, based on **truncated** ZIP codes (980## and 981##).
+-   `version`: character. Either `'final'` or `'stage'.`
 -   `wastate`: logical (T\|F). When false, data will include Oregon.
 -   `inpatient`: logical (T\|F). When false, data will include observation patients (i.e., outpatients).
 -   `deaths`: logical (T\|F). When true, the data will include those who died while in the hospital.
 -   `topcode`: logical (T\|F). When true, `chi_age` will be top coded to 100 to match population data top coding.
 
-If you do not specify any of the arguments, you will get all CHARS data columns, for the latest year, for King County (defined by the county of residence indicator), limited to inpatients, including those who died while hospitalized, with deaths top coded to 100.
+If you do not specify any of the arguments, you will get all CHARS data columns, for the latest year, for King County (defined by truncated ZIP codes), limited to inpatients, including those who died while hospitalized, with deaths top coded to 100.
 
 ```{r}
 #| warning: false
 #| message: false
-charsDT <- get_data_chars(year = 2021)
+charsDT <- get_data_chars(year = 2023)
 dim(charsDT) # dimensions of the downloaded CHARS data  
 names(charsDT)[1:6] # names of the first 6 columns
 unique(charsDT$chi_geo_kc) # confirm data is limited to King County
 unique(charsDT$chi_year) # check the year
 max(charsDT$chi_age, na.rm = T) # check top coding
+```
+
+## :warning: A note about King County population denominators
+
+**Important note:** Since King County in CHARS data is defined by truncated ZIP codes (980## and 981##), the correct denominator when calculating rates should be defined the same way. To be clear, this means you should **NOT** **use `get_population(kingco = T)`** for King County CHARS denominators. Instead, you should get ZIP code population data and aggregate it for King County.
+
+Here's an example of how to obtain a King County population denominator by age, gender, and race (with Hispanic as a race):
+
+```{r}
+#| warning: false
+#| message: false
+# Get ZIP code level population data
+denominator <- get_population(kingco = FALSE, 
+                             geo_type = 'zip', 
+                             group_by = c('ages', 'genders', 'race_eth'))
+
+# Subset to ZIP that begin with 980/981
+denominator <- denominator[grepl('^980|^981', geo_id)]
+
+# Sum the population across all these ZIP codes by gender, race/eth, and age
+denominator <- denominator[, .(pop = sum(pop)), .(gender, race_eth, age)]
+
+# Label it as King County
+denominator[, geo_id := 'King County']
+```
+
+```{r}
+#| echo: FALSE
+kable(head(denominator), format = "markdown")
 ```
 
 # chars_icd_ccs()
@@ -372,4 +402,4 @@ We know this was a lot to process. The good news is that this vignette isn't goi
 
 If you've read through this vignette and the corresponding help files and are still confused, please feel free to reach out for assistance. You may have found a bug, who knows? Good luck!
 
--- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'))`*
+-- *\``r paste0('Updated ', format(Sys.time(), '%B %d, %Y'), ' (rads v', packageVersion('rads'), ')')`*
