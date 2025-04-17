@@ -492,5 +492,4 @@ Some additional notes:
 
 You've been introduced to `calc()`, but you'll only become competent at using it by using it. Try it out with your favorite dataset. Play with it. Try to break it and, if you're successful, submit a [GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new). Enjoy!
 
--- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'))`*
-
+-- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'), ' (rads v', packageVersion('rads'), ')')`*

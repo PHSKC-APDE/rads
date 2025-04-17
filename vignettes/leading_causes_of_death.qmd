@@ -516,4 +516,4 @@ pretty_kable(infranking[count >= 10, .SD[1:4], gender])
 
 ## :star2: Finished!
 
--- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'))`*
+-- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'), ' (rads v', packageVersion('rads'), ')')`*

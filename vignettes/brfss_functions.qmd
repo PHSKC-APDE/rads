@@ -299,16 +299,28 @@ As noted in the [calc() wiki](https://github.com/PHSKC-APDE/rads/wiki/calc#examp
 
 ## Calculate prediabetes & obesity prevalence by HRA20 & sex (using an [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf))
 
+We will do this in two parts since only one value of `what` can be specified when ph.data is an [imputationList](https://cran.r-project.org/web/packages/mitools/mitools.pdf).
+
 ```{r}
 #| echo: true
 #| output: false
-prediab_obese_hra20_sex <- calc(
-  ph.data = brfss_hra,
-  what = c("prediab1", "obese"),
-  by = c("hra20_name", "chi_sex"),
-  metrics = c("mean", "rse"),
-  proportion = TRUE
+prediab_obese_hra20_sex <- rbind(
+  calc(
+    ph.data = brfss_hra,
+    what = c("prediab1"),
+    by = c("hra20_name", "chi_sex"),
+    metrics = c("mean", "rse"),
+    proportion = TRUE
+  ), 
+  calc(
+    ph.data = brfss_hra,
+    what = c("obese"),
+    by = c("hra20_name", "chi_sex"),
+    metrics = c("mean", "rse"),
+    proportion = TRUE
+  )
 )
+
 head(prediab_obese_hra20_sex)
 ```
 
@@ -396,4 +408,4 @@ Working with BRFSS data requires careful attention to survey weights and design,
 
 Happy analyzing!
 
--- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'))`*
+-- *\``r paste0('Updated ', format(Sys.time(), '%B %d, %Y'), ' (rads v', packageVersion('rads'), ')')`*

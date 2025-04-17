@@ -431,4 +431,4 @@ print(all.equal(r1,r2))
 
 ```
 
--- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'))`*
+-- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'), ' (rads v', packageVersion('rads'), ')')`*
