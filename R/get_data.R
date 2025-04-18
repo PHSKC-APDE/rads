@@ -505,7 +505,7 @@ get_data_chars <- function(cols = NA,
       original.order <- names(dat)
 
       string_clean(dat, stringsAsFactors = F) # clean random white spaces and ensure all factors are strings
-      string.vars <- setdiff(names(dat)[sapply(dat, is.character)], c('diag1', 'proc1', 'ecode1', unique(rads.data::misc_chi_byvars[]$varname)))
+      string.vars <- setdiff(names(dat)[sapply(dat, is.character)], c('diag1', 'proc1', 'ecode1', 'race3_hispanic', unique(rads.data::misc_chi_byvars[]$varname)))
       if(length(string.vars) > 0){dat[, (string.vars) := lapply(.SD, tolower), .SDcols = string.vars]}
 
   # reorder table ----
