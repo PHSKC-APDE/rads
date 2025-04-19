@@ -83,7 +83,7 @@ data_modeler <- function(ph.data, number_of_observations, comments = TRUE, retur
     if(is.na(instructions) & inherits(oneVariable, "factor")) {
       orderTF <- is.ordered(oneVariable)
       detectedLevels <- levels(oneVariable)
-      instructions <- paste0(variableName," = factor(sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", number_of_observations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),")), levels = c('",paste0(detectedLevels, collapse = "', '"),"'), ordered = ", orderTF,")", collapse = "")
+      instructions <- paste0("`",variableName,"`"," = factor(sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", number_of_observations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),")), levels = c('",paste0(detectedLevels, collapse = "', '"),"'), ordered = ", orderTF,")", collapse = "")
       instructions <- gsub("'NA'", "NA", instructions)
       if(comments){
         instructions <- paste0(instructions, " # as a factor")
@@ -92,7 +92,7 @@ data_modeler <- function(ph.data, number_of_observations, comments = TRUE, retur
 
     #integer: categorical
     if(is.na(instructions) & inherits(oneVariable, "integer") & (length(unique(oneVariable)) <= 61 & length(oneVariable) > 61)) {
-      instructions <- paste0(variableName," = as.integer(sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", number_of_observations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),")))", collapse = "")
+      instructions <- paste0("`",variableName,"`"," = as.integer(sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", number_of_observations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),")))", collapse = "")
       instructions <- gsub("'NA'", "NA", instructions)
       if(comments){
         instructions <- paste0(instructions, " # as a categorical non factor")
@@ -101,7 +101,7 @@ data_modeler <- function(ph.data, number_of_observations, comments = TRUE, retur
 
     #character: categorical
     if(is.na(instructions) & inherits(oneVariable, "character") & (length(unique(oneVariable)) <= 61 & length(oneVariable) > 61)) {
-      instructions <- paste0(variableName," = sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", number_of_observations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),"))", collapse = "")
+      instructions <- paste0("`",variableName,"`"," = sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", number_of_observations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),"))", collapse = "")
       instructions <- gsub("'NA'", "NA", instructions)
       if(comments){
 
@@ -112,7 +112,7 @@ data_modeler <- function(ph.data, number_of_observations, comments = TRUE, retur
     #continuous integer
     if(is.na(instructions) & inherits(oneVariable, "integer") & (length(unique(oneVariable)) > 61 & length(oneVariable) > 61)) {
       #uniform distribution
-      instructions <- paste0(variableName, " = as.integer(runif(", number_of_observations,", ", min(oneVariable, na.rm = TRUE), ", ", max(oneVariable, na.rm = TRUE),"))")
+      instructions <- paste0("`",variableName,"`", " = as.integer(runif(", number_of_observations,", ", min(oneVariable, na.rm = TRUE), ", ", max(oneVariable, na.rm = TRUE),"))")
       if(comments){
         instructions <- paste0(instructions, " # continuous integer with uniform distribution")
       }
@@ -135,7 +135,7 @@ data_modeler <- function(ph.data, number_of_observations, comments = TRUE, retur
       oneVariable[,RH := count_decimal_places(oneVariable[[1]])]
       numberOfDecimals <- max(oneVariable$RH, na.rm = T)
       #uniform distribution
-      instructions <- paste0(variableName, " = as.double(round(runif(", number_of_observations,", ", min(oneVariable, na.rm = TRUE), ", ", max(oneVariable, na.rm = TRUE),"),", numberOfDecimals , "))")
+      instructions <- paste0("`",variableName,"`", " = as.double(round(runif(", number_of_observations,", ", min(oneVariable, na.rm = TRUE), ", ", max(oneVariable, na.rm = TRUE),"),", numberOfDecimals , "))")
       if(comments){
         instructions <- paste0(instructions, " # continuous double with uniform distribution")
       }
