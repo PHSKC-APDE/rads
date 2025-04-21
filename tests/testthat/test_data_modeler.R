@@ -35,7 +35,7 @@ testthat("data_modeler handles apostrophies", {
 
   # test if capture quotation marks
 
-  #test if provides accurate error if unable to match (contains both quoate and apostrophie
+  #test if provides accurate error if unable to match (contains both quote and apostrophe
 
 
 })
