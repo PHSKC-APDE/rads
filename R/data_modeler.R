@@ -83,10 +83,10 @@ data_modeler <- function(ph.data, number_of_observations, comments = TRUE, retur
     if(is.na(instructions) & inherits(oneVariable, "factor")) {
       orderTF <- is.ordered(oneVariable)
       detectedLevels <- levels(oneVariable)
-      instructions <- paste0("`",variableName,"`"," = factor(sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", number_of_observations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),")), levels = c('",paste0(detectedLevels, collapse = "', '"),"'), ordered = ", orderTF,")", collapse = "")
-      instructions <- gsub("'NA'", "NA", instructions)
+      instructions <- paste0('`',variableName,'`',' = factor(sample(c("',paste0(unlist(unique(oneVariable)),collapse = '", "'),'"), ', number_of_observations,', replace = TRUE, prob = c(',paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ', '),')), levels = c("',paste0(detectedLevels, collapse = '", "'),'"), ordered = ', orderTF,')', collapse = '')
+      instructions <- gsub("'NA'", 'NA', instructions)
       if(comments){
-        instructions <- paste0(instructions, " # as a factor")
+        instructions <- paste0(instructions, ' # as a factor')
       }
     }
 
@@ -101,11 +101,11 @@ data_modeler <- function(ph.data, number_of_observations, comments = TRUE, retur
 
     #character: categorical
     if(is.na(instructions) & inherits(oneVariable, "character") & (length(unique(oneVariable)) <= 61 & length(oneVariable) > 61)) {
-      instructions <- paste0("`",variableName,"`"," = sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", number_of_observations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),"))", collapse = "")
+      instructions <- paste0('`',variableName,'`',' = sample(c("',paste0(unlist(unique(oneVariable)),collapse = '", "'),'"), ', number_of_observations,', replace = TRUE, prob = c(',paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ', '),'))', collapse = '')
       instructions <- gsub("'NA'", "NA", instructions)
       if(comments){
 
-        instructions <- paste0(instructions, " # as a categorical non factor")
+        instructions <- paste0(instructions, ' # as a categorical non factor')
       }
     }
 
