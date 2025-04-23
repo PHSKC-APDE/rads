@@ -38,8 +38,13 @@ Receives a data table of public health data and returns a synthetic version that
 \donttest{
 # Observe that modeled data looks like original data
 library(data.table)
-ph.data <- get_data_birth(cols = c('race4', 'chi_age', 'hra20_name', 'sex', 'birth_weight_grams'))
-DT.synthetic.data <- data_modeler(ph.data = ph.data, number_of_observations =  10000, comments = TRUE, return_code = F, print_code = F)
+ph.data <- get_data_birth(cols = c('race4', 'chi_age', 'hra20_name',
+                                   'sex', 'birth_weight_grams'))
+DT.synthetic.data <- data_modeler(ph.data = ph.data,
+                                  number_of_observations =  10000,
+                                  comments = TRUE,
+                                  return_code = FALSE,
+                                  print_code = FALSE)
 
 str(ph.data)
 str(DT.synthetic.data)
@@ -47,8 +52,14 @@ str(DT.synthetic.data)
 
 # Manually convert received code into data
 
-DT.code <- data_modeler(ph.data = ph.data, number_of_observations =  10000, comments = TRUE, return_code = T, print_code = T)
-codeListParsed <- c(list("DT <- data.table("),gsub(" #", ", #", DT.code[1:(length(DT.code)-1)]), gsub(" #",") #",DT.code[length(DT.code)]))
+DT.code <- data_modeler(ph.data = ph.data,
+                                  number_of_observations =  10000,
+                                  comments = TRUE,
+                                  return_code = TRUE,
+                                  print_code = TRUE)
+codeListParsed <- c(list("DT <- data.table("),gsub(" #", ", #",
+                    DT.code[1:(length(DT.code)-1)]), gsub(" #",") #",
+                    DT.code[length(DT.code)]))
 codeText <- paste(unlist(codeListParsed), collapse =" \n" )
 DT.synthetic.data.manual <- eval( parse(text = paste0(codeText)))
 
