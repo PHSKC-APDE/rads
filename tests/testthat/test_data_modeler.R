@@ -22,7 +22,7 @@ test_that("data_modeler creates correct types", {
 
 })
 
-testthat("data_modeler handles apostrophies", {
+test_that("data_modeler handles apostrophies", {
   observations <- 1000
   DTTest <- data.table(
     id = 1:observations,
@@ -35,7 +35,6 @@ testthat("data_modeler handles apostrophies", {
 
   # test if capture quotation marks
 
-  #test if provides accurate error if unable to match (contains both quote and apostrophe
-
+  # test if provides accurate error if unable to match (contains both quote and apostrophe
 
 })
