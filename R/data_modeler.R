@@ -88,7 +88,7 @@ data_modeler <- function(ph.data, number_of_observations, comments = TRUE, retur
     }
   }
 
-  # Core function ----
+  # Core function: convert provided data into an executable string that generates similar looking data ----
   variable_modeler <- function(oneVariable, number_of_observations, varName = NA, comments = TRUE) {
     if(any(class(oneVariable) %in% "data.table")) {
       if(ncol(oneVariable) == 1) {
@@ -185,7 +185,7 @@ data_modeler <- function(ph.data, number_of_observations, comments = TRUE, retur
     return(instructions)
   }
 
-  # Use the core function and tidy ----
+  # Loop through the core function to model entire DT and parse output ----
   batch_variable_modeler <- function(x) {
     variable_modeler(ph.data[,..x][[1]], number_of_observations, names(ph.data)[x], comments = comments)
   }
@@ -204,20 +204,14 @@ data_modeler <- function(ph.data, number_of_observations, comments = TRUE, retur
     codeText <- paste(unlist(codeListParsed), collapse =" \n" )
   }
 
+  if(print_code){
+    cat(codeText)
+  }
+
   if(return_code) {
-
-    if(print_code){
-      cat(codeText)
-    }
-
     return(codeList)
-
   } else {
-    if(print_code){
-      cat(codeText)
-    }
     eval( parse(text = paste0(codeText)))
-
     return(DT)
   }
 
