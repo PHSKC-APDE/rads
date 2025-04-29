@@ -11,12 +11,12 @@ string_clean(ph.data = NULL, stringsAsFactors = FALSE, convert_to_utf8 = FALSE)
 
 \item{stringsAsFactors}{logical. Specifies whether to convert strings to
 factors (TRUE) or not (FALSE). Note that columns that were originally factors
-will always be returned as factors.}
+will always be returned as factors. Default \code{stringsAsFactors = FALSE}.}
 
 \item{convert_to_utf8}{logical. Specifies whether to convert character strings
 to UTF-8 encoding. UTF-8 ensures consistent handling of international characters
 and special symbols across different systems and prevents display/processing
-errors from incompatible character encodings.}
+errors from incompatible character encodings. Default \code{convert_to_utf8 = FALSE}.}
 }
 \value{
 data.table
