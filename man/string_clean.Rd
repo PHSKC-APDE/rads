@@ -4,14 +4,19 @@
 \alias{string_clean}
 \title{Clean string & factor columns}
 \usage{
-string_clean(dat = NULL, stringsAsFactors = FALSE)
+string_clean(ph.data = NULL, stringsAsFactors = FALSE, convert_to_utf8 = FALSE)
 }
 \arguments{
-\item{dat}{name of data.frame or data.table}
+\item{ph.data}{name of data.frame or data.table}
 
 \item{stringsAsFactors}{logical. Specifies whether to convert strings to
 factors (TRUE) or not (FALSE). Note that columns that were originally factors
 will always be returned as factors.}
+
+\item{convert_to_utf8}{logical. Specifies whether to convert character strings
+to UTF-8 encoding. UTF-8 ensures consistent handling of international characters
+and special symbols across different systems and prevents display/processing
+errors from incompatible character encodings.}
 }
 \value{
 data.table
@@ -19,10 +24,10 @@ data.table
 \description{
 \code{string_clean} is designed to clean and preprocess strings and factors within a
 data.frame or data.table after importing from SQL, text files, CSVs, etc. It
-encodes text to UTF-8, trims and replaces multiple whitespaces, converts blank
-strings to true NA values, and optionally converts strings factors. The function
-maintains the original order of columns and leaves numeric and logical columns
-as they were.
+(optionally) encodes text to UTF-8, trims and replaces multiple whitespaces,
+converts blank strings to true NA values, and optionally converts strings to
+factors. The function maintains the original order of columns and leaves
+numeric and logical columns as they were.
 }
 \details{
 Depending on the size of the data.frame/data.table, the cleaning
@@ -36,10 +41,11 @@ type \code{string_clean(myTable)}.
 \examples{
 \donttest{
 myTable <- data.table::data.table(
-intcol = as.integer(1, 2, 3),
+intcol = as.integer(c(1, 2, 3)),
 county = c(' King  County ', 'Pierce County', '  Snohomish  county '))
 myTable[, county_factor := factor(county)]
 string_clean(myTable, stringsAsFactors = TRUE)
 print(myTable)
 }
+
 }

@@ -4,10 +4,10 @@
 \alias{sql_clean}
 \title{Clean string columns read from SQL}
 \usage{
-sql_clean(dat = NULL, stringsAsFactors = FALSE)
+sql_clean(ph.data = NULL, stringsAsFactors = FALSE)
 }
 \arguments{
-\item{dat}{name of data.frame or data.table}
+\item{ph.data}{name of data.frame or data.table}
 
 \item{stringsAsFactors}{logical. Specifies whether to convert strings to factors (TRUE) or not (FALSE)}
 }
