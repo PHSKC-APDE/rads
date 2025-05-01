@@ -5,13 +5,15 @@
 \title{Convert the class of a vector to another class -- when possible without
 introducing additional NAs}
 \usage{
-lossless_convert(x, class)
+lossless_convert(x, class, column_name = NULL)
 }
 \arguments{
 \item{x}{vector of indeterminate length and type}
 
-\item{class}{character vector of length one specifying the preferred new column type (i.e.,
-'character', 'numeric', 'integer', or 'factor')}
+\item{class}{character vector of length one specifying the preferred new column type (e.g.,
+'character', 'numeric', 'integer', 'Date', or 'POSIXct)}
+
+\item{column_name}{optional name of the column being converted (for better error messages)}
 }
 \value{
 a vector of the same length as x, but of the new class (when possible)
@@ -26,11 +28,8 @@ converted.
 \donttest{
 str(lossless_convert(c('1', '2', '3'), 'integer'))
 str(lossless_convert(c('one', '2', '3'), 'integer'))
-str(lossless_convert(c('1', '2', 'three'), 'integer'))
-
 str(lossless_convert(c('2020-01-01', '2021-12-31', '2022-02-22'), 'Date'))
-str(lossless_convert(c('2020-01-01', '2021-12-31', 'z'), 'Date'))
-str(lossless_convert(c('z', '2020-01-01', '2021-12-31'), 'Date'))
+str(lossless_convert(c('2020-01-01 12:30:45', '2021-12-31 23:59:59'), 'POSIXct'))
 }
 
 }
