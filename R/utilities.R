@@ -1834,7 +1834,6 @@ list_ref_pop <- function(){
 }
 
 # lossless_convert() ----
-# lossless_convert() ----
 #' Convert the class of a vector to another class -- when possible without
 #' introducing additional NAs
 #'
