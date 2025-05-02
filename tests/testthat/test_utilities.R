@@ -327,7 +327,7 @@ test_that('list_ref_pop',{
 })
 
 # lossless_convert() ----
-test_that('lossless_convert', {
+test_that('lossless_convert misc tests', {
   expect_equal(class(lossless_convert(c('1', '2', '3'), 'integer')), 'integer')
 
   expect_equal(
@@ -356,6 +356,94 @@ test_that('lossless_convert', {
     'would introduce additional NAs'),
   c('z', '2020-01-01', '2021-12-31'))
 
+
+
+})
+
+test_that("lossless_convert handles Date conversions correctly", {
+  # Setup test vectors
+  alpha <- c('2022-01-01', '2023-01-01', '2024-01-01', '2025-01-01')
+  beta <- c(NA, '2023-01-01', '2024-01-01', '2025-01-01')
+  gamma <- c(NA, 'Not a Date', '2024-01-01', '2025-01-01')
+  delta <- c('Not a Date', '2023-01-01', '2024-01-01', '2025-01-01')
+
+  # Test successful Date conversion
+  expect_true(inherits(lossless_convert(alpha, 'Date'), 'Date'))
+  expect_true(inherits(lossless_convert(beta, 'Date'), 'Date'))
+
+  # Test failed Date conversion (preserves original)
+  expect_message(result_gamma <- lossless_convert(gamma, 'Date', column_name = "gamma"),
+                 "Conversion of 'gamma' to Date would introduce additional NAs")
+  expect_true(inherits(result_gamma, 'character'))
+
+  expect_message(result_delta <- lossless_convert(delta, 'Date', column_name = "delta"),
+                 "Conversion of 'delta' to Date would introduce additional NAs")
+  expect_true(inherits(result_delta, 'character'))
+})
+
+test_that("lossless_convert handles numeric and integer conversions correctly", {
+  # Setup test vectors
+  epsilon <- c('1', '2', '3', NA)
+  zeta <- c('One', '2', '3', NA)
+  eta <- c('1.1', '2', '3', NA)
+
+  # Test successful integer conversion
+  expect_true(inherits(lossless_convert(epsilon, 'integer'), 'integer'))
+
+  # Test failed integer conversion
+  expect_message(result_zeta <- lossless_convert(zeta, 'integer', column_name = "zeta"),
+                 "Conversion of 'zeta' to integer would introduce additional NAs")
+  expect_true(inherits(result_zeta, 'character'))
+
+  expect_message(result_eta <- lossless_convert(eta, 'integer', column_name = "eta"),
+                 "Conversion of 'eta' to integer would introduce additional NAs")
+  expect_true(inherits(result_eta, 'character'))
+
+  # Test successful numeric conversion
+  expect_true(inherits(lossless_convert(epsilon, 'numeric'), 'numeric'))
+  expect_true(inherits(lossless_convert(eta, 'numeric'), 'numeric'))
+})
+
+test_that("lossless_convert handles POSIXct conversions correctly", {
+  # Setup test vector
+  tau <- c(NA, '2023-01-01 12:30:45', '2024-12-31 23:59:59', '2025-01-01 11:11:11')
+
+  # Test successful POSIXct conversion
+  expect_true(inherits(lossless_convert(tau, 'POSIXct'), 'POSIXct'))
+})
+
+test_that("lossless_convert works with data.table", {
+  # Setup test vectors
+  alpha <- c('2022-01-01', '2023-01-01', '2024-01-01', '2025-01-01')
+  beta <- c(NA, '2023-01-01', '2024-01-01', '2025-01-01')
+  gamma <- c(NA, 'Not a Date', '2024-01-01', '2025-01-01')
+  delta <- c('Not a Date', '2023-01-01', '2024-01-01', '2025-01-01')
+  epsilon <- c('1', '2', '3', NA)
+  zeta <- c('One', '2', '3', NA)
+  eta <- c('1.1', '2', '3', NA)
+
+  # Create data.table
+  library(data.table)
+  mydt <- data.table(alpha, beta, gamma, delta, epsilon, zeta, eta)
+
+  # Test numeric conversion on all columns
+  mydt[, (names(mydt)) := lapply(names(mydt), function(col_name) {
+    lossless_convert(get(col_name), class = 'numeric', column_name = col_name)
+  })]
+
+  # Check that only epsilon and eta were converted to numeric
+  expect_equal(names(mydt)[sapply(mydt, is.numeric)], c('epsilon', 'eta'))
+
+  # Test Date conversion on all columns
+  mydt[, (names(mydt)) := lapply(names(mydt), function(col_name) {
+    lossless_convert(get(col_name), class = 'Date', column_name = col_name)
+  })]
+
+  # Check that only alpha and beta were converted to Date
+  expect_equal(
+    names(mydt)[sapply(mydt, function(x) inherits(x, "Date"))],
+    c("alpha", "beta")
+  )
 })
 
 # multi_t_test ----
