@@ -1911,6 +1911,8 @@ lossless_convert <- function(x, class, column_name = NULL) {
       stop("\n\U1F6D1 'column_name' must be a character vector of length == 1.")
     }
 
+    if (inherits(x, class)) return(x) # if already the correct class, return the original
+
   # Set up ----
     # Get the name of x for reporting warnings
     x_name <- if (!is.null(column_name)) {
@@ -1932,20 +1934,20 @@ lossless_convert <- function(x, class, column_name = NULL) {
       message("Conversion of '", x_name, "' to ", class, " would introduce additional NAs. Operation not performed.")
     }
 
+    # Create helper to assess if something is a whole number within a reasonable tolerance
+    is.wholenumber <- function(x) {
+      abs(x - round(x)) < sqrt(.Machine$double.eps) # a commonly used tolerance ~ 0.00000001490116
+    }
+
   # Simple conversions for empty or 100% NA vectors ----
     if (length(x) == 0 || all(is.na(x))) {
-      # Return empty vector of appropriate class
-      if (class == "character") {
-        return(as.character(x))
-      } else if (class == "numeric") {
-        return(as.numeric(x))
-      } else if (class == "integer") {
-        return(as.integer(x))
-      } else if (class == "Date") {
-        return(as.Date(x))
-      } else if (class == "POSIXct") {
-        return(as.POSIXct(x))
-      }
+      return(switch(class,
+                    character = as.character(x),
+                    numeric   = as.numeric(x),
+                    integer   = as.integer(x),
+                    Date      = as.Date(x),
+                    POSIXct   = as.POSIXct(x)
+      ))
     }
 
   # Attempt less simple class conversions ----
@@ -1958,13 +1960,34 @@ lossless_convert <- function(x, class, column_name = NULL) {
       return(new_x)
     }
     else if (class %in% c("numeric", "integer")) {
-      # For numeric/integer, do a direct conversion with suppressed warnings
-      new_x <- suppressWarnings(if (class == "numeric") as.numeric(x) else as.integer(x))
-      if (sum(is.na(new_x)) > original_na_count) {
+      # Convert to numeric first
+      numeric_x <- suppressWarnings(as.numeric(x))
+
+      # Check if conversion to numeric introduces NAs
+      if (sum(is.na(numeric_x)) > original_na_count) {
         warn_lossy_conversion()
         return(x)
       }
-      return(new_x)
+
+      if (class == "integer") {
+        non_na_vals <- numeric_x[!is.na(numeric_x)]
+
+        # check for non whole numbers
+        if (any(!is.wholenumber(non_na_vals))) {
+          warn_lossy_conversion()
+          return(x)
+        }
+
+        # check for integers that are too large or too small for R (overflow)
+        if (any(non_na_vals > .Machine$integer.max | non_na_vals < -(.Machine$integer.max + 1))) {
+          warn_lossy_conversion()
+          return(x)
+        }
+
+      }
+
+      # If we've reached this point, conversion should be safe
+      return(if (class == "numeric") numeric_x else as.integer(numeric_x))
     }
     else if (class %in% c("Date", "POSIXct")) {
       # Get the first non-NA value
