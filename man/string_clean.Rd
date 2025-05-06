@@ -4,7 +4,9 @@
 \alias{string_clean}
 \title{Clean string & factor columns}
 \usage{
-string_clean(ph.data = NULL, stringsAsFactors = FALSE, convert_to_utf8 = FALSE)
+string_clean(ph.data = NULL,
+             stringsAsFactors = FALSE,
+             convert_to_utf8 = FALSE)
 }
 \arguments{
 \item{ph.data}{name of data.frame or data.table}
@@ -16,25 +18,32 @@ will always be returned as factors. Default \code{stringsAsFactors = FALSE}.}
 \item{convert_to_utf8}{logical. Specifies whether to convert character strings
 to UTF-8 encoding. UTF-8 ensures consistent handling of international characters
 and special symbols across different systems and prevents display/processing
-errors from incompatible character encodings. Default \code{convert_to_utf8 = FALSE}.}
+errors from incompatible character encodings. If you have a few extra minutes
+to spare, \code{convert_to_utf8 = TRUE} is recommended. Default
+\code{convert_to_utf8 = FALSE}.}
 }
 \value{
-data.table
+A modified data.table, invisibly.
 }
 \description{
 \code{string_clean} is designed to clean and preprocess strings and factors within a
 data.frame or data.table after importing from SQL, text files, CSVs, etc. It
-(optionally) encodes text to UTF-8, trims and replaces multiple whitespaces,
-converts blank strings to true NA values, and optionally converts strings to
-factors. The function maintains the original order of columns and leaves
-numeric and logical columns as they were.
+removes zero-width and invisible characters, normalizes all white spaces,
+replaces multiple white spaces with a single white space, trims beginning and
+ending white spaces, converts empty strings to true \code{NA} and optionally
+encodes text to UTF-8 and strings as factors. The function maintains the
+original order of columns and leaves numeric and logical columns as they were.
 }
 \details{
 Depending on the size of the data.frame/data.table, the cleaning
 process can take a long time.
 
+If you want a more thorough cleaning or if your
+data have international characters or special symbols, you are encouraged to
+set \code{convert_to_utf8 = TRUE}.
+
 The \code{string_clean} function modifies objects in place due to the use
-of data.table's by-reference assignment (e.g., :=). In other words, there is
+of data.table's by-reference assignment (e.g., \code{:=}). In other words, there is
 \emph{no need to assign the output}, just
 type \code{string_clean(myTable)}.
 }

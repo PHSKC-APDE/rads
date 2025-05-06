@@ -2533,27 +2533,38 @@ round2 = function(x, n = 0) {
 #' @param  convert_to_utf8 logical. Specifies whether to convert character strings
 #' to UTF-8 encoding. UTF-8 ensures consistent handling of international characters
 #' and special symbols across different systems and prevents display/processing
-#' errors from incompatible character encodings. Default \code{convert_to_utf8 = FALSE}.
+#' errors from incompatible character encodings. If you have a few extra minutes
+#' to spare, \code{convert_to_utf8 = TRUE} is recommended. Default
+#' \code{convert_to_utf8 = FALSE}.
 #' @description
 #' `string_clean` is designed to clean and preprocess strings and factors within a
 #' data.frame or data.table after importing from SQL, text files, CSVs, etc. It
-#' (optionally) encodes text to UTF-8, trims and replaces multiple whitespaces,
-#' converts blank strings to true NA values, and optionally converts strings to
-#' factors. The function maintains the original order of columns and leaves
-#' numeric and logical columns as they were.
+#' removes zero-width and invisible characters, normalizes all white spaces,
+#' replaces multiple white spaces with a single white space, trims beginning and
+#' ending white spaces, converts empty strings to true \code{NA} and optionally
+#' encodes text to UTF-8 and strings as factors. The function maintains the
+#' original order of columns and leaves numeric and logical columns as they were.
 #'
 #' @details
 #' Depending on the size of the data.frame/data.table, the cleaning
 #' process can take a long time.
 #'
+#' If you want a more thorough cleaning or if your
+#' data have international characters or special symbols, you are encouraged to
+#' set \code{convert_to_utf8 = TRUE}.
+#'
 #' The `string_clean` function modifies objects in place due to the use
-#' of data.table's by-reference assignment (e.g., :=). In other words, there is
+#' of data.table's by-reference assignment (e.g., \code{:=}). In other words, there is
 #' *no need to assign the output*, just
 #' type `string_clean(myTable)`.
+#'
+#' @usage string_clean(ph.data = NULL,
+#'              stringsAsFactors = FALSE,
+#'              convert_to_utf8 = FALSE)
 #' @export
 #' @importFrom utf8 utf8_encode
 #' @importFrom data.table fifelse is.data.table setcolorder setDT
-#' @return data.table
+#' @return A modified data.table, invisibly.
 #' @examples
 #' \donttest{
 #' myTable <- data.table::data.table(
@@ -2564,7 +2575,9 @@ round2 = function(x, n = 0) {
 #' print(myTable)
 #' }
 #'
-string_clean <- function(ph.data = NULL, stringsAsFactors = FALSE, convert_to_utf8 = FALSE) {
+string_clean <- function (ph.data = NULL,
+                          stringsAsFactors = FALSE,
+                          convert_to_utf8 = FALSE) {
   # validation
   if (is.null(ph.data) || !is.data.frame(ph.data)) {
     stop("'ph.data' must be the name of a data.frame or data.table")
@@ -2591,35 +2604,40 @@ string_clean <- function(ph.data = NULL, stringsAsFactors = FALSE, convert_to_ut
 
   # Cleaning helper function
   clean_vec <- function(x) {
-    # Very basic / initial standardization
+    # Basic UTF-8 normalization
     x <- iconv(x, from = "", to = "UTF-8", sub = "byte")
 
-    # Robust UTF-8 encoding if selected
     if (convert_to_utf8) {
-      x <- utf8::utf8_encode(x) # slow but thorough UTF-8 encoding
+      x <- utf8::utf8_encode(x)  # Thorough check, but slow
     } else {
-      x <- enc2utf8(x) # fast, but less thorough UTF-8 encoding
+      x <- enc2utf8(x)  # Quick pass
     }
 
-    # White space tidying
     x <- tryCatch({
-      trimws(gsub("[[:space:]]+", " ", x))
+      # Step 1: Remove zero-width and invisible characters
+      x <- gsub("[\u200B\u200C\u200D\uFEFF]", "", x)
+
+      # Step 2: Normalize all sorts of whitespace to regular space
+      x <- gsub("[\u00A0\u2000-\u200A\u2028\u2029\u202F\u205F\u3000[:space:]]+", " ", x)
+
+      # Step 3: Trim leading/trailing space
+      trimws(x)
     }, error = function(e) {
-      # If there are issues, process strings individually to avoid losing the entire vector
       result <- character(length(x))
       for (i in seq_along(x)) {
         result[i] <- tryCatch({
-          trimws(gsub("[[:space:]]+", " ", x[i]))
-        }, error = function(e) {
-          trimws(x[i]) # extremely messed up strings will be saved as is
-        })
+          xi <- gsub("[\u200B\u200C\u200D\uFEFF]", "", x[i])
+          xi <- gsub("[\u00A0\u2000-\u200A\u2028\u2029\u202F\u205F\u3000[:space:]]+", " ", xi)
+          trimws(xi)
+        }, error = function(e) trimws(x[i]))
       }
       result
     })
 
-    # Replace blanks with true NA
+    # Replace empty strings with NA
     data.table::fifelse(nzchar(x), x, NA_character_)
   }
+
 
   # Process string columns if any exist
   if (length(string.columns) > 0) {
