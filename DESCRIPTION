@@ -29,6 +29,7 @@ Imports:
 Remotes:
     github::PHSKC-APDE/rads.data, github::PHSKC-APDE/dtsurvey
 Suggests: 
+    devtools, 
     httr, 
     knitr,
     rmarkdown, 
