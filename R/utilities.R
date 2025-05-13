@@ -1860,73 +1860,193 @@ list_ref_pop <- function(){
 #' converted.
 #'
 #' @param x vector of indeterminate length and type
-#' @param class character vector of length one specifying the preferred new column type (i.e.,
-#' 'character', 'numeric', 'integer', or 'factor')
+#' @param class character vector of length one specifying the preferred new column type (e.g.,
+#' 'character', 'numeric', 'integer', 'Date', or 'POSIXct)
+#' @param column_name optional name of the column being converted (for better error messages)
 #' @examples
 #' \donttest{
-#' str(lossless_convert(c('1', '2', '3'), 'integer'))
-#' str(lossless_convert(c('one', '2', '3'), 'integer'))
-#' str(lossless_convert(c('1', '2', 'three'), 'integer'))
+#' # Create a bunch of sample vectors
+#' alpha <- c('2022-01-01', '2023-01-01', '2024-01-01', '2025-01-01')
+#' beta <- c(NA, '2023-01-01', '2024-01-01', '2025-01-01')
+#' gamma <- c(NA, 'Not a Date', '2024-01-01', '2025-01-01')
+#' delta <- c('Not a Date', '2023-01-01', '2024-01-01', '2025-01-01')
+#' epsilon <- c('1', '2', '3', NA)
+#' zeta <- c('One', '2', '3', NA)
+#' eta <- c('1.1', '2', '3', NA)
+#' tau <- c(NA, '2023-01-01 12:30:45', '2024-12-31 23:59:59', '2025-01-01 11:11:11')
 #'
-#' str(lossless_convert(c('2020-01-01', '2021-12-31', '2022-02-22'), 'Date'))
-#' str(lossless_convert(c('2020-01-01', '2021-12-31', 'z'), 'Date'))
-#' str(lossless_convert(c('z', '2020-01-01', '2021-12-31'), 'Date'))
+#' # Successful Date conversion
+#' inherits(lossless_convert(alpha, 'Date'), 'Date')
+#'
+#' # Failed Date conversion (preserves original)
+#' inherits(lossless_convert(gamma, 'Date'), 'character')
+#'
+#' # Successful integer conversion
+#' inherits(lossless_convert(epsilon, 'integer'), 'integer')
+#'
+#' # Failed integer conversion
+#' inherits(lossless_convert(eta, 'integer'), 'character')
+#'
+#' # Successful POSIXct conversion
+#' inherits(lossless_convert(tau, 'POSIXct'), 'POSIXct')
+#'
+#' # Convert all possible columns in a data.table to numeric
+#' library(data.table)
+#' mydt <- data.table(alpha, beta, gamma, delta, epsilon, zeta, eta)
+#' mydt[, (names(mydt)) := lapply(names(mydt), function(col_name) {
+#'   lossless_convert(get(col_name), class = 'numeric', column_name = col_name)
+#' })]
+#' all.equal(names(mydt)[sapply(mydt, is.numeric)], c('epsilon', 'eta'))
+#'
+#' # Convert all possible columns in a data.table to Date
+#' mydt[, (names(mydt)) := lapply(names(mydt), function(col_name) {
+#'   lossless_convert(get(col_name), class = 'Date', column_name = col_name)
+#' })]
+#' all.equal(names(mydt)[sapply(mydt, function(x) inherits(x, "Date"))], c("alpha", "beta"))
 #' }
 #'
 #' @export
 #' @return a vector of the same length as x, but of the new class (when possible)
-lossless_convert <- function(x, class) {
-  # Validate 'x'
-  if (missing(x)) {
-    stop("'x', the vector you wish to change, must be specified.")
-  }
-
-  # Validate 'class'
-  if (missing(class)) {
-    stop("'class' must be specified.")
-  }
-
-  if (length(class) != 1 || !class %in% c("character", "integer", "numeric", "Date", "POSIXct")) {
-    stop("'class' must be one of the following: 'character', 'integer', 'numeric', 'Date', 'POSIXct'")
-  }
-
-  # Get the name of x
-  x_name <- deparse(substitute(x))
-  if (nchar(x_name) > 20) { # If 'x' is a vector rather than a name, use 'x'
-    x_name <- "x"
-  }
-
-  # Pre-check for Date or POSIXct conversion
-  if (class %in% c("Date", "POSIXct")) {
-    temp_x <- suppressWarnings(as.character(x))
-    if (any(sapply(temp_x, function(x) tryCatch(is.na(as.Date(x)), error = function(e) TRUE)))) {
-      message("Conversion of '", x_name, "' to ", class, " would introduce additional NAs. Operation not performed.")
-      return(x)
+lossless_convert <- function(x, class, column_name = NULL) {
+  # Validation ----
+    # Validate 'x'
+    if (missing(x)) {
+      stop("\n\U1F6D1 'x', the vector you wish to change, must be specified.")
     }
-  }
 
-  # Attempt conversion with checks for loss
-  original_na_count <- sum(is.na(x))
-  converted_x <- tryCatch({
-    if (class %in% c("Date", "POSIXct")) {
-      # For date types, use already converted temp_x to avoid duplicate conversion
-      new_x <- suppressWarnings(if (class == "Date") as.Date(temp_x) else as.POSIXct(temp_x))
-    } else {
-      # For other types, attempt direct conversion
-      new_x <- suppressWarnings(as(x, class))
+    # Validate 'class'
+    if (missing(class)) {
+      stop("\n\U1F6D1 'class' must be specified.")
     }
-    if (sum(is.na(new_x)) > original_na_count) {
-      message("Conversion of '", x_name, "' to ", class, " would introduce additional NAs. Operation not performed.")
-      return(x)
+
+    if (length(class) != 1 || !class %in% c("character", "integer", "numeric", "Date", "POSIXct")) {
+      stop("\n\U1F6D1 'class' must be one of the following: 'character', 'integer', 'numeric', 'Date', 'POSIXct'")
+    }
+
+    if (!is.null(column_name) && ((length(column_name) != 1 || !inherits(column_name, 'character')))) {
+      stop("\n\U1F6D1 'column_name' must be a character vector of length == 1.")
+    }
+
+    if (inherits(x, class)) return(x) # if already the correct class, return the original
+
+  # Set up ----
+    # Get the name of x for reporting warnings
+    x_name <- if (!is.null(column_name)) {
+      column_name
     } else {
+      temp <- deparse(substitute(x))
+      if (grepl("[\\$\\[\\]\\(\\)\\{\\}]", temp)) { # if it is a not a simple column name, use 'x' as the name
+        "x"
+      } else {
+        temp
+      }
+    }
+
+    # Get original NA count
+    original_na_count <- sum(is.na(x))
+
+    # Create generic warning
+    warn_lossy_conversion <- function() {
+      message("Conversion of '", x_name, "' to ", class, " would introduce additional NAs. Operation not performed.")
+    }
+
+    # Create helper to assess if something is a whole number within a reasonable tolerance
+    is.wholenumber <- function(x) {
+      abs(x - round(x)) < sqrt(.Machine$double.eps) # a commonly used tolerance ~ 0.00000001490116
+    }
+
+  # Simple conversions for empty or 100% NA vectors ----
+    if (length(x) == 0 || all(is.na(x))) {
+      return(switch(class,
+                    character = as.character(x),
+                    numeric   = as.numeric(x),
+                    integer   = as.integer(x),
+                    Date      = as.Date(x),
+                    POSIXct   = as.POSIXct(x)
+      ))
+    }
+
+  # Attempt less simple class conversions ----
+    if (class == "character") {
+      new_x <- as.character(x)
+      if (sum(is.na(new_x)) > original_na_count) {
+        warn_lossy_conversion()
+        return(x)
+      }
       return(new_x)
     }
-  }, error = function(e) {
-    message("\U0001f47f An unexpected issue occurred during conversion '", x_name, "' to ", class, ": ", e$message)
-    return(x)
-  })
+    else if (class %in% c("numeric", "integer")) {
+      # Convert to numeric first
+      numeric_x <- suppressWarnings(as.numeric(x))
 
-  return(converted_x)
+      # Check if conversion to numeric introduces NAs
+      if (sum(is.na(numeric_x)) > original_na_count) {
+        warn_lossy_conversion()
+        return(x)
+      }
+
+      if (class == "integer") {
+        non_na_vals <- numeric_x[!is.na(numeric_x)]
+
+        # check for non whole numbers
+        if (any(!is.wholenumber(non_na_vals))) {
+          warn_lossy_conversion()
+          return(x)
+        }
+
+        # check for integers that are too large or too small for R (overflow)
+        if (any(non_na_vals > .Machine$integer.max | non_na_vals < -(.Machine$integer.max + 1))) {
+          warn_lossy_conversion()
+          return(x)
+        }
+
+      }
+
+      # If we've reached this point, conversion should be safe
+      return(if (class == "numeric") numeric_x else as.integer(numeric_x))
+    }
+    else if (class %in% c("Date", "POSIXct")) {
+      # Get the first non-NA value
+      first_non_na <- x[!is.na(x)][1]
+
+      # Try converting the first non-NA value to check for immediate errors
+      # Necessary because non-convertible value in first position will cause an error
+      # e.g., as.Date(c('Not a Date', '2025-01-01')) # ERROR, but as.Date(c('2025-01-01', 'Not a Date')) # gives an NA
+      first_converted <- tryCatch({
+        if (class == "Date") {
+          as.Date(as.character(first_non_na))
+        } else {
+          as.POSIXct(as.character(first_non_na))
+        }
+      }, error = function(e) {
+        return(NA)
+      }, warning = function(w) {
+        return(NA)
+      })
+
+      # If first value couldn't be converted, we know the conversion is lossy
+      if (is.na(first_converted)) {
+        warn_lossy_conversion()
+        return(x)
+      }
+
+      # If first value worked, convert the whole vector
+      new_x <- suppressWarnings({
+        if (class == "Date") {
+          as.Date(as.character(x))
+        } else {
+          as.POSIXct(as.character(x))
+        }
+      })
+
+      # Check if any new NAs were introduced
+      if (sum(is.na(new_x)) > original_na_count) {
+        warn_lossy_conversion()
+        return(x)
+      }
+
+      return(new_x)
+    }
 }
 
 # metrics() ----
