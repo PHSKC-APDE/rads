@@ -108,7 +108,14 @@ adjust_direct <- function(count, pop, stdpop, per = 100000, conf.level = 0.95) {
 #' setting `diagnostic_report = TRUE` returns a diagnostic table instead of normal results.
 #' Use this option if a warning about missing age groups appears when running the function normally.
 #'
-#' @return a data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'group_by' variable(s) -- if any
+#' @section Note on Standard Errors:
+#' This function calculates confidence intervals using the
+#' \href{https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf}{Fay-Feuer method},
+#' which does not provide direct standard error (SE) estimates. If you need SE approximations,
+#' common methods used by health departments include \code{SE = adjusted_rate/sqrt(cases)} and
+#' \code{RSE = 1/sqrt(cases)}.
+#'
+#' @return A data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'group_by' variable(s) -- if any
 #'
 #' @seealso \code{\link{adjust_direct}} for calculating crude and directly adjusted rates.
 #'

@@ -138,7 +138,7 @@ head(population)
 pretty_kable(head(population))
 ```
 
-Since we are interested in strata (i.e., `intent`), we will need a complete set of population data for each strata.
+Since we are interested in strata (i.e., `intent`), we will need a complete set of population data for each stratum.
 
 ```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
 population <- rbindlist(lapply(X = 1:length(unique(deaths$intent)),
@@ -333,9 +333,18 @@ pretty_kable(head(est))
 
 Here we see that the the **crude rate is lower** in South King County (`r est[Region=="South"]$crude.rate`) compared to North King County (`r est[Region=="North"]$crude.rate`). This flips the relationship we saw with the counts (`r est[Region=="South"]$count` vs `r est[Region=="North"]$count`), but does not account for differences in the population structure in the two regions. In contrast, the **adjusted rate is higher** in South King County (`r est[Region=="South"]$adj.rate`) vs. North King County(`r est[Region=="North"]$adj.rate`) .
 
+### (OPTIONAL) Calculating the standard error (SE) and relative standard error (RSE)
+
+The method used by rads to calculate the confidence intervals is that recommended by WA DOH, i.e., the [Fay-Feuer method](https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf). Unfortunately, this method does not have a corresponding SE. APDE consulted with a WA DOH biostatistician who said, **"*SE’s are not particularly useful for approximating the sampling distribution on the scale of adjusted rates*."** We therefore calculate **approximations** of the SE and RSE, as suggested by various state health departments. This means that the SE will be internally inconsistent with the confidence intervals ... *c'est la vie!*
+
+For reference, here are the approximations:
+$$SE = {\text{adjusted rate} \over{\sqrt{{\text{number of cases}}}}}$$
+
+$$RSE = {1 \over{\sqrt{\text{number of cases}}}}$$
+
 # Conclusion
 
-We hope this vignettes has convinced you of two things:
+We hope this vignette has convinced you of two things:
 
 1.  Age-adjusted rates are important because they can (sometimes) tell a different story compared to crude rates and counts!
 2.  Calculating age-adjusted rates within the PHSKC universe is readily doable if you follow the four basic steps:
