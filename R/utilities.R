@@ -2686,6 +2686,23 @@ substrRight <- function(x, x.start, x.stop){
   substr(x, nchar(x)-x.stop+1, nchar(x)-x.start+1)
 }
 
+# suppress() ----
+#' Suppress data according to APDE standards & add caution flag for high RSE
+#'
+#' @description
+#' \strong{!!!STOP!!! This function has been deprecated.} Please use
+#' \code{apde.chi.tools::chi_suppress_results()} instead.
+#'
+#' @param ... Not used.
+#'
+#' @section Deprecation:
+#' Please use \code{apde.chi.tools::chi_suppress_results()} instead.
+#'
+#' @export
+suppress <- function(...) {
+  stop("\n\U1F6D1 suppress() has been replaced. \nPlease use apde.chi.tools::chi_suppress_results() instead.", call. = FALSE)
+}
+
 # quiet() ----
 #' Silence (i.e., suppress or mute) printed messages from functions
 #'
