@@ -7,7 +7,7 @@
 #' @param print_message Logical. Whether to print messages about version status.
 #'   Default is TRUE.
 #'
-#' @return A list with the following components:
+#' @return Invisibly returns a list with the following components:
 #'   \item{is_current}{Logical. TRUE if the installed version is the latest, FALSE otherwise.}
 #'   \item{local_version}{The version of the installed rads package.}
 #'   \item{remote_version}{The version on GitHub, or NULL if it couldn't be determined.}
@@ -18,12 +18,6 @@
 #' \dontrun{
 #' # Check if rads is up to date
 #' check_version()
-#'
-#' # Check for updates silently
-#' status <- check_version(print_message = FALSE)
-#' if (!status$is_current) {
-#'   # Custom handling for outdated package
-#' }
 #' }
 #'
 #' @export
