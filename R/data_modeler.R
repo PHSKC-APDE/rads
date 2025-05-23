@@ -60,6 +60,8 @@ DT_analytic_ready$chi_race_7 <- factor(DT_analytic_ready$chi_race_7, ordered = T
 DT_analytic_ready$chi_race_7 <- factor(DT_analytic_ready$chi_race_eth8, ordered = F)
 
 ph.data <- DT_analytic_ready
+ph.data[, long_string := ifelse(lenstayd %% 2 == 1, "this is a longer sentence for all of us to see", "this is shorter sentence")]
+
 number_of_observations <- 100
 comments <- TRUE
 return_code <- FALSE
@@ -206,56 +208,33 @@ print_code <- TRUE
           instructions <- paste0(instructions, ' # as categorical character (non factor)')
         }
       }
-      # #miscellaneous characters (free text):
-      # # assumed if there are more than 61 observations, and 90% or more are unique
-      # # replaced with "lorem ipsum" of length similar to source
-      # if(is.na(instructions) &
-      #    (length(unique(oneVariable)) >= (length(oneVariable) *.90))) {
-      #   loremipsum <- "Lorem ipsum dolor sit amet consectetur adipiscing elit. Pretium tellus duis convallis tempus leo eu aenean. Iaculis massa nisl malesuada lacinia integer nunc posuere. Conubia nostra inceptos himenaeos orci varius natoque penatibus. Nulla molestie mattis scelerisque maximus eget fermentum odio."
-      #   minimumLength <- min(nchar(oneVariable))
-      #   maximumLength <- max(nchar(oneVariable))
-      #
-      #
-      #   minimumLength <- 10
-      #   maximumLength <- 30
-      #   number_of_observations <- 100
-      #   maxes <- sample(1:maximumLength, number_of_observations, replace = TRUE)
-      #
-      #
-      #   LIsplit <- paste0(strsplit(loremipsum, split = "")[[1]][1:maximumLength], collapse = "")
-      #   LIsplit <- strsplit(paste0(strsplit(loremipsum, split = "")[[1]][1:maximumLength], collapse = ""), split = " ")[[1]]
-      #   LIsplitDT <- data.table(LIsplit)
-      #
-      #
-      #   rep(LIsplit, number_of_observations, )
-      #   instructions <- paste0('`',variableName,'`',' = sample(c("',paste0(unlist(unique(oneVariable)),collapse = '", "'),'"), ', number_of_observations,', replace = TRUE, prob = c(',paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ', '),'))', collapse = '')
-      #   instructions <- gsub("'NA'", "NA", instructions)
-      #   if(comments){
-      #     instructions <- paste0(instructions, ' # as categorical character (non factor)')
-      #   }
-      # }
-      #date-like characters:
-      # not a date or posix
-      # but has date features (/, -, or a length of 6 or 8
-      # if(is.na(instructions) &
-      #    !inherits(oneVariable, "Date") &
-      #    !inherits(oneVariable, "POSIXct") &
-      #    !inherits(oneVariable, "POSIXt") &
-      #    (length(unique(oneVariable)) >= 61 & length(oneVariable) > 61) &
-      #    (all(grepl("/", onevariable)) | all(grepl("-", onevariable)) | (all(nchar(oneVariable) == 6) | all(nchar(oneVariable) == 8)))) {
-      #   dateLength <- nchar(oneVariable[1])
-      #   #identify format
-      #   # short numb: ######
-      #   # long numb: ########
-      #   # dash short numb:
-      #
-      #   instructions <- paste0('`',variableName,'`',' = sample(c("',paste0(unlist(unique(oneVariable)),collapse = '", "'),'"), ', number_of_observations,', replace = TRUE, prob = c(',paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ', '),'))', collapse = '')
-      #   instructions <- gsub("'NA'", "NA", instructions)
-      #   if(comments){
-      #
-      #     instructions <- paste0(instructions, ' # as a ch')
-      #   }
-      # }
+
+      #miscellaneous characters (free text):
+      # assumed if there are more than 61 observations, and 75% or more are unique
+      # replaced with "lorem ipsum" of length similar to source
+      if(is.na(instructions) &
+         (length(unique(oneVariable)) >= (length(oneVariable) *.75))) {
+        #arbitrarily long lorem ipsum to be pared down for expore. May need ot be bigger if paragraph length text are passed to this function
+        loremipsum <- "Lorem ipsum dolor sit amet consectetur adipiscing elit. Pretium tellus duis convallis tempus leo eu aenean. Iaculis massa nisl malesuada lacinia integer nunc posuere. Conubia nostra inceptos himenaeos orci varius natoque penatibus. Nulla molestie mattis scelerisque maximus eget fermentum odio."
+        minimumLength <- min(nchar(oneVariable))
+        maximumLength <- max(nchar(oneVariable))
+
+        LIsplit <- paste0(strsplit(loremipsum, split = "")[[1]][1:maximumLength], collapse = "")
+        LIsplit <- strsplit(paste0(strsplit(loremipsum, split = "")[[1]][1:maximumLength], collapse = ""), split = " ")[[1]]
+        find.min.parts <- function(minimumLength, LIsplit) {
+          minparts <- 0
+          for(i in 1:length(LIsplit)) {
+            if(nchar(paste0(LIsplit[1:i], collapse = " ")) < minimumLength) {minparts <- minparts +1}
+          }
+          return(minparts)
+        }
+        minparts <- find.min.parts(minimumLength, LIsplit)
+
+        instructions <- paste0('`',variableName,'`',' = replicate(',number_of_observations,', sapply(sample(',minparts,':',length(LIsplit),',1), function(x) {paste0(sample(c("',paste0(LIsplit, collapse = '", "'),'"), x, replace = T), collapse = " ")}))', collapse = '')
+        if(comments){
+          instructions <- paste0(instructions, ' # as character, free text')
+        }
+      }
     }
 
     #dates:
@@ -265,6 +244,16 @@ print_code <- TRUE
 
 
     #logicals:
+    if(inherits(oneVariable,"logical")) {
+      #match proportional distribution of source
+      instructions <- paste0('`',variableName,'`',' = sample(c("',paste0(unlist(unique(oneVariable)),collapse = '", "'),'"), ', number_of_observations,', replace = TRUE, prob = c(',paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ', '),'))', collapse = '')
+      instructions <- gsub('"NA"', "NA", instructions)
+      instructions <- gsub('"FALSE"', "FALSE", instructions)
+      instructions <- gsub('"TRUE"', "TRUE", instructions)
+      if(comments){
+        instructions <- paste0(instructions, ' # as logical')
+      }
+    }
 
 
     #unmatched:
@@ -310,4 +299,3 @@ print_code <- TRUE
     return(DT)
   }
 }
-
