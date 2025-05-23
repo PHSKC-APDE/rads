@@ -55,15 +55,15 @@ data_modeler <- function(ph.data, number_of_observations, comments = TRUE, retur
   RH <- DT <- `..x` <- NULL
 
 #TEST DATA
-# DT_analytic_ready <- get_data_chars()
-# DT_analytic_ready$chi_race_7 <- factor(DT_analytic_ready$chi_race_7, ordered = T)
-# DT_analytic_ready$chi_race_7 <- factor(DT_analytic_ready$chi_race_eth8, ordered = F)
-#
-# ph.data <- DT_analytic_ready
-# number_of_observations <- 100
-# comments <- TRUE
-# return_code <- FALSE
-# print_code <- TRUE
+DT_analytic_ready <- get_data_chars()
+DT_analytic_ready$chi_race_7 <- factor(DT_analytic_ready$chi_race_7, ordered = T)
+DT_analytic_ready$chi_race_7 <- factor(DT_analytic_ready$chi_race_eth8, ordered = F)
+
+ph.data <- DT_analytic_ready
+number_of_observations <- 100
+comments <- TRUE
+return_code <- FALSE
+print_code <- TRUE
 
   # Validate inputs ----
   if(missing(ph.data)){stop('\n\U1F6D1 ph.data must be provided')}
@@ -271,7 +271,7 @@ data_modeler <- function(ph.data, number_of_observations, comments = TRUE, retur
     if(is.na(instructions)) {
       instructions <- paste0("`",variableName,"`", " = as.integer(NA)")
       if(comments){
-        instructions <- paste0(instructions, " # [",variableName,"], of class [",paste0(class(x), collapse =  "]; ["),"] not modeled")
+        instructions <- paste0(instructions, " # [",variableName,"], of class [",paste0(class(oneVariable), collapse =  "]; ["),"] not modeled")
       }
     }
 
