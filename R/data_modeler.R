@@ -117,10 +117,7 @@ print_code <- TRUE
       variableName <- varName
     }
 
-    #oneVariableClass <- class(oneVariable)
-
-
-    #factors:
+    # factors:
     if(inherits(oneVariable, "factor")) {
       #generic factor replication. For any factor, mirror the probability of its levels. If ordered, reproduce the orders.
       if(is.na(instructions)) {
@@ -134,7 +131,7 @@ print_code <- TRUE
       }
     }
 
-    #integers:
+    # integers:
     if(inherits(oneVariable,"integer")) {
       # categorical integers:
       # assumed to be if there are 61 (number of HRAs) or fewer unique items on a vector with 61 or more rows
@@ -149,7 +146,7 @@ print_code <- TRUE
           instructions <- paste0(instructions, " # as categorical integer (non factor)")
         }
       }
-      #continuous integer:
+      # continuous integer:
       # assumed to be if there are more than 61 (number of HRAs) items on a vector with 61 or more rows
       # AND
       # all values are not unique
@@ -237,15 +234,49 @@ print_code <- TRUE
       }
     }
 
-    #dates:
+    #base R dates:
+    if(inherits(oneVariable, "Date")) {
+      # if there are 12 or fewer unique dates, create the same dates matching their probability in source
+      if(is.na(instructions) & length(unique(oneVariable)) <= 12){
 
+        instructions <- paste0('`',variableName,'`',' = as.Date(sample(c("',paste0(unlist(unique(oneVariable)),collapse = '", "'),'"), ', number_of_observations,', replace = TRUE, prob = c(',paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ', '),')))', collapse = '')
+        instructions <- gsub("'NA'", "NA", instructions)
+        if(comments){
+          instructions <- paste0(instructions, ' # as Date (with original probability)')
+        }
+      }
+
+      # if more than 12 dates
+      # identify if dates are unique by day, month, or year
+      # randomly sample dates between first and last date in uniform distribution
+      if(is.na(instructions) & length(unique(oneVariable)) > 12){
+        # [detect if dates are unique by day or month]
+        uniqueByType <- "day"
+        months <- format(oneVariable, "%Y-%m")
+        if(length(unique(months)) == length(unique(oneVariable))) {
+          uniqueByType <- "month"
+        }
+        years <- format(oneVariable, "%Y")
+        if(length(unique(years)) == length(unique(oneVariable))) {
+          uniqueByType <- "years"
+        }
+        startDate <- min(oneVariable)
+        endDate <- max(oneVariable)
+
+        instructions <- paste0('`',variableName,'`',' = sample(seq(as.Date("', startDate, '"), as.Date("',endDate,'"), by = "', uniqueByType,'"), ', number_of_observations,', replace = TRUE)', collapse = '')
+        instructions <- gsub("'NA'", "NA", instructions)
+        if(comments){
+          instructions <- paste0(instructions, ' # as Date (with uniform distribution by ', uniqueByType,')')
+        }
+      }
+    }
 
     #POSIXt:
 
 
     #logicals:
     if(inherits(oneVariable,"logical")) {
-      #match proportional distribution of source
+      # match proportional distribution of source
       instructions <- paste0('`',variableName,'`',' = sample(c("',paste0(unlist(unique(oneVariable)),collapse = '", "'),'"), ', number_of_observations,', replace = TRUE, prob = c(',paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ', '),'))', collapse = '')
       instructions <- gsub('"NA"', "NA", instructions)
       instructions <- gsub('"FALSE"', "FALSE", instructions)
@@ -256,8 +287,10 @@ print_code <- TRUE
     }
 
 
-    #unmatched:
+    # unmatched:
     if(is.na(instructions)) {
+      # return vector of NA integers
+      # if comments, indicate unmodeled data class
       instructions <- paste0("`",variableName,"`", " = as.integer(NA)")
       if(comments){
         instructions <- paste0(instructions, " # [",variableName,"], of class [",paste0(class(oneVariable), collapse =  "]; ["),"] not modeled")
@@ -283,7 +316,7 @@ print_code <- TRUE
 
   codeText <- paste(unlist(codeListParsed), collapse =" \n" )
 
-  #issue warning if any variables were not modelled
+  #issue warning if any variables were not modeled
   if(grepl("] not modeled" ,codeText)) {
     warning("There are one or more variables that could not be modeled. These will be NA columns in the model data. Review comments (run with comments = TRUE) for additional details")
   }
@@ -293,6 +326,8 @@ print_code <- TRUE
   }
 
   if(return_code) {
+
+
     return(codeListParsed)
   }else{
     eval(parse(text = paste0(codeText)))
