@@ -89,6 +89,7 @@ calc <- function(ph.data, ...) {
 }
 
 #' @noRd
+#' @keywords internal
 #' @export
 calc.data.frame <- function(ph.data, ...){
 
@@ -101,6 +102,7 @@ calc.data.frame <- function(ph.data, ...){
 }
 
 #' @noRd
+#' @keywords internal
 #' @export
 calc.survey.design2 <- function(ph.data, ...){
 
@@ -112,6 +114,7 @@ calc.survey.design2 <- function(ph.data, ...){
 }
 
 #' @noRd
+#' @keywords internal
 #' @export
 calc.svyrep.design <- function(ph.data, ...){
   ph.data = dtsurvey::dtrepsurvey(ph.data)
@@ -119,6 +122,7 @@ calc.svyrep.design <- function(ph.data, ...){
 }
 
 #' @noRd
+#' @keywords internal
 #' @export
 calc.grouped_df <- function(ph.data, ...){
   stop("calc doesn't know how to handle `grouped_df` objects. Likely, you have a dplyr::group_by somewhere higher up in the code.
