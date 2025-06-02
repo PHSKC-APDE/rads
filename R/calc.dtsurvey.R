@@ -2,7 +2,7 @@
 #' @export
 #' @importFrom stats median na.omit
 #' @importFrom utils capture.output
-calc.dtsurvey = function(ph.data,
+calc.dtsurvey <- function(ph.data,
                          what = NULL,
                          where, #this is a change from the main calc framework
                          by = NULL,
@@ -180,7 +180,17 @@ calc.dtsurvey = function(ph.data,
 #' A function to compute a metric as part of calc.dtsurvey
 #' see the help/documentation for calc and/or smeanto better understand the inputs
 #' @noRd
-compute = function(DT, x, by = NULL, metrics, ci_method = 'mean', level = .95, time_var, time_format, per = 1, window = FALSE){
+#' @keywords internal
+compute <- function(DT,
+                    x,
+                    by = NULL,
+                    metrics,
+                    ci_method = 'mean',
+                    level = .95,
+                    time_var,
+                    time_format,
+                    per = 1,
+                    window = FALSE){
 
 
   # if(nrow(DT) == 0) warning('No valid rows to compute on given `where` and `win` conditions')

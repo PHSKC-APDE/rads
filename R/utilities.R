@@ -943,8 +943,8 @@ convert_to_date <- function(x, origin = "1899-12-30") {
 #'
 #' @param x factor
 #' @param target character. class of the object to transform the factor into. One of integer, numeric, or character.
-#'
-#'
+#' @keywords internal
+#' @noRd
 dumb_convert <- function(x, target = 'character'){
 
   stopifnot(length(target) == 1)
@@ -1530,6 +1530,7 @@ list_dataset_columns <- function(dataset = NULL,
 #' @return A list containing configuration settings for the specified dataset.
 #'
 #' @keywords internal
+#' @noRd
 list_dataset_columns_config <- function(dataset) {
   # no need for dataset validation b/c validated in list_dataset_columns()
   configs <- list(
@@ -1588,6 +1589,7 @@ list_dataset_columns_config <- function(dataset) {
 #' @return data.table with var.names column
 #'
 #' @keywords internal
+#' @noRd
 list_dataset_columns_sql <- function(config, year, mykey, kingco, analytic_only) {
   # Connect to database and get column names
   con <- validate_hhsaw_key(mykey)
@@ -1613,6 +1615,7 @@ list_dataset_columns_sql <- function(config, year, mykey, kingco, analytic_only)
 #' @return data.table with var.names and year(s) columns
 #'
 #' @keywords internal
+#' @noRd
 list_dataset_columns_brfss <- function(config, year, mykey, kingco, analytic_only) {
   # Visible bindings for data.table/check global variables ----
   chi_year <- NULL
@@ -1664,6 +1667,7 @@ list_dataset_columns_brfss <- function(config, year, mykey, kingco, analytic_onl
 #' @return data.table with var.names, analytic_ready, and year(s) columns
 #'
 #' @keywords internal
+#' @noRd
 list_dataset_columns_hys <- function(config, year, mykey, kingco, analytic_only) {
   # Visible bindings for data.table/check global variables ----
   ar <- colname <- NULL
@@ -1702,6 +1706,7 @@ list_dataset_columns_hys <- function(config, year, mykey, kingco, analytic_only)
 #' @return data.table with var.names, records, and year(s) columns
 #'
 #' @keywords internal
+#' @noRd
 list_dataset_columns_pums <- function(config, year, mykey, kingco, analytic_only) {
   # Visible bindings for data.table/check global variables ----
   varname <- records <- NULL
