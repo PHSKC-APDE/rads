@@ -2,15 +2,54 @@
 % Please edit documentation in R/validation_utils.R
 \name{depth}
 \alias{depth}
-\title{Check the depth of a list}
+\title{Calculate the Maximum Depth of a Nested List}
 \usage{
 depth(this, thisdepth = 0)
 }
 \arguments{
-\item{this}{a list.}
+\item{this}{A list or other R object to analyze. If not a list, the function
+returns the starting depth level defined by \code{thisdepth}.}
 
-\item{thisdepth}{numeric. Starting depth.}
+\item{thisdepth}{Numeric. The starting depth level for the calculation.
+Defaults to 0.}
+}
+\value{
+A numeric value representing the maximum depth of the list structure.
 }
 \description{
-Check the depth of a list
+This function examines a list to determine how many layers deep it goes.
+The depth is defined as the number of nested list layers, where a simple vector
+has depth 0, a list containing vectors has depth 1, a list containing lists has
+depth 2, and so on.
+}
+\examples{
+# Simple vector (depth 0)
+depth(c(1, 2, 3))
+
+# Empty list (depth 0)
+depth(list())
+
+# Simple list with vectors (depth 1)
+depth(list(a = 1:3, b = letters[1:5]))
+
+# Nested list (depth 2)
+depth(list(a = list(x = 1, y = 2), b = 3))
+
+# Nested list (depth 3)
+nested_list <- list(
+  level1 = list(
+    level2 = list(
+      level3 = c(1, 2, 3)
+    )
+  )
+)
+depth(nested_list)
+
+# Mixed depth list (returns maximum depth)
+mixed_list <- list(
+  shallow = c(1, 2),
+  deep = list(inner = list(deeper = 42))
+)
+depth(mixed_list)
+
 }
