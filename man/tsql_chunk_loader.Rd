@@ -51,8 +51,8 @@ Default \code{validate_upload = TRUE}.}
 so it can be easily loaded into SQL. Experience has shown that loading large
 tables in 'chunks' is less likely to cause errors. It is not needed for small
 tables which load quickly. For \strong{extremely large} datasets, you will likely
-want to use another method, perhaps something like
-\href{https://learn.microsoft.com/en-us/sql/tools/bcp-utility?view=sql-server-ver16}{bcp}.
+want to use the \href{https://learn.microsoft.com/en-us/sql/tools/bcp-utility?}{BCP
+(Bulk Copy Program)}, which has been implemented in \code{\link[apde]{load_df_bcp_f}}.
 }
 \details{
 \code{overwrite} & \code{append} are intentionally redundant in order to reduce the risk
@@ -89,4 +89,8 @@ provided.
  )
 }
 
+}
+\seealso{
+\code{\link[apde]{load_df_bcp_f}} for a faster BCP-based approach
+recommended for very large datasets where speed is critical.
 }
