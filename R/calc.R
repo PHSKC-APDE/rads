@@ -129,7 +129,7 @@ calc.grouped_df <- function(ph.data, ...){
        Instead of grouping before running calc, use the `by` argument in calc")
 }
 
-#' @noRd
+#' @rdname calc
 #' @export
 #' @importFrom mitools MIcombine
 #' @importFrom stats coef qt as.formula

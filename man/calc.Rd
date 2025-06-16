@@ -2,10 +2,27 @@
 % Please edit documentation in R/calc.R, R/calc.dtsurvey.R
 \name{calc}
 \alias{calc}
+\alias{calc.imputationList}
 \alias{calc.dtsurvey}
 \title{Compute metrics from record (e.g. vital stats) or survey data}
 \usage{
 calc(ph.data, ...)
+
+\method{calc}{imputationList}(
+  ph.data,
+  what = NULL,
+  where = NULL,
+  by = NULL,
+  metrics = c("mean", "numerator", "denominator"),
+  per = NULL,
+  win = NULL,
+  time_var = NULL,
+  proportion = FALSE,
+  fancy_time = TRUE,
+  ci = 0.95,
+  verbose = FALSE,
+  ...
+)
 
 \method{calc}{dtsurvey}(
   ph.data,
