@@ -938,39 +938,6 @@ convert_to_date <- function(x, origin = "1899-12-30") {
 }
 
 
-# dumb_convert() ----
-#' Convert from one type to another type
-#'
-#' @param x factor
-#' @param target character. class of the object to transform the factor into. One of integer, numeric, or character.
-#' @keywords internal
-#' @noRd
-dumb_convert <- function(x, target = 'character'){
-
-  stopifnot(length(target) == 1)
-  if(target == 'character'){
-    return(as.character(x))
-  }
-
-  if(target == 'numeric'){
-    return(as.numeric(as.character(x)))
-  }
-
-  if(target == 'integer'){
-    return(as.integer(as.character(x)))
-  }
-
-  if(target == 'logical') return(as.logical(as.character(x)))
-
-  if(target == 'factor'){
-    if(is.factor(x)) return(x)
-
-    return(as.factor(x))
-  }
-
-  stop(paste0('Target class of ', target, ' is invalid'))
-}
-
 # format_time() ----
 #' Format a vector of time, date, or any numeric values into a series of human readable chunks
 #' @param x numeric or Date
