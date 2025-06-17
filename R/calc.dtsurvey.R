@@ -1,5 +1,6 @@
 #' @rdname calc
 #' @export
+#' @method calc dtsurvey
 #' @importFrom stats median na.omit
 #' @importFrom utils capture.output
 calc.dtsurvey <- function(ph.data,
