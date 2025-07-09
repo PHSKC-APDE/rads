@@ -450,3 +450,165 @@ test_that("Handle missing values in inputs", {
 
   expect_equal(nrow(result), 4)
 })
+
+test_that("Differences more or less match normal approx (using SE)", {
+  dt <- data.table(
+    location = "test",
+    comp_mean = 15.0,
+    comp_se = 2.0,
+    ref_mean = 10.0,
+    ref_se = 1.5
+  )
+
+  # Calc expected difference using normal approx
+  expected_diff <- 15.0 - 10.0
+  expected_se <- sqrt(2.0^2 + 1.5^2)
+  expected_lower <- expected_diff - 1.96 * expected_se
+  expected_upper <- expected_diff + 1.96 * expected_se
+
+  result <- propagate_uncertainty(
+    ph.estimates = dt,
+    comp_mean_col = "comp_mean",
+    comp_se_col = "comp_se",
+    ref_mean_col = "ref_mean",
+    ref_se_col = "ref_se",
+    contrast_fn = function(x, y) x - y,
+    dist = "normal",
+    draws = 50000, # arbitrary stinkin' big number to get stability
+    seed = 98104
+  )
+
+  # Check that results are similar to normal approximation
+  expect_equal(result$contrast, expected_diff, tolerance = 0.05)
+  expect_equal(result$contrast_se, expected_se, tolerance = 0.05)
+  expect_equal(result$contrast_lower, expected_lower, tolerance = 0.05)
+  expect_equal(result$contrast_upper, expected_upper, tolerance = 0.05)
+})
+
+test_that("Differences more or less match normal approx (with CI)", {
+  dt <- data.table(
+    location = "test",
+    comp_rate = 8.5,
+    comp_lower = 8.5 - 1.96 * 1.2,
+    comp_upper = 8.5 + 1.96 * 1.2,
+    ref_rate = 6.0,
+    ref_lower = 6.0 - 1.96 * 0.8,
+    ref_upper = 6.0 + 1.96 * 0.8
+  )
+
+  # Calc expected difference using normal approx
+  expected_diff <- 8.5 - 6.0
+  expected_se <- sqrt(1.2^2 + 0.8^2)
+  expected_lower <- expected_diff - 1.96 * expected_se
+  expected_upper <- expected_diff + 1.96 * expected_se
+
+  result <- propagate_uncertainty(
+    ph.estimates = dt,
+    comp_mean_col = "comp_rate",
+    comp_lower_col = "comp_lower",
+    comp_upper_col = "comp_upper",
+    ref_mean_col = "ref_rate",
+    ref_lower_col = "ref_lower",
+    ref_upper_col = "ref_upper",
+    contrast_fn = function(x, y) x - y,
+    dist = "normal",
+    draws = 50000,
+    seed = 98104
+  )
+
+  # Check that results are similar to normal approximation
+  expect_equal(result$contrast, expected_diff, tolerance = 0.05)
+  expect_equal(result$contrast_se, expected_se, tolerance = 0.05)
+  expect_equal(result$contrast_lower, expected_lower, tolerance = 0.05)
+  expect_equal(result$contrast_upper, expected_upper, tolerance = 0.05)
+})
+
+test_that("Ratios more or less match delta method (with SE)", {
+  # Create test data with moderate values to avoid extreme ratios
+  dt <- data.table(
+    location = "test",
+    comp_mean = 3.0,
+    comp_se = 0.3,
+    ref_mean = 2.0,
+    ref_se = 0.2
+  )
+
+  # For Ratio = X / Y, assuming X and Y are independent:
+  # Var(Ratio) ≈ (μx / μy)^2 * [ (σx / μx)^2 + (σy / μy)^2 ]
+  # a.k.a., Var(Ratio) ≈ Ratio^2 * (CV_x^2 + CV_y^2)
+  # so, SE(Ratio) ≈ Ratio * sqrt((CV_x^2 + CV_y^2))
+  expected_ratio <- 3.0 / 2.0  # = 1.5
+  cv_comp <- 0.3 / 3.0  # coefficient of variation for comp
+  cv_ref <- 0.2 / 2.0   # coefficient of variation for ref
+  expected_cv_ratio <- sqrt(cv_comp^2 + cv_ref^2)  # CV of ratio
+  expected_se_ratio <- expected_ratio * expected_cv_ratio
+  expected_lower <- expected_ratio - 1.96 * expected_se_ratio
+  expected_upper <- expected_ratio + 1.96 * expected_se_ratio
+
+  result <- propagate_uncertainty(
+    ph.estimates = dt,
+    comp_mean_col = "comp_mean",
+    comp_se_col = "comp_se",
+    ref_mean_col = "ref_mean",
+    ref_se_col = "ref_se",
+    contrast_fn = function(x, y) x / y,
+    dist = "normal",
+    draws = 50000,
+    seed = 98104
+  )
+
+  # Check that results are similar to delta method
+  # (Note: tolerances are higher for ratios due to non-linearity)
+  expect_equal(result$contrast, expected_ratio, tolerance = 0.05)
+  expect_equal(result$contrast_se, expected_se_ratio, tolerance = 0.05)
+  expect_equal(result$contrast_lower, expected_lower, tolerance = 0.05)
+  expect_equal(result$contrast_upper, expected_upper, tolerance = 0.05)
+})
+
+test_that("Ratios are more or less reasonable with lognormal distributions", {
+  dt <- data.table(
+    location = "test",
+    comp_rate = 4.0,
+    comp_lower = 3.2,
+    comp_upper = 5.0,
+    ref_rate = 2.0,
+    ref_lower = 1.7,
+    ref_upper = 2.4
+  )
+
+  # Calc approx SE on log scale (log_upper-log_lower = 2 * 1.96 * log_se)
+  comp_se_log <- (log(5.0) - log(3.2)) / (2 * 1.96)
+  ref_se_log <- (log(2.4) - log(1.7)) / (2 * 1.96)
+
+  # Expected log ratio and its SE
+  expected_log_ratio <- log(4.0) - log(2.0)
+  expected_se_log_ratio <- sqrt(comp_se_log^2 + ref_se_log^2)
+
+  # CI is symmetric on log scale
+  expected_log_lower <- expected_log_ratio - 1.96 * expected_se_log_ratio
+  expected_log_upper <- expected_log_ratio + 1.96 * expected_se_log_ratio
+
+  # Convert back to original scale
+  expected_ratio <- exp(expected_log_ratio)
+  expected_lower <- exp(expected_log_lower)
+  expected_upper <- exp(expected_log_upper)
+
+  result <- propagate_uncertainty(
+    ph.estimates = dt,
+    comp_mean_col = "comp_rate",
+    comp_lower_col = "comp_lower",
+    comp_upper_col = "comp_upper",
+    ref_mean_col = "ref_rate",
+    ref_lower_col = "ref_lower",
+    ref_upper_col = "ref_upper",
+    contrast_fn = function(x, y) x / y,
+    dist = "lognormal", # this is what is different vs the previous 3 tests
+    draws = 50000,
+    seed = 123
+  )
+
+  # Check that results are reasonable
+  expect_equal(result$contrast, expected_ratio, tolerance = 0.05)
+  expect_equal(result$contrast_lower, expected_lower, tolerance = 0.05)
+  expect_equal(result$contrast_upper, expected_upper, tolerance = 0.05)
+})
