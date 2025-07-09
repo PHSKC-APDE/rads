@@ -30,6 +30,8 @@ Remotes:
     github::PHSKC-APDE/rads.data, github::PHSKC-APDE/dtsurvey
 Suggests: 
     devtools, 
+    future, 
+    future.apply,
     httr, 
     knitr,
     rmarkdown, 
