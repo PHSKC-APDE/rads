@@ -281,6 +281,9 @@ calc.imputationList = function(ph.data,
       r = list(r)
     }
 
+    mr = sapply(r, nrow)
+    r[names(mr[mr ==0])] <- NULL
+
     # compute estimates
     # This is borrowed/adapted from mitools
     mi = lapply(r, function(a){
