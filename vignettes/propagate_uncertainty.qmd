@@ -76,11 +76,13 @@ The confidence intervals for age-adjusted rates are often asymmetric because the
 
 ### 3. Life Expectancy
 
-Life expectancy confidence intervals are often asymmetric because they:
+Life expectancy confidence intervals **can be** asymmetric, particularly when they:
 
--   Come from complex life table calculations that are inherently non-linear
--   Can't go below zero but have no strict upper limit
--   Are sensitive to mortality rates at young ages, where small changes can have large effects
+- Come from small populations with sparse death counts
+- Use bootstrap or resampling methods that preserve distributional properties  
+- Are calculated for populations with unusual mortality patterns
+
+However, many published life expectancy estimates (including those from the `life_table()` function in this package, which uses the WHO/Chiang method) produce roughly symmetric confidence intervals with adequate sample sizes and can use the normal distribution assumption.
 
 ### 4. Any Indicator with Asymmetric Confidence Intervals
 
@@ -256,12 +258,13 @@ contrast_fn = function(x, y) log(x / y)
 -   Can theoretically be negative (means, differences, log-coefficients)
 -   Are approximately symmetric around their true value\
 -   Come from linear models or are simple means or proportions
+-   Comparing two life expectancies from `life_table()` (unless very small populations)
 
 **Use `dist = "lognormal"` when `comp_mean_col` and `ref_mean_col`:**
 
 -   Must be positive (rates, counts, exponentiated coefficients)
 -   Have right-skewed sampling distributions
--   Have asymmetric confidence intervals
+-   Have asymmetric confidence intervals (check your specific estimates)
 
 # Examples: Basic Usage
 
@@ -383,6 +386,7 @@ pretty_kable(ratio_result[, .(comparison, contrast, contrast_lower, contrast_upp
 The real power of this function, besides not relying on parametric assumptions, is that you can easily batch process comparisons. For example, the following code will compare the death rates for different demographics in Megalopolis compared to Smallville.
 
 ### Table of Mortality Rates per 100,000
+
 ```{r}
 #| warning: false
 #| message: false
