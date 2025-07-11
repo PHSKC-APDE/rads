@@ -101,9 +101,10 @@ This approach is valid regardless of the underlying distributions and automatica
 
 Let's see how Monte Carlo simulation works, first with a familiar normal case, then with a more complex scenario.
 
-## Example 1: Normal Distributions (Traditional Methods Work)
+## Normal Distributions (I.e., When Traditional Methods Work)
 
 Define the age distributions
+
 ```{r}
 smallville_le <- 34.3
 smallville_se <- 0.2
@@ -113,6 +114,7 @@ megalopolis_se <- 0.15
 ```
 
 Traditional calculation of the age difference
+
 ```{r}
 traditional_diff <- megalopolis_le - smallville_le
 traditional_se <- sqrt(smallville_se^2 + megalopolis_se^2)
@@ -121,6 +123,7 @@ traditional_upper <- traditional_diff + 1.96 * traditional_se
 ```
 
 Monte Carlo simulation of normal distributions based on summary statistics
+
 ```{r}
 set.seed(98104)
 n_draws <- 10000
@@ -130,6 +133,7 @@ difference_draws <- megalopolis_draws - smallville_draws
 ```
 
 Summarize Monte Carlo simulations
+
 ```{r}
 mc_diff <- mean(difference_draws)
 mc_lower <- quantile(difference_draws, 0.025)
@@ -137,11 +141,13 @@ mc_upper <- quantile(difference_draws, 0.975)
 ```
 
 Visualize the Monte Carlo simulations
+
 ```{r}
 #| fig.width: 12
 #| fig.height: 5
 #| echo: false
-#| fig.show: 'hold'
+#| dev: "png"
+#| dpi: 300
 # Order properly
 plot_data <- data.table(
   value = c(megalopolis_draws, smallville_draws, difference_draws),
@@ -186,6 +192,7 @@ print(p1)
 ```
 
 Compare the results
+
 ```{r}
 #| echo: false
 pretty_kable(data.table(` ` = c('Difference', 'Lower', 'Upper'), 
@@ -195,113 +202,6 @@ pretty_kable(data.table(` ` = c('Difference', 'Lower', 'Upper'),
 
 As you can see, when the underlying distributions are normal, Monte Carlo and traditional methods give nearly identical results!
 
-## Example 2: Skewed Distributions (Traditional Methods Fail)
-
-Define the age-adjusted mortality rates with asymmetric confidence intervals
-```{r}
-smallville_rate <- 650
-smallville_lower <- 620
-smallville_upper <- 695
-
-megalopolis_rate <- 680  
-megalopolis_lower <- 655
-megalopolis_upper <- 720
-```
-
-Traditional calculation (**problematic for asymmetric CIs!**)
-```{r}
-traditional_diff <- megalopolis_rate - smallville_rate
-
-smallville_se_approx <- (smallville_upper - smallville_lower) / (2 * 1.96)
-megalopolis_se_approx <- (megalopolis_upper - megalopolis_lower) / (2 * 1.96)
-
-traditional_se <- sqrt(smallville_se_approx^2 + megalopolis_se_approx^2)
-
-traditional_lower <- traditional_diff - 1.96 * traditional_se
-traditional_upper <- traditional_diff + 1.96 * traditional_se
-```
-
-Monte Carlo simulation using lognormal distributions
-```{r}
-set.seed(98104)
-n_draws <- 10000
-
-# Convert asymmetric CIs to lognormal parameters
-smallville_sdlog <- (log(smallville_upper) - log(smallville_lower)) / (2 * 1.96)
-megalopolis_sdlog <- (log(megalopolis_upper) - log(megalopolis_lower)) / (2 * 1.96)
-
-# Generate Monte Carlo samples using lognormal (creates skewed distributions)
-smallville_draws <- rlnorm(n_draws, log(smallville_rate), smallville_sdlog)
-megalopolis_draws <- rlnorm(n_draws, log(megalopolis_rate), megalopolis_sdlog)
-difference_draws <- megalopolis_draws - smallville_draws
-```
-
-Summarize Monte Carlo simulations
-```{r}
-mc_diff <- mean(difference_draws)
-mc_lower <- quantile(difference_draws, 0.025)
-mc_upper <- quantile(difference_draws, 0.975)
-```
-
-Visualize the Monte Carlo simulations
-```{r}
-#| fig.width: 12
-#| fig.height: 5
-#| echo: false
-#| fig.show: 'hold'
-# Order properly
-plot_data2 <- data.table(
-  value = c(megalopolis_draws, smallville_draws, difference_draws),
-  distribution = factor(rep(c("Megalopolis Rate", "Smallville Rate", "Difference"), each = 10000),
-                       levels = c("Megalopolis Rate", "Smallville Rate", "Difference"))
-)
-
-# Calculate summary stats for each distribution
-megalopolis_mean <- mean(megalopolis_draws)
-megalopolis_ci_low <- quantile(megalopolis_draws, 0.025)
-megalopolis_ci_high <- quantile(megalopolis_draws, 0.975)
-
-smallville_mean <- mean(smallville_draws)
-smallville_ci_low <- quantile(smallville_draws, 0.025)
-smallville_ci_high <- quantile(smallville_draws, 0.975)
-
-# Create labels for each panel
-labels_data2 <- data.table(
-  distribution = factor(c("Megalopolis Rate", "Smallville Rate", "Difference"),
-                       levels = c("Megalopolis Rate", "Smallville Rate", "Difference")),
-  label = c(
-    paste0("Mean: ", round2(megalopolis_mean, 1), "\nCI: (", round2(megalopolis_ci_low, 1), ", ", round2(megalopolis_ci_high, 1), ")"),
-    paste0("Mean: ", round2(smallville_mean, 1), "\nCI: (", round2(smallville_ci_low, 1), ", ", round2(smallville_ci_high, 1), ")"),
-    paste0("Mean: ", round2(mc_diff, 1), "\nCI: (", round2(mc_lower, 1), ", ", round2(mc_upper, 1), ")")
-  )
-)
-
-p2 <- ggplot(plot_data2, aes(x = value, fill = distribution)) +
-  geom_histogram(alpha = 0.7, bins = 100, color = "white") +
-  facet_wrap(~distribution, ncol = 3, scales = "free_x") +
-  labs(title = "Monte Carlo Simulation: Skewed Case",
-       subtitle = "Comparing Age-Adjusted Mortality Rates (per 100,000)",
-       x = "Value", y = "Count") +
-  theme_minimal() +
-  theme(legend.position = "none",
-        panel.grid = element_blank()) +
-  geom_text(data = labels_data2, aes(label = label), 
-            x = Inf, y = Inf, hjust = 1.1, vjust = 1.1, 
-            size = 3, inherit.aes = FALSE)
-
-print(p2)
-```
-
-Compare the results
-```{r}
-#| echo: false
-pretty_kable(data.table(` ` = c('Difference', 'Lower', 'Upper'), 
-                        Traditional = round2(c(traditional_diff, traditional_lower, traditional_upper), 1), 
-                        `Monte Carlo` = round2(c(mc_diff, mc_lower, mc_upper), 1)))
-```
-
-Notice how the underlying distributions are skewed (right-tailed), and the resulting difference distribution is also skewed. The traditional method gives a symmetric confidence interval that doesn't capture this asymmetry, while Monte Carlo naturally handles it.
-
 # The `propagate_uncertainty()` Function
 
 The `propagate_uncertainty()` function automates this Monte Carlo approach, allowing you to apply it to estimates in data.tables.
@@ -310,34 +210,33 @@ The `propagate_uncertainty()` function automates this Monte Carlo approach, allo
 
 **Data and Column Specifications:**
 
-- `ph.estimates`: Your data.table/data.frame with point estimates and uncertainty measures
-- `comp_mean_col`: Column name for comparator group point estimates  
-- `ref_mean_col`: Column name for reference group point estimates
-- `comp_se_col` / `ref_se_col`: Standard error columns (when provided, used preferentially over the CI)
-- `comp_lower_col` & `comp_upper_col` / `ref_lower_col` & `ref_upper_col`: Confidence interval columns
+-   `ph.estimates`: Your data.table/data.frame with point estimates and uncertainty measures
+-   `comp_mean_col`: Column name for comparator group point estimates\
+-   `ref_mean_col`: Column name for reference group point estimates
+-   `comp_se_col` / `ref_se_col`: Standard error columns (when provided, used preferentially over the CI)
+-   `comp_lower_col` & `comp_upper_col` / `ref_lower_col` & `ref_upper_col`: Confidence interval columns
 
 **Commonly Modified Parameters:**
 
-- `contrast_fn`: Function defining your operation. Default: `function(x, y) x - y`
-- `dist`: Distribution assumption - `"normal"` or `"lognormal"`. Default: `"normal"`
-- `draws`: Number of Monte Carlo draws. Default: `10,000`
+-   `contrast_fn`: Function defining your operation. Default: `function(x, y) x - y`
+-   `dist`: Distribution assumption - `"normal"` or `"lognormal"`. Default: `"normal"`
+-   `draws`: Number of Monte Carlo draws. Default: `10,000`
 
 **Infrequently Modified Parameters:**
 
-- `alpha`: Significance level for confidence intervals. Default: `0.05`  
-- `convergence_check`: Whether to assess Monte Carlo convergence. Default: `FALSE`
-- `h0_value`: Null hypothesis value for testing. Default: auto-detected
-- `pvalue_method`: `"proportion"` (robust) or `"ttest"` (assumes normality). Default: `"proportion"`
-- `use_futures`: Enable parallel processing for large datasets. Default: `FALSE`
-- `seed`: Random seed for reproducibility. Default: `98104`
-- `se_scale`: Whether standard errors are on `"original"` or `"log"` scale. Default: `"original"`
-
+-   `alpha`: Significance level for confidence intervals. Default: `0.05`\
+-   `convergence_check`: Whether to assess Monte Carlo convergence. Default: `FALSE`
+-   `h0_value`: Null hypothesis value for testing. Default: auto-detected
+-   `pvalue_method`: `"proportion"` (robust) or `"ttest"` (assumes normality). Default: `"proportion"`
+-   `use_futures`: Enable parallel processing for large datasets. Default: `FALSE`
+-   `seed`: Random seed for reproducibility. Default: `98104`
+-   `se_scale`: Whether standard errors are on `"original"` or `"log"` scale. Default: `"original"`
 
 ## :rotating_light: Critical Parameters: `contrast_fn` and `dist`
 
 ### Choosing the Contrast Function (`contrast_fn`)
 
-You can provide whatever contrast function you desire. For your convenience, here are the ones you'll most likely want to use. 
+You can provide whatever contrast function you desire. For your convenience, here are the ones you'll most likely want to use.
 
 ```{r}
 # Differences (default)
@@ -353,20 +252,19 @@ contrast_fn = function(x, y) 100 * (x - y) / y
 contrast_fn = function(x, y) log(x / y)
 ```
 
-
 ### Choosing the Distribution (`dist`)
 
 **Use `dist = "normal"` when `comp_mean_col` and `ref_mean_col`:**
 
-- Can theoretically be negative (means, differences, log-coefficients)
-- Are approximately symmetric around their true value  
-- Come from linear models or are simple means or proportions
+-   Can theoretically be negative (means, differences, log-coefficients)
+-   Are approximately symmetric around their true value\
+-   Come from linear models or are simple means or proportions
 
 **Use `dist = "lognormal"` when `comp_mean_col` and `ref_mean_col`:**
 
-- Must be positive (rates, counts, exponentiated coefficients)
-- Have right-skewed sampling distributions
-- Have asymmetric confidence intervals
+-   Must be positive (rates, counts, exponentiated coefficients)
+-   Have right-skewed sampling distributions
+-   Have asymmetric confidence intervals
 
 # Examples: Basic Usage
 
@@ -485,7 +383,7 @@ pretty_kable(ratio_result[, .(comparison, contrast, contrast_lower, contrast_upp
 
 ## Working with Multiple Comparisons
 
-The real power of this function, besides not relying on parametric assumptions, is that you can easily batch process comparisons. For example, the following code will compare the death rates for different demographics in Megalopolis compared to Smallville. 
+The real power of this function, besides not relying on parametric assumptions, is that you can easily batch process comparisons. For example, the following code will compare the death rates for different demographics in Megalopolis compared to Smallville.
 
 ```{r}
 #| warning: false
@@ -577,9 +475,9 @@ The `propagate_uncertainty()` function is particularly valuable for:
 
 **Comparing Pre-existing Estimates**: When comparing health indicators between demographic groups or geographic areas from summary estimates such as those from [CHI](https://kingcounty.gov/chi):
 
-- Life expectancy differences between racial/ethnic groups
-- Age-adjusted mortality rate comparisons  
-- Hospitalization rate ratios
+-   Life expectancy differences between racial/ethnic groups
+-   Age-adjusted mortality rate comparisons\
+-   Hospitalization rate ratios
 
 **Data Requests**: When stakeholders want to know if differences between groups are statistically significant, particularly for indicators with asymmetric confidence intervals.
 
@@ -593,10 +491,10 @@ Uncertainty propagation is a crucial but often overlooked aspect of comparing he
 
 The `propagate_uncertainty()` function provides a robust Monte Carlo solution that:
 
-- Works regardless of the underlying distributions
-- Properly handles asymmetric confidence intervals  
-- Automatically captures the correct uncertainty propagation
-- Provides both point estimates and hypothesis tests
+-   Works regardless of the underlying distributions
+-   Properly handles asymmetric confidence intervals\
+-   Automatically captures the correct uncertainty propagation
+-   Provides both point estimates and hypothesis tests
 
 By using this function, you can confidently compare health indicators while properly accounting for uncertainty, leading to more accurate and defensible conclusions in your analyses.
 
