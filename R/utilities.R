@@ -938,39 +938,6 @@ convert_to_date <- function(x, origin = "1899-12-30") {
 }
 
 
-# dumb_convert() ----
-#' Convert from one type to another type
-#'
-#' @param x factor
-#' @param target character. class of the object to transform the factor into. One of integer, numeric, or character.
-#'
-#'
-dumb_convert <- function(x, target = 'character'){
-
-  stopifnot(length(target) == 1)
-  if(target == 'character'){
-    return(as.character(x))
-  }
-
-  if(target == 'numeric'){
-    return(as.numeric(as.character(x)))
-  }
-
-  if(target == 'integer'){
-    return(as.integer(as.character(x)))
-  }
-
-  if(target == 'logical') return(as.logical(as.character(x)))
-
-  if(target == 'factor'){
-    if(is.factor(x)) return(x)
-
-    return(as.factor(x))
-  }
-
-  stop(paste0('Target class of ', target, ' is invalid'))
-}
-
 # format_time() ----
 #' Format a vector of time, date, or any numeric values into a series of human readable chunks
 #' @param x numeric or Date
@@ -1530,6 +1497,7 @@ list_dataset_columns <- function(dataset = NULL,
 #' @return A list containing configuration settings for the specified dataset.
 #'
 #' @keywords internal
+#' @noRd
 list_dataset_columns_config <- function(dataset) {
   # no need for dataset validation b/c validated in list_dataset_columns()
   configs <- list(
@@ -1588,6 +1556,7 @@ list_dataset_columns_config <- function(dataset) {
 #' @return data.table with var.names column
 #'
 #' @keywords internal
+#' @noRd
 list_dataset_columns_sql <- function(config, year, mykey, kingco, analytic_only) {
   # Connect to database and get column names
   con <- validate_hhsaw_key(mykey)
@@ -1613,6 +1582,7 @@ list_dataset_columns_sql <- function(config, year, mykey, kingco, analytic_only)
 #' @return data.table with var.names and year(s) columns
 #'
 #' @keywords internal
+#' @noRd
 list_dataset_columns_brfss <- function(config, year, mykey, kingco, analytic_only) {
   # Visible bindings for data.table/check global variables ----
   chi_year <- NULL
@@ -1664,6 +1634,7 @@ list_dataset_columns_brfss <- function(config, year, mykey, kingco, analytic_onl
 #' @return data.table with var.names, analytic_ready, and year(s) columns
 #'
 #' @keywords internal
+#' @noRd
 list_dataset_columns_hys <- function(config, year, mykey, kingco, analytic_only) {
   # Visible bindings for data.table/check global variables ----
   ar <- colname <- NULL
@@ -1702,6 +1673,7 @@ list_dataset_columns_hys <- function(config, year, mykey, kingco, analytic_only)
 #' @return data.table with var.names, records, and year(s) columns
 #'
 #' @keywords internal
+#' @noRd
 list_dataset_columns_pums <- function(config, year, mykey, kingco, analytic_only) {
   # Visible bindings for data.table/check global variables ----
   varname <- records <- NULL
@@ -3189,8 +3161,8 @@ tsql_validate_field_types <- function(ph.data = NULL,
 #' so it can be easily loaded into SQL. Experience has shown that loading large
 #' tables in 'chunks' is less likely to cause errors. It is not needed for small
 #' tables which load quickly. For **extremely large** datasets, you will likely
-#' want to use another method, perhaps something like
-#' [bcp](https://learn.microsoft.com/en-us/sql/tools/bcp-utility?view=sql-server-ver16).
+#' want to use the \href{https://learn.microsoft.com/en-us/sql/tools/bcp-utility?}{BCP
+#' (Bulk Copy Program)}, which has been implemented in \code{\link[apde]{load_df_bcp_f}}.
 #'
 #'
 #' @param ph.data The name of a single data.table/data.frame to be loaded to SQL Server
@@ -3223,6 +3195,9 @@ tsql_validate_field_types <- function(ph.data = NULL,
 #'
 #' `validate_field_types = TRUE` is ignored if the `field_types` argument is not
 #' provided.
+#'
+#' @seealso \code{\link[apde]{load_df_bcp_f}} for a faster BCP-based approach
+#' recommended for very large datasets where speed is critical.
 #'
 #' @name tsql_chunk_loader
 #'

@@ -88,8 +88,9 @@ calc <- function(ph.data, ...) {
   UseMethod("calc")
 }
 
-#' @noRd
+#' @keywords internal
 #' @export
+#' @method calc data.frame
 calc.data.frame <- function(ph.data, ...){
 
   # Catch data.frame, and send it as a dtadmin
@@ -100,7 +101,8 @@ calc.data.frame <- function(ph.data, ...){
   #      Use `ph.data <- dtsurvey::dtadmin(ph.data)` for non-survey data.')
 }
 
-#' @noRd
+#' @keywords internal
+#' @method calc survey.design2
 #' @export
 calc.survey.design2 <- function(ph.data, ...){
 
@@ -111,22 +113,25 @@ calc.survey.design2 <- function(ph.data, ...){
   #      Review the documentation for dtsurvey::dtsurvey to properly convert/encode survey data for use with `calc`.')
 }
 
-#' @noRd
+#' @keywords internal
+#' @method calc svyrep.design
 #' @export
 calc.svyrep.design <- function(ph.data, ...){
   ph.data = dtsurvey::dtrepsurvey(ph.data)
   calc(ph.data, ...)
 }
 
-#' @noRd
+#' @keywords internal
+#' @method calc grouped_df
 #' @export
 calc.grouped_df <- function(ph.data, ...){
   stop("calc doesn't know how to handle `grouped_df` objects. Likely, you have a dplyr::group_by somewhere higher up in the code.
        Instead of grouping before running calc, use the `by` argument in calc")
 }
 
-#' @noRd
+#' @keywords internal
 #' @export
+#' @method calc imputationList
 #' @importFrom mitools MIcombine
 #' @importFrom stats coef qt as.formula
 #' @importFrom utils head
