@@ -1,8 +1,7 @@
 ---
-title: "Uncertainty Propagation with propagate_uncertainty()"
+title: "propagate_uncertainty()"
 format: gfm
 prefer-html: false
-self-contained: true
 editor: visual
 ---
 
@@ -99,9 +98,7 @@ This approach is valid regardless of the underlying distributions and automatica
 
 # Visualizing the Monte Carlo Approach
 
-Let's see how Monte Carlo simulation works, first with a familiar normal case, then with a more complex scenario.
-
-## Normal Distributions (I.e., When Traditional Methods Work)
+Let's see how Monte Carlo simulation works by comparing it with the familiar case of estimates from normal distributions. These are condition under which traditional parametric methods work.
 
 Define the age distributions
 
@@ -151,8 +148,8 @@ Visualize the Monte Carlo simulations
 # Order properly
 plot_data <- data.table(
   value = c(megalopolis_draws, smallville_draws, difference_draws),
-  distribution = factor(rep(c("Megalopolis LE", "Smallville LE", "Difference"), each = 10000),
-                       levels = c("Megalopolis LE", "Smallville LE", "Difference"))
+  distribution = factor(rep(c("Megalopolis", "Smallville", "Difference"), each = 10000),
+                       levels = c("Megalopolis", "Smallville", "Difference"))
 )
 
 # Calculate summary stats for each distribution
@@ -200,7 +197,7 @@ pretty_kable(data.table(` ` = c('Difference', 'Lower', 'Upper'),
                         `Monte Carlo` = round2(c(mc_diff, mc_lower, mc_upper), 3)))
 ```
 
-As you can see, when the underlying distributions are normal, Monte Carlo and traditional methods give nearly identical results!
+As you can see, when the underlying distributions are normal, Monte Carlo and traditional methods give nearly identical results.
 
 # The `propagate_uncertainty()` Function
 
@@ -350,7 +347,7 @@ pretty_kable(mortality_result[, .(comparison, contrast, contrast_lower, contrast
 
 ## Example 3: Calculating Ratios
 
-Often we want to calculate ratios rather than differences:
+Often we want to calculate ratios rather than differences. To do so, just change the `contrast_fn` parameter value.
 
 ```{r}
 #| warning: false
@@ -385,6 +382,7 @@ pretty_kable(ratio_result[, .(comparison, contrast, contrast_lower, contrast_upp
 
 The real power of this function, besides not relying on parametric assumptions, is that you can easily batch process comparisons. For example, the following code will compare the death rates for different demographics in Megalopolis compared to Smallville.
 
+### Table of Mortality Rates per 100,000
 ```{r}
 #| warning: false
 #| message: false
@@ -406,6 +404,8 @@ multi_data <- data.table(
 pretty_kable(multi_data)
 ```
 
+### Table of Mortality Rate Ratios
+
 ```{r}
 #| warning: false
 #| message: false
@@ -417,7 +417,7 @@ multi_result <- propagate_uncertainty(
   ref_mean_col = "smallville_rate", 
   ref_lower_col = "smallville_lower",
   ref_upper_col = "smallville_upper",
-  contrast_fn = function(x, y) x / y,
+  contrast_fn = function(x, y) x / y, # The critical change
   dist = "lognormal",
   draws = 10000,
   seed = 98104
