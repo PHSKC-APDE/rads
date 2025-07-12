@@ -165,8 +165,8 @@ smallville_ci_high <- quantile(smallville_draws, 0.975)
 
 # Create labels for each panel
 labels_data <- data.table(
-  distribution = factor(c("Megalopolis LE", "Smallville LE", "Difference"),
-                       levels = c("Megalopolis LE", "Smallville LE", "Difference")),
+  distribution = factor(c("Megalopolis", "Smallville", "Difference"),
+                       levels = c("Megalopolis", "Smallville", "Difference")),
   label = c(
     paste0("Mean: ", round2(megalopolis_mean, 2), "\nCI: (", round2(megalopolis_ci_low, 2), ", ", round2(megalopolis_ci_high, 2), ")"),
     paste0("Mean: ", round2(smallville_mean, 2), "\nCI: (", round2(smallville_ci_low, 2), ", ", round2(smallville_ci_high, 2), ")"),
@@ -177,9 +177,7 @@ labels_data <- data.table(
 p1 <- ggplot(plot_data, aes(x = value, fill = distribution)) +
   geom_histogram(alpha = 0.7, bins = 100, color = "white") +
   facet_wrap(~distribution, ncol = 3, scales = "free_x") +  # Free x-axis, shared y-axis
-  labs(title = "Monte Carlo Simulation: Normal Case",
-       subtitle = "Comparing Life Expectancy Between Cities",
-       x = "Value", y = "Count") +
+  labs(x = "", y = "") +
   theme_minimal() +
   theme(legend.position = "none", 
         panel.grid = element_blank()) +
