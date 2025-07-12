@@ -13,6 +13,28 @@ The process of combining uncertainties when performing mathematical operations i
 
 This vignette will walk you through when and how to propagate uncertainty, starting with the traditional mathematical approaches and then showing when and why you need the more flexible Monte Carlo method.
 
+## When to Use `propagate_uncertainty()` vs `multi_t_test()`
+
+Before diving into uncertainty propagation, it's important to understand when to use this function versus the related [`multi_t_test()`](utilities.html#multi_t_test) function:
+
+- **Use `propagate_uncertainty()`** when you want to **combine or compare two estimates** (differences, ratios, etc.) and at least one has asymmetric confidence intervals or comes from specialized methods (like age-adjusted rates, exponentiated regression coefficients, or life expectancy from small populations).
+
+- **Use `multi_t_test()`** when you want to **compare multiple groups against a single reference group** using summary statistics, and your estimates have roughly symmetric confidence intervals that can reasonably assume normality.
+
+In essence, `propagate_uncertainty()` handles the complex uncertainty propagation for two estimates, while `multi_t_test()` performs statistical testing across multiple groups with traditional assumptions. If you're unsure which to use, `propagate_uncertainty()` is more robust as it doesn't rely on normality assumptions.
+
+# When Traditional Methods Work (and When They Don't)
+
+## Traditional Error Propagation Formulas
+
+For simple cases, we can use familiar mathematical formulas to propagate uncertainty. These work well when estimates follow normal distributions and have symmetric confidence intervals.
+
+**For differences (X - Y):** $$SE_{difference} = \sqrt{SE_X^2 + SE_Y^2}$$
+
+**For ratios (X / Y):** $$SE_{ratio} = \frac{X}{Y} \times \sqrt{\left(\frac{SE_X}{X}\right)^2 + \left(\frac{SE_Y}{Y}\right)^2}$$
+
+These formulas assume that X and Y are independent and normally distributed. Let's see when this works well:
+
 ```{r}
 #| warning: false
 #| message: false
@@ -27,19 +49,6 @@ pretty_kable <- function(dt) {
   knitr::kable(dt, format = 'markdown')
 }
 ```
-
-# When Traditional Methods Work (and When They Don't)
-
-## Traditional Error Propagation Formulas
-
-For simple cases, we can use familiar mathematical formulas to propagate uncertainty. These work well when estimates follow normal distributions and have symmetric confidence intervals.
-
-**For differences (X - Y):** $$SE_{difference} = \sqrt{SE_X^2 + SE_Y^2}$$
-
-**For ratios (X / Y):** $$SE_{ratio} = \frac{X}{Y} \times \sqrt{\left(\frac{SE_X}{X}\right)^2 + \left(\frac{SE_Y}{Y}\right)^2}$$
-
-These formulas assume that X and Y are independent and normally distributed. Let's see when this works well:
-
 ```{r}
 # Example: Comparing simple means from two surveys
 # These would typically have symmetric, normal-like confidence intervals
@@ -440,8 +449,8 @@ As you'll remember, when you have odds ratios or rate ratios from regression mod
 
 Imagine we ran a logistic regression predicting the odds of knowing how to play saxophone across King County, using Seattle as the reference group. We want to compare the East King County effect to the North King County effect by calculating the ratio of their odds ratios. To do so, we'll compare a manual method against using `propagate_uncertainty()`, showing that they produce nearly equivalent results.
 
-
 ### Create Regression Estimates
+
 ```{r}
 #| warning: false
 #| message: false
@@ -463,6 +472,7 @@ pretty_kable(saxophone_data)
 ```
 
 ### The Hard Way (Manual Log-Scale Calculations)
+
 ```{r}
 #| warning: false
 #| message: false
