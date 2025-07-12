@@ -78,9 +78,9 @@ The confidence intervals for age-adjusted rates are often asymmetric because the
 
 Life expectancy confidence intervals **can be** asymmetric, particularly when they:
 
-- Come from small populations with sparse death counts
-- Use bootstrap or resampling methods that preserve distributional properties  
-- Are calculated for populations with unusual mortality patterns
+-   Come from small populations with sparse death counts
+-   Use bootstrap or resampling methods that preserve distributional properties\
+-   Are calculated for populations with unusual mortality patterns
 
 However, many published life expectancy estimates (including those from the `life_table()` function in this package, which uses the WHO/Chiang method) produce roughly symmetric confidence intervals with adequate sample sizes and can use the normal distribution assumption.
 
@@ -438,40 +438,92 @@ pretty_kable(multi_result[, .(demographic, contrast, contrast_lower, contrast_up
 
 ## Handling Exponentiated Regression Results
 
-If you have odds ratios or rate ratios from regression models, you could convert them back to the log scale, but this is annoying and prone to error:
+As you'll remember, when you have odds ratios or rate ratios from regression models, those estimates have been exponentiated from the log scale. This means their confidence intervals are no longer symmetric on the original scale, making traditional error propagation formulas inappropriate.
+
+Imagine we ran a logistic regression predicting the odds of knowing how to play saxophone across King County, using Seattle as the reference group. We want to compare the East King County effect to the North King County effect by calculating the ratio of their odds ratios. To do so, we'll compare a manual method against using `propagate_uncertainty()`, showing that they produce nearly equivalent results.
+
+
+### Create Regression Estimates
+```{r}
+#| warning: false
+#| message: false
+# Odds ratios from logistic regression
+saxophone_data <- data.table(
+  comparison = "East KC vs North KC Saxophone OR",
+  east_kc_or = 1.85,        # OR for East KC vs Seattle
+  east_kc_lower = 1.42,     # CI bounds
+  east_kc_upper = 2.41,
+  north_kc_or = 1.34,       # OR for North KC vs Seattle  
+  north_kc_lower = 1.08,    # CI bounds
+  north_kc_upper = 1.66
+)
+```
+
+```{r}
+#| echo: false
+pretty_kable(saxophone_data)
+```
+
+### The Hard Way (Manual Log-Scale Calculations)
+```{r}
+#| warning: false
+#| message: false
+# Manual calculation: convert to log scale
+east_log_or <- log(1.85)
+north_log_or <- log(1.34)
+
+# Calculate SEs from CIs on log scale
+east_se_log <- (log(2.41) - log(1.42)) / (2 * 1.96)
+north_se_log <- (log(1.66) - log(1.08)) / (2 * 1.96)
+
+# Traditional error propagation for difference on log scale
+log_diff <- east_log_or - north_log_or
+se_log_diff <- sqrt(east_se_log^2 + north_se_log^2)
+
+# Convert back to ratio scale
+manual_ratio <- exp(log_diff)
+manual_lower <- exp(log_diff - 1.96 * se_log_diff)
+manual_upper <- exp(log_diff + 1.96 * se_log_diff)
+
+# Calculate p-value manually (testing if log difference ≠ 0)
+manual_z <- log_diff / se_log_diff
+manual_pvalue <- 2 * (1 - pnorm(abs(manual_z)))
+```
+
+### The Easy Way (using `propagate_uncertainty`)
 
 ```{r}
 #| warning: false
 #| message: false
-# Example: Odds ratios from logistic regression (the hard way)
-or_data <- data.table(
-  factor = "Urban vs Rural",
-  urban_or = 1.45,      # Odds ratio
-  urban_se_log = 0.12,  # Standard error on LOG scale  
-  rural_or = 1.0,       # Reference (always 1.0)
-  rural_se_log = 0      # Reference has no uncertainty
-)
-
-# Convert back to log scale for calculation
-or_data[, urban_log := log(urban_or)]
-or_data[, rural_log := log(rural_or)] 
-
-# Calculate log ratio, then exponentiate
-log_result <- propagate_uncertainty(
-  ph.estimates = or_data,
-  comp_mean_col = "urban_log",
-  comp_se_col = "urban_se_log", 
-  ref_mean_col = "rural_log",
-  ref_se_col = "rural_se_log",
-  contrast_fn = function(x, y) exp(x - y),  # Difference on log scale, then exp()
-  dist = "normal",                          # Normal on log scale
-  se_scale = "log",                         # SE is on log scale
-  draws = 10000,
-  seed = 98104
+easy_way_result <- propagate_uncertainty(
+  ph.estimates = saxophone_data,
+  comp_mean_col = "east_kc_or",        # East KC:Seattle OR
+  comp_lower_col = "east_kc_lower",
+  comp_upper_col = "east_kc_upper",
+  ref_mean_col = "north_kc_or",        # North KC:Seattle OR
+  ref_lower_col = "north_kc_lower", 
+  ref_upper_col = "north_kc_upper",
+  contrast_fn = function(x, y) x / y,  # Ratio of the two ORs
+  dist = "lognormal"                   # Needed for ORs
 )
 ```
 
-This works, but using `propagate_uncertainty()` directly with `dist = "lognormal"` is much easier for most cases.
+### Comparison: Both Methods Give the Same Answer
+
+```{r}
+#| echo: false
+comparison_data <- data.table(
+  Method = c("Manual (Log Scale)", "propagate_uncertainty()"),
+  `Ratio of ORs` = round2(c(manual_ratio, easy_way_result$contrast), 2),
+  `Lower CI` = round2(c(manual_lower, easy_way_result$contrast_lower), 2),
+  `Upper CI` = round2(c(manual_upper, easy_way_result$contrast_upper), 2),
+  `P-value` = round2(c(manual_pvalue, easy_way_result$contrast_pvalue), 3)
+)
+
+pretty_kable(comparison_data)
+```
+
+As you can see, the two approaches give similar results. However, using `propagate_uncertainty` is much simpler and less error-prone since you can work directly with your exponentiated coefficients.
 
 # Practical Applications
 
