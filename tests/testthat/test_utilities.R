@@ -31,17 +31,17 @@ test_that('age_standardize ... valid output',{
 
   expect_equal(sum(temp.dt1$count), temp.agestd1[["count"]])
 
-  expect_equal(round(1000*sum(temp.dt1$count) / sum(temp.dt1$pop), 2), temp.agestd1[["crude.rate"]])
+  expect_equal(round(1000*sum(temp.dt1$count) / sum(temp.dt1$pop), 4), temp.agestd1[["crude.rate"]])
 
-  expect_equal(29.83, temp.agestd1[["crude.lci"]] ) # checked vis-à-vis survival::cipoisson() exact method
+  expect_equal(29.8335, temp.agestd1[["crude.lci"]] ) # checked vis-à-vis survival::cipoisson() exact method
 
-  expect_equal(37.13, temp.agestd1[["crude.uci"]] ) # checked vis-à-vis survival::cipoisson() exact method
+  expect_equal(37.1309, temp.agestd1[["crude.uci"]] ) # checked vis-à-vis survival::cipoisson() exact method
 
-  expect_equal(35.10, temp.agestd1[["adj.rate"]] ) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(35.1021, temp.agestd1[["adj.rate"]] ) # checked vis-à-vis epitools::ageadjust.direct
 
-  expect_equal(30.62, temp.agestd1[["adj.lci"]] ) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(30.6216, temp.agestd1[["adj.lci"]] ) # checked vis-à-vis epitools::ageadjust.direct
 
-  expect_equal(40.25, temp.agestd1[["adj.uci"]] ) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(40.2520, temp.agestd1[["adj.uci"]] ) # checked vis-à-vis epitools::ageadjust.direct
 
 
   temp.dt2 <- data.table(sex = c(rep("M", 11), rep("F", 11)), age = rep(50:60, 2),
@@ -63,23 +63,23 @@ test_that('age_standardize ... valid output',{
   expect_equal(sum(temp.dt2[sex == "M"]$count) , temp.agestd2[sex == "M"]$count)
   expect_equal(sum(temp.dt2[sex == "F"]$count) , temp.agestd2[sex == "F"]$count)
 
-  expect_equal(round(1000*sum(temp.dt2[sex == "M"]$count) / sum(temp.dt2[sex == "M"]$pop), 2) , temp.agestd2[sex == "M"]$crude.rate)
-  expect_equal(round(1000*sum(temp.dt2[sex == "F"]$count) / sum(temp.dt2[sex == "F"]$pop), 2) , temp.agestd2[sex == "F"]$crude.rate)
+  expect_equal(round(1000*sum(temp.dt2[sex == "M"]$count) / sum(temp.dt2[sex == "M"]$pop), 4) , temp.agestd2[sex == "M"]$crude.rate)
+  expect_equal(round(1000*sum(temp.dt2[sex == "F"]$count) / sum(temp.dt2[sex == "F"]$pop), 4) , temp.agestd2[sex == "F"]$crude.rate)
 
-  expect_equal(28.26 , temp.agestd2[sex == "M"]$crude.lci) # checked vis-à-vis survival::cipoisson() exact method
-  expect_equal(26.47 , temp.agestd2[sex == "F"]$crude.lci) # checked vis-à-vis survival::cipoisson() exact method
+  expect_equal(28.2633 , temp.agestd2[sex == "M"]$crude.lci) # checked vis-à-vis survival::cipoisson() exact method
+  expect_equal(26.4730 , temp.agestd2[sex == "F"]$crude.lci) # checked vis-à-vis survival::cipoisson() exact method
 
-  expect_equal(35.18 , temp.agestd2[sex == "M"]$crude.uci) # checked vis-à-vis survival::cipoisson() exact method
-  expect_equal(32.83 , temp.agestd2[sex == "F"]$crude.uci) # checked vis-à-vis survival::cipoisson() exact method
+  expect_equal(35.1766 , temp.agestd2[sex == "M"]$crude.uci) # checked vis-à-vis survival::cipoisson() exact method
+  expect_equal(32.8298 , temp.agestd2[sex == "F"]$crude.uci) # checked vis-à-vis survival::cipoisson() exact method
 
-  expect_equal(31.73 , temp.agestd2[sex == "M"]$adj.rate) # checked vis-à-vis epitools::ageadjust.direct
-  expect_equal(29.64 , temp.agestd2[sex == "F"]$adj.rate) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(31.7250 , temp.agestd2[sex == "M"]$adj.rate) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(29.6415 , temp.agestd2[sex == "F"]$adj.rate) # checked vis-à-vis epitools::ageadjust.direct
 
-  expect_equal(28.39 , temp.agestd2[sex == "M"]$adj.lci) # checked vis-à-vis epitools::ageadjust.direct
-  expect_equal(26.58 , temp.agestd2[sex == "F"]$adj.lci) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(28.3923 , temp.agestd2[sex == "M"]$adj.lci) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(26.5772 , temp.agestd2[sex == "F"]$adj.lci) # checked vis-à-vis epitools::ageadjust.direct
 
-  expect_equal(35.35 , temp.agestd2[sex == "M"]$adj.uci) # checked vis-à-vis epitools::ageadjust.direct
-  expect_equal(32.97 , temp.agestd2[sex == "F"]$adj.uci) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(35.3468 , temp.agestd2[sex == "M"]$adj.uci) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(32.9665 , temp.agestd2[sex == "F"]$adj.uci) # checked vis-à-vis epitools::ageadjust.direct
   })
 
 test_that('age_standardize ... errors & warnings',{
@@ -327,7 +327,7 @@ test_that('list_ref_pop',{
 })
 
 # lossless_convert() ----
-test_that('lossless_convert', {
+test_that('lossless_convert misc tests', {
   expect_equal(class(lossless_convert(c('1', '2', '3'), 'integer')), 'integer')
 
   expect_equal(
@@ -356,6 +356,94 @@ test_that('lossless_convert', {
     'would introduce additional NAs'),
   c('z', '2020-01-01', '2021-12-31'))
 
+
+
+})
+
+test_that("lossless_convert handles Date conversions correctly", {
+  # Setup test vectors
+  alpha <- c('2022-01-01', '2023-01-01', '2024-01-01', '2025-01-01')
+  beta <- c(NA, '2023-01-01', '2024-01-01', '2025-01-01')
+  gamma <- c(NA, 'Not a Date', '2024-01-01', '2025-01-01')
+  delta <- c('Not a Date', '2023-01-01', '2024-01-01', '2025-01-01')
+
+  # Test successful Date conversion
+  expect_true(inherits(lossless_convert(alpha, 'Date'), 'Date'))
+  expect_true(inherits(lossless_convert(beta, 'Date'), 'Date'))
+
+  # Test failed Date conversion (preserves original)
+  expect_message(result_gamma <- lossless_convert(gamma, 'Date', column_name = "gamma"),
+                 "Conversion of 'gamma' to Date would introduce additional NAs")
+  expect_true(inherits(result_gamma, 'character'))
+
+  expect_message(result_delta <- lossless_convert(delta, 'Date', column_name = "delta"),
+                 "Conversion of 'delta' to Date would introduce additional NAs")
+  expect_true(inherits(result_delta, 'character'))
+})
+
+test_that("lossless_convert handles numeric and integer conversions correctly", {
+  # Setup test vectors
+  epsilon <- c('1', '2', '3', NA)
+  zeta <- c('One', '2', '3', NA)
+  eta <- c('1.1', '2', '3', NA)
+
+  # Test successful integer conversion
+  expect_true(inherits(lossless_convert(epsilon, 'integer'), 'integer'))
+
+  # Test failed integer conversion
+  expect_message(result_zeta <- lossless_convert(zeta, 'integer', column_name = "zeta"),
+                 "Conversion of 'zeta' to integer would introduce additional NAs")
+  expect_true(inherits(result_zeta, 'character'))
+
+  expect_message(result_eta <- lossless_convert(eta, 'integer', column_name = "eta"),
+                 "Conversion of 'eta' to integer would introduce additional NAs")
+  expect_true(inherits(result_eta, 'character'))
+
+  # Test successful numeric conversion
+  expect_true(inherits(lossless_convert(epsilon, 'numeric'), 'numeric'))
+  expect_true(inherits(lossless_convert(eta, 'numeric'), 'numeric'))
+})
+
+test_that("lossless_convert handles POSIXct conversions correctly", {
+  # Setup test vector
+  tau <- c(NA, '2023-01-01 12:30:45', '2024-12-31 23:59:59', '2025-01-01 11:11:11')
+
+  # Test successful POSIXct conversion
+  expect_true(inherits(lossless_convert(tau, 'POSIXct'), 'POSIXct'))
+})
+
+test_that("lossless_convert works with data.table", {
+  # Setup test vectors
+  alpha <- c('2022-01-01', '2023-01-01', '2024-01-01', '2025-01-01')
+  beta <- c(NA, '2023-01-01', '2024-01-01', '2025-01-01')
+  gamma <- c(NA, 'Not a Date', '2024-01-01', '2025-01-01')
+  delta <- c('Not a Date', '2023-01-01', '2024-01-01', '2025-01-01')
+  epsilon <- c('1', '2', '3', NA)
+  zeta <- c('One', '2', '3', NA)
+  eta <- c('1.1', '2', '3', NA)
+
+  # Create data.table
+  library(data.table)
+  mydt <- data.table(alpha, beta, gamma, delta, epsilon, zeta, eta)
+
+  # Test numeric conversion on all columns
+  mydt[, (names(mydt)) := lapply(names(mydt), function(col_name) {
+    lossless_convert(get(col_name), class = 'numeric', column_name = col_name)
+  })]
+
+  # Check that only epsilon and eta were converted to numeric
+  expect_equal(names(mydt)[sapply(mydt, is.numeric)], c('epsilon', 'eta'))
+
+  # Test Date conversion on all columns
+  mydt[, (names(mydt)) := lapply(names(mydt), function(col_name) {
+    lossless_convert(get(col_name), class = 'Date', column_name = col_name)
+  })]
+
+  # Check that only alpha and beta were converted to Date
+  expect_equal(
+    names(mydt)[sapply(mydt, function(x) inherits(x, "Date"))],
+    c("alpha", "beta")
+  )
 })
 
 # multi_t_test ----
@@ -809,6 +897,145 @@ test_that('std_error',{
 
 test_that('std_error',{
   expect_equal(std_error(c(seq(0, 400, 100), NA)), sd(c(seq(0, 400, 100), NA), na.rm = T) / sqrt(5))
+})
+
+# string_clean() -----
+test_that("string_clean validates arguments correctly", {
+  expect_error(string_clean(NULL), "must be the name of a data.frame or data.table")
+
+  expect_error(string_clean(c(1, 2, 3)), "must be the name of a data.frame or data.table")
+
+  test_dt <- data.table(text = "test")
+  expect_error(string_clean(test_dt, stringsAsFactors = "yes"), "stringsAsFactors must be specified as a logical")
+
+  expect_error(string_clean(test_dt, convert_to_utf8 = "yes"), "convert_to_utf8 must be specified as a logical")
+})
+
+test_that("string_clean handles standard whitespace correctly", {
+  test_dt <- data.table(
+    id = 1:3,
+    text = c("  Hello  World  ", # regular spaces
+             "Test\t\tString", # tabs
+             "  Multiple\n\nSpaces  ") # new lines
+  )
+
+  expected <- c("Hello World", "Test String", "Multiple Spaces")
+
+  string_clean(test_dt)
+
+  expect_equal(test_dt$text, expected)
+})
+
+test_that("string_clean handles non-standard whitespace correctly", {
+  test_dt <- data.table(
+    id = 1:13,
+    text = c(
+      paste0("\u200A", "Hello", "\u200A"),     # Hair space
+      paste0("\u2002", "Hello", "\u2002"),     # En space
+      paste0("\u00A0", "Hello", "\u00A0"),     # Non breaking space
+      paste0("\u2003", "Hello", "\u2003"),     # Em space
+      paste0("Hello", "\u2009", "World"),      # Thin space between words
+      paste0("\u200A\u2002\u00A0", "Hello", "\u2003\u2009\u200A"),  # Multiple mixed spaces
+      paste0("\u2006", "Hello", "\u2006"),     # 6-per-em space
+      paste0("\u202F", "Hello", "\u202F"),     # Narrow no-break space
+      paste0("\u2005", "Hello", "\u2005"),     # 4-per-em space
+      paste0("\u2008", "Hello", "\u2008"),     # Punctuation space
+      paste0("\u2004", "Hello", "\u2004"),     # 3-per-em space
+      paste0("\u2007", "Hello", "\u2007"),     # Figure space
+      paste0("\u2006\u202F\u2005", "Hello", "\u2008\u2004\u2007")   # More mixed spaces
+    )
+  )
+
+  expected <- c("Hello", "Hello", "Hello", "Hello", "Hello World", "Hello",
+                "Hello", "Hello", "Hello", "Hello", "Hello", "Hello", "Hello")
+
+  string_clean(test_dt)
+
+  expect_equal(test_dt$text, expected)
+})
+
+test_that("string_clean handles zero-width and invisible characters correctly", {
+  test_dt <- data.table(
+    id = 1:8,
+    text = c(
+      paste0("\u200B", "Hello", "\u200B"),             # Zero-width space
+      paste0("\u200C", "Hello", "\u200C"),             # Zero-width non-joiner
+      paste0("\u200D", "Hello", "\u200D"),             # Zero-width joiner
+      paste0("\uFEFF", "Hello", "\uFEFF"),             # Byte-order mark
+      paste0("Hel", "\u200B", "lo"),                   # Zero-width space in middle of word
+      paste0("Hel", "\u200C\u200D", "lo"),             # Multiple zero-width characters in word
+      paste0("\u200B\u200C", "Hello", "\u200D\uFEFF"), # Multiple mixed invisible characters
+      paste0("\u200B\u00A0\u200C", "Hello", "\u2003\u200D\uFEFF")  # Mix of invisible and whitespace
+    )
+  )
+
+  expected <- c("Hello", "Hello", "Hello", "Hello", "Hello", "Hello", "Hello", "Hello")
+
+  string_clean(test_dt)
+
+  expect_equal(test_dt$text, expected)
+})
+
+test_that("string_clean handles empty strings and NA values correctly", {
+  test_dt <- data.table(
+    id = 1:5,
+    text = c("Content", "", "   ", NA, "  Content  ")
+  )
+
+  expected <- c("Content", NA, NA, NA, "Content")
+
+  string_clean(test_dt)
+
+  expect_equal(test_dt$text, expected)
+})
+
+test_that("string_clean correctly handles factor columns", {
+  test_dt <- data.table(
+    id = 1:3,
+    text_factor = factor(c("  Option A  ", "Option   B", "  Option C  "))
+  )
+
+  expected <- factor(c("Option A", "Option B", "Option C"))
+
+  string_clean(test_dt)
+
+  expect_equal(as.character(test_dt$text_factor), as.character(expected))
+
+  expect_true(is.factor(test_dt$text_factor))
+})
+
+test_that("string_clean correctly converts strings to factors when requested", {
+  test_dt <- data.table(
+    id = 1:3,
+    text = c("  Hello  ", "World", "  Test  ")
+  )
+
+  string_clean(test_dt, stringsAsFactors = TRUE)
+
+  expect_true(is.factor(test_dt$text))
+
+  expect_equal(levels(test_dt$text), c("Hello", "Test", "World"))
+})
+
+test_that("string_clean preserves non-string columns", {
+  test_dt <- data.table(
+    id = 1:3,
+    numeric = c(1.5, 2.7, 3.9),
+    integer = as.integer(c(1, 2, 3)),
+    logical = c(TRUE, FALSE, TRUE),
+    text = c("  Hello  ", "World", "  Test  ")
+  )
+
+  test_copy <- copy(test_dt) # copy b/c want the original for comparison
+
+  string_clean(test_copy)
+
+  expect_equal(test_copy$numeric, test_dt$numeric)
+  expect_equal(test_copy$integer, test_dt$integer)
+  expect_equal(test_copy$logical, test_dt$logical)
+
+  # Check if the string column is cleaned properly
+  expect_equal(test_copy$text, c("Hello", "World", "Test"))
 })
 
 # tsql_chunk_loader() ----

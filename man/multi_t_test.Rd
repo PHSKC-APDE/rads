@@ -56,8 +56,7 @@ Default is \strong{\code{'estimated'}}.}
 \item{adjust_method}{String specifying the method of adjustment for multiple
 comparisons: \strong{\code{NULL}}, \strong{\code{'Holm-Bonferroni'}},
 \strong{\code{'Benjamini-Hochberg'}}. Refer to the \code{holm} and \code{bh} descriptions
-in \code{\link{p.adjust}} in the \code{\link{stats}} package for more
-information. Default is \strong{\code{NULL}}.}
+in \code{\link[stats:p.adjust]{stats::p.adjust()}} for more information. Default is \strong{\code{NULL}}.}
 }
 \value{
 A data.table containing comparison results with the following columns:
@@ -101,7 +100,7 @@ other population-based studies. Equal variances are rarely encountered in such
 contexts due to inherent differences between subpopulations. If you have the
 underlying raw data (not just the means and standard errors) and want to
 perform calculations assuming equal variances or a paired t-test, please
-refer to \code{\link{t.test}} in the \code{\link{stats}} package.
+refer to \code{\link[stats:t.test]{stats::t.test()}}.
 }
 \examples{
 # Example 1: Comparing birthweights across different maternal age groups
@@ -124,4 +123,9 @@ birthweight_comparison[, Age_Group := age_groups]
 
 print(birthweight_comparison)
 
+}
+\seealso{
+\code{\link[=propagate_uncertainty]{propagate_uncertainty()}} for more robust uncertainty
+propagation when comparing two estimates with potentially asymmetric
+confidence intervals or non-normal distributions.
 }

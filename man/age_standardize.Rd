@@ -45,7 +45,7 @@ setting \code{diagnostic_report = TRUE} returns a diagnostic table instead of no
 Use this option if a warning about missing age groups appears when running the function normally.}
 }
 \value{
-a data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'group_by' variable(s) -- if any
+A data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'group_by' variable(s) -- if any
 }
 \description{
 Calculate age standardized rates from a data.table with age, counts, and population columns.
@@ -57,6 +57,15 @@ Your dataset must have the following three columns ...
 \item the population corresponding to the age or agecat in your original data
 }
 }
+\section{Note on Standard Errors}{
+
+This function calculates confidence intervals using the
+\href{https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf}{Fay-Feuer method},
+which does not provide direct standard error (SE) estimates. If you need SE approximations,
+common methods used by health departments include \code{SE = adjusted_rate/sqrt(cases)} and
+\code{RSE = 1/sqrt(cases)}.
+}
+
 \examples{
 \donttest{
 library(data.table)

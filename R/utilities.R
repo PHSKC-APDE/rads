@@ -108,7 +108,14 @@ adjust_direct <- function(count, pop, stdpop, per = 100000, conf.level = 0.95) {
 #' setting `diagnostic_report = TRUE` returns a diagnostic table instead of normal results.
 #' Use this option if a warning about missing age groups appears when running the function normally.
 #'
-#' @return a data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'group_by' variable(s) -- if any
+#' @section Note on Standard Errors:
+#' This function calculates confidence intervals using the
+#' \href{https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf}{Fay-Feuer method},
+#' which does not provide direct standard error (SE) estimates. If you need SE approximations,
+#' common methods used by health departments include \code{SE = adjusted_rate/sqrt(cases)} and
+#' \code{RSE = 1/sqrt(cases)}.
+#'
+#' @return A data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'group_by' variable(s) -- if any
 #'
 #' @seealso \code{\link{adjust_direct}} for calculating crude and directly adjusted rates.
 #'
@@ -166,7 +173,7 @@ age_standardize <- function (ph.data,
   agecat_exists <- "agecat" %in% names(ph.data)
 
   if (age_exists && agecat_exists) {
-    stop("\n\U1F6D1 Both 'age' and 'agecat' columns are present, but only one is needed. Please check your data.")
+    stop("\n\U1F6D1 Both 'age' and 'agecat' columns are present, but only one is needed. \nPlease check your data and rename or delete one of these variables.")
   } else if (!age_exists && !agecat_exists) {
     stop("\n\U1F6D1 Neither 'age' nor 'agecat' columns are present. Please check your data.")
   } else if (age_exists) {
@@ -205,14 +212,17 @@ age_standardize <- function (ph.data,
   # Ensure the reference population exists ----
   if(is.null(ref.popname)){ref.popname <- "2000 U.S. Std Population (11 age groups)"}
   if(! ref.popname %in% c( list_ref_pop(), "none")){
-    stop(strwrap(paste0("\n\U1F6D1 ref.popname ('", ref.popname, "') is not a valid reference population name.
-              The names of standardized reference populations can be viewed by typing `list_ref_pop()`.
-              If ph.data is already aggregated/collapsed and has a relevant 'stdpop' column, please set ref.popname = 'none'"), prefix = " ", initial = ""))}
+    stop(paste0("\n\U1F6D1 ref.popname ('", ref.popname, "') is not a valid reference population name.\n",
+              "The names of standardized reference populations can be viewed by typing `list_ref_pop()`.\n",
+              "If ph.data is already aggregated/collapsed and has a relevant 'stdpop' column, please set ref.popname = 'none'"))
+    }
 
   if(ref.popname == "none" & !"stdpop" %in% colnames(ph.data)){stop("\n\U1F6D1 When specifying ref.popname = 'none', ph.data must have a column named 'stdpop' with the reference standard population data.")}
 
-  if(ref.popname == "none" & collapse == T){stop(strwrap("\n\U1F6D1 When ref.popname = 'none', collapse should equal F.
-                                                                      Selecting ref.popname = 'none' expects that ph.data has already been collapsed/aggregated and has a 'stdpop' column."), prefix = " ", initial = "")}
+  if(ref.popname == "none" & collapse == T){
+    stop(paste0("\n\U1F6D1 When ref.popname = 'none', collapse should equal F.\n",
+               "Selecting ref.popname = 'none' expects that ph.data has already been collapsed/aggregated and has a 'stdpop' column."))
+  }
 
   # Standardize column names ----
   # purposefully did not use setnames() because it is possible that count | pop already exists and are intentionally using different columns for this function
@@ -312,43 +322,50 @@ age_standardize <- function (ph.data,
 
   # Check count ----
   if(nrow(ph.data[is.na(count)]) > 0){
-    warning(paste0("\u26A0\ufe0f ph.data (", ph.data.name, ") contains at least one row where my.count is missing.
-                    Those values have been replaced with zero."))
+    warning(paste0("\u26A0\ufe0f ph.data (", ph.data.name, ") contains at least one row where my.count is missing.\n",
+                    "Those values have been replaced with zero."))
     ph.data[is.na(count), count := 0]
   }
   if(nrow(ph.data[count < 0]) > 0){
-    stop(paste0("\U0001f47f ph.data (", ph.data.name, ") contains at least one row where my.count is negative.
-                        Correct the data and try again."))
+    stop(paste0("\n\U0001f47f ph.data (", ph.data.name, ") contains at least one row where my.count is negative.\n",
+                "Correct the data and try again."))
   }
 
   # Check population ----
   if(nrow(ph.data[is.na(pop)]) > 0){
-    stop(paste0("\U0001f47f ph.data (", ph.data.name, ") contains at least one row where my.pop is missing.
-                     Correct the data and try again."))
+    stop(paste0("\n\U0001f47f ph.data (", ph.data.name, ") contains at least one row where my.pop is missing.\n",
+                     "Correct the data and try again."))
   }
   if(nrow(ph.data[pop < 0]) > 0){
-    stop(paste0("\U0001f47f ph.data (", ph.data.name, ") contains at least one row where my.pop is negative.
-                        Correct the data and try again."))
+    stop(paste0("\n\U0001f47f ph.data (", ph.data.name, ") contains at least one row where my.pop is negative.\n",
+                        "Correct the data and try again."))
   }
 
   # Check count vs population ----
   if(nrow(ph.data[count > pop]) > 0 ){
-    warning(paste0("\u26A0\ufe0f ph.data (", ph.data.name, ") contains at least one row where the count is greater than the population.
-                        This may be correct because OFM populations are just estimates. However, you are encouraged to check the data."))
+    warning(paste0("\u26A0\ufe0f ph.data (", ph.data.name, ") contains at least one row where the count is greater than the population.\n",
+                        "This may be correct because OFM populations are just estimates. However, you are encouraged to check the data."))
   }
 
   # Collapse ph.data to match standard population bins ----
   if(collapse==T){
-    if(! "age" %in% colnames(ph.data)){stop(strwrap("\n\U1F6D1 When collapse = T, ph.data must have a column named 'age' where age is an integer.
-                                                          This is necessary to generate age bins that align with the selected standard
-                                                          reference population. If ph.data already has an 'agecat' column that is formatted
-                                                          identically to that in the standard reference population, set collapse = F"), prefix = " ", initial = "")}
-    if(is.numeric(ph.data$age) == F){stop("\n\U1F6D1 When collapse = T, the 'age' column must be comprised entirely of integers")}
-    if(sum(as.numeric(ph.data$age) %% 1) != 0){stop("\n\U1F6D1 When collapse = T, the 'age' column must be comprised entirely of integers")}
-    if("agecat" %in% colnames(ph.data)){stop(strwrap("\n\U1F6D1 When collapse = T, a new column named 'agecat' is created to match that in the standard reference population.
-                                                    ph.data already has a column named 'agecat' and it will not be automatically overwritten.
-                                                    If you are sure you want to create a new column named 'agecat', delete the existing column in ph.data and run again."),
-                                             prefix = " ", initial = "")}
+    if(! "age" %in% colnames(ph.data)){
+      stop("\n\U1F6D1 When collapse = T, ph.data must have a column named 'age' where age is an integer.\n",
+           "This is necessary to generate age bins that align with the selected standard\n",
+           "reference population. If ph.data already has an 'agecat' column that is formatted\n",
+           "identically to that in the standard reference population, set collapse = F")
+      }
+    if(is.numeric(ph.data$age) == F){
+      stop("\n\U1F6D1 When collapse = T, the 'age' column must be comprised entirely of integers")
+      }
+    if(sum(as.numeric(ph.data$age) %% 1) != 0){
+      stop("\n\U1F6D1 When collapse = T, the 'age' column must be comprised entirely of integers")
+      }
+    if("agecat" %in% colnames(ph.data)){
+      stop("\n\U1F6D1 When collapse = T, a new column named 'agecat' is created to match that in the standard reference population.\n",
+           "ph.data already has a column named 'agecat' and it will not be automatically overwritten.\n",
+           "If you are sure you want to create a new column named 'agecat', delete the existing column in ph.data and run again.")
+         }
     my.ref.pop <- get_ref_pop(ref.popname)
     for(z in seq(1, nrow(my.ref.pop))){
       ph.data[age %in% my.ref.pop[z, age_start]:my.ref.pop[z, age_end], agecat := my.ref.pop[z, agecat]]
@@ -359,14 +376,13 @@ age_standardize <- function (ph.data,
 
   # Hack when pop < count in age collapsed data ----
   if(nrow(ph.data[pop < count]) > 0){
-    warning(paste0("\u26A0\ufe0f
-      When ph.data (", ph.data.name, ") was collapsed to match the standard
-      population, the aggregate `count` was greater than the aggreate `pop` for
-      the following age group(s): ",
-                   sort(paste(unique(ph.data[pop < count]$agecat), collapse = ', ')), ". In these rows, the
-      `pop` was ascribed the `count` value. This is necessary to calculate
-      the age adjusted rate and only nomimally biases the calculated rates since
-      the counts are typically small."))
+    warning(paste0("\u26A0\ufe0f When ph.data (", ph.data.name, ") was collapsed to match the standard\n",
+                   "population, the aggregate `count` was greater than the aggregate `pop` for\n",
+                   "the following age group(s): \n",
+                   sort(paste(unique(ph.data[pop < count]$agecat), collapse = ', ')), ".\n",
+                   "In these rows, the `pop` was ascribed the `count` value. This is necessary to calculate\n",
+                   "the age adjusted rate and only nomimally biases the calculated rates since\n",
+                   "the counts are typically small."))
 
     ph.data[pop < count, pop := count]
   }
@@ -387,7 +403,7 @@ age_standardize <- function (ph.data,
 
   # Tidy results ----
   rate_estimates <- c("crude.rate", "crude.lci", "crude.uci", "adj.rate", "adj.lci", "adj.uci")
-  my.rates[, c(rate_estimates) := lapply(.SD, rads::round2, 2), .SDcols = rate_estimates]
+  my.rates[, c(rate_estimates) := lapply(.SD, rads::round2, 4), .SDcols = rate_estimates]
   my.rates[, reference_pop := ref.popname]
   my.rates[is.nan(adj.lci) & count == 0, adj.lci := 0]
   if(ref.popname == "none"){my.rates[, reference_pop := paste0("stdpop column in `", ph.data.name, "`")]}
@@ -921,39 +937,6 @@ convert_to_date <- function(x, origin = "1899-12-30") {
   }
 }
 
-
-# dumb_convert() ----
-#' Convert from one type to another type
-#'
-#' @param x factor
-#' @param target character. class of the object to transform the factor into. One of integer, numeric, or character.
-#'
-#'
-dumb_convert <- function(x, target = 'character'){
-
-  stopifnot(length(target) == 1)
-  if(target == 'character'){
-    return(as.character(x))
-  }
-
-  if(target == 'numeric'){
-    return(as.numeric(as.character(x)))
-  }
-
-  if(target == 'integer'){
-    return(as.integer(as.character(x)))
-  }
-
-  if(target == 'logical') return(as.logical(as.character(x)))
-
-  if(target == 'factor'){
-    if(is.factor(x)) return(x)
-
-    return(as.factor(x))
-  }
-
-  stop(paste0('Target class of ', target, ' is invalid'))
-}
 
 # format_time() ----
 #' Format a vector of time, date, or any numeric values into a series of human readable chunks
@@ -1514,6 +1497,7 @@ list_dataset_columns <- function(dataset = NULL,
 #' @return A list containing configuration settings for the specified dataset.
 #'
 #' @keywords internal
+#' @noRd
 list_dataset_columns_config <- function(dataset) {
   # no need for dataset validation b/c validated in list_dataset_columns()
   configs <- list(
@@ -1572,6 +1556,7 @@ list_dataset_columns_config <- function(dataset) {
 #' @return data.table with var.names column
 #'
 #' @keywords internal
+#' @noRd
 list_dataset_columns_sql <- function(config, year, mykey, kingco, analytic_only) {
   # Connect to database and get column names
   con <- validate_hhsaw_key(mykey)
@@ -1597,6 +1582,7 @@ list_dataset_columns_sql <- function(config, year, mykey, kingco, analytic_only)
 #' @return data.table with var.names and year(s) columns
 #'
 #' @keywords internal
+#' @noRd
 list_dataset_columns_brfss <- function(config, year, mykey, kingco, analytic_only) {
   # Visible bindings for data.table/check global variables ----
   chi_year <- NULL
@@ -1648,6 +1634,7 @@ list_dataset_columns_brfss <- function(config, year, mykey, kingco, analytic_onl
 #' @return data.table with var.names, analytic_ready, and year(s) columns
 #'
 #' @keywords internal
+#' @noRd
 list_dataset_columns_hys <- function(config, year, mykey, kingco, analytic_only) {
   # Visible bindings for data.table/check global variables ----
   ar <- colname <- NULL
@@ -1686,6 +1673,7 @@ list_dataset_columns_hys <- function(config, year, mykey, kingco, analytic_only)
 #' @return data.table with var.names, records, and year(s) columns
 #'
 #' @keywords internal
+#' @noRd
 list_dataset_columns_pums <- function(config, year, mykey, kingco, analytic_only) {
   # Visible bindings for data.table/check global variables ----
   varname <- records <- NULL
@@ -1844,73 +1832,193 @@ list_ref_pop <- function(){
 #' converted.
 #'
 #' @param x vector of indeterminate length and type
-#' @param class character vector of length one specifying the preferred new column type (i.e.,
-#' 'character', 'numeric', 'integer', or 'factor')
+#' @param class character vector of length one specifying the preferred new column type (e.g.,
+#' 'character', 'numeric', 'integer', 'Date', or 'POSIXct)
+#' @param column_name optional name of the column being converted (for better error messages)
 #' @examples
 #' \donttest{
-#' str(lossless_convert(c('1', '2', '3'), 'integer'))
-#' str(lossless_convert(c('one', '2', '3'), 'integer'))
-#' str(lossless_convert(c('1', '2', 'three'), 'integer'))
+#' # Create a bunch of sample vectors
+#' alpha <- c('2022-01-01', '2023-01-01', '2024-01-01', '2025-01-01')
+#' beta <- c(NA, '2023-01-01', '2024-01-01', '2025-01-01')
+#' gamma <- c(NA, 'Not a Date', '2024-01-01', '2025-01-01')
+#' delta <- c('Not a Date', '2023-01-01', '2024-01-01', '2025-01-01')
+#' epsilon <- c('1', '2', '3', NA)
+#' zeta <- c('One', '2', '3', NA)
+#' eta <- c('1.1', '2', '3', NA)
+#' tau <- c(NA, '2023-01-01 12:30:45', '2024-12-31 23:59:59', '2025-01-01 11:11:11')
 #'
-#' str(lossless_convert(c('2020-01-01', '2021-12-31', '2022-02-22'), 'Date'))
-#' str(lossless_convert(c('2020-01-01', '2021-12-31', 'z'), 'Date'))
-#' str(lossless_convert(c('z', '2020-01-01', '2021-12-31'), 'Date'))
+#' # Successful Date conversion
+#' inherits(lossless_convert(alpha, 'Date'), 'Date')
+#'
+#' # Failed Date conversion (preserves original)
+#' inherits(lossless_convert(gamma, 'Date'), 'character')
+#'
+#' # Successful integer conversion
+#' inherits(lossless_convert(epsilon, 'integer'), 'integer')
+#'
+#' # Failed integer conversion
+#' inherits(lossless_convert(eta, 'integer'), 'character')
+#'
+#' # Successful POSIXct conversion
+#' inherits(lossless_convert(tau, 'POSIXct'), 'POSIXct')
+#'
+#' # Convert all possible columns in a data.table to numeric
+#' library(data.table)
+#' mydt <- data.table(alpha, beta, gamma, delta, epsilon, zeta, eta)
+#' mydt[, (names(mydt)) := lapply(names(mydt), function(col_name) {
+#'   lossless_convert(get(col_name), class = 'numeric', column_name = col_name)
+#' })]
+#' all.equal(names(mydt)[sapply(mydt, is.numeric)], c('epsilon', 'eta'))
+#'
+#' # Convert all possible columns in a data.table to Date
+#' mydt[, (names(mydt)) := lapply(names(mydt), function(col_name) {
+#'   lossless_convert(get(col_name), class = 'Date', column_name = col_name)
+#' })]
+#' all.equal(names(mydt)[sapply(mydt, function(x) inherits(x, "Date"))], c("alpha", "beta"))
 #' }
 #'
 #' @export
 #' @return a vector of the same length as x, but of the new class (when possible)
-lossless_convert <- function(x, class) {
-  # Validate 'x'
-  if (missing(x)) {
-    stop("'x', the vector you wish to change, must be specified.")
-  }
-
-  # Validate 'class'
-  if (missing(class)) {
-    stop("'class' must be specified.")
-  }
-
-  if (length(class) != 1 || !class %in% c("character", "integer", "numeric", "Date", "POSIXct")) {
-    stop("'class' must be one of the following: 'character', 'integer', 'numeric', 'Date', 'POSIXct'")
-  }
-
-  # Get the name of x
-  x_name <- deparse(substitute(x))
-  if (nchar(x_name) > 20) { # If 'x' is a vector rather than a name, use 'x'
-    x_name <- "x"
-  }
-
-  # Pre-check for Date or POSIXct conversion
-  if (class %in% c("Date", "POSIXct")) {
-    temp_x <- suppressWarnings(as.character(x))
-    if (any(sapply(temp_x, function(x) tryCatch(is.na(as.Date(x)), error = function(e) TRUE)))) {
-      message("Conversion of '", x_name, "' to ", class, " would introduce additional NAs. Operation not performed.")
-      return(x)
+lossless_convert <- function(x, class, column_name = NULL) {
+  # Validation ----
+    # Validate 'x'
+    if (missing(x)) {
+      stop("\n\U1F6D1 'x', the vector you wish to change, must be specified.")
     }
-  }
 
-  # Attempt conversion with checks for loss
-  original_na_count <- sum(is.na(x))
-  converted_x <- tryCatch({
-    if (class %in% c("Date", "POSIXct")) {
-      # For date types, use already converted temp_x to avoid duplicate conversion
-      new_x <- suppressWarnings(if (class == "Date") as.Date(temp_x) else as.POSIXct(temp_x))
-    } else {
-      # For other types, attempt direct conversion
-      new_x <- suppressWarnings(as(x, class))
+    # Validate 'class'
+    if (missing(class)) {
+      stop("\n\U1F6D1 'class' must be specified.")
     }
-    if (sum(is.na(new_x)) > original_na_count) {
-      message("Conversion of '", x_name, "' to ", class, " would introduce additional NAs. Operation not performed.")
-      return(x)
+
+    if (length(class) != 1 || !class %in% c("character", "integer", "numeric", "Date", "POSIXct")) {
+      stop("\n\U1F6D1 'class' must be one of the following: 'character', 'integer', 'numeric', 'Date', 'POSIXct'")
+    }
+
+    if (!is.null(column_name) && ((length(column_name) != 1 || !inherits(column_name, 'character')))) {
+      stop("\n\U1F6D1 'column_name' must be a character vector of length == 1.")
+    }
+
+    if (inherits(x, class)) return(x) # if already the correct class, return the original
+
+  # Set up ----
+    # Get the name of x for reporting warnings
+    x_name <- if (!is.null(column_name)) {
+      column_name
     } else {
+      temp <- deparse(substitute(x))
+      if (grepl("[\\$\\[\\]\\(\\)\\{\\}]", temp)) { # if it is a not a simple column name, use 'x' as the name
+        "x"
+      } else {
+        temp
+      }
+    }
+
+    # Get original NA count
+    original_na_count <- sum(is.na(x))
+
+    # Create generic warning
+    warn_lossy_conversion <- function() {
+      message("Conversion of '", x_name, "' to ", class, " would introduce additional NAs. Operation not performed.")
+    }
+
+    # Create helper to assess if something is a whole number within a reasonable tolerance
+    is.wholenumber <- function(x) {
+      abs(x - round(x)) < sqrt(.Machine$double.eps) # a commonly used tolerance ~ 0.00000001490116
+    }
+
+  # Simple conversions for empty or 100% NA vectors ----
+    if (length(x) == 0 || all(is.na(x))) {
+      return(switch(class,
+                    character = as.character(x),
+                    numeric   = as.numeric(x),
+                    integer   = as.integer(x),
+                    Date      = as.Date(x),
+                    POSIXct   = as.POSIXct(x)
+      ))
+    }
+
+  # Attempt less simple class conversions ----
+    if (class == "character") {
+      new_x <- as.character(x)
+      if (sum(is.na(new_x)) > original_na_count) {
+        warn_lossy_conversion()
+        return(x)
+      }
       return(new_x)
     }
-  }, error = function(e) {
-    message("\U0001f47f An unexpected issue occurred during conversion '", x_name, "' to ", class, ": ", e$message)
-    return(x)
-  })
+    else if (class %in% c("numeric", "integer")) {
+      # Convert to numeric first
+      numeric_x <- suppressWarnings(as.numeric(x))
 
-  return(converted_x)
+      # Check if conversion to numeric introduces NAs
+      if (sum(is.na(numeric_x)) > original_na_count) {
+        warn_lossy_conversion()
+        return(x)
+      }
+
+      if (class == "integer") {
+        non_na_vals <- numeric_x[!is.na(numeric_x)]
+
+        # check for non whole numbers
+        if (any(!is.wholenumber(non_na_vals))) {
+          warn_lossy_conversion()
+          return(x)
+        }
+
+        # check for integers that are too large or too small for R (overflow)
+        if (any(non_na_vals > .Machine$integer.max | non_na_vals < -(.Machine$integer.max + 1))) {
+          warn_lossy_conversion()
+          return(x)
+        }
+
+      }
+
+      # If we've reached this point, conversion should be safe
+      return(if (class == "numeric") numeric_x else as.integer(numeric_x))
+    }
+    else if (class %in% c("Date", "POSIXct")) {
+      # Get the first non-NA value
+      first_non_na <- x[!is.na(x)][1]
+
+      # Try converting the first non-NA value to check for immediate errors
+      # Necessary because non-convertible value in first position will cause an error
+      # e.g., as.Date(c('Not a Date', '2025-01-01')) # ERROR, but as.Date(c('2025-01-01', 'Not a Date')) # gives an NA
+      first_converted <- tryCatch({
+        if (class == "Date") {
+          as.Date(as.character(first_non_na))
+        } else {
+          as.POSIXct(as.character(first_non_na))
+        }
+      }, error = function(e) {
+        return(NA)
+      }, warning = function(w) {
+        return(NA)
+      })
+
+      # If first value couldn't be converted, we know the conversion is lossy
+      if (is.na(first_converted)) {
+        warn_lossy_conversion()
+        return(x)
+      }
+
+      # If first value worked, convert the whole vector
+      new_x <- suppressWarnings({
+        if (class == "Date") {
+          as.Date(as.character(x))
+        } else {
+          as.POSIXct(as.character(x))
+        }
+      })
+
+      # Check if any new NAs were introduced
+      if (sum(is.na(new_x)) > original_na_count) {
+        warn_lossy_conversion()
+        return(x)
+      }
+
+      return(new_x)
+    }
 }
 
 # metrics() ----
@@ -1998,7 +2106,7 @@ metrics = function(){
 #' contexts due to inherent differences between subpopulations. If you have the
 #' underlying raw data (not just the means and standard errors) and want to
 #' perform calculations assuming equal variances or a paired t-test, please
-#' refer to \code{\link{t.test}} in the \code{\link{stats}} package.
+#' refer to [stats::t.test()].
 #'
 #' @param means Numeric vector of group means.
 #' @param ses Numeric vector of standard errors for each group.
@@ -2031,8 +2139,7 @@ metrics = function(){
 #' @param adjust_method String specifying the method of adjustment for multiple
 #' comparisons: \strong{`NULL`}, \strong{`'Holm-Bonferroni'`},
 #' \strong{`'Benjamini-Hochberg'`}. Refer to the `holm` and `bh` descriptions
-#' in \code{\link{p.adjust}} in the \code{\link{stats}} package for more
-#' information. Default is \strong{`NULL`}.
+#' in [stats::p.adjust()] for more information. Default is \strong{`NULL`}.
 #'
 #' @return A data.table containing comparison results with the following columns:
 #'   \item{comparison}{String describing the comparison}
@@ -2071,6 +2178,9 @@ metrics = function(){
 #' print(birthweight_comparison)
 #'
 #' @import data.table
+#' @seealso [`propagate_uncertainty()`] for more robust uncertainty
+#'   propagation when comparing two estimates with potentially asymmetric
+#'   confidence intervals or non-normal distributions.
 #' @export
 multi_t_test <- function(means,
                          ses,
@@ -2526,90 +2636,150 @@ round2 = function(x, n = 0) {
 
 # string_clean() ----
 #' Clean string & factor columns
-#' @param dat name of data.frame or data.table
+#' @param ph.data name of data.frame or data.table
 #' @param stringsAsFactors logical. Specifies whether to convert strings to
 #' factors (TRUE) or not (FALSE). Note that columns that were originally factors
-#' will always be returned as factors.
+#' will always be returned as factors. Default \code{stringsAsFactors = FALSE}.
+#' @param  convert_to_utf8 logical. Specifies whether to convert character strings
+#' to UTF-8 encoding. UTF-8 ensures consistent handling of international characters
+#' and special symbols across different systems and prevents display/processing
+#' errors from incompatible character encodings. If you have a few extra minutes
+#' to spare, \code{convert_to_utf8 = TRUE} is recommended. Default
+#' \code{convert_to_utf8 = FALSE}.
 #' @description
 #' `string_clean` is designed to clean and preprocess strings and factors within a
 #' data.frame or data.table after importing from SQL, text files, CSVs, etc. It
-#' encodes text to UTF-8, trims and replaces multiple whitespaces, converts blank
-#' strings to true NA values, and optionally converts strings factors. The function
-#' maintains the original order of columns and leaves numeric and logical columns
-#' as they were.
+#' removes zero-width and invisible characters, normalizes all white spaces,
+#' replaces multiple white spaces with a single white space, trims beginning and
+#' ending white spaces, converts empty strings to true \code{NA} and optionally
+#' encodes text to UTF-8 and strings as factors. The function maintains the
+#' original order of columns and leaves numeric and logical columns as they were.
 #'
 #' @details
 #' Depending on the size of the data.frame/data.table, the cleaning
 #' process can take a long time.
 #'
+#' If you want a more thorough cleaning or if your
+#' data have international characters or special symbols, you are encouraged to
+#' set \code{convert_to_utf8 = TRUE}.
+#'
 #' The `string_clean` function modifies objects in place due to the use
-#' of data.table's by-reference assignment (e.g., :=). In other words, there is
+#' of data.table's by-reference assignment (e.g., \code{:=}). In other words, there is
 #' *no need to assign the output*, just
 #' type `string_clean(myTable)`.
+#'
+#' @usage string_clean(ph.data = NULL,
+#'              stringsAsFactors = FALSE,
+#'              convert_to_utf8 = FALSE)
 #' @export
 #' @importFrom utf8 utf8_encode
-#' @return data.table
+#' @importFrom data.table fifelse is.data.table setcolorder setDT
+#' @return A modified data.table, invisibly.
 #' @examples
 #' \donttest{
 #' myTable <- data.table::data.table(
-#' intcol = as.integer(1, 2, 3),
+#' intcol = as.integer(c(1, 2, 3)),
 #' county = c(' King  County ', 'Pierce County', '  Snohomish  county '))
 #' myTable[, county_factor := factor(county)]
 #' string_clean(myTable, stringsAsFactors = TRUE)
 #' print(myTable)
 #' }
-
-string_clean <- function(dat = NULL,
-                         stringsAsFactors = FALSE) {
-
-  # check date.frame
-    if(!is.null(dat)){
-      if(!is.data.frame(dat)){
-        stop("'dat' must be the name of a data.frame or data.table")
-      }
-      if(is.data.frame(dat) && !data.table::is.data.table(dat)){
-        data.table::setDT(dat)
-      }
-    } else {stop("'dat' (the name of a data.frame or data.table) must be specified")}
-
-  original.order <- names(dat)
-
-  # convert factors to strings
-    factor.columns <- names(dat)[sapply(dat, is.factor)] # Identify factor columns
-    dat[, (factor.columns) := lapply(.SD, as.character), .SDcols = factor.columns]
-
-  string.columns <- which(vapply(dat, is.character, FUN.VALUE = logical(1))) # Identify string columns
-  if (length(string.columns) > 0) {
-    # Define a custom cleaning function
-    clean_string <- function(x) {
-      x <- utf8::utf8_encode(x) # Convert encoding to UTF-8
-      x <- gsub("[[:space:]]+", " ", x) # Replace common unconventional white spaces to a true white space
-      x <- trimws(x, which = "both") # Trim white space to right or left
-      x <- gsub("\\s+", " ", x) # Collapse multiple consecutive white spaces into one
-      x <- ifelse(nzchar(trimws(x)), x, NA) # Replace blanks (or strings that become blanks after trim) with NA
-      return(x)
-    }
-
-    # Apply the custom cleaning function to all string columns at once
-      dat[, (string.columns) := lapply(.SD, clean_string), .SDcols = string.columns]
-
-    # convert strings to factors
-      if (stringsAsFactors == TRUE) {
-        dat[, (string.columns) := lapply(.SD, factor), .SDcols = string.columns]
-      } else {
-        dat[, (factor.columns) := lapply(.SD, factor), .SDcols = factor.columns] # original factors back to factors
-      }
+#'
+string_clean <- function (ph.data = NULL,
+                          stringsAsFactors = FALSE,
+                          convert_to_utf8 = FALSE) {
+  # validation
+  if (is.null(ph.data) || !is.data.frame(ph.data)) {
+    stop("'ph.data' must be the name of a data.frame or data.table")
+  }
+  if (!data.table::is.data.table(ph.data)) data.table::setDT(ph.data)
+  if(!is.logical(stringsAsFactors)){
+    stop('\n\U1F6D1 stringsAsFactors must be specified as a logical (i.e., TRUE, T, FALSE, or F)')
+  }
+  if(!is.logical(convert_to_utf8)){
+    stop('\n\U1F6D1 convert_to_utf8 must be specified as a logical (i.e., TRUE, T, FALSE, or F)')
   }
 
-  # Reorder table to original column order
-  setcolorder(dat, original.order)
+  # Save original column order
+  original.order <- names(ph.data)
 
-  return(dat) # Return cleaned data.table
+  # Get column types
+  col_types <- vapply(ph.data, function(x) {
+    if (is.factor(x)) return("factor")
+    if (is.character(x)) return("character")
+    return("other")
+  }, character(1))
+  factor.columns <- names(col_types[col_types == "factor"])
+  string.columns <- names(col_types[col_types == "character"])
+
+  # Cleaning helper function
+  clean_vec <- function(x) {
+    # Basic UTF-8 normalization
+    x <- iconv(x, from = "", to = "UTF-8", sub = "byte")
+
+    if (convert_to_utf8) {
+      x <- utf8::utf8_encode(x)  # Thorough check, but slow
+    } else {
+      x <- enc2utf8(x)  # Quick pass
+    }
+
+    x <- tryCatch({
+      # Step 1: Remove zero-width and invisible characters
+      x <- gsub("[\u200B\u200C\u200D\uFEFF]", "", x)
+
+      # Step 2: Normalize all sorts of whitespace to regular space
+      x <- gsub("[\u00A0\u2000-\u200A\u2028\u2029\u202F\u205F\u3000[:space:]]+", " ", x)
+
+      # Step 3: Trim leading/trailing space
+      trimws(x)
+    }, error = function(e) {
+      result <- character(length(x))
+      for (i in seq_along(x)) {
+        result[i] <- tryCatch({
+          xi <- gsub("[\u200B\u200C\u200D\uFEFF]", "", x[i])
+          xi <- gsub("[\u00A0\u2000-\u200A\u2028\u2029\u202F\u205F\u3000[:space:]]+", " ", xi)
+          trimws(xi)
+        }, error = function(e) trimws(x[i]))
+      }
+      result
+    })
+
+    # Replace empty strings with NA
+    data.table::fifelse(nzchar(x), x, NA_character_)
+  }
+
+
+  # Process string columns if any exist
+  if (length(string.columns) > 0) {
+    ph.data[, (string.columns) := lapply(.SD, clean_vec), .SDcols = string.columns]
+    # Convert to factors if requested
+    if (stringsAsFactors) {
+      ph.data[, (string.columns) := lapply(.SD, factor), .SDcols = string.columns]
+    }
+  }
+
+  # Process factor columns if any exist
+  if (length(factor.columns) > 0) {
+    # Convert factors to character, clean them, then back to factor
+    ph.data[, (factor.columns) := lapply(.SD, function(x) {
+      # Store factor levels / labels
+      lvls <- levels(x)
+      lvls_clean <- clean_vec(as.character(lvls))
+      # Convert to character, clean it, then back to factor with same levels
+      x_char <- as.character(x)
+      x_clean <- clean_vec(x_char)
+      factor(x_clean, levels = lvls_clean, exclude = NULL)
+    }), .SDcols = factor.columns]
+  }
+
+  # Reorder columns
+  data.table::setcolorder(ph.data, original.order)
+  return(invisible(ph.data))
 }
 
 # sql_clean() ----
 #' Clean string columns read from SQL
-#' @param dat name of data.frame or data.table
+#' @param ph.data name of data.frame or data.table
 #' @param stringsAsFactors logical. Specifies whether to convert strings to factors (TRUE) or not (FALSE)
 #' @description
 #' \strong{!!!STOP!!! This function has been deprecated!} Please use
@@ -2617,14 +2787,14 @@ string_clean <- function(dat = NULL,
 #' @export
 #' @importFrom utf8 utf8_encode
 #' @return data.table
-sql_clean <- function(dat = NULL, stringsAsFactors = FALSE){
+sql_clean <- function(ph.data = NULL, stringsAsFactors = FALSE){
   .Deprecated("string_clean")
 
   warning("\n\u26A0\ufe0f As a courtesy, `sql_clean` remains operational for the time being.\n",
           "Good things don't last forever. \nPlease update your code.",
           immediate. = FALSE)
 
-  string_clean(dat = dat, stringsAsFactors = stringsAsFactors)
+  string_clean(ph.data = ph.data, stringsAsFactors = stringsAsFactors)
 }
 
 # std_error() ----
@@ -2684,6 +2854,23 @@ std_error <- function(x) {
 #' }
 substrRight <- function(x, x.start, x.stop){
   substr(x, nchar(x)-x.stop+1, nchar(x)-x.start+1)
+}
+
+# suppress() ----
+#' Suppress data according to APDE standards & add caution flag for high RSE
+#'
+#' @description
+#' \strong{!!!STOP!!! This function has been deprecated.} Please use
+#' \code{apde.chi.tools::chi_suppress_results()} instead.
+#'
+#' @param ... Not used.
+#'
+#' @section Deprecation:
+#' Please use \code{apde.chi.tools::chi_suppress_results()} instead.
+#'
+#' @export
+suppress <- function(...) {
+  stop("\n\U1F6D1 suppress() has been replaced. \nPlease use apde.chi.tools::chi_suppress_results() instead.", call. = FALSE)
 }
 
 # quiet() ----
@@ -2976,8 +3163,8 @@ tsql_validate_field_types <- function(ph.data = NULL,
 #' so it can be easily loaded into SQL. Experience has shown that loading large
 #' tables in 'chunks' is less likely to cause errors. It is not needed for small
 #' tables which load quickly. For **extremely large** datasets, you will likely
-#' want to use another method, perhaps something like
-#' [bcp](https://learn.microsoft.com/en-us/sql/tools/bcp-utility?view=sql-server-ver16).
+#' want to use the \href{https://learn.microsoft.com/en-us/sql/tools/bcp-utility?}{BCP
+#' (Bulk Copy Program)}, which has been implemented in \code{\link[apde]{load_df_bcp_f}}.
 #'
 #'
 #' @param ph.data The name of a single data.table/data.frame to be loaded to SQL Server
@@ -3010,6 +3197,9 @@ tsql_validate_field_types <- function(ph.data = NULL,
 #'
 #' `validate_field_types = TRUE` is ignored if the `field_types` argument is not
 #' provided.
+#'
+#' @seealso \code{\link[apde]{load_df_bcp_f}} for a faster BCP-based approach
+#' recommended for very large datasets where speed is critical.
 #'
 #' @name tsql_chunk_loader
 #'
