@@ -100,7 +100,7 @@ However, many life expectancy estimates (including those calculated by the `life
 
 If your confidence intervals aren't roughly symmetric around the point estimate, traditional formulas will give incorrect results.
 
-## A Better Approach: Monte Carlo Simulation
+# A Better Approach: Monte Carlo Simulation
 
 For cases described above, we need a method that doesn't assume normality or symmetry. Monte Carlo simulation works by:
 
@@ -110,7 +110,7 @@ For cases described above, we need a method that doesn't assume normality or sym
 
 This approach is valid regardless of the underlying distributions and automatically captures the correct uncertainty propagation.
 
-# Visualizing the Monte Carlo Approach
+## Visualizing the Monte Carlo Approach
 
 Let's see how Monte Carlo simulation works by comparing it with the familiar case of estimates from normal distributions. These are condition under which traditional parametric methods work.
 
