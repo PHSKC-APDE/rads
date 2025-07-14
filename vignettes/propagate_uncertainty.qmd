@@ -7,19 +7,19 @@ editor: visual
 
 # Introduction
 
-When comparing health indicators between populations or time periods, we often need to calculate differences or ratios between estimates while accounting for their uncertainty. For example, you might want to know whether the life expectancy in Smallville is significantly different from that in Megalopolis. Or perhaps you want to calculate the ratio of age-adjusted mortality rates between two demographic groups.
+When comparing health indicators between populations or time periods, we often need to calculate differences or ratios between estimates while accounting for their uncertainty. For example, is life expectancy in Smallville significantly different from that in Megalopolis? Or, what is the ratio of age-adjusted mortality rates between these two communities?
 
 The process of combining uncertainties when performing mathematical operations is called **uncertainty propagation** or **error propagation**. While simple formulas exist for basic cases, they make assumptions that often don't hold for common public health indicators. The `propagate_uncertainty()` function provides a robust Monte Carlo approach that works even when traditional methods fail.
 
 This vignette will walk you through when and how to propagate uncertainty, starting with the traditional mathematical approaches and then showing when and why you need the more flexible Monte Carlo method.
 
-## When to Use `propagate_uncertainty()` vs `multi_t_test()`
+## :question: How does `propagate_uncertainty()` relate to `multi_t_test()`?
 
 Before diving into uncertainty propagation, it's important to understand when to use this function versus the related [`multi_t_test()`](utilities.html#multi_t_test) function:
 
-- **Use `propagate_uncertainty()`** when you want to **combine or compare two estimates** (differences, ratios, etc.) and at least one has asymmetric confidence intervals or comes from specialized methods (like age-adjusted rates, exponentiated regression coefficients, or life expectancy from small populations).
+-   **Use `propagate_uncertainty()`** when you want to **combine or compare two estimates** (summations, differences, ratios, etc.) and at least one has asymmetric confidence intervals or comes from specialized methods (like age-adjusted rates, exponentiated regression coefficients, or life expectancy from small populations).
 
-- **Use `multi_t_test()`** when you want to **compare multiple groups against a single reference group** using summary statistics, and your estimates have roughly symmetric confidence intervals that can reasonably assume normality.
+-   **Use `multi_t_test()`** when you want to **compare multiple groups against a single reference group** using summary statistics, and your estimates have roughly symmetric confidence intervals that can reasonably assume normality.
 
 In essence, `propagate_uncertainty()` handles the complex uncertainty propagation for two estimates, while `multi_t_test()` performs statistical testing across multiple groups with traditional assumptions. If you're unsure which to use, `propagate_uncertainty()` is more robust as it doesn't rely on normality assumptions.
 
@@ -33,15 +33,11 @@ For simple cases, we can use familiar mathematical formulas to propagate uncerta
 
 **For ratios (X / Y):** $$SE_{ratio} = \frac{X}{Y} \times \sqrt{\left(\frac{SE_X}{X}\right)^2 + \left(\frac{SE_Y}{Y}\right)^2}$$
 
-These formulas assume that X and Y are independent and normally distributed. Let's see when this works well:
+These formulas assume that X and Y are independent and normally distributed.
 
-```{r}
-#| warning: false
-#| message: false
-library(rads)
-library(data.table)
-library(ggplot2)
-```
+This works well in simple cases like comparing the means from two surveys since they would typically have *symmetric confidence intervals* based on a *normal distribution* (assuming samples with sufficient size).
+
+For example:
 
 ```{r}
 #| echo: false
@@ -49,21 +45,28 @@ pretty_kable <- function(dt) {
   knitr::kable(dt, format = 'markdown')
 }
 ```
-```{r}
-# Example: Comparing simple means from two surveys
-# These would typically have symmetric, normal-like confidence intervals
-smallville_mean <- 68.5  # Mean age
-smallville_se <- 2.1
-megalopolis_mean <- 71.2
-megalopolis_se <- 1.8
 
-# Traditional formula for difference
+```{r}
+#| warning: false
+#| message: false
+# Load libraries
+library(rads)
+library(data.table)
+library(ggplot2)
+
+# Set the parameteres
+smallville_mean <- 34.3  # Mean age in Smallville
+smallville_se <- 0.2
+megalopolis_mean <- 37.2 # Mean age in Megalopolis
+megalopolis_se <- 0.15
+
+# Traditional formulas for difference
 diff_traditional <- smallville_mean - megalopolis_mean
 se_diff_traditional <- sqrt(smallville_se^2 + megalopolis_se^2)
 ci_lower_traditional <- diff_traditional - 1.96 * se_diff_traditional
 ci_upper_traditional <- diff_traditional + 1.96 * se_diff_traditional
 
-print(paste0("Traditional method - Difference: ", round(diff_traditional, 2),
+cat(paste0("Traditional method - Difference: ", round(diff_traditional, 2),
             " 95% CI: (", round(ci_lower_traditional, 2), ", ", round(ci_upper_traditional, 2), ")"))
 ```
 
@@ -73,14 +76,14 @@ Traditional formulas break down when dealing with:
 
 ### 1. Exponentiated Results from Regression Models
 
-When you have odds ratios, rates ratios, or hazard ratios from logistic or Poisson regression, the confidence intervals are calculated on the log scale and then exponentiated. This creates asymmetric confidence intervals on the original scale.
+When you have odds ratios, rates ratios, or hazard ratios from regression, the confidence intervals are calculated on the log scale and then exponentiated. This creates asymmetric confidence intervals on the original scale.
 
 ### 2. Age-Adjusted Rates
 
 The confidence intervals for age-adjusted rates are often asymmetric because they:
 
--   Combine rates from different age groups with varying sample sizes
 -   Use methods like [Fay-Feuer](https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf) that account for the Poisson nature of count data
+-   Combine rates from different age groups with varying sample sizes
 -   Reflect skewed distributions, especially when dealing with rare events
 
 ### 3. Life Expectancy
@@ -91,7 +94,7 @@ Life expectancy confidence intervals **can be** asymmetric, particularly when th
 -   Use bootstrap or resampling methods that preserve distributional properties\
 -   Are calculated for populations with unusual mortality patterns
 
-However, many published life expectancy estimates (including those from the `life_table()` function in this package, which uses the WHO/Chiang method) produce roughly symmetric confidence intervals with adequate sample sizes and can use the normal distribution assumption.
+However, many life expectancy estimates (including those calculated by the `life_table()` function in this package, which uses the WHO/Chiang method) produce roughly symmetric confidence intervals with adequate sample sizes and can use the normal distribution assumption.
 
 ### 4. Any Indicator with Asymmetric Confidence Intervals
 
@@ -114,17 +117,17 @@ Let's see how Monte Carlo simulation works by comparing it with the familiar cas
 Define the age distributions
 
 ```{r}
-smallville_le <- 34.3
+smallville_mean <- 34.3
 smallville_se <- 0.2
 
-megalopolis_le <- 37.2
+megalopolis_mean <- 37.2
 megalopolis_se <- 0.15
 ```
 
 Traditional calculation of the age difference
 
 ```{r}
-traditional_diff <- megalopolis_le - smallville_le
+traditional_diff <- megalopolis_mean - smallville_mean
 traditional_se <- sqrt(smallville_se^2 + megalopolis_se^2)
 traditional_lower <- traditional_diff - 1.96 * traditional_se
 traditional_upper <- traditional_diff + 1.96 * traditional_se
@@ -135,8 +138,8 @@ Monte Carlo simulation of normal distributions based on summary statistics
 ```{r}
 set.seed(98104)
 n_draws <- 10000
-smallville_draws <- rnorm(n_draws, smallville_le, smallville_se)
-megalopolis_draws <- rnorm(n_draws, megalopolis_le, megalopolis_se)
+smallville_draws <- rnorm(n_draws, smallville_mean, smallville_se)
+megalopolis_draws <- rnorm(n_draws, megalopolis_mean, megalopolis_se)
 difference_draws <- megalopolis_draws - smallville_draws
 ```
 
@@ -253,9 +256,6 @@ contrast_fn = function(x, y) x / y
 
 # Percent differences
 contrast_fn = function(x, y) 100 * (x - y) / y
-
-# Log ratios
-contrast_fn = function(x, y) log(x / y)
 ```
 
 ### Choosing the Distribution (`dist`)
@@ -273,9 +273,13 @@ contrast_fn = function(x, y) log(x / y)
 -   Have right-skewed sampling distributions
 -   Have asymmetric confidence intervals (check your specific estimates)
 
+**Note on Age-Adjusted Rates**: The Fay-Feuer method actually uses the gamma distribution, but the lognormal approximation captures the right-skewed nature of the uncertainty and works well in practice when only confidence intervals are available.
+
+**Important Note**: The function assumes all uncertainty can be reasonably approximated by either normal or lognormal distributions. While these cover most public health scenarios, this is still an approximation. For estimates with highly unusual uncertainty distributions (e.g., multimodal or extreme skewness), the function may not capture the true distributional complexity.
+
 # Examples: Basic Usage
 
-## Example 1: Comparing Life Expectancy with Standard Errors
+## Example 1: Difference in Life Expectancy with Standard Errors
 
 Let's compare life expectancy between Smallville and Megalopolis using the `propagate_uncertainty()` function:
 
@@ -313,7 +317,7 @@ pretty_kable(le_result[, .(city_comparison, contrast, contrast_lower, contrast_u
                            contrast_se, contrast_pvalue)])
 ```
 
-## Example 2: Comparing Age-Adjusted Mortality Rates with Confidence Intervals
+## Example 2: Difference in Age-Adjusted Mortality Rates with Confidence Intervals
 
 Now let's work with age-adjusted mortality rates that have asymmetric confidence intervals:
 
@@ -325,10 +329,10 @@ mortality_data <- data.table(
   comparison = "City Mortality Comparison", 
   smallville_rate = 652,
   smallville_lower = 618,
-  smallville_upper = 689,
+  smallville_upper = 689,  # right skewed
   megalopolis_rate = 678,
   megalopolis_lower = 651,
-  megalopolis_upper = 708
+  megalopolis_upper = 708  # right skewed
 )
 
 # Calculate the difference - note we're using lognormal distribution
@@ -341,7 +345,7 @@ mortality_result <- propagate_uncertainty(
   ref_lower_col = "smallville_lower",
   ref_upper_col = "smallville_upper", 
   contrast_fn = function(x, y) x - y,
-  dist = "lognormal",                    # Better for rates with asymmetric CIs
+  dist = "lognormal",                   # Better for rates with asymmetric CIs
   draws = 10000,
   seed = 98104
 )
@@ -390,7 +394,7 @@ pretty_kable(ratio_result[, .(comparison, contrast, contrast_lower, contrast_upp
 
 ## Working with Multiple Comparisons
 
-The real power of this function, besides not relying on parametric assumptions, is that you can easily batch process comparisons. For example, the following code will compare the death rates for different demographics in Megalopolis compared to Smallville.
+The real power of this function, besides not relying on parametric assumptions, is that you can easily batch process comparisons. For example, the following code will compare the mortality rates for four different demographics in Megalopolis compared to Smallville.
 
 ### Table of Mortality Rates per 100,000
 
@@ -455,20 +459,20 @@ Imagine we ran a logistic regression predicting the odds of knowing how to play 
 #| warning: false
 #| message: false
 # Odds ratios from logistic regression
-saxophone_data <- data.table(
-  comparison = "East KC vs North KC Saxophone OR",
+sax_data <- data.table(
+  comparison = "East KC OR vs North KC OR",
   east_kc_or = 1.85,        # OR for East KC vs Seattle
-  east_kc_lower = 1.42,     # CI bounds
+  east_kc_lower = 1.42,     
   east_kc_upper = 2.41,
   north_kc_or = 1.34,       # OR for North KC vs Seattle  
-  north_kc_lower = 1.08,    # CI bounds
+  north_kc_lower = 1.08,    
   north_kc_upper = 1.66
 )
 ```
 
 ```{r}
 #| echo: false
-pretty_kable(saxophone_data)
+pretty_kable(sax_data)
 ```
 
 ### The Hard Way (Manual Log-Scale Calculations)
@@ -477,14 +481,14 @@ pretty_kable(saxophone_data)
 #| warning: false
 #| message: false
 # Manual calculation: convert to log scale
-east_log_or <- log(1.85)
-north_log_or <- log(1.34)
+east_log_or <- log(sax_data$east_kc_or)
+north_log_or <- log(sax_data$north_kc_or)
 
-# Calculate SEs from CIs on log scale
-east_se_log <- (log(2.41) - log(1.42)) / (2 * 1.96)
-north_se_log <- (log(1.66) - log(1.08)) / (2 * 1.96)
+# Calculate approximate SEs from CIs on log scale
+east_se_log <- (log(sax_data$east_kc_upper) - log(sax_data$east_kc_lower)) / (2 * 1.96)
+north_se_log <- (log(sax_data$north_kc_upper) - log(sax_data$north_kc_lower)) / (2 * 1.96)
 
-# Traditional error propagation for difference on log scale
+# Now that everythign is on log scale, can use traditional error propagation
 log_diff <- east_log_or - north_log_or
 se_log_diff <- sqrt(east_se_log^2 + north_se_log^2)
 
@@ -504,7 +508,7 @@ manual_pvalue <- 2 * (1 - pnorm(abs(manual_z)))
 #| warning: false
 #| message: false
 easy_way_result <- propagate_uncertainty(
-  ph.estimates = saxophone_data,
+  ph.estimates = sax_data,
   comp_mean_col = "east_kc_or",        # East KC:Seattle OR
   comp_lower_col = "east_kc_lower",
   comp_upper_col = "east_kc_upper",
@@ -531,7 +535,7 @@ comparison_data <- data.table(
 pretty_kable(comparison_data)
 ```
 
-As you can see, the two approaches give similar results. However, using `propagate_uncertainty` is much simpler and less error-prone since you can work directly with your exponentiated coefficients.
+As you can see, both approaches are statistically equivalent and give nearly identical results. The `propagate_uncertainty()` function is primarily a convenience that reduces the risk of coding errors and handles batch processing.
 
 # Practical Applications
 

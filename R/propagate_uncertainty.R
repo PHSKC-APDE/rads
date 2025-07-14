@@ -202,6 +202,9 @@
 #' @importFrom data.table copy data.table setDT setattr :=
 #' @importFrom stats median rnorm rlnorm qnorm quantile t.test sd
 #' @importFrom utils setTxtProgressBar txtProgressBar
+#' @seealso [`multi_t_test()`] for comparing multiple groups against a
+#'   reference group when estimates have symmetric confidence intervals and
+#'   normality can be reasonably assumed.
 #' @export
 propagate_uncertainty <- function(
     ph.estimates,
