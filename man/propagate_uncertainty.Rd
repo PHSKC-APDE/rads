@@ -263,6 +263,11 @@ result_custom <- propagate_uncertainty(
 }
 
 }
+\seealso{
+\code{\link[=multi_t_test]{multi_t_test()}} for comparing multiple groups against a
+reference group when estimates have symmetric confidence intervals and
+normality can be reasonably assumed.
+}
 \keyword{monte-carlo}
 \keyword{propagation}
 \keyword{statistics}

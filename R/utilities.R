@@ -2106,7 +2106,7 @@ metrics = function(){
 #' contexts due to inherent differences between subpopulations. If you have the
 #' underlying raw data (not just the means and standard errors) and want to
 #' perform calculations assuming equal variances or a paired t-test, please
-#' refer to \code{\link{t.test}} in the \code{\link{stats}} package.
+#' refer to [stats::t.test()].
 #'
 #' @param means Numeric vector of group means.
 #' @param ses Numeric vector of standard errors for each group.
@@ -2139,8 +2139,7 @@ metrics = function(){
 #' @param adjust_method String specifying the method of adjustment for multiple
 #' comparisons: \strong{`NULL`}, \strong{`'Holm-Bonferroni'`},
 #' \strong{`'Benjamini-Hochberg'`}. Refer to the `holm` and `bh` descriptions
-#' in \code{\link{p.adjust}} in the \code{\link{stats}} package for more
-#' information. Default is \strong{`NULL`}.
+#' in [stats::p.adjust()] for more information. Default is \strong{`NULL`}.
 #'
 #' @return A data.table containing comparison results with the following columns:
 #'   \item{comparison}{String describing the comparison}
@@ -2179,6 +2178,9 @@ metrics = function(){
 #' print(birthweight_comparison)
 #'
 #' @import data.table
+#' @seealso [`propagate_uncertainty()`] for more robust uncertainty
+#'   propagation when comparing two estimates with potentially asymmetric
+#'   confidence intervals or non-normal distributions.
 #' @export
 multi_t_test <- function(means,
                          ses,
