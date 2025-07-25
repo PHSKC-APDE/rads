@@ -1,5 +1,3 @@
-options("scipen"=999) # turn off scientific notation
-
 # adjust_direct() ----
 #' Calculate crude and directly adjusted rates
 #'
