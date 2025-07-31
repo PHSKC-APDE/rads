@@ -960,6 +960,68 @@ death_injury_matrix_count <- function(ph.data,
     return(x_combo)
 }
 
+# death_multicause() ----
+#' View available multicause death definitions for death_multicause_count()
+#'
+#' @description
+#' Function to view the multicause death definitions available in RADS. These are
+#' causes of death that require BOTH specific underlying causes AND contributing
+#' causes to be present.
+#'
+#' Generates a data.table showing the available cause names and their definitions.
+#'
+#' @details
+#' Multicause deaths are those requiring specific combinations of underlying and
+#' contributing causes. For example, opioid deaths require poisoning as the
+#' underlying cause AND opioid codes in the contributing causes.
+#'
+#' @note
+#' This function does not take any arguments
+#'
+#' @source
+#' [rads.data::icd10_multicause()]
+#'
+#' @return
+#' A data.table with unique cause names and a description of what each includes.
+#'
+#' @export
+#'
+#' @name death_multicause
+#'
+#' @examples
+#' # View available multicause definitions
+#' available_causes <- death_multicause()
+#' print(available_causes)
+#'
+#' @import data.table rads.data
+#'
+death_multicause <- function(){
+  # Global variables used by data.table declared as NULL to play nice with devtools::check() ----
+  cause_name <- underlying_contributing <- icd10 <- n_underlying <- n_contributing <- NULL
+
+  # Get the reference table
+  multicause_ref <- data.table::copy(rads.data::icd10_multicause)
+
+  # Summarize by cause_name
+  summary_table <- multicause_ref[, .(
+    n_underlying = sum(underlying_contributing == "underlying"),
+    n_contributing = sum(underlying_contributing == "contributing")
+  ), by = cause_name]
+
+  # Add description
+  summary_table[, description := paste0(
+    "Requires any of ", n_underlying, " underlying cause codes AND any of ",
+    n_contributing, " contributing cause codes"
+  )]
+
+  # Keep only the columns we want to show
+  summary_table <- summary_table[, .(cause_name, description)]
+
+  return(summary_table)
+}
+
+# death_multicause_count() ----
+
 # death_other() ----
 #' View "Other" Causes of Death available in RADS
 #'
