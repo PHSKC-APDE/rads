@@ -5,29 +5,29 @@ prefer-html: false
 self-contained: true
 editor: visual
 ---
-
+  
 # Introduction
-
+  
 The [rads package](https://github.com/PHSKC-APDE/rads/) has a suite of tools designed to facilitate and accelerate the analysis of standardized death data. Combining the `rads` functions below with the clean death data on our servers should allow APDE analysts to conduct custom analyses with relative ease.
 
 The core `rads` death functions are:
-
--   `get_data_death()`: easily download standardized death data from TSQL into R
--   `death_icd10_clean()`: clean and standardize ICD-10 codes for use with `rads` death functions
--   `death_113_count()`: generate death counts for the CDC's 113 Selected Causes of Death (PLUS COVID-19)
--   `death_130_count()`: generate death counts for the CDC's 130 Selected Causes of **infant** Death (PLUS COVID-19)
--   `death_injury_matrix_count()`: generate counts of external cause (a.k.a., injury related) deaths by intent and mechanism
--   `death_multicause_count()`: generate death counts needing **BOTH** underlying and contributing causes
--   `death_other_count()`: generate counts for select causes of death that are **not** **included** in `death_113_count()`, `death_130_count()`, & `death_injury_matrix_count()`, but are of interest to APDE.
--   `life_table()`: generate a standard life table, where the first row is the life expectancy (aka 'expectation of life') at birth
+  
+- `get_data_death()`: easily download standardized death data from TSQL into R
+- `death_icd10_clean()`: clean and standardize ICD-10 codes for use with `rads` death functions
+- `death_113_count()`: generate death counts for the CDC's 113 Selected Causes of Death (PLUS COVID-19)
+- `death_130_count()`: generate death counts for the CDC's 130 Selected Causes of **infant** Death (PLUS COVID-19)
+- `death_injury_matrix_count()`: generate counts of external cause (a.k.a., injury related) deaths by intent and mechanism
+- `death_multicause_count()`: generate death counts needing **BOTH** underlying and contributing causes
+- `death_other_count()`: generate counts for select causes of death that are **not** **included** in `death_113_count()`, `death_130_count()`, & `death_injury_matrix_count()`, but are of interest to APDE.
+- `life_table()`: generate a standard life table, where the first row is the life expectancy (aka 'expectation of life') at birth
 
 All of these functions have detailed help files that are accessible by typing `?function_name`, e.g. `?get_data_death`. Some examples for how to use these functions are given below.
 
 ***A few quick notes before we begin ...***
-
--   `death_113_count()`, `death_130_count()`, `death_injury_matrix_count()`, `death_multicause_count()` & `death_other_count()` only work with ICD-10 cause of death codes (i.e., those used since 1999).
--   If you want to create age-adjusted rates, we recommend you read the [age_standardize](https://github.com/PHSKC-APDE/rads/wiki/age_standardize) and [calculating_rates_with_rads](https://github.com/PHSKC-APDE/rads/wiki/calculating_rates_with_rads) vignettes after reading through this one.
--   To perform a leading causes of death analysis, please follow the [Six Step Process on the wiki](https://github.com/PHSKC-APDE/rads/wiki/leading_causes_of_death)
+  
+- `death_113_count()`, `death_130_count()`, `death_injury_matrix_count()`, `death_multicause_count()` & `death_other_count()` only work with ICD-10 cause of death codes (i.e., those used since 1999).
+- If you want to create age-adjusted rates, we recommend you read the [age_standardize](https://github.com/PHSKC-APDE/rads/wiki/age_standardize) and [calculating_rates_with_rads](https://github.com/PHSKC-APDE/rads/wiki/calculating_rates_with_rads) vignettes after reading through this one.
+- To perform a leading causes of death analysis, please follow the [Six Step Process on the wiki](https://github.com/PHSKC-APDE/rads/wiki/leading_causes_of_death)
 
 # Set up the environment
 
@@ -47,11 +47,11 @@ library(kableExtra)
 # get_data_death()
 
 `get_data_death()` takes four potential arguments:
-
--   `cols`: the names of the columns that you want to download. You will dramatically speed up the download time if you only specify the columns of genuine interest.
--   `year`: the year(s) of interest, from 1980 to the present.
--   `kingco`: logical (T\|F) specifying whether to limit the download to King County.
--   `topcode`: logical (T\|F) specifying whether you want to top code `chi_age` at 100 to match population data.
+  
+- `cols`: the names of the columns that you want to download. You will dramatically speed up the download time if you only specify the columns of genuine interest.
+- `year`: the year(s) of interest, from 1980 to the present.
+- `kingco`: logical (T|F) specifying whether to limit the analysis to King County.
+- `topcode`: logical (T|F) specifying whether you want to top code `chi_age` at 100 to match population data.
 
 If you do not specify any of the arguments, you will get all death data columns, for King County, for the latest year, with top coding to 100. Top coding to 100 is our general practice because there are few people above 100 years of age and it aligns with our population data, which is also top coded to 100.
 
@@ -69,8 +69,8 @@ max(ex0$chi_age, na.rm = T) # check top coding
 # death_icd10_clean()
 
 `death_icd10_clean()` is called upon by all of the `death_***_count()` functions, but can also be used as a standalone function for truly custom analyses. It takes a single argument:
-
--   `icdcol`: the name of a character vector of ICD-10 codes.
+  
+- `icdcol`: the name of a character vector of ICD-10 codes.
 
 The function can be used to clean any arbitrary vector of ICD-10 codes. Notice that it gives a warning, informing you that it cleaned the codes.
 
@@ -104,20 +104,20 @@ Here is a snapshot of the top 10 rows from `death_113()`
 
 ```{r}
 #| echo: FALSE
-  nchs113 <- death_113()[1:10]
-  kable((nchs113), format = "markdown") 
+nchs113 <- death_113()[1:10]
+kable((nchs113), format = "markdown") 
 ```
 
 `death_113_count()` takes eight potential arguments:
-
--   `ph.data`: the name of a person level data.table/data.frame of death data with ICD codes
--   `causeids`: specifies the causeid(s) for NCHS 113 Causes of Death (1:113)
--   `cause`: optional. A character vector specifying the causes of death of interest. When specified, it is used in lieu of the `causeids`. It is case insensitive and matches partial strings.
--   `icdcol`: name of the column with the ICD codes of interest. Defaults to "underlying_cod_code", which is used in APDE's data.
--   `kingco`: logical (T\|F) specifying whether to limit the data analysis to King County. Only works if ph.data still has the `chi_geo_kc` column.
--   `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
--   `ypll_age`: optional. The age in years (an integer) used for calculating Years of Potential Life Lost.
--   `death_age_col`: optional. Name of the age column used if `ypll_age` is specified.
+  
+- `ph.data`: the name of a person level data.table/data.frame of death data with ICD codes
+- `causeids`: specifies the causeid(s) for NCHS 113 Causes of Death (1:113)
+- `cause`: a character vector specifying the causes of death of interest. When specified, it is used in lieu of the `causeids`. It is case insensitive and matches partial strings.
+- `icdcol`: name of the column with the ICD codes of interest. Defaults to "underlying_cod_code", which is used in APDE's data.
+- `kingco`: logical (T|F) specifying whether to limit the analysis to King County.
+- `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
+- `ypll_age`: The age in years (an integer) used for calculating Years of Potential Life Lost.
+- `death_age_col`: Name of the age column used if `ypll_age` is specified.
 
 Please refer to the help file for more details.
 
@@ -160,7 +160,7 @@ dt1[, deaths := format(deaths, big.mark = ',')]
 kable(head(dt1), format = "markdown")
 ```
 
-Glancing at the table above, you'll see that you have the two causes of death of interest, PLUS the total of death from any cause ('All causes')*.*
+Glancing at the table above, you'll see that you have the two causes of death of interest, PLUS the total of death from any cause ('All causes').
 
 We could have specified 'Viral hepatitis' using `causeids` rather than the `cause` text string for the same result. Also, we really can't specify COVID-19. Since COVID-19 is not on the official 113 causes of death list, it does not have a code. It is however returned automatically by this function.
 
@@ -168,7 +168,7 @@ We could have specified 'Viral hepatitis' using `causeids` rather than the `caus
 #| warning: false
 #| message: false
 dt1.alt <- death_113_count(ph.data = ex1, 
-                       causeids = 14)
+                           causeids = 14)
 ```
 
 ```{r}
@@ -227,7 +227,7 @@ ex3 <- get_data_death(year = 2020,
                       cols = c('chi_age', 'underlying_cod_code'))
 ```
 
-Now, identify deaths due to COVID-19. Remember COVID-19 is not a one of the official 113 causes of death, so let's arbitrarily get causeid #1 (Salmonella infections), knowing that it will also give us COVID-19.
+Now, identify deaths due to COVID-19. Remember COVID-19 is not one of the official 113 causes of death, so let's arbitrarily get causeid #1 (Salmonella infections), knowing that it will also give us COVID-19.
 
 ```{r}
 #| warning: false
@@ -267,14 +267,14 @@ The table above tells us that, if everyone who died from COVID-19 in 2020 had li
 
 `death_injury_matrix_count()` takes eight potential arguments:
 
--   `ph.data`: the name of a person level data.table/data.frame of death data with ICD codes
--   `intent`: specifies the intent(s) of interest as per options available in `death_injury_matrix`. 'none' will ignore intent and return 'Any intent'. '\*' is a wildcard for all possible intents.
--   `mechanism`: specifies the mechanism(s) of interest as per options available in `death_injury_matrix`. 'none' will ignore mechanism and return 'Any mechansim'. '\*' is a wildcard for all possible mechanisms.
--   `icdcol`: name of the column with the ICD codes of interest. Defaults to "underlying_cod_code", which is used in APDE's data.
--   `kingco`: logical (T\|F) specifying whether to limit the data analysis to King County. Only works if ph.data still has the `chi_geo_kc` column.
--   `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
--   `ypll_age`: optional. The age in years (an integer) used for calculating Years of Potential Life Lost.
--   `death_age_col`: optional. Name of the age column used if `ypll_age` is specified.
+- `ph.data`: the name of a person level data.table/data.frame of death data with ICD codes
+- `intent`: specifies the intent(s) of interest as per options available in `death_injury_matrix`. 'none' will ignore intent and return 'Any intent'. '*' is a wildcard for all possible intents.
+- `mechanism`: specifies the mechanism(s) of interest as per options available in `death_injury_matrix`. 'none' will ignore mechanism and return 'Any mechanism'. '*' is a wildcard for all possible mechanisms.
+- `icdcol`: name of the column with the ICD codes of interest. Defaults to "underlying_cod_code", which is used in APDE's data.
+- `kingco`: logical (T|F) specifying whether to limit the analysis to King County.
+- `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
+- `ypll_age`: The age in years (an integer) used for calculating Years of Potential Life Lost.
+- `death_age_col`: Name of the age column used if `ypll_age` is specified.
 
 Please refer to the help file for more details.
 
@@ -287,7 +287,7 @@ ex4 <- get_data_death(year = 2020,
                       cols = c('chi_sex', 'underlying_cod_code'))
 ```
 
-Run death_injury_matrix_count and show the first six rows
+Run `death_injury_matrix_count` and show the first six rows
 
 ```{r}
 #| message: false
@@ -311,10 +311,10 @@ kable(dt4, format = "markdown")
 #| message: false
 #| warning: false
 dt4.alt <- death_injury_matrix_count(ph.data = ex4, 
-                                 intent = "none", 
-                                 mechanism = "none",
-                                 kingco = FALSE, 
-                                 group_by = 'chi_sex')
+                                     intent = "none", 
+                                     mechanism = "none",
+                                     kingco = FALSE, 
+                                     group_by = 'chi_sex')
 ```
 
 ```{r}
@@ -332,7 +332,7 @@ ex5 <- get_data_death(year = 2016:2020,
                       cols = c('chi_sex', 'underlying_cod_code'))
 ```
 
-Run death_injury_matrix_count
+Run `death_injury_matrix_count`
 
 ```{r}
 #| message: false
@@ -358,7 +358,7 @@ ex6 <- get_data_death(year = 2016:2020,
                       cols = c('chi_age', 'underlying_cod_code'))
 ```
 
-Run death_injury_matrix_count
+Run `death_injury_matrix_count`
 
 ```{r}
 #| message: false
@@ -378,25 +378,25 @@ kable(dt6, format = "markdown")
 
 # death_multicause_count()
 
-`death_multicause_count()`allows the user to get counts causes of death requiring **BOTH** underlying **AND** contributing causes. To view available analytic ready multicause death categories, simply type `death_multicause()`. If you want to add additional causes of death to this list, [please submit a GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new). In the meantime the function will allow you to specify the underlying cause of death and contributing cause of death ICD-10 of interest.
+`death_multicause_count()` allows the user to get counts causes of death requiring **BOTH** *underlying* **AND** *contributing* causes. To view available analytic ready multicause death categories, simply type `death_multicause()`. If you want to add additional causes of death to this list, [please submit a GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new?template=issue_form.yml). In the meantime the function will allow you to specify the underlying cause of death and contributing cause of death ICD-10 of interest.
 
 ```{r}
 kable(death_multicause(), format = "markdown")
 ```
 
-`death_multicause_count()` takes eleven potential arguments: 
-
-- `ph.data`: the name of a person level data.table/data.frame of death data with ICD codes, with at least one column of ICD10 underlying cause codes and columns for contributing cause codes. 
-- `cause_name`: a character vector specifying the multicause death definition from the reference table. For example, "Opioid". To see available options, use `rads::death_multicause()`. 
-- `underlying_codes`: an optional character vector of ICD10 codes that must appear in the underlying cause of death. Only used if `cause_name` is NULL. For example, c("X40", "X41", "X42"). 
-- `contributing_codes`: an optional character vector of ICD10 codes that must appear in the contributing causes of death. Only used if `cause_name` is NULL. For example, c("T400", "T401"). 
-- `icdcol`: name of the column with the underlying cause of death ICD codes. Defaults to "underlying_cod_code", which is used in APDE's data 
-- `contributing_cols`: a character vector specifying the stem of the column names containing contributing cause codes. The function expects columns named with this stem followed by numbers 1-20. E.g., "record_axis_code" leads the function to expect columns named 'record_axis_code_1', 'record_axis_code_2', ... 'record_axis_code_20'. 
-- `contributing_logic`: a character vector specifying whether "ANY" or "ALL" of the contributing_codes must be present. 
-- `kingco`: a logical vector specifying whether you want to limit the analysis to King County. Only works if ph.data still has the `chi_geo_kc` column. 
-- `group_by`: a character vector specifying all the variables by which you want to group (a.k.a. stratify) the results. For example, if you specified group_by = c('sex', 'sex'), the results would be stratified by each combination of sex and race. 
-- `ypll_age`: optional. The age in years (an integer) used for calculating Years of Potential Life Lost. 
-- `death_age_col`: optional. Name of the age column used if `ypll_age` is specified.
+`death_multicause_count()` takes eleven potential arguments:
+  
+- `ph.data`: the name of a person level data.table/data.frame of death data with ICD codes, with at least one column of ICD10 underlying cause codes and columns for contributing cause codes.
+- `cause_name`: a character vector specifying the multicause death definition from the reference table. For example, "Opioid". To see available options, use `death_multicause()`.
+- `underlying_codes`: a character vector of ICD10 codes that must appear in the underlying cause of death. Only used if `cause_name` is NULL. For example, c("X40", "X41", "X42").
+- `contributing_codes`: a character vector of ICD10 codes that must appear in the contributing causes of death. Only used if `cause_name` is NULL. For example, c("T400", "T401").
+- `icdcol`: name of the column with the underlying cause of death ICD codes. Defaults to "underlying_cod_code", which is used in APDE's data.
+- `contributing_cols`: a character vector specifying the stem of the column names containing contributing cause codes. The function expects columns named with this stem followed by numbers 1-20. E.g., "record_axis_code" leads the function to expect columns named 'record_axis_code_1', 'record_axis_code_2', ... 'record_axis_code_20'.
+- `contributing_logic`: a character vector specifying whether "ANY" or "ALL" of the `contributing_codes` must be present.
+- `kingco`: logical (T|F) specifying whether to limit the analysis to King County.
+- `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
+- `ypll_age`: The age in years (an integer) used for calculating Years of Potential Life Lost.
+- `death_age_col`: Name of the age column used if `ypll_age` is specified.
 
 Please refer to the help file for more details.
 
@@ -426,7 +426,7 @@ kable(dt7, format = "markdown")
 
 # death_other_count()
 
-`death_other_count()` allows the user to get death counts for cause of death that are NOT included in `death_113_count()`, `death_130_count()`, and `death_injury_matrix_count()`, but that are still of general interest to APDE. To review a list of all available 'other' causes of death, simply type `death_other()` into your R console. If you want to add additional causes of death to this list, [please submit a GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new).
+`death_other_count()` allows the user to get death counts for cause of death that are NOT included in `death_113_count()`, `death_130_count()`, and `death_injury_matrix_count()`, but that are still of general interest to APDE. To review a list of all available 'other' causes of death, simply type `death_other()` into your R console. If you want to add additional causes of death to this list, [please submit a GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new?template=issue_form.yml).
 
 ```{r}
 death_other()
@@ -434,13 +434,13 @@ death_other()
 
 `death_other_count()` takes seven potential arguments:
 
--   `ph.data`: the name of a person level data.table/data.frame of death data with ICD codes
--   `cause`: a character vector specifying the cause(s) of death of interest taken from the list provided by `death_other()`. It is case insensitive and matches partial strings
--   `icdcol`: name of the column with the ICD codes of interest. Defaults to "underlying_cod_code", which is used in APDE's data
--   `kingco`: logical (T\|F) specifying whether to limit the data analysis to King County. Only works if ph.data still has the `chi_geo_kc` column.
--   `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
--   `ypll_age`: optional. The age in years (an integer) used for calculating Years of Potential Life Lost.
--   `death_age_col`: optional. Name of the age column used if `ypll_age` is specified.
+- `ph.data`: the name of a person level data.table/data.frame of death data with ICD codes
+- `cause`: a character vector specifying the cause(s) of death of interest taken from the list provided by `death_other()`. It is case insensitive and matches partial strings.
+- `icdcol`: name of the column with the ICD codes of interest. Defaults to "underlying_cod_code", which is used in APDE's data.
+- `kingco`: logical (T|F) specifying whether to limit the analysis to King County.
+- `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
+- `ypll_age`: The age in years (an integer) used for calculating Years of Potential Life Lost.
+- `death_age_col`: Name of the age column used if `ypll_age` is specified.
 
 Please refer to the help file for more details.
 
@@ -459,9 +459,9 @@ Run `death_other_count`
 #| message: false
 #| warning: false
 dt8 <- death_other_count(ph.data = ex8, 
-                                 cause = "heat", 
-                                 kingco = FALSE, 
-                                 group_by = "chi_year")
+                         cause = "heat", 
+                         kingco = FALSE, 
+                         group_by = "chi_year")
 dt8 <- dt8[cause.of.death != 'All causes']
 setorder(dt8, chi_year, cause.of.death)
 ```
@@ -487,9 +487,9 @@ Run `death_other_count`
 #| message: false
 #| warning: false
 dt9 <- death_other_count(ph.data = ex9, 
-                                 cause = "cancer|heart", 
-                                 kingco = FALSE, 
-                                 ypll_age = 65)
+                         cause = "cancer|heart", 
+                         kingco = FALSE, 
+                         ypll_age = 65)
 ```
 
 ```{r}
@@ -504,14 +504,14 @@ kable(dt9, format = "markdown")
 `life_table()` generates a standard life table, where the first row is the life expectancy (aka 'expectation of life') at birth. Since it needs aggregate death data, you are **strongly encouraged to preprocess the death data with `life_table_prep()`.** A simple example of how to use `life_table_prep()` is embedded below.
 
 `life_table()` takes seven potential arguments:
-
--   `ph.data`: the name of data.table/data.frame with aggregated deaths and corresponding populations, as well as the age interval and the average fraction of years lived in the interval by those who die in the interval.
--   `myages`: the name of a column in `ph.data` with the age intervals used for the life table calculations (e.g., c('0-1', '1-5', ... '85+')).
--   `mydeaths`: the name of a numeric column in `ph.data` with the total deaths for the given age interval in the given year.
--   `mypops`: the name of a numeric column in `ph.data` with the total population corresponding to `mydeaths`.
--   `myprops`: the name of a numeric column in `ph.data` with the average proportion of the interval lived by those who died in the interval.
--   `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
--   `ci`: the confidence interval, must be \[0, 1\]. Default is 0.95
+  
+- `ph.data`: the name of data.table/data.frame with aggregated deaths and corresponding populations, as well as the age interval and the average fraction of years lived in the interval by those who die in the interval.
+- `myages`: the name of a column in `ph.data` with the age intervals used for the life table calculations (e.g., c('0-1', '1-5', ... '85+')).
+- `mydeaths`: the name of a numeric column in `ph.data` with the total deaths for the given age interval in the given year.
+- `mypops`: the name of a numeric column in `ph.data` with the total population corresponding to `mydeaths`.
+- `myprops`: the name of a numeric column in `ph.data` with the average proportion of the interval lived by those who died in the interval.
+- `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
+- `ci`: the confidence interval, must be [0, 1]. Default is 0.95
 
 Please refer to the help file for more details.
 
@@ -523,7 +523,7 @@ Get the critical death data
 #| message: false
 #| warning: false
 ex10 <- get_data_death(year = 2016:2020, 
-                        cols = c('date_of_birth', 'date_of_death', 'chi_sex'))
+                       cols = c('date_of_birth', 'date_of_death', 'chi_sex'))
 ```
 
 To preserve privacy, let's look at a summary of the table rather than the actual table
@@ -610,9 +610,9 @@ Merge the properly formatted death and population data together.
 #| message: false
 #| warning: false
 dt10 <- merge(dt10, 
-             pop, 
-             by = c('gender', 'ages'), 
-             all = T)
+              pop, 
+              by = c('gender', 'ages'), 
+              all = T)
 ```
 
 ```{r}
@@ -626,7 +626,7 @@ Run `life_table()` function to create life tables for males and females.
 #| message: false
 #| warning: false
 dt10.lifetable <- life_table(ph.data = dt10, 
-                            group_by = 'gender')
+                             group_by = 'gender')
 ```
 
 Display the first row of the life table for each gender, which is for children under 1. The `ex` column is the life expectancy at birth. To see a detailed key of what all the columns mean, type `?life_table` in your R console and read the 'Details' section.
