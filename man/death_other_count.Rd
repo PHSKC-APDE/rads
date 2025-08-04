@@ -124,6 +124,7 @@ head(eg2)
 \itemize{
 \item \code{\link[=death_other]{death_other()}} for viewing available 'Other' cause of death definitions
 \item \code{\link[=get_data_death]{get_data_death()}} for importing properly formatted death data
+\item \code{\link[=death_icd10_clean]{death_icd10_clean()}} for preparing ICD-10 codes for use with all rads death functions
 \item \code{\link[=age_standardize]{age_standardize()}} for calculating age standardized rates
 \item \code{\link[=death_113_count]{death_113_count()}} for generating CDC NCHS 113 leading causes of death counts
 \item \code{\link[=death_130_count]{death_130_count()}} for generating CDC NCHS 130 causes of infant death counts

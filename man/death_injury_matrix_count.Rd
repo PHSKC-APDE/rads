@@ -207,6 +207,7 @@ CDC: \url{https://www.cdc.gov/nchs/data/ice/icd10_transcode.pdf}
 \itemize{
 \item \code{\link[=death_injury_matrix]{death_injury_matrix()}} for viewing available injury death mechanisms and intents
 \item \code{\link[=get_data_death]{get_data_death()}} for importing properly formatted death data
+\item \code{\link[=death_icd10_clean]{death_icd10_clean()}} for preparing ICD-10 codes for use with all rads death functions
 \item \code{\link[=age_standardize]{age_standardize()}} for calculating age standardized rates
 \item \code{\link[=death_113_count]{death_113_count()}} for generating CDC NCHS 113 leading causes of death counts
 \item \code{\link[=death_130_count]{death_130_count()}} for generating CDC NCHS 130 causes of infant death counts

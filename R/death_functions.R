@@ -136,6 +136,7 @@ death_113 <- function(){
 #' @seealso
 #' - [death_113()] for viewing teh CDC NCHS 113 leading causes of death
 #' - [get_data_death()] for importing properly formatted death data
+#' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
 #' - [age_standardize()] for calculating age standardized rates
 #' - [death_130_count()] for generating CDC NCHS 130 causes of infant death counts
 #' - [death_injury_matrix_count()] for generating injury matrix counts
@@ -353,6 +354,7 @@ death_130<- function(){
 #' @seealso
 #' - [death_130()] for viewing the CDC NCHS 130 causes of infant death
 #' - [get_data_death()] for importing properly formatted death data
+#' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
 #' - [age_standardize()] for calculating age standardized rates
 #' - [death_113_count()] for generating CDC NCHS 113 leading causes of death counts
 #' - [death_injury_matrix_count()] for generating injury matrix counts
@@ -632,6 +634,7 @@ death_injury_matrix<- function(){
 #' @seealso
 #' - [death_injury_matrix()] for viewing available injury death mechanisms and intents
 #' - [get_data_death()] for importing properly formatted death data
+#' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
 #' - [age_standardize()] for calculating age standardized rates
 #' - [death_113_count()] for generating CDC NCHS 113 leading causes of death counts
 #' - [death_130_count()] for generating CDC NCHS 130 causes of infant death counts
@@ -1156,6 +1159,7 @@ death_multicause <- function(){
 #' @seealso
 #' - [death_multicause()] for viewing available multicause definitions
 #' - [get_data_death()] for importing properly formatted death data
+#' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
 #' - [age_standardize()] for calculating age standardized rates
 #' - [death_113_count()] for generating CDC NCHS 113 leading causes of death counts
 #' - [death_130_count()] for generating CDC NCHS 130 causes of infant death counts
@@ -1612,6 +1616,7 @@ death_other<- function(){
 #' @seealso
 #' - [death_other()] for viewing available 'Other' cause of death definitions
 #' - [get_data_death()] for importing properly formatted death data
+#' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
 #' - [age_standardize()] for calculating age standardized rates
 #' - [death_113_count()] for generating CDC NCHS 113 leading causes of death counts
 #' - [death_130_count()] for generating CDC NCHS 130 causes of infant death counts
