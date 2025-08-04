@@ -1267,7 +1267,9 @@ death_multicause_count <- function(ph.data,
                                         env = list(param_cause_name = I(cause_name))]
 
         # Set cause label
-        cause_label <- cause_name
+        cause_label <- unique(ref_table[tolower(cause_name) == param_cause_name,
+                                        cause_name,
+                                        env = list(param_cause_name = I(cause_name))])[1]
       } else {
         # Using custom codes - create a generic label
         cause_label <- "Custom multicause"
