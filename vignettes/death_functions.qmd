@@ -17,6 +17,7 @@ The core `rads` death functions are:
 -   `death_113_count()`: generate death counts for the CDC's 113 Selected Causes of Death (PLUS COVID-19)
 -   `death_130_count()`: generate death counts for the CDC's 130 Selected Causes of **infant** Death (PLUS COVID-19)
 -   `death_injury_matrix_count()`: generate counts of external cause (a.k.a., injury related) deaths by intent and mechanism
+-   `death_multicause_count()`: generate death counts needing **BOTH** underlying and contributing causes
 -   `death_other_count()`: generate counts for select causes of death that are **not** **included** in `death_113_count()`, `death_130_count()`, & `death_injury_matrix_count()`, but are of interest to APDE.
 -   `life_table()`: generate a standard life table, where the first row is the life expectancy (aka 'expectation of life') at birth
 
@@ -24,8 +25,9 @@ All of these functions have detailed help files that are accessible by typing `?
 
 ***A few quick notes before we begin ...***
 
--   `death_113_count()`, `death_130_count()`, `death_injury_matrix_count()`, & `death_other_count()` only work with ICD-10 cause of death codes (i.e., those used since 1999).
+-   `death_113_count()`, `death_130_count()`, `death_injury_matrix_count()`, `death_multicause_count()` & `death_other_count()` only work with ICD-10 cause of death codes (i.e., those used since 1999).
 -   If you want to create age-adjusted rates, we recommend you read the [age_standardize](https://github.com/PHSKC-APDE/rads/wiki/age_standardize) and [calculating_rates_with_rads](https://github.com/PHSKC-APDE/rads/wiki/calculating_rates_with_rads) vignettes after reading through this one.
+-   To perform a leading causes of death analysis, please follow the [Six Step Process on the wiki](https://github.com/PHSKC-APDE/rads/wiki/leading_causes_of_death)
 
 # Set up the environment
 
@@ -372,6 +374,51 @@ dt6 <- death_injury_matrix_count(ph.data = ex6,
 #| echo: false
 dt6[, ypll_65 := format(ypll_65, big.mark = ',')]
 kable(dt6, format = "markdown")
+```
+
+# death_multicause_count()
+`death_multicause_count()`allows the user to get counts causes of death requiring **BOTH** underlying **AND** contributing causes. To view available analytic ready multicause death categories, simply type `death_multicause()`. If you want to add additional causes of death to this list, [please submit a GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new). In the meantime the function will allow you to specify the underlying cause of death and contributing cause of death ICD-10 of interest. 
+```{r}
+death_multicause()
+```
+
+`death_multicause_count()` takes eleven potential arguments:
+-   `ph.data`: the name of a person level data.table/data.frame of death data with ICD codes, with at least one column of ICD10 underlying cause codes and columns for contributing cause codes.
+-   `cause_name`: a character vector specifying the multicause death definition from the reference table. For example, "Opioid". To see available options, use `rads::death_multicause()`.
+-   `underlying_codes`:	an optional character vector of ICD10 codes that must appear in the underlying cause of death. Only used if `cause_name` is NULL. For example, c("X40", "X41", "X42").
+-   `contributing_codes`: an optional character vector of ICD10 codes that must appear in the contributing causes of death. Only used if `cause_name` is NULL. For example, c("T400", "T401").
+-   `icdcol`: name of the column with the underlying cause of death ICD codes. Defaults to "underlying_cod_code", which is used in APDE's data
+-   `contributing_cols`: a character vector specifying the stem of the column names containing contributing cause codes. The function expects columns named with this stem followed by numbers 1-20. E.g., "record_axis_code" leads the function to expect columns named 'record_axis_code_1', 'record_axis_code_2', ... 'record_axis_code_20'.
+-   `contributing_logic`: a character vector specifying whether "ANY" or "ALL" of the contributing_codes must be present.
+-   `kingco`: a logical vector specifying whether you want to limit the analysis to King County. Only works if ph.data still has the `chi_geo_kc` column.
+-   `group_by`: a character vector specifying all the variables by which you want to group (a.k.a. stratify) the results. For example, if you specified group_by = c('sex', 'sex'), the results would be stratified by each combination of sex and race.
+-   `ypll_age`: optional. The age in years (an integer) used for calculating Years of Potential Life Lost.
+-   `death_age_col`: optional. Name of the age column used if `ypll_age` is specified.
+
+Please refer to the help file for more details.
+
+### example #7: Count the number of opioid deaths for 2019-2023, stratified by sex
+```{r}
+ex7 <- get_data_death(year = 2019:2023, 
+                      cols = c('chi_sex', 'underlying_cod_code', 
+                               paste0('record_axis_code_', 1:20)))
+```
+
+
+```{r}
+#| message: false
+#| warning: false
+dt7 <- death_multicause_count(ph.data = ex7, 
+                                 cause_name = "Opioid", 
+                                 kingco = FALSE, 
+                                 group_by = "chi_sex")
+dt7 <- dt7[cause.of.death != 'All causes' & chi_sex %in% c("Female", "Male")]
+```
+
+```{r}
+#| echo: false
+dt7[, deaths := format(deaths, big.mark = ',')]
+kable(dt7, format = "markdown")
 ```
 
 # death_other_count()

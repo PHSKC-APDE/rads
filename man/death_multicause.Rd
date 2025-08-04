@@ -2,7 +2,7 @@
 % Please edit documentation in R/death_functions.R
 \name{death_multicause}
 \alias{death_multicause}
-\title{View available multicause death definitions for death_multicause_count()}
+\title{View available multicause death definitions for \code{death_multicause_count()}}
 \source{
 \code{\link[rads.data:icd10_multicause]{rads.data::icd10_multicause()}}
 }
@@ -32,4 +32,7 @@ This function does not take any arguments
 available_causes <- death_multicause()
 print(available_causes)
 
+}
+\seealso{
+\code{\link[=death_multicause_count]{death_multicause_count()}} for using this information to count multicause deaths
 }

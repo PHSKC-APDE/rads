@@ -44,14 +44,14 @@ formatted death data obtained using the \code{get_data_death()} function.}
 limit the analysis to King County.
 
 \strong{NOTE} this only works with data imported with the \code{get_data_death()}
-function because it needs the logical variable \code{chi_geo_kc}.
+function because it needs the variable \code{chi_geo_kc}.
 
 The default is kingco = TRUE.}
 
 \item{group_by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{group_by = c('chi_sex',
-'chi_race_6')}, the results would be stratified by each combination of sex
+results. For example, if you specified \code{group_by = c('sex',
+'race')}, the results would be stratified by each combination of sex
 and race.
 
 The default is \code{group_by = NULL}}
@@ -128,4 +128,15 @@ head(eg1)
 \references{
 \url{https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf} &
 \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS130CausesInfantDeath_Codes.pdf}
+}
+\seealso{
+\itemize{
+\item \code{\link[=death_130]{death_130()}} for viewing the CDC NCHS 130 causes of infant death
+\item \code{\link[=get_data_death]{get_data_death()}} for importing properly formatted death data
+\item \code{\link[=age_standardize]{age_standardize()}} for calculating age standardized rates
+\item \code{\link[=death_113_count]{death_113_count()}} for generating CDC NCHS 113 leading causes of death counts
+\item \code{\link[=death_injury_matrix_count]{death_injury_matrix_count()}} for generating injury matrix counts
+\item \code{\link[=death_multicause_count]{death_multicause_count()}} for generating counts of deaths defined by BOTH underlying & contributing causes
+\item \code{\link[=death_other_count]{death_other_count()}} for generating counts of causes NOT included in the NCHS
+}
 }

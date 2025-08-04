@@ -120,3 +120,14 @@ eg2 <- death_other_count(ph.data = deathdata2,
 head(eg2)
 
 }
+\seealso{
+\itemize{
+\item \code{\link[=death_other]{death_other()}} for viewing available 'Other' cause of death definitions
+\item \code{\link[=get_data_death]{get_data_death()}} for importing properly formatted death data
+\item \code{\link[=age_standardize]{age_standardize()}} for calculating age standardized rates
+\item \code{\link[=death_113_count]{death_113_count()}} for generating CDC NCHS 113 leading causes of death counts
+\item \code{\link[=death_130_count]{death_130_count()}} for generating CDC NCHS 130 causes of infant death counts
+\item \code{\link[=death_injury_matrix_count]{death_injury_matrix_count()}} for generating injury matrix counts
+\item \code{\link[=death_multicause_count]{death_multicause_count()}} for generating counts of deaths defined by BOTH underlying & contributing causes
+}
+}
