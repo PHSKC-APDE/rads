@@ -24,6 +24,9 @@
 #' \url{https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf} &
 #' \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS113CausesOfDeath.pdf}
 #'
+#' @seealso
+#' [death_113_count()] for using this information to count the NCHS 113 leading causes of death
+#'
 #' @return
 #' A data.table with 114 rows and two columns: causeid (integers between 1 & 114, inclusive) and cause.of.death (human readable description).
 #'
@@ -97,7 +100,7 @@ death_113 <- function(){
 #' limit the analysis to King County.
 #'
 #' **NOTE** this only works with data imported with the \code{get_data_death()}
-#' function because it needs the logical variable \code{chi_geo_kc}.
+#' function because it needs the variable \code{chi_geo_kc}.
 #'
 #' The default is kingco = TRUE.
 #'
@@ -129,6 +132,16 @@ death_113 <- function(){
 #' @references
 #' \url{https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf} &
 #' \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS113CausesOfDeath.pdf}
+#'
+#' @seealso
+#' - [death_113()] for viewing teh CDC NCHS 113 leading causes of death
+#' - [get_data_death()] for importing properly formatted death data
+#' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
+#' - [age_standardize()] for calculating age standardized rates
+#' - [death_130_count()] for generating CDC NCHS 130 causes of infant death counts
+#' - [death_injury_matrix_count()] for generating injury matrix counts
+#' - [death_multicause_count()] for generating counts of deaths defined by BOTH underlying & contributing causes
+#' - [death_other_count()] for generating counts of causes NOT included in the NCHS
 #'
 #' @return
 #' Generates a table with three columns, \code{causeid},  \code{cause.of.death},
@@ -233,6 +246,9 @@ death_113_count <- function(ph.data,
 #' \url{https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf}, Table C.
 #' \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS130CausesInfantDeath_Codes.pdf}
 #'
+#' @seealso
+#' [death_130_count()] for using this information to count the NCHS 130 causes of infant deaths
+#'
 #' @return
 #' A data.table with 130 rows and two columns: causeid (integers between 1 & 130, inclusive) and cause.of.death (human readable description).
 #'
@@ -302,14 +318,14 @@ death_130<- function(){
 #' limit the analysis to King County.
 #'
 #' **NOTE** this only works with data imported with the \code{get_data_death()}
-#' function because it needs the logical variable \code{chi_geo_kc}.
+#' function because it needs the variable \code{chi_geo_kc}.
 #'
 #' The default is kingco = TRUE.
 #'
 #' @param group_by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified \code{group_by = c('chi_sex',
-#' 'chi_race_6')}, the results would be stratified by each combination of sex
+#' results. For example, if you specified \code{group_by = c('sex',
+#' 'race')}, the results would be stratified by each combination of sex
 #' and race.
 #'
 #' The default is \code{group_by = NULL}
@@ -334,6 +350,16 @@ death_130<- function(){
 #' @references
 #' \url{https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf} &
 #' \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS130CausesInfantDeath_Codes.pdf}
+#'
+#' @seealso
+#' - [death_130()] for viewing the CDC NCHS 130 causes of infant death
+#' - [get_data_death()] for importing properly formatted death data
+#' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
+#' - [age_standardize()] for calculating age standardized rates
+#' - [death_113_count()] for generating CDC NCHS 113 leading causes of death counts
+#' - [death_injury_matrix_count()] for generating injury matrix counts
+#' - [death_multicause_count()] for generating counts of deaths defined by BOTH underlying & contributing causes
+#' - [death_other_count()] for generating counts of causes NOT included in the NCHS
 #'
 #' @return
 #' Generates a table with three columns, \code{causeid},  \code{cause.of.death},
@@ -496,6 +522,10 @@ death_icd10_clean <- function(icdcol){
 #'
 #' \url{https://www.cdc.gov/nchs/data/ice/icd10_transcode.pdf}
 #'
+#' @seealso
+#' [death_injury_matrix_count()] for using this information to count injury related deaths
+#' by mechanism and intent
+#'
 #' @return
 #' A data.table with 88 rows and two columns: \code{mechanism} & \code{intent}.
 #'
@@ -600,6 +630,16 @@ death_injury_matrix<- function(){
 #' @details
 #' The matrix coding is based on the ICE (International Collaborative Effort on
 #' Injury Statistics) standard.
+#'
+#' @seealso
+#' - [death_injury_matrix()] for viewing available injury death mechanisms and intents
+#' - [get_data_death()] for importing properly formatted death data
+#' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
+#' - [age_standardize()] for calculating age standardized rates
+#' - [death_113_count()] for generating CDC NCHS 113 leading causes of death counts
+#' - [death_130_count()] for generating CDC NCHS 130 causes of infant death counts
+#' - [death_multicause_count()] for generating counts of deaths defined by BOTH underlying & contributing causes
+#' - [death_other_count()] for generating counts of causes NOT included in the NCHS
 #'
 #' @return
 #' The function returns a data.table with a minimum of three columns:
@@ -960,6 +1000,503 @@ death_injury_matrix_count <- function(ph.data,
     return(x_combo)
 }
 
+# death_multicause() ----
+#' View available multicause death definitions for `death_multicause_count()`
+#'
+#' @description
+#' Function to view the multicause death definitions available in RADS. These are
+#' causes of death that require BOTH specific underlying causes AND contributing
+#' causes to be present.
+#'
+#' Generates a data.table showing the available cause names and their definitions.
+#'
+#' @details
+#' Multicause deaths are those requiring specific combinations of underlying and
+#' contributing causes. For example, opioid deaths require poisoning as the
+#' underlying cause AND opioid codes in the contributing causes.
+#'
+#' @note
+#' This function does not take any arguments
+#'
+#' @source
+#' [rads.data::icd10_multicause()]
+#'
+#' @seealso
+#' [death_multicause_count()] for using this information to count multicause deaths
+#'
+#' @return
+#' A data.table with unique cause names and a description of what each includes.
+#'
+#' @export
+#'
+#' @name death_multicause
+#'
+#' @examples
+#' # View available multicause definitions
+#' available_causes <- death_multicause()
+#' print(available_causes)
+#'
+#' @import data.table rads.data
+#'
+death_multicause <- function(){
+  # Global variables used by data.table declared as NULL to play nice with devtools::check() ----
+  cause_name <- underlying_contributing <- icd10 <- n_underlying <- n_contributing <- NULL
+
+  # Get the reference table
+  multicause_ref <- data.table::copy(rads.data::icd10_multicause)
+
+  # Summarize by cause_name
+  summary_table <- multicause_ref[, list(
+    n_underlying = sum(underlying_contributing == "underlying"),
+    n_contributing = sum(underlying_contributing == "contributing")
+  ), by = cause_name]
+
+  # Add description
+  summary_table[, description := paste0(
+    "Requires any of ", n_underlying, " underlying cause codes AND any of ",
+    n_contributing, " contributing cause codes"
+  )]
+
+  # Keep only the columns we want to show
+  summary_table <- summary_table[, list(cause_name, description)]
+
+  return(summary_table)
+}
+
+# death_multicause_count() ----
+#' Summarize multicause deaths requiring **BOTH** underlying and contributing causes
+#'
+#' @description
+#' Generate death counts for causes of death that require BOTH specific underlying
+#' causes AND contributing causes. Needs line-level death data with properly
+#' formatted ICD10 columns for both underlying and contributing causes of death.
+#'
+#' See [death_multicause()] for a complete list of available multicause
+#' definitions.
+#'
+#' @details
+#' This function identifies deaths where specific combinations of underlying and
+#' contributing causes must both be present. For example, opioid-related deaths
+#' require poisoning as the underlying cause AND opioid codes in the contributing
+#' causes.
+#'
+#' The function will automatically include "All causes" in addition to your
+#' specified multicause definition.
+#'
+#' @param ph.data a data.table or data.frame. Must contain death data structured
+#' with one person per row, with at least one column of ICD10 underlying cause
+#' codes and columns for contributing cause codes.
+#'
+#' @param cause_name a character vector of length one that specifies the multicause
+#' death definition from the reference table. For example, `"Opioid"`. To see
+#' available options, use `rads::death_multicause()`.
+#'
+#' The default is `NULL`, which means you must specify `cause_name` *OR* the
+#' `underlying_codes` and `contributing_codes` directly.
+#'
+#' @param underlying_codes an optional character vector of ICD10 codes that must
+#' appear in the underlying cause of death. Only used if `cause_name` is NULL.
+#' For example, `c("X40", "X41", "X42")`.
+#'
+#' The default is `NULL`.
+#'
+#' @param contributing_codes an optional character vector of ICD10 codes that must
+#' appear in the contributing causes of death. Only used if `cause_name` is NULL.
+#' For example, `c("T400", "T401")`.
+#'
+#' The default is `NULL`.
+#'
+#' @param icdcol a character vector of length one that specifies the name of the
+#' column in ph.data that contains the underlying ICD10 death codes.
+#'
+#' The default is `"underlying_cod_code"`, which is found in properly formatted
+#' death data obtained using the `get_data_death()` function.
+#'
+#' @param contributing_cols a character vector of length one that specifies the
+#' stem of the column names containing contributing cause codes. The function
+#' expects columns named with this stem followed by numbers 1-20.
+#'
+#' The default is `"record_axis_code"`, expecting columns like `record_axis_code_1`
+#' through `record_axis_code_20`.
+#'
+#' @param contributing_logic a character vector of length one. Specifies whether
+#' ANY or ALL of the `contributing_codes` must be present.
+#'
+#' The default is `"ANY"`.
+#'
+#' @param kingco a logical vector of length one. It specifies whether you want to
+#' limit the analysis to King County.
+#'
+#' **NOTE** this only works with data imported with the `get_data_death()`
+#' function because it needs the variable `chi_geo_kc`.
+#'
+#' The default is `kingco = TRUE`.
+#'
+#' @param group_by a character vector of indeterminate length. This is used to
+#' specify all the variables by which you want to group (a.k.a. stratify) the
+#' results. For example, if you specified `group_by = c('chi_sex', 'chi_race_6')`,
+#' the results would be stratified by each combination of sex and race.
+#'
+#' The default is `group_by = NULL`
+#'
+#' @param ypll_age an optional numeric vector of length 1. When specified, it
+#' should be the age (an integer) used for **Years of Potential Life Lost** (YPLL)
+#' calculations. Valid values are between 1 & 99 (inclusive), though 65 and 85
+#' are the most common. For example, `ypll_age = 65` would sum the total number
+#' of years that could have been lived had everyone in the data lived to at least 65.
+#' Note that this function returns the total number of YPLL. Additional
+#' processing is necessary to calculate rates per 100,000.
+#'
+#' The default is `ypll_age = NULL`, which will skip YPLL calculations.
+#'
+#' @param death_age_col an optional character vector of length one that specifies
+#' the name of the column in ph.data with the decedents' age at death
+#' in years. It is only needed if `ypll_age` is specified AND if ph.data lacks
+#' a column named `chi_age`.
+#'
+#' The default is `death_age_col = NULL`.
+#'
+#' @seealso
+#' - [death_multicause()] for viewing available multicause definitions
+#' - [get_data_death()] for importing properly formatted death data
+#' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
+#' - [age_standardize()] for calculating age standardized rates
+#' - [death_113_count()] for generating CDC NCHS 113 leading causes of death counts
+#' - [death_130_count()] for generating CDC NCHS 130 causes of infant death counts
+#' - [death_injury_matrix_count()] for generating injury matrix counts
+#' - [death_other_count()] for generating counts of causes NOT included in the NCHS
+#' 113 Causes of death or injury matrix
+#'
+#' @keywords mortality multicause
+#'
+#' @return
+#' Generates a table with three columns: `cause.of.death`, `deaths`, and
+#' if specified, `ypll_##`. Columns in the `group_by` argument will also be
+#' returned.
+#'
+#' @export
+#'
+#' @name death_multicause_count
+#'
+#' @examples
+#' \dontrun{
+#' # Example using reference table definition
+#' opioid_deaths <- death_multicause_count(
+#'   ph.data = death_data,
+#'   cause_name = "Opioid",
+#'   icdcol = "underlying_cod_code",
+#'   contributing_cols = "record_axis_code",
+#'   kingco = TRUE
+#' )
+#'
+#' # Example using custom codes
+#' custom_deaths <- death_multicause_count(
+#'   ph.data = death_data,
+#'   underlying_codes = c("X40", "X41", "X42"),
+#'   contributing_codes = c("T400", "T401"),
+#'   contributing_logic = "ANY",
+#'   icdcol = "underlying_cod_code",
+#'   contributing_cols = "record_axis_code",
+#'   kingco = FALSE
+#' )
+#' }
+#'
+death_multicause_count <- function(ph.data,
+                                   cause_name = NULL,
+                                   underlying_codes = NULL,
+                                   contributing_codes = NULL,
+                                   icdcol = "underlying_cod_code",
+                                   contributing_cols = "record_axis_code",
+                                   contributing_logic = "ANY",
+                                   kingco = TRUE,
+                                   group_by = NULL,
+                                   ypll_age = NULL,
+                                   death_age_col = NULL) {
+  # Check arguments ----
+    # ph.data ----
+      if (missing(ph.data) || !is.data.frame(ph.data)) {
+        stop("\n\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
+      }
+
+      # Create a copy of ph.data and ensure it's a data.table
+      ph.data <- data.table::setDT(data.table::copy(ph.data))
+
+    # cause_name vs underlying/contributing codes ----
+      if (!is.null(cause_name) && (!is.null(underlying_codes) || !is.null(contributing_codes))) {
+        warning("\n\u26A0\ufe0f You specified both `cause_name` and custom codes. \n",
+                "The custom codes have been ignored.\n",
+                "If you want to use custom codes, set `cause_name = NULL`.\n",
+                "Otherwise set `underlying_codes = NULL` and `contributing_codes = NULL`.")
+        underlying_codes <- NULL
+        contributing_codes <- NULL
+      }
+
+      if (is.null(cause_name) && (is.null(underlying_codes) || is.null(contributing_codes))) {
+        stop("\n\U0001f47f You must specify either `cause_name` OR both `underlying_codes` ",
+             "and `contributing_codes`.")
+      }
+
+    # Get codes from reference table if cause_name specified ----
+      if (!is.null(cause_name)) {
+        if (!is.character(cause_name) || length(cause_name) != 1) {
+          stop("\n\U0001f47f `cause_name` must be a single character value.\n",
+               "See `death_multicause()` for available options.")
+        }
+
+        # Make lower case
+        cause_name <- tolower(cause_name)
+
+        # Load reference table
+        ref_table <- data.table::copy(rads.data::icd10_multicause)
+
+        # Check if cause_name exists
+        if (!cause_name %in% tolower(unique(ref_table$cause_name))) {
+          stop("\n\U0001f47f '", cause_name, "' is not a valid cause_name. ",
+               "Use `rads::death_multicause()` to see available options.")
+        }
+
+        # Extract codes
+        underlying_codes <- ref_table[tolower(cause_name) == param_cause_name &
+                                        underlying_contributing == "underlying",
+                                      icd10,
+                                      env = list(param_cause_name = I(cause_name))] # I() means use AsIs, it isn't a col name
+
+        contributing_codes <- ref_table[tolower(cause_name) == param_cause_name &
+                                          underlying_contributing == "contributing",
+                                        icd10,
+                                        env = list(param_cause_name = I(cause_name))]
+
+        # Set cause label
+        cause_label <- unique(ref_table[tolower(cause_name) == param_cause_name,
+                                        cause_name,
+                                        env = list(param_cause_name = I(cause_name))])[1]
+      } else {
+        # Using custom codes - create a generic label
+        cause_label <- "Custom multicause"
+      }
+
+    # Clean and validate ICD codes ----
+      # Clean all ICD codes (underlying and contributing)
+      underlying_codes <- death_icd10_clean(underlying_codes)
+      contributing_codes <- death_icd10_clean(contributing_codes)
+
+      # Remove any NA codes
+      underlying_codes <- underlying_codes[!is.na(underlying_codes)]
+      contributing_codes <- contributing_codes[!is.na(contributing_codes)]
+
+      # Check if any codes remain after cleaning
+      if (length(underlying_codes) == 0) {
+        stop("\n\U0001f47f All underlying_codes became NA after cleaning with `death_icd10_clean()`.")
+      }
+
+      if (length(contributing_codes) == 0) {
+        stop("\n\U0001f47f All contributing_codes became NA after cleaning with `death_icd10_clean()`.")
+      }
+
+    # contributing_logic ----
+      if (!contributing_logic %in% c("ANY", "ALL")) {
+        stop("\n\U0001f47f `contributing_logic` must be either 'ANY' or 'ALL'.")
+      }
+
+    # icdcol ----
+    if (!icdcol %in% names(ph.data)) {
+      stop("\n\U0001f47f `icdcol` must be the name of a column that exists in `ph.data`.")
+    }
+
+    # Clean underlying cause codes
+    ph.data[, icd10_tempy := death_icd10_clean(get(icdcol))]
+
+    # contributing_cols ----
+      # Clean up the stem (remove trailing underscore if exists)
+      contributing_cols <- gsub("_$", "", contributing_cols)
+
+      # Find all matching columns
+      contrib_col_pattern <- paste0("^", contributing_cols, "_[0-9]+$")
+      contrib_col_names <- grep(contrib_col_pattern, names(ph.data), value = TRUE)
+
+      if (length(contrib_col_names) == 0) {
+        stop("\n\U0001f47f No columns found matching pattern '", contributing_cols, "_#'. ",
+             "Expected columns like '", contributing_cols, "_1', '", contributing_cols, "_2', etc.")
+      }
+
+      if (length(contrib_col_names) < 20) {
+        warning("\n\u26A0\ufe0f Less than 20 columns were found matching the pattern '", contributing_cols, "_#'.\n",
+                "Typically there are 20 columns for the contributing causes of death. You may want to check ph.data.")
+      }
+
+      # Clean contributing causes columns in ph.data
+      ph.data[, (contrib_col_names) := lapply(.SD, death_icd10_clean), .SDcols = contrib_col_names]
+
+    # kingco ----
+      if (!is.logical(kingco)) {
+        stop("\n\U0001f47f `kingco` must be a logical value, i.e., TRUE or FALSE.")
+      }
+
+      if (kingco && !"chi_geo_kc" %in% names(ph.data)) {
+        stop("\n\U0001f47f `ph.data` does not have the column `chi_geo_kc`, ",
+             "which is required for King County data.")
+      }
+
+      if (kingco) {
+        ph.data <- ph.data[chi_geo_kc == 'King County']
+      }
+
+    # group_by ----
+      if (!is.null(group_by)) {
+        group_col_error <- setdiff(group_by, names(ph.data))
+        if (length(group_col_error) > 0) {
+          stop("\n\U0001f6d1 The following `group_by` values are not column names in `ph.data`: ",
+               paste0(group_col_error, collapse = ', '), ".")
+        }
+      }
+
+    # ypll_age ----
+      if (!is.null(ypll_age)) {
+        if (!is.numeric(ypll_age) ||
+            !all(ypll_age == floor(ypll_age)) ||
+            length(ypll_age) != 1 || ypll_age < 1 | ypll_age > 99) {
+          stop("\n\U0001f47f `ypll_age` must be an integer between 1 and 99.")
+        }
+
+        ypll_col_name <- paste0("ypll_", ypll_age)
+      }
+
+    # death_age_col ----
+      if (!is.null(death_age_col)) {
+        if (!(death_age_col %in% names(ph.data))) {
+          stop("\n\U0001f47f `death_age_col` must be the name of column that exists in `ph.data`.")
+        }
+
+        col_data <- unique(ph.data[[death_age_col]])
+        if (!is.numeric(col_data) || !all(is.na(col_data) | col_data == floor(col_data), na.rm = TRUE)) {
+          stop("\n\U0001f47f If `death_age_col` is specified, it must be a column of integers in `ph.data`.")
+        }
+
+        if (is.null(ypll_age)) {
+          stop("\n\U0001f47f `death_age_col` should not be specified when `ypll_age` is NULL.")
+        }
+      }
+
+      if (is.null(death_age_col) & !is.null(ypll_age)) {
+        if ("chi_age" %in% names(ph.data)) {
+          death_age_col <- 'chi_age'
+          message("\U0001F4E3 \nYou requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
+                  "\nThe function found and used a column named `chi_age` for the YPLL calculation. If this was not",
+                  "\nyour intention, please specify the correct column with the decedent's age with the",
+                  "\n`death_age_col` argument.")
+        } else {
+          stop(paste0("\n\U0001f47f You requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
+                      "\nThe function attempted to use a column named `chi_age`, but it was not found.",
+                      "\nTo calculate YPLL, please set death_age_col to the name of the column with the age at death."))
+        }
+      }
+
+  # Identify deaths meeting criteria ----
+    # Check underlying cause
+    ph.data[, meets_criteria := icd10_tempy %in% underlying_codes]
+
+    # Check contributing causes (made my brain hurt, but it works!)
+    if (contributing_logic == "ANY") {
+      # ANY logic - at least one contributing code must be present
+      ph.data[meets_criteria == TRUE,
+              meets_criteria := Reduce(`|`, lapply(.SD, function(x) x %in% contributing_codes)),
+              .SDcols = contrib_col_names]
+    }
+
+    if (contributing_logic == "ALL") {
+      # For each contributing code, check if it appears in any contributing columns
+      # If it does, it continues to `meet_criteria`.
+      # If it doesn't, it is removed from further comparisons
+      for(code in contributing_codes) {
+        code_present <- ph.data[meets_criteria == TRUE,
+                                Reduce(`|`, lapply(.SD, function(x) x %in% code)),
+                                .SDcols = contrib_col_names]
+        ph.data[meets_criteria == TRUE, meets_criteria := meets_criteria & code_present]
+      }
+    }
+
+  # Calculate YPLL if needed ----
+    if (!is.null(ypll_age)) {
+      ph.data[, (ypll_col_name) := fifelse(get(death_age_col) < ypll_age,
+                                           ypll_age - get(death_age_col),
+                                           0)]
+    }
+
+  # Create summary of death and ypll counts ----
+    if (is.null(ypll_age)) {
+      # All causes
+      all_causes <- ph.data[, list(cause.of.death = "All causes",
+                                deaths = .N), by = group_by]
+
+      # Specific multicause
+      specific_cause <- ph.data[meets_criteria == TRUE,
+                                list(cause.of.death = cause_label,
+                                  deaths = .N), by = group_by]
+    } else {
+      # All causes with YPLL
+      all_causes <- ph.data[, list(cause.of.death = "All causes",
+                                deaths = .N,
+                                temp_ypll = sum(get(ypll_col_name), na.rm = TRUE)),
+                            by = group_by]
+
+      # Specific multicause with YPLL
+      specific_cause <- ph.data[meets_criteria == TRUE,
+                                list(cause.of.death = cause_label,
+                                  deaths = .N,
+                                  temp_ypll = sum(get(ypll_col_name), na.rm = TRUE)),
+                                by = group_by]
+
+      # Rename YPLL column
+      setnames(all_causes, "temp_ypll", ypll_col_name)
+      setnames(specific_cause, "temp_ypll", ypll_col_name)
+    }
+
+    # Combine results
+    result <- rbind(all_causes, specific_cause)
+
+  # Create rows for zero values ----
+    # Select columns to use for combination
+    cols_to_use <- setdiff(names(result), c('deaths', grep('^ypll_', names(result), value = TRUE)))
+
+    # Create list of unique values for each selected column
+    unique_col_vals <- lapply(cols_to_use, function(col) unique(result[[col]]))
+    names(unique_col_vals) <- cols_to_use
+
+    # Use CJ to create all combinations
+    template_xyz <- do.call(data.table::CJ, unique_col_vals)
+
+    # Merge actual values onto template
+    result <- merge(template_xyz,
+                    result,
+                    all.x = TRUE,
+                    all.y = TRUE)
+
+    # Fill deaths with zeros
+    result[is.na(deaths), deaths := 0]
+
+    # Fill ypll with zeros if needed
+    if (!is.null(ypll_age)) {
+      ypll_name <- grep('^ypll_[0-9]', names(result), value = TRUE)
+      result[is.na(get(ypll_name)), (ypll_name) := 0]
+    }
+
+  # Sort columns and rows ----
+    if (!is.null(ypll_age)) {
+      setcolorder(result, c("cause.of.death", "deaths", ypll_name))
+      sort_cols <- c("cause.of.death", setdiff(names(result),
+                                               c("deaths", "cause.of.death", ypll_name)))
+    } else {
+      setcolorder(result, c("cause.of.death", "deaths"))
+      sort_cols <- c("cause.of.death", setdiff(names(result),
+                                               c("deaths", "cause.of.death")))
+    }
+    setorderv(result, sort_cols)
+
+  # Return result ----
+    return(result)
+}
+
+
 # death_other() ----
 #' View "Other" Causes of Death available in RADS
 #'
@@ -984,6 +1521,9 @@ death_injury_matrix_count <- function(ph.data,
 #'
 #' @references
 #' \code{?rads.data::icd_other_causes_of_death}
+#'
+#' @seealso
+#' [death_other_count()] for using this information to count 'Other' causes of death
 #'
 #' @return
 #' A character vector with the name of each available cause of death.
@@ -1075,6 +1615,15 @@ death_other<- function(){
 #'
 #' The default is \code{death_age_col = NULL}.'
 #'
+#' @seealso
+#' - [death_other()] for viewing available 'Other' cause of death definitions
+#' - [get_data_death()] for importing properly formatted death data
+#' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
+#' - [age_standardize()] for calculating age standardized rates
+#' - [death_113_count()] for generating CDC NCHS 113 leading causes of death counts
+#' - [death_130_count()] for generating CDC NCHS 130 causes of infant death counts
+#' - [death_injury_matrix_count()] for generating injury matrix counts
+#' - [death_multicause_count()] for generating counts of deaths defined by BOTH underlying & contributing causes
 #'
 #' @return
 #' Generates a table with two columns: \code{cause.of.death} and \code{deaths}.
@@ -1390,7 +1939,7 @@ death_other_count <- function(ph.data,
 #' limit the analysis to King County.
 #'
 #' **NOTE** this only works with data imported with the \code{get_data_death()}
-#' function because it needs the logical variable \code{chi_geo_kc}.
+#' function because it needs the variable \code{chi_geo_kc}.
 #'
 #' The default is kingco = TRUE.
 #'
