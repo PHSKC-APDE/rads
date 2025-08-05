@@ -409,7 +409,7 @@ library('testthat')
 
     test_that("Death counts & YPLL counts by cause are accurate ...", {
       expect_equal(multi.rads[cause.of.death == 'All causes', sum(deaths)], 10000) # all cause deaths
-      expect_equal(multi.rads[cause.of.death == 'opioid', sum(deaths)], 1000) # opioid deaths (999 + 1)
+      expect_equal(multi.rads[cause.of.death == 'Opioid', sum(deaths)], 1000) # opioid deaths (999 + 1)
       expect_true(all(c('cause.of.death', 'deaths', 'sex', 'region', 'ypll_65') %in% names(multi.rads))) # expected columns
       expect_true(all(multi.rads$ypll_65 >= 0)) # YPLL should be non-negative
     })
@@ -417,10 +417,10 @@ library('testthat')
     test_that("'cause_name' vs custom codes arguments work correctly ...", {
       # Test with cause_name
       result1 <- death_multicause_count(ph.data = multidata,
-                                        cause_name = 'opioid',
+                                        cause_name = 'Opioid',
                                         kingco = TRUE)
 
-      expect_equal(result1[cause.of.death == 'opioid', deaths], 1000) # expect 1000 opioid deaths with default 'ANY' logic
+      expect_equal(result1[cause.of.death == 'Opioid', deaths], 1000) # expect 1000 opioid deaths with default 'ANY' logic
 
       # Test with custom codes
       result2 <- death_multicause_count(ph.data = multidata,
@@ -447,8 +447,8 @@ library('testthat')
                                            kingco = TRUE)
 
       # ALL logic should result in fewer deaths (only 1 row has all opioid contributing codes)
-      expect_true(result_all[cause.of.death == 'opioid', deaths] <= result_any[cause.of.death == 'opioid', deaths])
-      expect_equal(result_all[cause.of.death == 'opioid', deaths], 1) # only 1 row has ALL contributing codes
+      expect_true(result_all[cause.of.death == 'Opioid', deaths] <= result_any[cause.of.death == 'Opioid', deaths])
+      expect_equal(result_all[cause.of.death == 'Opioid', deaths], 1) # only 1 row has ALL contributing codes
     })
 
     test_that("Alternative column naming works correctly ...", {
@@ -464,7 +464,7 @@ library('testthat')
                                        contributing_cols = "contributing_icd10_",
                                        kingco = TRUE)
 
-      expect_equal(result[cause.of.death == 'opioid', deaths], 1000) # should still work
+      expect_equal(result[cause.of.death == 'Opioid', deaths], 1000) # should still work
     })
 
 # Check death_other ----
