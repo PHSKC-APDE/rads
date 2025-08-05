@@ -4,7 +4,7 @@
 \alias{adjust_direct}
 \title{Calculate crude and directly adjusted rates}
 \usage{
-adjust_direct(count, pop, stdpop, per = 100000, conf.level = 0.95)
+adjust_direct(count, pop, stdpop, per = 1e+05, conf.level = 0.95)
 }
 \arguments{
 \item{count}{Numeric vector of indeterminate length. The # of events of interest (e.g., deaths, births, etc.)}

@@ -38,3 +38,6 @@ blah[]
 \url{https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf} &
 \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS113CausesOfDeath.pdf}
 }
+\seealso{
+\code{\link[=death_113_count]{death_113_count()}} for using this information to count the NCHS 113 leading causes of death
+}

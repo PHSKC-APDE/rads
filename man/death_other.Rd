@@ -37,3 +37,6 @@ print(blah)
 \references{
 \code{?rads.data::icd_other_causes_of_death}
 }
+\seealso{
+\code{\link[=death_other_count]{death_other_count()}} for using this information to count 'Other' causes of death
+}
