@@ -37,3 +37,6 @@ blah[]
 \url{https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf}, Table C.
 \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS130CausesInfantDeath_Codes.pdf}
 }
+\seealso{
+\code{\link[=death_130_count]{death_130_count()}} for using this information to count the NCHS 130 causes of infant deaths
+}

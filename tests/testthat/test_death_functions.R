@@ -262,6 +262,211 @@ library('testthat')
     # do not need to test group_by, because already tested with death_113_count, and both use same underlying function (death_xxx_count)
   })
 
+# Check death_multicause() ----
+  # death_multicause() create data ----
+  # not necessary
+
+  # death_multicause() create output ----
+  # not necessary
+
+  # death_multicause() tests ----
+  test_that("Check that death_multicause() exists, is the right type, and has some expected values ...", {
+    multiz <- death_multicause()
+    expect_true(inherits(multiz, 'data.table'))
+    expect_identical(c('cause_name', 'description'), names(multiz))
+    expect_true(grepl("opioid", multiz$cause_name, ignore.case = T))
+  })
+
+# Check death_multicause_count ----
+  # death_multicause_count create data ----
+    set.seed(98104)
+    opioid_underlying <- c("X400", "X401", "X402", "X403", "X404", "X405", "X406", "X407", "X408", "X409", "X410",
+                           "X411", "X412", "X413", "X414", "X415", "X416", "X417", "X418", "X419", "X420", "X421",
+                           "X422", "X423", "X424", "X425", "X426", "X427", "X428", "X429", "X430", "X431", "X432",
+                           "X433", "X434", "X435", "X436", "X437", "X438", "X439", "X440", "X441", "X442", "X443",
+                           "X444", "X445", "X446", "X447", "X448", "X449", "X600", "X601", "X602", "X603", "X604",
+                           "X605", "X606", "X607", "X608", "X609", "X610", "X611", "X612", "X613", "X614", "X615",
+                           "X616", "X617", "X618", "X619", "X620", "X621", "X622", "X623", "X624", "X625", "X626",
+                           "X627", "X628", "X629", "X630", "X631", "X632", "X633", "X634", "X635", "X636", "X637",
+                           "X638", "X639", "X640", "X641", "X642", "X643", "X644", "X645", "X646", "X647", "X648",
+                           "X649", "X850", "X851", "X852", "X853", "X854", "X855", "X856", "X857", "X858", "X859",
+                           "Y100", "Y101", "Y102", "Y103", "Y104", "Y105", "Y106", "Y107", "Y108", "Y109", "Y110",
+                           "Y111", "Y112", "Y113", "Y114", "Y115", "Y116", "Y117", "Y118", "Y119", "Y120", "Y121",
+                           "Y122", "Y123", "Y124", "Y125", "Y126", "Y127", "Y128", "Y129", "Y130", "Y131", "Y132",
+                           "Y133", "Y134", "Y135", "Y136", "Y137", "Y138", "Y139", "Y140", "Y141", "Y142", "Y143",
+                           "Y144", "Y145", "Y146", "Y147", "Y148", "Y149")
+    opioid_contributing <- c("T400", "T401", "T402", "T403", "T404", "T406")
+    misc_contributing <- c("K279", "N320", "I749", "A327", "I493", "D350", "B349", "I050", "D594", "K219")
+    misc_underlying <- c("G729", "C832", "G904", "C844", "C342", "G912", "M873", "I612", "K37", "I456")
+
+    # Create synthetic death data
+    multidata <- data.table::data.table(underlying_cod_code = sample(misc_underlying, 10000, replace = TRUE))
+    for(i in 1:20){
+      multidata[, paste0("record_axis_code_", i) := sample(misc_underlying, 10000, replace = TRUE)]
+    }
+
+    # Fill in 999 rows with an overdose underlying cause and opioid contributing cause
+    for(rr in sample(1:10000, 999, replace = FALSE)){
+      multidata[rr, underlying_cod_code := sample(opioid_underlying, 1)]
+      multidata[rr , sample(paste0("record_axis_code_", 1:20), 1) := sample(opioid_contributing, 1)]
+    }
+
+    # Fill in a single row with ALL opioid_contributing codes and an overdose underlying code
+    first_non_opioid <- multidata[!underlying_cod_code %in% opioid_underlying, which = TRUE][1]
+    multidata[first_non_opioid, `:=` (underlying_cod_code = opioid_underlying[1],
+                                      record_axis_code_1 = opioid_contributing[1],
+                                      record_axis_code_2 = opioid_contributing[2],
+                                      record_axis_code_3 = opioid_contributing[3],
+                                      record_axis_code_4 = opioid_contributing[4],
+                                      record_axis_code_5 = opioid_contributing[5],
+                                      record_axis_code_6 = opioid_contributing[6])]
+
+    # Fill in a single row with an overdose underlying code but NO opioid contributing code
+    first_non_opioid <- multidata[!underlying_cod_code %in% opioid_underlying, which = TRUE][1]
+    multidata[first_non_opioid, underlying_cod_code := opioid_underlying[1]]
+
+    # Fill in a single row with an opioid contributing code but NO overdose underlying code
+    first_non_opioid <- multidata[!underlying_cod_code %in% opioid_underlying, which = TRUE][1]
+    multidata[first_non_opioid, record_axis_code_1 := opioid_contributing[1]]
+
+    # Add demographics
+    multidata[, chi_geo_kc := 'King County']
+    multidata[, sex := sample(c('Female', 'Male'), .N, replace = TRUE)]
+    multidata[, region := sample(c('East', 'North', 'Seattle', 'South'), .N, replace = TRUE)]
+    multidata[, chi_age := sample(17:72, .N, replace = T)]
+    multidata[, ypll_65 := fifelse(chi_age < 65, 65 - chi_age, 0)]
+
+  # death_multicause_count create output ----
+    multi.rads <- death_multicause_count(ph.data = multidata[, ypll_65 := NULL],
+                                         cause_name = 'opioid',
+                                         icdcol = "underlying_cod_code",
+                                         contributing_cols = "record_axis_code",
+                                         contributing_logic = "ANY",
+                                         kingco = TRUE,
+                                         group_by = c('sex', 'region'),
+                                         ypll_age = 65,
+                                         death_age_col = 'chi_age')
+
+  # death_multicause_count tests ----
+    test_that("Check for proper triggering of errors ...", {
+      ph.data <- data.table::data.table(underlying_cod_code = c("X40", "X41", "X42"),
+                                        record_axis_code_1 = c("T400", "T401", "T402"),
+                                        chi_geo_kc = c("King County", "King County", "Other County"),
+                                        chi_age = c(65, 70, 75))
+
+      # Add remaining record_axis_code columns
+      for(i in 2:20) {
+        ph.data[, paste0("record_axis_code_", i) := "K279"]
+      }
+
+      # missing ph.data
+      expect_error(death_multicause_count(cause_name = "opioid"),
+                   "\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
+
+      # ph.data is a data.frame/data.table
+      expect_error(death_multicause_count(ph.data = list(), cause_name = "opioid"),
+                   "\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
+
+      # missing both cause_name and custom codes
+      expect_error(death_multicause_count(ph.data = ph.data),
+                   "\U0001f47f You must specify either `cause_name` OR both `underlying_codes`")
+
+      # invalid cause_name
+      expect_error(death_multicause_count(ph.data = ph.data, cause_name = 123),
+                   "\U0001f47f `cause_name` must be a single character value")
+
+      # invalid contributing_logic
+      expect_error(death_multicause_count(ph.data = ph.data, cause_name = "opioid", contributing_logic = "SOME"),
+                   "\U0001f47f `contributing_logic` must be either 'ANY' or 'ALL'")
+
+      # icdcol not in ph.data
+      expect_error(death_multicause_count(ph.data = ph.data, cause_name = "opioid", icdcol = "invalid_column"),
+                   "\U0001f47f `icdcol` must be the name of a column that exists in `ph.data`")
+
+      # kingco is logical
+      expect_error(death_multicause_count(ph.data = ph.data, cause_name = "opioid", kingco = "TRUE"),
+                   "\U0001f47f `kingco` must be a logical value, i.e., TRUE or FALSE")
+
+      # missing chi_geo_kc when kingco == TRUE
+      ph.data_no_kingco <- data.table::copy(ph.data)[, chi_geo_kc := NULL]
+      expect_error(death_multicause_count(ph.data = ph.data_no_kingco, cause_name = "opioid", kingco = TRUE),
+                   "\U0001f47f `ph.data` does not have the column `chi_geo_kc`")
+
+      # valid group_by columns
+      expect_error(death_multicause_count(ph.data = ph.data, cause_name = "opioid", group_by = c("invalid_column")),
+                   "\U0001f6d1 The following `group_by` values are not column names in `ph.data`")
+
+      # valid ypll_age values
+      expect_error(death_multicause_count(ph.data = ph.data, cause_name = "opioid", ypll_age = 0),
+                   "\U0001f47f `ypll_age` must be an integer between 1 and 99")
+      expect_error(death_multicause_count(ph.data = ph.data, cause_name = "opioid", ypll_age = 100),
+                   "\U0001f47f `ypll_age` must be an integer between 1 and 99")
+
+      # valid death_age_col
+      expect_error(death_multicause_count(ph.data = ph.data, cause_name = "opioid", ypll_age = 75, death_age_col = "invalid_column"),
+                   "\U0001f47f `death_age_col` must be the name of column that exists in `ph.data`")
+    })
+
+    test_that("Death counts & YPLL counts by cause are accurate ...", {
+      expect_equal(multi.rads[cause.of.death == 'All causes', sum(deaths)], 10000) # all cause deaths
+      expect_equal(multi.rads[cause.of.death == 'Opioid', sum(deaths)], 1000) # opioid deaths (999 + 1)
+      expect_true(all(c('cause.of.death', 'deaths', 'sex', 'region', 'ypll_65') %in% names(multi.rads))) # expected columns
+      expect_true(all(multi.rads$ypll_65 >= 0)) # YPLL should be non-negative
+    })
+
+    test_that("'cause_name' vs custom codes arguments work correctly ...", {
+      # Test with cause_name
+      result1 <- death_multicause_count(ph.data = multidata,
+                                        cause_name = 'Opioid',
+                                        kingco = TRUE)
+
+      expect_equal(result1[cause.of.death == 'Opioid', deaths], 1000) # expect 1000 opioid deaths with default 'ANY' logic
+
+      # Test with custom codes
+      result2 <- death_multicause_count(ph.data = multidata,
+                                        underlying_codes = opioid_underlying,
+                                        contributing_codes = opioid_contributing,
+                                        contributing_logic = "ANY",
+                                        kingco = TRUE)
+
+      expect_equal(result2[cause.of.death == 'Custom multicause', deaths], 1000) # should match opioid deaths
+      expect_identical(sort(unique(result2$cause.of.death)), c('All causes', 'Custom multicause'))
+    })
+
+    test_that("'contributing_logic' argument works correctly ...", {
+      # Test ANY logic (default)
+      result_any <- death_multicause_count(ph.data = multidata,
+                                           cause_name = 'opioid',
+                                           contributing_logic = "ANY",
+                                           kingco = TRUE)
+
+      # Test ALL logic
+      result_all <- death_multicause_count(ph.data = multidata,
+                                           cause_name = 'opioid',
+                                           contributing_logic = "ALL",
+                                           kingco = TRUE)
+
+      # ALL logic should result in fewer deaths (only 1 row has all opioid contributing codes)
+      expect_true(result_all[cause.of.death == 'Opioid', deaths] <= result_any[cause.of.death == 'Opioid', deaths])
+      expect_equal(result_all[cause.of.death == 'Opioid', deaths], 1) # only 1 row has ALL contributing codes
+    })
+
+    test_that("Alternative column naming works correctly ...", {
+      # Create data with different column names
+      alt_data <- multidata
+      data.table::setnames(alt_data, "underlying_cod_code", "underlyingCOD")
+      data.table::setnames(alt_data, grep("record_axis_code", names(alt_data), value = T),
+                           gsub("record_axis_code", "contributing_icd10", grep("record_axis_code", names(alt_data), value = T)))
+
+      result <- death_multicause_count(ph.data = alt_data,
+                                       cause_name = 'opioid',
+                                       icdcol = "underlyingCOD",
+                                       contributing_cols = "contributing_icd10_",
+                                       kingco = TRUE)
+
+      expect_equal(result[cause.of.death == 'Opioid', deaths], 1000) # should still work
+    })
+
 # Check death_other ----
   # death_other create data ----
   # not necessary

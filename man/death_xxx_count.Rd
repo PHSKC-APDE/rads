@@ -42,7 +42,7 @@ formatted death data obtained using the \code{get_data_death()} function.}
 limit the analysis to King County.
 
 \strong{NOTE} this only works with data imported with the \code{get_data_death()}
-function because it needs the logical variable \code{chi_geo_kc}.
+function because it needs the variable \code{chi_geo_kc}.
 
 The default is kingco = TRUE.}
 

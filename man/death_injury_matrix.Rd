@@ -39,3 +39,7 @@ print(blah)
 
 \url{https://www.cdc.gov/nchs/data/ice/icd10_transcode.pdf}
 }
+\seealso{
+\code{\link[=death_injury_matrix_count]{death_injury_matrix_count()}} for using this information to count injury related deaths
+by mechanism and intent
+}
