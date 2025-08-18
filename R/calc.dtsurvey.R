@@ -503,6 +503,10 @@ compute <- function(DT,
   #make 0 row if ph.data is 0
   if(nrow(DT) == 0) res = res[FALSE]
 
+  # Check for dupes (usually factors with NAs an some such)
+  res[!duplicated(res, by = unique(c(by, 'level', 'variable'))),]
+
+
   return(res)
 
 
