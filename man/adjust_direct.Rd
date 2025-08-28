@@ -23,9 +23,27 @@ a labeled numeric vector of the count, rate, and adjusted rate with the CI
 \description{
 Calculate crude and directly adjusted rates
 }
+\section{Data anomalies}{
+
+When \code{pop < count} (which can occur after collapsing age groups to match the
+reference standard population) or when \code{pop = 0}, \code{adjust_direct()} internally
+uses adjusted values for calculations while preserving the original population
+values in the output. This ensures that age-adjusted rates can still be
+calculated. The adjustment only nominally biases the calculated rates since
+the affected counts are typically small.
+
+If you are calling a wrapper function that prepares data for \code{adjust_direct()}
+(like \code{\link[=age_standardize]{age_standardize()}}), you may see a warning that notes this adjustment
+and identifies the affected age groups. The actual change is made within
+\code{adjust_direct()} itself.
+}
+
 \examples{
 \donttest{
  adjust_direct(count = c(11, 9), pop = c(500, 500), stdpop = c(640, 720),
  per = 100, conf.level = 0.95)[]
 }
+}
+\seealso{
+\code{\link[=age_standardize]{age_standardize()}} for a useful wrapper that calls upon standard reference populations.
 }

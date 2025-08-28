@@ -10,6 +10,22 @@
 #' @return a labeled numeric vector of the count, rate, and adjusted rate with the CI
 #' @export
 #' @name adjust_direct
+#'
+#' @section Data anomalies:
+#' When `pop < count` (which can occur after collapsing age groups to match the
+#' reference standard population) or when `pop = 0`, `adjust_direct()` internally
+#' uses adjusted values for calculations while preserving the original population
+#' values in the output. This ensures that age-adjusted rates can still be
+#' calculated. The adjustment only nominally biases the calculated rates since
+#' the affected counts are typically small.
+#'
+#' If you are calling a wrapper function that prepares data for `adjust_direct()`
+#' (like [age_standardize()]), you may see a warning that notes this adjustment
+#' and identifies the affected age groups. The actual change is made within
+#' `adjust_direct()` itself.
+#'
+#' @seealso [age_standardize()] for a useful wrapper that calls upon standard reference populations.
+#'
 #' @examples
 #' \donttest{
 #'  adjust_direct(count = c(11, 9), pop = c(500, 500), stdpop = c(640, 720),
@@ -38,21 +54,26 @@ adjust_direct <- function(count, pop, stdpop, per = 100000, conf.level = 0.95) {
   sum_pop <- sum(pop)
   sum_stdpop <- sum(stdpop)
 
+  # Create pop_calc for calculations to handle zero/problematic values ----
+  pop_calc <- ifelse(pop == 0, 0.00001, pop)
+  pop_calc <- ifelse(pop_calc < count, count, pop_calc)  # Also handle pop < count
+  sum_pop_calc <- sum(pop_calc)  # Use this for crude rate calculations
+
   # Basic calculations ----
-  rate <- count/pop
+  rate <- count/pop_calc
   alpha <- 1 - conf.level
-  cruderate <- sum_count/sum_pop
+  cruderate <- sum_count/sum_pop_calc
   stdwt <- stdpop/sum_stdpop
 
   # Calculate exact poisson CI for crude rates ----
   dummycount <- if(sum_count == 0) 1 else sum_count
-  crude.lci <- if(sum_count == 0) 0 else qgamma(alpha/2, dummycount)/sum_pop
-  crude.uci <- qgamma(1 - alpha/2, sum_count + 1)/sum_pop
+  crude.lci <- if(sum_count == 0) 0 else qgamma(alpha/2, dummycount)/sum_pop_calc
+  crude.uci <- qgamma(1 - alpha/2, sum_count + 1)/sum_pop_calc
 
   # Calculate exact CI for adjusted rates ----
   dsr <- sum(stdwt * rate)
-  dsr.var <- sum((stdwt^2) * (count/pop^2))
-  wm <- max(stdwt/pop)
+  dsr.var <- sum((stdwt^2) * (count/pop_calc^2))
+  wm <- max(stdwt/pop_calc)
 
   shape_lower <- (dsr^2)/dsr.var
   scale_lower <- dsr.var/dsr
@@ -80,16 +101,9 @@ adjust_direct <- function(count, pop, stdpop, per = 100000, conf.level = 0.95) {
 #' @description
 #' Calculate age standardized rates from a data.table with age, counts, and population columns.
 #'
-#' Your dataset must have the following three columns ...
-#' \itemize{
-#' \item 'age' or 'agecat': 'age' in single years (if collapse = T) or 'agecat' with the same age bins as your selected reference population (if collapse = F)
-#' \item an \bold{aggregated} count for the event (e.g., disease) for which you want to find an age standardized rate
-#' \item the population corresponding to the age or agecat in your original data
-#' }
-#'
 #' @param ph.data a data.table or data.frame containing the data to be age-standardized.
 #' @param ref.popname Character vector of length 1. Only valid options are those
-#' in \code{\link{list_ref_pop}} and "none" (when standard population already exists in ph.data)
+#' in [list_ref_pop()] and `"none"` (when standard population already exists in ph.data)
 #' @param collapse Logical vector of length 1. Do you want to collapse ph.data ages
 #' to match those in `ref.popname`?
 #' @param my.count Character vector of length 1. Identifies the column with the
@@ -106,19 +120,35 @@ adjust_direct <- function(count, pop, stdpop, per = 100000, conf.level = 0.95) {
 #' setting `diagnostic_report = TRUE` returns a diagnostic table instead of normal results.
 #' Use this option if a warning about missing age groups appears when running the function normally.
 #'
+#' @details
+#' `ph.data`  must have the following three columns ...
+#'  - 'age' or 'agecat': 'age' in single years (if collapse = T) or 'agecat' with the same age bins as your selected reference population (if collapse = F)
+#'  - `my.count`: an *aggregated* count for the event (e.g., disease) for which you want to find an age standardized rate
+#'  - `my.pop`: the population corresponding to the age or agecat
+#'
+#'
 #' @section Note on Standard Errors:
 #' This function calculates confidence intervals using the
 #' \href{https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf}{Fay-Feuer method},
 #' which does not provide direct standard error (SE) estimates. If you need SE approximations,
-#' common methods used by health departments include \code{SE = adjusted_rate/sqrt(cases)} and
-#' \code{RSE = 1/sqrt(cases)}.
+#' common methods used by health departments include `SE = adjusted_rate/sqrt(cases)` and
+#' `RSE = 1/sqrt(cases)`.
+#'
+#' @section Data anomalies:
+#' In rare cases (typically after collapsing age groups), the aggregate event
+#' count (`count`) may be greater than the corresponding aggregate population (`pop`),
+#' or the population may be zero. When this occurs, the function issues a
+#' warning and internally adjusts the denominator in the [adjust_direct()] function
+#' to allow the rate calculation. This adjustment ensures stable results and only
+#' minimally biases estimates, since such anomalies usually occur in small strata.
 #'
 #' @return A data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'group_by' variable(s) -- if any
 #'
-#' @seealso \code{\link{adjust_direct}} for calculating crude and directly adjusted rates.
+#' @seealso [adjust_direct()] for calculating crude and directly adjusted rates.
 #'
 #' @export
 #' @name age_standardize
+#'
 #' @references \url{https://github.com/PHSKC-APDE/rads/wiki/age_standardize}
 #' @examples
 #' \donttest{
@@ -372,22 +402,24 @@ age_standardize <- function (ph.data,
     if(is.null(group_by)){ph.data <- ph.data[, list(count = sum(count), pop = sum(pop)), by = "agecat"]}
   }
 
-  # Hack when pop < count in age collapsed data ----
+  # Warning when pop < count in age collapsed data ----
   if(nrow(ph.data[pop < count]) > 0){
     warning(paste0("\u26A0\ufe0f When ph.data (", ph.data.name, ") was collapsed to match the standard\n",
                    "population, the aggregate `count` was greater than the aggregate `pop` for\n",
                    "the following age group(s): \n",
                    sort(paste(unique(ph.data[pop < count]$agecat), collapse = ', ')), ".\n",
-                   "In these rows, the `pop` was ascribed the `count` value. This is necessary to calculate\n",
-                   "the age adjusted rate and only nomimally biases the calculated rates since\n",
-                   "the counts are typically small."))
-
-    ph.data[pop < count, pop := count]
-  }
-
-  # Hack when pop == 0 ----
-  if(nrow(ph.data[pop ==0]) > 0){
-    ph.data[pop == 0, pop := 1]
+                   "In these rows, the `pop` is ascribed the `count` value inside ",
+                   "adjust_direct(), not here in the wrapper. This is necessary to calculate the\n",
+                   "age-adjusted rate and only nominally biases the calculated rates since the\n",
+                   "counts are typically small."))
+    warning(paste0("\u26A0\ufe0f When ph.data (", ph.data.name, ") was collapsed to match the standard\n",
+                   "population, the aggregate `count` was greater than the aggregate `pop` for\n",
+                   "the following age group(s): \n",
+                   sort(paste(unique(ph.data[pop < count]$agecat), collapse = ', ')), ".\n",
+                   "These anomalies are handled internally by adjust_direct() which uses\n",
+                   "adjusted values for rate calculations while preserving the original\n",
+                   "population values in the output. This only nominally biases the\n",
+                   "calculated rates since the counts are typically small."))
   }
 
   # Merge standard pop onto count data ----

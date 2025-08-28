@@ -20,7 +20,7 @@ age_standardize(
 \item{ph.data}{a data.table or data.frame containing the data to be age-standardized.}
 
 \item{ref.popname}{Character vector of length 1. Only valid options are those
-in \code{\link{list_ref_pop}} and "none" (when standard population already exists in ph.data)}
+in \code{\link[=list_ref_pop]{list_ref_pop()}} and \code{"none"} (when standard population already exists in ph.data)}
 
 \item{collapse}{Logical vector of length 1. Do you want to collapse ph.data ages
 to match those in \code{ref.popname}?}
@@ -49,12 +49,13 @@ A data.table of the count, rate & adjusted rate with CIs, name of the reference 
 }
 \description{
 Calculate age standardized rates from a data.table with age, counts, and population columns.
-
-Your dataset must have the following three columns ...
+}
+\details{
+\code{ph.data}  must have the following three columns ...
 \itemize{
 \item 'age' or 'agecat': 'age' in single years (if collapse = T) or 'agecat' with the same age bins as your selected reference population (if collapse = F)
-\item an \bold{aggregated} count for the event (e.g., disease) for which you want to find an age standardized rate
-\item the population corresponding to the age or agecat in your original data
+\item \code{my.count}: an \emph{aggregated} count for the event (e.g., disease) for which you want to find an age standardized rate
+\item \code{my.pop}: the population corresponding to the age or agecat
 }
 }
 \section{Note on Standard Errors}{
@@ -64,6 +65,16 @@ This function calculates confidence intervals using the
 which does not provide direct standard error (SE) estimates. If you need SE approximations,
 common methods used by health departments include \code{SE = adjusted_rate/sqrt(cases)} and
 \code{RSE = 1/sqrt(cases)}.
+}
+
+\section{Data anomalies}{
+
+In rare cases (typically after collapsing age groups), the aggregate event
+count (\code{count}) may be greater than the corresponding aggregate population (\code{pop}),
+or the population may be zero. When this occurs, the function issues a
+warning and internally adjusts the denominator in the \code{\link[=adjust_direct]{adjust_direct()}} function
+to allow the rate calculation. This adjustment ensures stable results and only
+minimally biases estimates, since such anomalies usually occur in small strata.
 }
 
 \examples{
@@ -94,5 +105,5 @@ group_by = "sex")[]
 \url{https://github.com/PHSKC-APDE/rads/wiki/age_standardize}
 }
 \seealso{
-\code{\link{adjust_direct}} for calculating crude and directly adjusted rates.
+\code{\link[=adjust_direct]{adjust_direct()}} for calculating crude and directly adjusted rates.
 }
