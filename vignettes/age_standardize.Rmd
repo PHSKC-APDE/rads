@@ -81,6 +81,21 @@ Your dataset must have the following three columns ...
 
 3)  the population corresponding to the age or agecat in your original data
 
+### Working with age-restricted groups
+
+When analyzing conditions that only affect certain age groups (e.g., teen births, working-age mortality, pediatric diseases), **subset your data to include only the relevant ages** before running `age_standardize()`. 
+
+For example, if analyzing 18-64 year old mortality, you could use:
+```r
+age_standardize(ph.data = mydata[age %in% 18:64], 
+                ...)
+```
+Avoid including all ages with zero counts/population for irrelevant age groups. Failure to do so may:
+
+- artificially dilute your age-adjusted rates
+- create numerical instability in confidence intervals
+- produce misleading comparisons
+
 ------------------------------------------------------------------------
 
 ## Example #1: The Basics
