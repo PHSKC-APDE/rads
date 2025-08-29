@@ -6,23 +6,26 @@
 #' @param stdpop Numeric vector of indeterminate length. The reference standard population corresponding to the population.
 #' @param per Integer vector of length 1. A multiplier for all rates and CI, e.g., when per = 1000, the rates are per 1000 people
 #' @param conf.level A numeric vector of length 1. The confidence interval used in the calculations.
+#' @param event_type Character vector of length 1. Either `"unique"` (default) for events
+#'   that can only occur once per person (e.g., death, first diagnosis), or `"repeatable"`
+#'   for events that can occur multiple times per person (e.g., ER visits, infections).
+#'   When `"unique"`, rates are capped at 100%; when "repeatable", rates can exceed 100%.
 #'
 #' @return a labeled numeric vector of the count, rate, and adjusted rate with the CI
 #' @export
 #' @name adjust_direct
 #'
 #' @section Data anomalies:
-#' When `pop < count` (which can occur after collapsing age groups to match the
-#' reference standard population) or when `pop = 0`, `adjust_direct()` internally
-#' uses adjusted values for calculations while preserving the original population
-#' values in the output. This ensures that age-adjusted rates can still be
-#' calculated. The adjustment only nominally biases the calculated rates since
-#' the affected counts are typically small.
+#' When `event_type = "unique"` and `pop < count` (which can occur when small
+#' populations are modeled estimates), `adjust_direct()` internally caps the rate
+#' at 100% by using the count as the denominator. This ensures logical
+#' consistency for events that can only occur once per person.
 #'
-#' If you are calling a wrapper function that prepares data for `adjust_direct()`
-#' (like [age_standardize()]), you may see a warning that notes this adjustment
-#' and identifies the affected age groups. The actual change is made within
-#' `adjust_direct()` itself.
+#' When `pop = 0`, the function uses a small non-zero value (0.00001) to avoid
+#' division by zero errors.
+#'
+#' The original population values are always preserved in the output. These adjustments
+#' only nominally bias the calculated rates since the affected counts are typically small.
 #'
 #' @seealso [age_standardize()] for a useful wrapper that calls upon standard reference populations.
 #'
@@ -32,7 +35,12 @@
 #'  per = 100, conf.level = 0.95)[]
 #' }
 #' @importFrom stats qgamma
-adjust_direct <- function(count, pop, stdpop, per = 100000, conf.level = 0.95) {
+adjust_direct <- function(count,
+                          pop,
+                          stdpop,
+                          per = 100000,
+                          conf.level = 0.95,
+                          event_type = "unique") {
   # adapted from epitools v0.5-10.1 :: ageadjust.direct & survival 3.2-7 :: cipoisson
 
   # Validate arguments ----
@@ -49,14 +57,22 @@ adjust_direct <- function(count, pop, stdpop, per = 100000, conf.level = 0.95) {
     stop("'conf.level' should be a decimal between 0.00 & 0.99")
   }
 
+  if(!event_type %in% c("unique", "repeatable")) {
+    stop("The `event_type` argument must be either 'unique' or 'repeatable'.")
+  }
+
   # Calculate sums used multiple times ----
   sum_count <- sum(count)
   sum_pop <- sum(pop)
   sum_stdpop <- sum(stdpop)
 
   # Create pop_calc for calculations to handle zero/problematic values ----
-  pop_calc <- ifelse(pop == 0, 0.00001, pop)
-  pop_calc <- ifelse(pop_calc < count, count, pop_calc)  # Also handle pop < count
+  if(event_type == "unique") {
+    pop_calc <- ifelse(pop < count, count, pop)
+  } else {
+      pop_calc <- pop
+  }
+  pop_calc <- ifelse(pop_calc == 0, 0.00001, pop_calc)
   sum_pop_calc <- sum(pop_calc)  # Use this for crude rate calculations
 
   # Basic calculations ----
@@ -119,6 +135,10 @@ adjust_direct <- function(count, pop, stdpop, per = 100000, conf.level = 0.95) {
 #' @param diagnostic_report If `group_by` is used and there are groups with missing ages,
 #' setting `diagnostic_report = TRUE` returns a diagnostic table instead of normal results.
 #' Use this option if a warning about missing age groups appears when running the function normally.
+#' @param event_type Character vector of length 1. Either `"unique"` (default) for events
+#'   that can only occur once per person (e.g., death, first diagnosis), or `"repeatable"`
+#'   for events that can occur multiple times per person (e.g., ER visits, infections).
+#'   When `"unique"`, rates are capped at 100%; when "repeatable", rates can exceed 100%.
 #'
 #' @details
 #' `ph.data`  must have the following three columns ...
@@ -133,6 +153,17 @@ adjust_direct <- function(count, pop, stdpop, per = 100000, conf.level = 0.95) {
 #' which does not provide direct standard error (SE) estimates. If you need SE approximations,
 #' common methods used by health departments include `SE = adjusted_rate/sqrt(cases)` and
 #' `RSE = 1/sqrt(cases)`.
+#'
+#' @section Data anomalies:
+#' When the aggregate event count (`count`) is greater than the corresponding
+#' aggregate population (`pop`) AND`event_type = "unique"`, the function issues
+#' a warning and internally adjusts the denominator in the [adjust_direct()]
+#' function to cap rates at 100%. When `count > pop` AND `event_type = "repeatable"`,
+#' no adjustment is made as rates can legitimately exceed 100%.
+#'
+#' If the population is zero, the function always makes a small adjustment to allow
+#' rate calculation. These adjustments ensure stable results and only minimally bias
+#' estimates, since such anomalies usually occur in small strata.
 #'
 #' @section Data anomalies:
 #' In rare cases (typically after collapsing age groups), the aggregate event
@@ -183,7 +214,8 @@ age_standardize <- function (ph.data,
                              per = 100000,
                              conf.level = 0.95,
                              group_by = NULL,
-                             diagnostic_report = F) {
+                             diagnostic_report = F,
+                             event_type = "unique") {
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
   ph.data.name <- age <- age_start <- age_end <- agecat <- count <- pop <-
     stdpop <- reference_pop <- adj.lci <- adj.uci <- complete <- id <- NULL
@@ -235,6 +267,10 @@ age_standardize <- function (ph.data,
     stop(paste0("\n\U1F6D1 The column '", my.pop, "' does not exist in ph.data.\n",
                 "ph.data must have a column for the population denominator correspondnig to the given demographics. It is typically named 'pop'.\n",
                 "If such a column exists with a different name, you need to specify it in the `my.pop` argument. e.g., my.pop = 'wapop'."))
+  }
+
+  if(!event_type %in% c("unique", "repeatable")) {
+    stop("The `event_type` argument must be either 'unique' or 'repeatable'.")
   }
 
   # Ensure the reference population exists ----
@@ -403,15 +439,7 @@ age_standardize <- function (ph.data,
   }
 
   # Warning when pop < count in age collapsed data ----
-  if(nrow(ph.data[pop < count]) > 0){
-    warning(paste0("\u26A0\ufe0f When ph.data (", ph.data.name, ") was collapsed to match the standard\n",
-                   "population, the aggregate `count` was greater than the aggregate `pop` for\n",
-                   "the following age group(s): \n",
-                   sort(paste(unique(ph.data[pop < count]$agecat), collapse = ', ')), ".\n",
-                   "In these rows, the `pop` is ascribed the `count` value inside ",
-                   "adjust_direct(), not here in the wrapper. This is necessary to calculate the\n",
-                   "age-adjusted rate and only nominally biases the calculated rates since the\n",
-                   "counts are typically small."))
+  if(event_type == "unique" && nrow(ph.data[pop < count]) > 0){
     warning(paste0("\u26A0\ufe0f When ph.data (", ph.data.name, ") was collapsed to match the standard\n",
                    "population, the aggregate `count` was greater than the aggregate `pop` for\n",
                    "the following age group(s): \n",
@@ -428,8 +456,16 @@ age_standardize <- function (ph.data,
   }
 
   # Calculate crude & adjusted rates with CI ----
-  if(!is.null(group_by)){my.rates <- ph.data[, as.list(adjust_direct(count = count, pop = pop, stdpop = stdpop, conf.level = as.numeric(conf.level), per = per)), by = group_by]}
-  if( is.null(group_by)){my.rates <- ph.data[, as.list(adjust_direct(count = count, pop = pop, stdpop = stdpop, conf.level = as.numeric(conf.level), per = per))]}
+  if(!is.null(group_by)){
+    my.rates <- ph.data[, as.list(adjust_direct(count = count, pop = pop, stdpop = stdpop,
+                                                conf.level = as.numeric(conf.level), per = per,
+                                                event_type = event_type)), by = group_by]
+  }
+  if(is.null(group_by)){
+    my.rates <- ph.data[, as.list(adjust_direct(count = count, pop = pop, stdpop = stdpop,
+                                                conf.level = as.numeric(conf.level), per = per,
+                                                event_type = event_type))]
+  }
 
   # Tidy results ----
   rate_estimates <- c("crude.rate", "crude.lci", "crude.uci", "adj.rate", "adj.lci", "adj.uci")
