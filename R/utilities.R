@@ -84,8 +84,8 @@ adjust_direct <- function(count,
     stop("The `per` argument must be a positive integer, e.g., 100000.")
   }
 
-  if(!is.numeric(conf.level) || conf.level < 0 || conf.level > 0.99) {
-    stop("'conf.level' should be a decimal between 0.00 & 0.99")
+  if(!is.numeric(conf.level) || conf.level < 0 || conf.level |> 1) {
+    stop("'conf.level' should be a decimal between 0 and 1")
   }
 
   if(!event_type %in% c("unique", "repeatable")) {
@@ -117,7 +117,7 @@ adjust_direct <- function(count,
         pop_calc[i] <- 1
 
       } else {
-        # pop = 0 & count > 0 only possible at this poing when event_type == 'repeatable'
+        # pop = 0 & count > 0 only possible at this point when event_type == 'repeatable'
         # Set pop_calc = NA to force the user to address the data issue head on
         pop_calc[i] <- NA
         zero_pop_warning <- TRUE
@@ -171,8 +171,8 @@ adjust_direct <- function(count,
             call. = FALSE, immediate. = TRUE)
   }
 
-  # Return output
-  return(adjusted)
+  # Return output ----
+  adjusted
 }
 
 # age_standardize() ----
