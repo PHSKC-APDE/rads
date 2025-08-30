@@ -31,10 +31,41 @@
 #'
 #' @examples
 #' \donttest{
-#'  adjust_direct(count = c(11, 9), pop = c(500, 500), stdpop = c(640, 720),
-#'  per = 100, conf.level = 0.95)[]
+#' # Unique events (e.g., deaths, first diagnosis)
+#' adjust_direct(count = c(11, 9),
+#'               pop = c(500, 500),
+#'               stdpop = c(500, 900),
+#'               per = 100,
+#'               conf.level = 0.95,
+#'               event_type = "unique")
+#'
+#' # Repeatable events (e.g., ER visits, infections)
+#' adjust_direct(count = c(150, 200),
+#'               pop = c(500, 500),
+#'               stdpop = c(500, 900),
+#'               per = 100,
+#'               conf.level = 0.95,
+#'               event_type = "repeatable")
+#'
+#' # Unique events when count > population (caps unique events at 100%)
+#' adjust_direct(count = c(25, 30),
+#'               pop = c(20, 25),
+#'               stdpop = c(500, 900),
+#'               per = 100,
+#'               conf.level = 0.95,
+#'               event_type = "unique")
+#'
+#' # Repeatable events when count > population (allows > 100%)
+#' adjust_direct(count = c(25, 30),
+#'               pop = c(20, 25),
+#'               stdpop = c(500, 900),
+#'               per = 100,
+#'               conf.level = 0.95,
+#'               event_type = "repeatable")
+#'
 #' }
 #' @importFrom stats qgamma
+#'
 adjust_direct <- function(count,
                           pop,
                           stdpop,
