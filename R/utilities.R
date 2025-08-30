@@ -66,14 +66,36 @@ adjust_direct <- function(count,
   sum_pop <- sum(pop)
   sum_stdpop <- sum(stdpop)
 
-  # Create pop_calc for calculations to handle zero/problematic values ----
+  # Create pop_calc for calculations to handle when pop < count ----
   if(event_type == "unique") {
     pop_calc <- ifelse(pop < count, count, pop)
   } else {
       pop_calc <- pop
   }
-  pop_calc <- ifelse(pop_calc == 0, 0.00001, pop_calc)
-  sum_pop_calc <- sum(pop_calc)  # Use this for crude rate calculations
+
+  # Handle zero populations ----
+  zero_pop_warning <- FALSE  # Flag to track if warning needed
+
+  if(any(pop_calc == 0)) {
+    zero_indices <- which(pop_calc == 0)
+
+    for(i in zero_indices) {
+      if(count[i] == 0) {
+        # Case: pop = 0, count = 0 (both event types)
+        # Set pop_calc = 1 to get rate = 0/1 = 0
+        pop_calc[i] <- 1
+
+      } else {
+        # pop = 0 & count > 0 only possible at this poing when event_type == 'repeatable'
+        # Set pop_calc = NA to force the user to address the data issue head on
+        pop_calc[i] <- NA
+        zero_pop_warning <- TRUE
+      }
+    }
+  }
+
+  # Get sum of pop for crude calculations below
+    sum_pop_calc <- sum(pop_calc)
 
   # Basic calculations ----
   rate <- count/pop_calc
@@ -109,6 +131,17 @@ adjust_direct <- function(count,
                 adj.lci = per * gamma.lci,
                 adj.uci = per * gamma.uci
   )
+
+  # Give clear warning of zero population problem ----
+  if(zero_pop_warning) {
+    warning("\n\u26A0\ufe0f\u26A0\ufe0f\u26A0\ufe0f\nZero population with positive count detected when event_type = 'repeatable'\n",
+            "This indicates a data quality issue so rates could not be calculated (they are NA).\n",
+            "Consider investigating these cases.",
+            call. = FALSE, immediate. = TRUE)
+  }
+
+  # Return output
+  return(adjusted)
 }
 
 # age_standardize() ----
