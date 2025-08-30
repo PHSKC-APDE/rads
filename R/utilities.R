@@ -142,7 +142,7 @@ adjust_direct <- function(count,
 
   # Calculate exact CI for adjusted rates ----
   dsr <- sum(stdwt * rate, na.rm = TRUE)
-  dsr.var <- sum((stdwt^2, na.rm = TRUE) * (count/pop_calc^2))
+  dsr.var <- sum((stdwt^2) * (count/pop_calc^2), na.rm = TRUE)
   wm <- max(stdwt/pop_calc)
 
   shape_lower <- (dsr^2)/dsr.var
