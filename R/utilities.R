@@ -65,7 +65,6 @@
 #'               event_type = "repeatable")
 #'
 #' }
-#' @importFrom stats qgamma
 #'
 adjust_direct <- function(count,
                           pop,
@@ -137,8 +136,8 @@ adjust_direct <- function(count,
 
   # Calculate exact poisson CI for crude rates ----
   dummycount <- if(sum_count == 0) 1 else sum_count
-  crude.lci <- if(sum_count == 0) 0 else qgamma(alpha/2, dummycount)/sum_pop_calc
-  crude.uci <- qgamma(1 - alpha/2, sum_count + 1)/sum_pop_calc
+  crude.lci <- if(sum_count == 0) 0 else stats::qgamma(alpha/2, dummycount)/sum_pop_calc
+  crude.uci <- stats::qgamma(1 - alpha/2, sum_count + 1)/sum_pop_calc
 
   # Calculate exact CI for adjusted rates ----
   dsr <- sum(stdwt * rate, na.rm = TRUE)
@@ -147,11 +146,11 @@ adjust_direct <- function(count,
 
   shape_lower <- (dsr^2)/dsr.var
   scale_lower <- dsr.var/dsr
-  gamma.lci <- qgamma(alpha/2, shape = shape_lower, scale = scale_lower)
+  gamma.lci <- stats::qgamma(alpha/2, shape = shape_lower, scale = scale_lower)
 
   shape_upper <- ((dsr + wm)^2)/(dsr.var + wm^2)
   scale_upper <- (dsr.var + wm^2)/(dsr + wm)
-  gamma.uci <- qgamma(1 - alpha/2, shape = shape_upper, scale = scale_upper)
+  gamma.uci <- stats::qgamma(1 - alpha/2, shape = shape_upper, scale = scale_upper)
 
   # Prep output ----
   adjusted <- c(count = sum_count,
