@@ -4,7 +4,14 @@
 \alias{adjust_direct}
 \title{Calculate crude and directly adjusted rates}
 \usage{
-adjust_direct(count, pop, stdpop, per = 1e+05, conf.level = 0.95)
+adjust_direct(
+  count,
+  pop,
+  stdpop,
+  per = 1e+05,
+  conf.level = 0.95,
+  event_type = "unique"
+)
 }
 \arguments{
 \item{count}{Numeric vector of indeterminate length. The # of events of interest (e.g., deaths, births, etc.)}
@@ -16,33 +23,69 @@ adjust_direct(count, pop, stdpop, per = 1e+05, conf.level = 0.95)
 \item{per}{Integer vector of length 1. A multiplier for all rates and CI, e.g., when per = 1000, the rates are per 1000 people}
 
 \item{conf.level}{A numeric vector of length 1. The confidence interval used in the calculations.}
+
+\item{event_type}{Character vector of length 1. Either \code{"unique"} (default) for events
+that can only occur once per person (e.g., death, first diagnosis), or \code{"repeatable"}
+for events that can occur multiple times per person (e.g., ER visits, infections).
+When \code{"unique"}, rates are capped at 100\%; when "repeatable", rates can exceed 100\%.}
 }
 \value{
-a labeled numeric vector of the count, rate, and adjusted rate with the CI
+A labeled numeric vector containing: count (total events), pop (total population),
+crude.rate, crude.lci, crude.uci, adj.rate, adj.lci, adj.uci (all rates multiplied by \code{per})
 }
 \description{
 Calculate crude and directly adjusted rates
 }
 \section{Data anomalies}{
 
-When \code{pop < count} (which can occur after collapsing age groups to match the
-reference standard population) or when \code{pop = 0}, \code{adjust_direct()} internally
-uses adjusted values for calculations while preserving the original population
-values in the output. This ensures that age-adjusted rates can still be
-calculated. The adjustment only nominally biases the calculated rates since
-the affected counts are typically small.
+When \code{event_type = "unique"} and \code{pop < count} (which can occur when small
+populations are modeled estimates), \code{adjust_direct()} internally caps the rate
+at 100\% by using the count as the denominator. This ensures logical
+consistency for events that can only occur once per person.
 
-If you are calling a wrapper function that prepares data for \code{adjust_direct()}
-(like \code{\link[=age_standardize]{age_standardize()}}), you may see a warning that notes this adjustment
-and identifies the affected age groups. The actual change is made within
-\code{adjust_direct()} itself.
+When \code{pop = 0}, the function uses a small non-zero value (0.00001) to avoid
+division by zero errors.
+
+The original population values are always preserved in the output. These adjustments
+only nominally bias the calculated rates since the affected counts are typically small.
 }
 
 \examples{
 \donttest{
- adjust_direct(count = c(11, 9), pop = c(500, 500), stdpop = c(640, 720),
- per = 100, conf.level = 0.95)[]
+# Unique events (e.g., deaths, first diagnosis)
+adjust_direct(count = c(11, 9),
+              pop = c(500, 500),
+              stdpop = c(500, 900),
+              per = 100,
+              conf.level = 0.95,
+              event_type = "unique")
+
+# Repeatable events (e.g., ER visits, infections)
+adjust_direct(count = c(150, 200),
+              pop = c(500, 500),
+              stdpop = c(500, 900),
+              per = 100,
+              conf.level = 0.95,
+              event_type = "repeatable")
+
+# Unique events when count > population (caps unique events at 100\%)
+adjust_direct(count = c(25, 30),
+              pop = c(20, 25),
+              stdpop = c(500, 900),
+              per = 100,
+              conf.level = 0.95,
+              event_type = "unique")
+
+# Repeatable events when count > population (allows > 100\%)
+adjust_direct(count = c(25, 30),
+              pop = c(20, 25),
+              stdpop = c(500, 900),
+              per = 100,
+              conf.level = 0.95,
+              event_type = "repeatable")
+
 }
+
 }
 \seealso{
 \code{\link[=age_standardize]{age_standardize()}} for a useful wrapper that calls upon standard reference populations.

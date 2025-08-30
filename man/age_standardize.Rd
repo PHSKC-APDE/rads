@@ -13,7 +13,8 @@ age_standardize(
   per = 1e+05,
   conf.level = 0.95,
   group_by = NULL,
-  diagnostic_report = F
+  diagnostic_report = F,
+  event_type = "unique"
 )
 }
 \arguments{
@@ -43,6 +44,11 @@ do you want to stratify the rate results, if any?}
 \item{diagnostic_report}{If \code{group_by} is used and there are groups with missing ages,
 setting \code{diagnostic_report = TRUE} returns a diagnostic table instead of normal results.
 Use this option if a warning about missing age groups appears when running the function normally.}
+
+\item{event_type}{Character vector of length 1. Either \code{"unique"} (default) for events
+that can only occur once per person (e.g., death, first diagnosis), or \code{"repeatable"}
+for events that can occur multiple times per person (e.g., ER visits, infections).
+When \code{"unique"}, rates are capped at 100\%; when "repeatable", rates can exceed 100\%.}
 }
 \value{
 A data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'group_by' variable(s) -- if any
@@ -69,12 +75,15 @@ common methods used by health departments include \code{SE = adjusted_rate/sqrt(
 
 \section{Data anomalies}{
 
-In rare cases (typically after collapsing age groups), the aggregate event
-count (\code{count}) may be greater than the corresponding aggregate population (\code{pop}),
-or the population may be zero. When this occurs, the function issues a
-warning and internally adjusts the denominator in the \code{\link[=adjust_direct]{adjust_direct()}} function
-to allow the rate calculation. This adjustment ensures stable results and only
-minimally biases estimates, since such anomalies usually occur in small strata.
+When the aggregate event count (\code{count}) is greater than the corresponding
+aggregate population (\code{pop}) AND\code{event_type = "unique"}, the function issues
+a warning and internally adjusts the denominator in the \code{\link[=adjust_direct]{adjust_direct()}}
+function to cap rates at 100\%. When \code{count > pop} AND \code{event_type = "repeatable"},
+no adjustment is made as rates can legitimately exceed 100\%.
+
+If the population is zero, the function always makes a small adjustment to allow
+rate calculation. These adjustments ensure stable results and only minimally bias
+estimates, since such anomalies usually occur in small strata.
 }
 
 \examples{
