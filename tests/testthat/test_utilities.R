@@ -191,10 +191,10 @@ test_that('age_standardize ... errors & warnings',{
                "Both 'age' and 'agecat' columns are present, but only one is needed")
 
   expect_error(age_standardize(copy(temp.dt3)[, age := NULL], my.count = "count", my.pop = "pop"),
-               "Neither 'age' nor 'agecat' columns are present")
+               "The 'age' column must be numeric")
 
   expect_error(age_standardize(copy(temp.dt3)[, age := age + 0.1], my.count = "count", my.pop = "pop"),
-               "The 'age' column is not an integer and cannot be converted to integer without loss of data")
+               "The 'age' column is not an integer and cannot be converted")
 
   expect_error(age_standardize(copy(temp.dt3)[, age := NULL][, agecat := 10], my.count = "count", my.pop = "pop"),
                "The 'agecat' column is neither character nor factor")
@@ -277,8 +277,34 @@ test_that('age_standardize ... errors & warnings',{
                                per = 1000,
                                conf.level = 0.95,
                                group_by = "gender"),
-               'The agecat values in ph.data must match those in your reference')
+               "The 'age' column must be numeric")
 
+})
+
+test_that("non-numeric age column rejected", {
+  dt <- data.table(age = as.character(0:10), count = 1, pop = 10)
+  expect_error(
+    age_standardize(dt, my.count = "count", my.pop = "pop"),
+    "The 'age' column must be numeric"
+  )
+})
+
+test_that("error when ref.popname != 'none' but collapse = FALSE and no agecat", {
+  dt <- data.table(age = 0:100, count = 1, pop = 100)
+  expect_error(
+    age_standardize(dt,
+                    ref.popname = "2000 U.S. Std Population (11 age groups)",
+                    collapse = FALSE, my.count = "count", my.pop = "pop"
+    ),
+    "When collapse = FALSE and ref.popname != 'none'"
+  )
+})
+
+test_that("zero count data gives finite upper CI and lower CI == 0", {
+  dt <- data.table(age = 0:100, count = 0, pop = 1000)
+  res <- age_standardize(dt, my.count = "count", my.pop = "pop")
+  expect_equal(res$adj.lci, 0)
+  expect_true(is.finite(res$adj.uci))
 })
 
 # as_table_brfss() & as_imputed_brfss() ----

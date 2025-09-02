@@ -183,8 +183,9 @@ adjust_direct <- function(count,
 
   if(dsr == 0 && dsr.var == 0) {
     gamma.lci <- 0 # Lower should be 0 when counts are 0
-    gamma.uci <- stats::qgamma(1 - alpha/2, 1) / sum_pop_calc # Upper should NOT be 0 when counts are 0
-  } else {
+    # Upper is conservative and weighted -- assume one event in the stratum with maximum stdwt / pop_calc
+    wm_local <- max(stdwt / pop_calc)
+    gamma.uci <- stats::qgamma(1 - alpha/2, 1) * wm_local  } else {
     wm <- max(stdwt/pop_calc)
 
     shape_lower <- (dsr^2)/dsr.var
@@ -243,7 +244,7 @@ adjust_direct <- function(count,
 #'
 #' @details
 #' `ph.data`  must have the following three columns:
-#'  - 'age' or 'agecat': 'age' in single years (if collapse = T) or 'agecat' with the same age bins as your selected reference population (if collapse = F)
+#'  - 'age' or 'agecat': 'age' in single years (if collapse = TRUE) or 'agecat' with the same age bins as your selected reference population (if collapse = FALSE)
 #'  - `my.count`: an *aggregated* count for the event (e.g., disease) for which you want to find an age standardized rate
 #'  - `my.pop`: the population corresponding to the age or agecat
 #'
@@ -323,8 +324,11 @@ age_standardize <- function (ph.data,
 
   # Check that ph.data has either 'age' or 'agecat' ----
   age_exists <- "age" %in% names(ph.data)
-  agecat_exists <- "agecat" %in% names(ph.data)
+  if (!is.numeric(ph.data$age) && !is.integer(ph.data$age)) {
+    stop("\n\U1F6D1 The 'age' column must be numeric (whole years) or integer.")
+  }
 
+  agecat_exists <- "agecat" %in% names(ph.data)
   if (age_exists && agecat_exists) {
     stop("\n\U1F6D1 Both 'age' and 'agecat' columns are present, but only one is needed. \nPlease check your data and rename or delete one of these variables.")
   } else if (!age_exists && !agecat_exists) {
@@ -385,8 +389,13 @@ age_standardize <- function (ph.data,
   if(ref.popname == "none" & !"stdpop" %in% colnames(ph.data)){stop("\n\U1F6D1 When specifying ref.popname = 'none', ph.data must have a column named 'stdpop' with the reference standard population data.")}
 
   if(ref.popname == "none" & collapse == TRUE){
-    stop(paste0("\n\U1F6D1 When ref.popname = 'none', collapse should equal F.\n",
+    stop(paste0("\n\U1F6D1 When ref.popname = 'none', collapse should equal FALSE.\n",
                 "Selecting ref.popname = 'none' expects that ph.data has already been collapsed/aggregated and has a 'stdpop' column."))
+  }
+
+  if (!isTRUE(collapse) && ref.popname != "none" && !"agecat" %in% names(ph.data)) {
+    stop("\n\U1F6D1 When collapse = FALSE and ref.popname != 'none', ph.data must contain \n",
+         "an 'agecat' column matching the selected reference population.")
   }
 
   # Standardize column names ----
@@ -480,11 +489,12 @@ age_standardize <- function (ph.data,
   }
 
   # Check agecat ----
-  if("agecat" %in% names(ph.data)){
-    if(!identical(sort(unique(ph.data$agecat)),
-                  sort(unique(get_ref_pop(ref.popname)[['agecat']])))){
+    if ("agecat" %in% names(ph.data) && ref.popname != "none") {
+      if (!identical(sort(unique(ph.data$agecat)),
+                     sort(unique(get_ref_pop(ref.popname)[['agecat']])))) {
       stop("\n\U1F6D1 STOP and fix your code!\n",
-           "The agecat values in ph.data must match those in your reference \npopulation {",ref.popname, "} exactly.")
+           "The agecat values in ph.data must match those in your reference \n",
+           "population {",ref.popname, "} exactly.")
     }
   }
 
@@ -549,18 +559,18 @@ age_standardize <- function (ph.data,
   }
 
   # Collapse ph.data to match standard population bins ----
-  if(collapse==T){
+  if(isTRUE(collapse)){
     if(! "age" %in% colnames(ph.data)){
       stop("\n\U1F6D1 When collapse = TRUE, ph.data must have a column named 'age' where age is an integer.\n",
            "This is necessary to generate age bins that align with the selected standard\n",
            "reference population. If ph.data already has an 'agecat' column that is formatted\n",
            "identically to that in the standard reference population, set collapse = FALSE")
     }
-    if(is.numeric(ph.data$age) == FALSE){
-      stop("\n\U1F6D1 When collapse = TRUE, the 'age' column must be comprised entirely of integers")
+    if (!is.numeric(ph.data$age)) {
+      stop("\n\U1F6D1 When collapse = TRUE, the 'age' column must be comprised entirely of integers.")
     }
-    if(sum(as.numeric(ph.data$age) %% 1) != 0){
-      stop("\n\U1F6D1 When collapse = TRUE, the 'age' column must be comprised entirely of integers")
+    if (any(ph.data$age %% 1 != 0)) {
+      stop("\n\U1F6D1 When collapse = TRUE, the 'age' column must be comprised entirely of integers.")
     }
     if("agecat" %in% colnames(ph.data)){
       stop("\n\U1F6D1 When collapse = TRUE, a new column named 'agecat' is created to match that in the standard reference population.\n",

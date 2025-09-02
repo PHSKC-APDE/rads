@@ -45,8 +45,7 @@ consistency for events that can only occur once per person.
 
 When \code{pop = 0}, the function sets \code{pop = 1} to avoid division by zero errors.
 
-The original population values are always preserved in the output. These adjustments
-only nominally bias the calculated rates since the affected counts are typically small.
+The original population values are always preserved in the output.
 }
 
 \examples{

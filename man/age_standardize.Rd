@@ -7,13 +7,13 @@
 age_standardize(
   ph.data,
   ref.popname = NULL,
-  collapse = T,
+  collapse = TRUE,
   my.count = "count",
   my.pop = "pop",
   per = 1e+05,
   conf.level = 0.95,
   group_by = NULL,
-  diagnostic_report = F,
+  diagnostic_report = FALSE,
   event_type = "unique"
 )
 }
@@ -36,18 +36,19 @@ population corresponding to the given demographics.}
 when per = 1000, the rates are per 1000 people}
 
 \item{conf.level}{A numeric vector of length 1. The confidence interval used
-in the calculations.}
+in the calculations, >0 & <1, typically 0.95}
 
 \item{group_by}{Character vector of indeterminate length. By which variable(s)
 do you want to stratify the rate results, if any?}
 
-\item{diagnostic_report}{If \code{group_by} is used and there are groups with missing ages,
-setting \code{diagnostic_report = TRUE} returns a diagnostic table instead of normal results.
-Use this option if a warning about missing age groups appears when running the function normally.}
+\item{diagnostic_report}{Logical vector of length 1. If \code{group_by} is used and
+there are groups with missing ages, setting \code{diagnostic_report = TRUE} returns
+a diagnostic table instead of normal results. Use this option if a warning about
+missing age groups appears when running the function normally.}
 
-\item{event_type}{Character vector of length 1. Either \code{"unique"} (default) for events
-that can only occur once per person (e.g., death, first diagnosis), or \code{"repeatable"}
-for events that can occur multiple times per person (e.g., ER visits, infections).
+\item{event_type}{Character vector of length 1. Either \code{"unique"} (default) for
+events that can only occur once per person (e.g., death, first diagnosis), or
+\code{"repeatable"} for events that can occur multiple times per person (e.g., ER visits, infections).
 When \code{"unique"}, rates are capped at 100\%; when "repeatable", rates can exceed 100\%.}
 }
 \value{
@@ -57,9 +58,9 @@ A data.table of the count, rate & adjusted rate with CIs, name of the reference 
 Calculate age standardized rates from a data.table with age, counts, and population columns.
 }
 \details{
-\code{ph.data}  must have the following three columns ...
+\code{ph.data}  must have the following three columns:
 \itemize{
-\item 'age' or 'agecat': 'age' in single years (if collapse = T) or 'agecat' with the same age bins as your selected reference population (if collapse = F)
+\item 'age' or 'agecat': 'age' in single years (if collapse = TRUE) or 'agecat' with the same age bins as your selected reference population (if collapse = FALSE)
 \item \code{my.count}: an \emph{aggregated} count for the event (e.g., disease) for which you want to find an age standardized rate
 \item \code{my.pop}: the population corresponding to the age or agecat
 }
