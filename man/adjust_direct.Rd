@@ -14,7 +14,7 @@ adjust_direct(
 )
 }
 \arguments{
-\item{count}{Numeric vector of indeterminate length. The # of events of interest (e.g., deaths, births, etc.)}
+\item{count}{Numeric vector of indeterminate length. The number of events of interest (e.g., deaths, births, etc.)}
 
 \item{pop}{Numeric vector of indeterminate length. The population denominator for the count.}
 
@@ -22,7 +22,7 @@ adjust_direct(
 
 \item{per}{Integer vector of length 1. A multiplier for all rates and CI, e.g., when per = 1000, the rates are per 1000 people}
 
-\item{conf.level}{A numeric vector of length 1. The confidence interval used in the calculations.}
+\item{conf.level}{A numeric vector of length 1. The confidence interval used in the calculations, >0 & <1, typically 0.95}
 
 \item{event_type}{Character vector of length 1. Either \code{"unique"} (default) for events
 that can only occur once per person (e.g., death, first diagnosis), or \code{"repeatable"}
@@ -31,7 +31,7 @@ When \code{"unique"}, rates are capped at 100\%; when "repeatable", rates can ex
 }
 \value{
 A labeled numeric vector containing: count (total events), pop (total population),
-crude.rate, crude.lci, crude.uci, adj.rate, adj.lci, adj.uci (all rates multiplied by \code{per})
+crude.rate, crude.lci, crude.uci, adj.rate, adj.lci, adj.uci (rates and CI are scaled by \code{per})
 }
 \description{
 Calculate crude and directly adjusted rates
@@ -43,8 +43,7 @@ populations are modeled estimates), \code{adjust_direct()} internally caps the r
 at 100\% by using the count as the denominator. This ensures logical
 consistency for events that can only occur once per person.
 
-When \code{pop = 0}, the function uses a small non-zero value (0.00001) to avoid
-division by zero errors.
+When \code{pop = 0}, the function sets \code{pop = 1} to avoid division by zero errors.
 
 The original population values are always preserved in the output. These adjustments
 only nominally bias the calculated rates since the affected counts are typically small.

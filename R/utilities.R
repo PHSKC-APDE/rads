@@ -1,18 +1,18 @@
 # adjust_direct() ----
 #' Calculate crude and directly adjusted rates
 #'
-#' @param count Numeric vector of indeterminate length. The # of events of interest (e.g., deaths, births, etc.)
+#' @param count Numeric vector of indeterminate length. The number of events of interest (e.g., deaths, births, etc.)
 #' @param pop Numeric vector of indeterminate length. The population denominator for the count.
 #' @param stdpop Numeric vector of indeterminate length. The reference standard population corresponding to the population.
 #' @param per Integer vector of length 1. A multiplier for all rates and CI, e.g., when per = 1000, the rates are per 1000 people
-#' @param conf.level A numeric vector of length 1. The confidence interval used in the calculations.
+#' @param conf.level A numeric vector of length 1. The confidence interval used in the calculations, >0 & <1, typically 0.95
 #' @param event_type Character vector of length 1. Either `"unique"` (default) for events
 #'   that can only occur once per person (e.g., death, first diagnosis), or `"repeatable"`
 #'   for events that can occur multiple times per person (e.g., ER visits, infections).
 #'   When `"unique"`, rates are capped at 100%; when "repeatable", rates can exceed 100%.
 #'
 #' @return A labeled numeric vector containing: count (total events), pop (total population),
-#'   crude.rate, crude.lci, crude.uci, adj.rate, adj.lci, adj.uci (all rates multiplied by `per`)
+#'   crude.rate, crude.lci, crude.uci, adj.rate, adj.lci, adj.uci (rates and CI are scaled by `per`)
 #' @export
 #' @name adjust_direct
 #'
@@ -22,11 +22,9 @@
 #' at 100% by using the count as the denominator. This ensures logical
 #' consistency for events that can only occur once per person.
 #'
-#' When `pop = 0`, the function uses a small non-zero value (0.00001) to avoid
-#' division by zero errors.
+#' When `pop = 0`, the function sets `pop = 1` to avoid division by zero errors.
 #'
-#' The original population values are always preserved in the output. These adjustments
-#' only nominally bias the calculated rates since the affected counts are typically small.
+#' The original population values are always preserved in the output.
 #'
 #' @seealso [age_standardize()] for a useful wrapper that calls upon standard reference populations.
 #'
@@ -77,56 +75,96 @@ adjust_direct <- function(count,
   # Validate arguments ----
   n_count <- length(count)
   if(n_count != length(pop) || n_count != length(stdpop)) {
-    stop("The length of `count`, `pop`, and `stdpop` must be equal.")
+    stop("\n\U1F6D1 The length of `count`, `pop`, and `stdpop` must be equal.")
+  }
+
+  validation_params <- list(
+    count = "counts",
+    pop = "populations",
+    stdpop = "standard populations"
+  )
+    for(arg_name in names(validation_params)) {
+      arg_value <- get(arg_name)
+      context_name <- validation_params[[arg_name]]
+
+      # Check if numeric
+      if(!is.numeric(arg_value)) {
+        stop(paste0("\n\U1F6D1 The `", arg_name, "` argument must be numeric."))
+      }
+
+      # Check for NA values first
+      if(any(is.na(arg_value))) {
+        na_positions <- which(is.na(arg_value))
+        stop(paste0("\n\U1F6D1 NA values detected in `", arg_name, "` at position(s): ",
+                    paste(na_positions, collapse = ", "),
+                    ".\nAll strata must have valid ", context_name, " for rate calculation."))
+      }
+
+      # Check for negative or zero values (no na.rm needed since we confirmed no NAs)
+      if(any(arg_value < 0)) {
+        stop(paste0("\n\U1F6D1 The `", arg_name, "` argument must not contain negative values."))
+      }
+    }
+
+  if(sum(stdpop) == 0) {
+    stop("\n\U1F6D1 The sum of `stdpop` cannot be zero.")
+  }
+
+  if(any(stdpop == 0)) {
+    warning("\n\u26A0\ufe0f\u26A0\ufe0f\u26A0\ufe0f At least one stratum of your standard population has a population of 0.\n",
+            "In practice this is extremely rare and is likely the result of an error in data preparation.\n",
+            "If this was not intentional, correct your data and try again.")
   }
 
   if(!is.numeric(per) || per <= 0 || per %% 1 != 0) {
-    stop("The `per` argument must be a positive integer, e.g., 100000.")
+    stop("\n\U1F6D1 The `per` argument must be a positive integer, e.g., 100000.")
   }
 
-  if(!is.numeric(conf.level) || conf.level < 0 || conf.level |> 1) {
-    stop("'conf.level' should be a decimal between 0 and 1")
+  if(!is.numeric(conf.level) || conf.level <= 0 || conf.level >= 1) {
+    stop("\n\U1F6D1 'conf.level' should be a decimal between 0 and 1")
   }
 
   if(!event_type %in% c("unique", "repeatable")) {
-    stop("The `event_type` argument must be either 'unique' or 'repeatable'.")
+    stop("\n\U1F6D1 The `event_type` argument must be either 'unique' or 'repeatable'.")
+  }
+
+  # Stop when population not usable ----
+  if(event_type == "repeatable" && sum(pop) == 0 && any(count > 0)) {
+    stop("\n\U1F6D1 Cannot calculate rates when all populations are zero and \n",
+          "there are positive counts with event_type = 'repeatable'.\n",
+           "This represents undefined division (count/0). Please review your data.")
   }
 
   # Calculate sums used multiple times ----
-  sum_count <- sum(count, na.rm = TRUE)
-  sum_pop <- sum(pop, na.rm = TRUE)
-  sum_stdpop <- sum(stdpop, na.rm = TRUE)
+  sum_count <- sum(count)
+  sum_pop <- sum(pop)
+  sum_stdpop <- sum(stdpop)
 
   # Create pop_calc for calculations to handle when pop < count ----
   if(event_type == "unique") {
     pop_calc <- ifelse(pop < count, count, pop)
   } else {
-      pop_calc <- pop
+    pop_calc <- pop
   }
 
   # Handle zero populations ----
-  zero_pop_warning <- FALSE  # Flag to track if warning needed
-
   if(any(pop_calc == 0)) {
     zero_indices <- which(pop_calc == 0)
 
     for(i in zero_indices) {
       if(count[i] == 0) {
-        # Case: pop = 0, count = 0 (both event types)
-        # Set pop_calc = 1 to get rate = 0/1 = 0
+        # When pop = 0 & count = 0, set pop_calc = 1 to get rate = 0/1 = 0
         pop_calc[i] <- 1
-
       } else {
-        # pop = 0 & count > 0 only possible at this point when event_type == 'repeatable'
-        # Set pop_calc = NA to force the user to address the data issue head on
-        pop_calc[i] <- NA
-        zero_pop_warning <- TRUE
+        # when pop = 0 & count > 0 (only possible when event_type == "repeatable")
+        stop("\n\U1F6D1 When event_type = 'repeatable', cannot have pop = 0 with count > 0.\n",
+             "Please review your data.")
       }
     }
   }
 
-  # Get sum of pop for crude calculations below
-    sum_pop_calc <- sum(pop_calc, na.rm = TRUE)
+  # Get sum of pop_calc for crude calculations below
+  sum_pop_calc <- sum(pop_calc)
 
   # Basic calculations ----
   rate <- count/pop_calc
@@ -140,17 +178,23 @@ adjust_direct <- function(count,
   crude.uci <- stats::qgamma(1 - alpha/2, sum_count + 1)/sum_pop_calc
 
   # Calculate exact CI for adjusted rates ----
-  dsr <- sum(stdwt * rate, na.rm = TRUE)
-  dsr.var <- sum((stdwt^2) * (count/pop_calc^2), na.rm = TRUE)
-  wm <- max(stdwt/pop_calc)
+  dsr <- sum(stdwt * rate)
+  dsr.var <- sum((stdwt^2) * (count/pop_calc^2))
 
-  shape_lower <- (dsr^2)/dsr.var
-  scale_lower <- dsr.var/dsr
-  gamma.lci <- stats::qgamma(alpha/2, shape = shape_lower, scale = scale_lower)
+  if(dsr == 0 && dsr.var == 0) {
+    gamma.lci <- 0 # Lower should be 0 when counts are 0
+    gamma.uci <- stats::qgamma(1 - alpha/2, 1) / sum_pop_calc # Upper should NOT be 0 when counts are 0
+  } else {
+    wm <- max(stdwt/pop_calc)
 
-  shape_upper <- ((dsr + wm)^2)/(dsr.var + wm^2)
-  scale_upper <- (dsr.var + wm^2)/(dsr + wm)
-  gamma.uci <- stats::qgamma(1 - alpha/2, shape = shape_upper, scale = scale_upper)
+    shape_lower <- (dsr^2)/dsr.var
+    scale_lower <- dsr.var/dsr
+    gamma.lci <- stats::qgamma(alpha/2, shape = shape_lower, scale = scale_lower)
+
+    shape_upper <- ((dsr + wm)^2)/(dsr.var + wm^2)
+    scale_upper <- (dsr.var + wm^2)/(dsr + wm)
+    gamma.uci <- stats::qgamma(1 - alpha/2, shape = shape_upper, scale = scale_upper)
+  }
 
   # Prep output ----
   adjusted <- c(count = sum_count,
@@ -162,14 +206,6 @@ adjust_direct <- function(count,
                 adj.lci = per * gamma.lci,
                 adj.uci = per * gamma.uci
   )
-
-  # Give clear warning of zero population problem ----
-  if(zero_pop_warning) {
-    warning("\n\u26A0\ufe0f\u26A0\ufe0f\u26A0\ufe0f\nZero population with positive count detected when event_type = 'repeatable'\n",
-            "This indicates a data quality issue so rates could not be calculated (they are NA).\n",
-            "Consider investigating these cases.",
-            call. = FALSE, immediate. = TRUE)
-  }
 
   # Return output ----
   adjusted
@@ -193,7 +229,7 @@ adjust_direct <- function(count,
 #' @param per Integer vector of length 1. A multiplier for all rates and CI, e.g.,
 #' when per = 1000, the rates are per 1000 people
 #' @param conf.level A numeric vector of length 1. The confidence interval used
-#' in the calculations.
+#' in the calculations, >0 & <1, typically 0.95
 #' @param group_by Character vector of indeterminate length. By which variable(s)
 #' do you want to stratify the rate results, if any?
 #' @param diagnostic_report If `group_by` is used and there are groups with missing ages,

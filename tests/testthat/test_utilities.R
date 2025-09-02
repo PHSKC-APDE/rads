@@ -3,7 +3,31 @@ library(DBI)
 library(data.table)
 
 # adjust_direct() ----
-test_that('adjust_direct',{
+test_that("adjust_direct: input validation errors", {
+  expect_error(
+    adjust_direct(count = c(1, 2), pop = c(100), stdpop = c(50, 60)),
+    "length.*must be equal"
+  )
+
+  expect_error(
+    adjust_direct(count = c(-1, 2), pop = c(100, 200), stdpop = c(50, 60)),
+    "must not contain negative values"
+  )
+
+  expect_error(
+    adjust_direct(count = c(1, 2), pop = c(100, 200), stdpop = c(50, 60), conf.level = 1),
+    "between 0 and 1"
+  )
+})
+
+test_that("adjust_direct: stdpop = 0 generates warning", {
+  expect_warning(
+    adjust_direct(count = c(1, 2), pop = c(100, 200), stdpop = c(0, 60)),
+    "At least one stratum.*population of 0"
+  )
+})
+
+test_that('adjust_direct calculations',{
 
   temp.direct <- adjust_direct(count = c(11, 9), pop = c(500, 500), stdpop = c(640, 720), per = 100, conf.level = 0.95)
 
@@ -21,6 +45,67 @@ test_that('adjust_direct',{
 
   expect_equal(3.0820, round(temp.direct[["adj.uci"]], 4) ) # checked vis-à-vis epitools::ageadjust.direct
 
+})
+
+test_that("adjust_direct: count = 0 and pop > 0", {
+  res <- adjust_direct(count = c(0, 0), pop = c(100, 200), stdpop = c(1, 1))
+  expect_equal(res[["crude.rate"]], 0)
+  expect_equal(res[["adj.rate"]], 0)
+  expect_equal(res[["crude.lci"]], 0)
+})
+
+test_that("adjust_direct: pop = 0 and count = 0 (no warning expected)", {
+  expect_silent({
+    res <- adjust_direct(count = c(0, 0), pop = c(0, 0), stdpop = c(1, 1))
+  })
+  expect_equal(res[["crude.rate"]], 0)
+  expect_equal(res[["adj.rate"]], 0)
+})
+
+test_that("adjust_direct: pop = 0 and count > 0 with repeatable events (warning and NA)", {
+  expect_error(
+    res <- adjust_direct(
+      count = c(5, 10),
+      pop = c(0, 0),
+      stdpop = c(1, 1),
+      event_type = "repeatable"
+    ), "Cannot calculate rates when all populations are zero"
+  )
+})
+
+test_that("adjust_direct: pop < count with unique events (capped at 100%)", {
+  res <- adjust_direct(
+    count = c(25, 30),
+    pop = c(20, 25),
+    stdpop = c(500, 900),
+    per = 100,
+    event_type = "unique"
+  )
+  expect_true(res[["crude.rate"]] == 100)
+  expect_true(res[["adj.rate"]] == 100)
+})
+
+test_that("adjust_direct: pop < count with repeatable events (rates > 100% allowed)", {
+  res <- adjust_direct(
+    count = c(25, 30),
+    pop = c(20, 25),
+    stdpop = c(500, 900),
+    per = 100,
+    event_type = "repeatable"
+  )
+  expect_true(res[["crude.rate"]] > 100)
+  expect_true(res[["adj.rate"]] > 100)
+})
+
+test_that("adjust_direct: very small population edge case", {
+  res <- adjust_direct(
+    count = c(1),
+    pop = c(1),
+    stdpop = c(1),
+    per = 1000
+  )
+  expect_equal(res[["crude.rate"]], 1000)
+  expect_true(res[["crude.uci"]] > res[["crude.lci"]])
 })
 
 # age_standardize() ----
