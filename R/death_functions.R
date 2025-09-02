@@ -2431,7 +2431,6 @@ death_xxx_count <- function(ph.data,
 #' }
 #'
 #' @import data.table
-#' @importFrom stats qnorm
 #'
 
 life_table <- function(ph.data,
@@ -2444,7 +2443,7 @@ life_table <- function(ph.data,
 
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
   istart <- iend <- irank <- ilength <- mx <- qx <- lx <- dx <- Lx <- Tx <- ex <- NULL
-  ax <- mx_upper <- mx_lower <- mx_se <- qnorm <- qx_variance <- px_variance <- NULL
+  ax <- mx_upper <- mx_lower <- mx_se <- qx_variance <- px_variance <- NULL
   ex_temp <- ex_temp_cumsum <- ex_variance <- ex_se <- ex_lower <- ex_upper <- NULL
   ordered_cols <- newdeaths <- original_order <- NULL
   predicted_mx <- deaths_original <- deaths <- pop <- NULL
@@ -2640,8 +2639,8 @@ life_table <- function(ph.data,
         ph.data[, predicted_mx := NULL]
       }
 
-    ph.data[, mx_upper := qgamma((ci+(1-ci)/2), get(mydeaths) + 1) / get(mypops)] # exact Poisson upper CI
-    ph.data[, mx_se := (mx_upper - mx) / qnorm((ci+(1-ci)/2))] # reverse_engineer poisson standard error
+    ph.data[, mx_upper := stats::qgamma((ci+(1-ci)/2), get(mydeaths) + 1) / get(mypops)] # exact Poisson upper CI
+    ph.data[, mx_se := (mx_upper - mx) / stats::qnorm((ci+(1-ci)/2))] # reverse_engineer poisson standard error
     ph.data[, mx_upper := NULL]
 
   # qx ... probability of dying in the interval ----
@@ -2814,7 +2813,7 @@ life_table <- function(ph.data,
 
   # Use variance to calculate confidence intervals
   ph.data[, ex_se := sqrt(ex_variance)]
-  zscore = qnorm(1 - (1-ci)/2) # since two sided, need to split the alpha for upper and lower tails
+  zscore = stats::qnorm(1 - (1-ci)/2) # since two sided, need to split the alpha for upper and lower tails
   ph.data[, ex_lower := ex - ex_se * zscore]
   ph.data[, ex_upper := ex + ex_se * zscore]
 
