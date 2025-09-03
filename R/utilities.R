@@ -244,11 +244,17 @@ adjust_direct <- function(count,
 #' When `"unique"`, rates are capped at 100%; when "repeatable", rates can exceed 100%.
 #'
 #' @details
-#' `ph.data`  must have the following three columns:
-#'  - 'age' or 'agecat': 'age' in single years (if collapse = TRUE) or 'agecat' with the same age bins as your selected reference population (if collapse = FALSE)
-#'  - `my.count`: an *aggregated* count for the event (e.g., disease) for which you want to find an age standardized rate
+#' `ph.data` must have the following three columns:
+#'  - 'age' or 'agecat': 'age' in single years (if collapse = TRUE) or 'agecat'
+#'    with the same age bins as your selected reference population (if collapse = FALSE)
+#'  - `my.count`: an *aggregated* count for the event (e.g., disease) for which you
+#'    want to find an age standardized rate
 #'  - `my.pop`: the population corresponding to the age or agecat
 #'
+#' When analyzing *specific age subsets* (e.g., adolescents, seniors, etc.), include *only* those ages.
+#'
+#' When analyzing the *whole population*, *include all ages* with zero counts where no
+#' events occurred to ensure accurate age-standardized rates.
 #'
 #' @section Note on Standard Errors:
 #' This function calculates confidence intervals using the
@@ -437,10 +443,14 @@ age_standardize <- function (ph.data,
           if (is.null(group_by)) {
             check_result <- check_full_age_range(ph.data)
             if (!check_result$full_range) {
-              warning(paste0("\n\u26A0\ufe0f ph.data (", ph.data.name, ") does not have the full range of ages from 0 to 100.\n",
-                             "Missing ages: ", format_time(check_result$missing), "\n",
-                             "This may affect the accuracy of your age-adjusted rates.\n",
-                             "Consider adding missing ages with zero counts and the appropriate population."),
+              warning(paste0("\n\u26A0\ufe0f ph.data (", ph.data.name, ") does not include all ages 0-100.\n",
+                             "Missing ages: ", format_time(check_result$missing), "\n\n",
+                             "This is expected if analyzing a specific age group (e.g., adolescents, working adults, etc.).\n",
+                             "However, if analyzing the whole population, missing ages should be added with:\n",
+                             "  - count = 0 (if no events occurred)\n",
+                             "  - pop = actual population for that age\n\n",
+                             "Without complete age data, age-standardized rates may not accurately represent\n",
+                             "the total population burden."),
                       immediate. = TRUE, call. = FALSE)
 
             }
@@ -451,9 +461,11 @@ age_standardize <- function (ph.data,
 
             if(diagnostic_report) {
               message(
-                "\U0001F50D Returning diagnostic report instead of age-standardized rates.\n",
+                "\U0001F50D Returning diagnostic report showing groups with incomplete age ranges.\n",
                 "\u26A0\ufe0f ", format(nrow(age_chk), big.mark = ','),
-                " group(s) have missing age ranges. Consider addressing these gaps before proceeding."
+                " group(s) have missing ages.\n\n",
+                "If analyzing specific age subsets, this may be intentional.\n",
+                "If analyzing whole populations, add missing ages with count = 0 and appropriate population."
               )
               return(age_chk)
             }
@@ -461,26 +473,30 @@ age_standardize <- function (ph.data,
             if (nrow(age_chk) %in% 1:5) {
               table_output <- paste(capture.output(print(age_chk, row.names = FALSE, class = FALSE, print.keys = FALSE)), collapse = "\n")
 
-              warning_message <- paste0(
+              warning(paste0(
                 "\n\u26A0\ufe0f Missing ages detected in ", ph.data.name, " for these groups:\n\n",
                 table_output,
-                "\n\nThis may affect the accuracy of your age-adjusted rates.\n",
-                "Consider adding missing ages with zero counts and the appropriate population."
-              )
-
-              warning(warning_message, immediate. = TRUE, call. = FALSE)
+                "\n\nThis is expected if analyzing a specific age group (e.g., adolescents, working adults, etc.).\n",
+                "However, if analyzing the whole population, missing ages should be added with:\n",
+                "  - count = 0 (if no events occurred)\n",
+                "  - pop = actual population for those ages\n\n",
+                "Without complete age data, age-standardized rates may not accurately represent\n",
+                "the total population burden."
+              ), immediate. = TRUE, call. = FALSE)
             }
 
             if (nrow(age_chk) > 6) {
-              warning_message <- paste0(
+              warning(paste0(
                 "\n\u26A0\ufe0f Missing ages detected in ", ph.data.name, " for ",
-                format(nrow(age_chk), big.mark = ','), " groups.\n",
-                "This may affect the accuracy of your age-adjusted rates.\n",
-                "Consider adding missing ages with zero counts and the appropriate population.\n",
-                "Rerunning age_standardize() with `diagnostic_report = TRUE` will return a table of affected groups and ages instead of the normal output."
-              )
-
-              warning(warning_message, immediate. = TRUE, call. = FALSE)
+                format(nrow(age_chk), big.mark = ','), " groups.\n\n",
+                "This is expected if analyzing a specific age group (e.g., adolescents, working adults, etc.).\n",
+                "However, if analyzing the whole population, missing ages should be added with:\n",
+                "  - count = 0 (if no events occurred)\n",
+                "  - pop = actual population for those ages\n\n",
+                "Without complete age data, age-standardized rates may not accurately represent\n",
+                "the total population burden.\n\n",
+                "Run age_standardize() with `diagnostic_report = TRUE` to see affected groups and ages."
+              ), immediate. = TRUE, call. = FALSE)
 
             }
           }
