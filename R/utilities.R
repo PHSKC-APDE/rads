@@ -1,36 +1,138 @@
 # adjust_direct() ----
 #' Calculate crude and directly adjusted rates
 #'
-#' @param count Numeric vector of indeterminate length. The # of events of interest (e.g., deaths, births, etc.)
+#' @param count Numeric vector of indeterminate length. The number of events of interest (e.g., deaths, births, etc.)
 #' @param pop Numeric vector of indeterminate length. The population denominator for the count.
 #' @param stdpop Numeric vector of indeterminate length. The reference standard population corresponding to the population.
 #' @param per Integer vector of length 1. A multiplier for all rates and CI, e.g., when per = 1000, the rates are per 1000 people
-#' @param conf.level A numeric vector of length 1. The confidence interval used in the calculations.
+#' @param conf.level A numeric vector of length 1. The confidence interval used in the calculations, >0 & <1, typically 0.95
+#' @param event_type Character vector of length 1. Either `"unique"` (default) for events
+#'   that can only occur once per person (e.g., death, first diagnosis), or `"repeatable"`
+#'   for events that can occur multiple times per person (e.g., ER visits, infections).
+#'   When `"unique"`, rates are capped at 100%; when "repeatable", rates can exceed 100%.
 #'
-#' @return a labeled numeric vector of the count, rate, and adjusted rate with the CI
+#' @return A labeled numeric vector containing: count (total events), pop (total population),
+#'   crude.rate, crude.lci, crude.uci, adj.rate, adj.lci, adj.uci (rates and CI are scaled by `per`)
 #' @export
 #' @name adjust_direct
+#'
+#' @section Data anomalies:
+#' When `event_type = "unique"` and `pop < count` (which can occur when small
+#' populations are modeled estimates), `adjust_direct()` internally caps the rate
+#' at 100% by using the count as the denominator. This ensures logical
+#' consistency for events that can only occur once per person.
+#'
+#' When `pop = 0`, the function sets `pop = 1` to avoid division by zero errors.
+#'
+#' The original population values are always preserved in the output.
+#'
+#' @seealso [age_standardize()] for a useful wrapper that calls upon standard reference populations.
+#'
 #' @examples
 #' \donttest{
-#'  adjust_direct(count = c(11, 9), pop = c(500, 500), stdpop = c(640, 720),
-#'  per = 100, conf.level = 0.95)[]
+#' # Unique events (e.g., deaths, first diagnosis)
+#' adjust_direct(count = c(11, 9),
+#'               pop = c(500, 500),
+#'               stdpop = c(500, 900),
+#'               per = 100,
+#'               conf.level = 0.95,
+#'               event_type = "unique")
+#'
+#' # Repeatable events (e.g., ER visits, infections)
+#' adjust_direct(count = c(150, 200),
+#'               pop = c(500, 500),
+#'               stdpop = c(500, 900),
+#'               per = 100,
+#'               conf.level = 0.95,
+#'               event_type = "repeatable")
+#'
+#' # Unique events when count > population (caps unique events at 100%)
+#' adjust_direct(count = c(25, 30),
+#'               pop = c(20, 25),
+#'               stdpop = c(500, 900),
+#'               per = 100,
+#'               conf.level = 0.95,
+#'               event_type = "unique")
+#'
+#' # Repeatable events when count > population (allows > 100%)
+#' adjust_direct(count = c(25, 30),
+#'               pop = c(20, 25),
+#'               stdpop = c(500, 900),
+#'               per = 100,
+#'               conf.level = 0.95,
+#'               event_type = "repeatable")
+#'
 #' }
-#' @importFrom stats qgamma
-adjust_direct <- function(count, pop, stdpop, per = 100000, conf.level = 0.95) {
+#'
+adjust_direct <- function(count,
+                          pop,
+                          stdpop,
+                          per = 100000,
+                          conf.level = 0.95,
+                          event_type = "unique") {
   # adapted from epitools v0.5-10.1 :: ageadjust.direct & survival 3.2-7 :: cipoisson
 
   # Validate arguments ----
   n_count <- length(count)
   if(n_count != length(pop) || n_count != length(stdpop)) {
-    stop("The length of `count`, `pop`, and `stdpop` must be equal.")
+    stop("\n\U1F6D1 The length of `count`, `pop`, and `stdpop` must be equal.")
+  }
+
+  validation_params <- list(
+    count = "counts",
+    pop = "populations",
+    stdpop = "standard populations"
+  )
+  for(arg_name in names(validation_params)) {
+    arg_value <- get(arg_name)
+    context_name <- validation_params[[arg_name]]
+
+    # Check if numeric
+    if(!is.numeric(arg_value)) {
+      stop(paste0("\n\U1F6D1 The `", arg_name, "` argument must be numeric."))
+    }
+
+    # Check for NA values first
+    if(any(is.na(arg_value))) {
+      na_positions <- which(is.na(arg_value))
+      stop(paste0("\n\U1F6D1 NA values detected in `", arg_name, "` at position(s): ",
+                  paste(na_positions, collapse = ", "),
+                  ".\nAll strata must have valid ", context_name, " for rate calculation."))
+    }
+
+    # Check for negative or zero values (no na.rm needed since we confirmed no NAs)
+    if(any(arg_value < 0)) {
+      stop(paste0("\n\U1F6D1 The `", arg_name, "` argument must not contain negative values."))
+    }
+  }
+
+  if(sum(stdpop) == 0) {
+    stop("\n\U1F6D1 The sum of `stdpop` cannot be zero.")
+  }
+
+  if(any(stdpop == 0)) {
+    warning("\n\u26A0\ufe0f\u26A0\ufe0f\u26A0\ufe0f At least one stratum of your standard population has a population of 0.\n",
+            "In practice this is extremely rare and is likely the result of an error in data preparation.\n",
+            "If this was not intentional, correct your data and try again.")
   }
 
   if(!is.numeric(per) || per <= 0 || per %% 1 != 0) {
-    stop("The `per` argument must be a positive integer, e.g., 100000.")
+    stop("\n\U1F6D1 The `per` argument must be a positive integer, e.g., 100000.")
   }
 
-  if(!is.numeric(conf.level) || conf.level < 0 || conf.level > 0.99) {
-    stop("'conf.level' should be a decimal between 0.00 & 0.99")
+  if(!is.numeric(conf.level) || conf.level <= 0 || conf.level >= 1) {
+    stop("\n\U1F6D1 'conf.level' should be a decimal between 0 and 1")
+  }
+
+  if(!event_type %in% c("unique", "repeatable")) {
+    stop("\n\U1F6D1 The `event_type` argument must be either 'unique' or 'repeatable'.")
+  }
+
+  # Stop when population not usable ----
+  if(event_type == "repeatable" && sum(pop) == 0 && any(count > 0)) {
+    stop("\n\U1F6D1 Cannot calculate rates when all populations are zero and \n",
+         "there are positive counts with event_type = 'repeatable'.\n",
+         "This represents undefined division (count/0). Please review your data.")
   }
 
   # Calculate sums used multiple times ----
@@ -38,29 +140,63 @@ adjust_direct <- function(count, pop, stdpop, per = 100000, conf.level = 0.95) {
   sum_pop <- sum(pop)
   sum_stdpop <- sum(stdpop)
 
+  # Create pop_calc for calculations to handle when pop < count ----
+  if(event_type == "unique") {
+    pop_calc <- ifelse(pop < count, count, pop)
+  } else {
+    pop_calc <- pop
+  }
+
+  # Handle zero populations ----
+  if(any(pop_calc == 0)) {
+    zero_indices <- which(pop_calc == 0)
+
+    for(i in zero_indices) {
+      if(count[i] == 0) {
+        # When pop = 0 & count = 0, set pop_calc = 1 to get rate = 0/1 = 0
+        pop_calc[i] <- 1
+      } else {
+        # when pop = 0 & count > 0 (only possible when event_type == "repeatable")
+        stop("\n\U1F6D1 When event_type = 'repeatable', cannot have pop = 0 with count > 0.\n",
+             "Please review your data.")
+      }
+    }
+  }
+
+  # Get sum of pop_calc for crude calculations below
+  sum_pop_calc <- sum(pop_calc)
+
   # Basic calculations ----
-  rate <- count/pop
+  rate <- count/pop_calc
   alpha <- 1 - conf.level
-  cruderate <- sum_count/sum_pop
+  cruderate <- sum_count/sum_pop_calc
   stdwt <- stdpop/sum_stdpop
 
   # Calculate exact poisson CI for crude rates ----
   dummycount <- if(sum_count == 0) 1 else sum_count
-  crude.lci <- if(sum_count == 0) 0 else qgamma(alpha/2, dummycount)/sum_pop
-  crude.uci <- qgamma(1 - alpha/2, sum_count + 1)/sum_pop
+  crude.lci <- if(sum_count == 0) 0 else stats::qgamma(alpha/2, dummycount)/sum_pop_calc
+  crude.uci <- stats::qgamma(1 - alpha/2, sum_count + 1)/sum_pop_calc
 
   # Calculate exact CI for adjusted rates ----
   dsr <- sum(stdwt * rate)
-  dsr.var <- sum((stdwt^2) * (count/pop^2))
-  wm <- max(stdwt/pop)
+  dsr.var <- sum((stdwt^2) * (count/pop_calc^2))
 
-  shape_lower <- (dsr^2)/dsr.var
-  scale_lower <- dsr.var/dsr
-  gamma.lci <- qgamma(alpha/2, shape = shape_lower, scale = scale_lower)
+  if(dsr == 0 && dsr.var == 0) { # when counts == 0
+    gamma.lci <- 0 # Lower should be 0
+    # Upper is conservative and weighted -- assume one event in the stratum with maximum stdwt / pop_calc
+    wm_local <- max(stdwt / pop_calc)
+    gamma.uci <- stats::qgamma(1 - alpha/2, 1) * wm_local
+    } else {
+      wm <- max(stdwt/pop_calc)
 
-  shape_upper <- ((dsr + wm)^2)/(dsr.var + wm^2)
-  scale_upper <- (dsr.var + wm^2)/(dsr + wm)
-  gamma.uci <- qgamma(1 - alpha/2, shape = shape_upper, scale = scale_upper)
+      shape_lower <- (dsr^2)/dsr.var
+      scale_lower <- dsr.var/dsr
+      gamma.lci <- stats::qgamma(alpha/2, shape = shape_lower, scale = scale_lower)
+
+      shape_upper <- ((dsr + wm)^2)/(dsr.var + wm^2)
+      scale_upper <- (dsr.var + wm^2)/(dsr + wm)
+      gamma.uci <- stats::qgamma(1 - alpha/2, shape = shape_upper, scale = scale_upper)
+    }
 
   # Prep output ----
   adjusted <- c(count = sum_count,
@@ -72,6 +208,9 @@ adjust_direct <- function(count, pop, stdpop, per = 100000, conf.level = 0.95) {
                 adj.lci = per * gamma.lci,
                 adj.uci = per * gamma.uci
   )
+
+  # Return output ----
+  adjusted
 }
 
 # age_standardize() ----
