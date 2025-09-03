@@ -3,7 +3,31 @@ library(DBI)
 library(data.table)
 
 # adjust_direct() ----
-test_that('adjust_direct',{
+test_that("adjust_direct: input validation errors", {
+  expect_error(
+    adjust_direct(count = c(1, 2), pop = c(100), stdpop = c(50, 60)),
+    "length.*must be equal"
+  )
+
+  expect_error(
+    adjust_direct(count = c(-1, 2), pop = c(100, 200), stdpop = c(50, 60)),
+    "must not contain negative values"
+  )
+
+  expect_error(
+    adjust_direct(count = c(1, 2), pop = c(100, 200), stdpop = c(50, 60), conf.level = 1),
+    "between 0 and 1"
+  )
+})
+
+test_that("adjust_direct: stdpop = 0 generates warning", {
+  expect_warning(
+    adjust_direct(count = c(1, 2), pop = c(100, 200), stdpop = c(0, 60)),
+    "At least one stratum.*population of 0"
+  )
+})
+
+test_that('adjust_direct calculations',{
 
   temp.direct <- adjust_direct(count = c(11, 9), pop = c(500, 500), stdpop = c(640, 720), per = 100, conf.level = 0.95)
 
@@ -23,11 +47,72 @@ test_that('adjust_direct',{
 
 })
 
+test_that("adjust_direct: count = 0 and pop > 0", {
+  res <- adjust_direct(count = c(0, 0), pop = c(100, 200), stdpop = c(1, 1))
+  expect_equal(res[["crude.rate"]], 0)
+  expect_equal(res[["adj.rate"]], 0)
+  expect_equal(res[["crude.lci"]], 0)
+})
+
+test_that("adjust_direct: pop = 0 and count = 0 (no warning expected)", {
+  expect_silent({
+    res <- adjust_direct(count = c(0, 0), pop = c(0, 0), stdpop = c(1, 1))
+  })
+  expect_equal(res[["crude.rate"]], 0)
+  expect_equal(res[["adj.rate"]], 0)
+})
+
+test_that("adjust_direct: pop = 0 and count > 0 with repeatable events (warning and NA)", {
+  expect_error(
+    res <- adjust_direct(
+      count = c(5, 10),
+      pop = c(0, 0),
+      stdpop = c(1, 1),
+      event_type = "repeatable"
+    ), "Cannot calculate rates when all populations are zero"
+  )
+})
+
+test_that("adjust_direct: pop < count with unique events (capped at 100%)", {
+  res <- adjust_direct(
+    count = c(25, 30),
+    pop = c(20, 25),
+    stdpop = c(500, 900),
+    per = 100,
+    event_type = "unique"
+  )
+  expect_true(res[["crude.rate"]] == 100)
+  expect_true(res[["adj.rate"]] == 100)
+})
+
+test_that("adjust_direct: pop < count with repeatable events (rates > 100% allowed)", {
+  res <- adjust_direct(
+    count = c(25, 30),
+    pop = c(20, 25),
+    stdpop = c(500, 900),
+    per = 100,
+    event_type = "repeatable"
+  )
+  expect_true(res[["crude.rate"]] > 100)
+  expect_true(res[["adj.rate"]] > 100)
+})
+
+test_that("adjust_direct: very small population edge case", {
+  res <- adjust_direct(
+    count = c(1),
+    pop = c(1),
+    stdpop = c(1),
+    per = 1000
+  )
+  expect_equal(res[["crude.rate"]], 1000)
+  expect_true(res[["crude.uci"]] > res[["crude.lci"]])
+})
+
 # age_standardize() ----
 test_that('age_standardize ... valid output',{
   temp.dt1 <- data.table(age = c(50:60), count = c(25:35), pop = c(seq(1000, 800, -20)) )
   temp.agestd1 <- suppressWarnings(age_standardize(ph.data = temp.dt1, ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)", collapse = T,
-                  my.count = "count", my.pop = "pop", per = 1000, conf.level = 0.95))
+                                                   my.count = "count", my.pop = "pop", per = 1000, conf.level = 0.95))
 
   expect_equal(sum(temp.dt1$count), temp.agestd1[["count"]])
 
@@ -45,20 +130,20 @@ test_that('age_standardize ... valid output',{
 
 
   temp.dt2 <- data.table(sex = c(rep("M", 11), rep("F", 11)), age = rep(50:60, 2),
-                      count = c(25:35, 26:36), pop = c(seq(1000, 900, -10), seq(1100, 1000, -10)),
-                      stdpop = rep(1000, 22))
+                         count = c(25:35, 26:36), pop = c(seq(1000, 900, -10), seq(1100, 1000, -10)),
+                         stdpop = rep(1000, 22))
 
   expect_message(age_standardize(ph.data = temp.dt2, ref.popname = "none", collapse = F, my.count = "count",
                                  my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex", diagnostic_report = TRUE),
                  'Returning diagnostic report instead of age-standardized rates')
 
   diagreport <- suppressMessages(age_standardize(ph.data = temp.dt2, ref.popname = "none", collapse = F, my.count = "count",
-                                my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex", diagnostic_report = TRUE))
+                                                 my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex", diagnostic_report = TRUE))
   expect_identical(unique(diagreport$missing), '0-49, 61-100')
   expect_identical(sort(unique(diagreport$sex)), c('F', 'M'))
 
   temp.agestd2 <- suppressWarnings(age_standardize(ph.data = temp.dt2, ref.popname = "none", collapse = F, my.count = "count",
-                  my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex"))
+                                                   my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex"))
 
   expect_equal(sum(temp.dt2[sex == "M"]$count) , temp.agestd2[sex == "M"]$count)
   expect_equal(sum(temp.dt2[sex == "F"]$count) , temp.agestd2[sex == "F"]$count)
@@ -80,7 +165,7 @@ test_that('age_standardize ... valid output',{
 
   expect_equal(35.3468 , temp.agestd2[sex == "M"]$adj.uci) # checked vis-à-vis epitools::ageadjust.direct
   expect_equal(32.9665 , temp.agestd2[sex == "F"]$adj.uci) # checked vis-à-vis epitools::ageadjust.direct
-  })
+})
 
 test_that('age_standardize ... errors & warnings',{
   set.seed(98104)
@@ -106,10 +191,10 @@ test_that('age_standardize ... errors & warnings',{
                "Both 'age' and 'agecat' columns are present, but only one is needed")
 
   expect_error(age_standardize(copy(temp.dt3)[, age := NULL], my.count = "count", my.pop = "pop"),
-               "Neither 'age' nor 'agecat' columns are present")
+               "The 'age' column must be numeric")
 
   expect_error(age_standardize(copy(temp.dt3)[, age := age + 0.1], my.count = "count", my.pop = "pop"),
-               "The 'age' column is not an integer and cannot be converted to integer without loss of data")
+               "The 'age' column is not an integer and cannot be converted")
 
   expect_error(age_standardize(copy(temp.dt3)[, age := NULL][, agecat := 10], my.count = "count", my.pop = "pop"),
                "The 'agecat' column is neither character nor factor")
@@ -192,8 +277,34 @@ test_that('age_standardize ... errors & warnings',{
                                per = 1000,
                                conf.level = 0.95,
                                group_by = "gender"),
-               'The agecat values in ph.data must match those in your reference')
+               "The 'age' column must be numeric")
 
+})
+
+test_that("non-numeric age column rejected", {
+  dt <- data.table(age = as.character(0:10), count = 1, pop = 10)
+  expect_error(
+    age_standardize(dt, my.count = "count", my.pop = "pop"),
+    "The 'age' column must be numeric"
+  )
+})
+
+test_that("error when ref.popname != 'none' but collapse = FALSE and no agecat", {
+  dt <- data.table(age = 0:100, count = 1, pop = 100)
+  expect_error(
+    age_standardize(dt,
+                    ref.popname = "2000 U.S. Std Population (11 age groups)",
+                    collapse = FALSE, my.count = "count", my.pop = "pop"
+    ),
+    "When collapse = FALSE and ref.popname != 'none'"
+  )
+})
+
+test_that("zero count data gives finite upper CI and lower CI == 0", {
+  dt <- data.table(age = 0:100, count = 0, pop = 1000)
+  res <- age_standardize(dt, my.count = "count", my.pop = "pop")
+  expect_equal(res$adj.lci, 0)
+  expect_true(is.finite(res$adj.uci))
 })
 
 # as_table_brfss() & as_imputed_brfss() ----
