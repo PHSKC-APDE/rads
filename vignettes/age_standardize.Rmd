@@ -75,11 +75,23 @@ Arguments are the values that we send to a function when it is called. The stand
 
 Your dataset must have the following three columns ...
 
-1)  'age' or 'agecat': 'age' in single years (if collapse = T) or 'agecat' with the same age bins as your selected reference population (if collapse = F)
+1)  'age' or 'agecat':
+
+    -   'age' in single years (if collapse = T)
+
+    -   'agecat' with the same age bins as your selected reference population (if collapse = F)
 
 2)  an **aggregated** count for the event (e.g., disease) for which you want to find an age standardized rate
 
 3)  the population corresponding to the age or agecat in your original data
+
+## Note about incomplete ages
+
+If you are using an 'age' column and do not have all ages [0, 100], you will receive a warning.
+
+This is expected and **required** if you are performing analyses for a specific age group (e.g., adolescent birth rates, opioid mortality rate among working age adults, etc.)
+
+Otherwise, to ensure you calculate accurate rates, be sure to include every age from 0 to 100. If there were no events/counts for a given age, set count = 0 and use the corresponding actual population for that age.
 
 ------------------------------------------------------------------------
 
@@ -449,8 +461,7 @@ According to your analysis, the crude King County teen birth rate is approximate
 
 The method used by rads to calculate the confidence intervals is that recommended by WA DOH, i.e., the [Fay-Feuer method](https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf). Unfortunately, this method does not have a corresponding SE. APDE consulted with a WA DOH biostatistician who said, **"*SE’s are not particularly useful for approximating the sampling distribution on the scale of adjusted rates*."** We therefore calculate **approximations** of the SE and RSE, as suggested by various state health departments. This means that the SE will be internally inconsistent with the confidence intervals ... *c'est la vie!*
 
-For reference, here are the approximations:
-$$SE = {\text{adjusted rate} \over{\sqrt{{\text{number of cases}}}}}$$
+For reference, here are the approximations: $$SE = {\text{adjusted rate} \over{\sqrt{{\text{number of cases}}}}}$$
 
 $$RSE = {1 \over{\sqrt{\text{number of cases}}}}$$
 
