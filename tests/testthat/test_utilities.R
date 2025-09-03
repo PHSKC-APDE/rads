@@ -135,7 +135,7 @@ test_that('age_standardize ... valid output',{
 
   expect_message(age_standardize(ph.data = temp.dt2, ref.popname = "none", collapse = F, my.count = "count",
                                  my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex", diagnostic_report = TRUE),
-                 'Returning diagnostic report instead of age-standardized rates')
+                 'Returning diagnostic report')
 
   diagreport <- suppressMessages(age_standardize(ph.data = temp.dt2, ref.popname = "none", collapse = F, my.count = "count",
                                                  my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex", diagnostic_report = TRUE))
@@ -191,10 +191,10 @@ test_that('age_standardize ... errors & warnings',{
                "Both 'age' and 'agecat' columns are present, but only one is needed")
 
   expect_error(age_standardize(copy(temp.dt3)[, age := NULL], my.count = "count", my.pop = "pop"),
-               "The 'age' column must be numeric")
+               "Neither 'age' nor 'agecat' columns are present.")
 
   expect_error(age_standardize(copy(temp.dt3)[, age := age + 0.1], my.count = "count", my.pop = "pop"),
-               "The 'age' column is not an integer and cannot be converted")
+               "The 'age' column must be numeric")
 
   expect_error(age_standardize(copy(temp.dt3)[, age := NULL][, agecat := 10], my.count = "count", my.pop = "pop"),
                "The 'agecat' column is neither character nor factor")
@@ -256,7 +256,7 @@ test_that('age_standardize ... errors & warnings',{
     age = sample(0:100, 20000, replace = T),
     disease = sample(0:1, 20000, replace = T))
   tempy <- tempy[, .(pop = .N, disease = sum(disease)), .(gender, age)]
-  tempy[age == 0, agecat := "0"]
+  tempy[age == 0, agecat := "0"] # notice these year bins are DIFFERENT from 2000 U.S. Std Population (11 age groups)
   tempy[age %in% 1:5, agecat := "1-5 years"]
   tempy[age %in% 6:14, agecat := "6-14 years"]
   tempy[age %in% 15:24, agecat := "15-24 years"]
@@ -277,7 +277,7 @@ test_that('age_standardize ... errors & warnings',{
                                per = 1000,
                                conf.level = 0.95,
                                group_by = "gender"),
-               "The 'age' column must be numeric")
+               "The agecat values in ph.data must match those in your reference")
 
 })
 
