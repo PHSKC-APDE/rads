@@ -2687,7 +2687,7 @@ life_table <- function(ph.data,
         ph.data[, predicted_mx := NULL]
       }
 
-    ph.data[, mx_upper := qgamma((ci+(1-ci)/2), get(mydeaths) + 1) / get(mypops)] # exact Poisson upper CI
+    ph.data[, mx_upper := stats::qgamma((ci+(1-ci)/2), get(mydeaths) + 1) / get(mypops)] # exact Poisson upper CI
     ph.data[, mx_se := (mx_upper - mx) / qnorm((ci+(1-ci)/2))] # reverse_engineer poisson standard error
     ph.data[, mx_upper := NULL]
 
