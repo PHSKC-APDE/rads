@@ -331,7 +331,8 @@ age_standardize <- function (ph.data,
 
       # Check that ph.data has either 'age' or 'agecat' ----
       age_exists <- "age" %in% names(ph.data)
-      if (!is.numeric(ph.data$age) || !all(ph.data$age %% 1 == 0)) {
+
+      if (age_exists && (!is.numeric(ph.data$age) || !all(ph.data$age %% 1 == 0))) {
         stop("\n\U1F6D1 The 'age' column must be numeric (whole years) or integer.")
       }
 
