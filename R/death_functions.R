@@ -985,6 +985,30 @@ death_injury_matrix_count <- function(ph.data,
       # Fill deaths with zeros
         x_combo[is.na(deaths), deaths := 0]
 
+      # Ensure ALL combinations of group_by variables are present
+        if (!is.null(group_by)) {
+          # Create template from ALL combinations in original data
+          unique_col_vals <- lapply(group_by, function(col) unique(ph.data[[col]]))
+          names(unique_col_vals) <- group_by
+
+          # Add the mechanism and intent columns
+          unique_col_vals[["mechanism"]] <- unique(x_combo$mechanism)
+          unique_col_vals[["intent"]] <- unique(x_combo$intent)
+
+          # Create full template
+          full_template <- do.call(data.table::CJ, unique_col_vals)
+
+          # Merge with existing data
+          x_combo <- merge(full_template, x_combo, all.x = TRUE, all.y = TRUE)
+
+          # Fill missing values
+          x_combo[is.na(deaths), deaths := 0]
+          if(!is.null(ypll_age)){
+            ypll_name = grep('^ypll_[0-9]', names(x_combo), value = T)
+            x_combo[is.na(get(ypll_name)), paste0(ypll_name) := 0]
+          }
+        }
+
       # Fill ypll_## with zeros if needed
         if(!is.null(ypll_age)){
           ypll_name = grep('^ypll_[0-9]', names(x_combo), value = T)
@@ -1877,6 +1901,29 @@ death_other_count <- function(ph.data,
       # Fill deaths with zeros
         x_combo[is.na(deaths), deaths := 0]
 
+      # Ensure ALL combinations of group_by variables are present
+        if (!is.null(group_by)) {
+          # Create template from ALL combinations in original data
+          unique_col_vals <- lapply(group_by, function(col) unique(ph.data[[col]]))
+          names(unique_col_vals) <- group_by
+
+          # Add the cause.of.death column
+          unique_col_vals[["cause.of.death"]] <- unique(x_combo$cause.of.death)
+
+          # Create full template
+          full_template <- do.call(data.table::CJ, unique_col_vals)
+
+          # Merge with existing data
+          x_combo <- merge(full_template, x_combo, all.x = TRUE, all.y = TRUE)
+
+          # Fill missing values
+          x_combo[is.na(deaths), deaths := 0]
+          if(!is.null(ypll_age)){
+            ypll_name = grep('^ypll_[0-9]', names(x_combo), value = T)
+            x_combo[is.na(get(ypll_name)), paste0(ypll_name) := 0]
+          }
+        }
+
       # Fill ypll_## with zeros if needed
         if(!is.null(ypll_age)){
           ypll_name = grep('^ypll_[0-9]', names(x_combo), value = T)
@@ -2640,7 +2687,7 @@ life_table <- function(ph.data,
         ph.data[, predicted_mx := NULL]
       }
 
-    ph.data[, mx_upper := qgamma((ci+(1-ci)/2), get(mydeaths) + 1) / get(mypops)] # exact Poisson upper CI
+    ph.data[, mx_upper := stats::qgamma((ci+(1-ci)/2), get(mydeaths) + 1) / get(mypops)] # exact Poisson upper CI
     ph.data[, mx_se := (mx_upper - mx) / qnorm((ci+(1-ci)/2))] # reverse_engineer poisson standard error
     ph.data[, mx_upper := NULL]
 
