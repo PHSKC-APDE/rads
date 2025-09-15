@@ -52,7 +52,7 @@ so it can be easily loaded into SQL. Experience has shown that loading large
 tables in 'chunks' is less likely to cause errors. It is not needed for small
 tables which load quickly. For \strong{extremely large} datasets, you will likely
 want to use the \href{https://learn.microsoft.com/en-us/sql/tools/bcp-utility?}{BCP
-(Bulk Copy Program)}, which has been implemented in \code{\link[apde]{load_df_bcp_f}}.
+(Bulk Copy Program)}, which has been implemented in \code{\link[apde.etl]{load_df_bcp}}.
 }
 \details{
 \code{overwrite} & \code{append} are intentionally redundant in order to reduce the risk
@@ -91,6 +91,6 @@ provided.
 
 }
 \seealso{
-\code{\link[apde]{load_df_bcp_f}} for a faster BCP-based approach
+\code{\link[apde.etl]{load_df_bcp}} for a faster BCP-based approach
 recommended for very large datasets where speed is critical.
 }
