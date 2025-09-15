@@ -155,19 +155,13 @@ adjust_direct <- function(count,
   }
 
   # Handle zero populations ----
-  if(any(pop_calc == 0)) {
-    zero_indices <- which(pop_calc == 0)
-
-    for(i in zero_indices) {
-      if(count[i] == 0) {
-        # When pop = 0 & count = 0, set pop_calc = 1 to get rate = 0/1 = 0
-        pop_calc[i] <- 1
-      } else {
-        # when pop = 0 & count > 0 (only possible when event_type == "repeatable")
-        stop("\n\U1F6D1 When event_type = 'repeatable', cannot have pop = 0 with count > 0.\n",
-             "Please review your data.")
-      }
+  zero_indices <- pop_calc == 0
+  if (any(zero_indices)) {
+    if (event_type == "repeatable" && any(count[zero_indices] > 0)) { # pop == 0 & count > 0 for event_type = 'unique' dealt with above
+      stop("\n\U1F6D1 When event_type = 'repeatable', cannot have pop = 0 with count > 0.\n",
+           "Please review your data.")
     }
+    pop_calc[zero_indices & count == 0] <- 1 # to get rate = 0/1 = 0
   }
 
   # Get sum of pop_calc for crude calculations below
