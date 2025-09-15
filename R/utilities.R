@@ -95,8 +95,15 @@ adjust_direct <- function(count,
     # Check for NA values first
     if(any(is.na(arg_value))) {
       na_positions <- which(is.na(arg_value))
+
+      if(length(na_positions) <= 5) {
+        positions_text <- paste(na_positions, collapse = ", ")
+      } else {
+        positions_text <- paste(c(na_positions[1:5], "..."), collapse = ", ")
+      }
+
       stop(paste0("\n\U1F6D1 NA values detected in `", arg_name, "` at position(s): ",
-                  paste(na_positions, collapse = ", "),
+                  positions_text,
                   ".\nAll strata must have valid ", context_name, " for rate calculation."))
     }
 
