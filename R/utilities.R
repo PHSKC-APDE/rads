@@ -2750,7 +2750,7 @@ tsql_validate_field_types <- function(ph.data = NULL,
 #' tables in 'chunks' is less likely to cause errors. It is not needed for small
 #' tables which load quickly. For **extremely large** datasets, you will likely
 #' want to use the \href{https://learn.microsoft.com/en-us/sql/tools/bcp-utility?}{BCP
-#' (Bulk Copy Program)}, which has been implemented in \code{\link[apde]{load_df_bcp_f}}.
+#' (Bulk Copy Program)}, which has been implemented in \code{\link[apde.etl]{load_df_bcp}}.
 #'
 #'
 #' @param ph.data The name of a single data.table/data.frame to be loaded to SQL Server
@@ -2784,7 +2784,7 @@ tsql_validate_field_types <- function(ph.data = NULL,
 #' `validate_field_types = TRUE` is ignored if the `field_types` argument is not
 #' provided.
 #'
-#' @seealso \code{\link[apde]{load_df_bcp_f}} for a faster BCP-based approach
+#' @seealso \code{\link[apde.etl]{load_df_bcp}} for a faster BCP-based approach
 #' recommended for very large datasets where speed is critical.
 #'
 #' @name tsql_chunk_loader
