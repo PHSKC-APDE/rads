@@ -236,7 +236,7 @@ test_that('age_standardize ... errors & warnings',{
                                  per = 1000,
                                  conf.level = 0.95,
                                  group_by = "sex"),
-                 'Missing ages detected in temp.dt2 for these groups:')
+                 'Missing ages detected in temp.dt2:')
 
   expect_warning(age_standardize(ph.data = temp.dt2,
                                  ref.popname = "none",
