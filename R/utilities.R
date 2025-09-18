@@ -480,7 +480,8 @@ compare_estimate <- function (mydt,
 #'
 #' @examples
 #' convert_to_date(c("2024-01-01", "February 13, 1999", "2024/02/01",
-#'                   "03/21/2000", "05/15/89", "Not date"))
+#'                   "03/21/2000", "05/15/89", "10Sep1998", "10 September 1998",
+#'                   "Not date"))
 #' convert_to_date(c(42005, 42006), origin = "1899-12-30")
 #' convert_to_date(c('puppies', 'kittens'))
 #'
@@ -513,11 +514,15 @@ convert_to_date <- function(x, origin = "1899-12-30") {
   } else {
     date_out <- as.Date(suppressWarnings(
       lubridate::parse_date_time(x,
-                                 orders = c("%Y-%m-%d", "%Y/%m/%d", "%m/%d/%Y",
-                                            "%m-%d-%Y", "%B %d, %Y",
-                                            "%d %B, %Y", "%Y-%m-%d %H:%M:%S",
+                                 orders = c("%d%b%Y", "%d-%b-%Y",
+                                            "%d %B, %Y", "%d %B %Y",
+                                            "%Y-%m-%d", "%Y/%m/%d",
+                                            "%m/%d/%Y", "%m-%d-%Y",
+                                            "%B %d, %Y",
+                                            "%Y-%m-%d %H:%M:%S",
                                             "%Y/%m/%d %H:%M:%S",
-                                            "%m/%d/%y", "%m-%d-%y"))))
+                                            "%m/%d/%y", "%m-%d-%y"),
+                                 exact = TRUE)))
     if (all(is.na(date_out))) {
       warning('\n\u26A0\ufe0f `', x_name, '` cannot be converted to a date. Your original data will be returned.')
       return(x_orig)
