@@ -63,6 +63,8 @@ test_that("common date formats are parsed correctly", {
   expect_equal(convert_to_date("2024/02/01"), as.Date("2024-02-01"))
   expect_equal(convert_to_date("03-01-2024"), as.Date("2024-03-01"))
   expect_equal(convert_to_date("04/01/2024"), as.Date("2024-04-01"))
+  expect_equal(convert_to_date("05/15/89"), as.Date("1989-05-15"))
+  expect_equal(convert_to_date("05-15-89"), as.Date("1989-05-15"))
   expect_equal(convert_to_date("2024-03-05 12:00:00"), as.Date("2024-03-05"))
   expect_equal(convert_to_date("2024/03/05 12:00:00"), as.Date("2024-03-05"))
   expect_equal(convert_to_date("March 10, 2024"), as.Date("2024-03-10"))
