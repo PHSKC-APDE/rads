@@ -1,4 +1,4 @@
-library('testthat')
+library(testthat)
 library(DBI)
 library(data.table)
 
@@ -216,6 +216,14 @@ test_that("lossless_convert handles POSIXct conversions correctly", {
 
   # Test successful POSIXct conversion
   expect_true(inherits(lossless_convert(tau, 'POSIXct'), 'POSIXct'))
+})
+
+test_that("lossless_convert deals with unique issues of raw conversions", {
+  expect_message(lossless_convert(NA, class = 'raw'), "Conversion of 'NA' to raw would introduce additional NAs.")
+  expect_equal(as.integer(lossless_convert(c(0, "1", "2", 3, 4, 5L, 6L), class = 'raw')), c(0:6))
+  expect_equal(lossless_convert(c(1, 2, 3.1), class = 'raw'), c(1, 2, 3.1)) # because limited to [0L:255L]
+  expect_message(lossless_convert(c(1, 2, 3.1), class = 'raw'), "Conversion of 'c\\(1, 2, 3\\.1\\)' to raw would introduce additional NAs.")
+  expect_message(lossless_convert('test', class = 'raw'), 'Conversion of \'"test"\' to raw would introduce additional NAs.')
 })
 
 test_that("lossless_convert works with data.table", {

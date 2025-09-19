@@ -1418,9 +1418,21 @@ list_ref_pop <- function(){
 #' converted.
 #'
 #' @param x vector of indeterminate length and type
-#' @param class character vector of length one specifying the preferred new column type (e.g.,
-#' 'character', 'numeric', 'integer', 'Date', or 'POSIXct)
+#' @param class character vector of length one specifying the preferred new column
+#' type. Options are limited to 'character', 'Date', 'integer', 'numeric',
+#' 'POSIXct', and 'raw'
 #' @param column_name optional name of the column being converted (for better error messages)
+#'
+#' @details
+#' For `class = "raw"`, this function enforces a *strictly lossless*
+#' conversion:
+#' * Input vectors containing any `NA` values are rejected, because
+#'   raw vectors cannot represent missing data (`as.raw(NA)` ==
+#'   `as.raw(0)`).
+#' * All values must be whole numbers in the range 0–255.
+#'   Values outside this range or non-integer numerics trigger a
+#'   warning and are not converted.
+#'
 #' @examples
 #' \donttest{
 #' # Create a bunch of sample vectors
@@ -1477,8 +1489,8 @@ lossless_convert <- function(x, class, column_name = NULL) {
       stop("\n\U1F6D1 'class' must be specified.")
     }
 
-    if (length(class) != 1 || !class %in% c("character", "integer", "numeric", "Date", "POSIXct")) {
-      stop("\n\U1F6D1 'class' must be one of the following: 'character', 'integer', 'numeric', 'Date', 'POSIXct'")
+    if (length(class) != 1 || !class %in% c("character", "integer", "numeric", "Date", "POSIXct", "raw")) {
+      stop("\n\U1F6D1 'class' must be one of the following: 'character', 'Date', 'integer', 'numeric', 'POSIXct', and 'raw'")
     }
 
     if (!is.null(column_name) && ((length(column_name) != 1 || !inherits(column_name, 'character')))) {
@@ -1514,7 +1526,8 @@ lossless_convert <- function(x, class, column_name = NULL) {
     }
 
   # Simple conversions for empty or 100% NA vectors ----
-    if (length(x) == 0 || all(is.na(x))) {
+    # DO NOT INCLUDE 'raw' because as.raw(NA) == as.raw(0), which is not lossless
+    if (class != 'raw' & (length(x) == 0 || all(is.na(x)))) {
       return(switch(class,
                     character = as.character(x),
                     numeric   = as.numeric(x),
@@ -1604,6 +1617,41 @@ lossless_convert <- function(x, class, column_name = NULL) {
       }
 
       return(new_x)
+    }
+    else if (class == "raw") {
+      # Raw vectors cannot represent NA values - they get converted to 00
+      # e.g., identical(as.raw(NA), as.raw(0)) == TRUE
+      if (original_na_count > 0) {
+        warn_lossy_conversion()
+        return(x)
+      }
+
+      # First convert to numeric to check for conversion issues
+      numeric_x <- suppressWarnings(as.numeric(x))
+
+      # Check if conversion to numeric introduces NAs beyond original
+      if (sum(is.na(numeric_x)) > original_na_count) {
+        warn_lossy_conversion()
+        return(x)
+      }
+
+      non_na_vals <- numeric_x[!is.na(numeric_x)]
+
+      # Check if any values are not whole numbers (would be truncated)
+      if (any(!is.wholenumber(non_na_vals))) {
+        warn_lossy_conversion()
+        return(x)
+      }
+
+      # Check if any values are outside valid raw range (0-255)
+      # as.raw() would silently convert these to 0, which is lossy
+      if (any(non_na_vals < 0 | non_na_vals > 255)) {
+        warn_lossy_conversion()
+        return(x)
+      }
+
+      # Safe to convert - as.raw() will preserve NAs and valid values
+      return(suppressWarnings(as.raw(as.integer(numeric_x))))
     }
 }
 
@@ -2551,6 +2599,7 @@ quiet <- function(expr, suppressWarnings = FALSE) {
 #' - `char`, `varchar`, `text`, `nchar`, `nvarchar`, `ntext` → `character`
 #' - `date` → `Date`
 #' - `datetime`, `datetime2`, `smalldatetime`, `datetimeoffset` → `POSIXct`
+#' - `binary`, `varbinary` → `raw`
 #'
 #' Note: `bigint` is mapped to `numeric` rather than `integer`
 #' because R integers can't handle the full range of TSQL `bigint` values.
@@ -2702,8 +2751,8 @@ tsql_convert_types <- function(ph.data = NULL,
     datetime2 = "POSIXct",
     smalldatetime = "POSIXct",
     datetimeoffset = "POSIXct",
-    binary = "character",
-    varbinary = "character"
+    binary = "raw",
+    varbinary = "raw"
   )
 
   # Helper function: map_tsql_to_r_class() ----

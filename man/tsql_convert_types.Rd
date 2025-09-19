@@ -62,6 +62,7 @@ The function maps TSQL types to appropriate R classes as follows:
 \item \code{char}, \code{varchar}, \code{text}, \code{nchar}, \code{nvarchar}, \code{ntext} → \code{character}
 \item \code{date} → \code{Date}
 \item \code{datetime}, \code{datetime2}, \code{smalldatetime}, \code{datetimeoffset} → \code{POSIXct}
+\item \code{binary}, \code{varbinary} → \code{raw}
 }
 
 Note: \code{bigint} is mapped to \code{numeric} rather than \code{integer}
