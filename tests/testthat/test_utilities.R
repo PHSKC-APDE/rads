@@ -939,6 +939,145 @@ test_that("error if validate_upload is not logical", {
                                 validate_upload = NULL), "must be specified as a logical")
 })
 
+# tsql_convert_types ----
+test_that("function successfully converts compatible types", {
+  mydt <- data.table(col1 = c("1", "2", "3"), col2 = c("1.5", "2.5", "3.5"))
+  my_field_types <- c(col1 = 'int', col2 = 'float')
+  result <- tsql_convert_types(ph.data = mydt, field_types = my_field_types, verbose = FALSE)
+  expect_true(is.integer(result$col1))
+  expect_true(is.numeric(result$col2))
+})
+
+test_that("function is case insensitive for column names", {
+  mydt <- data.table(COL1 = c("1", "2", "3"), Col2 = c("1.5", "2.5", "3.5"))
+  my_field_types <- c(CoL1 = 'INT', col2 = 'FLOAT')
+  expect_no_error(tsql_convert_types(ph.data = mydt, field_types = my_field_types, verbose = FALSE))
+})
+
+test_that("function returns conversion log ", {
+  mydt <- data.table(col1 = c("1", "2", "3"), col2 = c("1.5", "2.5", "3.5"))
+  my_field_types <- c(col1 = 'int', col2 = 'float')
+  result <- tsql_convert_types(ph.data = mydt, field_types = my_field_types,
+                               verbose = FALSE, return_log = TRUE)
+  expect_true(is.list(result))
+  expect_true(all(c("data", "conversion_log") %in% names(result)))
+  expect_true(is.data.table(result$conversion_log))
+  expect_true(all(c("column", "original_type", "target_r_type", "target_tsql_type",
+                    "conversion_success", "notes") %in% names(result$conversion_log)))
+})
+
+test_that("function handles NULL arguments as expected", {
+  mydt <- data.table(col1 = c("1", "2", "3"), col2 = c("1.5", "2.5", "3.5"))
+  my_field_types <- c(col1 = 'int', col2 = 'float')
+  expect_error(tsql_convert_types(ph.data = NULL, field_types = my_field_types),
+               'You must specify a dataset')
+  expect_error(tsql_convert_types(ph.data = mydt, field_types = NULL),
+               'must specify a named character vector')
+})
+
+test_that("function fails when field types and column names don't match", {
+  mydt <- data.table(col1 = c("1", "2", "3"), col3 = c("1.5", "2.5", "3.5"))
+  my_field_types <- c(col1 = 'int', col2 = 'float')
+  expect_error(tsql_convert_types(ph.data = mydt, field_types = my_field_types),
+               'exactly one TSQL datatype per column name')
+})
+
+test_that("function handles invalid field_types values", {
+  mydt <- data.table(col1 = c("1", "2", "3"))
+  expect_error(tsql_convert_types(ph.data = mydt, field_types = c("int")),
+               'must specify a named character vector')
+  expect_error(tsql_convert_types(ph.data = mydt, field_types = character(0)),
+               'must specify a named character vector')
+})
+
+test_that("function validates logical parameters", {
+  mydt <- data.table(col1 = c("1", "2", "3"))
+  my_field_types <- c(col1 = 'int')
+  expect_error(tsql_convert_types(ph.data = mydt, field_types = my_field_types,
+                                  validate_before = "TRUE"), 'must be specified as a logical')
+  expect_error(tsql_convert_types(ph.data = mydt, field_types = my_field_types,
+                                  validate_after = 1), 'must be specified as a logical')
+  expect_error(tsql_convert_types(ph.data = mydt, field_types = my_field_types,
+                                  verbose = "FALSE"), 'must be specified as a logical')
+  expect_error(tsql_convert_types(ph.data = mydt, field_types = my_field_types,
+                                  return_log = 0), 'must be specified as a logical')
+})
+
+test_that("function handles columns that already have correct types", {
+  mydt <- data.table(col1 = 1:3, col2 = runif(3))
+  my_field_types <- c(col1 = 'int', col2 = 'float')
+  result <- tsql_convert_types(ph.data = mydt, field_types = my_field_types,
+                               verbose = FALSE, return_log = TRUE)
+  expect_true(all(result$conversion_log$conversion_success))
+  expect_true(any(grepl("Already", result$conversion_log$notes)))
+})
+
+test_that("function skips conversion when validate_before passes", {
+  mydt <- data.table(col1 = 1:3, col2 = runif(3))
+  my_field_types <- c(col1 = 'int', col2 = 'float')
+  expect_message(tsql_convert_types(ph.data = mydt, field_types = my_field_types,
+                                    validate_before = TRUE), "already compatible")
+})
+
+test_that("function handles lossy conversions correctly", {
+  mydt <- data.table(col1 = c("1.5", "2.7", "3.9"))
+  my_field_types <- c(col1 = 'int')
+  result <- tsql_convert_types(ph.data = mydt, field_types = my_field_types,
+                               verbose = FALSE, return_log = TRUE)
+  # Should not convert because it would be lossy
+  expect_true(is.character(result$data$col1))
+  expect_false(result$conversion_log$conversion_success[1])
+})
+
+test_that("function handles various TSQL type mappings", {
+  mydt <- data.table(
+    col1 = c("1", "2", "3"),           # should convert to integer
+    col2 = c("1.5", "2.5", "3.5"),    # should convert to numeric
+    col3 = c("a", "b", "c"),          # should stay character
+    col4 = c("2023-01-01", "2023-01-02", "2023-01-03") # should convert to Date
+  )
+  my_field_types <- c(col1 = 'smallint', col2 = 'decimal', col3 = 'varchar(10)', col4 = 'date')
+
+  result <- tsql_convert_types(ph.data = mydt, field_types = my_field_types, verbose = FALSE)
+  expect_true(is.integer(result$col1))
+  expect_true(is.numeric(result$col2))
+  expect_true(is.character(result$col3))
+  expect_true(inherits(result$col4, "Date"))
+})
+
+test_that("function parses (removes) TSQL type modifiers", {
+  mydt <- data.table(col1 = c("1", "2", "3"), col2 = c("a", "b", "c"))
+  my_field_types <- c(col1 = 'INT(10)', col2 = 'CHAR(50)')
+  result <- tsql_convert_types(ph.data = mydt, field_types = my_field_types, verbose = FALSE)
+  expect_true(is.integer(result$col1))
+  expect_true(is.character(result$col2))
+})
+
+test_that("function converts column names to lowercase", {
+  mydt <- data.table(COL1 = c("1", "2", "3"), COL2 = c("a", "b", "c"))
+  my_field_types <- c(col1 = 'int', col2 = 'varchar(10)')
+  result <- tsql_convert_types(ph.data = mydt, field_types = my_field_types, verbose = FALSE)
+  expect_true(all(names(result) == tolower(names(result))))
+  expect_true(all(c("col1", "col2") %in% names(result)))
+})
+
+test_that("function handles mixed conversions (some tank and some succeed)", {
+  mydt <- data.table(
+    good_col = c("1", "2", "3"),      # should convert successfully
+    bad_col = c("a", "b", "c")        # should fail to convert to int
+  )
+  my_field_types <- c(good_col = 'int', bad_col = 'int')
+
+  result <- tsql_convert_types(ph.data = mydt, field_types = my_field_types,
+                               verbose = FALSE, return_log = TRUE)
+
+  expect_true(is.integer(result$data$good_col))
+  expect_true(is.character(result$data$bad_col))
+  expect_true(result$conversion_log[column == "good_col"]$conversion_success)
+  expect_false(result$conversion_log[column == "bad_col"]$conversion_success)
+})
+
+
 # tsql_validate_field_types ----
 test_that("function succeeds with compatible data.table and field types", {
   mydt <- data.table(col1 = 1:10, col2 = runif(10), col3 = sample(c(0L, 1L, NA), 10, replace = T))
