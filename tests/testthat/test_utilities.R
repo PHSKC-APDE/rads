@@ -1,4 +1,4 @@
-library('testthat')
+library(testthat)
 library(DBI)
 library(data.table)
 
@@ -63,17 +63,25 @@ test_that("common date formats are parsed correctly", {
   expect_equal(convert_to_date("2024/02/01"), as.Date("2024-02-01"))
   expect_equal(convert_to_date("03-01-2024"), as.Date("2024-03-01"))
   expect_equal(convert_to_date("04/01/2024"), as.Date("2024-04-01"))
+  expect_equal(convert_to_date("05/15/89"), as.Date("1989-05-15"))
+  expect_equal(convert_to_date("05-15-89"), as.Date("1989-05-15"))
   expect_equal(convert_to_date("2024-03-05 12:00:00"), as.Date("2024-03-05"))
   expect_equal(convert_to_date("2024/03/05 12:00:00"), as.Date("2024-03-05"))
   expect_equal(convert_to_date("March 10, 2024"), as.Date("2024-03-10"))
   expect_equal(convert_to_date("10 March 2024"), as.Date("2024-03-10"))
+  expect_equal(convert_to_date("10Sep1998"), as.Date("1998-09-10"))
+  expect_equal(convert_to_date("10-Sep-1998"), as.Date("1998-09-10"))
+  expect_equal(convert_to_date("10 September 1998"), as.Date("1998-09-10"))
+  expect_equal(convert_to_date("10 September, 1998"), as.Date("1998-09-10"))
+  expect_equal(convert_to_date("29 Feb 2020"), as.Date("2020-02-29")) # leap year
+  expect_identical(convert_to_date(as.Date("2020-09-18")), as.Date("2020-09-18"))
 })
 
 # Test that numeric values are converted correctly using different origins
 test_that("numeric values are converted correctly using default and custom origins", {
   expect_equal(convert_to_date(0), as.Date("1899-12-30"))
   expect_equal(convert_to_date(1), as.Date("1899-12-31"))
-  expect_equal(convert_to_date(43500, origin = "1900-1-1"), as.Date("2019-02-06"))
+  expect_equal(convert_to_date(1, origin = "1970-01-01"), as.Date("1970-01-02"))
 })
 
 # Test handling of non-date strings
@@ -81,6 +89,8 @@ test_that("non-date strings return NA and a warning", {
   expect_warning(out <- convert_to_date(c("dogs", "cats")),
                  "cannot be converted to a date")
   expect_equal(out, c("dogs", "cats"))
+  expect_true(is.na(suppressWarnings(convert_to_date(NA_character_))))
+  expect_type(suppressWarnings(convert_to_date(NA_character_)), "character")
 })
 
 # Test that origin must be in %Y-%m-%d format
@@ -216,6 +226,14 @@ test_that("lossless_convert handles POSIXct conversions correctly", {
 
   # Test successful POSIXct conversion
   expect_true(inherits(lossless_convert(tau, 'POSIXct'), 'POSIXct'))
+})
+
+test_that("lossless_convert deals with unique issues of raw conversions", {
+  expect_message(lossless_convert(NA, class = 'raw'), "Conversion of 'NA' to raw would introduce additional NAs.")
+  expect_equal(as.integer(lossless_convert(c(0, "1", "2", 3, 4, 5L, 6L), class = 'raw')), c(0:6))
+  expect_equal(lossless_convert(c(1, 2, 3.1), class = 'raw'), c(1, 2, 3.1)) # because limited to [0L:255L]
+  expect_message(lossless_convert(c(1, 2, 3.1), class = 'raw'), "Conversion of 'c\\(1, 2, 3\\.1\\)' to raw would introduce additional NAs.")
+  expect_message(lossless_convert('test', class = 'raw'), 'Conversion of \'"test"\' to raw would introduce additional NAs.')
 })
 
 test_that("lossless_convert works with data.table", {
@@ -938,6 +956,145 @@ test_that("error if validate_upload is not logical", {
                                 c(col1 = 'int', col2 = 'float', col3 = 'date', col4 = 'nvarchar(255)'),
                                 validate_upload = NULL), "must be specified as a logical")
 })
+
+# tsql_convert_types ----
+test_that("function successfully converts compatible types", {
+  mydt <- data.table(col1 = c("1", "2", "3"), col2 = c("1.5", "2.5", "3.5"))
+  my_field_types <- c(col1 = 'int', col2 = 'float')
+  result <- tsql_convert_types(ph.data = mydt, field_types = my_field_types, verbose = FALSE)
+  expect_true(is.integer(result$col1))
+  expect_true(is.numeric(result$col2))
+})
+
+test_that("function is case insensitive for column names", {
+  mydt <- data.table(COL1 = c("1", "2", "3"), Col2 = c("1.5", "2.5", "3.5"))
+  my_field_types <- c(CoL1 = 'INT', col2 = 'FLOAT')
+  expect_no_error(tsql_convert_types(ph.data = mydt, field_types = my_field_types, verbose = FALSE))
+})
+
+test_that("function returns conversion log ", {
+  mydt <- data.table(col1 = c("1", "2", "3"), col2 = c("1.5", "2.5", "3.5"))
+  my_field_types <- c(col1 = 'int', col2 = 'float')
+  result <- tsql_convert_types(ph.data = mydt, field_types = my_field_types,
+                               verbose = FALSE, return_log = TRUE)
+  expect_true(is.list(result))
+  expect_true(all(c("data", "conversion_log") %in% names(result)))
+  expect_true(is.data.table(result$conversion_log))
+  expect_true(all(c("column", "original_type", "target_r_type", "target_tsql_type",
+                    "conversion_success", "notes") %in% names(result$conversion_log)))
+})
+
+test_that("function handles NULL arguments as expected", {
+  mydt <- data.table(col1 = c("1", "2", "3"), col2 = c("1.5", "2.5", "3.5"))
+  my_field_types <- c(col1 = 'int', col2 = 'float')
+  expect_error(tsql_convert_types(ph.data = NULL, field_types = my_field_types),
+               'You must specify a dataset')
+  expect_error(tsql_convert_types(ph.data = mydt, field_types = NULL),
+               'must specify a named character vector')
+})
+
+test_that("function fails when field types and column names don't match", {
+  mydt <- data.table(col1 = c("1", "2", "3"), col3 = c("1.5", "2.5", "3.5"))
+  my_field_types <- c(col1 = 'int', col2 = 'float')
+  expect_error(tsql_convert_types(ph.data = mydt, field_types = my_field_types),
+               'exactly one TSQL datatype per column name')
+})
+
+test_that("function handles invalid field_types values", {
+  mydt <- data.table(col1 = c("1", "2", "3"))
+  expect_error(tsql_convert_types(ph.data = mydt, field_types = c("int")),
+               'must specify a named character vector')
+  expect_error(tsql_convert_types(ph.data = mydt, field_types = character(0)),
+               'must specify a named character vector')
+})
+
+test_that("function validates logical parameters", {
+  mydt <- data.table(col1 = c("1", "2", "3"))
+  my_field_types <- c(col1 = 'int')
+  expect_error(tsql_convert_types(ph.data = mydt, field_types = my_field_types,
+                                  validate_before = "TRUE"), 'must be specified as a logical')
+  expect_error(tsql_convert_types(ph.data = mydt, field_types = my_field_types,
+                                  validate_after = 1), 'must be specified as a logical')
+  expect_error(tsql_convert_types(ph.data = mydt, field_types = my_field_types,
+                                  verbose = "FALSE"), 'must be specified as a logical')
+  expect_error(tsql_convert_types(ph.data = mydt, field_types = my_field_types,
+                                  return_log = 0), 'must be specified as a logical')
+})
+
+test_that("function handles columns that already have correct types", {
+  mydt <- data.table(col1 = 1:3, col2 = runif(3))
+  my_field_types <- c(col1 = 'int', col2 = 'float')
+  result <- tsql_convert_types(ph.data = mydt, field_types = my_field_types,
+                               verbose = FALSE, return_log = TRUE)
+  expect_true(all(result$conversion_log$conversion_success))
+  expect_true(any(grepl("Already", result$conversion_log$notes)))
+})
+
+test_that("function skips conversion when validate_before passes", {
+  mydt <- data.table(col1 = 1:3, col2 = runif(3))
+  my_field_types <- c(col1 = 'int', col2 = 'float')
+  expect_message(tsql_convert_types(ph.data = mydt, field_types = my_field_types,
+                                    validate_before = TRUE), "already compatible")
+})
+
+test_that("function handles lossy conversions correctly", {
+  mydt <- data.table(col1 = c("1.5", "2.7", "3.9"))
+  my_field_types <- c(col1 = 'int')
+  result <- tsql_convert_types(ph.data = mydt, field_types = my_field_types,
+                               verbose = FALSE, return_log = TRUE)
+  # Should not convert because it would be lossy
+  expect_true(is.character(result$data$col1))
+  expect_false(result$conversion_log$conversion_success[1])
+})
+
+test_that("function handles various TSQL type mappings", {
+  mydt <- data.table(
+    col1 = c("1", "2", "3"),           # should convert to integer
+    col2 = c("1.5", "2.5", "3.5"),    # should convert to numeric
+    col3 = c("a", "b", "c"),          # should stay character
+    col4 = c("2023-01-01", "2023-01-02", "2023-01-03") # should convert to Date
+  )
+  my_field_types <- c(col1 = 'smallint', col2 = 'decimal', col3 = 'varchar(10)', col4 = 'date')
+
+  result <- tsql_convert_types(ph.data = mydt, field_types = my_field_types, verbose = FALSE)
+  expect_true(is.integer(result$col1))
+  expect_true(is.numeric(result$col2))
+  expect_true(is.character(result$col3))
+  expect_true(inherits(result$col4, "Date"))
+})
+
+test_that("function parses (removes) TSQL type modifiers", {
+  mydt <- data.table(col1 = c("1", "2", "3"), col2 = c("a", "b", "c"))
+  my_field_types <- c(col1 = 'INT(10)', col2 = 'CHAR(50)')
+  result <- tsql_convert_types(ph.data = mydt, field_types = my_field_types, verbose = FALSE)
+  expect_true(is.integer(result$col1))
+  expect_true(is.character(result$col2))
+})
+
+test_that("function converts column names to lowercase", {
+  mydt <- data.table(COL1 = c("1", "2", "3"), COL2 = c("a", "b", "c"))
+  my_field_types <- c(col1 = 'int', col2 = 'varchar(10)')
+  result <- tsql_convert_types(ph.data = mydt, field_types = my_field_types, verbose = FALSE)
+  expect_true(all(names(result) == tolower(names(result))))
+  expect_true(all(c("col1", "col2") %in% names(result)))
+})
+
+test_that("function handles mixed conversions (some tank and some succeed)", {
+  mydt <- data.table(
+    good_col = c("1", "2", "3"),      # should convert successfully
+    bad_col = c("a", "b", "c")        # should fail to convert to int
+  )
+  my_field_types <- c(good_col = 'int', bad_col = 'int')
+
+  result <- tsql_convert_types(ph.data = mydt, field_types = my_field_types,
+                               verbose = FALSE, return_log = TRUE)
+
+  expect_true(is.integer(result$data$good_col))
+  expect_true(is.character(result$data$bad_col))
+  expect_true(result$conversion_log[column == "good_col"]$conversion_success)
+  expect_false(result$conversion_log[column == "bad_col"]$conversion_success)
+})
+
 
 # tsql_validate_field_types ----
 test_that("function succeeds with compatible data.table and field types", {

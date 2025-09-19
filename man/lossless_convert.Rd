@@ -10,8 +10,9 @@ lossless_convert(x, class, column_name = NULL)
 \arguments{
 \item{x}{vector of indeterminate length and type}
 
-\item{class}{character vector of length one specifying the preferred new column type (e.g.,
-'character', 'numeric', 'integer', 'Date', or 'POSIXct)}
+\item{class}{character vector of length one specifying the preferred new column
+type. Options are limited to 'character', 'Date', 'integer', 'numeric',
+'POSIXct', and 'raw'}
 
 \item{column_name}{optional name of the column being converted (for better error messages)}
 }
@@ -23,6 +24,18 @@ Convert the class of a vector to another class -- when possible without
 introducing additional NAs. If NAs would be introduced, the original vector
 will be returned along with a warning so the user knows it has not been
 converted.
+}
+\details{
+For \code{class = "raw"}, this function enforces a \emph{strictly lossless}
+conversion:
+\itemize{
+\item Input vectors containing any \code{NA} values are rejected, because
+raw vectors cannot represent missing data (\code{as.raw(NA)} ==
+\code{as.raw(0)}).
+\item All values must be whole numbers in the range 0–255.
+Values outside this range or non-integer numerics trigger a
+warning and are not converted.
+}
 }
 \examples{
 \donttest{

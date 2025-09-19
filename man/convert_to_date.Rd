@@ -38,7 +38,9 @@ is returned.
 }
 }
 \examples{
-convert_to_date(c("2024-01-01", "February 13, 1999", "2024/02/01", "03/21/2000", "Not date"))
+convert_to_date(c("2024-01-01", "February 13, 1999", "2024/02/01",
+                  "03/21/2000", "05/15/89", "10Sep1998", "10 September 1998",
+                  "Not date"))
 convert_to_date(c(42005, 42006), origin = "1899-12-30")
 convert_to_date(c('puppies', 'kittens'))
 
