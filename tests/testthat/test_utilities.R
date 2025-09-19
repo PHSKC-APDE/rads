@@ -63,17 +63,25 @@ test_that("common date formats are parsed correctly", {
   expect_equal(convert_to_date("2024/02/01"), as.Date("2024-02-01"))
   expect_equal(convert_to_date("03-01-2024"), as.Date("2024-03-01"))
   expect_equal(convert_to_date("04/01/2024"), as.Date("2024-04-01"))
+  expect_equal(convert_to_date("05/15/89"), as.Date("1989-05-15"))
+  expect_equal(convert_to_date("05-15-89"), as.Date("1989-05-15"))
   expect_equal(convert_to_date("2024-03-05 12:00:00"), as.Date("2024-03-05"))
   expect_equal(convert_to_date("2024/03/05 12:00:00"), as.Date("2024-03-05"))
   expect_equal(convert_to_date("March 10, 2024"), as.Date("2024-03-10"))
   expect_equal(convert_to_date("10 March 2024"), as.Date("2024-03-10"))
+  expect_equal(convert_to_date("10Sep1998"), as.Date("1998-09-10"))
+  expect_equal(convert_to_date("10-Sep-1998"), as.Date("1998-09-10"))
+  expect_equal(convert_to_date("10 September 1998"), as.Date("1998-09-10"))
+  expect_equal(convert_to_date("10 September, 1998"), as.Date("1998-09-10"))
+  expect_equal(convert_to_date("29 Feb 2020"), as.Date("2020-02-29")) # leap year
+  expect_identical(convert_to_date(as.Date("2020-09-18")), as.Date("2020-09-18"))
 })
 
 # Test that numeric values are converted correctly using different origins
 test_that("numeric values are converted correctly using default and custom origins", {
   expect_equal(convert_to_date(0), as.Date("1899-12-30"))
   expect_equal(convert_to_date(1), as.Date("1899-12-31"))
-  expect_equal(convert_to_date(43500, origin = "1900-1-1"), as.Date("2019-02-06"))
+  expect_equal(convert_to_date(1, origin = "1970-01-01"), as.Date("1970-01-02"))
 })
 
 # Test handling of non-date strings
@@ -81,6 +89,8 @@ test_that("non-date strings return NA and a warning", {
   expect_warning(out <- convert_to_date(c("dogs", "cats")),
                  "cannot be converted to a date")
   expect_equal(out, c("dogs", "cats"))
+  expect_true(is.na(suppressWarnings(convert_to_date(NA_character_))))
+  expect_type(suppressWarnings(convert_to_date(NA_character_)), "character")
 })
 
 # Test that origin must be in %Y-%m-%d format
