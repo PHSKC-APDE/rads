@@ -489,47 +489,61 @@ compare_estimate <- function (mydt,
 convert_to_date <- function(x, origin = "1899-12-30") {
   # validation of 'origin'
   if (! grepl("^\\d{4}-\\d{1,2}-\\d{1,2}$", origin) ||
-      inherits(try(as.Date(origin), silent = TRUE), "try-error") ||
       is.na(as.Date(origin))) {
-    stop("Origin date must be in '%Y-%m-%d' format, e.g., '1970-01-01'")
+    stop("Origin date must be in 'YYYY-MM-DD' format, e.g., '1970-01-01'")
   }
 
   # get name of 'x'
   x_name <- deparse(substitute(x))
 
   # get copy of original data
-  x_orig <- copy(x)
+  x_orig <- data.table::copy(x)
 
   # if already a date, return it unchanged
   if (inherits(x, 'Date')) {
     return(x)
   }
 
-  # Sometimes we get character data for dates that should be numeric, but aren't
-  # x = rads::quiet(rads::lossless_convert(x, 'numeric'))
-
   # convert numerics first, then strings
   if (is.numeric(x)) {
     return(as.Date(x, origin = origin))
-  } else {
-    date_out <- as.Date(suppressWarnings(
-      lubridate::parse_date_time(x,
-                                 orders = c("%d%b%Y", "%d-%b-%Y",
-                                            "%d %B, %Y", "%d %B %Y",
-                                            "%Y-%m-%d", "%Y/%m/%d",
-                                            "%m/%d/%Y", "%m-%d-%Y",
-                                            "%B %d, %Y",
-                                            "%Y-%m-%d %H:%M:%S",
-                                            "%Y/%m/%d %H:%M:%S",
-                                            "%m/%d/%y", "%m-%d-%y"),
-                                 exact = TRUE)))
-    if (all(is.na(date_out))) {
-      warning('\n\u26A0\ufe0f `', x_name, '` cannot be converted to a date. Your original data will be returned.')
-      return(x_orig)
-    } else {return(date_out)}
   }
-}
 
+  # character input
+  parse_orders <- c(
+    "%d%b%Y", "%d-%b-%Y",
+    "%d %B, %Y", "%d %B %Y",
+    "%Y-%m-%d", "%Y/%m/%d",
+    "%m/%d/%Y", "%m-%d-%Y",
+    "%B %d, %Y",
+    "%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S",
+    "%m/%d/%y", "%m-%d-%y"
+  )
+
+  parse_dates <- function(vec) {
+    as.Date(suppressWarnings(
+      lubridate::parse_date_time(vec, orders = parse_orders, exact = TRUE)
+    ))
+  }
+
+  is_serial <- grepl("^\\d+$", x) & !is.na(suppressWarnings(as.numeric(x)))
+  date_out  <- rep(as.Date(NA), length(x)) # create empty vector that will be filled
+
+  if (any(is_serial)) {
+    date_out [is_serial] <- as.Date(suppressWarnings(as.numeric(x[is_serial])),
+                                    origin = origin)
+  }
+  if (any(!is_serial)) {
+    date_out [!is_serial] <- parse_dates(x[!is_serial])
+  }
+
+  if (all(is.na(date_out))) {
+    warning('\n\u26A0\ufe0f `', x_name, '` cannot be converted to a date. Your original data will be returned.')
+    return(x_orig)
+  }
+
+  return(date_out)
+}
 
 # format_time() ----
 #' Format a vector of time, date, or any numeric values into a series of human readable chunks
