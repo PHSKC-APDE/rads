@@ -308,7 +308,7 @@ propagate_uncertainty <- function(
     # alpha
       if ( !is.numeric(alpha) || length(alpha) != 1  || alpha <= 0 || alpha >= 1) {
         stop("\n\U0001F6D1 alpha must be between 0 and 1")
-      } else {z <- qnorm(1 - alpha/2)}
+      } else {zscore <- qnorm(1 - alpha/2)}
 
     # h0_value
       if (!is.null(h0_value) && (!is.numeric(h0_value) || length(h0_value) != 1 )) {
@@ -514,11 +514,11 @@ propagate_uncertainty <- function(
 
         if (dist_type == "normal") {
           # Back-calculate SD from CI width
-          est_sd <- (upper - lower) / (2 * z)
+          est_sd <- (upper - lower) / (2 * zscore)
           return(rnorm(draws, mean = mu, sd = est_sd))
         } else if (dist_type == "lognormal") {
           # CI symmetric on log scale for lognormal
-          est_sdlog <- (log(upper) - log(lower)) / (2 * z)
+          est_sdlog <- (log(upper) - log(lower)) / (2 * zscore)
           return(rlnorm(draws, meanlog = log(mu), sdlog = est_sdlog))
         }
       }
