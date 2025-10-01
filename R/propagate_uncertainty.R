@@ -4,7 +4,7 @@
 #' Propagates uncertainty when calculating contrasts (differences, ratios, etc.)
 #' between two point estimates by using Monte Carlo simulation. This approach is
 #' needed when assumptions of the normal approximation do not hold. Relevant
-#' examples include exponentiated estimates from logistics or Poisson models, or
+#' examples include exponentiated estimates from logistic or Poisson models, or
 #' when confidence intervals are calculated using specialized methods like the
 #' [Fay-Feuer](https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf)
 #' method (which is used for age-standardized rates). Basically, unless
@@ -30,12 +30,13 @@
 #' (optional)
 #' @param ref_upper_col Character. Column name for the reference group upper CI
 #' (optional)
-#' @param contrast_fn Function. Function to calculate contrast between groups.
+#' @param contrast_fn Function. User defined function to calculate contrast
+#'   between groups.
 #'   Common options include:
-#'   - `function(x, y) x - y` for differences (default)
-#'   - `function(x, y) x / y` for ratios
-#'   - `function(x, y) 100 * (x - y) / y` for percent differences
-#'   - `function(x, y) log(x / y)` for log ratios
+#'   - `function(x, y) x - y` ***... for differences (default)***
+#'   - `function(x, y) x / y` ***... for ratios***
+#'   - `function(x, y) 100 * (x - y) / y` ***... for percent differences***
+#'   - `function(x, y) log(x / y)` ***... for log ratios***
 #' @param dist Character. Distribution assumption for the INPUT estimates (not
 #' the contrast):
 #'   - `"normal"`: Use normal distribution. Appropriate when input estimates can
@@ -51,14 +52,22 @@
 #'   (default)
 #'   - `"log"`: Standard errors are on the log scale (sometimes used with
 #'   exponentiated estimates)
-#' @param draws Integer. Number of Monte Carlo draws per observation
+#' @param draws Integer. Number of Monte Carlo draws per observation. Default
+#'   `draws = 10000`
 #' @param seed Integer. Random seed for reproducibility. Default `seed = 98104`
-#' @param alpha Numeric. Alpha level for confidence intervals (default 0.05 for
-#' 95% CI)
+#' @param alpha Numeric. Alpha level for **OUTPUT (contrast)** confidence
+#'   interval width (default 0.05 for 95% CI).
+#'
+#'   *Note:* alpha = 1 - CI level.
+#' @param input_ci_level Numeric. The confidence level of the **INPUT** confidence
+#'   intervals provided in the `*_lower_col` and `*_upper_col` parameters (default
+#'   0.95 for 95% CIs).
+#'
+#'   *Note:* CI level = 1 - alpha.
 #' @param h0_value Numeric. Value for null hypothesis testing. Default
-#' `h0_value = NULL` uses empirical detection (0 for differences, 1 for ratios).
-#' Set explicitly for custom tests (e.g., `h0_value = 10` to test if difference
-#' does not equal 10).
+#'   `h0_value = NULL` uses empirical detection (0 for differences, 1 for ratios).
+#'   Set explicitly for custom tests (e.g., `h0_value = 10` to test if difference
+#'   does not equal 10).
 #' @param use_futures Logical. Whether to use future.apply for parallelization
 #' @param pvalue_method Character. Method for p-value calculation:
 #'   - "proportion": Empirical p-value based on proportion of draws crossing the
@@ -95,11 +104,6 @@
 #' with age-standardized rates).
 #'
 #' **Distribution Choice:**
-#' Use "normal" for most estimates including means, proportions, differences, and
-#' log-transformed values. Use "lognormal" for strictly positive measures like
-#' rates, ratios, or counts where the sampling distribution is right-skewed.
-#'
-#' #' **Distribution Choice:**
 #' Choose based on the ORIGINAL INPUT estimates you're comparing, not the contrast:
 #'
 #' Use "normal" when your estimates:
@@ -222,6 +226,7 @@ propagate_uncertainty <- function(
     draws = 10000,
     seed = 98104,
     alpha = 0.05,
+    input_ci_level = 0.95,
     h0_value = NULL,
     use_futures = FALSE,
     pvalue_method = "proportion",
@@ -308,7 +313,13 @@ propagate_uncertainty <- function(
     # alpha
       if ( !is.numeric(alpha) || length(alpha) != 1  || alpha <= 0 || alpha >= 1) {
         stop("\n\U0001F6D1 alpha must be between 0 and 1")
-      } else {zscore <- qnorm(1 - alpha/2)}
+      }
+
+    # input_ci_level
+      if (!is.numeric(input_ci_level) || length(input_ci_level) != 1 ||
+          input_ci_level <= 0 || input_ci_level >= 1) {
+        stop("\n\U0001F6D1 input_ci_level must be a single numeric value between 0 and 1")
+      } else {zscore <- qnorm(1 - (1 - input_ci_level)/2)}
 
     # h0_value
       if (!is.null(h0_value) && (!is.numeric(h0_value) || length(h0_value) != 1 )) {
@@ -501,8 +512,8 @@ propagate_uncertainty <- function(
             return(rlnorm(draws, meanlog = log(mu), sdlog = se))
           } else {
             # SE on original scale - convert using delta method
-            sdlog <- se / mu
-            return(rlnorm(draws, meanlog = log(mu), sdlog = sdlog))
+            selog <- se / mu
+            return(rlnorm(draws, meanlog = log(mu), sdlog = selog))
           }
         }
       }
@@ -513,13 +524,13 @@ propagate_uncertainty <- function(
                lower > 0 && upper > lower) {
 
         if (dist_type == "normal") {
-          # Back-calculate SD from CI width
-          est_sd <- (upper - lower) / (2 * zscore)
-          return(rnorm(draws, mean = mu, sd = est_sd))
+          # Back-calculate SE from CI width
+          est_se <- (upper - lower) / (2 * zscore)
+          return(rnorm(draws, mean = mu, sd = est_se))
         } else if (dist_type == "lognormal") {
           # CI symmetric on log scale for lognormal
-          est_sdlog <- (log(upper) - log(lower)) / (2 * zscore)
-          return(rlnorm(draws, meanlog = log(mu), sdlog = est_sdlog))
+          est_selog <- (log(upper) - log(lower)) / (2 * zscore)
+          return(rlnorm(draws, meanlog = log(mu), sdlog = est_selog))
         }
       }
 
