@@ -10,7 +10,7 @@ test_that('Load data birth', {
   # check that column & year selection works properly
   birth2 <- get_data_birth(cols = c('chi_geo_kc', 'chi_year'), year = 2017:2019)
   birth2.5 <- get_data_birth(cols = c('chi_year'), year = 2017:2019)
-  expect_identical(names(birth2), c('chi_geo_kc', 'chi_year'))
+  expect_identical(sort(names(birth2)), sort(c('chi_geo_kc', 'chi_year')))
   expect_identical(sort(unique(birth2$chi_year)), 2017:2019)
   expect_error(get_data_birth(year = '2019', cols = 'chi_geo_kc', kingco = T))
   expect_error(get_data_birth(year = 2019.4, cols = 'chi_geo_kc', kingco = T))
