@@ -20,6 +20,7 @@ propagate_uncertainty(
   draws = 10000,
   seed = 98104,
   alpha = 0.05,
+  input_ci_level = 0.95,
   h0_value = NULL,
   use_futures = FALSE,
   pvalue_method = "proportion",
@@ -56,13 +57,14 @@ errors (optional)}
 \item{ref_upper_col}{Character. Column name for the reference group upper CI
 (optional)}
 
-\item{contrast_fn}{Function. Function to calculate contrast between groups.
+\item{contrast_fn}{Function. User defined function to calculate contrast
+between groups.
 Common options include:
 \itemize{
-\item \code{function(x, y) x - y} for differences (default)
-\item \code{function(x, y) x / y} for ratios
-\item \code{function(x, y) 100 * (x - y) / y} for percent differences
-\item \code{function(x, y) log(x / y)} for log ratios
+\item \code{function(x, y) x - y} \emph{\strong{... for differences (default)}}
+\item \code{function(x, y) x / y} \emph{\strong{... for ratios}}
+\item \code{function(x, y) 100 * (x - y) / y} \emph{\strong{... for percent differences}}
+\item \code{function(x, y) log(x / y)} \emph{\strong{... for log ratios}}
 }}
 
 \item{dist}{Character. Distribution assumption for the INPUT estimates (not
@@ -86,12 +88,21 @@ not the type of contrast function you're calculating.
 exponentiated estimates)
 }}
 
-\item{draws}{Integer. Number of Monte Carlo draws per observation}
+\item{draws}{Integer. Number of Monte Carlo draws per observation. Default
+\code{draws = 10000}}
 
 \item{seed}{Integer. Random seed for reproducibility. Default \code{seed = 98104}}
 
-\item{alpha}{Numeric. Alpha level for confidence intervals (default 0.05 for
-95\% CI)}
+\item{alpha}{Numeric. Alpha level for \strong{OUTPUT (contrast)} confidence
+interval width (default 0.05 for 95\% CI).
+
+\emph{Note:} alpha = 1 - CI level.}
+
+\item{input_ci_level}{Numeric. The confidence level of the \strong{INPUT} confidence
+intervals provided in the \verb{*_lower_col} and \verb{*_upper_col} parameters (default
+0.95 for 95\% CIs).
+
+\emph{Note:} CI level = 1 - alpha.}
 
 \item{h0_value}{Numeric. Value for null hypothesis testing. Default
 \code{h0_value = NULL} uses empirical detection (0 for differences, 1 for ratios).
@@ -132,7 +143,7 @@ A data.table with original columns plus:
 Propagates uncertainty when calculating contrasts (differences, ratios, etc.)
 between two point estimates by using Monte Carlo simulation. This approach is
 needed when assumptions of the normal approximation do not hold. Relevant
-examples include exponentiated estimates from logistics or Poisson models, or
+examples include exponentiated estimates from logistic or Poisson models, or
 when confidence intervals are calculated using specialized methods like the
 \href{https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf}{Fay-Feuer}
 method (which is used for age-standardized rates). Basically, unless
@@ -154,11 +165,6 @@ standard error is an approximation at best (e.g., the Fay-Feuer method used
 with age-standardized rates).
 
 \strong{Distribution Choice:}
-Use "normal" for most estimates including means, proportions, differences, and
-log-transformed values. Use "lognormal" for strictly positive measures like
-rates, ratios, or counts where the sampling distribution is right-skewed.
-
-#' \strong{Distribution Choice:}
 Choose based on the ORIGINAL INPUT estimates you're comparing, not the contrast:
 
 Use "normal" when your estimates:

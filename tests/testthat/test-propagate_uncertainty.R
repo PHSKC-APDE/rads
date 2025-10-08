@@ -163,6 +163,43 @@ test_that("Input validation works", {
     "alpha must be between 0 and 1"
   )
 
+  # Invalid input_ci_level values
+  expect_error(
+    propagate_uncertainty(
+      ph.estimates = dt,
+      comp_mean_col = "comp_mean",
+      comp_se_col = "comp_se",
+      ref_mean_col = "ref_mean",
+      ref_se_col = "ref_se",
+      input_ci_level = 1.5
+    ),
+    "input_ci_level must be a single numeric value between 0 and 1"
+  )
+
+  expect_error(
+    propagate_uncertainty(
+      ph.estimates = dt,
+      comp_mean_col = "comp_mean",
+      comp_se_col = "comp_se",
+      ref_mean_col = "ref_mean",
+      ref_se_col = "ref_se",
+      input_ci_level = -0.05
+    ),
+    "input_ci_level must be a single numeric value between 0 and 1"
+  )
+
+  expect_error(
+    propagate_uncertainty(
+      ph.estimates = dt,
+      comp_mean_col = "comp_mean",
+      comp_se_col = "comp_se",
+      ref_mean_col = "ref_mean",
+      ref_se_col = "ref_se",
+      input_ci_level = c(0.90, 0.95)
+    ),
+    "input_ci_level must be a single numeric value between 0 and 1"
+  )
+
   # Not a data.table
   expect_no_warning(
     propagate_uncertainty(
@@ -612,3 +649,136 @@ test_that("Ratios are more or less reasonable with lognormal distributions", {
   expect_equal(result$contrast_lower, expected_lower, tolerance = 0.05)
   expect_equal(result$contrast_upper, expected_upper, tolerance = 0.05)
 })
+
+test_that("input_ci_level works correctly with different CI widths", {
+  # Create data & estimates with 90% CIs (z = 1.645)
+  dt_90 <- data.table(
+    location = "test",
+    comp_rate = 8.5,
+    comp_lower = 8.5 - 1.645 * 1.2,  # 90% CI
+    comp_upper = 8.5 + 1.645 * 1.2,
+    ref_rate = 6.0,
+    ref_lower = 6.0 - 1.645 * 0.8,
+    ref_upper = 6.0 + 1.645 * 0.8
+  )
+
+  result_90 <- propagate_uncertainty(
+    ph.estimates = dt_90,
+    comp_mean_col = "comp_rate",
+    comp_lower_col = "comp_lower",
+    comp_upper_col = "comp_upper",
+    ref_mean_col = "ref_rate",
+    ref_lower_col = "ref_lower",
+    ref_upper_col = "ref_upper",
+    input_ci_level = 0.90,  # Correctly specify 90% CIs
+    draws = 50000,
+    seed = 98104
+  )
+
+  # Same data but with 95% CIs (z = 1.96)
+  dt_95 <- data.table(
+    location = "test",
+    comp_rate = 8.5,
+    comp_lower = 8.5 - 1.96 * 1.2,  # 95% CI
+    comp_upper = 8.5 + 1.96 * 1.2,
+    ref_rate = 6.0,
+    ref_lower = 6.0 - 1.96 * 0.8,
+    ref_upper = 6.0 + 1.96 * 0.8
+  )
+
+  result_95 <- propagate_uncertainty(
+    ph.estimates = dt_95,
+    comp_mean_col = "comp_rate",
+    comp_lower_col = "comp_lower",
+    comp_upper_col = "comp_upper",
+    ref_mean_col = "ref_rate",
+    ref_lower_col = "ref_lower",
+    ref_upper_col = "ref_upper",
+    input_ci_level = 0.95,  # Correctly specify 95% CIs
+    draws = 50000,
+    seed = 98104
+  )
+
+  # Both should give similar results since they represent the same underlying uncertainty (SE)
+  expect_equal(result_90$contrast, result_95$contrast, tolerance = 0.1)
+  expect_equal(result_90$contrast_se, result_95$contrast_se, tolerance = 0.1)
+
+  # Now test MISSPECIFICATION: use 90% CIs but tell function they're 95%
+  result_90_misspec <- propagate_uncertainty(
+    ph.estimates = dt_90,
+    comp_mean_col = "comp_rate",
+    comp_lower_col = "comp_lower",
+    comp_upper_col = "comp_upper",
+    ref_mean_col = "ref_rate",
+    ref_lower_col = "ref_lower",
+    ref_upper_col = "ref_upper",
+    input_ci_level = 0.95,  # WRONG ... actually 90% CIs
+    draws = 50000,
+    seed = 98104
+  )
+
+  # Misspecification should produce DIFFERENT (narrower) SE
+  expect_true(result_90_misspec$contrast_se < result_90$contrast_se)
+
+  # Amount of misspecification should be proportionate to the ratio of zscores (1.645/1.96)
+  expect_equal(result_90_misspec$contrast_se / result_90$contrast_se,
+               1.645/1.96, tolerance = 0.05)
+})
+
+test_that("alpha controls output CI width independently", {
+  dt <- data.table(
+    location = "test",
+    comp_rate = 8.5,
+    comp_lower = 8.5 - 1.96 * 1.2,  # Input: 95% CI
+    comp_upper = 8.5 + 1.96 * 1.2,
+    ref_rate = 6.0,
+    ref_lower = 6.0 - 1.96 * 0.8,
+    ref_upper = 6.0 + 1.96 * 0.8
+  )
+
+  # Get results with 95% output CI (alpha = 0.05)
+  result_95 <- propagate_uncertainty(
+    ph.estimates = dt,
+    comp_mean_col = "comp_rate",
+    comp_lower_col = "comp_lower",
+    comp_upper_col = "comp_upper",
+    ref_mean_col = "ref_rate",
+    ref_lower_col = "ref_lower",
+    ref_upper_col = "ref_upper",
+    alpha = 0.05,  # 95% output CI
+    input_ci_level = 0.95,
+    draws = 50000,
+    seed = 98104
+  )
+
+  # Get results with 90% output CI (alpha = 0.10)
+  result_90 <- propagate_uncertainty(
+    ph.estimates = dt,
+    comp_mean_col = "comp_rate",
+    comp_lower_col = "comp_lower",
+    comp_upper_col = "comp_upper",
+    ref_mean_col = "ref_rate",
+    ref_lower_col = "ref_lower",
+    ref_upper_col = "ref_upper",
+    alpha = 0.10,  # 90% output CI
+    input_ci_level = 0.95,  # Input still 95%
+    draws = 50000,
+    seed = 98104
+  )
+
+  # Point estimates and SE should be identical
+  expect_equal(result_95$contrast, result_90$contrast, tolerance = 0.01)
+  expect_equal(result_95$contrast_se, result_90$contrast_se, tolerance = 0.01)
+
+  # But CI width should differ
+  ci_width_95 <- result_95$contrast_upper - result_95$contrast_lower
+  ci_width_90 <- result_90$contrast_upper - result_90$contrast_lower
+
+  # 90% CI should be narrower than 95% CI
+  expect_true(ci_width_90 < ci_width_95)
+
+  # Ratio should be proportionate to the ratio of zscores (1.645/1.96) (think through the algebra, everything else cancels out)
+  expect_equal(ci_width_90 / ci_width_95, 1.645/1.96, tolerance = 0.05)
+
+})
+

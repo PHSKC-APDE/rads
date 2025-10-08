@@ -96,9 +96,9 @@ test_that("non-date strings return NA and a warning", {
 # Test that origin must be in %Y-%m-%d format
 test_that("origin must be in %Y-%m-%d format", {
   expect_error(convert_to_date(43500, origin = "01-01-1900"),
-               "Origin date must be in '%Y-%m-%d' format.")
+               "Origin date must be in 'YYYY-MM-DD' format.")
   expect_error(convert_to_date(43500, origin = "1900/1/1"),
-               "Origin date must be in '%Y-%m-%d' format.")
+               "Origin date must be in 'YYYY-MM-DD' format.")
 })
 
 # Test with real data and mixed valid/invalid dates
@@ -107,6 +107,29 @@ test_that("real data with mixed valid and invalid dates handles correctly", {
   expected_dates <- as.Date(c("2024-01-01", NA, "2024-12-31", NA))
   result <- convert_to_date(mixed_dates)
   expect_equal(result, expected_dates)
+})
+
+# Test when have serial dates mixed with character dates in data.table
+test_that("mixed column in data.table gives proper results", {
+  myvector <- c(
+    "15Jan2024",           # %d%b%Y
+    "15-Jan-2024",         # %d-%b-%Y
+    "15 January, 2024",    # %d %B, %Y
+    "15 January 2024",     # %d %B %Y
+    "2024-01-15",          # %Y-%m-%d
+    "2024/01/15",          # %Y/%m/%d
+    "01/15/2024",          # %m/%d/%Y
+    "01-15-2024",          # %m-%d-%Y
+    "January 15, 2024",    # %B %d, %Y
+    "2024-01-15 14:30:25", # %Y-%m-%d %H:%M:%S
+    "2024/01/15 14:30:25", # %Y/%m/%d %H:%M:%S
+    "01/15/24",            # %m/%d/%y
+    "01-15-24",            # %m-%d-%y
+    45306                  # Excel serial date that will become a character in data.table
+  )
+  mydt <- data.table(orig = myvector)
+  mydt[, result := convert_to_date(orig)]
+  expect_equal(unique(mydt$result), as.Date('2024-01-15'))
 })
 
 
