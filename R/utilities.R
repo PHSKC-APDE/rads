@@ -2625,15 +2625,21 @@ quiet <- function(expr, suppressWarnings = FALSE) {
 #' Note: `bigint` is mapped to `numeric` rather than `integer`
 #' because R integers can't handle the full range of TSQL `bigint` values.
 #'
+#' Column names in the returned data will match the casing used in `field_types`.
+#' This ensures compatibility with functions like [tsql_chunk_loader()] that use
+#' the same `field_types` specification. For example, if your data has columns
+#' `c("NAME", "age")` and `field_types` specifies `c(Name = 'varchar(50)', Age = 'int')`,
+#' the returned data will have columns `c("Name", "Age")`.
+#'
 #' @return
 #' If `return_log = FALSE`, returns a data.table whose column
-#' names have been converted to lowercase. If `return_log = TRUE`,
-#' returns a list with `data` (the converted data.table, also with
-#' lowercase names) and `conversion_log` (a data.table of results).
+#' names match the casing specified in `field_types`. If `return_log = TRUE`,
+#' returns a list with `data` (the converted data.table with names matching
+#' `field_types` casing) and `conversion_log` (a data.table of results).
 #'
 #' @examples
 #' \donttest{
-#' # Create example data with type mismatches
+#' # Example1: data with type mismatches
 #'  library(data.table)
 #'  mydt <- data.table(apgar_10 = c("8", "9", "7", "10"), #  should be int
 #'                     birth_weight = c("3500", "2800", "4200", "3100"), # should be int
@@ -2644,7 +2650,8 @@ quiet <- function(expr, suppressWarnings = FALSE) {
 #'                    sex = 'char(1)')
 #'
 #'  # Basic conversion
-#'  converted_data <- tsql_convert_types(ph.data = mydt, field_types = myfieldtypes)
+#'  converted_data <- tsql_convert_types(ph.data = mydt,
+#'                                       field_types = myfieldtypes)
 #'
 #'  # Conversion with detailed log
 #'  result <- tsql_convert_types(ph.data = mydt,
@@ -2652,6 +2659,22 @@ quiet <- function(expr, suppressWarnings = FALSE) {
 #'                               return_log = TRUE)
 #'  converted_data <- result$data
 #'  conversion_log <- result$conversion_log
+#'
+#' ###########################################################################
+#' # Example2: showing column name casing behavior
+#' mydt2 <- data.table(FIRST_name = c("Alice", "Bob"),
+#'                     last_NAME = c("Smith", "Jones"),
+#'                     AGE = c("25", "30"))
+#'
+#' # field_types uses mixed case
+#' myfieldtypes2 <- c(First_Name = 'varchar(50)',
+#'                    Last_Name = 'varchar(50)',
+#'                    Age = 'int')
+#'
+#' # Returned data will have column names: First_Name, Last_Name, Age
+#' converted_data2 <- tsql_convert_types(ph.data = mydt2,
+#'                                       field_types = myfieldtypes2)
+#' names(converted_data2) # Shows: "First_Name" "Last_Name" "Age"
 #' }
 #'
 #' @export
@@ -2681,7 +2704,6 @@ tsql_convert_types <- function(ph.data = NULL,
   }
 
   ph.data = copy(ph.data) # so original will not change due to set functions
-  setnames(ph.data, tolower(names(ph.data))) # b/c TSQL normally case insensitive
 
   if (is.null(field_types) || !(is.character(field_types) && !is.null(names(field_types)) && all(nzchar(names(field_types))))) {
     stop('\n\U1F6D1 {field_types} must specify a named character vector of TSQL data types.')
@@ -2691,11 +2713,8 @@ tsql_convert_types <- function(ph.data = NULL,
     stop('\n\U1F6D1 {field_types} cannot be empty.')
   }
 
-  # Make field_types names lowercase to match data
-  names(field_types) <- tolower(names(field_types))
-
   if (!identical(sort(tolower(names(ph.data))), sort(tolower(names(field_types))))) {
-    stop('\n\U1F6D1 Conversion requires exactly one TSQL datatype per column name in {ph.data}.')
+    stop('\n\U1F6D1 Conversion requires exactly one TSQL field_type per column name in {ph.data}.')
   }
 
   if(!is.logical(validate_before)){
@@ -2713,6 +2732,11 @@ tsql_convert_types <- function(ph.data = NULL,
   if(!is.logical(return_log)){
     stop('\n\U1F6D1 {return_log} must be specified as a logical (i.e., TRUE, T, FALSE, or F)')
   }
+
+  # Match ph.data column name casing to that in field_types ----
+  lower_to_field_type_map <- setNames(names(field_types), tolower(names(field_types)))
+  new_names <- lower_to_field_type_map[tolower(names(ph.data))] # reorder names from field_map to match column order in ph.data
+  setnames(ph.data, new_names)
 
   # IF `validate_before = TRUE` ----
   if (validate_before) {

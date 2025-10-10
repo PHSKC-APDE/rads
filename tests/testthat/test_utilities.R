@@ -1118,6 +1118,37 @@ test_that("function handles mixed conversions (some tank and some succeed)", {
   expect_false(result$conversion_log[column == "bad_col"]$conversion_success)
 })
 
+test_that("tsql_convert_types matches field_types column name casing", {
+  # Create data with mixed case column names
+  test_dt <- data.table(
+    COLUMN_one = c("1", "2", "3"),
+    column_TWO = c("4.5", "5.5", "6.5"),
+    CoLuMn_ThReE = c("A", "B", "C")
+  )
+
+  # Define field_types with specific casing
+  test_field_types <- c(
+    Column_One = 'int',
+    Column_Two = 'float',
+    Column_Three = 'varchar(10)'
+  )
+
+  # Convert
+  result <- tsql_convert_types(
+    ph.data = test_dt,
+    field_types = test_field_types,
+    validate_before = FALSE,
+    verbose = FALSE
+  )
+
+  # Test that column names match field_types casing exactly
+  expect_equal(names(result), names(test_field_types))
+
+  # Test that data types were converted correctly
+  expect_true(is.integer(result$Column_One))
+  expect_true(is.numeric(result$Column_Two))
+  expect_true(is.character(result$Column_Three))
+})
 
 # tsql_validate_field_types ----
 test_that("function succeeds with compatible data.table and field types", {
