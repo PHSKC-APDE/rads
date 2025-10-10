@@ -37,9 +37,9 @@ converted data? If \code{TRUE}, returns a list with 'data' and
 }
 \value{
 If \code{return_log = FALSE}, returns a data.table whose column
-names have been converted to lowercase. If \code{return_log = TRUE},
-returns a list with \code{data} (the converted data.table, also with
-lowercase names) and \code{conversion_log} (a data.table of results).
+names match the casing specified in \code{field_types}. If \code{return_log = TRUE},
+returns a list with \code{data} (the converted data.table with names matching
+\code{field_types} casing) and \code{conversion_log} (a data.table of results).
 }
 \description{
 \code{tsql_convert_types} attempts to safely convert columns in a
@@ -67,10 +67,16 @@ The function maps TSQL types to appropriate R classes as follows:
 
 Note: \code{bigint} is mapped to \code{numeric} rather than \code{integer}
 because R integers can't handle the full range of TSQL \code{bigint} values.
+
+Column names in the returned data will match the casing used in \code{field_types}.
+This ensures compatibility with functions like \code{\link[=tsql_chunk_loader]{tsql_chunk_loader()}} that use
+the same \code{field_types} specification. For example, if your data has columns
+\code{c("NAME", "age")} and \code{field_types} specifies \code{c(Name = 'varchar(50)', Age = 'int')},
+the returned data will have columns \code{c("Name", "Age")}.
 }
 \examples{
 \donttest{
-# Create example data with type mismatches
+# Example1: data with type mismatches
  library(data.table)
  mydt <- data.table(apgar_10 = c("8", "9", "7", "10"), #  should be int
                     birth_weight = c("3500", "2800", "4200", "3100"), # should be int
@@ -81,7 +87,8 @@ because R integers can't handle the full range of TSQL \code{bigint} values.
                    sex = 'char(1)')
 
  # Basic conversion
- converted_data <- tsql_convert_types(ph.data = mydt, field_types = myfieldtypes)
+ converted_data <- tsql_convert_types(ph.data = mydt,
+                                      field_types = myfieldtypes)
 
  # Conversion with detailed log
  result <- tsql_convert_types(ph.data = mydt,
@@ -89,6 +96,22 @@ because R integers can't handle the full range of TSQL \code{bigint} values.
                               return_log = TRUE)
  converted_data <- result$data
  conversion_log <- result$conversion_log
+
+###########################################################################
+# Example2: showing column name casing behavior
+mydt2 <- data.table(FIRST_name = c("Alice", "Bob"),
+                    last_NAME = c("Smith", "Jones"),
+                    AGE = c("25", "30"))
+
+# field_types uses mixed case
+myfieldtypes2 <- c(First_Name = 'varchar(50)',
+                   Last_Name = 'varchar(50)',
+                   Age = 'int')
+
+# Returned data will have column names: First_Name, Last_Name, Age
+converted_data2 <- tsql_convert_types(ph.data = mydt2,
+                                      field_types = myfieldtypes2)
+names(converted_data2) # Shows: "First_Name" "Last_Name" "Age"
 }
 
 }
