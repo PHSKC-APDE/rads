@@ -1020,7 +1020,7 @@ test_that("function fails when field types and column names don't match", {
   mydt <- data.table(col1 = c("1", "2", "3"), col3 = c("1.5", "2.5", "3.5"))
   my_field_types <- c(col1 = 'int', col2 = 'float')
   expect_error(tsql_convert_types(ph.data = mydt, field_types = my_field_types),
-               'exactly one TSQL datatype per column name')
+               'exactly one TSQL field_type per column name')
 })
 
 test_that("function handles invalid field_types values", {
