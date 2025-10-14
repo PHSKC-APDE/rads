@@ -281,6 +281,10 @@ calc.imputationList = function(ph.data,
     # organize them by "by variables"
     r = rbindlist(r)
     if(isfactor && !is.null(by)){
+      for(bbb in by){
+        r[is.na(get(bbb)), (bbb) := '_NA_']
+      }
+
       r = split(r, by = by)
     }else{
       r = list(r)
@@ -305,6 +309,11 @@ calc.imputationList = function(ph.data,
 
     # combine results
     mi = rbindlist(mi)
+    if(isfactor && !is.null(by)){
+      for(bbb in by){
+        mi[get(bbb) == '_NA_', (bbb) := NA]
+      }
+    }
     updateme = c(vvv, paste0(vvv,'_se'), paste0(vvv, '_lower'), paste0(vvv, '_upper'))
     setnames(mi,
              c('coef', 'se', 'lower', 'upper'),
