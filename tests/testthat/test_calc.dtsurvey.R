@@ -573,8 +573,7 @@ test_that('Resample approach', {
 
   # by variables with unused factor levels don't automatically break
   r14 = calc(midat, 'random_factNA', by = 'random3_weird', metrics = 'mean')
-
-
+  r15 = calc(midat, 'random3_weird', by = 'random_factNA', metrics = 'mean')
 
 
 })
