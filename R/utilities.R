@@ -1135,8 +1135,8 @@ list_dataset_columns_config <- function(dataset) {
     ),
     hys = list(
       type = "hys",
-      path = "//dphcifs/APDE-CDIP/HYS/releases/2021/best/hys_cols.csv",
-      valid_years = c(seq(2004, 2018, 2), 2021)
+      path = "//dphcifs/APDE-CDIP/HYS/releases/best/hys_cols.csv",
+      valid_years = c(seq(2004, 2018, 2), 2021, 2023)
     ),
     pums = list(
       type = "pums",
@@ -1254,7 +1254,8 @@ list_dataset_columns_hys <- function(config, year, mykey, kingco, analytic_only)
   # Read and process data
   validate_network_path(config$path, is_directory = FALSE)
   dat <- data.table::fread(config$path)
-  dat <- dat[year %in% year]
+  y = year
+  dat <- dat[year %in% y]
 
   # Split variables by analytic ready status
   var.names.ar <- dat[ar == TRUE, colname]
