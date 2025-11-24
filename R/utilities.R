@@ -7,6 +7,11 @@
 #' for HRA and region assignments. This is necessary after modifying variables in
 #' BRFSS data that contains HRA or region variables.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `as_imputed_brfss()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::make_brfss_imputations()] instead.
+#'
 #' @param ph.data A \code{\link[dtsurvey]{dtsurvey}}/data.table containing BRFSS
 #' survey data, typically created using \code{\link{as_table_brfss}}
 #'
@@ -59,6 +64,13 @@
 #'
 as_imputed_brfss <- function(ph.data,
                              impute_cols = c('hra20_id', 'hra20_name', 'chi_geo_region')) {
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "as_imputed_brfss()",
+    with = "apde.data::make_brfss_imputations()",
+    details = ''
+  )
+
   # Visible bindings for data.table/check global variables
   hra20_id <- hra20_name <- region_name <- chi_geo_region <- NULL
 
@@ -126,6 +138,11 @@ as_imputed_brfss <- function(ph.data,
 #' dataset. This is useful when you need to modify variables in BRFSS data that
 #' contains HRA or region variables.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `as_table_brfss()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::make_brfss_table()] instead.
+#'
 #' @param ph.data A \code{\link[mitools]{imputationList}} containing BRFSS survey data
 #'
 #' @details
@@ -166,6 +183,13 @@ as_imputed_brfss <- function(ph.data,
 #' @export
 #'
 as_table_brfss <- function(ph.data) {
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "as_table_brfss()",
+    with = "apde.data::make_brfss_table()",
+    details = ''
+  )
+
   # Validate input is an imputationList
   if (!inherits(ph.data, "imputationList")) {
     stop("\n\U1F6D1 'ph.data' must be an mitools imputationList")
@@ -976,6 +1000,11 @@ get_ref_pop <- function(ref_name = NULL){
 # list_apde_data() ----
 #' Returns the list of datasets currently available for analysis in RADS
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `list_apde_data()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::list_data()] instead.
+#'
 #' @return Character vector of available datasets.
 #' @export
 #' @name list_apde_data
@@ -984,6 +1013,12 @@ get_ref_pop <- function(ref_name = NULL){
 #'  list_apde_data()
 #' }
 list_apde_data <- function(){
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::list_apde_data()",
+    with = "apde.data::list_data()",
+    details = ''
+  )
 
   ret <- c('birth', 'brfss', 'chars', 'death', 'hys', 'pums')
 
@@ -997,6 +1032,11 @@ list_apde_data <- function(){
 #' Returns the available columns for a specified dataset. This function adapts to
 #' different data sources (SQL databases, network files) and handles various
 #' dataset-specific requirements like year validation and analytic-ready flags.
+#'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `list_dataset_columns()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::list_data_columns()] instead.
 #'
 #' @param dataset Character vector of length 1. Identifies the dataset to be
 #' fetched. Use \code{\link{list_apde_data}} for available options.
@@ -1058,6 +1098,12 @@ list_dataset_columns <- function(dataset = NULL,
                                  mykey = 'hhsaw',
                                  kingco = TRUE,
                                  analytic_only = FALSE) {
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::list_dataset_columns()",
+    with = "apde.data::list_data_columns()",
+    details = ''
+  )
 
   # Visible bindings for data.table/check global variables ----
   ar <- colname <- chi_year <- `year(s)` <- NULL
@@ -1099,6 +1145,11 @@ list_dataset_columns <- function(dataset = NULL,
 #' dataset in \code{\link{list_dataset_columns}}. New data sets can be added by
 #' including their configuration here.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `list_dataset_columns_config()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::list_data_columns_config()] instead.
+#'
 #' @param dataset Character vector of length 1. Dataset identifier.
 #'
 #' @return A list containing configuration settings for the specified dataset.
@@ -1106,6 +1157,13 @@ list_dataset_columns <- function(dataset = NULL,
 #' @keywords internal
 #' @noRd
 list_dataset_columns_config <- function(dataset) {
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::list_dataset_columns_config()",
+    with = "apde.data::list_data_columns_config()",
+    details = ''
+  )
+
   # no need for dataset validation b/c validated in list_dataset_columns()
   configs <- list(
     # SQL-based datasets ----
@@ -1156,6 +1214,11 @@ list_dataset_columns_config <- function(dataset) {
 #' be created by the \code{\link{get_data}} functions. Use by
 #' \code{\link{list_dataset_columns}}.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `list_dataset_columns_sql()` was deprecated in rads 1.5.2. Please use
+#' `apde.data::list_data_columns_sql()` instead.
+#'
 #' @inheritParams list_dataset_columns
 #' @param config List of configuration settings for the dataset that are defined
 #' by \code{\link{list_dataset_columns_config}}
@@ -1165,6 +1228,13 @@ list_dataset_columns_config <- function(dataset) {
 #' @keywords internal
 #' @noRd
 list_dataset_columns_sql <- function(config, year, mykey, kingco, analytic_only) {
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::list_dataset_columns_sql()",
+    with = "apde.data::list_data_columns_sql()",
+    details = ''
+  )
+
   # Connect to database and get column names
   con <- validate_hhsaw_key(mykey)
   var.names <- names(DBI::dbGetQuery(con, config$query))
@@ -1184,6 +1254,11 @@ list_dataset_columns_sql <- function(config, year, mykey, kingco, analytic_only)
 #' ___Internal function___ that processes the column names for the BRFSS data.
 #' Used by \code{\link{list_dataset_columns}}.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `list_dataset_columns_brfss()` was deprecated in rads 1.5.2. Please use
+#' `apde.data::list_data_columns_brfss()` instead.
+#'
 #' @inheritParams list_dataset_columns_sql
 #'
 #' @return data.table with var.names and year(s) columns
@@ -1191,6 +1266,13 @@ list_dataset_columns_sql <- function(config, year, mykey, kingco, analytic_only)
 #' @keywords internal
 #' @noRd
 list_dataset_columns_brfss <- function(config, year, mykey, kingco, analytic_only) {
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::list_dataset_columns_brfss()",
+    with = "apde.data::list_data_columns_brfss()",
+    details = ''
+  )
+
   # Visible bindings for data.table/check global variables ----
   chi_year <- NULL
 
@@ -1236,6 +1318,11 @@ list_dataset_columns_brfss <- function(config, year, mykey, kingco, analytic_onl
 #' ___Internal function___ that processes the column names for the HYS data. Used
 #' by \code{\link{list_dataset_columns}}.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `list_dataset_columns_hys()` was deprecated in rads 1.5.2. Please use
+#' `apde.data::list_data_columns_hys()` instead.
+#'
 #' @inheritParams list_dataset_columns_sql
 #'
 #' @return data.table with var.names, analytic_ready, and year(s) columns
@@ -1243,6 +1330,13 @@ list_dataset_columns_brfss <- function(config, year, mykey, kingco, analytic_onl
 #' @keywords internal
 #' @noRd
 list_dataset_columns_hys <- function(config, year, mykey, kingco, analytic_only) {
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::list_dataset_columns_hys()",
+    with = "apde.data::list_data_columns_hys()",
+    details = ''
+  )
+
   # Visible bindings for data.table/check global variables ----
   ar <- colname <- NULL
 
@@ -1275,6 +1369,11 @@ list_dataset_columns_hys <- function(config, year, mykey, kingco, analytic_only)
 #' ___Internal function___ that processes column names for the PUMS data. Used
 #' by \code{\link{list_dataset_columns}}.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `list_dataset_columns_pums()` was deprecated in rads 1.5.2. Please use
+#' `apde.data::list_data_columns_pums()` instead.
+#'
 #' @inheritParams list_dataset_columns_sql
 #'
 #' @return data.table with var.names, records, and year(s) columns
@@ -1282,7 +1381,14 @@ list_dataset_columns_hys <- function(config, year, mykey, kingco, analytic_only)
 #' @keywords internal
 #' @noRd
 list_dataset_columns_pums <- function(config, year, mykey, kingco, analytic_only) {
-  # Visible bindings for data.table/check global variables ----
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::list_dataset_columns_pums()",
+    with = "apde.data::list_data_columns_pums()",
+    details = ''
+  )
+
+  # Visible bindings for data.table/check global variables
   varname <- records <- NULL
 
   # Validate base directory exists
@@ -2033,6 +2139,11 @@ multi_t_test <- function(means,
 #' proportionately down scaled. This function provides three weight adjustment
 #' methods.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `pool_brfss_weights()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::adjust_brfss_weights()] instead.
+#'
 #' @param ph.data A \code{data.frame}, \code{data.table}, \code{dtsurvey} object
 #' or \code{\link[mitools]{imputationList}} containing BRFSS survey data
 #' @param years An integer vector specifying which years to include in the weight
@@ -2119,6 +2230,13 @@ pool_brfss_weights <- function(
     new_wt_var,
     wt_method = 'obs',
     strata = 'x_ststr') {
+
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "pool_brfss_weights()",
+    with = "apde.data::adjust_brfss_weights()",
+    details = ''
+  )
 
   # Visible bindings for data.table/check global variables ----
     wt_adjustment <- miList <- `_id` <- hra20_id <- all_missing <- NULL
@@ -3459,6 +3577,11 @@ tsql_chunk_loader <- function(ph.data = NULL, # R data.frame/data.table
 #' Validates keyring:: `service` name and the corresponding password. If they
 #' are valid, it creates a database connection.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `validate_hhsaw_key()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::authenticate_hhsaw()] instead.
+#'
 #' @param hhsaw_key Character vector of length 1.
 #'
 #' Identifies the name of the keyring:: `service` that will be used to connect
@@ -3480,6 +3603,13 @@ tsql_chunk_loader <- function(ph.data = NULL, # R data.frame/data.table
 #' }
 
 validate_hhsaw_key <- function(hhsaw_key = 'hhsaw'){
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::validate_hhsaw_key()",
+    with = "apde.data::authenticate_hhsaw()",
+    details = ''
+  )
+
   # Key should be a character string that can be used to generate a database connection
   # Also have to allow for the option of interactive authentication
   # TODO: Allow hhsaw_key to be a database connection itself
@@ -3549,6 +3679,11 @@ validate_hhsaw_key <- function(hhsaw_key = 'hhsaw'){
 #' Check if a network path or file exists and is accessible. Used internally by
 #' RADS functions to verify network dependencies before attempting data access.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `validate_network_path()` was deprecated in rads 1.5.2. Please use
+#' `apde.data::validate_network_path()` instead.
+#'
 #' @param path Character string specifying the network path to validate
 #' @param is_directory Logical indicating whether path should be a directory (TRUE)
 #'        or file (FALSE)
@@ -3557,6 +3692,13 @@ validate_hhsaw_key <- function(hhsaw_key = 'hhsaw'){
 #' @noRd
 
 validate_network_path <- function(path, is_directory = FALSE) {
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::validate_network_path()",
+    with = "apde.data::validate_network_path()",
+    details = ''
+  )
+
   if (!base::dir.exists(base::dirname(path))) {
     stop(paste0("\n\U1F6D1 Network path not accessible: ", base::dirname(path),
                 "\nPlease verify your network connection and permissions."))

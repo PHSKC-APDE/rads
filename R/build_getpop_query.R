@@ -1,5 +1,10 @@
 #' A helper function for building queries for get_pop
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `build_getpop_query()` was deprecated in rads 1.5.2. Please use
+#' `apde.data::build_getpop_query()` instead.
+#'
 #' @param con a database connection
 #' @param cols data.table A three column data.table that describes the colname and coltype and cat
 #' @param pop_table DBI::Id of the relevant database table
@@ -26,6 +31,12 @@ build_getpop_query = function(con,
                               genders,
                               races,
                               ...) {
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::build_getpop_query()",
+    with = "apde.data::build_getpop_query()",
+    details = ''
+  )
 
   # fix visible bindings
   coltype <- colname <- NULL

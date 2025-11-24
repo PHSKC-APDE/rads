@@ -120,6 +120,11 @@ dataset as a data.table for further analysis/tabulation
 \description{
 Simple front-end for pulling in standard population data
 from SQL
+
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{get_population()} was deprecated in rads 1.5.2. Please use
+\code{\link[apde.data:population]{apde.data::population()}} instead.
 }
 \details{
 Note the following geography limitations:

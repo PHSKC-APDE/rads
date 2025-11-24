@@ -22,6 +22,11 @@ a database connection
 \description{
 Validates keyring:: \code{service} name and the corresponding password. If they
 are valid, it creates a database connection.
+
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{validate_hhsaw_key()} was deprecated in rads 1.5.2. Please use
+\code{\link[apde.data:authenticate_hhsaw]{apde.data::authenticate_hhsaw()}} instead.
 }
 \examples{
 \donttest{

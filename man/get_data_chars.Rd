@@ -63,6 +63,11 @@ a single data.table
 }
 \description{
 Get CHARS (Comprehensive Hospital Abstract Reporting System) microdata from storage.
+
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{get_data_chars()} was deprecated in rads 1.5.2. Please use
+\code{\link[apde.data:chars]{apde.data::chars()}} instead.
 }
 \examples{
 

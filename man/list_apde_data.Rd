@@ -10,7 +10,11 @@ list_apde_data()
 Character vector of available datasets.
 }
 \description{
-Returns the list of datasets currently available for analysis in RADS
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+}
+\details{
+\code{list_apde_data()} was deprecated in rads 1.5.2. Please use
+\code{\link[apde.data:list_data]{apde.data::list_data()}} instead.
 }
 \examples{
 \donttest{

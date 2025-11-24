@@ -32,6 +32,11 @@ dataset either in data.table (administrative data) or svy_tbl (survey data) for 
 }
 \description{
 Get HYS microdata from storage.
+
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{get_data_hys()} was deprecated in rads 1.5.2. Please use
+\code{\link[apde.data:hys]{apde.data::hys()}} instead.
 }
 \examples{
 

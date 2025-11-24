@@ -3,6 +3,11 @@
 #' @description Simple front-end for pulling in standard population data
 #' from SQL
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `get_population()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::population()] instead.
+#'
 #' @param kingco Logical vector of length 1. Identifies whether you want
 #' population estimates limited to King County. Only impacts results for
 #' geo_type in c('blk', blkgrp', 'lgd', 'scd', 'tract', 'zip').
@@ -133,6 +138,12 @@ get_population <- function(kingco = T,
                            schema = 'ref',
                            table_prefix = 'pop_geo_',
                            return_query = FALSE){
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::get_population()",
+    with = "apde.data::population()",
+    details = ''
+  )
 
   # visible bindings ----
   . <- age <- code <- colname <- coltype <- cou_id <- cou_name <- gender <- geo_id <- geo_id_code <- NULL
