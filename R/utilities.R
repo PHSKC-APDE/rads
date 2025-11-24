@@ -238,89 +238,87 @@ calc_age <- function(from, to) {
 # chi_cols() ----
 #' Vector of standard CHI / Tableau Ready columns
 #'
-#' @description
-#' \strong{!!!STOP!!! This function has been deprecated.} Please use
-#' \code{apde.chi.tools::chi_get_cols()} instead.
+#' `r lifecycle::badge("deprecated")`
 #'
-#' @param ... Not used.
+#' `chi_cols()` was made defunct in rads 1.5.2. Please use [apde.chi.tools::chi_get_cols()] instead.
 #'
-#' @section Deprecation:
-#' Please use \code{apde.chi.tools::chi_get_cols()} instead.
-#'
+#' @param ... Deprecated arguments
 #' @export
-chi_cols <- function(...) {
-  stop("\n\U1F6D1 chi_cols() has been replaced. \nPlease use apde.chi.tools::chi_get_cols() instead.", call. = FALSE)
+chi_cols <- function(...){
+  lifecycle::deprecate_stop(
+    when = "1.5.2",
+    what = "chi_cols()",
+    with = "apde.chi.tools::chi_get_cols()"
+  )
 }
 
 # chi_compare_est() ----
 #' Compare two data.frames with properly formatted CHI data
 #'
-#' @description
-#' \strong{!!!STOP!!! This function has been deprecated.} Please use
-#' \code{apde.chi.tools::chi_compare_estimates()} instead.
+#' `r lifecycle::badge("deprecated")`
 #'
-#' @param ... Not used.
+#' `chi_compare_est()` was made defunct in rads 1.5.2. Please use [apde.chi.tools::chi_compare_estimates()] instead.
 #'
-#' @section Deprecation:
-#' Please use \code{apde.chi.tools::chi_compare_estimates()} instead.
-#'
+#' @param ... Deprecated arguments
 #' @export
-#'
-chi_compare_est <- function(...) {
-  stop("\n\U1F6D1 chi_compare_est() has been replaced. \nPlease use apde.chi.tools::chi_compare_estimates() instead.", call. = FALSE)
+chi_compare_est <- function(...){
+  lifecycle::deprecate_stop(
+    when = "1.5.2",
+    what = "chi_compare_est()",
+    with = "apde.chi.tools::chi_compare_estimates()"
+  )
 }
 
 # chi_compare_kc() ----
 #' Compare CHI standard tabular results to the King County average for the same year within a given data set
 #'
-#' @description
-#' \strong{!!!STOP!!! This function has been deprecated.} Please use
-#' \link{compare_estimate} instead.
+#' `r lifecycle::badge("deprecated")`
 #'
+#' `chi_compare_kc()` was made defunct in rads 1.5.2. Please use [compare_estimate()] instead.
 #'
-#' @param ... Not used.
-#'
-#' @section Deprecation:
-#' Please use \link{compare_estimate} instead.
-#'
+#' @param ... Deprecated arguments
 #' @export
-#'
-chi_compare_kc <- function(...) {
-  stop("\n\U1F6D1 chi_compare_kc() has been replaced. \nPlease use rads::compare_estimate() instead.", call. = FALSE)
+chi_compare_kc <- function(...){
+  lifecycle::deprecate_stop(
+    when = "1.5.2",
+    what = "chi_compare_kc()",
+    with = "compare_estimate()"
+  )
 }
 
 # chi_metadata_cols() ----
 #' Vector of standard CHI / Tableau Ready metadata columns
 #'
-#' @description
-#' \strong{!!!STOP!!! This function has been deprecated.} Please use
-#' \code{names(apde.chi.tools::chi_get_yaml()$metadata)} instead.
+#' `r lifecycle::badge("deprecated")`
 #'
-#' @param ... Not used.
+#' `chi_metadata_cols()` was made defunct in rads 1.5.2. Please use
+#' `names(apde.chi.tools::chi_get_yaml()$metadata)` instead.
 #'
-#' @section Deprecation:
-#' Please use \code{names(apde.chi.tools::chi_get_yaml()$metadata)} instead.
-#'
+#' @param ... Deprecated arguments
 #' @export
-chi_metadata_cols <- function(...) {
-  stop("\n\U1F6D1 chi_metadata_cols() has been replaced. \nPlease use names(apde.chi.tools::chi_get_yaml()$metadata) instead.", call. = FALSE)
+chi_metadata_cols <- function(...){
+  lifecycle::deprecate_stop(
+    when = "1.5.2",
+    what = "chi_metadata_cols()",
+    with = "apde.chi.tools::chi_get_yaml()"
+  )
 }
 
 # chi_qa() ----
 #' QA for CHI/Tableau ready standards using R
 #'
-#' @description
-#' \strong{!!!STOP!!! This function has been deprecated.} Please use
-#' \code{apde.chi.tools::chi_qa_tro()} instead.
+#' `r lifecycle::badge("deprecated")`
 #'
-#' @param ... Not used.
+#' `chi_qa()` was made defunct in rads 1.5.2. Please use [apde.chi.tools::chi_qa_tro()] instead.
 #'
-#' @section Deprecation:
-#' Please use \code{apde.chi.tools::chi_qa_tro()} instead.
-#'
+#' @param ... Deprecated arguments
 #' @export
-chi_qa <- function(...) {
-  stop("\n\U1F6D1 chi_qa() has been replaced. \nPlease use apde.chi.tools::chi_qa_tro() instead.", call. = FALSE)
+chi_qa <- function(...){
+  lifecycle::deprecate_stop(
+    when = "1.5.2",
+    what = "chi_qa()",
+    with = "apde.chi.tools::chi_qa_tro()"
+  )
 }
 
 # compare_estimate() ----
@@ -2552,22 +2550,19 @@ string_clean <- function (ph.data = NULL,
 
 # sql_clean() ----
 #' Clean string columns read from SQL
-#' @param ph.data name of data.frame or data.table
-#' @param stringsAsFactors logical. Specifies whether to convert strings to factors (TRUE) or not (FALSE)
-#' @description
-#' \strong{!!!STOP!!! This function has been deprecated!} Please use
-#' \link{string_clean} instead.
+#'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `sql_clean()` was made defunct in rads 1.5.2. Please use [string_clean()] instead.
+#'
+#' @param ... Deprecated arguments
 #' @export
-#' @importFrom utf8 utf8_encode
-#' @return data.table
-sql_clean <- function(ph.data = NULL, stringsAsFactors = FALSE){
-  .Deprecated("string_clean")
-
-  warning("\n\u26A0\ufe0f As a courtesy, `sql_clean` remains operational for the time being.\n",
-          "Good things don't last forever. \nPlease update your code.",
-          immediate. = FALSE)
-
-  string_clean(ph.data = ph.data, stringsAsFactors = stringsAsFactors)
+sql_clean <- function(...){
+  lifecycle::deprecate_stop(
+    when = "1.5.2",
+    what = "sql_clean()",
+    with = "string_clean()"
+  )
 }
 
 # std_error() ----
@@ -2632,18 +2627,18 @@ substrRight <- function(x, x.start, x.stop){
 # suppress() ----
 #' Suppress data according to APDE standards & add caution flag for high RSE
 #'
-#' @description
-#' \strong{!!!STOP!!! This function has been deprecated.} Please use
-#' \code{apde.chi.tools::chi_suppress_results()} instead.
+#' `r lifecycle::badge("deprecated")`
 #'
-#' @param ... Not used.
+#' `suppress()` was made defunct in rads 1.5.2. Please use [apde.chi.tools::chi_suppress_results()] instead.
 #'
-#' @section Deprecation:
-#' Please use \code{apde.chi.tools::chi_suppress_results()} instead.
-#'
+#' @param ... Deprecated arguments
 #' @export
-suppress <- function(...) {
-  stop("\n\U1F6D1 suppress() has been replaced. \nPlease use apde.chi.tools::chi_suppress_results() instead.", call. = FALSE)
+suppress <- function(...){
+  lifecycle::deprecate_stop(
+    when = "1.5.2",
+    what = "suppress()",
+    with = "apde.chi.tools::chi_suppress_results()"
+  )
 }
 
 # quiet() ----
@@ -3723,137 +3718,16 @@ validate_network_path <- function(path, is_directory = FALSE) {
 #' Validate the structure and data types of a data.frame or data.table against
 #' specifications defined in a YAML file
 #'
-#' @description
-#' \strong{!!!STOP!!! This function has been deprecated!} Please use
-#' \link{tsql_validate_field_types} instead.
+#' `r lifecycle::badge("deprecated")`
 #'
-#' Validate the structure and data types of a data.frame or data.table against
-#' specifications defined in a YAML file. This is most often used to check that
-#' your data.frame or data.table is suitable to be pushed to TSQL when a YAML
-#' file specifies the field.types to be used by `DBI::dbWriteTable` &
-#' `odbc::dbWriteTable`.
+#' `validate_yaml_data()` was made defunct in rads 1.5.2. Please use [tsql_validate_field_types()] instead.
 #'
-#'
-#' @param ph.data Name of the data.table/data.frame that you want to assess
-#' vis-à-vis the YAML file
-#'
-#' @param YML Name of the YAML object in memory
-#'
-#' @param VARS Character vector of length 1. Is is the name of the object in the
-#' list contained by YML
-#'
-#' @importFrom data.table data.table setnames ":=" setDT
-#'
-#' @examples
-#' library(data.table)
-#'
-#' # create sample data.table
-#' mydt <- data.table(myalpha = letters[1:10],
-#'                    myint = 1L:10L,
-#'                    mynum = seq(.1, 1, .1))
-#' mydt[, mydate := as.Date('2000-01-01') + myint]
-#' mydt[, myfact := factor(myalpha)]
-#'
-#' # create sample yaml object
-#' myyaml <- list(
-#'   myvars = list(
-#'     myalpha = "varchar(255)",
-#'     myint = "int",
-#'     mynum = "float",
-#'     mydate = "date",
-#'     myfact = "varchar(255)"
-#'   )
-#' )
-#'
-#' # use function
-#' validate_yaml_data(ph.data = mydt, YML = myyaml, VARS = "myvars")
-#'
+#' @param ... Deprecated arguments
 #' @export
-#' @return A simple printed statement, either identifying incompatible column types or a statement of success
-validate_yaml_data <- function(ph.data = NULL, YML = NULL, VARS = "vars"){
-  ## Global variables used by data.table declared as NULL here to play nice with devtools::check()
-  ph.data.class <- orig.ph.dataname <- yamlcols <- yamlnames <- yamlextra <- dfcols <- dfnames <- NULL
-
-  #Deprecation warning
-  .Deprecated("tsql_validate_field_types")
-
-  # Get the name of of the data.frame/data.table passed to to the function ----
-  orig.ph.dataname <- deparse(substitute(ph.data))
-
-  # Check that DT is a data.frame/data.table ----
-  if(is.data.frame(ph.data) == FALSE){
-    stop("'ph.data' must be a data.frame or a data.table")
-  }else{ph.data <- data.table::setDT(copy(ph.data))}
-
-  # Check that number of vars in YML is same as ncols in ph.data ----
-  yamlcols <- length(YML[[VARS]])
-  dfcols <- ncol(ph.data)
-  if(yamlcols != dfcols){
-    stop(paste0("The number of vars specified in the YAML (", yamlcols, ") does not match the number of columns in ph.data (", dfcols, ")"))
-  }
-
-  # Check that the column names in YML match those in ph.data ----
-  yamlnames <- sort(names(YML[[VARS]]))
-  dfnames <- sort(names(ph.data))
-  yamlextra <- setdiff(yamlnames, dfnames)
-  if(length(yamlextra) == 0){yamlextra <- "_____"}
-  dfextra <- setdiff(dfnames, yamlnames)
-  if(length(dfextra) == 0){dfextra <- "_____"}
-  if(setequal(yamlnames, dfnames)==F){
-    stop(paste0("The following variables are in the YAML but not in ph.data: ", yamlextra),
-         paste0(". The following variables are in ph.data but not in the YAML: ", dfextra), ".")
-  }
-
-  # notice that this might take a while ----
-  message("The validation may take a few minutes if your data & yaml contain dates and or times ...")
-
-  # identify proper classes from YAML file ----
-  class.compare <- data.table::data.table(
-    name =  c(names(YML[[VARS]])),
-    yaml.class = tolower(as.character(YML[[VARS]]))
+validate_yaml_data <- function(...){
+  lifecycle::deprecate_stop(
+    when = "1.5.2",
+    what = "validate_yaml_data()",
+    with = "tsql_validate_field_types()"
   )
-
-  # convert names of SQL data types to R classes ----
-  class.compare[grepl("char|text|uniqueidentifier", tolower(yaml.class)), yaml.class := "character"]
-  class.compare[tolower(yaml.class) %in% c("tinyint", "smallint", "int"), yaml.class := "integer"]
-  class.compare[grepl("bigint|decimal|float|money|numeric|real", tolower(yaml.class)), yaml.class := "numeric"]
-  class.compare[grepl("bit", tolower(yaml.class)), yaml.class := "logical"]
-  class.compare[grepl("time", tolower(yaml.class)), yaml.class := "POSIXct"]
-  class.compare[grepl("date", tolower(yaml.class)), yaml.class := "date"]
-
-  # identify which VARS should be of which class (assuming YAML is correct) ----
-  make.char <- class.compare[yaml.class == "character"]$name
-  make.num  <- class.compare[yaml.class == "numeric"]$name
-  make.int  <- class.compare[yaml.class == "integer"]$name
-  make.logical  <- class.compare[yaml.class == "logical"]$name
-  make.POSIXct  <- class.compare[yaml.class == "POSIXct"]$name
-  make.Date  <- class.compare[yaml.class == "date"]$name
-
-  # use lossless_convert function to convert R column types if possible / needed ----
-  suppressWarnings(ph.data[, (make.char) := lapply(.SD, lossless_convert, class = 'character'), .SDcols = make.char])
-  suppressWarnings(ph.data[, (make.num) := lapply(.SD, lossless_convert, class = 'numeric'), .SDcols = make.num])
-  suppressWarnings(ph.data[, (make.int) := lapply(.SD, lossless_convert, class = 'integer'), .SDcols = make.int])
-  suppressWarnings(ph.data[, (make.logical) := lapply(.SD, lossless_convert, class = 'logical'), .SDcols = make.logical])
-  suppressWarnings(ph.data[, (make.Date) := lapply(.SD, lossless_convert, class = 'Date'), .SDcols = make.Date])
-  suppressWarnings(ph.data[, (make.POSIXct) := lapply(.SD, lossless_convert, class = 'POSIXct'), .SDcols = make.POSIXct])
-
-  # check if there are variables that could not be coerced to proper type ----
-  class.compare <- merge(data.table::data.table(name = names(sapply(ph.data, class)), ph.data.class = tolower(sapply(ph.data, class))),
-                         class.compare, by = "name")
-  class.compare[ph.data.class == 'c("posixct", "posixt")', ph.data.class := 'POSIXct']
-
-  # allow R to be more strict than YAML with numbers ----
-  class.compare[yaml.class=="numeric" & ph.data.class == "integer", ph.data.class := "numeric"]
-
-  # Assess whether there were any problems ----
-  if(nrow(class.compare[ph.data.class != yaml.class]) > 0){
-    yaml.name <- class.compare[ph.data.class != yaml.class]$name
-    yaml.class <- class.compare[ph.data.class != yaml.class]$yaml.class
-    class.problems <- paste(paste0(yaml.name, " (", yaml.class, ")"), collapse = ", ")
-    stop(glue::glue("\n\U0001f47f The following variables could not be coerced to their proper class (which is specified in parentheses):
-                              {class.problems}"))
-  }else{message(paste0("\U0001f642 All column classes in `", orig.ph.dataname,"` are compatible with the YAML reference standard."))}
-
-  return(invisible(NULL))
-
 }

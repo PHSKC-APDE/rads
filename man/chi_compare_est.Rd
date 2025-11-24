@@ -7,14 +7,11 @@
 chi_compare_est(...)
 }
 \arguments{
-\item{...}{Not used.}
+\item{...}{Deprecated arguments}
 }
 \description{
-\strong{!!!STOP!!! This function has been deprecated.} Please use
-\code{apde.chi.tools::chi_compare_estimates()} instead.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
 }
-\section{Deprecation}{
-
-Please use \code{apde.chi.tools::chi_compare_estimates()} instead.
+\details{
+\code{chi_compare_est()} was made defunct in rads 1.5.2. Please use \code{\link[apde.chi.tools:chi_compare_estimates]{apde.chi.tools::chi_compare_estimates()}} instead.
 }
-
