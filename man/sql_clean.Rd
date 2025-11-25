@@ -4,17 +4,14 @@
 \alias{sql_clean}
 \title{Clean string columns read from SQL}
 \usage{
-sql_clean(ph.data = NULL, stringsAsFactors = FALSE)
+sql_clean(...)
 }
 \arguments{
-\item{ph.data}{name of data.frame or data.table}
-
-\item{stringsAsFactors}{logical. Specifies whether to convert strings to factors (TRUE) or not (FALSE)}
-}
-\value{
-data.table
+\item{...}{Deprecated arguments}
 }
 \description{
-\strong{!!!STOP!!! This function has been deprecated!} Please use
-\link{string_clean} instead.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+}
+\details{
+\code{sql_clean()} was made defunct in rads 1.5.2. Please use \code{\link[=string_clean]{string_clean()}} instead.
 }

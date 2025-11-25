@@ -18,6 +18,11 @@ Converts a BRFSS \code{\link[mitools]{imputationList}} to a single
 \code{\link[dtsurvey]{dtsurvey}}/data.table by extracting the first imputed
 dataset. This is useful when you need to modify variables in BRFSS data that
 contains HRA or region variables.
+
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{as_table_brfss()} was deprecated in rads 1.5.2. Please use
+\code{\link[apde.data:make_brfss_table]{apde.data::make_brfss_table()}} instead.
 }
 \details{
 When working with BRFSS data that includes Health Reporting Area (HRA) or region

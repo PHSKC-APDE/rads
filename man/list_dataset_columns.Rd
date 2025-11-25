@@ -45,6 +45,11 @@ A \code{data.table} with dataset-specific columns:
 Returns the available columns for a specified dataset. This function adapts to
 different data sources (SQL databases, network files) and handles various
 dataset-specific requirements like year validation and analytic-ready flags.
+
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{list_dataset_columns()} was deprecated in rads 1.5.2. Please use
+\code{\link[apde.data:list_data_columns]{apde.data::list_data_columns()}} instead.
 }
 \details{
 This function handles multiple data sources with different requirements:

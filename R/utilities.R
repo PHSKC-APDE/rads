@@ -7,6 +7,11 @@
 #' for HRA and region assignments. This is necessary after modifying variables in
 #' BRFSS data that contains HRA or region variables.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `as_imputed_brfss()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::make_brfss_imputations()] instead.
+#'
 #' @param ph.data A \code{\link[dtsurvey]{dtsurvey}}/data.table containing BRFSS
 #' survey data, typically created using \code{\link{as_table_brfss}}
 #'
@@ -59,6 +64,13 @@
 #'
 as_imputed_brfss <- function(ph.data,
                              impute_cols = c('hra20_id', 'hra20_name', 'chi_geo_region')) {
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "as_imputed_brfss()",
+    with = "apde.data::make_brfss_imputations()",
+    details = ''
+  )
+
   # Visible bindings for data.table/check global variables
   hra20_id <- hra20_name <- region_name <- chi_geo_region <- NULL
 
@@ -126,6 +138,11 @@ as_imputed_brfss <- function(ph.data,
 #' dataset. This is useful when you need to modify variables in BRFSS data that
 #' contains HRA or region variables.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `as_table_brfss()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::make_brfss_table()] instead.
+#'
 #' @param ph.data A \code{\link[mitools]{imputationList}} containing BRFSS survey data
 #'
 #' @details
@@ -166,6 +183,13 @@ as_imputed_brfss <- function(ph.data,
 #' @export
 #'
 as_table_brfss <- function(ph.data) {
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "as_table_brfss()",
+    with = "apde.data::make_brfss_table()",
+    details = ''
+  )
+
   # Validate input is an imputationList
   if (!inherits(ph.data, "imputationList")) {
     stop("\n\U1F6D1 'ph.data' must be an mitools imputationList")
@@ -214,89 +238,87 @@ calc_age <- function(from, to) {
 # chi_cols() ----
 #' Vector of standard CHI / Tableau Ready columns
 #'
-#' @description
-#' \strong{!!!STOP!!! This function has been deprecated.} Please use
-#' \code{apde.chi.tools::chi_get_cols()} instead.
+#' `r lifecycle::badge("deprecated")`
 #'
-#' @param ... Not used.
+#' `chi_cols()` was made defunct in rads 1.5.2. Please use [apde.chi.tools::chi_get_cols()] instead.
 #'
-#' @section Deprecation:
-#' Please use \code{apde.chi.tools::chi_get_cols()} instead.
-#'
+#' @param ... Deprecated arguments
 #' @export
-chi_cols <- function(...) {
-  stop("\n\U1F6D1 chi_cols() has been replaced. \nPlease use apde.chi.tools::chi_get_cols() instead.", call. = FALSE)
+chi_cols <- function(...){
+  lifecycle::deprecate_stop(
+    when = "1.5.2",
+    what = "chi_cols()",
+    with = "apde.chi.tools::chi_get_cols()"
+  )
 }
 
 # chi_compare_est() ----
 #' Compare two data.frames with properly formatted CHI data
 #'
-#' @description
-#' \strong{!!!STOP!!! This function has been deprecated.} Please use
-#' \code{apde.chi.tools::chi_compare_estimates()} instead.
+#' `r lifecycle::badge("deprecated")`
 #'
-#' @param ... Not used.
+#' `chi_compare_est()` was made defunct in rads 1.5.2. Please use [apde.chi.tools::chi_compare_estimates()] instead.
 #'
-#' @section Deprecation:
-#' Please use \code{apde.chi.tools::chi_compare_estimates()} instead.
-#'
+#' @param ... Deprecated arguments
 #' @export
-#'
-chi_compare_est <- function(...) {
-  stop("\n\U1F6D1 chi_compare_est() has been replaced. \nPlease use apde.chi.tools::chi_compare_estimates() instead.", call. = FALSE)
+chi_compare_est <- function(...){
+  lifecycle::deprecate_stop(
+    when = "1.5.2",
+    what = "chi_compare_est()",
+    with = "apde.chi.tools::chi_compare_estimates()"
+  )
 }
 
 # chi_compare_kc() ----
 #' Compare CHI standard tabular results to the King County average for the same year within a given data set
 #'
-#' @description
-#' \strong{!!!STOP!!! This function has been deprecated.} Please use
-#' \link{compare_estimate} instead.
+#' `r lifecycle::badge("deprecated")`
 #'
+#' `chi_compare_kc()` was made defunct in rads 1.5.2. Please use [compare_estimate()] instead.
 #'
-#' @param ... Not used.
-#'
-#' @section Deprecation:
-#' Please use \link{compare_estimate} instead.
-#'
+#' @param ... Deprecated arguments
 #' @export
-#'
-chi_compare_kc <- function(...) {
-  stop("\n\U1F6D1 chi_compare_kc() has been replaced. \nPlease use rads::compare_estimate() instead.", call. = FALSE)
+chi_compare_kc <- function(...){
+  lifecycle::deprecate_stop(
+    when = "1.5.2",
+    what = "chi_compare_kc()",
+    with = "compare_estimate()"
+  )
 }
 
 # chi_metadata_cols() ----
 #' Vector of standard CHI / Tableau Ready metadata columns
 #'
-#' @description
-#' \strong{!!!STOP!!! This function has been deprecated.} Please use
-#' \code{names(apde.chi.tools::chi_get_yaml()$metadata)} instead.
+#' `r lifecycle::badge("deprecated")`
 #'
-#' @param ... Not used.
+#' `chi_metadata_cols()` was made defunct in rads 1.5.2. Please use
+#' `names(apde.chi.tools::chi_get_yaml()$metadata)` instead.
 #'
-#' @section Deprecation:
-#' Please use \code{names(apde.chi.tools::chi_get_yaml()$metadata)} instead.
-#'
+#' @param ... Deprecated arguments
 #' @export
-chi_metadata_cols <- function(...) {
-  stop("\n\U1F6D1 chi_metadata_cols() has been replaced. \nPlease use names(apde.chi.tools::chi_get_yaml()$metadata) instead.", call. = FALSE)
+chi_metadata_cols <- function(...){
+  lifecycle::deprecate_stop(
+    when = "1.5.2",
+    what = "chi_metadata_cols()",
+    with = "apde.chi.tools::chi_get_yaml()"
+  )
 }
 
 # chi_qa() ----
 #' QA for CHI/Tableau ready standards using R
 #'
-#' @description
-#' \strong{!!!STOP!!! This function has been deprecated.} Please use
-#' \code{apde.chi.tools::chi_qa_tro()} instead.
+#' `r lifecycle::badge("deprecated")`
 #'
-#' @param ... Not used.
+#' `chi_qa()` was made defunct in rads 1.5.2. Please use [apde.chi.tools::chi_qa_tro()] instead.
 #'
-#' @section Deprecation:
-#' Please use \code{apde.chi.tools::chi_qa_tro()} instead.
-#'
+#' @param ... Deprecated arguments
 #' @export
-chi_qa <- function(...) {
-  stop("\n\U1F6D1 chi_qa() has been replaced. \nPlease use apde.chi.tools::chi_qa_tro() instead.", call. = FALSE)
+chi_qa <- function(...){
+  lifecycle::deprecate_stop(
+    when = "1.5.2",
+    what = "chi_qa()",
+    with = "apde.chi.tools::chi_qa_tro()"
+  )
 }
 
 # compare_estimate() ----
@@ -976,6 +998,11 @@ get_ref_pop <- function(ref_name = NULL){
 # list_apde_data() ----
 #' Returns the list of datasets currently available for analysis in RADS
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `list_apde_data()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::list_data()] instead.
+#'
 #' @return Character vector of available datasets.
 #' @export
 #' @name list_apde_data
@@ -984,6 +1011,12 @@ get_ref_pop <- function(ref_name = NULL){
 #'  list_apde_data()
 #' }
 list_apde_data <- function(){
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::list_apde_data()",
+    with = "apde.data::list_data()",
+    details = ''
+  )
 
   ret <- c('birth', 'brfss', 'chars', 'death', 'hys', 'pums')
 
@@ -997,6 +1030,11 @@ list_apde_data <- function(){
 #' Returns the available columns for a specified dataset. This function adapts to
 #' different data sources (SQL databases, network files) and handles various
 #' dataset-specific requirements like year validation and analytic-ready flags.
+#'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `list_dataset_columns()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::list_data_columns()] instead.
 #'
 #' @param dataset Character vector of length 1. Identifies the dataset to be
 #' fetched. Use \code{\link{list_apde_data}} for available options.
@@ -1058,6 +1096,12 @@ list_dataset_columns <- function(dataset = NULL,
                                  mykey = 'hhsaw',
                                  kingco = TRUE,
                                  analytic_only = FALSE) {
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::list_dataset_columns()",
+    with = "apde.data::list_data_columns()",
+    details = ''
+  )
 
   # Visible bindings for data.table/check global variables ----
   ar <- colname <- chi_year <- `year(s)` <- NULL
@@ -1099,6 +1143,11 @@ list_dataset_columns <- function(dataset = NULL,
 #' dataset in \code{\link{list_dataset_columns}}. New data sets can be added by
 #' including their configuration here.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `list_dataset_columns_config()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::list_data_columns_config()] instead.
+#'
 #' @param dataset Character vector of length 1. Dataset identifier.
 #'
 #' @return A list containing configuration settings for the specified dataset.
@@ -1106,6 +1155,13 @@ list_dataset_columns <- function(dataset = NULL,
 #' @keywords internal
 #' @noRd
 list_dataset_columns_config <- function(dataset) {
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::list_dataset_columns_config()",
+    with = "apde.data::list_data_columns_config()",
+    details = ''
+  )
+
   # no need for dataset validation b/c validated in list_dataset_columns()
   configs <- list(
     # SQL-based datasets ----
@@ -1156,6 +1212,11 @@ list_dataset_columns_config <- function(dataset) {
 #' be created by the \code{\link{get_data}} functions. Use by
 #' \code{\link{list_dataset_columns}}.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `list_dataset_columns_sql()` was deprecated in rads 1.5.2. Please use
+#' `apde.data::list_data_columns_sql()` instead.
+#'
 #' @inheritParams list_dataset_columns
 #' @param config List of configuration settings for the dataset that are defined
 #' by \code{\link{list_dataset_columns_config}}
@@ -1165,6 +1226,13 @@ list_dataset_columns_config <- function(dataset) {
 #' @keywords internal
 #' @noRd
 list_dataset_columns_sql <- function(config, year, mykey, kingco, analytic_only) {
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::list_dataset_columns_sql()",
+    with = "apde.data::list_data_columns_sql()",
+    details = ''
+  )
+
   # Connect to database and get column names
   con <- validate_hhsaw_key(mykey)
   var.names <- names(DBI::dbGetQuery(con, config$query))
@@ -1184,6 +1252,11 @@ list_dataset_columns_sql <- function(config, year, mykey, kingco, analytic_only)
 #' ___Internal function___ that processes the column names for the BRFSS data.
 #' Used by \code{\link{list_dataset_columns}}.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `list_dataset_columns_brfss()` was deprecated in rads 1.5.2. Please use
+#' `apde.data::list_data_columns_brfss()` instead.
+#'
 #' @inheritParams list_dataset_columns_sql
 #'
 #' @return data.table with var.names and year(s) columns
@@ -1191,6 +1264,13 @@ list_dataset_columns_sql <- function(config, year, mykey, kingco, analytic_only)
 #' @keywords internal
 #' @noRd
 list_dataset_columns_brfss <- function(config, year, mykey, kingco, analytic_only) {
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::list_dataset_columns_brfss()",
+    with = "apde.data::list_data_columns_brfss()",
+    details = ''
+  )
+
   # Visible bindings for data.table/check global variables ----
   chi_year <- NULL
 
@@ -1236,6 +1316,11 @@ list_dataset_columns_brfss <- function(config, year, mykey, kingco, analytic_onl
 #' ___Internal function___ that processes the column names for the HYS data. Used
 #' by \code{\link{list_dataset_columns}}.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `list_dataset_columns_hys()` was deprecated in rads 1.5.2. Please use
+#' `apde.data::list_data_columns_hys()` instead.
+#'
 #' @inheritParams list_dataset_columns_sql
 #'
 #' @return data.table with var.names, analytic_ready, and year(s) columns
@@ -1243,6 +1328,13 @@ list_dataset_columns_brfss <- function(config, year, mykey, kingco, analytic_onl
 #' @keywords internal
 #' @noRd
 list_dataset_columns_hys <- function(config, year, mykey, kingco, analytic_only) {
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::list_dataset_columns_hys()",
+    with = "apde.data::list_data_columns_hys()",
+    details = ''
+  )
+
   # Visible bindings for data.table/check global variables ----
   ar <- colname <- NULL
 
@@ -1275,6 +1367,11 @@ list_dataset_columns_hys <- function(config, year, mykey, kingco, analytic_only)
 #' ___Internal function___ that processes column names for the PUMS data. Used
 #' by \code{\link{list_dataset_columns}}.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `list_dataset_columns_pums()` was deprecated in rads 1.5.2. Please use
+#' `apde.data::list_data_columns_pums()` instead.
+#'
 #' @inheritParams list_dataset_columns_sql
 #'
 #' @return data.table with var.names, records, and year(s) columns
@@ -1282,7 +1379,14 @@ list_dataset_columns_hys <- function(config, year, mykey, kingco, analytic_only)
 #' @keywords internal
 #' @noRd
 list_dataset_columns_pums <- function(config, year, mykey, kingco, analytic_only) {
-  # Visible bindings for data.table/check global variables ----
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::list_dataset_columns_pums()",
+    with = "apde.data::list_data_columns_pums()",
+    details = ''
+  )
+
+  # Visible bindings for data.table/check global variables
   varname <- records <- NULL
 
   # Validate base directory exists
@@ -2033,6 +2137,11 @@ multi_t_test <- function(means,
 #' proportionately down scaled. This function provides three weight adjustment
 #' methods.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `pool_brfss_weights()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::adjust_brfss_weights()] instead.
+#'
 #' @param ph.data A \code{data.frame}, \code{data.table}, \code{dtsurvey} object
 #' or \code{\link[mitools]{imputationList}} containing BRFSS survey data
 #' @param years An integer vector specifying which years to include in the weight
@@ -2119,6 +2228,13 @@ pool_brfss_weights <- function(
     new_wt_var,
     wt_method = 'obs',
     strata = 'x_ststr') {
+
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "pool_brfss_weights()",
+    with = "apde.data::adjust_brfss_weights()",
+    details = ''
+  )
 
   # Visible bindings for data.table/check global variables ----
     wt_adjustment <- miList <- `_id` <- hra20_id <- all_missing <- NULL
@@ -2434,22 +2550,19 @@ string_clean <- function (ph.data = NULL,
 
 # sql_clean() ----
 #' Clean string columns read from SQL
-#' @param ph.data name of data.frame or data.table
-#' @param stringsAsFactors logical. Specifies whether to convert strings to factors (TRUE) or not (FALSE)
-#' @description
-#' \strong{!!!STOP!!! This function has been deprecated!} Please use
-#' \link{string_clean} instead.
+#'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `sql_clean()` was made defunct in rads 1.5.2. Please use [string_clean()] instead.
+#'
+#' @param ... Deprecated arguments
 #' @export
-#' @importFrom utf8 utf8_encode
-#' @return data.table
-sql_clean <- function(ph.data = NULL, stringsAsFactors = FALSE){
-  .Deprecated("string_clean")
-
-  warning("\n\u26A0\ufe0f As a courtesy, `sql_clean` remains operational for the time being.\n",
-          "Good things don't last forever. \nPlease update your code.",
-          immediate. = FALSE)
-
-  string_clean(ph.data = ph.data, stringsAsFactors = stringsAsFactors)
+sql_clean <- function(...){
+  lifecycle::deprecate_stop(
+    when = "1.5.2",
+    what = "sql_clean()",
+    with = "string_clean()"
+  )
 }
 
 # std_error() ----
@@ -2514,18 +2627,18 @@ substrRight <- function(x, x.start, x.stop){
 # suppress() ----
 #' Suppress data according to APDE standards & add caution flag for high RSE
 #'
-#' @description
-#' \strong{!!!STOP!!! This function has been deprecated.} Please use
-#' \code{apde.chi.tools::chi_suppress_results()} instead.
+#' `r lifecycle::badge("deprecated")`
 #'
-#' @param ... Not used.
+#' `suppress()` was made defunct in rads 1.5.2. Please use [apde.chi.tools::chi_suppress_results()] instead.
 #'
-#' @section Deprecation:
-#' Please use \code{apde.chi.tools::chi_suppress_results()} instead.
-#'
+#' @param ... Deprecated arguments
 #' @export
-suppress <- function(...) {
-  stop("\n\U1F6D1 suppress() has been replaced. \nPlease use apde.chi.tools::chi_suppress_results() instead.", call. = FALSE)
+suppress <- function(...){
+  lifecycle::deprecate_stop(
+    when = "1.5.2",
+    what = "suppress()",
+    with = "apde.chi.tools::chi_suppress_results()"
+  )
 }
 
 # quiet() ----
@@ -2625,15 +2738,21 @@ quiet <- function(expr, suppressWarnings = FALSE) {
 #' Note: `bigint` is mapped to `numeric` rather than `integer`
 #' because R integers can't handle the full range of TSQL `bigint` values.
 #'
+#' Column names in the returned data will match the casing used in `field_types`.
+#' This ensures compatibility with functions like [tsql_chunk_loader()] that use
+#' the same `field_types` specification. For example, if your data has columns
+#' `c("NAME", "age")` and `field_types` specifies `c(Name = 'varchar(50)', Age = 'int')`,
+#' the returned data will have columns `c("Name", "Age")`.
+#'
 #' @return
 #' If `return_log = FALSE`, returns a data.table whose column
-#' names have been converted to lowercase. If `return_log = TRUE`,
-#' returns a list with `data` (the converted data.table, also with
-#' lowercase names) and `conversion_log` (a data.table of results).
+#' names match the casing specified in `field_types`. If `return_log = TRUE`,
+#' returns a list with `data` (the converted data.table with names matching
+#' `field_types` casing) and `conversion_log` (a data.table of results).
 #'
 #' @examples
 #' \donttest{
-#' # Create example data with type mismatches
+#' # Example1: data with type mismatches
 #'  library(data.table)
 #'  mydt <- data.table(apgar_10 = c("8", "9", "7", "10"), #  should be int
 #'                     birth_weight = c("3500", "2800", "4200", "3100"), # should be int
@@ -2644,7 +2763,8 @@ quiet <- function(expr, suppressWarnings = FALSE) {
 #'                    sex = 'char(1)')
 #'
 #'  # Basic conversion
-#'  converted_data <- tsql_convert_types(ph.data = mydt, field_types = myfieldtypes)
+#'  converted_data <- tsql_convert_types(ph.data = mydt,
+#'                                       field_types = myfieldtypes)
 #'
 #'  # Conversion with detailed log
 #'  result <- tsql_convert_types(ph.data = mydt,
@@ -2652,6 +2772,22 @@ quiet <- function(expr, suppressWarnings = FALSE) {
 #'                               return_log = TRUE)
 #'  converted_data <- result$data
 #'  conversion_log <- result$conversion_log
+#'
+#' ###########################################################################
+#' # Example2: showing column name casing behavior
+#' mydt2 <- data.table(FIRST_name = c("Alice", "Bob"),
+#'                     last_NAME = c("Smith", "Jones"),
+#'                     AGE = c("25", "30"))
+#'
+#' # field_types uses mixed case
+#' myfieldtypes2 <- c(First_Name = 'varchar(50)',
+#'                    Last_Name = 'varchar(50)',
+#'                    Age = 'int')
+#'
+#' # Returned data will have column names: First_Name, Last_Name, Age
+#' converted_data2 <- tsql_convert_types(ph.data = mydt2,
+#'                                       field_types = myfieldtypes2)
+#' names(converted_data2) # Shows: "First_Name" "Last_Name" "Age"
 #' }
 #'
 #' @export
@@ -2681,7 +2817,6 @@ tsql_convert_types <- function(ph.data = NULL,
   }
 
   ph.data = copy(ph.data) # so original will not change due to set functions
-  setnames(ph.data, tolower(names(ph.data))) # b/c TSQL normally case insensitive
 
   if (is.null(field_types) || !(is.character(field_types) && !is.null(names(field_types)) && all(nzchar(names(field_types))))) {
     stop('\n\U1F6D1 {field_types} must specify a named character vector of TSQL data types.')
@@ -2691,11 +2826,8 @@ tsql_convert_types <- function(ph.data = NULL,
     stop('\n\U1F6D1 {field_types} cannot be empty.')
   }
 
-  # Make field_types names lowercase to match data
-  names(field_types) <- tolower(names(field_types))
-
   if (!identical(sort(tolower(names(ph.data))), sort(tolower(names(field_types))))) {
-    stop('\n\U1F6D1 Conversion requires exactly one TSQL datatype per column name in {ph.data}.')
+    stop('\n\U1F6D1 Conversion requires exactly one TSQL field_type per column name in {ph.data}.')
   }
 
   if(!is.logical(validate_before)){
@@ -2713,6 +2845,11 @@ tsql_convert_types <- function(ph.data = NULL,
   if(!is.logical(return_log)){
     stop('\n\U1F6D1 {return_log} must be specified as a logical (i.e., TRUE, T, FALSE, or F)')
   }
+
+  # Match ph.data column name casing to that in field_types ----
+  lower_to_field_type_map <- setNames(names(field_types), tolower(names(field_types)))
+  new_names <- lower_to_field_type_map[tolower(names(ph.data))] # reorder names from field_map to match column order in ph.data
+  setnames(ph.data, new_names)
 
   # IF `validate_before = TRUE` ----
   if (validate_before) {
@@ -3435,6 +3572,11 @@ tsql_chunk_loader <- function(ph.data = NULL, # R data.frame/data.table
 #' Validates keyring:: `service` name and the corresponding password. If they
 #' are valid, it creates a database connection.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `validate_hhsaw_key()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::authenticate_hhsaw()] instead.
+#'
 #' @param hhsaw_key Character vector of length 1.
 #'
 #' Identifies the name of the keyring:: `service` that will be used to connect
@@ -3456,6 +3598,13 @@ tsql_chunk_loader <- function(ph.data = NULL, # R data.frame/data.table
 #' }
 
 validate_hhsaw_key <- function(hhsaw_key = 'hhsaw'){
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::validate_hhsaw_key()",
+    with = "apde.data::authenticate_hhsaw()",
+    details = ''
+  )
+
   # Key should be a character string that can be used to generate a database connection
   # Also have to allow for the option of interactive authentication
   # TODO: Allow hhsaw_key to be a database connection itself
@@ -3525,6 +3674,11 @@ validate_hhsaw_key <- function(hhsaw_key = 'hhsaw'){
 #' Check if a network path or file exists and is accessible. Used internally by
 #' RADS functions to verify network dependencies before attempting data access.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `validate_network_path()` was deprecated in rads 1.5.2. Please use
+#' `apde.data::validate_network_path()` instead.
+#'
 #' @param path Character string specifying the network path to validate
 #' @param is_directory Logical indicating whether path should be a directory (TRUE)
 #'        or file (FALSE)
@@ -3533,6 +3687,13 @@ validate_hhsaw_key <- function(hhsaw_key = 'hhsaw'){
 #' @noRd
 
 validate_network_path <- function(path, is_directory = FALSE) {
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::validate_network_path()",
+    with = "apde.data::validate_network_path()",
+    details = ''
+  )
+
   if (!base::dir.exists(base::dirname(path))) {
     stop(paste0("\n\U1F6D1 Network path not accessible: ", base::dirname(path),
                 "\nPlease verify your network connection and permissions."))
@@ -3557,137 +3718,16 @@ validate_network_path <- function(path, is_directory = FALSE) {
 #' Validate the structure and data types of a data.frame or data.table against
 #' specifications defined in a YAML file
 #'
-#' @description
-#' \strong{!!!STOP!!! This function has been deprecated!} Please use
-#' \link{tsql_validate_field_types} instead.
+#' `r lifecycle::badge("deprecated")`
 #'
-#' Validate the structure and data types of a data.frame or data.table against
-#' specifications defined in a YAML file. This is most often used to check that
-#' your data.frame or data.table is suitable to be pushed to TSQL when a YAML
-#' file specifies the field.types to be used by `DBI::dbWriteTable` &
-#' `odbc::dbWriteTable`.
+#' `validate_yaml_data()` was made defunct in rads 1.5.2. Please use [tsql_validate_field_types()] instead.
 #'
-#'
-#' @param ph.data Name of the data.table/data.frame that you want to assess
-#' vis-à-vis the YAML file
-#'
-#' @param YML Name of the YAML object in memory
-#'
-#' @param VARS Character vector of length 1. Is is the name of the object in the
-#' list contained by YML
-#'
-#' @importFrom data.table data.table setnames ":=" setDT
-#'
-#' @examples
-#' library(data.table)
-#'
-#' # create sample data.table
-#' mydt <- data.table(myalpha = letters[1:10],
-#'                    myint = 1L:10L,
-#'                    mynum = seq(.1, 1, .1))
-#' mydt[, mydate := as.Date('2000-01-01') + myint]
-#' mydt[, myfact := factor(myalpha)]
-#'
-#' # create sample yaml object
-#' myyaml <- list(
-#'   myvars = list(
-#'     myalpha = "varchar(255)",
-#'     myint = "int",
-#'     mynum = "float",
-#'     mydate = "date",
-#'     myfact = "varchar(255)"
-#'   )
-#' )
-#'
-#' # use function
-#' validate_yaml_data(ph.data = mydt, YML = myyaml, VARS = "myvars")
-#'
+#' @param ... Deprecated arguments
 #' @export
-#' @return A simple printed statement, either identifying incompatible column types or a statement of success
-validate_yaml_data <- function(ph.data = NULL, YML = NULL, VARS = "vars"){
-  ## Global variables used by data.table declared as NULL here to play nice with devtools::check()
-  ph.data.class <- orig.ph.dataname <- yamlcols <- yamlnames <- yamlextra <- dfcols <- dfnames <- NULL
-
-  #Deprecation warning
-  .Deprecated("tsql_validate_field_types")
-
-  # Get the name of of the data.frame/data.table passed to to the function ----
-  orig.ph.dataname <- deparse(substitute(ph.data))
-
-  # Check that DT is a data.frame/data.table ----
-  if(is.data.frame(ph.data) == FALSE){
-    stop("'ph.data' must be a data.frame or a data.table")
-  }else{ph.data <- data.table::setDT(copy(ph.data))}
-
-  # Check that number of vars in YML is same as ncols in ph.data ----
-  yamlcols <- length(YML[[VARS]])
-  dfcols <- ncol(ph.data)
-  if(yamlcols != dfcols){
-    stop(paste0("The number of vars specified in the YAML (", yamlcols, ") does not match the number of columns in ph.data (", dfcols, ")"))
-  }
-
-  # Check that the column names in YML match those in ph.data ----
-  yamlnames <- sort(names(YML[[VARS]]))
-  dfnames <- sort(names(ph.data))
-  yamlextra <- setdiff(yamlnames, dfnames)
-  if(length(yamlextra) == 0){yamlextra <- "_____"}
-  dfextra <- setdiff(dfnames, yamlnames)
-  if(length(dfextra) == 0){dfextra <- "_____"}
-  if(setequal(yamlnames, dfnames)==F){
-    stop(paste0("The following variables are in the YAML but not in ph.data: ", yamlextra),
-         paste0(". The following variables are in ph.data but not in the YAML: ", dfextra), ".")
-  }
-
-  # notice that this might take a while ----
-  message("The validation may take a few minutes if your data & yaml contain dates and or times ...")
-
-  # identify proper classes from YAML file ----
-  class.compare <- data.table::data.table(
-    name =  c(names(YML[[VARS]])),
-    yaml.class = tolower(as.character(YML[[VARS]]))
+validate_yaml_data <- function(...){
+  lifecycle::deprecate_stop(
+    when = "1.5.2",
+    what = "validate_yaml_data()",
+    with = "tsql_validate_field_types()"
   )
-
-  # convert names of SQL data types to R classes ----
-  class.compare[grepl("char|text|uniqueidentifier", tolower(yaml.class)), yaml.class := "character"]
-  class.compare[tolower(yaml.class) %in% c("tinyint", "smallint", "int"), yaml.class := "integer"]
-  class.compare[grepl("bigint|decimal|float|money|numeric|real", tolower(yaml.class)), yaml.class := "numeric"]
-  class.compare[grepl("bit", tolower(yaml.class)), yaml.class := "logical"]
-  class.compare[grepl("time", tolower(yaml.class)), yaml.class := "POSIXct"]
-  class.compare[grepl("date", tolower(yaml.class)), yaml.class := "date"]
-
-  # identify which VARS should be of which class (assuming YAML is correct) ----
-  make.char <- class.compare[yaml.class == "character"]$name
-  make.num  <- class.compare[yaml.class == "numeric"]$name
-  make.int  <- class.compare[yaml.class == "integer"]$name
-  make.logical  <- class.compare[yaml.class == "logical"]$name
-  make.POSIXct  <- class.compare[yaml.class == "POSIXct"]$name
-  make.Date  <- class.compare[yaml.class == "date"]$name
-
-  # use lossless_convert function to convert R column types if possible / needed ----
-  suppressWarnings(ph.data[, (make.char) := lapply(.SD, lossless_convert, class = 'character'), .SDcols = make.char])
-  suppressWarnings(ph.data[, (make.num) := lapply(.SD, lossless_convert, class = 'numeric'), .SDcols = make.num])
-  suppressWarnings(ph.data[, (make.int) := lapply(.SD, lossless_convert, class = 'integer'), .SDcols = make.int])
-  suppressWarnings(ph.data[, (make.logical) := lapply(.SD, lossless_convert, class = 'logical'), .SDcols = make.logical])
-  suppressWarnings(ph.data[, (make.Date) := lapply(.SD, lossless_convert, class = 'Date'), .SDcols = make.Date])
-  suppressWarnings(ph.data[, (make.POSIXct) := lapply(.SD, lossless_convert, class = 'POSIXct'), .SDcols = make.POSIXct])
-
-  # check if there are variables that could not be coerced to proper type ----
-  class.compare <- merge(data.table::data.table(name = names(sapply(ph.data, class)), ph.data.class = tolower(sapply(ph.data, class))),
-                         class.compare, by = "name")
-  class.compare[ph.data.class == 'c("posixct", "posixt")', ph.data.class := 'POSIXct']
-
-  # allow R to be more strict than YAML with numbers ----
-  class.compare[yaml.class=="numeric" & ph.data.class == "integer", ph.data.class := "numeric"]
-
-  # Assess whether there were any problems ----
-  if(nrow(class.compare[ph.data.class != yaml.class]) > 0){
-    yaml.name <- class.compare[ph.data.class != yaml.class]$name
-    yaml.class <- class.compare[ph.data.class != yaml.class]$yaml.class
-    class.problems <- paste(paste0(yaml.name, " (", yaml.class, ")"), collapse = ", ")
-    stop(glue::glue("\n\U0001f47f The following variables could not be coerced to their proper class (which is specified in parentheses):
-                              {class.problems}"))
-  }else{message(paste0("\U0001f642 All column classes in `", orig.ph.dataname,"` are compatible with the YAML reference standard."))}
-
-  return(invisible(NULL))
-
 }

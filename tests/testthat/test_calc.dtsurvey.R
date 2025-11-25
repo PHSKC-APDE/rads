@@ -425,6 +425,9 @@ test_that('Resample approach', {
     r$random = sample(1:5, nrow(r), T)
     r$random3 = sample(1:3, nrow(r), T)
     r$random_fact = factor(r$random)
+    r$random_factNA = r$random_fact
+    r$random_factNA[c(1,3,5,10)] <- NA
+    r$random3_weird = factor(r$random3, c(1:4), c('a','b','c','d'))
 
     # Make some variables to test various edge cases
     # Test what happens when there is no variation within a group
@@ -567,6 +570,10 @@ test_that('Resample approach', {
 
   # Multiple values in `what` break
   expect_error(calc(midat, c('random_fact', 'random'), metrics = c('mean')))
+
+  # by variables with unused factor levels don't automatically break
+  r14 = calc(midat, 'random_factNA', by = 'random3_weird', metrics = 'mean')
+  r15 = calc(midat, 'random3_weird', by = 'random_factNA', metrics = 'mean')
 
 
 })
