@@ -20,6 +20,8 @@ pretty_kable <- function(dt) {
 }
 ```
 
+> :warning: **DEPRECATED:** The functions in this vignette have been migrated to [apde.data](https://github.com/PHSKC-APDE/apde.data). Please use that package instead.
+
 ## Introduction
 
 This vignette will provide some examples of ways to pull population data into R from the Azure cloud.
@@ -157,7 +159,6 @@ head(get_population(geo_type = c("zip"),
 pretty_kable(head(get_population(geo_type = c("zip"), group_by = c("geo_id"))[]))
 ```
 
-
 **King County Census Tracts**
 
 ```{r, warning = FALSE, message = FALSE, echo=TRUE, results='hide'}
@@ -242,6 +243,7 @@ pretty_kable(get_population(ages = 65:70)[])
 ```
 
 **King County multiple ages stratified**
+
 ```{r, warning = FALSE, message = FALSE, echo=TRUE, results='hide'}
 get_population(ages = 65:70, group_by = "ages")[]
 ```
@@ -293,7 +295,6 @@ get_population(races = "aian",
 ```{r, echo=FALSE}
 pretty_kable(get_population(races = "aian", race_type = "race", group_by = 'race')[])
 ```
-
 
 **King County stratified by Hispanic as race**
 
@@ -360,7 +361,6 @@ pretty_kable(get_population(ages = 16:25,
 ## 'hispanic' as a `group_by` value
 
 Sometimes a user might want to access population data by Hispanic ethnicity. To get population values by race X ethnicity, users should include 'hispanic' in the `group_by` argument. This option only works in conjunction when `race_type = 'race_eth'`. Several combinations (e.g. adding 'hispanic' to the `races` argument) will not work and will throw some (hopefully) informative errors. Other options (as demonstrated above) will continue to work.
-
 
 **King County regions stratified by Hispanic/Non-Hispanic**
 

@@ -8,6 +8,8 @@ vignette: >
   %\VignetteEngine{knitr::knitr}
 ---
 
+> :warning: **DEPRECATED:** The functions in this vignette have been migrated to [apde.data](https://github.com/PHSKC-APDE/apde.data). Please use that package instead.
+
 ## Introduction
 
 This vignette will provide some examples of ways to explore and load [birth data](https://github.com/PHSKC-APDE/DOHdata/tree/master/ETL/birth) using the `get_data_birth()` functions in [`rads`](https://github.com/PHSKC-APDE/rads), APDE's 'R Automated Data System'. As of December 2024, `get_data_brfss()`, `get_data_chars()`, `get_data_death()`, `get_data_hys(),`and `get_data_pums()` also exist. In the future, `rads` may allow users to easily load additional datasets . You are encouraged to read the detailed help files that exist for each data source.

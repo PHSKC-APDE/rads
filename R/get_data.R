@@ -3,6 +3,12 @@
 #'
 #' @description Simple front-end for pulling in standard APDE data
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `get_data()` was deprecated in rads 1.5.2 and will not be replaced. Please
+#' use the `apde.data` package's data pulling functions instead, e.g.,
+#' `birth()`, `pums()`, etc.
+#'
 #' @param dataset Character vector of length 1. Identifies the dataset to be
 #' fetched. Use \code{list_apde_data} for available options
 #' @param cols Character vector of length >=1. Identifies which columns should
@@ -32,6 +38,13 @@
 #'  head(test)
 #' }
 get_data <- function(dataset, cols = NULL, year = 2021, ...){
+    lifecycle::deprecate_warn(
+      when = "1.5.2",
+      what = "rads::get_data()",
+      details = "This function is no longer supported. To pull analytic data,
+      use the apde.data package's source-specific functions. E.g., `birth()`,
+      `death()`, etc."
+    )
 
   f <- match.fun(paste0('get_data_', dataset))
   f(cols = cols, year = year, ...)
@@ -54,6 +67,13 @@ get_data <- function(dataset, cols = NULL, year = 2021, ...){
 
 # get_data_birth() ----
 #' Get Birth microdata from storage.
+#' @description
+#' Get Birth microdata from storage.
+#'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `get_data_birth()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::birth()] instead.
 #'
 #' @param cols Character vector of length >=1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
 #'     See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.
@@ -100,6 +120,12 @@ get_data_birth <- function(cols = NA,
                            kingco = T,
                            version = 'final',
                            mykey = 'hhsaw'){
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::get_data_birth()",
+    with = "apde.data::birth()",
+    details = ''
+  )
   if(is.null(cols)) cols <- NA
   if(is.null(year)) year <- NA
 
@@ -179,6 +205,11 @@ get_data_birth <- function(cols = NA,
 #' and adjusts survey weights to ensure accurate representation for multi-year
 #' analysis.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `get_data_brfss()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::brfss()] instead.
+#'
 #' @param cols Character vector specifying which columns to include in the
 #' returned data. If NULL, all columns identified by
 #' \code{list_dataset_columns('brfss')} will be included. Defaults to
@@ -256,6 +287,12 @@ get_data_brfss <- function(cols = NULL,
                            year = NULL,
                            kingco = TRUE,
                            wt_method = 'obs'){
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::get_data_brfss()",
+    with = "apde.data::brfss()",
+    details = ''
+  )
 
   # Visible bindings for data.table/check global variables ----
     chi_year <- finalwt1 <- x_llcpwt <- x_ststr <- hra20_id <- hra20_name <- NULL
@@ -355,6 +392,14 @@ get_data_brfss <- function(cols = NULL,
 # get_data_chars() ----
 #' Get CHARS (Comprehensive Hospital Abstract Reporting System) microdata from storage.
 #'
+#' @description
+#' Get CHARS (Comprehensive Hospital Abstract Reporting System) microdata from storage.
+#'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `get_data_chars()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::chars()] instead.
+#'
 #' @param cols Character vector of length >=1. Identifies which columns should be returned. NA returns all columns in the analytic dataset.
 #'     See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.
 #'
@@ -427,6 +472,12 @@ get_data_chars <- function(cols = NA,
                            deaths = T,
                            topcode = T,
                            mykey = 'hhsaw'){
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::get_data_chars()",
+    with = "apde.data::chars()",
+    details = ''
+  )
 
   chi_age <- date_of_birth <- date_of_chars <- age_years <- chi_race_eth7 <- NULL
   chi_race_6 <- chi_race_eth8 <- chi_race_7 <- geo_id_code <- chi_geo_wastate <- NULL
@@ -526,6 +577,14 @@ get_data_chars <- function(cols = NA,
 # get_data_death() ----
 #' Get Death microdata from storage.
 #'
+#' @description
+#' Get Death microdata from storage.
+#'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `get_data_death()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::death()] instead.
+#'
 #' @param cols Character vector of length >=1. Identifies which columns should be
 #' returned. NA returns all columns in the analytic dataset. See
 #' \code{\link{list_dataset_columns}} for more information on which columns are
@@ -587,6 +646,13 @@ get_data_death <- function(cols = NA,
                            topcode = TRUE,
                            mykey = 'hhsaw',
                            include_prelim = FALSE){
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::get_data_death()",
+    with = "apde.data::death()",
+    details = ''
+  )
+
   # Visible bindings for data.table/check global variables ----
     chi_age <- chi_geo_kc <- chi_year <- NULL
 
@@ -690,6 +756,13 @@ get_data_death <- function(cols = NA,
 # get_data_hys() ----
 #' Get HYS microdata from storage.
 #'
+#' @description
+#' Get HYS microdata from storage.
+#'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `get_data_hys()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::hys()] instead.
 #'
 #' @param cols Character vector of length >-1. Identifies which columns should be returned. NULL or NA returns all columns in the analytic dataset.
 #'     See \code{\link{list_dataset_columns}} for more information on which columns are considered default by dataset.
@@ -710,6 +783,12 @@ get_data_death <- function(cols = NA,
 #'  get_data_hys(cols = NULL, year = c(2016, 2018), weight_variable = 'wt_grade_kc')
 #' }
 get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_grade_kc', kingco = TRUE, version = 'best', ar = TRUE){
+    lifecycle::deprecate_warn(
+      when = "1.5.2",
+      what = "rads::get_data_hys()",
+      with = "apde.data::hys()",
+      details = ''
+    )
 
   colname <- chi_geo_kc <- weight1 <- psu <- chi_year <- NULL
 
@@ -804,6 +883,11 @@ get_data_hys <- function(cols = NULL, year = c(2021), weight_variable = 'wt_grad
 #' from storage. Can return person-level, household-level, or combined records
 #' with appropriate survey weights applied.
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `get_data_pums()` was deprecated in rads 1.5.2. Please use
+#' [apde.data::pums()] instead.
+#'
 #' @param cols Character vector specifying which columns to include in the
 #' returned data. If NULL, all columns will be included. Note that survey weight
 #' columns (wgtp/pwgtp) and chi_year are always included regardless of selection.
@@ -879,6 +963,13 @@ get_data_pums <- function(cols = NULL,
                           year = NULL,
                           kingco = TRUE,
                           records = "person") {
+  lifecycle::deprecate_warn(
+    when = "1.5.2",
+    what = "rads::get_data_pums()",
+    with = "apde.data::pums()",
+    details = ''
+  )
+
 # Visible bindings for data.table/check global variables ----
   chi_geo_kc <- serialno <- NULL
 

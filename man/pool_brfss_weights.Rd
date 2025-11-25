@@ -67,6 +67,11 @@ State data) is designed for single-year analyses. When
 analyzing BRFSS data across multiple years, the survey weights must be
 proportionately down scaled. This function provides three weight adjustment
 methods.
+
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{pool_brfss_weights()} was deprecated in rads 1.5.2. Please use
+\code{\link[apde.data:adjust_brfss_weights]{apde.data::adjust_brfss_weights()}} instead.
 }
 \details{
 When analyzing multiple years of BRFSS data together, using the original

@@ -36,6 +36,11 @@ with the specified columns and years that is ready for use with
 Retrieves American Community Survey (ACS) Public Use Microdata Sample (PUMS) data
 from storage. Can return person-level, household-level, or combined records
 with appropriate survey weights applied.
+
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{get_data_pums()} was deprecated in rads 1.5.2. Please use
+\code{\link[apde.data:pums]{apde.data::pums()}} instead.
 }
 \details{
 The function automatically applies the appropriate survey weights (person or

@@ -6,6 +6,8 @@ self-contained: true
 editor: visual
 ---
 
+> :warning: **DEPRECATED:** The functions in this vignette have been migrated to [apde.data](https://github.com/PHSKC-APDE/apde.data). Please use that package instead.
+
 # Introduction
 
 The Behavioral Risk Factor Surveillance System (BRFSS) is a gold mine of public health data -- but like any mine, you need the right tools to extract the value. Since BRFSS is a complex survey, analyses need to account for the survey design and weights to get accurate results. The survey design includes stratification and weighting to ensure the sample represents the full population, accounting for who was more or less likely to be included in the survey. When we want to analyze multiple years together (which we often do to increase precision), we need to adjust those survey weights to avoid overestimating our population.

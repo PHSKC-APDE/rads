@@ -29,6 +29,12 @@ survey-weighted \code{\link[dtsurvey]{dtsurvey}} objects.
 }
 \description{
 Simple front-end for pulling in standard APDE data
+
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{get_data()} was deprecated in rads 1.5.2 and will not be replaced. Please
+use the \code{apde.data} package's data pulling functions instead, e.g.,
+\code{birth()}, \code{pums()}, etc.
 }
 \examples{
 \donttest{

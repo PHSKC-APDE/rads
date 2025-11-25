@@ -49,6 +49,11 @@ weight).
 Retrieves Behavioral Risk Factor Surveillance System (BRFSS) data
 and adjusts survey weights to ensure accurate representation for multi-year
 analysis.
+
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{get_data_brfss()} was deprecated in rads 1.5.2. Please use
+\code{\link[apde.data:brfss]{apde.data::brfss()}} instead.
 }
 \details{
 Note that while \code{get_data_brfss} automatically creates multi-year weights

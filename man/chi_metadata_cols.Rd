@@ -7,14 +7,12 @@
 chi_metadata_cols(...)
 }
 \arguments{
-\item{...}{Not used.}
+\item{...}{Deprecated arguments}
 }
 \description{
-\strong{!!!STOP!!! This function has been deprecated.} Please use
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+}
+\details{
+\code{chi_metadata_cols()} was made defunct in rads 1.5.2. Please use
 \code{names(apde.chi.tools::chi_get_yaml()$metadata)} instead.
 }
-\section{Deprecation}{
-
-Please use \code{names(apde.chi.tools::chi_get_yaml()$metadata)} instead.
-}
-

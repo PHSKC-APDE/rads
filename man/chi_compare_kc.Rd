@@ -7,14 +7,11 @@
 chi_compare_kc(...)
 }
 \arguments{
-\item{...}{Not used.}
+\item{...}{Deprecated arguments}
 }
 \description{
-\strong{!!!STOP!!! This function has been deprecated.} Please use
-\link{compare_estimate} instead.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
 }
-\section{Deprecation}{
-
-Please use \link{compare_estimate} instead.
+\details{
+\code{chi_compare_kc()} was made defunct in rads 1.5.2. Please use \code{\link[=compare_estimate]{compare_estimate()}} instead.
 }
-
