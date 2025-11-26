@@ -386,11 +386,10 @@ chars_injury_matrix_count<- function(ph.data = NULL,
   # Return data ----
     return(x_combo)
 }
-
 # chars_icd_ccs() ----
 #' View available CHARS ICD-9-CM OR ICD-10-CM (diagnosis) codes, descriptions,
-#'  and summary 'broad' and 'detailed' classifications that can be used with
-#' \code{chars_icd_ccs_count}
+#' and summary 'broad' and 'detailed' classifications that can be used with
+#' [chars_icd_ccs_count()]
 #'
 #' @description
 #' A function to view the complete list of ICD-9-CM OR ICD-10-CM codes and
@@ -403,7 +402,19 @@ chars_injury_matrix_count<- function(ph.data = NULL,
 #' classifications.
 #'
 #' Output is provided in the form of a table. Use this table to inform your
-#' arguments in the  \code{chars_icd_ccs_count} function.
+#' arguments in the [chars_icd_ccs_count()] function.
+#'
+#' @param ref_type a character vector of length one specifying the hospital diagnosis
+#' descriptions that are of interest to you. Acceptable options include: `'all'`,
+#' `'icdcm'`, `'superlevel'`, `'broad'`, `'midlevel'`, & `'detailed'`.
+#'
+#' The default is `ref_type = 'all'`.
+#'
+#' @param icdcm_version an integer vector of length one specifying the ICD CM
+#' version that you want to reference. Acceptable options include: `9`
+#' & `10`.
+#'
+#' The default is `icdcm_version = 10`.
 #'
 #' @note
 #' If you do not specify any arguments, the function will return a table with
@@ -411,29 +422,11 @@ chars_injury_matrix_count<- function(ph.data = NULL,
 #' detailed descriptions.
 #'
 #' @source
-#' \code{kcitazrhpasqlprp16.azds.kingcounty.gov >> hhs_analytics_workspace >>
-#' ref.icdcm_codes}
+#' Reference tables [rads.data::icd9cm_ccs] and [rads.data::icd10cm_ccs]
+#' created by [rads.internal::make_chars_icd_ccs()].
 #'
 #' @references
-#' \url{https://hcup-us.ahrq.gov/toolssoftware/ccsr/ccs_refined.jsp}
-#'
-#' @param ref_type a character vector of length one specifying the hospital diagnosis
-#' descriptions that are of interest to you. Acceptable options include: \code{'all'},
-#' \code{'icdcm'}, \code{'superlevel'}, \code{'broad'}, \code{'midlevel'}, & \code{'detailed'}.
-#'
-#' The default is \code{ref_type = 'all'}.
-#'
-#' @param mykey Character vector of length 1. Identifies
-#' the keyring:: service that can be used to access the Health & Human Services
-#' Analytic Workspace (HHSAW).
-#'
-#' The default is \code{mykey = 'hhsaw'}
-#'
-#' @param icdcm_version an integer vector of length one specifying the ICD CM
-#' version that you want to reference. Acceptable options include: \code{9}
-#' & \code{10}.
-#'
-#' The default is \code{icdcm_version = 10}.
+#' <https://hcup-us.ahrq.gov/toolssoftware/ccsr/ccs_refined.jsp>
 #'
 #' @return
 #' A data.table. The number of rows and columns are dependent upon the arguments
@@ -444,54 +437,49 @@ chars_injury_matrix_count<- function(ph.data = NULL,
 #' @name chars_icd_ccs
 #'
 #' @examples
-#' # Save and view table as a data.table named 'blah'
-#' blah <- chars_icd_ccs(ref_type = 'all')
-#' head(blah)
-#'
-#' @import data.table rads.data
+#' myCCS <- chars_icd_ccs(ref_type = 'all')
+#' head(myCCS)
 #'
 chars_icd_ccs <- function(ref_type = 'all',
-                          mykey = "hhsaw",
                           icdcm_version = 10){
-
-  # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-  chars_list <- icdcm <- icdcm_code <- superlevel <- broad <- midlevel <- detailed  <- NULL
-
   # check arguments ----
   if(length(ref_type) != 1){
-    stop("\n \U0001f47f the `ref_type` must have a single value. Valid options are 'all', 'icdcm', 'superlevel, 'broad', 'midlevel', & 'detailed'")}
+    stop("\n\U0001f47f the `ref_type` must have a single value. Valid options are 'all', 'icdcm', 'superlevel', 'broad', 'midlevel', & 'detailed'")}
   if(!ref_type %in% c('all', 'icdcm', 'superlevel', 'broad', 'midlevel', 'detailed')){
-    stop(paste0("\n \U0001f47f'", ref_type, "' is not a valid option for the `ref_type` argument. \nValid options are 'all', 'icdcm', 'broad', 'midlevel', & 'detailed'."))}
+    stop(paste0("\n\U0001f47f '", ref_type, "' is not a valid option for the `ref_type` argument. \nValid options are 'all', 'icdcm', 'superlevel', 'broad', 'midlevel', & 'detailed'."))}
 
-  if(length(mykey) != 1 | !is.character(mykey)){
-    stop("\n \U0001f47f the `mykey` argument must be a string of length == 1, \nwhich is the name of your keyring:: service providing the \npassword for connecting to HHSAW, it is typically 'hhsaw'.")}
-  if(!mykey %in% keyring::key_list()[]$service){
-    stop("\n \U0001f47f the `mykey` value passed to this function ('", mykey, "') is not in your `keyring::key_list`.\nPlease create it using `keyring::key_set` and try again.")
+  if(!icdcm_version %in% c(9, 10) | length(icdcm_version) != 1){
+    stop("\n\U0001f47f the `icdcm_version` argument is limited to the integers '9' OR '10'")}
+
+  # get data from rads.data ----
+  if(icdcm_version == 9){
+    chars_list <- data.table::copy(rads.data::icd9cm_ccs)
+  } else {
+    chars_list <- data.table::copy(rads.data::icd10cm_ccs)
   }
-  if(!icdcm_version %in% c(9, 10) | length(icdcm_version) != 1){stop("\n \U0001f47f the `icdcm_version` argument is limited to the integers '9' OR '10'")}
 
-  # get data ----
-  con <- validate_hhsaw_key(hhsaw_key = mykey)
-  chars_list <- setDT(DBI::dbGetQuery(conn = con,
-                                   paste0("SELECT icdcm_version,
-                                   icdcm_code = icdcm,
-                                   icdcm = icdcm_description,
-                                   superlevel = ccs_superlevel_desc,
-                                   broad = ccs_broad_desc,
-                                   detailed = ccs_detail_desc,
-                                   midlevel = ccs_midlevel_desc
-                                   FROM [ref].[icdcm_codes] WHERE icdcm_version = ", icdcm_version )))
-
-  if(ref_type == 'all'){chars_list <- chars_list[, list(icdcm_code, icdcm, superlevel, broad, midlevel, detailed, icdcm_version)]}
-  if(ref_type == 'icdcm'){chars_list <- chars_list[, list(icdcm_code, icdcm, icdcm_version)]}
-  if(ref_type == 'superlevel'){chars_list <- chars_list[, list(superlevel, icdcm_version)]}
-  if(ref_type == 'broad'){chars_list <- chars_list[, list(broad, icdcm_version)]}
-  if(ref_type == 'midlevel'){chars_list <- chars_list[, list(midlevel, icdcm_version)]}
-  if(ref_type == 'detailed'){chars_list <- chars_list[, list(detailed, icdcm_version)]}
+  # Select columns based on ref_type ----
+  if(ref_type == 'all'){
+    chars_list <- chars_list[, list(icdcm_code, icdcm, superlevel, broad, midlevel, detailed, icdcm_version)]
+  }
+  if(ref_type == 'icdcm'){
+    chars_list <- chars_list[, list(icdcm_code, icdcm, icdcm_version)]
+  }
+  if(ref_type == 'superlevel'){
+    chars_list <- chars_list[, list(superlevel, icdcm_version)]
+  }
+  if(ref_type == 'broad'){
+    chars_list <- chars_list[, list(broad, icdcm_version)]
+  }
+  if(ref_type == 'midlevel'){
+    chars_list <- chars_list[, list(midlevel, icdcm_version)]
+  }
+  if(ref_type == 'detailed'){
+    chars_list <- chars_list[, list(detailed, icdcm_version)]
+  }
 
   return(unique(chars_list))
 }
-
 
 # chars_icd_ccs_count() ----
 #' Count (non-injury) Comprehensive Hospital Abstract Reporting System

@@ -4,13 +4,13 @@
 \alias{chars_icd_ccs}
 \title{View available CHARS ICD-9-CM OR ICD-10-CM (diagnosis) codes, descriptions,
 and summary 'broad' and 'detailed' classifications that can be used with
-\code{chars_icd_ccs_count}}
+\code{\link[=chars_icd_ccs_count]{chars_icd_ccs_count()}}}
 \source{
-\code{kcitazrhpasqlprp16.azds.kingcounty.gov >> hhs_analytics_workspace >>
-ref.icdcm_codes}
+Reference tables \link[rads.data:icd9cm_ccs]{rads.data::icd9cm_ccs} and \link[rads.data:icd10cm_ccs]{rads.data::icd10cm_ccs}
+created by \code{\link[rads.internal:make_chars_icd_ccs]{rads.internal::make_chars_icd_ccs()}}.
 }
 \usage{
-chars_icd_ccs(ref_type = "all", mykey = "hhsaw", icdcm_version = 10)
+chars_icd_ccs(ref_type = "all", icdcm_version = 10)
 }
 \arguments{
 \item{ref_type}{a character vector of length one specifying the hospital diagnosis
@@ -18,12 +18,6 @@ descriptions that are of interest to you. Acceptable options include: \code{'all
 \code{'icdcm'}, \code{'superlevel'}, \code{'broad'}, \code{'midlevel'}, & \code{'detailed'}.
 
 The default is \code{ref_type = 'all'}.}
-
-\item{mykey}{Character vector of length 1. Identifies
-the keyring:: service that can be used to access the Health & Human Services
-Analytic Workspace (HHSAW).
-
-The default is \code{mykey = 'hhsaw'}}
 
 \item{icdcm_version}{an integer vector of length one specifying the ICD CM
 version that you want to reference. Acceptable options include: \code{9}
@@ -46,7 +40,7 @@ were developed by APDE, based in large part on the 'broad' and 'detailed'
 classifications.
 
 Output is provided in the form of a table. Use this table to inform your
-arguments in the  \code{chars_icd_ccs_count} function.
+arguments in the \code{\link[=chars_icd_ccs_count]{chars_icd_ccs_count()}} function.
 }
 \note{
 If you do not specify any arguments, the function will return a table with
@@ -54,9 +48,8 @@ all ICD-10-CM codes as well ICD-10-CM, superlevel, broad, midlevel, and
 detailed descriptions.
 }
 \examples{
-# Save and view table as a data.table named 'blah'
-blah <- chars_icd_ccs(ref_type = 'all')
-head(blah)
+myCCS <- chars_icd_ccs(ref_type = 'all')
+head(myCCS)
 
 }
 \references{
