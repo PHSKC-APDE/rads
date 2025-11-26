@@ -14,8 +14,10 @@ utils::globalVariables(c(
   "description",
   "icd10",
   "icd10_tempy",
+  "intent"
   "lower_ci",
   "mean_est",
+  "mechanism",
   "meets_criteria",
   "param_cause_name",
   "p_value",

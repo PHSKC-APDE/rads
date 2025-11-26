@@ -6,14 +6,14 @@
 #' Hospital Abstract Reporting System (CHARS) Injury Matrix mechanisms and
 #' intents available in rads.
 #'
-#' Generates a table with two columns, \code{mechanism} & \code{intent}.
-#' Use it to identify the combinations of \code{mechanism} & \code{intent} that
-#' you want to use in \code{chars_injury_matrix_count}.
+#' Generates a table with two columns, `mechanism` & `intent`.
+#' Use it to identify the combinations of `mechanism` & `intent` that
+#' you want to use in [chars_injury_matrix_count()].
 #'
 #' @details
 #' This function provides the terms used by the hospitalization function
-#' \code{chars_injury_matrix_count} and may not be the same as those used with
-#' \code{death_injury_matrix_count}.
+#' [chars_injury_matrix_count()] and may not be the same as those used with
+#' [death_injury_matrix_count()].
 #'
 #' @note
 #' This function does not take any arguments.
@@ -22,43 +22,34 @@
 #' to ICD9-cm (2012-2015) and some of which are specific to ICD10-cm (2016+).
 #'
 #' @source
-#' Derived from columns beginning with `mechanism_` and `intent_` in
-#' Azure Server 16 (chars.final_analytic) that were created during the CHARS
-#' ETL process.
+#' Reference table [rads.data::icdcm_injury_matrix] created by
+#' [rads.internal::make_chars_injury_matrix()].
 #'
 #' @return
-#' A data.table with two columns: \code{mechanism} & \code{intent}. The number
-#' of rows are determined dynamically by scanning the data available in SQL.
+#' A data.table with two columns: `mechanism` & `intent`. The number
+#' of rows are determined by the available combinations in the reference table.
 #'
 #' @references
-#' WA DOH CHAT: \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/Hospitalization%20Injury%20Matrix%20ICD10CM.xlsx}
+#' - WA DOH Community Health Assessment Tool > User Guides > Code Set Definitions >
+#'   Hospitalization Injury Matrix ICD10CM
+#' - CDC Injury Code and Matrices: <https://www.cdc.gov/nchs/injury/injury_matrices.htm>
 #'
 #' @export
 #'
 #' @name chars_injury_matrix
 #'
 #' @examples
-#' # Save and view table as a data.table named 'blah'
-#' blah <- chars_injury_matrix()
-#' print(blah)
+#' myDT <- chars_injury_matrix()
+#' print(myDT)
 #'
-#' @import data.table rads.data
-#'
-chars_injury_matrix<- function(){
-  # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-  chars_injury_matrix_list <- mechanism <- intent <-  NULL
+chars_injury_matrix <- function(){
+  # Get unique combinations from rads.data reference table
+  imTable <- unique(rads.data::icdcm_injury_matrix[, list(mechanism, intent)])
 
-  # get column names from SQL table
-  con <- validate_hhsaw_key('hhsaw')
-  chars.names <- names(DBI::dbGetQuery(con, "SELECT TOP (0) * FROM [chars].[final_analytic]"))
+  # Sort by mechanism and intent for consistency
+  data.table::setorder(imTable, mechanism, intent)
 
-  # create a matrix of every possible mechanism and intent
-  chars_injury_matrix_list = unique(data.table::setDT(expand.grid(
-    mechanism = sort(c("motor_vehicle_traffic", setdiff(gsub("^mechanism_", "", grep("^mech", chars.names, value = T)), ""))), # motor vehicle is not in data, but will combine mvt variables
-    intent = setdiff(gsub("^intent_", "", grep("^intent", chars.names, value = T)), '') #
-  )))
-
-  return(chars_injury_matrix_list)
+  return(imTable)
 }
 
 # chars_injury_matrix_count() ----
