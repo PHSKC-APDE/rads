@@ -4,16 +4,15 @@
 \alias{chars_injury_matrix}
 \title{View available combinations of CHARS injury mechanisms and intents}
 \source{
-Derived from columns beginning with \code{mechanism_} and \code{intent_} in
-Azure Server 16 (chars.final_analytic) that were created during the CHARS
-ETL process.
+Reference table \link[rads.data:icdcm_injury_matrix]{rads.data::icdcm_injury_matrix} created by
+\code{\link[rads.internal:make_chars_injury_matrix]{rads.internal::make_chars_injury_matrix()}}.
 }
 \usage{
 chars_injury_matrix()
 }
 \value{
 A data.table with two columns: \code{mechanism} & \code{intent}. The number
-of rows are determined dynamically by scanning the data available in SQL.
+of rows are determined by the available combinations in the reference table.
 }
 \description{
 Function to view all combinations of the Comprehensive
@@ -22,12 +21,12 @@ intents available in rads.
 
 Generates a table with two columns, \code{mechanism} & \code{intent}.
 Use it to identify the combinations of \code{mechanism} & \code{intent} that
-you want to use in \code{chars_injury_matrix_count}.
+you want to use in \code{\link[=chars_injury_matrix_count]{chars_injury_matrix_count()}}.
 }
 \details{
 This function provides the terms used by the hospitalization function
-\code{chars_injury_matrix_count} and may not be the same as those used with
-\code{death_injury_matrix_count}.
+\code{\link[=chars_injury_matrix_count]{chars_injury_matrix_count()}} and may not be the same as those used with
+\code{\link[=death_injury_matrix_count]{death_injury_matrix_count()}}.
 }
 \note{
 This function does not take any arguments.
@@ -36,11 +35,14 @@ This function will return all available categories, some of which are specific
 to ICD9-cm (2012-2015) and some of which are specific to ICD10-cm (2016+).
 }
 \examples{
-# Save and view table as a data.table named 'blah'
-blah <- chars_injury_matrix()
-print(blah)
+myDT <- chars_injury_matrix()
+print(myDT)
 
 }
 \references{
-WA DOH CHAT: \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/Hospitalization\%20Injury\%20Matrix\%20ICD10CM.xlsx}
+\itemize{
+\item WA DOH Community Health Assessment Tool > User Guides > Code Set Definitions >
+Hospitalization Injury Matrix ICD10CM
+\item CDC Injury Code and Matrices: \url{https://www.cdc.gov/nchs/injury/injury_matrices.htm}
+}
 }
