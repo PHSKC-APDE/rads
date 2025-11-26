@@ -14,7 +14,7 @@ utils::globalVariables(c(
   "description",
   "icd10",
   "icd10_tempy",
-  "intent"
+  "intent",
   "lower_ci",
   "mean_est",
   "mechanism",
