@@ -11,22 +11,21 @@ chars_injury_matrix_count(
   mechanism = "*",
   group_by = NULL,
   def = "narrow",
-  primary_ecode = T,
-  kingco = T
+  primary_ecode = TRUE,
+  kingco = TRUE
 )
 }
 \arguments{
 \item{ph.data}{a data.table or data.frame. Must contain CHARS data structured
 with one person per row and predetermined \code{mechanism_} and \code{intent_} columns.
-In other words, this ph.data should come from use of \code{get_data_chars()}.
+In other words, this ph.data should come from use of \code{\link[apde.data:chars]{apde.data::chars()}}.
 
 The default is \code{ph.data = NULL}}
 
-\item{intent}{a character vector. It specifies the
-intent of the injury related hospitalization that you want returned (e.g.,
-"assault", "intentional", "unintentional", etc.). "none"
-will ignore the intent and only return the mechanism of the injury leading
-to hospitalization.
+\item{intent}{a character vector. It specifies the intent of the injury
+related hospitalization that you want returned (e.g., "assault",
+"intentional", "unintentional", etc.). "none" will ignore the intent and only
+return the mechanism of the injury leading to hospitalization.
 
 \strong{NOTE}
 You do not have to type the entire keyword for the intent, a
@@ -36,14 +35,13 @@ partial string match is sufficient and is case insensitive. E.g.,
 
 The default is \code{intent = '*'}, which selects all possible intents}
 
-\item{mechanism}{a character vector. It specifies the
-mechanism of the injury related hospitalization that you want returned
-(e.g., "cut_pierce", "drowning", "fall", "firearm", etc.). "none" will ignore
-the mechanism and only return the intent of the injury leading to hospitalization.
+\item{mechanism}{a character vector. It specifies the mechanism of the injury
+related hospitalization that you want returned (e.g., "cut_pierce",
+"drowning", "fall", "firearm", etc.). "none" will ignore the mechanism and
+only return the intent of the injury leading to hospitalization.
 
 To see the complete list of mechanisms, type
-\code{unique(chars_injury_matrix()$mechanism)} in your
-R console.
+\code{unique(chars_injury_matrix()$mechanism)} in your R console.
 
 \strong{NOTE}
 You do not have to type the entire keyword for the mechanism, a
@@ -55,8 +53,8 @@ The default is \code{mechanism = '*'}, which selects all possible mechanisms}
 
 \item{group_by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{group_by = c('chi_sex',
-'chi_race_6')}, the results would be stratified by each combination of sex
+results. For example, if you specified `group_by = c('chi_sex',
+'race3')``, the results would be stratified by each combination of sex
 and race.
 
 The default is \code{group_by = NULL}}
@@ -87,7 +85,7 @@ The default is \code{primary_ecode = TRUE}}
 
 \item{kingco}{a logical vector of length one. It specifies whether you want to
 limit the analysis to King County. Note that this only works when you have
-the column \code{chi_geo_kc} imported from the \code{get_data_chars()} function.
+the column \code{chi_geo_kc} imported from the \code{\link[apde.data:chars]{apde.data::chars()}} function.
 
 The default is \code{kingco = TRUE}}
 }
@@ -109,7 +107,7 @@ with columns beginning with \code{mechanism_} and \code{intent_}. Covers both IC
 }
 \details{
 Since the injury analysis uses many columns, we suggest that you obtain
-ph.data with get_data_chars(cols = NA), rather than trying to specify the
+ph.data with \code{apde.data::chars(cols = NA)}, rather than trying to specify the
 columns of interest.
 
 This function will only count injuries where the type of injury (from
@@ -121,16 +119,21 @@ See Jeremy Whitehurst's documentation for the CHARS ETL to understand exactly
 which codes are mapped to which intents and mechanisms.
 }
 \examples{
-# example: 2019 King County hospitalizations due to intentional injury, by sex
+# example: 2022 King County hospitalizations due to intentional injury, by sex
 \donttest{
-blah = get_data_chars(year = 2019, kingco = TRUE)
+blah = apde.data::chars(year = 2022, kingco = TRUE)
 myresult <- chars_injury_matrix_count(ph.data = blah,
                                       intent = '^intentional',
                                       mechanism = 'none',
                                       group_by = c('chi_sex'))
 print(myresult)
 }
+
 }
 \references{
-WA DOH CHAT: \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/Hospitalization\%20Injury\%20Matrix\%20ICD10CM.xlsx}
+\itemize{
+\item WA DOH Community Health Assessment Tool > User Guides > Code Set Definitions >
+Hospitalization Injury Matrix ICD10CM
+\item CDC Injury Code and Matrices: \url{https://www.cdc.gov/nchs/injury/injury_matrices.htm}
+}
 }

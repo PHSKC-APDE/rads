@@ -64,82 +64,80 @@ chars_injury_matrix <- function(){
 #'
 #' @param ph.data a data.table or data.frame. Must contain CHARS data structured
 #' with one person per row and predetermined `mechanism_` and `intent_` columns.
-#' In other words, this ph.data should come from use of \code{get_data_chars()}.
+#' In other words, this ph.data should come from use of [apde.data::chars()].
 #'
-#' The default is \code{ph.data = NULL}
+#' The default is `ph.data = NULL`
 #'
-#' @param intent a character vector. It specifies the
-#' intent of the injury related hospitalization that you want returned (e.g.,
-#' "assault", "intentional", "unintentional", etc.). "none"
-#' will ignore the intent and only return the mechanism of the injury leading
-#' to hospitalization.
+#' @param intent a character vector. It specifies the intent of the injury
+#' related hospitalization that you want returned (e.g., "assault",
+#' "intentional", "unintentional", etc.). "none" will ignore the intent and only
+#' return the mechanism of the injury leading to hospitalization.
 #'
 #' **NOTE**
 #' You do not have to type the entire keyword for the intent, a
 #' partial string match is sufficient and is case insensitive. E.g.,
-#' \code{intent = c("intent")} would return both "intentional" and "unintentional" and
-#' \code{intent = c("un")} would return both "undetermined" and "unintentional".
+#' `intent = c("intent")` would return both "intentional" and "unintentional" and
+#' `intent = c("un")` would return both "undetermined" and "unintentional".
 #'
-#' The default is \code{intent = '*'}, which selects all possible intents
+#' The default is `intent = '*'`, which selects all possible intents
 #'
-#' @param mechanism a character vector. It specifies the
-#' mechanism of the injury related hospitalization that you want returned
-#' (e.g., "cut_pierce", "drowning", "fall", "firearm", etc.). "none" will ignore
-#' the mechanism and only return the intent of the injury leading to hospitalization.
+#' @param mechanism a character vector. It specifies the mechanism of the injury
+#' related hospitalization that you want returned (e.g., "cut_pierce",
+#' "drowning", "fall", "firearm", etc.). "none" will ignore the mechanism and
+#' only return the intent of the injury leading to hospitalization.
 #'
 #' To see the complete list of mechanisms, type
-#' \code{unique(chars_injury_matrix()$mechanism)} in your
-#' R console.
+#' `unique(chars_injury_matrix()$mechanism)` in your R console.
 #'
 #' **NOTE**
 #' You do not have to type the entire keyword for the mechanism, a
 #' partial string match is sufficient and is case insensitive. E.g.,
-#' \code{mechanism = c("fire")} would return both "firearm" and
+#' `mechanism = c("fire")` would return both "firearm" and
 #' "fire_burn".
 #'
-#' The default is \code{mechanism = '*'}, which selects all possible mechanisms
+#' The default is `mechanism = '*'`, which selects all possible mechanisms
 #'
 #' @param group_by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified \code{group_by = c('chi_sex',
-#' 'chi_race_6')}, the results would be stratified by each combination of sex
+#' results. For example, if you specified `group_by = c('chi_sex',
+#' 'race3')``, the results would be stratified by each combination of sex
 #' and race.
 #'
-#' The default is \code{group_by = NULL}
+#' The default is `group_by = NULL`
 #'
 #' @param def a character vector of length one, limited to 'narrow' or 'broad'.
 #' It specifies whether you want to use the CDC's recommended 'narrow' approach,
-#' which requires that the \strong{principal diagnosis} of an injury
+#' which requires that the **principal diagnosis** of an injury
 #' hospitalization be a nature-of-injury ICD10-CM code. Or, alternatively, the
 #' 'broad' definition that searches all available diagnosis fields on the
 #' hospital discharge record (there can be a maximum of 54 diagnosis fields in
 #' CHARS data).
 #'
 #' **NOTE**
-#' ph.data must contain the columns named \code{injury_nature_narrow} &
-#' \code{injury_nature_broad}.
+#' ph.data must contain the columns named `injury_nature_narrow` &
+#' `injury_nature_broad`.
 #'
-#' The default is \code{def = 'narrow'}
+#' The default is `def = 'narrow'`
 #'
 #' @param primary_ecode a logical vector of length one. It specifies whether you
 #' want to limit the analysis to using just the primary ecode (i.e., the
-#' \code{injury_ecode} variable), rather than all available ecodes.
+#' `injury_ecode` variable), rather than all available ecodes.
 #'
 #' As of RADS 1.1.7.7, the only valid argument is TRUE (T). Those wanting to perform
 #' an analysis with other ecodes would need to perform a custom analysis in SQL using
 #' the `chars.stage_diag` & `chars.stage_ecode` tables.
 #'
-#' The default is \code{primary_ecode = TRUE}
+#' The default is `primary_ecode = TRUE`
 #'
 #' @param kingco a logical vector of length one. It specifies whether you want to
 #' limit the analysis to King County. Note that this only works when you have
-#' the column `chi_geo_kc` imported from the \code{get_data_chars()} function.
+#' the column `chi_geo_kc` imported from the [apde.data::chars()] function.
 #'
-#' The default is \code{kingco = TRUE}
+#' The default is `kingco = TRUE`
 #'
 #' @details
 #' Since the injury analysis uses many columns, we suggest that you obtain
-#' ph.data with get_data_chars(cols = NA), rather than trying to specify the
+#' ph.data with `apde.data::chars(cols = NA)`, rather than trying to specify the
 #' columns of interest.
 #'
 #' This function will only count injuries where the type of injury (from
@@ -152,8 +150,8 @@ chars_injury_matrix <- function(){
 #'
 #' @return
 #' The function returns a data.table with a minimum of three columns:
-#' \code{mechanism}, \code{intent}, & \code{hospitalizations}. Any
-#' \code{group_by} variables would also have their own columns.
+#' `mechanism`, `intent`, & `hospitalizations`. Any
+#' `group_by` variables would also have their own columns.
 #'
 #' The function default is to return the matrix of all intents and mechanisms
 #' of injury related hospitalizations. You can choose to only return the intent
@@ -161,40 +159,32 @@ chars_injury_matrix <- function(){
 #' summary of all injury hospitalizations without regard to the intent or mechanism.
 #'
 #' @references
-#' WA DOH CHAT: \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/Hospitalization%20Injury%20Matrix%20ICD10CM.xlsx}
+#' - WA DOH Community Health Assessment Tool > User Guides > Code Set Definitions >
+#'   Hospitalization Injury Matrix ICD10CM
+#' - CDC Injury Code and Matrices: <https://www.cdc.gov/nchs/injury/injury_matrices.htm>
 #'
 #' @export
 #'
 #' @name chars_injury_matrix_count
 #'
 #' @examples
-#' # example: 2019 King County hospitalizations due to intentional injury, by sex
+#' # example: 2022 King County hospitalizations due to intentional injury, by sex
 #' \donttest{
-#' blah = get_data_chars(year = 2019, kingco = TRUE)
+#' blah = apde.data::chars(year = 2022, kingco = TRUE)
 #' myresult <- chars_injury_matrix_count(ph.data = blah,
 #'                                       intent = '^intentional',
 #'                                       mechanism = 'none',
 #'                                       group_by = c('chi_sex'))
 #' print(myresult)
 #' }
-#' @import data.table rads.data
 #'
 chars_injury_matrix_count<- function(ph.data = NULL,
                                      intent = "*",
                                      mechanism = "*",
                                      group_by = NULL,
                                      def = 'narrow',
-                                     primary_ecode = T,
-                                     kingco = T){
-  # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-    chi_geo_kc <- icd10 <- bingo <- hospitalizations <- icd10cm <- icd10cm_desc <- NULL
-    var.names <- injury_nature_narrow <- injury_ecode <- injury_nature_broad <- NULL
-    injury_intent <- injury_mechanism <- NULL
-    chi_geo_kc <- NULL
-    yage4 <- age <- age6 <- geo_type <- geo_id <- pov200grp <- race4 <- race3 <- NULL
-    chi_race_aic_hisp <- race3_hispanic <- NULL
-    mechanism_motor_vehicle_traffic <- NULL
-
+                                     primary_ecode = TRUE,
+                                     kingco = TRUE){
   # Check arguments ----
     # ph.data ----
       if (missing(ph.data) || !is.data.frame(ph.data)) {
@@ -219,24 +209,12 @@ chars_injury_matrix_count<- function(ph.data = NULL,
           stop("\n\U0001f47f The intent '*' cannot be specified with any other intents.")
         }
 
-        if(nrow(setDT(quiet(list_dataset_columns('chars')))[grepl('^intent_', var.names)]) >
-           length(grep('^intent_', names(ph.data), value = T))){
-          mi_col_intent <- setdiff(setDT(list_dataset_columns('chars'))[grepl('^intent_', var.names)]$var.names, grep('^intent_', names(ph.data), value = T))
-          warning(paste0("\n\u26A0\ufe0f ph.data is missing the following `intent_**` columns: ", paste0(mi_col_intent, collapse = ', '), ". This may impact the completeness of your results."))
-        }
-
     # mechanism ----
         if("none" %in% mechanism & length(mechanism) != 1){
           stop("\n\U0001f47f The mechanism 'none' cannot be specified with any other mechanisms.")
         }
         if("*" %in% mechanism & length(mechanism) != 1){
           stop("\n\U0001f47f The mechanism '*' cannot be specified with any other mechanisms.")
-        }
-
-        if(nrow(setDT(quiet(list_dataset_columns('chars')))[grepl('^mechanism_', var.names)]) >
-           length(grep('^mechanism_', names(ph.data), value = T))){
-          mi_col_mechanism <- setdiff(setDT(list_dataset_columns('chars'))[grepl('^mechanism_', var.names)]$var.names, grep('^mechanism_', names(ph.data), value = T))
-          warning(paste0("\n\u26A0\ufe0f ph.data is missing the following `mechanism_**` columns: ", paste0(mi_col_mechanism, collapse = ', '), ". This may impact the completeness of your results."))
         }
 
     # group_by ----
@@ -259,13 +237,13 @@ chars_injury_matrix_count<- function(ph.data = NULL,
         }
 
     # primary_ecode ----
-        if(!is.logical(primary_ecode)){stop("\n\U0001f47f `primary_ecode` must be a logical vector of length 1, i.e,. TRUE or FALSE.")}
+        if(!isTRUE(primary_ecode) && !isFALSE(primary_ecode) ){stop("\n\U0001f47f `primary_ecode` must be a logical vector of length 1, i.e,. TRUE or FALSE.")}
         if(isFALSE(primary_ecode)){stop(paste0("\n\U1F6D1 \U2620 \U0001f47f\n",
                                         " You set 'primary_ecode = F'. This is no longer a valid option. If you want to use other ecodes\n",
                                         " you will have to perform a custom analysis using [chars].[stage_diag] & [chars].[stage_ecode]."))}
 
     # kingco ----
-        if(!is.logical(kingco)){stop("\n\U0001f47f `kingco` must be a logical vector of length 1, i.e,. TRUE or FALSE.")}
+        if(!isTRUE(kingco) && !isFALSE(kingco) ){stop("\n\U0001f47f `kingco` must be a logical vector of length 1, i.e,. TRUE or FALSE.")}
         if (isTRUE(kingco) & (!"chi_geo_kc" %in% names(ph.data))){
           stop("\n\U0001f47f You specified kingco=TRUE, but `ph.data` does not have the following columns that identify King County data:
                    chi_geo_kc")
@@ -295,6 +273,14 @@ chars_injury_matrix_count<- function(ph.data = NULL,
           x_intent <- unique(c(x_intent, grep(i, possible.intents, value = TRUE, ignore.case = TRUE)))
         }
       }
+
+      if(length(x_intent) < length(intent) & !("*" %in% intent) & !("none" %in% intent)){
+        matched <- sapply(intent, function(i) any(grepl(i, possible.intents, ignore.case = TRUE)))
+        unmatched <- intent[!matched]
+        warning(paste0("\n\u26A0\ufe0f The following intent value(s) did not match any valid intents and were ignored: ",
+                       paste0(unmatched, collapse = ', ')))
+      }
+
       if(length(x_intent) == 0){stop(paste0(
         "\n\U0001f47f \nYour `intent` value (", intent, ") has filtered out all of the hospitalization injury intents.\nPlease enter 'none', '*', or a new partial keyword term and try again."))}
 
@@ -313,6 +299,14 @@ chars_injury_matrix_count<- function(ph.data = NULL,
           x_mechanism <- unique(c(x_mechanism, grep(i, possible.mechanisms, value = TRUE, ignore.case = TRUE)))
         }
       }
+
+      if(length(x_mechanism) < length(mechanism) & !("*" %in% mechanism) & !("none" %in% mechanism)){
+        matched <- sapply(mechanism, function(i) any(grepl(i, possible.mechanisms, ignore.case = TRUE)))
+        unmatched <- mechanism[!matched]
+        warning(paste0("\n\u26A0\ufe0f The following mechanism value(s) did not match any valid mechanisms and were ignored: ",
+                       paste0(unmatched, collapse = ', ')))
+      }
+
       if(length(x_mechanism) == 0){stop(paste0(
         "\n\U0001f47f \nYour `mechanism` value (", mechanism, ") has filtered out all of the hospitalization injury mechanisms.\nPlease enter 'none', '*', or a new partial keyword term and try again.\n",
         "Entering `rads::chars_injury_matrix()` into the console will provide you with a table of valid options."))}
@@ -328,7 +322,7 @@ chars_injury_matrix_count<- function(ph.data = NULL,
 
   # Count hospitalizations for each intent_x_mechanism of interest ----
         # create matrix of all mechanisms and intents of interest ----
-        x_grid <- data.table::setDT(expand.grid(mechanism = x_mechanism, intent = x_intent))
+        x_grid <- data.table::CJ(mechanism = x_mechanism, intent = x_intent)
 
         # count number of hospitalizations (i.e., rows) when def == 'narrow' ----
         x_combo <- rbindlist(lapply(1:nrow(x_grid), function(ii) {
@@ -386,6 +380,7 @@ chars_injury_matrix_count<- function(ph.data = NULL,
   # Return data ----
     return(x_combo)
 }
+
 # chars_icd_ccs() ----
 #' View available CHARS ICD-9-CM OR ICD-10-CM (diagnosis) codes, descriptions,
 #' and summary 'broad' and 'detailed' classifications that can be used with
