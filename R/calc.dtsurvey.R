@@ -39,9 +39,9 @@ calc.dtsurvey <- function(ph.data,
     }
 
     e <- substitute(where)
-    r <- eval(e, ph.data, parent.frame())
-    stopifnot('`where` does not resolve to a logical' = is.logical(r))
-    ph.data = ph.data[r,]
+    # r <- eval(e, ph.data, parent.frame())
+    # stopifnot('`where` does not resolve to a logical' = is.logical(r))
+    ph.data = ph.data[r,env = list(r = e)]
     #do.call(subset, args = list(x = ph.data, subset = e)) an alternative approach
 
     if(nrow(ph.data) == 0){
