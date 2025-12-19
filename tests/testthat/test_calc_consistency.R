@@ -34,3 +34,9 @@ test_that('Where with quoted and non-quoted wheres',{
   expect_equal(r1,r2)
 
 })
+
+test_that('Where is improperly specified',{
+  expect_error(calc(sur, what = 'api00', where = stype == c('H', 'E'), metrics = c('mean', 'numerator', 'denominator')))
+  expect_error(calc(apisrs, what = 'api00', where = stype == c('H', 'E'), metrics = c('mean', 'numerator', 'denominator')))
+
+})
