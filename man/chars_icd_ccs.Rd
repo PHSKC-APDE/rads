@@ -21,7 +21,7 @@ The default is \code{ref_type = 'all'}.}
 
 \item{icdcm_version}{an integer vector of length one specifying the ICD CM
 version that you want to reference. Acceptable options include: \code{9}
-& \code{10}.
+or \code{10}.
 
 The default is \code{icdcm_version = 10}.}
 }

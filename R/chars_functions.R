@@ -100,7 +100,7 @@ chars_injury_matrix <- function(){
 #' @param group_by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
 #' results. For example, if you specified `group_by = c('chi_sex',
-#' 'race3')``, the results would be stratified by each combination of sex
+#' 'race3')`, the results would be stratified by each combination of sex
 #' and race.
 #'
 #' The default is `group_by = NULL`
@@ -168,13 +168,19 @@ chars_injury_matrix <- function(){
 #' @name chars_injury_matrix_count
 #'
 #' @examples
-#' # example: 2022 King County hospitalizations due to intentional injury, by sex
 #' \donttest{
-#' blah = apde.data::chars(year = 2022, kingco = TRUE)
-#' myresult <- chars_injury_matrix_count(ph.data = blah,
+#' myresult <- chars_injury_matrix_count(ph.data = rads.data::synthetic_chars,
 #'                                       intent = '^intentional',
 #'                                       mechanism = 'none',
-#'                                       group_by = c('chi_sex'))
+#'                                       group_by = c('temperament'),
+#'                                       kingco = FALSE)
+#' print(myresult)
+#'
+#' myresult <- chars_injury_matrix_count(ph.data = rads.data::synthetic_chars,
+#'                                       intent = 'unintentional',
+#'                                       mechanism = 'fall',
+#'                                       group_by = c('temperament'),
+#'                                       kingco = FALSE)
 #' print(myresult)
 #' }
 #'
@@ -407,7 +413,7 @@ chars_injury_matrix_count<- function(ph.data = NULL,
 #'
 #' @param icdcm_version an integer vector of length one specifying the ICD CM
 #' version that you want to reference. Acceptable options include: `9`
-#' & `10`.
+#' or `10`.
 #'
 #' The default is `icdcm_version = 10`.
 #'
@@ -485,31 +491,37 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' Abstract Reporting System (CHARS) data using partial strings from the ICD-10-CM
 #' or ICD-9-CM descriptions or AHRQ HCUP's CCSR based 'broad' and 'detailed'
 #' classifications. Needs line-level CHARS data with a properly formatted
-#' ICD-CM column (e.g., the data available from \code{get_data_chars()}).
+#' ICD-CM column (e.g., the data available from [apde.data::chars()]).
 #'
-#' See \code{chars_icd_ccs()} for a complete list of available ICD-10-CM,
+#' See [chars_icd_ccs()] for a complete list of available ICD-10-CM,
 #' ICD-9-CM, and superlevel, broad, midlevel, and narrow classifications.
 #'
 #' \strong{¡¡¡REMEMBER!!!} ICD-10-CM started in 2016! Be sure to use the correct
-#' **\code{icdcm_version}**.
+#' **`icdcm_version`**.
 #'
 #'
 #' @details
 #' This function needs the user to enter a search string in one or more of the
 #' following arguments in order to search the CHARS data for the corresponding
-#' ICD CM codes: \code{icdcm}, \code{superlevel}, \code{broad}, \code{midlevel},
-#' or \code{detailed}.
-#' Partial search terms are acceptable and they are case-insensitive. For
-#' example, if you set \code{broad = 'ex'} with \code{icdcm_version = 10}, the
-#' function would return counts for "Diseases of the eye and adnEXa" as well as
-#' "EXternal causes of morbidity". It also understands simple regex syntax,
-#' including **\code{^}**, **\code{$}**, and **\code{|}**.
+#' ICD CM codes:
 #'
-#' **Note:** If you submit values for more than one of \code{icdcm},
-#' \code{superlevel}, \code{broad}, \code{midlevel}, or \code{detailed} they must
-#' be nested. For example, \code{broad = 'neoplasms', detailed = 'sarcoma'} will
+#' - `icdcm`
+#' - `superlevel`
+#' - `broad`,
+#' - `midlevel`, or
+#' - `detailed`.
+#'
+#' Partial search terms are acceptable and they are case-insensitive. For
+#' example, if you set `broad = 'ex'` with `icdcm_version = 10`, the
+#' function would return counts for *"Diseases of the eye and adnEXa"* as well as
+#' *"EXternal causes of morbidity"*. It also understands simple regex syntax,
+#' including **`^`**, **`$`**, and **`|`**.
+#'
+#' **Note:** If you submit values for more than one of `icdcm`,
+#' `superlevel`, `broad`, `midlevel`, or `detailed`, they must
+#' be nested. For example, `broad = 'neoplasms', detailed = 'sarcoma'` will
 #' give results because sarcomas are type of cancers. However,
-#' \code{broad = 'neoplasms', detailed = 'intestinal infection'} will return an
+#' `broad = 'neoplasms', detailed = 'intestinal infection'` will return an
 #' error because your resulting table will have zero rows.
 #'
 #' @param ph.data a data.table or data.frame. Must contain CHARS data structured
@@ -518,24 +530,24 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' **NOTE!** ph.data must have a column named `seq_no`, which is a unique patient
 #' level identifier.
 #'
-#' The default is \code{ph.data = NULL}
+#' The default is `ph.data = NULL`
 #'
 #' @param icdcm_version an integer vector of length one specifying the ICD CM
-#' version that you want to reference. Acceptable options include: \code{9}
-#' & \code{10}.
+#' version that you want to reference. Acceptable options include: `9`
+#' or `10`.
 #'
-#' The default is \code{icdcm_version = 10}.
+#' The default is `icdcm_version = 10`.
 #'
 #' @param CMtable An optional data.table containing the reference table of ICD codes
-#' and their classifications. This should come from \code{\link{chars_icd_ccs}}
-#' and have the following columns: \code{icdcm_code}, \code{icdcm}, \code{superlevel},
-#' \code{broad}, \code{midlevel}, \code{detailed}, and \code{icdcm_version}. If
+#' and their classifications. This should come from [chars_icd_ccs()]
+#' and have the following columns: `icdcm_code`, `icdcm`, `superlevel`,
+#' `broad`, `midlevel`, `detailed`, and `icdcm_version`. If
 #' provided, the function will use this table instead of making a new call to
-#' \code{\link{chars_icd_ccs}}, which can significantly improve performance when
+#' [chars_icd_ccs()], which can significantly improve performance when
 #' making multiple calls to this function.
 #'
-#' The default is \code{CMtable = NULL}, which means the function will fetch the reference
-#' table from the database using \code{\link{chars_icd_ccs}}.
+#' The default is `CMtable = NULL`, which means the function will fetch the reference
+#' table from the database using [chars_icd_ccs()].
 #'
 #' @param icdcm a character vector of length 1. An ICD CM description OR code.
 #' It is case agnostic and works with partial strings. For example, both
@@ -543,67 +555,66 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' ICD-10-CM. You can also combine multiple search terms. For example,
 #' 'rotavira|choler' would count all Rotaviral enteritis AND cholera
 #' hospitalizations. View available options with
-#' \code{chars_icd_ccs(ref_type = 'icdcm', icdcm_version = 10)}.
+#' `chars_icd_ccs(ref_type = 'icdcm', icdcm_version = 10)`.
 #'
-#' The default is \code{icdcm = NULL}
+#' The default is `icdcm = NULL`
 #'
 #' @param superlevel a character vector of length 1. Case agnostic and works
 #' with partial strings. View available options with
-#' \code{chars_icd_ccs(ref_type = 'superlevel', icdcm_version = 10)}.
+#' `chars_icd_ccs(ref_type = 'superlevel', icdcm_version = 10)`.
 #'
-#' The default is \code{superlevel = NULL}
+#' The default is `superlevel = NULL`
 #'
 #' @param broad a character vector of length 1. Case agnostic and works with
 #' partial strings. View available options with
-#' \code{chars_icd_ccs(ref_type = 'broad', icdcm_version = 10)}.
+#' `chars_icd_ccs(ref_type = 'broad', icdcm_version = 10)`.
 #'
-#' The default is \code{broad = NULL}
+#' The default is `broad = NULL`
 #'
 #' @param midlevel a character vector of length 1. Case agnostic and works with
 #' partial strings. View available options with
-#' \code{chars_icd_ccs(ref_type = 'midlevel', icdcm_version = 10)}.
+#' `chars_icd_ccs(ref_type = 'midlevel', icdcm_version = 10)`.
 #'
-#' The default is \code{midlevel = NULL}
+#' The default is `midlevel = NULL`
 #'
 #' @param detailed a character vector of length 1. Case agnostic and works with
 #' partial strings. View available options with
-#' \code{chars_icd_ccs(ref_type = 'detailed', icdcm_version = 10)}.
+#' `chars_icd_ccs(ref_type = 'detailed', icdcm_version = 10)`.
 #'
-#' The default is \code{detailed = NULL}
+#' The default is `detailed = NULL`
 #'
-#' @param icdcol a character vector of length one that specifies the name of the
-#' column in ph.data that contains the ICD10-cm codes of interest.
+#' @param icdcol A character vector of length 1 specifying the name of the column
+#' in `ph.data` that contains ICD-CM diagnosis codes.
 #'
-#' The default is \code{icdcol = 'diag1'}, which refers to the principal
-#' diagnosis code provided by \code{get_data_chars()}).
+#' Values must be properly formatted ICD-9-CM or ICD-10-CM codes; codes are
+#' coerced to uppercase and stripped of punctuation (e.g., `A85.2` → `A852`).
+#' For ICD-10-CM, codes must begin with a capital letter followed by a digit
+#' (invalid codes are set to `NA`).
+#'
+#' The default is `icdcol = 'diag1'`, which refers to the principal
+#' diagnosis code provided by [apde.data::chars()].
 #'
 #' @param group_by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified \code{group_by = c('chi_sex',
-#' 'chi_race_6')}, the results would be stratified by each combination of sex
+#' results. For example, if you specified `group_by = c('chi_sex',
+#' 'chi_race_6')`, the results would be stratified by each combination of sex
 #' and race.
 #'
-#' The default is \code{group_by = NULL}
+#' The default is `group_by = NULL`
 #'
 #' @param kingco a logical vector of length one. It specifies whether you want to
-#' limit the analysis to King County.
+#' limit the analysis to King County. Note that this only works with data imported
+#' with the [apde.data::chars()] function because it needs the variable
+#' chi_geo_kc`.
 #'
-#' **NOTE** this only works with data imported
-#' with the \code{get_data_chars()} function because it needs the variable
-#' \code{chi_geo_kc}.
+#' The default is `kingco = TRUE`.
 #'
-#' The default is \code{kingco = TRUE}.
-#'
-#' @param mykey Character vector of length 1. Identifies the keyring:: service
-#' that can be used to access the Health & Human Services Analytic Workspace
-#' (HHSAW).
-#'
-#' The default is \code{mykey = 'hhsaw'}
+#' @param ... Additional arguments passed to other methods (currently unused).
 #'
 #' @return
 #' Generates a table with columns for each of the search terms you entered (e.g.,
-#' \code{icdcm}, \code{broad}, and/or \code{detailed}) as well as
-#' any \code{group_by} variables and a column named \code{hospitalizations} that
+#' `icdcm`, `broad`, and/or `detailed`) as well as
+#' any `group_by` variables and a column named `hospitalizations` that
 #' contains the relevant counts.
 #'
 #' @export
@@ -611,29 +622,21 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' @name chars_icd_ccs_count
 #'
 #' @examples
-#' # example #1: 2019 King County hospitalizations for chemotherapy, by sex
 #' \donttest{
-#' blah = get_data_chars(year = 2019, kingco = TRUE)
-#' myresult <- chars_icd_ccs_count(ph.data = blah,
+#' myresult <- chars_icd_ccs_count(ph.data = rads.data::synthetic_chars,
 #'                                 detailed = 'headache',
-#'                                 group_by = c('chi_sex'))
+#'                                 group_by = c('temperament'),
+#'                                 kingco = FALSE)
 #' print(myresult)
-#' }
 #'
-#' # example #2: 2022 King County hospitalizations for asthma using
-#' # an external reference table
-#' \donttest{
 #' myrefTable <- chars_icd_ccs()
-#'
-#' mydata = get_data_chars(year = 2022, kingco = TRUE)
-#' myresult <- chars_icd_ccs_count(ph.data = mydata,
+#' myresult <- chars_icd_ccs_count(ph.data = rads.data::synthetic_chars,
 #'                                 CMtable = myrefTable,
 #'                                 detailed = 'asthma',
-#'                                 group_by = c('chi_sex'))
+#'                                 group_by = c('temperament'),
+#'                                 kingco = FALSE)
 #' print(myresult)
 #' }
-#'
-#' @import data.table rads.data
 #'
 chars_icd_ccs_count <- function(ph.data = NULL,
                                 icdcm_version = 10,
@@ -645,14 +648,24 @@ chars_icd_ccs_count <- function(ph.data = NULL,
                                 detailed = NULL,
                                 icdcol = 'diag1',
                                 group_by = NULL,
-                                kingco = T,
-                                mykey = 'hhsaw'){
+                                kingco = TRUE,
+                                ...){
 
-  # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-    CMtable_cols <- CMtable.expanded <- filter.count <- problem.icds <- superlevel_desc <- broad_desc <-
-      midlevel_desc <- detailed_desc <- chi_geo_kc <- hospitalizations <- icdcm_code <- KeepMe <-
-      icdcm_desc <- icdcm_code <- query.group <- diag1 <- intent_ignore <-
-      chars_injury_matrix_count <- mechanism_ignore <- dummy <- NULL
+  # Note deprecation of `mykeys` parameter ----
+    dots <- list(...)
+
+    if ("mykey" %in% names(dots)) {
+      lifecycle::deprecate_warn(
+        "1.6.0",
+        "chars_icd_ccs_count(mykey = )",
+        details = "The `mykey` argument is no longer used."
+      )
+    }
+
+    unused <- setdiff(names(dots), "mykey")
+    if (length(unused) > 0) {
+      stop("Unused arguments: ", paste(unused, collapse = ", "), call. = FALSE)
+    }
 
   # Check arguments & filter reference table of all ICD CM (CMtable) ----
     # ph.data ----
@@ -695,7 +708,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
         }
 
         if(is.null(CMtable)){
-          CMtable <- chars_icd_ccs(icdcm_version = icdcm_version) # reference table of all potential search terms for this function
+          CMtable <- rads::chars_icd_ccs(icdcm_version = icdcm_version) # reference table of all potential search terms for this function
         }
         CMtable <- CMtable[, list(icdcm_code, icdcm_desc = icdcm, superlevel_desc = superlevel, broad_desc = broad, midlevel_desc = midlevel, detailed_desc = detailed)]
 
@@ -821,14 +834,6 @@ chars_icd_ccs_count <- function(ph.data = NULL,
           stop("\U0001f47f You specified kingco=TRUE, but `ph.data` does not have the column `chi_geo_kc` that identifies King County")
         }
         if (isTRUE(kingco)){ph.data <- ph.data[chi_geo_kc == 'King County']}
-
-    # mykey ----
-        if(length(mykey) != 1 | !is.character(mykey)){
-          stop("\n \U0001f47f the `mykey` argument must be a string of length == 1, \nwhich is the name of your keyring:: service providing the \npassword for connecting to HHSAW, it is typically 'hhsaw'.")
-        }
-        if(!mykey %in% keyring::key_list()[]$service){
-          stop("\n \U0001f47f the `mykey` value passed to this function ('", mykey, "') is not in your `keyring::key_list`.\nPlease create it using `keyring::key_set` and try again.")
-        }
 
   # Drop unnecessary columns from reference table (CMtable) ----
     KeepMe <- c("icdcm_code")

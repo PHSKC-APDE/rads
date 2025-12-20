@@ -53,8 +53,7 @@ The default is \code{mechanism = '*'}, which selects all possible mechanisms}
 
 \item{group_by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified `group_by = c('chi_sex',
-'race3')``, the results would be stratified by each combination of sex
+results. For example, if you specified \code{group_by = c('chi_sex', 'race3')}, the results would be stratified by each combination of sex
 and race.
 
 The default is \code{group_by = NULL}}
@@ -119,13 +118,19 @@ See Jeremy Whitehurst's documentation for the CHARS ETL to understand exactly
 which codes are mapped to which intents and mechanisms.
 }
 \examples{
-# example: 2022 King County hospitalizations due to intentional injury, by sex
 \donttest{
-blah = apde.data::chars(year = 2022, kingco = TRUE)
-myresult <- chars_injury_matrix_count(ph.data = blah,
+myresult <- chars_injury_matrix_count(ph.data = rads.data::synthetic_chars,
                                       intent = '^intentional',
                                       mechanism = 'none',
-                                      group_by = c('chi_sex'))
+                                      group_by = c('temperament'),
+                                      kingco = FALSE)
+print(myresult)
+
+myresult <- chars_injury_matrix_count(ph.data = rads.data::synthetic_chars,
+                                      intent = 'unintentional',
+                                      mechanism = 'fall',
+                                      group_by = c('temperament'),
+                                      kingco = FALSE)
 print(myresult)
 }
 

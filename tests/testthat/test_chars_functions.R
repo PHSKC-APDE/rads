@@ -35,7 +35,8 @@ library('testthat')
   })
 
 # Check chars_icd_ccs_count() ----
-  charsdata <- get_data_chars(year = 2019, cols = c("seq_no", "diag1", "chi_sex"), kingco = T)
+  charsdata <- rads.data::synthetic_chars
+  charsdata[, chi_sex := sample(c('Male', 'Female'), .N, replace = T)]
 
   test_that("Function returns expected rows, columns, and values...", {
     # test icd argument ----
@@ -46,8 +47,7 @@ library('testthat')
                                         icdcm = '^kidney transplant',
                                         icdcol = 'diag1',
                                         group_by = NULL,
-                                        kingco = F,
-                                        mykey = 'hhsaw')
+                                        kingco = F)
       expect_equal(nrow(icd.result), 4)
       expect_equal(sort(names(icd.result)), sort(c('icdcm_desc', 'hospitalizations')))
       expect_equal(sum(icd.result$hospitalizations), nrow(charsdata[grepl("T8611|T8612|T8613|Z940", x = diag1)]))
@@ -103,7 +103,8 @@ library('testthat')
                    sort(c('icdcm_desc', 'broad_desc', 'detailed_desc', 'hospitalizations')))
 
     # test that works for ICD9 (pre 2016) ----
-      icd9data <- get_data_chars(year = 2015, cols = c('seq_no', 'diag1', 'chi_geo_kc'))
+      icd9data <- rads.data::synthetic_chars
+      icd9data[, chi_geo_kc := sample(c(TRUE, FALSE), .N, replace = T)]
       icd9counts <- chars_icd_ccs_count(ph.data = icd9data,
                                         icdcm_version = 9,
                                         broad = 'neo',
@@ -162,7 +163,10 @@ library('testthat')
   })
 
 # Check chars_injury_matrix_count() ----
-  charsdt <- get_data_chars(year = 2019, kingco = T)
+  charsdt <- rads.data::synthetic_chars
+  charsdt[, chi_sex := sample(c('Male', 'Female'), .N, replace = T)]
+  charsdt[, chi_geo_kc := sample(c(TRUE, FALSE), .N, replace = T)]
+  charsdt[, race4 := sample(c("AIAN", "Asian", "Black", "Hispanic", "Multiple", "NHPI", "White"), .N, replace = T)]
 
   test_that("Function returns expected rows, columns, and values...", {
   # test ph.data argument ----
