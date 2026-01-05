@@ -99,11 +99,13 @@ and race.
 The default is \code{group_by = NULL}}
 
 \item{kingco}{a logical vector of length one. It specifies whether you want to
-limit the analysis to King County. Note that this only works with data imported
-with the \code{\link[apde.data:chars]{apde.data::chars()}} function because it needs the variable
-chi_geo_kc`.
+limit the analysis to King County. This parameter is specific to Washington State
+CHARS data and requires the column \code{chi_geo_kc}, which is provided by
+\code{\link[apde.data:chars]{apde.data::chars()}}.
 
-The default is \code{kingco = TRUE}.}
+For users outside of King County or Washington State, set \code{kingco = FALSE}.
+
+The default is \code{kingco = TRUE}}
 
 \item{...}{Additional arguments passed to other methods (currently unused).}
 }

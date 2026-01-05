@@ -83,8 +83,11 @@ the \code{chars.stage_diag} & \code{chars.stage_ecode} tables.
 The default is \code{primary_ecode = TRUE}}
 
 \item{kingco}{a logical vector of length one. It specifies whether you want to
-limit the analysis to King County. Note that this only works when you have
-the column \code{chi_geo_kc} imported from the \code{\link[apde.data:chars]{apde.data::chars()}} function.
+limit the analysis to King County. This parameter is specific to Washington State
+CHARS data and requires the column \code{chi_geo_kc}, which is provided by
+\code{\link[apde.data:chars]{apde.data::chars()}}.
+
+For users outside of King County or Washington State, set \code{kingco = FALSE}.
 
 The default is \code{kingco = TRUE}}
 }
