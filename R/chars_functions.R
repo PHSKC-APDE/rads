@@ -130,8 +130,11 @@ chars_injury_matrix <- function(){
 #' The default is `primary_ecode = TRUE`
 #'
 #' @param kingco a logical vector of length one. It specifies whether you want to
-#' limit the analysis to King County. Note that this only works when you have
-#' the column `chi_geo_kc` imported from the [apde.data::chars()] function.
+#' limit the analysis to King County. This parameter is specific to Washington State
+#' CHARS data and requires the column `chi_geo_kc`, which is provided by
+#' [apde.data::chars()].
+#'
+#' For users outside of King County or Washington State, set `kingco = FALSE`.
 #'
 #' The default is `kingco = TRUE`
 #'
@@ -603,11 +606,13 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' The default is `group_by = NULL`
 #'
 #' @param kingco a logical vector of length one. It specifies whether you want to
-#' limit the analysis to King County. Note that this only works with data imported
-#' with the [apde.data::chars()] function because it needs the variable
-#' chi_geo_kc`.
+#' limit the analysis to King County. This parameter is specific to Washington State
+#' CHARS data and requires the column `chi_geo_kc`, which is provided by
+#' [apde.data::chars()].
 #'
-#' The default is `kingco = TRUE`.
+#' For users outside of King County or Washington State, set `kingco = FALSE`.
+#'
+#' The default is `kingco = TRUE`
 #'
 #' @param ... Additional arguments passed to other methods (currently unused).
 #'
@@ -736,7 +741,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
               stop(paste0("\n\U0001f47f Setting the argument <superlevel='", superlevel, "'> filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
             }
             if(filter.count > 1){
-              stop(paste0("\n\U0001f47f Setting the argument <superlevel='", superlevel, "'>, either alone or in combinaton with other arguments, filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
+              stop(paste0("\n\U0001f47f Setting the argument <superlevel='", superlevel, "'>, either alone or in combination with other arguments, filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
             }
           }
         }
@@ -752,7 +757,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
               stop(paste0("\n\U0001f47f Setting the argument <broad='", broad, "'> filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
             }
             if(filter.count > 1){
-              stop(paste0("\n\U0001f47f Setting the argument <broad='", broad, "'>, either alone or in combinaton with other arguments, filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
+              stop(paste0("\n\U0001f47f Setting the argument <broad='", broad, "'>, either alone or in combination with other arguments, filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
             }
           }
         }
@@ -768,7 +773,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
               stop(paste0("\n\U0001f47f Setting the argument <midlevel='", midlevel, "'> filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
             }
             if(filter.count > 1){
-              stop(paste0("\n\U0001f47f Setting the argument <midlevel='", midlevel, "'>, either alone or in combinaton with other arguments, filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
+              stop(paste0("\n\U0001f47f Setting the argument <midlevel='", midlevel, "'>, either alone or in combination with other arguments, filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
             }
           }
         }
@@ -784,13 +789,13 @@ chars_icd_ccs_count <- function(ph.data = NULL,
               stop(paste0("\n\U0001f47f Setting the argument <detailed='", detailed, "'> filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
             }
             if(filter.count > 1){
-              stop(paste0("\n\U0001f47f Setting the argument <detailed='", detailed, "'>, either alone or in combinaton with other arguments, filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
+              stop(paste0("\n\U0001f47f Setting the argument <detailed='", detailed, "'>, either alone or in combination with other arguments, filtered out all possible ICD CM codes in the reference table. Please change your argument(s)."))
             }
           }
         }
 
     # icdcol ----
-        if(is.null(icdcol)){stop("\n\U0001f47f The `icdcol` argument cannot be NULL. If you are unsure of what enter, try using `icdcol = 'diag1`, which is the default")}
+        if(is.null(icdcol)){stop("\n\U0001f47f The `icdcol` argument cannot be NULL. If you are unsure of what enter, try using `icdcol = 'diag1'`, which is the default")}
         if(isFALSE(icdcol %in% colnames(ph.data))){
           stop(paste0("\n\U0001f47f You specified icdcol='", icdcol, "', but '", icdcol, "' does not exist in `ph.data`."))
         }
@@ -802,7 +807,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
           icdcol, ") contains a hyphen (-), period (.), space or some other ",
           "non alpha-numeric character. These characters will be deleted, e.g., ",
           "A85.2 will become A852. This is necessary because causeids in ",
-          "rads::chars_icd_ccs contains no hyphens or periods."
+          "rads::chars_icd_ccs() contains no hyphens or periods."
           ))
           ph.data[, paste0(icdcol) := gsub("[[:space:].]+", "", gsub("([^A-Za-z0-9 ])+", "", x = get(icdcol)))]
         }
