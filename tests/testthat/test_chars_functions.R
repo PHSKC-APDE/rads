@@ -86,9 +86,9 @@ library('testthat')
       group_by.result <- chars_icd_ccs_count(ph.data = charsdata[chi_sex %in% c("Male", "Female")],
                                              detailed = 'chronic kidney disease',
                                              kingco = F,
-                                             group_by = 'chi_sex')
-      expect_equal(nrow(group_by.result), 2)
-      expect_equal(sort(names(group_by.result)), sort(c('chi_sex', 'detailed_desc', 'hospitalizations')))
+                                             group_by = c('chi_sex', 'temperament'))
+      expect_equal(nrow(group_by.result), 6) # two sex * 3 temperament == 6 rows
+      expect_equal(sort(names(group_by.result)), sort(c('chi_sex', 'temperament', 'detailed_desc', 'hospitalizations')))
       expect_equal(sum(group_by.result$hospitalizations),
                    nrow(charsdata[diag1 %in% chars_icd_ccs()[grepl('chronic kidney disease', detailed, ignore.case = T)]$icdcm_cod]))
 
@@ -104,7 +104,6 @@ library('testthat')
 
     # test that works for ICD9 (pre 2016) ----
       icd9data <- rads.data::synthetic_chars
-      icd9data[, chi_geo_kc := sample(c(TRUE, FALSE), .N, replace = T)]
       icd9counts <- chars_icd_ccs_count(ph.data = icd9data,
                                         icdcm_version = 9,
                                         broad = 'neo',
@@ -116,26 +115,26 @@ library('testthat')
 
   test_that("Function gives errors as appropriate...", {
     # should error when no search strings given
-    expect_error(chars_icd_ccs_count(ph.data = charsdata, icd = NULL, kingco = T))
+    expect_error(chars_icd_ccs_count(ph.data = charsdata, icdcm = NULL, kingco = T))
 
     # should error when mis-specify the name of ph.data
-    expect_error(chars_icd_ccs_count(ph.data = 'charsdata', icd = '^Kidney transplant', kingco = F))
-    expect_error(chars_icd_ccs_count(ph.data = NULL, icd = '^Kidney transplant', kingco = F))
-    expect_error(chars_icd_ccs_count(ph.data = charsdata2, icd = '^Kidney transplant', kingco = F))
+    expect_error(chars_icd_ccs_count(ph.data = 'charsdata', icdcm = '^Kidney transplant', kingco = F))
+    expect_error(chars_icd_ccs_count(ph.data = NULL, icdcm = '^Kidney transplant', kingco = F))
+    expect_error(chars_icd_ccs_count(ph.data = charsdata2, icdcm = '^Kidney transplant', kingco = F))
 
     # should error because missing chi_geo_kc
-    expect_error(chars_icd_ccs_count(ph.data = charsdata, icd = '^Kidney transplant', kingco = T))
+    expect_error(chars_icd_ccs_count(ph.data = copy(charsdata)[, chi_geo_kc := NULL], icdcm = '^Kidney transplant', kingco = T))
 
     # should error because 'blah' is not a medical diagnosis!
-    expect_error(chars_icd_ccs_count(ph.data = charsdata, icd = 'blah', kingco = F))
+    expect_error(chars_icd_ccs_count(ph.data = charsdata, icdcm = 'blah', kingco = F))
     expect_error(chars_icd_ccs_count(ph.data = charsdata, superlevel = 'blah', kingco = F))
     expect_error(chars_icd_ccs_count(ph.data = charsdata, broad = 'blah', kingco = F))
     expect_error(chars_icd_ccs_count(ph.data = charsdata, midlevel = 'blah', kingco = F))
     expect_error(chars_icd_ccs_count(ph.data = charsdata, detailed = 'blah', kingco = F))
 
     # should error when mis-specify the column containing icdcm data
-    expect_error(chars_icd_ccs_count(ph.data = charsdata, icd = '^Kidney transplant', kingco = F, icdcol = NULL))
-    expect_error(chars_icd_ccs_count(ph.data = charsdata, icd = '^Kidney transplant', kingco = F, icdcol = 'mycolumn'))
+    expect_error(chars_icd_ccs_count(ph.data = charsdata, icdcm = '^Kidney transplant', kingco = F, icdcol = NULL))
+    expect_error(chars_icd_ccs_count(ph.data = charsdata, icdcm = '^Kidney transplant', kingco = F, icdcol = 'mycolumn'))
 
     # should error due to group_by because 'blah' is not a column in the dataset
     expect_error(chars_icd_ccs_count(ph.data = charsdata, broad = 'Chronic kidney disease', kingco = F, group_by = 'blah'))
@@ -165,7 +164,6 @@ library('testthat')
 # Check chars_injury_matrix_count() ----
   charsdt <- rads.data::synthetic_chars
   charsdt[, chi_sex := sample(c('Male', 'Female'), .N, replace = T)]
-  charsdt[, chi_geo_kc := sample(c(TRUE, FALSE), .N, replace = T)]
   charsdt[, race4 := sample(c("AIAN", "Asian", "Black", "Hispanic", "Multiple", "NHPI", "White"), .N, replace = T)]
 
   test_that("Function returns expected rows, columns, and values...", {
@@ -175,43 +173,53 @@ library('testthat')
   # test intent argument ----
     # check that that * gives all intent & mechanism by sampling some commonly of interest
     chars1 <- chars_injury_matrix_count(ph.data = charsdt, intent = '*')
+    expect_true(nrow(chars1) > 1)
     expect_true(sum(c('intentional', 'unintentional', 'legal', 'assault', 'Any intent') %in% unique(chars1$intent)) == 5)
 
     # confirm 'none' collapses the intent
     chars2 <- chars_injury_matrix_count(ph.data = charsdt, intent = 'none')
+    expect_true(nrow(chars2) > 1)
     expect_identical('Any intent', unique(chars2$intent))
 
     # confirm can select intent of interest
     chars3 <- chars_injury_matrix_count(ph.data = charsdt, intent = 'assault')
+    expect_true(nrow(chars3) > 1)
     expect_identical('assault', unique(chars3$intent))
 
   # test mechanism argument ----
     # check that that * gives all intent & mechanism by sampling some commonly of interest
     chars4 <- chars_injury_matrix_count(ph.data = charsdt, mechanism = '*')
+    expect_true(nrow(chars4) > 1)
     expect_true(sum(c('overexertion', 'firearm', 'fall', 'drowning', 'Any mechanism') %in% unique(chars4$mechanism)) == 5)
 
     # confirm 'none' collapses the mechanism
     chars5 <- chars_injury_matrix_count(ph.data = charsdt, mechanism = 'none')
+    expect_true(nrow(chars5) > 1)
     expect_identical('Any mechanism', unique(chars5$mechanism))
 
     # confirm can select mechanism of interest
     chars6 <- chars_injury_matrix_count(ph.data = charsdt, mechanism = 'firearm')
+    expect_true(nrow(chars6) > 1)
     expect_identical('firearm', unique(chars6$mechanism))
 
   # test group_by argument ----
     chars7 <- (chars_injury_matrix_count(ph.data = charsdt, mechanism = 'none', intent = 'none', group_by = 'race4'))
+    expect_true(nrow(chars7) > 1)
     expect_identical(sort(as.character(chars7$race4)),
                      c("AIAN", "Asian", "Black", "Hispanic", "Multiple", "NHPI", "White"))
 
   # test def argument ----
     chars8 <- (chars_injury_matrix_count(ph.data = charsdt, mechanism = 'none', intent = 'none', def = 'narrow'))
     chars9 <- (chars_injury_matrix_count(ph.data = charsdt, mechanism = 'none', intent = 'none', def = 'broad'))
+    expect_true(nrow(chars8) == 1)
+    expect_true(nrow(chars9) == 1)
     expect_gt(chars9$hospitalizations, chars8$hospitalizations)
 
   # test primary_ecode argument ----
     # when TRUE, total of any intent & any mechanism should be same as total of all specific mechanisms and causes
     chars10 <- chars_injury_matrix_count(ph.data = charsdt, mechanism = '*', intent = '*', def = 'narrow', primary_ecode = T)
     chars10 <- chars10[mechanism!='motor_vehicle_traffic'] # remove motor_vehcicle_traffic b/c created by RADS based on other vars
+    expect_true(nrow(chars10) > 1)
     expect_equal(sum(chars10[intent == 'Any intent' & mechanism == 'Any mechanism']$hospitalizations),
                  sum(chars10[intent != 'Any intent' & mechanism != 'Any mechanism']$hospitalizations) )
   })
@@ -226,12 +234,15 @@ library('testthat')
     expect_error(chars_injury_matrix_count(ph.data = NULL, kingco = F))
     expect_error(chars_injury_matrix_count(ph.data = charsdt2, kingco = F))
 
-    # should error when have illogical group_by values missing chi_geo_kc
-    expect_error(chars_injury_matrix_count(ph.data = charsdt, group_by = c('wastate', 'blah', 'age6')))
+    # should error when have illogical group_by values
+    expect_error(chars_injury_matrix_count(ph.data = charsdt, group_by = c('race4', 'blah', 'chi_sex')))
+
+    # should error because missing chi_geo_kc
+    expect_error(chars_injury_matrix_count(ph.data = copy(charsdata)[, chi_geo_kc := NULL], kingco = T))
 
     # should error because 'blah' is not an intent or mechanism
-    expect_error(chars_injury_matrix_count(ph.data = charsdt, intent = 'blah', kingco = F))
-    expect_error(chars_injury_matrix_count(ph.data = charsdt, mechanism = 'blah', kingco = F))
+    expect_error(suppressWarnings(chars_injury_matrix_count(ph.data = charsdt, intent = 'blah', kingco = F)))
+    expect_error(suppressWarnings(chars_injury_matrix_count(ph.data = charsdt, mechanism = 'blah', kingco = F)))
 
     # should error when mis-specify the def argument
     expect_error(chars_injury_matrix_count(ph.data = charsdt, kingco = F, def = 'narrows'))
