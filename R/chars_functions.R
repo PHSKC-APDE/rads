@@ -58,13 +58,16 @@ chars_injury_matrix <- function(){
 #'
 #' @description
 #' Generate hospitalization counts for an injury matrix
-#' specifying the intent and mechanism of injury. Needs line-level CHARS data
-#' with columns beginning with `mechanism_` and `intent_`. Covers both ICD9-cm
-#' (2012-2015) and ICD10-cm (2016+).
+#' specifying the intent and mechanism of injury. Needs line-level CHARS data.
+#' Covers both ICD9-cm (2012-2015) and ICD10-cm (2016+).
 #'
 #' @param ph.data a data.table or data.frame. Must contain CHARS data structured
-#' with one person per row and predetermined `mechanism_` and `intent_` columns.
-#' In other words, this ph.data should come from use of [apde.data::chars()].
+#' with one patient record per row. It must have the following columns, as
+#' specified by [chars_validate_data()]: `seq_no`, `injury_nature_broad`,
+#' `injury_nature_narrow`, `injury_intent`, and `injury_mechanism`. See
+#' `rads.data::synthetic_chars()` for a fully formatted example. If you are
+#' working within the King County, WA infrastructure, you can get formatted data
+#' from `apde.data::chars()`.
 #'
 #' The default is `ph.data = NULL`
 #'
@@ -94,6 +97,14 @@ chars_injury_matrix <- function(){
 #' partial string match is sufficient and is case insensitive. E.g.,
 #' `mechanism = c("fire")` would return both "firearm" and
 #' "fire_burn".
+#'
+#' **SPECIAL CASE: motor_vehicle_traffic**
+#'
+#' The mechanism "motor_vehicle_traffic" is a convenience aggregation that combines
+#' all motor vehicle traffic-related subcategories: "mvt_occupant", "mvt_motorcyclist",
+#' "mvt_pedestrian", "mvt_pedal_cyclist", etc. When you specify
+#' `mechanism = "motor_vehicle_traffic"`, the function will count
+#' hospitalizations for any of these MVT subcategories.
 #'
 #' The default is `mechanism = '*'`, which selects all possible mechanisms
 #'
@@ -145,7 +156,9 @@ chars_injury_matrix <- function(){
 #'
 #' This function will only count injuries where the type of injury (from
 #' ICD10-CM codes) AND the corresponding external cause information (from an
-#' ecode) is present. To examine injuries that do not have an external cause,
+#' ecode) is present. The function uses the `injury_mechanism` and `injury_intent`
+#' columns which contain the primary (first-listed) external cause for each hospitalization.
+#' To examine injuries that do not have an external cause,
 #' please examine the analytic data directly.
 #'
 #' See Jeremy Whitehurst's documentation for the CHARS ETL to understand exactly
@@ -195,199 +208,199 @@ chars_injury_matrix_count<- function(ph.data = NULL,
                                      primary_ecode = TRUE,
                                      kingco = TRUE){
   # Check arguments ----
-    # ph.data ----
-      if (missing(ph.data) || !is.data.frame(ph.data)) {
-        stop("\n\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
-      }
-      if (!data.table::is.data.table(ph.data)) {
-        data.table::setDT(ph.data)
-      }
-      ph.data <- data.table::copy(ph.data) # to prevent changing of original by reference
+  # ph.data ----
+  if (missing(ph.data) || !is.data.frame(ph.data)) {
+    stop("\n\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
+  }
+  if (!data.table::is.data.table(ph.data)) {
+    data.table::setDT(ph.data)
+  }
+  ph.data <- data.table::copy(ph.data) # to prevent changing of original by reference
 
-    # seq_no (unique identifier) ----
-        if(!'seq_no' %in% names(ph.data)){
-          stop("\U2620\U0001f47f\U2620\nph.data must contain the 'seq_no' column, which is the unique identifier.")}
-        if('seq_no' %in% names(ph.data) & length(unique(ph.data$seq_no)) != nrow(ph.data)){
-          stop("\U2620\U0001f47f\U2620\nThe 'seq_no' is a unique patient identifier and should not be repeated across rows.")}
+  ph.data <- chars_validate_data(ph.data = ph.data,
+                                 icdcm_version = 10,
+                                 verbose = FALSE)
 
-    # intent ----
-        if("none" %in% intent & length(intent) != 1){
-          stop("\n\U0001f47f The intent 'none' cannot be specified with any other intents.")
-        }
-        if("*" %in% intent & length(intent) != 1){
-          stop("\n\U0001f47f The intent '*' cannot be specified with any other intents.")
-        }
+  # seq_no (unique identifier) ----
+  # performed by chars_validate_data()
 
-    # mechanism ----
-        if("none" %in% mechanism & length(mechanism) != 1){
-          stop("\n\U0001f47f The mechanism 'none' cannot be specified with any other mechanisms.")
-        }
-        if("*" %in% mechanism & length(mechanism) != 1){
-          stop("\n\U0001f47f The mechanism '*' cannot be specified with any other mechanisms.")
-        }
+  # intent ----
+  if("none" %in% intent & length(intent) != 1){
+    stop("\n\U0001f47f The intent 'none' cannot be specified with any other intents.")
+  }
+  if("*" %in% intent & length(intent) != 1){
+    stop("\n\U0001f47f The intent '*' cannot be specified with any other intents.")
+  }
 
-    # group_by ----
-        if(!is.null(group_by)){
-          if(!inherits(group_by, 'character')){
-            stop("\n\U0001f47f `group_by` must either be NULL or specify a character vector of column names.")}
-          if(length(setdiff(group_by, names(ph.data))) > 0){
-            stop(paste0("\n\U0001f47f `group_by` contains the following column names which do not exist in ph.data: ", paste(setdiff(group_by, names(ph.data)), collapse = ', ') ))}
-        }
+  # mechanism ----
+  if("none" %in% mechanism & length(mechanism) != 1){
+    stop("\n\U0001f47f The mechanism 'none' cannot be specified with any other mechanisms.")
+  }
+  if("*" %in% mechanism & length(mechanism) != 1){
+    stop("\n\U0001f47f The mechanism '*' cannot be specified with any other mechanisms.")
+  }
 
-    # def ----
-        if(!def %in% c('narrow', 'broad') | length(def) != 1){
-          stop("\n\U0001f47f `def` can only have ONE of two values, 'narrow' or 'broad'.")
-        }
-        if(!"injury_nature_narrow" %in% names(ph.data) | !is.logical(ph.data$injury_nature_narrow)){
-          stop("\n\U0001f47f `injury_nature_narrow` must exist exist in ph.data and must be of type logical (TRUE|FALSE).")
-        }
-        if(!"injury_nature_broad" %in% names(ph.data) | !is.logical(ph.data$injury_nature_broad)){
-          stop("\n\U0001f47f `injury_nature_broad` must exist exist in ph.data and must be of type logical (TRUE|FALSE).")
-        }
+  # group_by ----
+  if(!is.null(group_by)){
+    if(!inherits(group_by, 'character')){
+      stop("\n\U0001f47f `group_by` must either be NULL or specify a character vector of column names.")}
+    if(length(setdiff(group_by, names(ph.data))) > 0){
+      stop(paste0("\n\U0001f47f `group_by` contains the following column names which do not exist in ph.data: ", paste(setdiff(group_by, names(ph.data)), collapse = ', ') ))}
+  }
 
-    # primary_ecode ----
-        if(!isTRUE(primary_ecode) && !isFALSE(primary_ecode) ){stop("\n\U0001f47f `primary_ecode` must be a logical vector of length 1, i.e., TRUE or FALSE.")}
-        if(isFALSE(primary_ecode)){stop(paste0("\n\U1F6D1 \U2620 \U0001f47f\n",
-                                        " You set 'primary_ecode = F'. This is no longer a valid option. If you want to use other ecodes\n",
-                                        " you will have to perform a custom analysis using [chars].[stage_diag] & [chars].[stage_ecode]."))}
+  # def ----
+  if(!def %in% c('narrow', 'broad') | length(def) != 1){
+    stop("\n\U0001f47f `def` can only have ONE of two values, 'narrow' or 'broad'.")
+  }
 
-    # kingco ----
-        if(!isTRUE(kingco) && !isFALSE(kingco) ){stop("\n\U0001f47f `kingco` must be a logical vector of length 1, i.e., TRUE or FALSE.")}
-        if (isTRUE(kingco) & (!"chi_geo_kc" %in% names(ph.data))){
-          stop("\n\U0001f47f You specified kingco=TRUE, but `ph.data` does not have the following columns that identify King County data:
+  # presence of of injury_nature_broad and injury_nature_narrow columns checked by chars_validate_data()
+
+  # primary_ecode ----
+  if(!isTRUE(primary_ecode) && !isFALSE(primary_ecode) ){stop("\n\U0001f47f `primary_ecode` must be a logical vector of length 1, i.e., TRUE or FALSE.")}
+  if(isFALSE(primary_ecode)){stop(paste0("\n\U1F6D1 \U2620 \U0001f47f\n",
+                                         " You set 'primary_ecode = F'. This is no longer a valid option. If you want to use other ecodes\n",
+                                         " you will have to perform a custom analysis using [chars].[stage_diag] & [chars].[stage_ecode]."))}
+
+  # kingco ----
+  if(!is.logical(kingco) || length(kingco) != 1 || is.na(kingco)){stop("\n\U0001f47f `kingco` must be a logical vector of length 1, i.e., TRUE or FALSE.")}
+  if (isTRUE(kingco) & (!"chi_geo_kc" %in% names(ph.data))){
+    stop("\n\U0001f47f You specified kingco=TRUE, but `ph.data` does not have the following columns that identify King County data:
                    chi_geo_kc")
-        }
-        if (isTRUE(kingco)){ph.data <- ph.data[chi_geo_kc == "King County"]}
+  }
+  if (isTRUE(kingco)){ph.data <- ph.data[chi_geo_kc == "King County"]}
 
   # Apply narrow or broad definition ----
-      if(def == 'narrow'){ph.data <- ph.data[injury_nature_narrow == T & !is.na(injury_intent)]}
-      if(def == 'broad'){ph.data <- ph.data[injury_nature_broad == T & !is.na(injury_intent)]}
+  if(def == 'narrow'){ph.data <- ph.data[injury_nature_narrow == T & !is.na(injury_intent) & !is.na(injury_mechanism)]}
+  if(def == 'broad'){ph.data <- ph.data[injury_nature_broad == T & !is.na(injury_intent) & !is.na(injury_mechanism)]}
 
   # Get complete list of all possible mechanisms and intents ----
-      possible.intents <- as.character(unique(chars_injury_matrix()$intent))
-      possible.mechanisms <- as.character(unique(chars_injury_matrix()$mechanism))
+  possible.intents <- as.character(unique(chars_injury_matrix()$intent))
+  possible.mechanisms <- as.character(unique(chars_injury_matrix()$mechanism))
 
   # Identify intent of interest ----
-      intent = tolower(intent)
+  intent = tolower(intent)
 
-      if("none" %in% intent){ # none means 'any intent', i.e., 'ignore' the intent
-        selected.intents = "any"
-      }
+  if("none" %in% intent){ # none means 'any intent', i.e., 'ignore' the intent
+    selected.intents = "any"
+  }
 
-      if("*" %in% intent){selected.intents = possible.intents}
+  if("*" %in% intent){selected.intents = possible.intents}
 
-      if(length(intersect(c("*", "none"), intent)) == 0){
-        selected.intents = c()
-        for(i in intent){
-          selected.intents <- unique(c(selected.intents, grep(i, possible.intents, value = TRUE, ignore.case = TRUE)))
-        }
-      }
+  if(length(intersect(c("*", "none"), intent)) == 0){
+    selected.intents = c()
+    for(i in intent){
+      selected.intents <- unique(c(selected.intents, grep(i, possible.intents, value = TRUE, ignore.case = TRUE)))
+    }
+  }
 
-      if(length(selected.intents) < length(intent) & !("*" %in% intent) & !("none" %in% intent)){
-        matched <- sapply(intent, function(i) any(grepl(i, possible.intents, ignore.case = TRUE)))
-        unmatched <- intent[!matched]
-        warning(paste0("\n\u26A0\ufe0f The following intent value(s) did not match any valid intents and were ignored: ",
-                       paste0(unmatched, collapse = ', ')))
-      }
+  if(length(selected.intents) < length(intent) & !("*" %in% intent) & !("none" %in% intent)){
+    matched <- sapply(intent, function(i) any(grepl(i, possible.intents, ignore.case = TRUE)))
+    unmatched <- intent[!matched]
+    warning(paste0("\n\u26A0\ufe0f The following intent value(s) did not match any valid intents and were ignored: ",
+                   paste0(unmatched, collapse = ', ')))
+  }
 
-      if(length(selected.intents) == 0){stop(paste0(
-        "\n\U0001f47f \nYour `intent` value (", intent, ") has filtered out all of the hospitalization injury intents.\nPlease enter 'none', '*', or a new partial keyword term and try again."))}
+  if(length(selected.intents) == 0){stop(paste0(
+    "\n\U0001f47f \nYour `intent` value (", intent, ") has filtered out all of the hospitalization injury intents.\nPlease enter 'none', '*', or a new partial keyword term and try again."))}
 
   # Identify mechanism of interest ----
-      mechanism = tolower(mechanism)
+  mechanism = tolower(mechanism)
 
-      if("none" %in% mechanism){ # none means 'any mechanism', i.e., 'ignore' the mechanism
-        selected.mechanisms  = "any"
-      }
+  if("none" %in% mechanism){ # none means 'any mechanism', i.e., 'ignore' the mechanism
+    selected.mechanisms  = "any"
+  }
 
-      if("*" %in% mechanism){selected.mechanisms  = possible.mechanisms}
+  if("*" %in% mechanism){selected.mechanisms  = possible.mechanisms}
 
-      if(length(intersect(c("*", "none"), mechanism)) == 0){
-        selected.mechanisms  = c()
-        for(i in mechanism){
-          selected.mechanisms  <- unique(c(selected.mechanisms , grep(i, possible.mechanisms, value = TRUE, ignore.case = TRUE)))
-        }
-      }
+  if(length(intersect(c("*", "none"), mechanism)) == 0){
+    selected.mechanisms  = c()
+    for(i in mechanism){
+      selected.mechanisms  <- unique(c(selected.mechanisms , grep(i, possible.mechanisms, value = TRUE, ignore.case = TRUE)))
+    }
+  }
 
-      if(length(selected.mechanisms ) < length(mechanism) & !("*" %in% mechanism) & !("none" %in% mechanism)){
-        matched <- sapply(mechanism, function(i) any(grepl(i, possible.mechanisms, ignore.case = TRUE)))
-        unmatched <- mechanism[!matched]
-        warning(paste0("\n\u26A0\ufe0f The following mechanism value(s) did not match any valid mechanisms and were ignored: ",
-                       paste0(unmatched, collapse = ', ')))
-      }
+  if(length(selected.mechanisms ) < length(mechanism) & !("*" %in% mechanism) & !("none" %in% mechanism)){
+    matched <- sapply(mechanism, function(i) any(grepl(i, possible.mechanisms, ignore.case = TRUE)))
+    unmatched <- mechanism[!matched]
+    warning(paste0("\n\u26A0\ufe0f The following mechanism value(s) did not match any valid mechanisms and were ignored: ",
+                   paste0(unmatched, collapse = ', ')))
+  }
 
-      if(length(selected.mechanisms ) == 0){stop(paste0(
-        "\n\U0001f47f \nYour `mechanism` value (", mechanism, ") has filtered out all of the hospitalization injury mechanisms.\nPlease enter 'none', '*', or a new partial keyword term and try again.\n",
-        "Entering `rads::chars_injury_matrix()` into the console will provide you with a table of valid options."))}
-
-  # Create motor_vehicle_traffic column when needed ----
-      if('motor_vehicle_traffic' %in% selected.mechanisms ){
-        mvt_cols <- paste0('mechanism_', grep('mvt_', possible.mechanisms, value = TRUE))
-        ph.data[, mechanism_motor_vehicle_traffic := Reduce(function(x, y) pmax(x, y, na.rm = TRUE),
-                                                            .SD,
-                                                            init = NA_real_),
-                                                      .SDcols = mvt_cols]
-      }
+  if(length(selected.mechanisms ) == 0){stop(paste0(
+    "\n\U0001f47f \nYour `mechanism` value (", mechanism, ") has filtered out all of the hospitalization injury mechanisms.\nPlease enter 'none', '*', or a new partial keyword term and try again.\n",
+    "Entering `rads::chars_injury_matrix()` into the console will provide you with a table of valid options."))}
 
   # Count hospitalizations for each combination of intent & mechanism of interest ----
-        # create matrix of all mechanisms and intents of interest ----
-        selected.combinations  <- data.table::CJ(mechanism = selected.mechanisms , intent = selected.intents)
+  # create matrix of all mechanisms and intents of interest
+  selected.combinations <- data.table::CJ(mechanism = selected.mechanisms, intent = selected.intents)
 
-        # count number of hospitalizations (i.e., rows) when def == 'narrow' ----
-        hospitalization_counts <- rbindlist(lapply(1:nrow(selected.combinations ), function(ii) {
-          temp.ph.data <- copy(ph.data)
+  # count number of hospitalizations (i.e., rows)
+  hospitalization_counts <- rbindlist(lapply(1:nrow(selected.combinations), function(ii) {
+    temp.ph.data <- copy(ph.data)
 
-        # Identify whether the combination of mech & intent in selected.combinations  has any hospitalizations in person level data ----
-          # could theoretically use injury_mechanism & injury_intent, but would need extra coding to address when either has value 'any'
-            temp.ph.data[, bingo := as.integer(get(paste0("mechanism_", selected.combinations [ii]$mechanism)) >= 1 &
-                                                 get(paste0("intent_", selected.combinations [ii]$intent)) >= 1)]
+    # Identify whether the combination of mech & intent in selected.combinations has any hospitalizations in person level data ----
+    current_mechanism <- selected.combinations[ii]$mechanism
+    current_intent <- selected.combinations[ii]$intent
 
-        # Aggregate (sum) the number of hospitalizations for the mech / intent combination from selected.combinations  ----
-            if(!is.null(group_by)){
-              temp.ph.data <- temp.ph.data[, list(mechanism = as.character(selected.combinations [ii]$mechanism),
-                                                  intent = as.character(selected.combinations [ii]$intent),
-                                                  hospitalizations = sum(bingo)),
-                                           by = group_by]}
-            if(is.null(group_by)){
-              temp.ph.data <- temp.ph.data[, list(mechanism = as.character(selected.combinations [ii]$mechanism),
-                                                  intent = as.character(selected.combinations [ii]$intent),
-                                                  hospitalizations = sum(bingo))]}
+    # Create binary noting presence of current combination of mechanism and intent for each row of ph.data
+    if(current_mechanism == "motor_vehicle_traffic") {
+      mvt_subcategories <- unique(c('motor_vehicle_traffic', grep('mvt', unique(rads.data::icdcm_injury_matrix$mechanism), value = T)))
+      temp.ph.data[, bingo := as.integer(injury_mechanism %in% mvt_subcategories &
+                                           (if(current_intent == "any") !is.na(injury_intent) else injury_intent == current_intent))]
+    } else if(current_mechanism == "any") {
+      temp.ph.data[, bingo := as.integer(!is.na(injury_mechanism) &
+                                           (if(current_intent == "any") !is.na(injury_intent) else injury_intent == current_intent))]
+    } else {
+      temp.ph.data[, bingo := as.integer(injury_mechanism == current_mechanism &
+                                           (if(current_intent == "any") !is.na(injury_intent) else injury_intent == current_intent))]
+    }
 
-          # create grid of all possible combinations of group_by vars ----
-            gridvars <- setdiff(names(temp.ph.data), 'hospitalizations')
-            complete.grid <- do.call(CJ, lapply(gridvars, function(x) unique(temp.ph.data[[x]])))
-            setnames(complete.grid, gridvars)
+    # Aggregate (sum) the number of hospitalizations for the mech / intent combination from selected.combinations ----
+    if(!is.null(group_by)){
+      temp.ph.data <- temp.ph.data[, list(mechanism = current_mechanism,
+                                          intent = current_intent,
+                                          hospitalizations = sum(bingo)),
+                                   by = group_by]}
+    if(is.null(group_by)){
+      temp.ph.data <- temp.ph.data[, list(mechanism = current_mechanism,
+                                          intent = current_intent,
+                                          hospitalizations = sum(bingo))]}
 
-          # merge temp.ph.data onto complete.grid ----
-            temp.ph.data <- merge(complete.grid, temp.ph.data, all = T)
-            temp.ph.data[is.na(hospitalizations), hospitalizations := 0]
+    # create grid of all possible combinations of group_by vars ----
+    gridvars <- setdiff(names(temp.ph.data), 'hospitalizations')
+    complete.grid <- do.call(CJ, lapply(gridvars, function(x) unique(temp.ph.data[[x]])))
+    setnames(complete.grid, gridvars)
 
-          return(temp.ph.data)
-        }), fill=TRUE)
+    # merge temp.ph.data onto complete.grid ----
+    temp.ph.data <- merge(complete.grid, temp.ph.data, all = T)
+    temp.ph.data[is.na(hospitalizations), hospitalizations := 0]
+
+    return(temp.ph.data)
+  }), fill=TRUE)
 
   # Tidy ----
-    # Additional collapse/aggregate if mechanism == 'none' ----
-      if("none" %in% mechanism){
-        hospitalization_counts[, mechanism := "Any mechanism"]
-        hospitalization_counts <- hospitalization_counts[, list(hospitalizations = sum(hospitalizations)), by = setdiff(names(hospitalization_counts), "hospitalizations")]
-      }
+  # Additional collapse/aggregate if mechanism == 'none' ----
+  if("none" %in% mechanism){
+    hospitalization_counts[, mechanism := "Any mechanism"]
+    hospitalization_counts <- hospitalization_counts[, list(hospitalizations = sum(hospitalizations)), by = setdiff(names(hospitalization_counts), "hospitalizations")]
+  }
 
-      hospitalization_counts[mechanism == 'any', mechanism := "Any mechanism"]
+  hospitalization_counts[mechanism == 'any', mechanism := "Any mechanism"]
 
-    # Additional collapse/aggregate if intent == 'none' ----
-      if("none" %in% intent){
-        hospitalization_counts[, intent := "Any intent"]
-        hospitalization_counts <- hospitalization_counts[, list(hospitalizations = sum(hospitalizations)), by = setdiff(names(hospitalization_counts), "hospitalizations")]
-      }
+  # Additional collapse/aggregate if intent == 'none' ----
+  if("none" %in% intent){
+    hospitalization_counts[, intent := "Any intent"]
+    hospitalization_counts <- hospitalization_counts[, list(hospitalizations = sum(hospitalizations)), by = setdiff(names(hospitalization_counts), "hospitalizations")]
+  }
 
-      hospitalization_counts[intent == 'any', intent := "Any intent"]
+  hospitalization_counts[intent == 'any', intent := "Any intent"]
 
-    # Sort columns and rows ----
-        setcolorder(hospitalization_counts, c("mechanism", "intent", "hospitalizations"))
-        setorderv(hospitalization_counts, c("mechanism", "intent", setdiff(names(hospitalization_counts), c("hospitalizations", "mechanism", "intent")) ))
+  # Sort columns and rows ----
+  setcolorder(hospitalization_counts, c("mechanism", "intent", "hospitalizations"))
+  setorderv(hospitalization_counts, c("mechanism", "intent", setdiff(names(hospitalization_counts), c("hospitalizations", "mechanism", "intent")) ))
 
   # Return data ----
-    return(hospitalization_counts)
+  return(hospitalization_counts)
 }
 
 # chars_icd_ccs() ----
