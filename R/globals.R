@@ -30,6 +30,7 @@ utils::globalVariables(c(
   "icdcm_code",
   "icdcm_desc",
   "injury_intent",
+  "injury_mechanism",
   "injury_nature_broad",
   "injury_nature_narrow",
   "intent",

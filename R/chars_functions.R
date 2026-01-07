@@ -945,7 +945,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
 #' @examples
 #' # Validate synthetic CHARS data
 #' mydata <- rads.data::synthetic_chars
-#' validated_data <- validate_chars_data(ph.data = mydata)
+#' validated_data <- chars_validate_data(ph.data = mydata)
 #'
 chars_validate_data <- function(ph.data = NULL,
                                 icdcol = 'diag1',
