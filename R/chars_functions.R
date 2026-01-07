@@ -209,14 +209,6 @@ chars_injury_matrix_count<- function(ph.data = NULL,
                                      kingco = TRUE){
   # Check arguments ----
   # ph.data ----
-  if (missing(ph.data) || !is.data.frame(ph.data)) {
-    stop("\n\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
-  }
-  if (!data.table::is.data.table(ph.data)) {
-    data.table::setDT(ph.data)
-  }
-  ph.data <- data.table::copy(ph.data) # to prevent changing of original by reference
-
   ph.data <- chars_validate_data(ph.data = ph.data,
                                  icdcm_version = 10,
                                  verbose = FALSE)
@@ -687,13 +679,10 @@ chars_icd_ccs_count <- function(ph.data = NULL,
 
   # Check arguments & filter reference table of all ICD CM (CMtable) ----
     # ph.data ----
-        if (missing(ph.data) || !is.data.frame(ph.data)) {
-          stop("\n\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
-        }
-        if (!data.table::is.data.table(ph.data)) {
-          data.table::setDT(ph.data)
-        }
-        ph.data <- data.table::copy(ph.data) # to prevent changing of original by reference
+      ph.data <- chars_validate_data(ph.data = ph.data,
+                                     icdcol = icdcol,
+                                     icdcm_version = 10,
+                                     verbose = FALSE)
 
     # icdcm_version ----
         if(!icdcm_version %in% c(9, 10) | length(icdcm_version) != 1){stop("\n \U0001f47f the `icdcm_version` argument is limited to the integers '9' OR '10'")}
@@ -715,10 +704,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
         }
 
     # seq_no (unique identifier) ----
-        if(!'seq_no' %in% names(ph.data)){
-          stop("\U2620\U0001f47f\U2620\nph.data must contain the 'seq_no' column, which is the unique identifier.")}
-        if('seq_no' %in% names(ph.data) & length(unique(ph.data$seq_no)) != nrow(ph.data)){
-          stop("\U2620\U0001f47f\U2620\nThe 'seq_no' is a unique patient identifier and should not be repeated across rows.")}
+      # performed by chars_validate_data()
 
     # icdcm + superlevel + broad + midlevel + detailed ----
         if(is.null(icdcm) & is.null(superlevel) & is.null(broad) & is.null(midlevel) & is.null(detailed)){
@@ -809,31 +795,8 @@ chars_icd_ccs_count <- function(ph.data = NULL,
 
     # icdcol ----
         if(is.null(icdcol)){stop("\n\U0001f47f The `icdcol` argument cannot be NULL. If you are unsure of what enter, try using `icdcol = 'diag1'`, which is the default")}
-        if(isFALSE(icdcol %in% colnames(ph.data))){
-          stop(paste0("\n\U0001f47f You specified icdcol='", icdcol, "', but '", icdcol, "' does not exist in `ph.data`."))
-        }
-
-        ph.data[, (icdcol) := toupper(get(icdcol))]
-
-        if(length(grep("\\.|-", ph.data[[icdcol]], value = T) >0 )){
-          warning(paste0("\u26A0\ufe0f There is at least one row where `icdcol` (",
-          icdcol, ") contains a hyphen (-), period (.), space or some other ",
-          "non alpha-numeric character. These characters will be deleted, e.g., ",
-          "A85.2 will become A852. This is necessary because causeids in ",
-          "rads::chars_icd_ccs() contains no hyphens or periods."
-          ))
-          ph.data[, paste0(icdcol) := gsub("[[:space:].]+", "", gsub("([^A-Za-z0-9 ])+", "", x = get(icdcol)))]
-        }
-
-        if(icdcm_version == 10){
-          if(nrow(ph.data[is.na(get(icdcol)) | !grepl("^[A-Z][0-9]", get(icdcol))]) > 0){
-            problem.icds <- ph.data[is.na(get(icdcol)) | !grepl("^[A-Z][0-9]", get(icdcol)), ][[icdcol]]
-            warning(paste0("\u26A0\ufe0f There is/are ", length(problem.icds), " row(s) where `icdcol` (",
-            icdcol, ") does not follow the proper ICD-10-CM pattern. All ICD-10-CMs that do not begin with a ",
-            "single capital letter followed by a number have been replaced with NA."))
-            ph.data[!grepl("^[A-Z][0-9]", get(icdcol)) , paste0(icdcol) := NA]
-          }
-        }
+        # presence of icdcol is assessed by chars_validate_data()
+        # icdcm cleaning performed by chars_validate_data()
 
     # group_by ----
         if(!is.null(group_by)){
@@ -848,6 +811,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
         }
 
     # kingco ----
+        if(!is.logical(kingco) || length(kingco) != 1 || is.na(kingco)){stop("\n\U0001f47f `kingco` must be a logical vector of length 1, i.e., TRUE or FALSE.")}
         if (isTRUE(kingco) & (!"chi_geo_kc" %in% names(ph.data))){
           stop("\U0001f47f You specified kingco=TRUE, but `ph.data` does not have the column `chi_geo_kc` that identifies King County")
         }
@@ -873,9 +837,9 @@ chars_icd_ccs_count <- function(ph.data = NULL,
     # generate counts for each query.group ----
       HospCounts <- rbindlist(lapply(unique(CMtable$query.group), function(QG) {
         tempHospCounts <- if (is.null(group_by)) {
-          ph.data[diag1 %in% unlist(CMtable[query.group == QG]$icdcm_code), list(hospitalizations = .N)]
+          ph.data[get(icdcol) %in% unlist(CMtable[query.group == QG]$icdcm_code), list(hospitalizations = .N)]
         } else {
-          ph.data[diag1 %in% unlist(CMtable[query.group == QG]$icdcm_code), list(hospitalizations = .N), by = group_by]
+          ph.data[get(icdcol) %in% unlist(CMtable[query.group == QG]$icdcm_code), list(hospitalizations = .N), by = group_by]
         }
         tempHospCounts[, query.group := QG]
         # tempHospCounts <- CMtable[tempHospCounts, on = "query.group"] # native data.table merge syntax
