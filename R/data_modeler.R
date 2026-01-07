@@ -87,7 +87,6 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
       stop("number_of_observations must be an integer greater than 0")
     }
   }
-
   # convert provided vector into an executable string that generates similar looking data ----
   variable_modeler <- function(oneVariable, number_of_observations, varName = NA, comments = TRUE) {
     if(any(class(oneVariable) %in% "data.table")) {
@@ -100,6 +99,7 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
     }
 
     instructions <- NA
+
 
     if(is.na(varName)) {
       variableName <- sub(".*\\$.*?", "\\1", deparse(substitute(oneVariable)))
