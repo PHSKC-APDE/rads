@@ -102,6 +102,18 @@ library('testthat')
       expect_equal(sort(names(multi.result)),
                    sort(c('icdcm_desc', 'broad_desc', 'detailed_desc', 'hospitalizations')))
 
+    # test for difference icdcol value ----
+      charsdata2 <- setnames(copy(charsdata), 'diag1', 'diag2')
+      icd.result2 <- chars_icd_ccs_count(ph.data = charsdata2,
+                                        icdcm_version = 10,
+                                        broad = NULL,
+                                        detailed = NULL,
+                                        icdcm = '^kidney transplant',
+                                        icdcol = 'diag2',
+                                        group_by = NULL,
+                                        kingco = F)
+      expect_identical(icd.result, icd.result2)
+
     # test that works for ICD9 (pre 2016) ----
       icd9data <- rads.data::synthetic_chars
       icd9counts <- chars_icd_ccs_count(ph.data = icd9data,
