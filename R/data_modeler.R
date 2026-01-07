@@ -13,7 +13,7 @@
 #'
 #' @export
 #' @name data_modeler
-#' @references \url{CREATE A WIKI FOR THIS}
+#' @references \url{https://github.com/PHSKC-APDE/rads/wiki/utilities#data_modeler}
 #'
 #' @import data.table rads.data
 #'
