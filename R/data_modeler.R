@@ -20,8 +20,13 @@
 #' @examples
 #' \donttest{
 #'   library(data.table)
-#'   ph.data <- get_data_birth(cols = c('race4', 'chi_age', 'hra20_name',
-#'                                    'sex', 'birth_weight_grams'))
+#'   ph.data <- data.table(
+#'   id = 1:observations,
+#'   chi_geo_kc = sample(c('King County',NA_character_), observations, replace = T),
+#'   chi_race_7 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), observations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
+#'   chi_sex = as.factor(sample(c("Male","Female"), observations, replace = T)),
+#'   chi_geo_region = factor(sample(c("South", "North", "Seattle", "East"), observations, replace = T), levels = c("South","North","Seattle","East")),
+#'   indicator1 = as.factor(sample(c("never","sometimes", "always", NA), observations, replace = T)))
 #'
 #'   ##Observe that modeled data have the same structure as the original
 #'   DT.synthetic.data <- data_modeler(ph.data = ph.data,
@@ -46,10 +51,10 @@
 #' }
 #'
 
-data_modeler <- function(ph.data, number_of_observations, comments = TRUE, return_code = FALSE, print_code = TRUE) {
-  ### generates a synthetic data set appropriate for testing functions relying on APDE data structures and where you do not want to use real data
-  ### receives description of data set to emulate, number of observations to include, a seed and number of years.
-  ### returns a data.table of synthetic data. If dataset is "generic" the returned structure will have idealized chi values and generic indicators
+data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE, return_code = FALSE, print_code = TRUE) {
+  ### generates a synthetic data set appropriate for testing functions relying on tabular data structures where you do not want to use real data (e.g. sharing methods where the data from the project are sensitive).
+  ### receives data.table object to emulate.
+  ### returns a data.table of synthetic data.
 
   # Global variables used by data.table declared as NULL to make devtools::check() happy ----
   RH <- DT <- `..x` <- NULL
@@ -396,7 +401,6 @@ data_modeler <- function(ph.data, number_of_observations, comments = TRUE, retur
   # Loop through the core function to model entire DT and parse output
   batch_variable_modeler <- function(x){
     variable_modeler(oneVariable = ph.data[,x, with = F][[1]], number_of_observations =  number_of_observations, varName = names(ph.data)[x], comments = comments)
-
   }
 
   codeList <- lapply(seq_along(ph.data), batch_variable_modeler)
