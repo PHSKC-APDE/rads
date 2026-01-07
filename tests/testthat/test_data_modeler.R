@@ -19,7 +19,7 @@ test_that("data_modeler creates correct types", {
   data_types_result <- sapply(DTResult, class)
 
   #all types match
-  testthat::expect_equal(all(data_types_test == data_types_result), TRUE)
+  testthat::expect_equal(all(unlist(data_types_test) == unlist(data_types_result)), TRUE)
 
 })
 
