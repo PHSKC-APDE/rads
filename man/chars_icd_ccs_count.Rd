@@ -24,8 +24,9 @@ chars_icd_ccs_count(
 \item{ph.data}{a data.table or data.frame. Must contain CHARS data structured
 with one person per row and with at least one column of ICD CM codes.
 
-\strong{NOTE!} ph.data must have a column named \code{seq_no}, which is a unique patient
-level identifier.
+\strong{Note:} \code{ph.data} will be validated using \code{\link[=chars_validate_data]{chars_validate_data()}}, which
+requires specific columns including \code{seq_no} (unique patient identifier),
+and the ICD column specified by \code{icdcol}.
 
 The default is \code{ph.data = NULL}}
 
@@ -84,9 +85,10 @@ The default is \code{detailed = NULL}}
 in \code{ph.data} that contains ICD-CM diagnosis codes.
 
 Values must be properly formatted ICD-9-CM or ICD-10-CM codes; codes are
-coerced to uppercase and stripped of punctuation (e.g., \code{A85.2} → \code{A852}).
-For ICD-10-CM, codes must begin with a capital letter followed by a digit
-(invalid codes are set to \code{NA}).
+automatically coerced to uppercase and stripped of punctuation by
+\code{\link[=chars_validate_data]{chars_validate_data()}} (e.g., \code{A85.2} → \code{A852}). For ICD-10-CM, codes
+must begin with a capital letter followed by a digit (invalid codes are set
+to \code{NA}).
 
 The default is \code{icdcol = 'diag1'}, which refers to the principal
 diagnosis code provided by \code{\link[apde.data:chars]{apde.data::chars()}}.}

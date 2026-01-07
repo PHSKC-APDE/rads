@@ -504,7 +504,7 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' See [chars_icd_ccs()] for a complete list of available ICD-10-CM,
 #' ICD-9-CM, and superlevel, broad, midlevel, and narrow classifications.
 #'
-#' \strong{¡¡¡REMEMBER!!!} ICD-10-CM started in 2016! Be sure to use the correct
+#' **¡¡¡REMEMBER!!!** ICD-10-CM started in 2016! Be sure to use the correct
 #' **`icdcm_version`**.
 #'
 #'
@@ -535,8 +535,9 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' @param ph.data a data.table or data.frame. Must contain CHARS data structured
 #' with one person per row and with at least one column of ICD CM codes.
 #'
-#' **NOTE!** ph.data must have a column named `seq_no`, which is a unique patient
-#' level identifier.
+#' **Note:** `ph.data` will be validated using [chars_validate_data()], which
+#' requires specific columns including `seq_no` (unique patient identifier),
+#' and the ICD column specified by `icdcol`.
 #'
 #' The default is `ph.data = NULL`
 #'
@@ -595,9 +596,10 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' in `ph.data` that contains ICD-CM diagnosis codes.
 #'
 #' Values must be properly formatted ICD-9-CM or ICD-10-CM codes; codes are
-#' coerced to uppercase and stripped of punctuation (e.g., `A85.2` → `A852`).
-#' For ICD-10-CM, codes must begin with a capital letter followed by a digit
-#' (invalid codes are set to `NA`).
+#' automatically coerced to uppercase and stripped of punctuation by
+#' [chars_validate_data()] (e.g., `A85.2` → `A852`). For ICD-10-CM, codes
+#' must begin with a capital letter followed by a digit (invalid codes are set
+#' to `NA`).
 #'
 #' The default is `icdcol = 'diag1'`, which refers to the principal
 #' diagnosis code provided by [apde.data::chars()].
@@ -880,8 +882,8 @@ chars_icd_ccs_count <- function(ph.data = NULL,
 }
 
 # chars_validate_data() ----
-#' Validate and prepare CHARS data for use with `chars_icd_ccs_count()` &
-#' `chars_injury_matrix_count()`
+#' Validate and prepare CHARS data for use with chars_icd_ccs_count() &
+#' chars_injury_matrix_count()
 #'
 #' @description
 #' Validates that a dataset meets the requirements for use with

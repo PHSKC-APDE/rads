@@ -17,8 +17,12 @@ chars_injury_matrix_count(
 }
 \arguments{
 \item{ph.data}{a data.table or data.frame. Must contain CHARS data structured
-with one person per row and predetermined \code{mechanism_} and \code{intent_} columns.
-In other words, this ph.data should come from use of \code{\link[apde.data:chars]{apde.data::chars()}}.
+with one patient record per row. It must have the following columns, as
+specified by \code{\link[=chars_validate_data]{chars_validate_data()}}: \code{seq_no}, \code{injury_nature_broad},
+\code{injury_nature_narrow}, \code{injury_intent}, and \code{injury_mechanism}. See
+\code{rads.data::synthetic_chars()} for a fully formatted example. If you are
+working within the King County, WA infrastructure, you can get formatted data
+from \code{apde.data::chars()}.
 
 The default is \code{ph.data = NULL}}
 
@@ -48,6 +52,14 @@ You do not have to type the entire keyword for the mechanism, a
 partial string match is sufficient and is case insensitive. E.g.,
 \code{mechanism = c("fire")} would return both "firearm" and
 "fire_burn".
+
+\strong{SPECIAL CASE: motor_vehicle_traffic}
+
+The mechanism "motor_vehicle_traffic" is a convenience aggregation that combines
+all motor vehicle traffic-related subcategories: "mvt_occupant", "mvt_motorcyclist",
+"mvt_pedestrian", "mvt_pedal_cyclist", etc. When you specify
+\code{mechanism = "motor_vehicle_traffic"}, the function will count
+hospitalizations for any of these MVT subcategories.
 
 The default is \code{mechanism = '*'}, which selects all possible mechanisms}
 
@@ -103,9 +115,8 @@ summary of all injury hospitalizations without regard to the intent or mechanism
 }
 \description{
 Generate hospitalization counts for an injury matrix
-specifying the intent and mechanism of injury. Needs line-level CHARS data
-with columns beginning with \code{mechanism_} and \code{intent_}. Covers both ICD9-cm
-(2012-2015) and ICD10-cm (2016+).
+specifying the intent and mechanism of injury. Needs line-level CHARS data.
+Covers both ICD9-cm (2012-2015) and ICD10-cm (2016+).
 }
 \details{
 Since the injury analysis uses many columns, we suggest that you obtain
@@ -114,7 +125,9 @@ columns of interest.
 
 This function will only count injuries where the type of injury (from
 ICD10-CM codes) AND the corresponding external cause information (from an
-ecode) is present. To examine injuries that do not have an external cause,
+ecode) is present. The function uses the \code{injury_mechanism} and \code{injury_intent}
+columns which contain the primary (first-listed) external cause for each hospitalization.
+To examine injuries that do not have an external cause,
 please examine the analytic data directly.
 
 See Jeremy Whitehurst's documentation for the CHARS ETL to understand exactly
