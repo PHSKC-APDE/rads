@@ -54,24 +54,11 @@ data_modeler <- function(ph.data, number_of_observations, comments = TRUE, retur
   # Global variables used by data.table declared as NULL to make devtools::check() happy ----
   RH <- DT <- `..x` <- NULL
 
-#TEST DATA
-DT_analytic_ready <- get_data_chars()
-DT_analytic_ready$chi_race_7 <- factor(DT_analytic_ready$chi_race_7, ordered = T)
-DT_analytic_ready$chi_race_7 <- factor(DT_analytic_ready$chi_race_eth8, ordered = F)
-
-ph.data <- DT_analytic_ready
-ph.data[, long_string := ifelse(lenstayd %% 2 == 1, "this is a longer sentence for all of us to see", "this is shorter sentence")]
-
-number_of_observations <- 100
-comments <- TRUE
-return_code <- FALSE
-print_code <- TRUE
-
   # Validate inputs ----
   if(missing(ph.data)){stop('\n\U1F6D1 ph.data must be provided')}
 
   if (is.data.frame(ph.data)) {
-    setDT(ph.data)
+    data.table::setDT(ph.data)
   } else {
     stop(paste0("\n\U1F6D1 ph.data must be a data.table or data.frame."))
   }
@@ -96,14 +83,12 @@ print_code <- TRUE
     }
   }
 
-  # Core function: convert provided data into an executable string that generates similar looking data ----
+  # convert provided vector into an executable string that generates similar looking data ----
   variable_modeler <- function(oneVariable, number_of_observations, varName = NA, comments = TRUE) {
     if(any(class(oneVariable) %in% "data.table")) {
       if(ncol(oneVariable) == 1) {
         message(class(oneVariable))
         oneVariable <- oneVariable[,1][[1]]
-        #message(class(oneVariable))
-        #message("caught DT")
       } else {
         stop("more than 1 column passed. Only pass a vector or one column")
       }
@@ -195,10 +180,10 @@ print_code <- TRUE
 
     #characters:
     if(inherits(oneVariable, "character")){
-      #categorical characters:
-      # assumed if there are 61 (number of HRAs) or fewer unique items on a vector with 61 or more rows
-      # these are reapplied with probability matching the proportion of each variable
-      if(is.na(instructions) & (length(unique(oneVariable)) <= 61 & length(oneVariable) > 61)){
+      # categorical characters:
+      # assumed if there are 61 (number of HRAs) or fewer unique items in a vector OR if the vector is less than 75% unique
+      # the categories are reapplied with probability matching the proportion of each variable
+      if(is.na(instructions) & (length(unique(oneVariable)) <= 61 | length(unique(oneVariable)) < (length(oneVariable) *.75))){
         instructions <- paste0('`',variableName,'`',' = sample(c("',paste0(unlist(unique(oneVariable)),collapse = '", "'),'"), ', number_of_observations,', replace = TRUE, prob = c(',paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ', '),'))', collapse = '')
         instructions <- gsub("'NA'", "NA", instructions)
         if(comments){
@@ -206,11 +191,34 @@ print_code <- TRUE
         }
       }
 
-      #miscellaneous characters (free text):
+      # numeric characters:
       # assumed if there are more than 61 observations, and 75% or more are unique
+      # and they cleanly convert to numeric
+      # replaced with numeric of range with uniform distribution
+      if(is.na(instructions) &
+         (length(unique(oneVariable)) >= (length(oneVariable) *.75)) &
+         sum(is.na(oneVariable)) == sum(is.na(suppressWarnings(as.numeric(oneVariable))))) {
+        startNum <- min(suppressWarnings(as.numeric(oneVariable)))
+        endNum <- max(suppressWarnings(as.numeric(oneVariable)))
+
+        #add function to count number of decimals and rate of changecan be adjusted
+        byNum <- .01
+        decLength <- 2
+
+        instructions <- paste0('`',variableName,'`',' = as.character(sample(sprintf("%.', decLength ,'f",seq(', startNum, ', ',endNum,', by = ', byNum,')), ', number_of_observations,', replace = TRUE))', collapse = '')
+        instructions <- gsub("'NA'", "NA", instructions)
+        if(comments){
+          instructions <- paste0(instructions, ' # as numeric looking character')
+        }
+      }
+
+      # miscellaneous characters (free text):
+      # assumed if there are more than 61 observations, and 75% or more are unique
+      # and they do not cleanly convert to numeric
       # replaced with "lorem ipsum" of length similar to source
       if(is.na(instructions) &
-         (length(unique(oneVariable)) >= (length(oneVariable) *.75))) {
+         (length(unique(oneVariable)) >= (length(oneVariable) *.75)) &
+         sum(is.na(oneVariable)) != sum(is.na(suppressWarnings(as.numeric(oneVariable))))) {
         #arbitrarily long lorem ipsum to be pared down for expore. May need ot be bigger if paragraph length text are passed to this function
         loremipsum <- "Lorem ipsum dolor sit amet consectetur adipiscing elit. Pretium tellus duis convallis tempus leo eu aenean. Iaculis massa nisl malesuada lacinia integer nunc posuere. Conubia nostra inceptos himenaeos orci varius natoque penatibus. Nulla molestie mattis scelerisque maximus eget fermentum odio."
         minimumLength <- min(nchar(oneVariable))
@@ -250,7 +258,7 @@ print_code <- TRUE
       # identify if dates are unique by day, month, or year
       # randomly sample dates between first and last date in uniform distribution
       if(is.na(instructions) & length(unique(oneVariable)) > 12){
-        # [detect if dates are unique by day or month]
+        # detect if dates are unique by day, month, or year
         uniqueByType <- "day"
         months <- format(oneVariable, "%Y-%m")
         if(length(unique(months)) == length(unique(oneVariable))) {
@@ -271,10 +279,96 @@ print_code <- TRUE
       }
     }
 
-    #POSIXt:
+    # POSIXt:
+    # This section initially drafted by copilot, initial review and corrections by RWB
+    if(inherits(oneVariable, "POSIXct")){
+      # If there are 12 or fewer unique timestamps, sample with original probability
+      if(is.na(instructions) & length(unique(oneVariable)) <= 12){
+
+        tz <- attr(oneVariable, "tzone")
+        # Format values to full seconds; include timezone in the string for robust parsing
+        vals_chr <- format(unique(oneVariable), "%Y-%m-%d %H:%M:%S", usetz = TRUE)
+
+        if(!is.null(tz) && nzchar(tz)){
+          instructions <- paste0(
+            '`', variableName, '`',
+            ' = as.POSIXct(sample(c("',
+            paste0(vals_chr, collapse = '", "'),
+            '"), ',
+            number_of_observations,
+            ', replace = TRUE, prob = c(',
+            paste0(prop.table(table(oneVariable, useNA = "ifany")), collapse = ', '),
+            ')), tz = "', tz, '")'
+          )
+        } else {
+          instructions <- paste0(
+            '`', variableName, '`',
+            ' = as.POSIXct(sample(c("',
+            paste0(vals_chr, collapse = '", "'),
+            '"), ',
+            number_of_observations,
+            ', replace = TRUE, prob = c(',
+            paste0(prop.table(table(oneVariable, useNA = "ifany")), collapse = ', '),
+            ')))'
+          )
+        }
+
+        instructions <- gsub("'NA'", "NA", instructions)
+        if(comments){
+          instructions <- paste0(instructions, ' # as POSIXct (with original probability)')
+        }
+      }
+
+      # If more than 12 unique timestamps, detect granularity and sample uniformly
+      if(is.na(instructions) & length(unique(oneVariable)) > 12){
+
+        # Detect if timestamps are unique by second, minute, hour, day, month, or year
+        uniqueByType <- "sec"
+        mins   <- format(oneVariable, "%Y-%m-%d %H:%M")
+        if(length(unique(mins))   == length(unique(oneVariable))) uniqueByType <- "min"
+        hours  <- format(oneVariable, "%Y-%m-%d %H")
+        if(length(unique(hours))  == length(unique(oneVariable))) uniqueByType <- "hour"
+        days   <- format(oneVariable, "%Y-%m-%d")
+        if(length(unique(days))   == length(unique(oneVariable))) uniqueByType <- "day"
+        months <- format(oneVariable, "%Y-%m")
+        if(length(unique(months)) == length(unique(oneVariable))) uniqueByType <- "month"
+        years  <- format(oneVariable, "%Y")
+        if(length(unique(years))  == length(unique(oneVariable))) uniqueByType <- "year"
+
+        startDT <- suppressWarnings(min(oneVariable, na.rm = TRUE))
+        endDT   <- suppressWarnings(max(oneVariable, na.rm = TRUE))
+        tz <- attr(oneVariable, "tzone")
+        start_str <- format(startDT, "%Y-%m-%d %H:%M:%S")
+        end_str   <- format(endDT,   "%Y-%m-%d %H:%M:%S")
+
+        if(!is.null(tz) && nzchar(tz)){
+          instructions <- paste0(
+            '`', variableName, '`',
+            ' = sample(seq(as.POSIXct("', start_str, '", tz = "', tz, '"), ',
+            'as.POSIXct("', end_str, '", tz = "', tz, '"), ',
+            'by = "', uniqueByType, '"), ',
+            number_of_observations,', replace = TRUE)'
+          )
+        } else {
+          instructions <- paste0(
+            '`', variableName, '`',
+            ' = sample(seq(as.POSIXct("', start_str, '"), ',
+            'as.POSIXct("', end_str, '"), ',
+            'by = "', uniqueByType, '"), ',
+            number_of_observations,', replace = TRUE)'
+          )
+        }
+
+        instructions <- gsub("'NA'", "NA", instructions)
+        if(comments){
+          instructions <- paste0(instructions, ' # as POSIXct (with uniform distribution by ', uniqueByType,')')
+        }
+      }
+    }
 
 
-    #logicals:
+
+    # logicals:
     if(inherits(oneVariable,"logical")) {
       # match proportional distribution of source
       instructions <- paste0('`',variableName,'`',' = sample(c("',paste0(unlist(unique(oneVariable)),collapse = '", "'),'"), ', number_of_observations,', replace = TRUE, prob = c(',paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ', '),'))', collapse = '')
@@ -286,27 +380,26 @@ print_code <- TRUE
       }
     }
 
-
     # unmatched:
     if(is.na(instructions)) {
       # return vector of NA integers
       # if comments, indicate unmodeled data class
       instructions <- paste0("`",variableName,"`", " = as.integer(NA)")
       if(comments){
-        instructions <- paste0(instructions, " # [",variableName,"], of class [",paste0(class(oneVariable), collapse =  "]; ["),"] not modeled")
+        instructions <- paste0(instructions, " # [",variableName,"] of class [",paste0(class(oneVariable), collapse =  "], ["),"] not modeled")
       }
     }
 
     return(instructions)
   }
 
-  # Loop through the core function to model entire DT and parse output ----
-  batch_variable_modeler <- function(x) {
-    variable_modeler(oneVariable = ph.data[,x,with = FALSE][[1]], number_of_observations =  number_of_observations, varName = names(ph.data)[x], comments = comments)
+  # Loop through the core function to model entire DT and parse output
+  batch_variable_modeler <- function(x){
+    variable_modeler(oneVariable = ph.data[,x, with = F][[1]], number_of_observations =  number_of_observations, varName = names(ph.data)[x], comments = comments)
+
   }
 
   codeList <- lapply(seq_along(ph.data), batch_variable_modeler)
-
 
   if(comments) {
     codeListParsed <- c(list("DT <- data.table("),gsub(" #", ", #", codeList[1:(length(codeList)-1)]), gsub(" #",") #",codeList[length(codeList)]))
@@ -316,7 +409,7 @@ print_code <- TRUE
 
   codeText <- paste(unlist(codeListParsed), collapse =" \n" )
 
-  #issue warning if any variables were not modeled
+  # issue warning if any variables were not modeled
   if(grepl("] not modeled" ,codeText)) {
     warning("There are one or more variables that could not be modeled. These will be NA columns in the model data. Review comments (run with comments = TRUE) for additional details")
   }
@@ -326,11 +419,9 @@ print_code <- TRUE
   }
 
   if(return_code) {
-
-
     return(codeListParsed)
   }else{
-    eval(parse(text = paste0(codeText)))
+    DT <- eval(parse(text = paste0(codeText)))
     return(DT)
   }
 }

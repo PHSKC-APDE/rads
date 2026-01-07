@@ -10,7 +10,8 @@ test_that("data_modeler creates correct types", {
     chi_geo_region = factor(sample(c("South", "North", "Seattle", "East"), observations, replace = T), levels = c("South","North","Seattle","East")),
     indicator1 = as.factor(sample(c("never","sometimes", "always", NA), observations, replace = T)),
     indicator2 = as.factor(sample(c(1,2,3,4, NA), observations, replace = T)),
-    indicator3 = as.factor(sample(c("<20","21-40","41-60","61<"),  observations, replace = T)))
+    indicator3 = as.factor(sample(c("<20","21-40","41-60","61<"),  observations, replace = T)),
+    dates_posix14 = as.POSIXct(sample(c("2025-01-15 00:00:00 UTC","2025-02-15 00:00:00 UTC","2025-03-15 00:00:00 UTC","2025-04-15 00:00:00 UTC","2025-05-15 00:00:00 UTC","2025-06-15 00:00:00 UTC","2025-07-15 00:00:00 UTC","2025-08-15 00:00:00 UTC","2025-09-15 00:00:00 UTC","2025-10-15 00:00:00 UTC","2025-11-15 00:00:00 UTC","2025-12-15 00:00:00 UTC","2026-01-15 00:00:00 UTC","2026-02-15 00:00:00 UTC"), observations, replace = TRUE, prob = c(.05,.05,.05,.05,.05,.10,.10,.10,.10,.10,.10,.15,.05,.05)), tz = "UTC"))
 
   DTResult <- data_modeler(ph.data = DTTest, number_of_observations = 100, comments = T, return_code = F, print_code = T)
 
@@ -18,7 +19,7 @@ test_that("data_modeler creates correct types", {
   data_types_result <- sapply(DTResult, class)
 
   #all types match
-  expect_equal(all(data_types_test == data_types_result), TRUE)
+  testthat::expect_equal(all(data_types_test == data_types_result), TRUE)
 
 })
 
