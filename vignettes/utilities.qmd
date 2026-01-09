@@ -18,6 +18,7 @@ The core utility functions we'll cover in this vignette are:
 -   [`calc_age()`](#calc_age): Calculate age based on two dates
 -   [`convert_to_date()`](#convert_to_date): Convert various formats to Date objects
 -   [`create_dictionary()`](#create_dictionary): Generate a comprehensive data dictionary for a data.table or data.frame
+-   [`data_modeler()`](#data_modeler): Create uncorrelated data and code that recreates data for sharing publicly
 -   [`format_time()`](#format_time-and-format_time_simple): Format numeric values into human-readable time chunks
 -   [`format_time_simple()`](#format_time-and-format_time_simple): Format numeric values into a single time chunk
 -   [`generate_yaml()`](#generate_yaml): Generate a YAML file for loading R data to SQL
@@ -31,6 +32,7 @@ The core utility functions we'll cover in this vignette are:
 -   [`validate_hhsaw_key()`](#validate_hhsaw_key): Validates HHSAW keys and, if possible, opens a connection to HHSAW
 
 Let's explore each of these functions with examples to demonstrate their usage and benefits.
+
 
 # Setting up the environment
 
@@ -54,6 +56,8 @@ pretty_kable <- function(dt) {
 library(rads)
 library(data.table)
 ```
+
+# Functions
 
 ## calc_age() {#calc_age}
 
@@ -217,6 +221,149 @@ head(large_dict, 8)
 ```{r}
 #| echo: false
 pretty_kable(head(large_dict, 8))
+```
+
+## data_modeler()
+
+Data model receives a data.table object and returns a data.table of similar structure and content, but with uncorrelated data across columns. For example, a column of dates will become a column of dates of a similar range, and distribution, but randomly distributed across observations. Common use cases include:
+
++  demonstrating a statistic or visualization without exposing the audience to "real" data or results
++  sharing code, including code to generate a workable data set, to request help from others
++  creating data sets on the fly for unit testing or training
+
+There are two kinds of output that data_modeler() returns, either the data table itself, or a table of strings that can be evaluated to create the data table.
+
+In addition, data_modeler() can output a human readable version of the generation code that the user can copy and paste into their own scripts for sharing publicly.
+
+### data privacy caveats
+
+data_modeler makes some guesses as to if a column's content should be randomized (such as person names or blood pressures) or kept but randomly distributed (such as levels of response to a question or city names). They way it does this is based on how unique the observation, and not based on specific content. Because of this, you should consider if and how a variable should first be de identified or otherwise generalized, hashed, or removed
+
+data_modeler creates an uncorrelated column of data to substitute the original by randomly reassigning values across that column. However, this does not ensure that meaningful information is not passed along. For instance, if the provided data set is of outcomes in a small population (e.g. indicator A on American Indian/Alaska Native population in a given zip code) the uncorrelated result would still show a similar rate of that outcome in that population. The analyst should consider if this is ok or not and take measures to correct if necessary by either changing the input data or modifying the synthetic data. A simple approach in the above example would be to add one or more population groups so that the outcome would be distributed (in an uncorrelated distribution) across both populations, removing the ability to estimate the rate for the smaller population.
+
+### walkthrough
+
+For the below examples, we use teh following demonstration data. But this should work with any two dimensional data.table object (or data frames that are coercable to a data.table). Our demo "real" data has one indicator variable that represents an outcome that is never in the white population, sometimes in the asian population, and always in other races. In an uncorrelated (and so non-informative) synthetic data set, we would expect this indicator to no longer be biased by race.
+
+```{r create demonstration "real" data}
+DT.real.data <- data.table(
+   id = 1:1000,
+   chi_geo_kc = sample(c('King County',NA), 1000, replace = T),
+   chi_race_7 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), 1000, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
+   chi_sex = as.factor(sample(c("Male","Female"), 1000, replace = T)),
+   chi_geo_region = factor(sample(c("South", "North", "Seattle", "East"), 1000, replace = T), levels = c("South","North","Seattle","East")))
+
+# and we will attach biased indicators.
+#indicator1, all White population are "never", all "Asians, "sometimes", and everyone else, "always
+   DT.real.data[, indicator1 := ifelse(chi_race_7 == "White", "never",
+                         ifelse(chi_race_7 == "Asian", "sometimes",
+                                "always"))]
+```
+
+```{r create a data.table of synthetic data}
+#| echo: fenced
+
+
+##Observe that modeled data have the same structure as the original
+DT.synthetic.data <- data_modeler(ph.data = DT.real.data, #our "real" data
+                                number_of_observations =  100, #number of observations to create in the synthetic data
+                                comments = TRUE, #weather or not to include comments in code (only matters for return_code == TRUE or print_code == TRUE)
+                                return_code = FALSE, #return a DT of strings for creating the synthetic data instead of the data itself. leave FALSE to receive synthetic data
+                              print_code = FALSE) #print the generation code to terminal. useful for both review and if you wish to copy into other contexts, such as a shareable script or in a chat with a LLM/AI
+```
+
+You can observe that the data structures are the same for both data frames:
+
+```{r}
+#| echo: fenced
+str(DT.real.data)
+str(DT.synthetic.data)
+```
+
+But the data shapes are not:
+
+```{r}
+#| echo: fenced
+table(DT.real.data[,.(indicator1,chi_race_7)])
+table(DT.synthetic.data[,.(indicator1,chi_race_7)])
+```
+
+You can review, share, and execute the code used to create the synthetic data in two ways. Manually by printing it to terminal and copying it into your script, or receiving and processing the text object, which is more useful or programmatic handling.
+
+```{r}
+#| echo: fenced
+
+DT.synthetic.data <- data_modeler(ph.data = DT.real.data,
+                                number_of_observations =  100, 
+                                comments = TRUE, 
+                                return_code = FALSE,
+                              print_code = TRUE) # change this to true
+```
+The below code is the same text used to generate the data.table we assigned to DT.synthetic.data
+
+```{r code from terminal}
+DT <- data.table( 
+`id` = as.integer(1:100), # as ID variable integer (non factor) 
+`chi_geo_kc` = sample(c(NA, "King County"), 100, replace = TRUE, prob = c(0.482, 0.518)), # as categorical character (non factor) 
+`chi_race_7` = factor(sample(c("White", "Multiple", "Hispanic", "AIAN", "Black", "Asian", "Other", NA, "NHPI"), 100, replace = TRUE, prob = c(0.179, 0.016, 0.07, 0.115, 0.005, 0.384, 0.057, 0.152, 0.022)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple"), ordered = FALSE), # as factor 
+`chi_sex` = factor(sample(c("Female", "Male"), 100, replace = TRUE, prob = c(0.525, 0.475)), levels = c("Female", "Male"), ordered = FALSE), # as factor 
+`chi_geo_region` = factor(sample(c("Seattle", "East", "South", "North"), 100, replace = TRUE, prob = c(0.284, 0.232, 0.243, 0.241)), levels = c("South", "North", "Seattle", "East"), ordered = FALSE), # as factor 
+`indicator1` = sample(c("never", "always", "sometimes", NA), 100, replace = TRUE, prob = c(0.415, 0.384, 0.179, 0.022))) # as categorical character (non factor)
+```
+
+This allows you to review the logic, share the code with others, or make changes as you see fit. Note that this output includes comments that describe the nature of each variable. Assign "comments = FALSE" to exclude these from the output.
+
+If you wish to use R to edit the text, you can receive the text as a DT object instead using:
+
+```{r}
+
+DT.synthetic.data.instructions <- data_modeler(ph.data = DT.real.data,
+                                number_of_observations =  100, 
+                                comments = FALSE, 
+                                return_code = TRUE, #setting this to "TRUE" will a DT of text strings instead of a DT of synthetic data
+                              print_code = FALSE)
+
+head(DT.synthetic.data.instructions)
+```
+After processing the text as desired, you can execute it, creating the desired synthetic data object, as follows:
+
+```{r}
+## Manually convert received code into data
+codeText <- paste(unlist(DT.synthetic.data.instructions), collapse =" \n" )
+DT.synthetic.data.manual <- eval( parse(text = paste0(codeText)))
+
+str(DT.real.data)
+str(DT.synthetic.data)
+str(DT.synthetic.data.manual)
+
+```
+
+Finally, each time data_modeler is executed, there is a randomness to how the data are created. If you wish to create identical data sets, be sure to set seed before executing:
+
+```{r}
+DT.synthetic.data.random <- data_modeler(ph.data = DT.real.data,
+                                number_of_observations =  100, 
+                                comments = TRUE, 
+                                return_code = FALSE,
+                              print_code = FALSE) 
+
+set.seed(1000)
+DT.synthetic.data.s1000a <- data_modeler(ph.data = DT.real.data,
+                                number_of_observations =  100, 
+                                comments = TRUE, 
+                                return_code = FALSE,
+                              print_code = FALSE) 
+
+set.seed(1000)
+DT.synthetic.data.s1000b <- data_modeler(ph.data = DT.real.data,
+                                number_of_observations =  100, 
+                                comments = TRUE, 
+                                return_code = FALSE,
+                              print_code = FALSE) 
+
+identical(DT.synthetic.data.random, DT.synthetic.data.s1000a)
+
+identical(DT.synthetic.data.s1000a, DT.synthetic.data.s1000b)
 ```
 
 ## format_time() and format_time_simple() {#format_time-and-format_time_simple}
