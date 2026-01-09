@@ -114,7 +114,7 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
         orderTF <- is.ordered(oneVariable)
         detectedLevels <- levels(oneVariable)
         instructions <- paste0('`',variableName,'`',' = factor(sample(c("',paste0(unlist(unique(oneVariable)),collapse = '", "'),'"), ', number_of_observations,', replace = TRUE, prob = c(',paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ', '),')), levels = c("',paste0(detectedLevels, collapse = '", "'),'"), ordered = ', orderTF,')', collapse = '')
-        instructions <- gsub("'NA'", 'NA', instructions)
+        instructions <- gsub('"NA"', 'NA', instructions)
         if(comments) {
           instructions <- paste0(instructions, ' # as factor')
         }
@@ -124,18 +124,27 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
     # integers:
     if(inherits(oneVariable,"integer")) {
       # categorical integers:
-      # assumed to be if there are 61 (number of HRAs) or fewer unique items on a vector with 61 or more rows
-      # OR
-      # if all are unique
+      # if all are unique, treat as an ID and recreate as a vector of i to N with i being the lowest value in the data, and N being number of observations to be synthesized
+      if(is.na(instructions) & (length(unique(oneVariable)) == length(oneVariable))) {
+        bottom <- min(oneVariable)
+        top <- bottom +(number_of_observations-1)
+        instructions <- paste0("`",variableName,"`"," = as.integer(",bottom,":",top,")", collapse = "")
+        instructions <- gsub('"NA"', 'NA', instructions)
+        if(comments){
+          instructions <- paste0(instructions, " # as ID variable integer (non factor)")
+        }
+      }
+      # assumed to be descriptive/indicator values if there are 61 (number of HRAs) or fewer unique items on a vector with 61 or more rows
       # these are reapplied with probability matching the proportion of each variable
       if(is.na(instructions) &
-         ((length(unique(oneVariable)) <= 61 & length(oneVariable) >= 61) | (length(unique(oneVariable)) == length(oneVariable)))) {
+         ((length(unique(oneVariable)) <= 61 & length(oneVariable) >= 61) )) {
         instructions <- paste0("`",variableName,"`"," = as.integer(sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", number_of_observations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),")))", collapse = "")
-        instructions <- gsub("'NA'", "NA", instructions)
+        instructions <- gsub('"NA"', 'NA', instructions)
         if(comments){
           instructions <- paste0(instructions, " # as categorical integer (non factor)")
         }
       }
+
       # continuous integer:
       # assumed to be if there are more than 61 (number of HRAs) items on a vector with 61 or more rows
       # AND
@@ -190,7 +199,7 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
       # the categories are reapplied with probability matching the proportion of each variable
       if(is.na(instructions) & (length(unique(oneVariable)) <= 61 | length(unique(oneVariable)) < (length(oneVariable) *.75))){
         instructions <- paste0('`',variableName,'`',' = sample(c("',paste0(unlist(unique(oneVariable)),collapse = '", "'),'"), ', number_of_observations,', replace = TRUE, prob = c(',paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ', '),'))', collapse = '')
-        instructions <- gsub("'NA'", "NA", instructions)
+        instructions <- gsub('"NA"', 'NA', instructions)
         if(comments){
           instructions <- paste0(instructions, ' # as categorical character (non factor)')
         }
@@ -211,7 +220,7 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
         decLength <- 2
 
         instructions <- paste0('`',variableName,'`',' = as.character(sample(sprintf("%.', decLength ,'f",seq(', startNum, ', ',endNum,', by = ', byNum,')), ', number_of_observations,', replace = TRUE))', collapse = '')
-        instructions <- gsub("'NA'", "NA", instructions)
+        instructions <- gsub('"NA"', 'NA', instructions)
         if(comments){
           instructions <- paste0(instructions, ' # as numeric looking character')
         }
@@ -253,7 +262,7 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
       if(is.na(instructions) & length(unique(oneVariable)) <= 12){
 
         instructions <- paste0('`',variableName,'`',' = as.Date(sample(c("',paste0(unlist(unique(oneVariable)),collapse = '", "'),'"), ', number_of_observations,', replace = TRUE, prob = c(',paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ', '),')))', collapse = '')
-        instructions <- gsub("'NA'", "NA", instructions)
+        instructions <- gsub('"NA"', 'NA', instructions)
         if(comments){
           instructions <- paste0(instructions, ' # as Date (with original probability)')
         }
@@ -277,7 +286,7 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
         endDate <- max(oneVariable)
 
         instructions <- paste0('`',variableName,'`',' = sample(seq(as.Date("', startDate, '"), as.Date("',endDate,'"), by = "', uniqueByType,'"), ', number_of_observations,', replace = TRUE)', collapse = '')
-        instructions <- gsub("'NA'", "NA", instructions)
+        instructions <- gsub('"NA"', 'NA', instructions)
         if(comments){
           instructions <- paste0(instructions, ' # as Date (with uniform distribution by ', uniqueByType,')')
         }
@@ -318,7 +327,7 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
           )
         }
 
-        instructions <- gsub("'NA'", "NA", instructions)
+        instructions <- gsub('"NA"', 'NA', instructions)
         if(comments){
           instructions <- paste0(instructions, ' # as POSIXct (with original probability)')
         }
@@ -364,7 +373,7 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
           )
         }
 
-        instructions <- gsub("'NA'", "NA", instructions)
+        instructions <- gsub('"NA"', 'NA', instructions)
         if(comments){
           instructions <- paste0(instructions, ' # as POSIXct (with uniform distribution by ', uniqueByType,')')
         }
@@ -377,9 +386,9 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
     if(inherits(oneVariable,"logical")) {
       # match proportional distribution of source
       instructions <- paste0('`',variableName,'`',' = sample(c("',paste0(unlist(unique(oneVariable)),collapse = '", "'),'"), ', number_of_observations,', replace = TRUE, prob = c(',paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ', '),'))', collapse = '')
-      instructions <- gsub('"NA"', "NA", instructions)
-      instructions <- gsub('"FALSE"', "FALSE", instructions)
-      instructions <- gsub('"TRUE"', "TRUE", instructions)
+      instructions <- gsub('"NA"', 'NA', instructions)
+      instructions <- gsub('"FALSE"', 'FALSE', instructions)
+      instructions <- gsub('"TRUE"', 'TRUE', instructions)
       if(comments){
         instructions <- paste0(instructions, ' # as logical')
       }
