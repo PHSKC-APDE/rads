@@ -228,22 +228,22 @@ pretty_kable(head(large_dict, 8))
 Data model receives a data.table object and returns a data.table of similar structure and content, but with uncorrelated data across columns. For example, a column of dates will become a column of dates of a similar range, and distribution, but randomly distributed across observations. Common use cases include:
 
 +  demonstrating a statistic or visualization without exposing the audience to "real" data or results
-+  sharing code, including code to generate a workable data set, to request help from others
++  sharing code that generates a data set for minimally viable examples used in requesting help from others
 +  creating data sets on the fly for unit testing or training
 
-There are two kinds of output that data_modeler() returns, either the data table itself, or a table of strings that can be evaluated to create the data table.
+data_modeler() makes some guesses as to if a column's content should be randomized (such as person names or blood pressures) or kept but randomly distributed (such as levels of response to a question or city names). This is intended to capture original categories where appropriate, or generate random data (similarly shaped numbers, or "lore ipsum"). It bases these guesses on the data type (integer or string), and complexity (e.g. 75% being unique data), but not the meaning of the data (i.e. a zip code or human name). Variables that are identified as non-categorical will, in most cases, be replaced with a uniform distribution of noisy, but similarly shaped, data. Variables idnetified as categorical will, in most cases, be replaced with identical categories in a similar distribution, but randomly assigned to observations (a data set of 95% males and 5% females would still generate a data set of roughly 95% males and 5% females).
 
-In addition, data_modeler() can output a human readable version of the generation code that the user can copy and paste into their own scripts for sharing publicly.
+There are two kinds of output that data_modeler() returns, either the data table itself, or a table of strings that can be evaluated to create the data table. In addition, data_modeler() can output a human readable version of the generation code that the user can copy and paste into their own scripts for sharing publicly.
 
 ### data privacy caveats
 
-data_modeler makes some guesses as to if a column's content should be randomized (such as person names or blood pressures) or kept but randomly distributed (such as levels of response to a question or city names). They way it does this is based on how unique the observation, and not based on specific content. Because of this, you should consider if and how a variable should first be de identified or otherwise generalized, hashed, or removed
+#### uncorrelated may not always equal non-informative
 
-data_modeler creates an uncorrelated column of data to substitute the original by randomly reassigning values across that column. However, this does not ensure that meaningful information is not passed along. For instance, if the provided data set is of outcomes in a small population (e.g. indicator A on American Indian/Alaska Native population in a given zip code) the uncorrelated result would still show a similar rate of that outcome in that population. The analyst should consider if this is ok or not and take measures to correct if necessary by either changing the input data or modifying the synthetic data. A simple approach in the above example would be to add one or more population groups so that the outcome would be distributed (in an uncorrelated distribution) across both populations, removing the ability to estimate the rate for the smaller population.
+data_modeler creates an uncorrelated column of data to substitute the original by randomly reassigning values across that column. However, this does not ensure that meaningful information is not passed along. For instance, if the provided data set is of outcomes in a single population the uncorrelated result would still show a similar rate of that outcome in that population, because all observations would be for the same population group. The analyst should consider if this is acceptable or not and take measures to correct if necessary by either changing the input data or modifying the synthetic data. A simple approach in the above example would be to add one or more additional population groups so that the outcomes would be distributed removing the ability to estimate the rate for the smaller population. Note that, in most cases, categorical observations are distributed in proportion to the source data. 
 
 ### walkthrough
 
-For the below examples, we use teh following demonstration data. But this should work with any two dimensional data.table object (or data frames that are coercable to a data.table). Our demo "real" data has one indicator variable that represents an outcome that is never in the white population, sometimes in the asian population, and always in other races. In an uncorrelated (and so non-informative) synthetic data set, we would expect this indicator to no longer be biased by race.
+For the below examples, we use the following demonstration data. But this should work with any two dimensional data.table object (or data frames that are coercable to a data.table). Our demo "real" data has one indicator variable that represents an outcome that is never in the white population, sometimes in the asian population, and always in other races. In an uncorrelated (and so non-informative) synthetic data set, we would expect this indicator to no longer be biased by race.
 
 ```{r create demonstration "real" data}
 DT.real.data <- data.table(
