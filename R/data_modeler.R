@@ -20,6 +20,7 @@
 #' @examples
 #' \donttest{
 #'   library(data.table)
+#'   observations <- 1000
 #'   ph.data <- data.table(
 #'   id = 1:observations,
 #'   chi_geo_kc = sample(c('King County',NA_character_), observations, replace = T),
