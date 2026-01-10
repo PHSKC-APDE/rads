@@ -575,6 +575,10 @@ test_that('Resample approach', {
   r14 = calc(midat, 'random_factNA', by = 'random3_weird', metrics = 'mean')
   r15 = calc(midat, 'random3_weird', by = 'random_factNA', metrics = 'mean')
 
+  # return time variables
+  r16 = calc(midat, what = 'random', where = yyy %in% 1:2, time_var = 'yyy', metrics = c('mean', 'numerator', 'denominator'))
+  expect_equal(r16$yyy[1], '1-2')
+
 
 })
 
