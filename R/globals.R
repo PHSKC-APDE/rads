@@ -19,6 +19,7 @@ utils::globalVariables(c(
   "meets_criteria",
   "param_cause_name",
   "p_value",
+  "r",
   "ref_lower",
   "ref_se",
   "ref_upper",
