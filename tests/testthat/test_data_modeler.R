@@ -14,7 +14,7 @@ test_that("data_modeler creates matching types", {
     dates_baser = as.Date(sample(c("2025-01-01", "2025-06-01","2025-12-01"), observations, replace = T, prob = c(.33, .33, .33))),
     dates_posix14 = as.POSIXct(sample(c("2025-01-15 00:00:00 UTC","2025-02-15 00:00:00 UTC","2025-03-15 00:00:00 UTC","2025-04-15 00:00:00 UTC","2025-05-15 00:00:00 UTC","2025-06-15 00:00:00 UTC","2025-07-15 00:00:00 UTC","2025-08-15 00:00:00 UTC","2025-09-15 00:00:00 UTC","2025-10-15 00:00:00 UTC","2025-11-15 00:00:00 UTC","2025-12-15 00:00:00 UTC","2026-01-15 00:00:00 UTC","2026-02-15 00:00:00 UTC"), observations, replace = TRUE, prob = c(.05,.05,.05,.05,.05,.10,.10,.10,.10,.10,.10,.15,.05,.05)), tz = "UTC"))
 
-  DTResult <- data_modeler(ph.data = DTTest, number_of_observations = 100, comments = T, return_code = F, print_code = T)
+  DTResult <- data_modeler(ph.data = DTTest, number_of_observations = 1000, comments = T, return_code = F, print_code = F)
 
   data_types_test <- sapply(DTTest, class)
   data_types_result <- sapply(DTResult, class)
