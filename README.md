@@ -1,7 +1,7 @@
 # R Automatic Data System (RADS)
 
 ## Purpose
-RADS, APDE's **R** **A**utomated **D**ata **S**ystem, is a suite of tools written in R and designed to make standard public health analyses faster, more standardized, and less prone to error. While we hope the tools are applicable for different settings, the toolset has been customized to the needs of [PHSKC's](https://www.kingcounty.gov/depts/health.aspx) [APDE](https://www.kingcounty.gov/depts/health/data). While this package has only been tested in Windows, it should work identically on a Linux or Mac OS machine.
+RADS is a suite of tools written in R and designed to make standard public health analyses faster, more standardized, and less prone to error. While we hope the tools are applicable for different settings, the toolset has been customized to the needs of [PHSKC's](https://www.kingcounty.gov/depts/health.aspx) [APDE](https://www.kingcounty.gov/depts/health/data). While this package has only been tested in Windows, it should work identically on a Linux or Mac OS machine.
 
 ## Installation
 If you haven't yet installed [`rads`](https://github.com/PHSKC-APDE/rads), follow these steps:
