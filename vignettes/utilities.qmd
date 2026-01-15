@@ -231,9 +231,14 @@ pretty_kable(head(large_dict, 8))
 -   sharing code that generates a data set for minimally viable examples used in requesting help from, or teaching, others
 -   creating data sets programmatically for (unit) testing or training
 
+There are two kinds of output that `data_modeler()` returns, either the data table itself, or a list object of strings that can be evaluated to create the data table. In addition, `data_modeler()` can output-to-terminal a human readable version of the generation code that the user can copy and paste into their own scripts for sharing publicly.
+
 `data_modeler()` makes some guesses as to if a column's content should be randomized (such as person names or blood pressures) or kept but randomly distributed (such as levels of response to a question or city names). This is intended to generate random data or to retain original categories where appropriate. It bases these guesses on the data type (integer or string), and complexity (e.g. 75% being unique data), but not the meaning of the data (i.e. it doesn't know that a number is a "zip code" and doesn't know that a string is a "human name"). Variables that are identified as non-categorical will, in most cases, be replaced with a uniform distribution of noisy, but similarly shaped, data (e.g. floating point numbers of the same range and precision, but in a random uniform distribution, or a "lore ipsum" string of similar lengths). Variables identified as categorical will, in most cases, be replaced with identical categories in a similar distribution to the original, but randomly assigned across observations (a data set of 95% males and 5% females would still generate a data set of roughly 95% males and 5% females).
 
-There are two kinds of output that `data_modeler()` returns, either the data table itself, or a list of strings that can be evaluated to create the data table. In addition, `data_modeler()` can output-to-terminal a human readable version of the generation code that the user can copy and paste into their own scripts for sharing publicly.
+Two parameters are available to adjust the assumptions data_modeler uses to identify categorical values. These are "categorical_threshold" and "proportional_threshold". 
+
+- "categorical_threshold": defines how many unique categories can exist in the variable before data_modeler assumes the variable isn't categorical. Above this number, and the value will not be considered categorical. This currently defaults to 61.
+- "proportional_threshold": defines the proportion of values that can be unique before data_modeler() assumes the variable isn't categorical. This currently defaults to 0.75.
 
 ### data privacy caveats
 
@@ -243,7 +248,9 @@ There are two kinds of output that `data_modeler()` returns, either the data tab
 
 ### walkthrough
 
-For the examples below, we create a "real" data set and show how to use `data_modeler()` and how the synthetic and "real" data differ. following demonstration data. Our demo "real" data has one indicator variable that represents an outcome that is never in the White population, sometimes in the Asian population, and always in other Races. In an uncorrelated (and so non-informative) synthetic data set, we would expect this indicator to no longer be biased by race.
+For the examples below, we create a "real" data set and show how to use `data_modeler()` and how the synthetic and "real" data differ. 
+
+Our demo "real" data has one indicator variable that represents an outcome that is never in the White population, sometimes in the Asian population, and always in other Races. In an uncorrelated (and so non-informative) synthetic data set, we would expect this indicator to no longer be biased by race.
 
 ```{r create demonstration "real" data}
 DT.real.data <- data.table(
@@ -254,7 +261,7 @@ DT.real.data <- data.table(
    chi_geo_region = factor(sample(c("South", "North", "Seattle", "East"), 1000, replace = T), levels = c("South","North","Seattle","East")))
 
 # Attach a biased indicator.
-#indicator1, all White population are "never", all Asians population, "sometimes", and everyone else, "always
+#indicator1, all White population are "never", all Asians population, "sometimes", and everyone else, "always"
    DT.real.data[, indicator1 := ifelse(chi_race_7 == "White", "never",
                          ifelse(chi_race_7 == "Asian", "sometimes",
                                 "always"))]
@@ -268,7 +275,7 @@ DT.real.data <- data.table(
 DT.synthetic.data <- data_modeler(ph.data = DT.real.data, #our "real" data
                                 number_of_observations =  100, #number of observations to create in the synthetic data
                                 comments = TRUE, #whether or not to include comments in code (only matters for return_code == TRUE or print_code == TRUE)
-                                return_code = FALSE, #return a DT of strings for creating the synthetic data instead of the data itself. leave FALSE to receive synthetic data
+                                return_code = FALSE, #return a list object of strings for creating the synthetic data instead of the data itself. leave FALSE to receive synthetic data
                               print_code = FALSE) #print the generation code to terminal. useful for both review and if you wish to copy into other contexts, such as a shareable script or in a chat with a LLM/AI
 ```
 
@@ -294,36 +301,34 @@ You can review, share, and execute the code used to create the synthetic data in
 
 ```{r}
 #| echo: true
-#| eval: false
 
 DT.synthetic.data <- data_modeler(ph.data = DT.real.data,
                                 number_of_observations =  100, 
                                 comments = TRUE, 
                                 return_code = FALSE,
-                              print_code = TRUE) # change this to true
+                              print_code = TRUE) # change this to true to copy code from your terminal output
 ```
 
-The code below is what is used to generate the synthetic data. Using this approach you can see the data, sample approach, and rates for each variable. Because we ran `data_modeler()` with `comments = TRUE`, we also see a human-readable string at the end of each line describing how each variable was classified by data_modeler. This allows you to review the logic, share the code with others, or make changes as you see fit.
+The code below is what is used to generate the synthetic data. Using this approach you can see the data, sample approach and rates for each variable. Because we ran `data_modeler()` with `comments = TRUE`, we also see a human-readable string at the end of each line describing how each variable was classified by data_modeler. This allows you to review the logic, make changes, and share the code with others.
 
 ```{r code from terminal}
-#| echo: false
-#| eval: true
-
-DT.synthetic.data <- data_modeler(ph.data = DT.real.data,
-                                number_of_observations =  100, 
-                                comments = TRUE, 
-                                return_code = FALSE,
-                                print_code = TRUE) # change this to true
+DT <- data.table( 
+`id` = as.integer(1:100), # as an identifying (all unique) integer 
+`chi_geo_kc` = sample(c(NA, "King County"), 100, replace = TRUE, prob = c(0.494, 0.506)), # as categorical character (non factor) 
+`chi_race_7` = factor(sample(c("Black", "White", "AIAN", NA, "Asian", "Multiple", "Other", "NHPI", "Hispanic"), 100, replace = TRUE, prob = c(0.193, 0.014, 0.067, 0.11, 0.012, 0.36, 0.064, 0.157, 0.023)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple"), ordered = FALSE), # as factor 
+`chi_sex` = factor(sample(c("Male", "Female"), 100, replace = TRUE, prob = c(0.518, 0.482)), levels = c("Female", "Male"), ordered = FALSE), # as factor 
+`chi_geo_region` = factor(sample(c("Seattle", "South", "North", "East"), 100, replace = TRUE, prob = c(0.241, 0.229, 0.258, 0.272)), levels = c("South", "North", "Seattle", "East"), ordered = FALSE), # as factor 
+`indicator1` = sample(c("always", "never", NA, "sometimes"), 100, replace = TRUE, prob = c(0.424, 0.36, 0.193, 0.023))) # as categorical character (non factor)
 ```
 
-Note, the above approach requires the user to copy and paste output from their terminal. If you wish to check, modify, and extract the code without human intervention, you need to receive the text as a DT object using `return_code = TRUE`:
+Note, the above approach requires the user to copy and paste output from their terminal. If you wish to check, modify, and extract the code without human intervention, you need to receive the text as a list object using `return_code = TRUE`:
 
 ```{r}
 
 DT.synthetic.data.instructions <- data_modeler(ph.data = DT.real.data,
                                 number_of_observations =  100, 
                                 comments = FALSE, 
-                                return_code = TRUE, #setting this to "TRUE" will a DT of text strings instead of a DT of synthetic data
+                                return_code = TRUE, #setting this to "TRUE" will cause data_modeler() to return a list object of the text instead of a DT of synthetic data
                                 print_code = FALSE)
 
 head(DT.synthetic.data.instructions)
@@ -343,6 +348,10 @@ Now you can visually confirm that the class structure of each of the tables is t
 str(DT.real.data)
 str(DT.synthetic.data)
 str(DT.synthetic.data.manual)
+
+sapply(DT.real.data, class)
+sapply(DT.synthetic.data, class)
+sapply(DT.synthetic.data.manual, class)
 
 ```
 
