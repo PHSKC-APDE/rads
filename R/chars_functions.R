@@ -161,9 +161,6 @@ chars_injury_matrix <- function(){
 #' To examine injuries that do not have an external cause,
 #' please examine the analytic data directly.
 #'
-#' See Jeremy Whitehurst's documentation for the CHARS ETL to understand exactly
-#' which codes are mapped to which intents and mechanisms.
-#'
 #' @return
 #' The function returns a data.table with a minimum of three columns:
 #' `mechanism`, `intent`, & `hospitalizations`. Any
@@ -248,13 +245,13 @@ chars_injury_matrix_count<- function(ph.data = NULL,
   # presence of of injury_nature_broad and injury_nature_narrow columns checked by chars_validate_data()
 
   # primary_ecode ----
-  if(!isTRUE(primary_ecode) && !isFALSE(primary_ecode) ){stop("\n\U0001f47f `primary_ecode` must be a logical vector of length 1, i.e., TRUE or FALSE.")}
+  if(!(identical(primary_ecode, TRUE) || identical(primary_ecode, FALSE))){stop("\n\U0001f47f `primary_ecode` must be a logical vector of length 1, i.e., TRUE or FALSE.")}
   if(isFALSE(primary_ecode)){stop(paste0("\n\U1F6D1 \U2620 \U0001f47f\n",
                                          " You set 'primary_ecode = F'. This is no longer a valid option. If you want to use other ecodes\n",
                                          " you will have to perform a custom analysis using [chars].[stage_diag] & [chars].[stage_ecode]."))}
 
   # kingco ----
-  if(!is.logical(kingco) || length(kingco) != 1 || is.na(kingco)){stop("\n\U0001f47f `kingco` must be a logical vector of length 1, i.e., TRUE or FALSE.")}
+  if(!(identical(kingco, TRUE) || identical(kingco, FALSE))){stop("\n\U0001f47f `kingco` must be a logical vector of length 1, i.e., TRUE or FALSE.")}
   if (isTRUE(kingco) & (!"chi_geo_kc" %in% names(ph.data))){
     stop("\n\U0001f47f You specified kingco=TRUE, but `ph.data` does not have the following columns that identify King County data:
                    chi_geo_kc")
@@ -326,49 +323,61 @@ chars_injury_matrix_count<- function(ph.data = NULL,
   # create matrix of all mechanisms and intents of interest
   selected.combinations <- data.table::CJ(mechanism = selected.mechanisms, intent = selected.intents)
 
+  # motor_vehicle_traffic can be an aggregation of mechanisms
+  mvt_subcategories <- unique(c(
+    "motor_vehicle_traffic",
+    grep("mvt", unique(rads.data::icdcm_injury_matrix$mechanism), value = TRUE)
+  ))
+
   # count number of hospitalizations (i.e., rows)
   hospitalization_counts <- rbindlist(lapply(1:nrow(selected.combinations), function(ii) {
-    temp.ph.data <- copy(ph.data)
 
-    # Identify whether the combination of mech & intent in selected.combinations has any hospitalizations in person level data ----
-    current_mechanism <- selected.combinations[ii]$mechanism
-    current_intent <- selected.combinations[ii]$intent
+      current_mechanism <- selected.combinations[ii, mechanism]
+      current_intent    <- selected.combinations[ii, intent]
 
-    # Create binary noting presence of current combination of mechanism and intent for each row of ph.data
-    if(current_mechanism == "motor_vehicle_traffic") {
-      mvt_subcategories <- unique(c('motor_vehicle_traffic', grep('mvt', unique(rads.data::icdcm_injury_matrix$mechanism), value = T)))
-      temp.ph.data[, bingo := as.integer(injury_mechanism %in% mvt_subcategories &
-                                           (if(current_intent == "any") !is.na(injury_intent) else injury_intent == current_intent))]
-    } else if(current_mechanism == "any") {
-      temp.ph.data[, bingo := as.integer(!is.na(injury_mechanism) &
-                                           (if(current_intent == "any") !is.na(injury_intent) else injury_intent == current_intent))]
-    } else {
-      temp.ph.data[, bingo := as.integer(injury_mechanism == current_mechanism &
-                                           (if(current_intent == "any") !is.na(injury_intent) else injury_intent == current_intent))]
-    }
+      temp.ph.data <- ph.data[
+        ,
+        {
+          # check if mechanism matches
+          bingo <-
+            if (current_mechanism == "motor_vehicle_traffic") {
+              injury_mechanism %in% mvt_subcategories
+            } else if (current_mechanism == "any") {
+              !is.na(injury_mechanism)
+            } else {
+              injury_mechanism == current_mechanism
+            }
 
-    # Aggregate (sum) the number of hospitalizations for the mech / intent combination from selected.combinations ----
-    if(!is.null(group_by)){
-      temp.ph.data <- temp.ph.data[, list(mechanism = current_mechanism,
-                                          intent = current_intent,
-                                          hospitalizations = sum(bingo)),
-                                   by = group_by]}
-    if(is.null(group_by)){
-      temp.ph.data <- temp.ph.data[, list(mechanism = current_mechanism,
-                                          intent = current_intent,
-                                          hospitalizations = sum(bingo))]}
+          # check if intent matches
+          bingo <- bingo & (
+            if (current_intent == "any") !is.na(injury_intent)
+            else injury_intent == current_intent
+          )
 
-    # create grid of all possible combinations of group_by vars ----
-    gridvars <- setdiff(names(temp.ph.data), 'hospitalizations')
-    complete.grid <- do.call(CJ, lapply(gridvars, function(x) unique(temp.ph.data[[x]])))
-    setnames(complete.grid, gridvars)
+          # Aggregate (sum) the number of hospitalizations for the mech / intent combination from selected.combinations
+          list(
+            mechanism = current_mechanism,
+            intent = current_intent,
+            hospitalizations = sum(bingo, na.rm = TRUE)
+          )
+        },
+        by = group_by
+      ]
 
-    # merge temp.ph.data onto complete.grid ----
-    temp.ph.data <- merge(complete.grid, temp.ph.data, all = T)
-    temp.ph.data[is.na(hospitalizations), hospitalizations := 0]
+      # create grid of all possible combinations of group_by vars
+      gridvars <- setdiff(names(temp.ph.data), 'hospitalizations')
+      complete.grid <- do.call(CJ, lapply(gridvars, function(x) unique(temp.ph.data[[x]])))
+      setnames(complete.grid, gridvars)
 
-    return(temp.ph.data)
-  }), fill=TRUE)
+      # merge temp.ph.data onto complete.grid
+      temp.ph.data <- merge(complete.grid, temp.ph.data, all = TRUE)
+      temp.ph.data[is.na(hospitalizations), hospitalizations := 0L]
+
+      return(temp.ph.data)
+    }),
+    fill = TRUE
+    )
+
 
   # Tidy ----
   # Additional collapse/aggregate if mechanism == 'none' ----
