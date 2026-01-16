@@ -32,7 +32,7 @@ test_that("data_modeler handles apostrophies", {
     indicator4 = as.factor(sample(c("jeremy's long sentence", "They're not having it!"), observations, replace = T)))
 
   # test if handles apostrophes
-  expect_no_error(data_modeler(ph.data = DTTest, number_of_observations = 100, comments = T, return_code = F, print_code = T))
+  expect_no_error(data_modeler(ph.data = DTTest, number_of_observations = 100, comments = T, return_code = F, print_code = F))
 
 })
 
