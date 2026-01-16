@@ -197,13 +197,13 @@ chars_injury_matrix <- function(){
 #' print(myresult)
 #' }
 #'
-chars_injury_matrix_count<- function(ph.data = NULL,
-                                     intent = "*",
-                                     mechanism = "*",
-                                     group_by = NULL,
-                                     def = 'narrow',
-                                     primary_ecode = TRUE,
-                                     kingco = TRUE){
+chars_injury_matrix_count <- function(ph.data = NULL,
+                                      intent = "*",
+                                      mechanism = "*",
+                                      group_by = NULL,
+                                      def = 'narrow',
+                                      primary_ecode = TRUE,
+                                      kingco = TRUE){
   # Check arguments ----
   # ph.data ----
   ph.data <- chars_validate_data(ph.data = ph.data,
@@ -336,31 +336,16 @@ chars_injury_matrix_count<- function(ph.data = NULL,
       current_intent    <- selected.combinations[ii, intent]
 
       temp.ph.data <- ph.data[
-        ,
-        {
-          # check if mechanism matches
-          bingo <-
-            if (current_mechanism == "motor_vehicle_traffic") {
-              injury_mechanism %in% mvt_subcategories
-            } else if (current_mechanism == "any") {
-              !is.na(injury_mechanism)
-            } else {
-              injury_mechanism == current_mechanism
-            }
-
-          # check if intent matches
-          bingo <- bingo & (
-            if (current_intent == "any") !is.na(injury_intent)
-            else injury_intent == current_intent
-          )
-
-          # Aggregate (sum) the number of hospitalizations for the mech / intent combination from selected.combinations
-          list(
-            mechanism = current_mechanism,
-            intent = current_intent,
-            hospitalizations = sum(bingo, na.rm = TRUE)
-          )
-        },
+        ( # mechanism condition
+          (current_mechanism == "motor_vehicle_traffic" & injury_mechanism %in% mvt_subcategories) |
+            (current_mechanism == "any" & !is.na(injury_mechanism)) |
+            (!(current_mechanism %in% c("motor_vehicle_traffic", "any")) & injury_mechanism == current_mechanism)
+        ) &
+          ( # intent condition
+            (current_intent == "any" & !is.na(injury_intent)) |
+              (current_intent != "any" & injury_intent == current_intent)
+          ),
+        .(mechanism = current_mechanism, intent = current_intent, hospitalizations = .N),
         by = group_by
       ]
 
@@ -403,6 +388,7 @@ chars_injury_matrix_count<- function(ph.data = NULL,
   # Return data ----
   return(hospitalization_counts)
 }
+
 
 # chars_icd_ccs() ----
 #' View available CHARS ICD-9-CM OR ICD-10-CM (diagnosis) codes, descriptions,
