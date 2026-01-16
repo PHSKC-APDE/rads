@@ -344,7 +344,7 @@ get_population <- function(kingco = T,
   ### convert to the numeric codes used in the ref table
   ref.table <- data.table::copy(rads.data::population_wapop_codebook_values)
   ref.table <- ref.table[varname %in% c("r1r3", "r2r4", "r3", "r4")]
-  ref.table <- unique(ref.table[, .(value = code, label, short)])
+  ref.table <- unique(ref.table[, list(value = code, label, short)])
   colnames = data.frame(short = c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white"),
                         sql_col = c('race_aian', 'race_as', 'race_blk', 'race_hisp', NA, 'race_nhpi', 'race_wht'))
   stopifnot(nrow(ref.table) == 7)
@@ -557,7 +557,7 @@ get_population <- function(kingco = T,
   r[, geo_type := geo_type]
   if(geo_type == 'kc') r[, geo_id := 'King County']
   if(geo_type == 'region'){
-    rnames = unique(rads.data::spatial_hra_vid_region[,.(region, region_id)])
+    rnames = unique(rads.data::spatial_hra_vid_region[, list(region, region_id)])
     rnames = rnames[, stats::setNames(region, region_id)]
     r[, geo_id_code := geo_id]
     r[, geo_id := rnames[as.character(geo_id)]]
@@ -567,7 +567,7 @@ get_population <- function(kingco = T,
 
   if(geo_type == 'county'){
     cnames = rads.data::spatial_county_codes_to_names
-    cnames = cnames[,.(geo_id_code = as.character(cou_id), geo_id = cou_name)]
+    cnames = cnames[, list(geo_id_code = as.character(cou_id), geo_id = cou_name)]
     cnames = stats::setNames(cnames[, geo_id], cnames[, geo_id_code])
     r[, geo_id_code := geo_id]
     r[, geo_id := cnames[as.character(geo_id)]]
@@ -603,7 +603,7 @@ get_population <- function(kingco = T,
     gt = rads.data::spatial_ids_and_names[tolower(type) %in% geo_type]
     gt[, geo_id_code := as.character(geo_id_code)]
     data.table::setnames(r, 'geo_id', 'geo_id_code')
-    r = merge(r, gt[, .(geo_id, geo_id_code)], all.x = T, by = 'geo_id_code')
+    r = merge(r, gt[, list(geo_id, geo_id_code)], all.x = T, by = 'geo_id_code')
     stopifnot(all(!is.na(r$geo_id)))
 
   }

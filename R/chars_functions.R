@@ -345,7 +345,7 @@ chars_injury_matrix_count <- function(ph.data = NULL,
             (current_intent == "any" & !is.na(injury_intent)) |
               (current_intent != "any" & injury_intent == current_intent)
           ),
-        .(mechanism = current_mechanism, intent = current_intent, hospitalizations = .N),
+        list(mechanism = current_mechanism, intent = current_intent, hospitalizations = .N),
         by = group_by
       ]
 
