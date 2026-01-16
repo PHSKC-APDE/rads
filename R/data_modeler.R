@@ -209,9 +209,7 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
       if(is.na(instructions) &
          ((length(unique(oneVariable)) > categorical_threshold) & (length(unique(oneVariable)) != length(oneVariable)))) {
         #used to recreate the number of decimal places accurately
-
-        oneVariable[,RH := count_decimal_places(oneVariable[[1]])]
-        numberOfDecimals <- max(oneVariable$RH, na.rm = T)
+        numberOfDecimals <- max(count_decimal_places(oneVariable))
         #uniform distribution
         instructions <- paste0("`",variableName,"`", " = as.double(round(runif(", number_of_observations,", ", min(oneVariable, na.rm = TRUE), ", ", max(oneVariable, na.rm = TRUE),"),", numberOfDecimals , "))")
         if(comments) {
@@ -252,8 +250,7 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
       if(is.na(instructions) &
          ((length(unique(oneVariable)) > categorical_threshold) & (length(unique(oneVariable)) != length(oneVariable)))) {
         #used to recreate the number of decimal places accurately
-        oneVariable[,RH := count_decimal_places(oneVariable[[1]])]
-        numberOfDecimals <- max(oneVariable$RH, na.rm = T)
+        numberOfDecimals <- max(count_decimal_places(oneVariable))
         #uniform distribution
         instructions <- paste0("`",variableName,"`", " = as.numeric(round(runif(", number_of_observations,", ", min(oneVariable, na.rm = TRUE), ", ", max(oneVariable, na.rm = TRUE),"),", numberOfDecimals , "))")
         if(comments) {
