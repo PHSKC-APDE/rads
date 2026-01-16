@@ -129,9 +129,6 @@ ecode) is present. The function uses the \code{injury_mechanism} and \code{injur
 columns which contain the primary (first-listed) external cause for each hospitalization.
 To examine injuries that do not have an external cause,
 please examine the analytic data directly.
-
-See Jeremy Whitehurst's documentation for the CHARS ETL to understand exactly
-which codes are mapped to which intents and mechanisms.
 }
 \examples{
 \donttest{
