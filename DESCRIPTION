@@ -20,7 +20,7 @@ Imports:
     methods,
     mitools (>= 2.4),
     odbc (>= 1.2.2),
-    rads.data (>= 1.0.8.0),
+    rads.data (>= 1.0.13),
     stats,
     survey (>= 4.0),
     utf8 (>= 1.1.4),
@@ -28,7 +28,8 @@ Imports:
     utils,
     lifecycle
 Remotes:
-    github::PHSKC-APDE/rads.data, github::PHSKC-APDE/dtsurvey
+    github::PHSKC-APDE/rads.data, 
+    github::PHSKC-APDE/dtsurvey
 Suggests: 
     devtools, 
     future, 

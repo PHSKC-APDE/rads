@@ -330,7 +330,7 @@ compute <- function(DT,
     mean_vcov_fun = NULL
     total_vcov_fun = NULL
   }
-  #use something like a = DT[, .(list(a), list(b)), env = list(a = mean_fun, b = total_fun), by = byvar]
+  #use something like a = DT[, list(list(a), list(b)), env = list(a = mean_fun, b = total_fun), by = byvar]
   #to capture the se and ci returns and then break out post hoc
   #if it is a factor, compute some things separately
   # Following bit creates the call taht will be executed within the data.table DT
