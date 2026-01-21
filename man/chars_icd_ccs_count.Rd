@@ -16,35 +16,36 @@ chars_icd_ccs_count(
   detailed = NULL,
   icdcol = "diag1",
   group_by = NULL,
-  kingco = T,
-  mykey = "hhsaw"
+  kingco = TRUE,
+  ...
 )
 }
 \arguments{
 \item{ph.data}{a data.table or data.frame. Must contain CHARS data structured
 with one person per row and with at least one column of ICD CM codes.
 
-\strong{NOTE!} ph.data must have a column named \code{seq_no}, which is a unique patient
-level identifier.
+\strong{Note:} \code{ph.data} will be validated using \code{\link[=chars_validate_data]{chars_validate_data()}}, which
+requires specific columns including \code{seq_no} (unique patient identifier),
+and the ICD column specified by \code{icdcol}.
 
 The default is \code{ph.data = NULL}}
 
 \item{icdcm_version}{an integer vector of length one specifying the ICD CM
 version that you want to reference. Acceptable options include: \code{9}
-& \code{10}.
+or \code{10}.
 
 The default is \code{icdcm_version = 10}.}
 
 \item{CMtable}{An optional data.table containing the reference table of ICD codes
-and their classifications. This should come from \code{\link{chars_icd_ccs}}
+and their classifications. This should come from \code{\link[=chars_icd_ccs]{chars_icd_ccs()}}
 and have the following columns: \code{icdcm_code}, \code{icdcm}, \code{superlevel},
 \code{broad}, \code{midlevel}, \code{detailed}, and \code{icdcm_version}. If
 provided, the function will use this table instead of making a new call to
-\code{\link{chars_icd_ccs}}, which can significantly improve performance when
+\code{\link[=chars_icd_ccs]{chars_icd_ccs()}}, which can significantly improve performance when
 making multiple calls to this function.
 
 The default is \code{CMtable = NULL}, which means the function will fetch the reference
-table from the database using \code{\link{chars_icd_ccs}}.}
+table from the database using \code{\link[=chars_icd_ccs]{chars_icd_ccs()}}.}
 
 \item{icdcm}{a character vector of length 1. An ICD CM description OR code.
 It is case agnostic and works with partial strings. For example, both
@@ -80,34 +81,35 @@ partial strings. View available options with
 
 The default is \code{detailed = NULL}}
 
-\item{icdcol}{a character vector of length one that specifies the name of the
-column in ph.data that contains the ICD10-cm codes of interest.
+\item{icdcol}{A character vector of length 1 specifying the name of the column
+in \code{ph.data} that contains ICD-CM diagnosis codes.
+
+Values must be properly formatted ICD-9-CM or ICD-10-CM codes; codes are
+automatically coerced to uppercase and stripped of punctuation by
+\code{\link[=chars_validate_data]{chars_validate_data()}} (e.g., \code{A85.2} → \code{A852}). For ICD-10-CM, codes
+must begin with a capital letter followed by a digit (invalid codes are set
+to \code{NA}).
 
 The default is \code{icdcol = 'diag1'}, which refers to the principal
-diagnosis code provided by \code{get_data_chars()}).}
+diagnosis code provided by \code{\link[apde.data:chars]{apde.data::chars()}}.}
 
 \item{group_by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{group_by = c('chi_sex',
-'chi_race_6')}, the results would be stratified by each combination of sex
+results. For example, if you specified \code{group_by = c('chi_sex', 'chi_race_6')}, the results would be stratified by each combination of sex
 and race.
 
 The default is \code{group_by = NULL}}
 
 \item{kingco}{a logical vector of length one. It specifies whether you want to
-limit the analysis to King County.
+limit the analysis to King County. This parameter is specific to Washington State
+CHARS data and requires the column \code{chi_geo_kc}, which is provided by
+\code{\link[apde.data:chars]{apde.data::chars()}}.
 
-\strong{NOTE} this only works with data imported
-with the \code{get_data_chars()} function because it needs the variable
-\code{chi_geo_kc}.
+For users outside of King County or Washington State, set \code{kingco = FALSE}.
 
-The default is \code{kingco = TRUE}.}
+The default is \code{kingco = TRUE}}
 
-\item{mykey}{Character vector of length 1. Identifies the keyring:: service
-that can be used to access the Health & Human Services Analytic Workspace
-(HHSAW).
-
-The default is \code{mykey = 'hhsaw'}}
+\item{...}{Additional arguments passed to other methods (currently unused).}
 }
 \value{
 Generates a table with columns for each of the search terms you entered (e.g.,
@@ -120,9 +122,9 @@ Generate hospitalization counts from WA State Comprehensive Hospital
 Abstract Reporting System (CHARS) data using partial strings from the ICD-10-CM
 or ICD-9-CM descriptions or AHRQ HCUP's CCSR based 'broad' and 'detailed'
 classifications. Needs line-level CHARS data with a properly formatted
-ICD-CM column (e.g., the data available from \code{get_data_chars()}).
+ICD-CM column (e.g., the data available from \code{\link[apde.data:chars]{apde.data::chars()}}).
 
-See \code{chars_icd_ccs()} for a complete list of available ICD-10-CM,
+See \code{\link[=chars_icd_ccs]{chars_icd_ccs()}} for a complete list of available ICD-10-CM,
 ICD-9-CM, and superlevel, broad, midlevel, and narrow classifications.
 
 \strong{¡¡¡REMEMBER!!!} ICD-10-CM started in 2016! Be sure to use the correct
@@ -131,41 +133,42 @@ ICD-9-CM, and superlevel, broad, midlevel, and narrow classifications.
 \details{
 This function needs the user to enter a search string in one or more of the
 following arguments in order to search the CHARS data for the corresponding
-ICD CM codes: \code{icdcm}, \code{superlevel}, \code{broad}, \code{midlevel},
-or \code{detailed}.
+ICD CM codes:
+\itemize{
+\item \code{icdcm}
+\item \code{superlevel}
+\item \code{broad},
+\item \code{midlevel}, or
+\item \code{detailed}.
+}
+
 Partial search terms are acceptable and they are case-insensitive. For
 example, if you set \code{broad = 'ex'} with \code{icdcm_version = 10}, the
-function would return counts for "Diseases of the eye and adnEXa" as well as
-"EXternal causes of morbidity". It also understands simple regex syntax,
+function would return counts for \emph{"Diseases of the eye and adnEXa"} as well as
+\emph{"EXternal causes of morbidity"}. It also understands simple regex syntax,
 including \strong{\code{^}}, \strong{\code{$}}, and \strong{\code{|}}.
 
 \strong{Note:} If you submit values for more than one of \code{icdcm},
-\code{superlevel}, \code{broad}, \code{midlevel}, or \code{detailed} they must
-be nested. For example, \code{broad = 'neoplasms', detailed = 'sarcoma'} will
+\code{superlevel}, \code{broad}, \code{midlevel}, or \code{detailed}, they must
+be nested. For example, \verb{broad = 'neoplasms', detailed = 'sarcoma'} will
 give results because sarcomas are type of cancers. However,
-\code{broad = 'neoplasms', detailed = 'intestinal infection'} will return an
+\verb{broad = 'neoplasms', detailed = 'intestinal infection'} will return an
 error because your resulting table will have zero rows.
 }
 \examples{
-# example #1: 2019 King County hospitalizations for chemotherapy, by sex
 \donttest{
-blah = get_data_chars(year = 2019, kingco = TRUE)
-myresult <- chars_icd_ccs_count(ph.data = blah,
+myresult <- chars_icd_ccs_count(ph.data = rads.data::synthetic_chars,
                                 detailed = 'headache',
-                                group_by = c('chi_sex'))
+                                group_by = c('temperament'),
+                                kingco = FALSE)
 print(myresult)
-}
 
-# example #2: 2022 King County hospitalizations for asthma using
-# an external reference table
-\donttest{
 myrefTable <- chars_icd_ccs()
-
-mydata = get_data_chars(year = 2022, kingco = TRUE)
-myresult <- chars_icd_ccs_count(ph.data = mydata,
+myresult <- chars_icd_ccs_count(ph.data = rads.data::synthetic_chars,
                                 CMtable = myrefTable,
                                 detailed = 'asthma',
-                                group_by = c('chi_sex'))
+                                group_by = c('temperament'),
+                                kingco = FALSE)
 print(myresult)
 }
 

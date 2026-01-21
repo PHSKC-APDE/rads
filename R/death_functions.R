@@ -902,7 +902,7 @@ death_injury_matrix_count <- function(ph.data,
   # Count deaths for each intent_x_mechanism of interest ----
     # prep injury matrix reference table ----
       # get reference table from rads.data
-        x_reftable <- unique(rads.data::icd10_death_injury_matrix)[, .(mechanism, intent, icd10)]
+        x_reftable <- unique(rads.data::icd10_death_injury_matrix)[, list(mechanism, intent, icd10)]
 
       # subset for intent
         if(length(x_intent) == 1 && x_intent == "Any intent"){
@@ -916,7 +916,7 @@ death_injury_matrix_count <- function(ph.data,
 
     # merge reference table onto death data ----
       x_combo <- ph.data[x_reftable, # data.table join faster than merge for large datasets
-                         on = .(icd10_tempy = icd10),
+                         on = list(icd10_tempy = icd10),
                          allow.cartesian = TRUE, # needed because there can be duplicate icd10 in x_reftable
                          nomatch = 0]
 
@@ -925,18 +925,18 @@ death_injury_matrix_count <- function(ph.data,
 
     # calculate YPLL count ----
       if(is.null(ypll_age)){
-        x_combo <- x_combo[, .(deaths = .N), by = c("mechanism", "intent", group_by)]
+        x_combo <- x_combo[, list(deaths = .N), by = c("mechanism", "intent", group_by)]
       } else {
         # create table with ypll summary
           x_ypll <- copy(x_combo)
           x_ypll[get(death_age_col) < ypll_age, ypll_col_name := ypll_age - get(death_age_col)]
           x_ypll[, c(death_age_col) := NULL]
-          x_ypll <- x_ypll[, .(temp_ypll = sum(ypll_col_name, na.rm = TRUE)), # use temporary name because data.table doesn't accept quoted value after .(
+          x_ypll <- x_ypll[, list(temp_ypll = sum(ypll_col_name, na.rm = TRUE)), # use temporary name because data.table doesn't accept quoted value after list(
                            by = c("mechanism", "intent", group_by)]
           setnames(x_ypll, "temp_ypll", ypll_col_name)
 
         # calculate death count
-          x_combo <- x_combo[, .(deaths = .N), by = c("mechanism", "intent", group_by)]
+          x_combo <- x_combo[, list(deaths = .N), by = c("mechanism", "intent", group_by)]
 
         # merge ypll onto death summaries
           x_combo <- merge(x_combo, x_ypll, all = T)
@@ -1821,7 +1821,7 @@ death_other_count <- function(ph.data,
   # Count deaths for each cause of death ----
     # prep cause of death reference table ----
       # get reference table from rads.data
-      x_reftable <- rads.data::icd_other_causes_of_death[, .(cause.of.death, icd10)]
+      x_reftable <- rads.data::icd_other_causes_of_death[, list(cause.of.death, icd10)]
 
       # subset for cause of death
       if(!(is.null(cause))){
@@ -1844,7 +1844,7 @@ death_other_count <- function(ph.data,
       x_combo <- rbindlist(
         lapply(unique_cod, function(each.cod) {
           ph.data[x_reftable[cause.of.death == each.cod], # data.table join faster alternative to merge
-                  on = .(icd10_tempy = icd10),
+                  on = list(icd10_tempy = icd10),
                   nomatch = 0]
         })
       )
@@ -2202,9 +2202,9 @@ death_xxx_count <- function(ph.data,
 
   # Import reference table once ----
     x_reftable <- if (nchsnum == 113) {
-      unique(rads.data::icd_nchs113causes[, .(cause.of.death, causeid, icd10)])
+      unique(rads.data::icd_nchs113causes[, list(cause.of.death, causeid, icd10)])
     } else {
-      unique(rads.data::icd_nchs130causes[, .(cause.of.death, causeid, icd10)])
+      unique(rads.data::icd_nchs130causes[, list(cause.of.death, causeid, icd10)])
     }
 
   # Identify cause(s) of interest ----
@@ -2247,7 +2247,7 @@ death_xxx_count <- function(ph.data,
   # Merge reference table onto death data ----
     setkey(ph.data, icd10_tempy)
     setkey(x_reftable, icd10)
-    x_combo <- x_reftable[ph.data, on = .(icd10 = icd10_tempy), allow.cartesian = TRUE] # data.table join faster alternative to merge
+    x_combo <- x_reftable[ph.data, on = list(icd10 = icd10_tempy), allow.cartesian = TRUE] # data.table join faster alternative to merge
     x_combo[, icd10 := tolower(icd10)]
     x_combo[icd10 == "u071" |
               grepl("^u071", icd10), cause.of.death := "COVID-19 (U07.1)"]
@@ -2255,19 +2255,19 @@ death_xxx_count <- function(ph.data,
 
   # calculate death counts & YPLL summaries ----
     if (is.null(ypll_age)) {
-      x_all <- ph.data[, .(causeid = NA_character_,
+      x_all <- ph.data[, list(causeid = NA_character_,
                            cause.of.death = "All causes",
                            deaths = .N), by = group_by]
-      x_combo <- x_combo[, .(deaths = .N), by = c("causeid", "cause.of.death", group_by)]
+      x_combo <- x_combo[, list(deaths = .N), by = c("causeid", "cause.of.death", group_by)]
       x_combo <- rbind(x_all, x_combo)
     } else {
-      x_all <- ph.data[, .(
+      x_all <- ph.data[, list(
         causeid = NA_character_,
         cause.of.death = "All causes",
         deaths = .N,
         temp_ypll = sum(get(ypll_col_name), na.rm = TRUE)
       ), by = group_by]
-      x_combo <- x_combo[, .(deaths = .N,
+      x_combo <- x_combo[, list(deaths = .N,
                              temp_ypll = sum(get(ypll_col_name), na.rm = TRUE)), by = c("causeid", "cause.of.death", group_by)]
       x_combo <- rbind(x_all, x_combo)
       setnames(x_combo, "temp_ypll", ypll_col_name)
@@ -2309,8 +2309,8 @@ death_xxx_count <- function(ph.data,
       }
 
       # Fill causeid if needed
-      x_reftable <- unique(x_reftable[, .(cause.of.death, causeid)])
-      x_combo[is.na(causeid), causeid := x_reftable[x_combo[is.na(causeid)], on = .(cause.of.death), causeid]]
+      x_reftable <- unique(x_reftable[, list(cause.of.death, causeid)])
+      x_combo[is.na(causeid), causeid := x_reftable[x_combo[is.na(causeid)], on = list(cause.of.death), causeid]]
 
     # Sort columns and rows ----
       if (!is.null(ypll_age)) {

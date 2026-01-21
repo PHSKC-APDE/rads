@@ -39,9 +39,9 @@ calc.dtsurvey <- function(ph.data,
     }
 
     e <- substitute(where)
-    r <- eval(e, ph.data, parent.frame())
-    stopifnot('`where` does not resolve to a logical' = is.logical(r))
-    ph.data = ph.data[r,]
+    # r <- eval(e, ph.data, parent.frame())
+    # stopifnot('`where` does not resolve to a logical' = is.logical(r))
+    ph.data = ph.data[r,env = list(r = e)]
     #do.call(subset, args = list(x = ph.data, subset = e)) an alternative approach
 
     if(nrow(ph.data) == 0){
@@ -330,7 +330,7 @@ compute <- function(DT,
     mean_vcov_fun = NULL
     total_vcov_fun = NULL
   }
-  #use something like a = DT[, .(list(a), list(b)), env = list(a = mean_fun, b = total_fun), by = byvar]
+  #use something like a = DT[, list(list(a), list(b)), env = list(a = mean_fun, b = total_fun), by = byvar]
   #to capture the se and ci returns and then break out post hoc
   #if it is a factor, compute some things separately
   # Following bit creates the call taht will be executed within the data.table DT

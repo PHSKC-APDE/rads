@@ -341,17 +341,15 @@ calc.imputationList = function(ph.data,
 
 
   # For the variables that don't go through MI routines (e.g numerator, take the average)
-  vars = setdiff(metrics, c('mean', 'total', 'mean_vcov', 'total_vcov', 'vcov'))
-  non_mi = res[, lapply(vars, function(v){
-    if(v %in% c('vcov', 'unique.time')){
-      f = data.table::first
-    }else{
-      f = function(x) mean(x, na.rm = T)
-    }
-    f(get(v))
-  }) , keyby = c(by, 'variable', 'level')]
+  vars = setdiff(names(res), c('mean', 'total', 'mean_vcov', 'total_vcov', 'vcov', by, 'variable', 'level', '_miiter', names(mi_res)))
+  non_mi = res[, lapply(.SD, function(v){
+    if(is.numeric(v)) return(mean(v,na.rm = T))
+    data.table::first(v)
+  }), .SDcols = vars, keyby = c(by, 'variable', 'level')]
 
-  setnames(non_mi, c(c(by, 'variable', 'level'), vars))
+  # setnames(non_mi, c(c(by, 'variable', 'level'), vars))
+
+
 
   ans = merge(mi_res, non_mi, all.x = T, by = c(by, 'variable', 'level'))
 

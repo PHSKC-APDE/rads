@@ -11,22 +11,25 @@ chars_injury_matrix_count(
   mechanism = "*",
   group_by = NULL,
   def = "narrow",
-  primary_ecode = T,
-  kingco = T
+  primary_ecode = TRUE,
+  kingco = TRUE
 )
 }
 \arguments{
 \item{ph.data}{a data.table or data.frame. Must contain CHARS data structured
-with one person per row and predetermined \code{mechanism_} and \code{intent_} columns.
-In other words, this ph.data should come from use of \code{get_data_chars()}.
+with one patient record per row. It must have the following columns, as
+specified by \code{\link[=chars_validate_data]{chars_validate_data()}}: \code{seq_no}, \code{injury_nature_broad},
+\code{injury_nature_narrow}, \code{injury_intent}, and \code{injury_mechanism}. See
+\code{rads.data::synthetic_chars()} for a fully formatted example. If you are
+working within the King County, WA infrastructure, you can get formatted data
+from \code{apde.data::chars()}.
 
 The default is \code{ph.data = NULL}}
 
-\item{intent}{a character vector. It specifies the
-intent of the injury related hospitalization that you want returned (e.g.,
-"assault", "intentional", "unintentional", etc.). "none"
-will ignore the intent and only return the mechanism of the injury leading
-to hospitalization.
+\item{intent}{a character vector. It specifies the intent of the injury
+related hospitalization that you want returned (e.g., "assault",
+"intentional", "unintentional", etc.). "none" will ignore the intent and only
+return the mechanism of the injury leading to hospitalization.
 
 \strong{NOTE}
 You do not have to type the entire keyword for the intent, a
@@ -36,14 +39,13 @@ partial string match is sufficient and is case insensitive. E.g.,
 
 The default is \code{intent = '*'}, which selects all possible intents}
 
-\item{mechanism}{a character vector. It specifies the
-mechanism of the injury related hospitalization that you want returned
-(e.g., "cut_pierce", "drowning", "fall", "firearm", etc.). "none" will ignore
-the mechanism and only return the intent of the injury leading to hospitalization.
+\item{mechanism}{a character vector. It specifies the mechanism of the injury
+related hospitalization that you want returned (e.g., "cut_pierce",
+"drowning", "fall", "firearm", etc.). "none" will ignore the mechanism and
+only return the intent of the injury leading to hospitalization.
 
 To see the complete list of mechanisms, type
-\code{unique(chars_injury_matrix()$mechanism)} in your
-R console.
+\code{unique(chars_injury_matrix()$mechanism)} in your R console.
 
 \strong{NOTE}
 You do not have to type the entire keyword for the mechanism, a
@@ -51,12 +53,19 @@ partial string match is sufficient and is case insensitive. E.g.,
 \code{mechanism = c("fire")} would return both "firearm" and
 "fire_burn".
 
+\strong{SPECIAL CASE: motor_vehicle_traffic}
+
+The mechanism "motor_vehicle_traffic" is a convenience aggregation that combines
+all motor vehicle traffic-related subcategories: "mvt_occupant", "mvt_motorcyclist",
+"mvt_pedestrian", "mvt_pedal_cyclist", etc. When you specify
+\code{mechanism = "motor_vehicle_traffic"}, the function will count
+hospitalizations for any of these MVT subcategories.
+
 The default is \code{mechanism = '*'}, which selects all possible mechanisms}
 
 \item{group_by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{group_by = c('chi_sex',
-'chi_race_6')}, the results would be stratified by each combination of sex
+results. For example, if you specified \code{group_by = c('chi_sex', 'race3')}, the results would be stratified by each combination of sex
 and race.
 
 The default is \code{group_by = NULL}}
@@ -86,8 +95,11 @@ the \code{chars.stage_diag} & \code{chars.stage_ecode} tables.
 The default is \code{primary_ecode = TRUE}}
 
 \item{kingco}{a logical vector of length one. It specifies whether you want to
-limit the analysis to King County. Note that this only works when you have
-the column \code{chi_geo_kc} imported from the \code{get_data_chars()} function.
+limit the analysis to King County. This parameter is specific to Washington State
+CHARS data and requires the column \code{chi_geo_kc}, which is provided by
+\code{\link[apde.data:chars]{apde.data::chars()}}.
+
+For users outside of King County or Washington State, set \code{kingco = FALSE}.
 
 The default is \code{kingco = TRUE}}
 }
@@ -103,34 +115,43 @@ summary of all injury hospitalizations without regard to the intent or mechanism
 }
 \description{
 Generate hospitalization counts for an injury matrix
-specifying the intent and mechanism of injury. Needs line-level CHARS data
-with columns beginning with \code{mechanism_} and \code{intent_}. Covers both ICD9-cm
-(2012-2015) and ICD10-cm (2016+).
+specifying the intent and mechanism of injury. Needs line-level CHARS data.
+Covers both ICD9-cm (2012-2015) and ICD10-cm (2016+).
 }
 \details{
 Since the injury analysis uses many columns, we suggest that you obtain
-ph.data with get_data_chars(cols = NA), rather than trying to specify the
+ph.data with \code{apde.data::chars(cols = NA)}, rather than trying to specify the
 columns of interest.
 
 This function will only count injuries where the type of injury (from
 ICD10-CM codes) AND the corresponding external cause information (from an
-ecode) is present. To examine injuries that do not have an external cause,
+ecode) is present. The function uses the \code{injury_mechanism} and \code{injury_intent}
+columns which contain the primary (first-listed) external cause for each hospitalization.
+To examine injuries that do not have an external cause,
 please examine the analytic data directly.
-
-See Jeremy Whitehurst's documentation for the CHARS ETL to understand exactly
-which codes are mapped to which intents and mechanisms.
 }
 \examples{
-# example: 2019 King County hospitalizations due to intentional injury, by sex
 \donttest{
-blah = get_data_chars(year = 2019, kingco = TRUE)
-myresult <- chars_injury_matrix_count(ph.data = blah,
+myresult <- chars_injury_matrix_count(ph.data = rads.data::synthetic_chars,
                                       intent = '^intentional',
                                       mechanism = 'none',
-                                      group_by = c('chi_sex'))
+                                      group_by = c('temperament'),
+                                      kingco = FALSE)
+print(myresult)
+
+myresult <- chars_injury_matrix_count(ph.data = rads.data::synthetic_chars,
+                                      intent = 'unintentional',
+                                      mechanism = 'fall',
+                                      group_by = c('temperament'),
+                                      kingco = FALSE)
 print(myresult)
 }
+
 }
 \references{
-WA DOH CHAT: \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/Hospitalization\%20Injury\%20Matrix\%20ICD10CM.xlsx}
+\itemize{
+\item WA DOH Community Health Assessment Tool > User Guides > Code Set Definitions >
+Hospitalization Injury Matrix ICD10CM
+\item CDC Injury Code and Matrices: \url{https://www.cdc.gov/nchs/injury/injury_matrices.htm}
+}
 }
