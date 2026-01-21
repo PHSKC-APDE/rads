@@ -678,7 +678,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
     # ph.data ----
       ph.data <- chars_validate_data(ph.data = ph.data,
                                      icdcol = icdcol,
-                                     icdcm_version = 10,
+                                     icdcm_version = icdcm_version,
                                      verbose = FALSE)
 
     # icdcm_version ----
