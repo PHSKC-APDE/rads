@@ -64,6 +64,66 @@ test_that("data_modeler handles single column DT objects", {
   expect_equal(all(unlist(data_types_test.1.num) == unlist(data_types_result.1.num)), TRUE)
 })
 
+test_that("data_modeler characters don't generate unneeded warnings", {
+  observations <- 1000
+
+  DT.test.data <- data.table::data.table(
+    `status_a` = as.factor(sample(c(NA, "bunny", "horse"), observations, replace = TRUE, prob = c(0.10, .40, 0.50))), # as factor
+    `status_b` = as.character(sample(c(NA, 'up', 'down'), observations, replace = TRUE, prob = c(0.20, 0.30, 0.50))), # as categorical character (non factor)
+    `status_c` = as.character(round(rnorm(observations, sd = 10, mean = 20), 6)), #as numeric looking character
+    `status_d` = replicate(observations, sapply(sample(1:7,1), function(x) {paste0(sample(c("Lorem", "ipsum", "dolor", "sit", "amet", "consectetur", "adipiscin"), x, replace = T), collapse = " ")})) # as character, free text
+  )
+
+  RANDOMROWS <- sample(1:observations, observations*.10)
+
+  DT.test.data[RANDOMROWS, `:=`(status_c = NA, status_d = NA)]
+
+  expect_no_warning(data_modeler( ph.data = DT.test.data,
+                                  number_of_observations = 1000,
+                                  comments = T,
+                                  return_code = F,
+                                  print_code = F))
+})
 
 
+test_that("data_modeler numbers don't generate unneeded warnings", {
+  observations <- 1000
 
+  DT.test.data <- data.table::data.table(
+    `createID` = 1:observations, # as an identifying (all unique) integer
+    `status_a` = as.integer(sample(c(NA, '0', '1'), observations, replace = TRUE, prob = c(0.05, 0.05, 0.90))), # as categorical integer (non factor)
+    `status_b` = as.integer(rnorm(observations, sd = 50)), # as continuous integer with uniform distribution
+    `status_c` = as.double(round((rnorm(observations, sd = 50) *0.1), 5)), # as continuous double with uniform distribution
+    `status_d` = as.numeric(sample(c(NA, '.405', '.21'), observations, replace = TRUE, prob = c(0.05, 0.05, 0.90))) # as categorical numeric (non factor)
+  )
+
+  RANDOMROWS <- sample(1:observations, observations*.10)
+
+  DT.test.data[RANDOMROWS, `:=`(status_b = NA, status_c = NA, status_d = NA)]
+
+  expect_no_warning(data_modeler( ph.data = DT.test.data,
+                                  number_of_observations = observations,
+                                  comments = T,
+                                  return_code = F,
+                                  print_code = F))
+})
+
+test_that("data_modeler dates don't generate unneeded warnings", {
+  observations <- 1000
+
+  DT.test.data <- data.table::data.table(
+    `status_a` = as.Date(sample(c(NA, "2010-01-01", "2020-01-01"), observations, replace = TRUE, prob = c(0.10, .40, 0.50))), #as Date (with original probability)
+    `status_b` = as.Date(paste0("2024-01-",round(rnorm(observations, sd = 4,mean =  15) ) )) # as Date (with uniform distribution by day)
+  )
+
+  RANDOMROWS <- sample(1:observations, observations*.10)
+
+  DT.test.data[RANDOMROWS, `:=`( status_b = NA)]
+
+
+  expect_no_warning(data_modeler( ph.data = DT.test.data,
+                                  number_of_observations = 1000,
+                                  comments = T,
+                                  return_code = F,
+                                  print_code = F))
+})

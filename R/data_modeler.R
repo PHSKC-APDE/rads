@@ -170,7 +170,7 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
       # categorical integers:
       # if all are unique, treat as an ID and recreate as a vector of i to N with i being the lowest value in the data, and N being number of observations to be synthesized
       if(is.na(instructions) & (length(unique(oneVariable)) == length(oneVariable))) {
-        bottom <- min(oneVariable)
+        bottom <- min(oneVariable, na.rm = T)
         top <- bottom +(number_of_observations-1)
         instructions <- paste0("`",variableName,"`"," = as.integer(",bottom,":",top,")", collapse = "")
         instructions <- gsub('"NA"', 'NA', instructions)
@@ -183,7 +183,7 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
       if(is.na(instructions) &
          ((length(unique(oneVariable)) <= categorical_threshold & length(oneVariable) >= categorical_threshold) )) {
         instructions <- paste0("`",variableName,"`"," = as.integer(sample(c('",paste0(unlist(unique(oneVariable)),collapse = "', '"),"'), ", number_of_observations,", replace = TRUE, prob = c(",paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ", "),")))", collapse = "")
-        instructions <- gsub('"NA"', 'NA', instructions)
+        instructions <- gsub("'NA'", 'NA', instructions)
         if(comments){
           instructions <- paste0(instructions, " # as categorical integer (non factor)")
         }
@@ -228,7 +228,7 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
       # categorical numeric:
       # if all are unique, treat as an ID and recreate as a vector of i to N with i being the lowest value in the data, and N being number of observations to be synthesized
       if(is.na(instructions) & (length(unique(oneVariable)) == length(oneVariable))) {
-        bottom <- min(oneVariable)
+        bottom <- min(oneVariable, na.rm = TRUE)
         top <- bottom +(number_of_observations-1)
         instructions <- paste0("`",variableName,"`"," = as.numeric(",bottom,":",top,")")
         instructions <- gsub('"NA"', 'NA', instructions)
@@ -255,7 +255,7 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
       if(is.na(instructions) &
          ((length(unique(oneVariable)) > categorical_threshold) & (length(unique(oneVariable)) != length(oneVariable)))) {
         #used to recreate the number of decimal places accurately
-        numberOfDecimals <- max(count_decimal_places(oneVariable))
+        numberOfDecimals <- max(count_decimal_places(oneVariable[!is.na(oneVariable)]))
         #uniform distribution
         instructions <- paste0("`",variableName,"`", " = as.numeric(round(runif(", number_of_observations,", ", min(oneVariable, na.rm = TRUE), ", ", max(oneVariable, na.rm = TRUE),"),", numberOfDecimals , "))")
         if(comments) {
@@ -286,8 +286,8 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
       if(is.na(instructions) &
          (length(unique(oneVariable)) >= (length(oneVariable) * proportional_threshold)) &
          sum(is.na(oneVariable)) == sum(is.na(suppressWarnings(as.numeric(oneVariable))))) {
-        startNum <- min(suppressWarnings(as.numeric(oneVariable)))
-        endNum <- max(suppressWarnings(as.numeric(oneVariable)))
+        startNum <- min(suppressWarnings(as.numeric(oneVariable)),na.rm = T)
+        endNum <- max(suppressWarnings(as.numeric(oneVariable)), na.rm = T)
 
         #add function to count number of decimals and rate of changecan be adjusted
         byNum <- .01
@@ -309,8 +309,8 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
          sum(is.na(oneVariable)) != sum(is.na(suppressWarnings(as.numeric(oneVariable))))) {
         #arbitrarily long lorem ipsum to be pared down for expore. May need ot be bigger if paragraph length text are passed to this function
         loremipsum <- "Lorem ipsum dolor sit amet consectetur adipiscing elit. Pretium tellus duis convallis tempus leo eu aenean. Iaculis massa nisl malesuada lacinia integer nunc posuere. Conubia nostra inceptos himenaeos orci varius natoque penatibus. Nulla molestie mattis scelerisque maximus eget fermentum odio."
-        minimumLength <- min(nchar(oneVariable))
-        maximumLength <- max(nchar(oneVariable))
+        minimumLength <- min(nchar(oneVariable), na.rm = T)
+        maximumLength <- max(nchar(oneVariable), na.rm = T)
 
         LIsplit <- paste0(strsplit(loremipsum, split = "")[[1]][1:maximumLength], collapse = "")
         LIsplit <- strsplit(paste0(strsplit(loremipsum, split = "")[[1]][1:maximumLength], collapse = ""), split = " ")[[1]]
@@ -356,8 +356,10 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
         if(length(unique(years)) == length(unique(oneVariable))) {
           uniqueByType <- "years"
         }
-        startDate <- min(oneVariable)
-        endDate <- max(oneVariable)
+        startDate <- min(oneVariable, na.rm = T)
+        endDate <- max(oneVariable, na.rm = T)
+
+
 
         instructions <- paste0('`',variableName,'`',' = sample(seq(as.Date("', startDate, '"), as.Date("',endDate,'"), by = "', uniqueByType,'"), ', number_of_observations,', replace = TRUE)', collapse = '')
         instructions <- gsub('"NA"', 'NA', instructions)
