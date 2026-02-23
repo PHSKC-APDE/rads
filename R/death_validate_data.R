@@ -94,11 +94,6 @@ death_validate_data <- function(ph.data = NULL,
   }
   ph.data <- data.table::copy(ph.data)
 
-  # Validate verbose ----
-  if (!is.logical(verbose) || length(verbose) != 1 || is.na(verbose)) {
-    stop("\n\U0001f47f `verbose` must be a logical vector of length 1, i.e., TRUE or FALSE.")
-  }
-
   # Validate icdcol ----
   if (!is.character(icdcol) || length(icdcol) != 1) {
     stop("\n\U0001f47f `icdcol` must be a single character string naming the ICD-10 column in `ph.data`.")
@@ -107,21 +102,14 @@ death_validate_data <- function(ph.data = NULL,
     stop(paste0("\n\U0001f47f `icdcol` ('", icdcol, "') was not found as a column in `ph.data`."))
   }
 
-  # Clean icdcol using death_icd10_clean() ----
-  # This mirrors what all rads death functions do internally
-  ph.data[, (icdcol) := death_icd10_clean(get(icdcol))]
-
-  # Validate chi_geo_kc (if it exists) ----
-  if ('chi_geo_kc' %in% names(ph.data) &&
-      length(setdiff(unique(ph.data$chi_geo_kc), c('King County', NA))) > 0) {
-    stop('\n\U0001F6D1 `chi_geo_kc` exists and has values other than "King County" and NA.\n',
-         "If your analyses are not specific to King County, WA, feel free to delete the chi_geo_kc column.\n",
-         "Otherwise, please fix chi_geo_kc and run again.")
-  }
-
   # Validate check_multicause ----
   if (!is.logical(check_multicause) || length(check_multicause) != 1 || is.na(check_multicause)) {
     stop("\n\U0001f47f `check_multicause` must be a logical vector of length 1, i.e., TRUE or FALSE.")
+  }
+
+  # Validate verbose ----
+  if (!is.logical(verbose) || length(verbose) != 1 || is.na(verbose)) {
+    stop("\n\U0001f47f `verbose` must be a logical vector of length 1, i.e., TRUE or FALSE.")
   }
 
   # Validate contributing cause columns (only when check_multicause = TRUE) ----
@@ -131,9 +119,7 @@ death_validate_data <- function(ph.data = NULL,
       stop("\n\U0001f47f `contributing_cols` must be a single character string naming the stem of the contributing cause columns in `ph.data`.")
     }
 
-    # Strip trailing underscore if present (mirrors death_multicause_count())
-    contributing_cols <- gsub("_$", "", contributing_cols)
-
+    contributing_cols <- gsub("_$", "", contributing_cols) # Strip trailing underscore if present
     contrib_col_pattern <- paste0("^", contributing_cols, "_[0-9]+$")
     contrib_col_names <- grep(contrib_col_pattern, names(ph.data), value = TRUE)
 
@@ -153,6 +139,17 @@ death_validate_data <- function(ph.data = NULL,
       message(paste0("\U00002139 Found ", length(contrib_col_names),
                      " contributing cause column(s) matching '", contributing_cols, "_#'."))
     }
+  }
+
+  # Clean icdcol using death_icd10_clean() ----
+  ph.data[, (icdcol) := death_icd10_clean(get(icdcol))]
+
+  # Validate chi_geo_kc (if it exists) ----
+  if ('chi_geo_kc' %in% names(ph.data) &&
+      length(setdiff(unique(ph.data$chi_geo_kc), c('King County', NA))) > 0) {
+    stop('\n\U0001F6D1 `chi_geo_kc` exists and has values other than "King County" and NA.\n',
+         "If your analyses are not specific to King County, WA, feel free to delete the chi_geo_kc column.\n",
+         "Otherwise, please fix chi_geo_kc and run again.")
   }
 
   # Return the modified data.table ----
