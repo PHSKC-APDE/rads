@@ -560,6 +560,8 @@ death_injury_matrix<- function(){
 #' @param ph.data a data.table or data.frame. Must contain death data structured
 #' with one person per row and with at least one column of ICD10 death codes.
 #'
+#' **Note:*** `ph.data` and `icdcol` are validated by [death_validate_data()]
+#'
 #' @param intent a character vector of length 1 to 5. It specifies the
 #' intent of death that you want returned ("Unintentional", "Suicide", "Homicide",
 #' "Undetermined", or "Legal intervention/war"). "none" will ignore the intent
@@ -770,12 +772,9 @@ death_injury_matrix_count <- function(ph.data,
 
   # Check arguments ----
     # ph.data ----
-      if (missing(ph.data) || !is.data.frame(ph.data)) {
-        stop("\n\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
-      }
-
-      # Create a copy of ph.data and ensure it's a data.table
-      ph.data <- data.table::setDT(data.table::copy(ph.data))
+      ph.data <- death_validate_data(ph.data = ph.data,
+                                     icdcol = icdcol,
+                                     verbose = FALSE)
 
     # intent ----
       if(isFALSE(is.character(intent)) || length(intent) > 5){
@@ -789,13 +788,11 @@ death_injury_matrix_count <- function(ph.data,
       }
 
     # icdcol ----
-      if(isFALSE(icdcol %in% colnames(ph.data))){
-        stop("\n\U0001f47f `icdcol` must be the name of column that exists in `ph.data`.")
-      }
-
-      ph.data[, icd10_tempy := death_icd10_clean(get(icdcol))]
+      # validated and cleaned by death_validate_data()
+      ph.data[, icd10_tempy := get(icdcol)]
 
     # kingco ----
+      # chi_geo_kc validated by death_validate_data() if it exists in ph.data
       if (!is.logical(kingco)) {
         stop("\n\U0001f47f `kingco` must be a logical value, i.e., TRUE or FALSE.")
       }
@@ -1111,6 +1108,9 @@ death_multicause <- function(){
 #' with one person per row, with at least one column of ICD10 underlying cause
 #' codes and columns for contributing cause codes.
 #'
+#' #' **Note:*** `ph.data`, `icdcol`, and `contributing_cols` are validated by
+#' [death_validate_data()]
+#'
 #' @param cause_name a character vector of length one that specifies the multicause
 #' death definition from the reference table. For example, `"Opioid"`. To see
 #' available options, use `rads::death_multicause()`.
@@ -1238,12 +1238,11 @@ death_multicause_count <- function(ph.data,
                                    death_age_col = NULL) {
   # Check arguments ----
     # ph.data ----
-      if (missing(ph.data) || !is.data.frame(ph.data)) {
-        stop("\n\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
-      }
-
-      # Create a copy of ph.data and ensure it's a data.table
-      ph.data <- data.table::setDT(data.table::copy(ph.data))
+      ph.data <- death_validate_data(ph.data = ph.data,
+                                     icdcol = icdcol,
+                                     check_multicause = TRUE,
+                                     contributing_cols = contributing_cols,
+                                     verbose = FALSE)
 
     # cause_name vs underlying/contributing codes ----
       if (!is.null(cause_name) && (!is.null(underlying_codes) || !is.null(contributing_codes))) {
@@ -1323,30 +1322,14 @@ death_multicause_count <- function(ph.data,
       }
 
     # icdcol ----
-    if (!icdcol %in% names(ph.data)) {
-      stop("\n\U0001f47f `icdcol` must be the name of a column that exists in `ph.data`.")
-    }
-
-    # Clean underlying cause codes
-    ph.data[, icd10_tempy := death_icd10_clean(get(icdcol))]
+      # validated and cleaned by death_validate_data()
+      ph.data[, icd10_tempy := get(icdcol)]
 
     # contributing_cols ----
-      # Clean up the stem (remove trailing underscore if exists)
+      # validated and cleaned by death_validate_data()
       contributing_cols <- gsub("_$", "", contributing_cols)
-
-      # Find all matching columns
       contrib_col_pattern <- paste0("^", contributing_cols, "_[0-9]+$")
       contrib_col_names <- grep(contrib_col_pattern, names(ph.data), value = TRUE)
-
-      if (length(contrib_col_names) == 0) {
-        stop("\n\U0001f47f No columns found matching pattern '", contributing_cols, "_#'. ",
-             "Expected columns like '", contributing_cols, "_1', '", contributing_cols, "_2', etc.")
-      }
-
-      if (length(contrib_col_names) < 20) {
-        warning("\n\u26A0\ufe0f Less than 20 columns were found matching the pattern '", contributing_cols, "_#'.\n",
-                "Typically there are 20 columns for the contributing causes of death. You may want to check ph.data.")
-      }
 
       # Clean contributing causes columns in ph.data
       ph.data[, (contrib_col_names) := lapply(.SD, death_icd10_clean), .SDcols = contrib_col_names]
@@ -1591,6 +1574,8 @@ death_other<- function(){
 #' @param ph.data a data.table or data.frame. Must contain death data structured
 #' with one person per row and with at least one column of ICD10 death codes.
 #'
+#' **Note:*** `ph.data` and `icdcol` are validated by [death_validate_data()]
+#'
 #' @param  cause a character vector specifying the complete or partial
 #' keyword for the cause of death of interest. It is not case sensitive and you
 #' can specify it in two ways: 1) \code{cause = c('induce', 'overdose')} or 2)
@@ -1711,12 +1696,9 @@ death_other_count <- function(ph.data,
 
   # Check arguments ----
     # ph.data ----
-      if (missing(ph.data) || !is.data.frame(ph.data)) {
-        stop("\n\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
-      }
-
-      # Create a copy of ph.data and ensure it's a data.table
-      ph.data <- data.table::setDT(data.table::copy(ph.data))
+      ph.data <- death_validate_data(ph.data = ph.data,
+                                     icdcol = icdcol,
+                                     verbose = FALSE)
 
     # cause ----
       if(missing(cause)){
@@ -1727,11 +1709,8 @@ death_other_count <- function(ph.data,
       }
 
     # icdcol ----
-      if (!icdcol %in% names(ph.data)) {
-        stop("\n\U0001f47f `icdcol` must be the name of a column that exists in `ph.data`.")
-      }
-
-      ph.data[, icd10_tempy := death_icd10_clean(get(icdcol))]
+      # validated and cleaned by death_validate_data()
+      ph.data[, icd10_tempy := get(icdcol)]
 
     # check that kingco is a logical ----
       if (!is.logical(kingco)) {
@@ -2031,77 +2010,78 @@ death_validate_data <- function(ph.data = NULL,
                                 verbose = TRUE) {
 
   # Validate ph.data ----
-  if (missing(ph.data) || !is.data.frame(ph.data)) {
-    stop("\n\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
-  }
-  if (!data.table::is.data.table(ph.data)) {
-    data.table::setDT(ph.data)
-  }
-  ph.data <- data.table::copy(ph.data)
+    if (missing(ph.data) || !is.data.frame(ph.data)) {
+      stop("\n\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
+    }
+    if (!data.table::is.data.table(ph.data)) {
+      data.table::setDT(ph.data)
+    }
+    ph.data <- data.table::copy(ph.data)
 
   # Validate icdcol ----
-  if (!is.character(icdcol) || length(icdcol) != 1) {
-    stop("\n\U0001f47f `icdcol` must be a single character string naming the ICD-10 column in `ph.data`.")
-  }
-  if (!icdcol %in% names(ph.data)) {
-    stop(paste0("\n\U0001f47f `icdcol` ('", icdcol, "') was not found as a column in `ph.data`."))
-  }
+    if (!is.character(icdcol) || length(icdcol) != 1) {
+      stop("\n\U0001f47f `icdcol` must be a single character string naming the ICD-10 column in `ph.data`.")
+    }
+    if (!icdcol %in% names(ph.data)) {
+      stop(paste0("\n\U0001f47f `icdcol` ('", icdcol, "') was not found as a column in `ph.data`."))
+    }
 
   # Validate check_multicause ----
-  if (!is.logical(check_multicause) || length(check_multicause) != 1 || is.na(check_multicause)) {
-    stop("\n\U0001f47f `check_multicause` must be a logical vector of length 1, i.e., TRUE or FALSE.")
-  }
+    if (!is.logical(check_multicause) || length(check_multicause) != 1 || is.na(check_multicause)) {
+      stop("\n\U0001f47f `check_multicause` must be a logical vector of length 1, i.e., TRUE or FALSE.")
+    }
 
   # Validate verbose ----
-  if (!is.logical(verbose) || length(verbose) != 1 || is.na(verbose)) {
-    stop("\n\U0001f47f `verbose` must be a logical vector of length 1, i.e., TRUE or FALSE.")
-  }
+    if (!is.logical(verbose) || length(verbose) != 1 || is.na(verbose)) {
+      stop("\n\U0001f47f `verbose` must be a logical vector of length 1, i.e., TRUE or FALSE.")
+    }
 
   # Validate contributing cause columns (only when check_multicause = TRUE) ----
-  if (isTRUE(check_multicause)) {
+    if (isTRUE(check_multicause)) {
 
-    if (!is.character(contributing_cols) || length(contributing_cols) != 1) {
-      stop("\n\U0001f47f `contributing_cols` must be a single character string naming the stem of the contributing cause columns in `ph.data`.")
+      if (!is.character(contributing_cols) || length(contributing_cols) != 1) {
+        stop("\n\U0001f47f `contributing_cols` must be a single character string naming the stem of the contributing cause columns in `ph.data`.")
+      }
+
+      contributing_cols <- gsub("_$", "", contributing_cols) # Strip trailing underscore if present
+      contrib_col_pattern <- paste0("^", contributing_cols, "_[0-9]+$")
+      contrib_col_names <- grep(contrib_col_pattern, names(ph.data), value = TRUE)
+
+      if (length(contrib_col_names) == 0) {
+        stop(paste0("\n\U0001f47f No columns found matching the pattern '", contributing_cols, "_#'. ",
+                    "Expected columns like '", contributing_cols, "_1', '", contributing_cols, "_2', etc. ",
+                    "These are required for death_multicause_count()."))
+      }
+
+      if (length(contrib_col_names) < 20) {
+        warning(paste0("\n\u26A0\ufe0f Only ", length(contrib_col_names), " column(s) were found matching the pattern '",
+                       contributing_cols, "_#'.\n",
+                       "Typically there are 20 contributing cause columns. You may want to check ph.data."))
+      }
+
+      if (verbose) {
+        message(paste0("\U00002139 Found ", length(contrib_col_names),
+                       " contributing cause column(s) matching '", contributing_cols, "_#'."))
+      }
     }
-
-    contributing_cols <- gsub("_$", "", contributing_cols) # Strip trailing underscore if present
-    contrib_col_pattern <- paste0("^", contributing_cols, "_[0-9]+$")
-    contrib_col_names <- grep(contrib_col_pattern, names(ph.data), value = TRUE)
-
-    if (length(contrib_col_names) == 0) {
-      stop(paste0("\n\U0001f47f No columns found matching the pattern '", contributing_cols, "_#'. ",
-                  "Expected columns like '", contributing_cols, "_1', '", contributing_cols, "_2', etc. ",
-                  "These are required for death_multicause_count()."))
-    }
-
-    if (length(contrib_col_names) < 20) {
-      warning(paste0("\n\u26A0\ufe0f Only ", length(contrib_col_names), " column(s) were found matching the pattern '",
-                     contributing_cols, "_#'.\n",
-                     "Typically there are 20 contributing cause columns. You may want to check ph.data."))
-    }
-
-    if (verbose) {
-      message(paste0("\U00002139 Found ", length(contrib_col_names),
-                     " contributing cause column(s) matching '", contributing_cols, "_#'."))
-    }
-  }
 
   # Clean icdcol using death_icd10_clean() ----
-  ph.data[, (icdcol) := death_icd10_clean(get(icdcol))]
+    ph.data[, (icdcol) := death_icd10_clean(get(icdcol))]
 
   # Validate chi_geo_kc (if it exists) ----
-  if ('chi_geo_kc' %in% names(ph.data) &&
-      length(setdiff(unique(ph.data$chi_geo_kc), c('King County', NA))) > 0) {
-    stop('\n\U0001F6D1 `chi_geo_kc` exists and has values other than "King County" and NA.\n',
-         "If your analyses are not specific to King County, WA, feel free to delete the chi_geo_kc column.\n",
-         "Otherwise, please fix chi_geo_kc and run again.")
-  }
+    if ('chi_geo_kc' %in% names(ph.data) &&
+        length(setdiff(unique(ph.data$chi_geo_kc), c('King County', NA))) > 0) {
+      stop('\n\U0001F6D1 `chi_geo_kc` exists and has values other than "King County" and NA.\n',
+           "If your analyses are not specific to King County, WA, feel free to delete the chi_geo_kc column.\n",
+           "Otherwise, please fix chi_geo_kc and run again.")
+    }
 
   # Return the modified data.table ----
-  if (verbose) {
-    message("\U0001f642 Validation passed! Data is ready for use with rads death analysis functions.")
-  }
-  return(ph.data)
+    if (verbose) {
+      message("\U0001f642 Validation passed! Data is ready for use with rads death analysis functions.")
+    }
+
+    return(ph.data)
 }
 
 # death_xxx_count() ----
@@ -2124,6 +2104,8 @@ death_validate_data <- function(ph.data = NULL,
 #'
 #' @param ph.data a data.table or data.frame. Must contain death data structured
 #' with one person per row and with at least one column of ICD10 death codes.
+#'
+#' **Note:*** `ph.data` and `icdcol` are validated by [death_validate_data()]
 #'
 #' @param causeids an integer vector, with a minimum value of 1 and a maximum
 #' value of dependent upon the NCHS reference table.
@@ -2242,12 +2224,9 @@ death_xxx_count <- function(ph.data,
 
   # Check arguments ----
     # ph.data ----
-    if (missing(ph.data) || !is.data.frame(ph.data)) {
-      stop("\n\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
-    }
-
-    # Create a copy of ph.data and ensure it's a data.table
-    ph.data <- data.table::setDT(data.table::copy(ph.data))
+      ph.data <- death_validate_data(ph.data = ph.data,
+                                     icdcol = icdcol,
+                                     verbose = FALSE)
 
     # causeids ----
       if (is.null(causeids) & is.null(cause)) {
@@ -2286,11 +2265,8 @@ death_xxx_count <- function(ph.data,
         }
 
     # icdcol ----
-      if (!icdcol %in% names(ph.data)) {
-        stop("\n\U0001f47f `icdcol` must be the name of a column that exists in `ph.data`.")
-      }
-
-      ph.data[, icd10_tempy := death_icd10_clean(get(icdcol))]
+      # validated and cleaned by death_validate_data()
+      ph.data[, icd10_tempy := get(icdcol)]
 
     # kingco ----
       if (!is.logical(kingco)) {
