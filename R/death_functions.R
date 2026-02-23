@@ -1511,8 +1511,8 @@ death_multicause_count <- function(ph.data,
 #' Function to view "Other" Causes of Death that are availbe in RADS (via
 #' \href{https://github.com/PHSKC-APDE/rads.data}{rads.data}). These are causes
 #' of death that are NOT included in the NCHS 113 Causes of death
-#' (see \code{?death_113_count}) or the CDC death injury matrix (see
-#' \code{?death_injury_matrix_count}).
+#' (see [death_113_count()] or the CDC death injury matrix (see
+#' [death_injury_matrix_count()].
 #'
 #' Generates a character vector with the names of all available causes of death.
 #'
