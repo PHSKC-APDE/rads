@@ -368,42 +368,41 @@ library('testthat')
                    "\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
 
       # missing both cause_name and custom codes
-      expect_error(death_multicause_count(ph.data = ph.data),
+      expect_error(death_multicause_count(ph.data = copy(ph.data)[, chi_geo_kc := 'King County'], underlying_codes = 'opioid'),
                    "\U0001f47f You must specify either `cause_name` OR both `underlying_codes`")
 
       # invalid cause_name
-      expect_error(death_multicause_count(ph.data = ph.data, cause_name = 123),
+      expect_error(death_multicause_count(ph.data = copy(ph.data)[, chi_geo_kc := 'King County'], cause_name = 123),
                    "\U0001f47f `cause_name` must be a single character value")
 
       # invalid contributing_logic
-      expect_error(death_multicause_count(ph.data = ph.data, cause_name = "opioid", contributing_logic = "SOME"),
+      expect_error(death_multicause_count(ph.data = copy(ph.data)[, chi_geo_kc := 'King County'], cause_name = "opioid", contributing_logic = "SOME"),
                    "\U0001f47f `contributing_logic` must be either 'ANY' or 'ALL'")
 
       # icdcol not in ph.data
-      expect_error(death_multicause_count(ph.data = ph.data, cause_name = "opioid", icdcol = "invalid_column"),
-                   "\U0001f47f `icdcol` must be the name of a column that exists in `ph.data`")
+      expect_error(death_multicause_count(ph.data = copy(ph.data)[, chi_geo_kc := 'King County'], cause_name = "opioid", icdcol = "invalid_column"),
+                   "\n\U0001f47f `icdcol` \\('invalid_column'\\) was not found as a column in `ph.data`")
 
       # kingco is logical
-      expect_error(death_multicause_count(ph.data = ph.data, cause_name = "opioid", kingco = "TRUE"),
+      expect_error(death_multicause_count(ph.data = copy(ph.data)[, chi_geo_kc := 'King County'], cause_name = "opioid", kingco = "TRUE"),
                    "\U0001f47f `kingco` must be a logical value, i.e., TRUE or FALSE")
 
       # missing chi_geo_kc when kingco == TRUE
-      ph.data_no_kingco <- data.table::copy(ph.data)[, chi_geo_kc := NULL]
-      expect_error(death_multicause_count(ph.data = ph.data_no_kingco, cause_name = "opioid", kingco = TRUE),
+      expect_error(death_multicause_count(ph.data = copy(ph.data)[, chi_geo_kc := NULL], cause_name = "opioid", kingco = TRUE),
                    "\U0001f47f `ph.data` does not have the column `chi_geo_kc`")
 
       # valid group_by columns
-      expect_error(death_multicause_count(ph.data = ph.data, cause_name = "opioid", group_by = c("invalid_column")),
+      expect_error(death_multicause_count(ph.data = copy(ph.data)[, chi_geo_kc := 'King County'], cause_name = "opioid", group_by = c("invalid_column")),
                    "\U0001f6d1 The following `group_by` values are not column names in `ph.data`")
 
       # valid ypll_age values
-      expect_error(death_multicause_count(ph.data = ph.data, cause_name = "opioid", ypll_age = 0),
+      expect_error(death_multicause_count(ph.data = copy(ph.data)[, chi_geo_kc := 'King County'], cause_name = "opioid", ypll_age = 0),
                    "\U0001f47f `ypll_age` must be an integer between 1 and 99")
-      expect_error(death_multicause_count(ph.data = ph.data, cause_name = "opioid", ypll_age = 100),
+      expect_error(death_multicause_count(ph.data = copy(ph.data)[, chi_geo_kc := 'King County'], cause_name = "opioid", ypll_age = 100),
                    "\U0001f47f `ypll_age` must be an integer between 1 and 99")
 
       # valid death_age_col
-      expect_error(death_multicause_count(ph.data = ph.data, cause_name = "opioid", ypll_age = 75, death_age_col = "invalid_column"),
+      expect_error(death_multicause_count(ph.data = copy(ph.data)[, chi_geo_kc := 'King County'], cause_name = "opioid", ypll_age = 75, death_age_col = "invalid_column"),
                    "\U0001f47f `death_age_col` must be the name of column that exists in `ph.data`")
     })
 
@@ -527,7 +526,7 @@ library('testthat')
   # death_other_count tests ----
     test_that("Check for proper triggering of errors ...", {
       ph.data <- data.table(underlying_cod_code = c("A00", "A01", "A02"),
-                            chi_geo_kc = c("King County", "King County", "Other County"),
+                            chi_geo_kc = c("King County", "King County", "King County"),
                             chi_age = c(65, 70, 75))
 
       # missing ph.data
@@ -548,7 +547,7 @@ library('testthat')
 
       # icdcol is in ph,data
       expect_error(death_other_count(ph.data = ph.data, cause = "A00", icdcol = "invalid_column"),
-                   "\U0001f47f `icdcol` must be the name of a column that exists in `ph.data`.")
+                   "\U0001f47f `icdcol` \\('invalid_column'\\) was not found as a column in `ph.data`.")
 
       # kingco is a logical
       expect_error(death_other_count(ph.data = ph.data, cause = "A00", kingco = "TRUE"),
