@@ -21,7 +21,10 @@ death_multicause_count(
 \arguments{
 \item{ph.data}{a data.table or data.frame. Must contain death data structured
 with one person per row, with at least one column of ICD10 underlying cause
-codes and columns for contributing cause codes.}
+codes and columns for contributing cause codes.
+
+#' \strong{Note:}* \code{ph.data}, \code{icdcol}, and \code{contributing_cols} are validated by
+\code{\link[=death_validate_data]{death_validate_data()}}}
 
 \item{cause_name}{a character vector of length one that specifies the multicause
 death definition from the reference table. For example, \code{"Opioid"}. To see

@@ -18,7 +18,9 @@ death_xxx_count(
 }
 \arguments{
 \item{ph.data}{a data.table or data.frame. Must contain death data structured
-with one person per row and with at least one column of ICD10 death codes.}
+with one person per row and with at least one column of ICD10 death codes.
+
+\strong{Note:}* \code{ph.data} and \code{icdcol} are validated by \code{\link[=death_validate_data]{death_validate_data()}}}
 
 \item{causeids}{an integer vector, with a minimum value of 1 and a maximum
 value of dependent upon the NCHS reference table.}

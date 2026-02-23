@@ -16,7 +16,9 @@ death_other_count(
 }
 \arguments{
 \item{ph.data}{a data.table or data.frame. Must contain death data structured
-with one person per row and with at least one column of ICD10 death codes.}
+with one person per row and with at least one column of ICD10 death codes.
+
+\strong{Note:}* \code{ph.data} and \code{icdcol} are validated by \code{\link[=death_validate_data]{death_validate_data()}}}
 
 \item{cause}{a character vector specifying the complete or partial
 keyword for the cause of death of interest. It is not case sensitive and you

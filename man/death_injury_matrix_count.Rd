@@ -20,7 +20,9 @@ death_injury_matrix_count(
 }
 \arguments{
 \item{ph.data}{a data.table or data.frame. Must contain death data structured
-with one person per row and with at least one column of ICD10 death codes.}
+with one person per row and with at least one column of ICD10 death codes.
+
+\strong{Note:}* \code{ph.data} and \code{icdcol} are validated by \code{\link[=death_validate_data]{death_validate_data()}}}
 
 \item{intent}{a character vector of length 1 to 5. It specifies the
 intent of death that you want returned ("Unintentional", "Suicide", "Homicide",
