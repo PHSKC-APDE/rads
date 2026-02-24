@@ -461,6 +461,9 @@ death_icd10_clean <- function(icdcol){
   # Set icd10 to upper case as per standards
   icdcol <- toupper(icdcol)
 
+  # Remove any white spaces
+  icdcol <- gsub("[[:space:]]", "", icdcol)
+
   # Check for hyphens and periods which are sometimes present
   if(length(grep("\\.|-", icdcol, value = T) > 0 )){
     warning(paste0("\n\u26A0\ufe0f There is at least one row where `icdcol` contains a hyphen (-), period (.), " ,
