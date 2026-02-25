@@ -547,7 +547,7 @@ death_injury_matrix<- function(){
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
   death_injury_matrix_list <- mechanism <- intent <-  NULL
 
-  death_injury_matrix_list <- unique(data.table::copy(rads.data::icd10_death_injury_matrix)[, list(mechanism, intent)])
+  death_injury_matrix_list <- unique(rads.data::icd10_death_injury_matrix[, list(mechanism, intent)])
 
   return(death_injury_matrix_list)
 }
@@ -1067,7 +1067,7 @@ death_multicause <- function(){
   cause_name <- underlying_contributing <- icd10 <- n_underlying <- n_contributing <- NULL
 
   # Get the reference table
-  multicause_ref <- data.table::copy(rads.data::icd10_multicause)
+  multicause_ref <- rads.data::icd10_multicause
 
   # Summarize by cause_name
   summary_table <- multicause_ref[, list(
@@ -1273,7 +1273,7 @@ death_multicause_count <- function(ph.data,
         cause_name <- tolower(cause_name)
 
         # Load reference table
-        ref_table <- data.table::copy(rads.data::icd10_multicause)
+        ref_table <- rads.data::icd10_multicause
 
         # Check if cause_name exists
         if (!cause_name %in% tolower(unique(ref_table$cause_name))) {
@@ -1553,7 +1553,7 @@ death_other<- function(){
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
   death_other_list <- cause.of.death <-  NULL
 
-  death_other_list <- data.table::copy(rads.data::icd_other_causes_of_death)
+  death_other_list <- rads.data::icd_other_causes_of_death
   death_other_list <- unique(death_other_list$cause.of.death) # from rads.data
   return(death_other_list)
 }
