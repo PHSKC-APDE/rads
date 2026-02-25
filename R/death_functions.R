@@ -803,7 +803,7 @@ death_injury_matrix_count <- function(ph.data,
       }
 
     # icdcol ----
-      # validated and cleaned by death_validate_data()
+      # validated by death_validate_data()
       ph.data[, icd10_tempy := get(icdcol)]
 
     # kingco ----
@@ -1337,11 +1337,11 @@ death_multicause_count <- function(ph.data,
       }
 
     # icdcol ----
-      # validated and cleaned by death_validate_data()
+      # validated by death_validate_data()
       ph.data[, icd10_tempy := get(icdcol)]
 
     # contributing_cols ----
-      # validated and cleaned by death_validate_data()
+      # validated by death_validate_data()
       contributing_cols <- gsub("_$", "", contributing_cols)
       contrib_col_pattern <- paste0("^", contributing_cols, "_[0-9]+$")
       contrib_col_names <- grep(contrib_col_pattern, names(ph.data), value = TRUE)
@@ -1724,7 +1724,7 @@ death_other_count <- function(ph.data,
       }
 
     # icdcol ----
-      # validated and cleaned by death_validate_data()
+      # validated by death_validate_data()
       ph.data[, icd10_tempy := get(icdcol)]
 
     # check that kingco is a logical ----
@@ -2293,7 +2293,7 @@ death_xxx_count <- function(ph.data,
         }
 
     # icdcol ----
-      # validated and cleaned by death_validate_data()
+      # validated by death_validate_data()
       ph.data[, icd10_tempy := get(icdcol)]
 
     # kingco ----
