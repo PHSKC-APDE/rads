@@ -787,9 +787,9 @@ death_injury_matrix_count <- function(ph.data,
 
   # Check arguments ----
     # ph.data ----
-      ph.data <- death_validate_data(ph.data = ph.data,
-                                     icdcol = icdcol,
-                                     verbose = FALSE)
+      death_validate_data(ph.data = ph.data,
+                          icdcol = icdcol,
+                          verbose = FALSE)
 
     # intent ----
       if(isFALSE(is.character(intent)) || length(intent) > 5){
@@ -1253,11 +1253,11 @@ death_multicause_count <- function(ph.data,
                                    death_age_col = NULL) {
   # Check arguments ----
     # ph.data ----
-      ph.data <- death_validate_data(ph.data = ph.data,
-                                     icdcol = icdcol,
-                                     check_multicause = TRUE,
-                                     contributing_cols = contributing_cols,
-                                     verbose = FALSE)
+      death_validate_data(ph.data = ph.data,
+                          icdcol = icdcol,
+                          check_multicause = TRUE,
+                          contributing_cols = contributing_cols,
+                          verbose = FALSE)
 
     # cause_name vs underlying/contributing codes ----
       if (!is.null(cause_name) && (!is.null(underlying_codes) || !is.null(contributing_codes))) {
@@ -1711,9 +1711,9 @@ death_other_count <- function(ph.data,
 
   # Check arguments ----
     # ph.data ----
-      ph.data <- death_validate_data(ph.data = ph.data,
-                                     icdcol = icdcol,
-                                     verbose = FALSE)
+      death_validate_data(ph.data = ph.data,
+                          icdcol = icdcol,
+                          verbose = FALSE)
 
     # cause ----
       if(missing(cause)){
@@ -2012,10 +2012,10 @@ death_other_count <- function(ph.data,
 #' @examples
 #' # Validate synthetic death data
 #' mydata <- rads.data::synthetic_death
-#' validated_data <- death_validate_data(ph.data = mydata)
+#' death_validate_data(ph.data = mydata)
 #'
 #' # Also validate contributing cause columns for use with death_multicause_count()
-#' validated_data2 <- death_validate_data(ph.data = mydata, check_multicause = TRUE)
+#' death_validate_data(ph.data = mydata, check_multicause = TRUE)
 #'
 death_validate_data <- function(ph.data = NULL,
                                 icdcol = 'underlying_cod_code',
@@ -2252,9 +2252,9 @@ death_xxx_count <- function(ph.data,
 
   # Check arguments ----
     # ph.data ----
-      ph.data <- death_validate_data(ph.data = ph.data,
-                                     icdcol = icdcol,
-                                     verbose = FALSE)
+      death_validate_data(ph.data = ph.data,
+                          icdcol = icdcol,
+                          verbose = FALSE)
 
     # causeids ----
       if (is.null(causeids) & is.null(cause)) {
