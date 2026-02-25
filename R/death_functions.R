@@ -447,9 +447,21 @@ death_130_count <- function(ph.data,
 #'
 #' @examples
 #' \donttest{
+#' # Create sample data
 #' icd_codes <- c("A85.2", "B99-1", "J20.9", "INVALID", "C34")
-#' cleaned_icd_codes <- death_icd10_clean(icd_codes)
-#' print(cleaned_icd_codes)
+#' icd_cols <- c('underlying_ICD', paste0('contributing_icd_', 1:20))
+#' ph.data <- data.table()
+#' ph.data[, (icd_cols) := lapply(1:21, function(i) sample(icd_codes, 5, replace = TRUE))]
+#'
+#' # Example cleaning a vector
+#' print(icd_codes)
+#' print(death_icd10_clean(icd_codes))
+#'
+#' # Example cleaning underlying cause of death in a data.table
+#' ph.data[, underlying_ICD := death_icd10_clean(underlying_ICD)]
+#'
+#' # Example cleaning underlying & contributing causes of death in a data.table
+#' ph.data[, (icd_cols) := lapply(.SD, death_icd10_clean), .SDcols = icd_cols]
 #' }
 #' @export
 #'
@@ -1932,8 +1944,7 @@ death_other_count <- function(ph.data,
 #' Validates that a dataset meets the requirements for use with
 #' [death_113_count()], [death_130_count()], [death_injury_matrix_count()],
 #' [death_other_count()], and [death_multicause_count()]. This function
-#' checks for required columns, validates data formats, and applies
-#' ICD-10 code cleaning consistent with rads death analysis functions.
+#' checks for required columns and validates data formats.
 #'
 #' @param ph.data a data.table or data.frame containing line-level death data,
 #' structured with one person per row.
@@ -1971,8 +1982,7 @@ death_other_count <- function(ph.data,
 #' **Always checked:**
 #' - `ph.data` is a data.frame or data.table
 #' - The column specified by `icdcol` exists in `ph.data`
-#' - ICD-10 codes in `icdcol` are cleaned using [death_icd10_clean()], consistent
-#'   with what all rads death functions do internally
+#' - ICD-10 codes in `icdcol` are consistent with the expectations of the rads death functions
 #'
 #' **Checked if present:**
 #' - `chi_geo_kc`: if this column exists in `ph.data`, it must contain only
@@ -1983,18 +1993,19 @@ death_other_count <- function(ph.data,
 #'   must exist in `ph.data`
 #' - A warning is issued if fewer than 20 such columns are found, as typically
 #'   20 contributing cause columns are expected
+#' - ICD-10 codes in `<contributing_cols>_#`` are consistent with the expectations of the rads death functions
 #'
 #' @return
 #' Returns a data.table with the ICD-10 column cleaned via [death_icd10_clean()].
 #' Informative messages, warnings, and errors are printed as appropriate.
 #'
 #' @seealso
+#' - [death_icd10_clean()] for ICD-10 code cleaning
 #' - [death_113_count()] for NCHS 113 causes of death counts
 #' - [death_130_count()] for NCHS 130 causes of infant death counts
 #' - [death_injury_matrix_count()] for injury matrix counts
 #' - [death_other_count()] for other cause of death counts
 #' - [death_multicause_count()] for counts using both underlying and contributing causes
-#' - [death_icd10_clean()] for ICD-10 code cleaning details
 #'
 #' @export
 #'
@@ -2011,15 +2022,15 @@ death_validate_data <- function(ph.data = NULL,
                                 check_multicause = FALSE,
                                 contributing_cols = 'record_axis_code',
                                 verbose = TRUE) {
+  # Helper function to assess ICD col validity ----
+    is_valid_icd <- function(x) { is.na(x) | grepl("^[A-Z][A-Z0-9]{2}[0-9]$", x) }
 
   # Validate ph.data ----
     if (missing(ph.data) || !is.data.frame(ph.data)) {
       stop("\n\U0001f47f `ph.data` must be the unquoted name of a data.frame or data.table")
     }
-    if (!data.table::is.data.table(ph.data)) {
-      data.table::setDT(ph.data)
-    }
-    ph.data <- data.table::copy(ph.data)
+
+    data.table::setDT(ph.data)
 
   # Validate icdcol ----
     if (!is.character(icdcol) || length(icdcol) != 1) {
@@ -2029,14 +2040,16 @@ death_validate_data <- function(ph.data = NULL,
       stop(paste0("\n\U0001f47f `icdcol` ('", icdcol, "') was not found as a column in `ph.data`."))
     }
 
+    bad_icd <- ph.data[[icdcol]][!is_valid_icd(ph.data[[icdcol]])]
+    if (length(bad_icd) > 0) {
+      stop(paste0('\n\U0001f47f Column `', icdcol, '` contains ', length(bad_icd), ' invalid ICD codes.\n',
+      'Example: ', bad_icd[1]), '\n',
+      'Please use `death_icd10_clean()` and try validating again.')
+    }
+
   # Validate check_multicause ----
     if (!is.logical(check_multicause) || length(check_multicause) != 1 || is.na(check_multicause)) {
       stop("\n\U0001f47f `check_multicause` must be a logical vector of length 1, i.e., TRUE or FALSE.")
-    }
-
-  # Validate verbose ----
-    if (!is.logical(verbose) || length(verbose) != 1 || is.na(verbose)) {
-      stop("\n\U0001f47f `verbose` must be a logical vector of length 1, i.e., TRUE or FALSE.")
     }
 
   # Validate contributing cause columns (only when check_multicause = TRUE) ----
@@ -2066,10 +2079,22 @@ death_validate_data <- function(ph.data = NULL,
         message(paste0("\U00002139 Found ", length(contrib_col_names),
                        " contributing cause column(s) matching '", contributing_cols, "_#'."))
       }
+
+      for (col in contrib_col_names) {
+        bad_icd <- ph.data[[col]][!is_valid_icd(ph.data[[col]])]
+        if (length(bad_icd) > 0) {
+          stop(paste0("\n\U0001f47f Column `", col, "` contains ",
+                      length(bad_icd), " invalid ICD codes.\n",
+                      "Example: ", bad_icd[1], "\n",
+                      "Please use `death_icd10_clean()` and try validating again."))
+        }
+      }
     }
 
-  # Clean icdcol using death_icd10_clean() ----
-    ph.data[, (icdcol) := death_icd10_clean(get(icdcol))]
+  # Validate verbose ----
+    if (!is.logical(verbose) || length(verbose) != 1 || is.na(verbose)) {
+      stop("\n\U0001f47f `verbose` must be a logical vector of length 1, i.e., TRUE or FALSE.")
+    }
 
   # Validate chi_geo_kc (if it exists) ----
     if ('chi_geo_kc' %in% names(ph.data) &&
@@ -2079,13 +2104,13 @@ death_validate_data <- function(ph.data = NULL,
            "Otherwise, please fix chi_geo_kc and run again.")
     }
 
-  # Return the modified data.table ----
+  # Return success message if verbose = TRUE ----
     if (verbose) {
       message("\U0001f642 Validation passed! Data is ready for use with rads death analysis functions.")
     }
 
-    return(ph.data)
-}
+    return(invisible(TRUE))
+  }
 
 # death_xxx_count() ----
 #' Summarize NCHS causes of deaths

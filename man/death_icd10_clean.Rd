@@ -27,8 +27,20 @@ standalone function.
 }
 \examples{
 \donttest{
+# Create sample data
 icd_codes <- c("A85.2", "B99-1", "J20.9", "INVALID", "C34")
-cleaned_icd_codes <- death_icd10_clean(icd_codes)
-print(cleaned_icd_codes)
+icd_cols <- c('underlying_ICD', paste0('contributing_icd_', 1:20))
+ph.data <- data.table()
+ph.data[, (icd_cols) := lapply(1:21, function(i) sample(icd_codes, 5, replace = TRUE))]
+
+# Example cleaning a vector
+print(icd_codes)
+print(death_icd10_clean(icd_codes))
+
+# Example cleaning underlying cause of death in a data.table
+ph.data[, underlying_ICD := death_icd10_clean(underlying_ICD)]
+
+# Example cleaning underlying & contributing causes of death in a data.table
+ph.data[, (icd_cols) := lapply(.SD, death_icd10_clean), .SDcols = icd_cols]
 }
 }

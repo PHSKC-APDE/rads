@@ -51,8 +51,7 @@ Informative messages, warnings, and errors are printed as appropriate.
 Validates that a dataset meets the requirements for use with
 \code{\link[=death_113_count]{death_113_count()}}, \code{\link[=death_130_count]{death_130_count()}}, \code{\link[=death_injury_matrix_count]{death_injury_matrix_count()}},
 \code{\link[=death_other_count]{death_other_count()}}, and \code{\link[=death_multicause_count]{death_multicause_count()}}. This function
-checks for required columns, validates data formats, and applies
-ICD-10 code cleaning consistent with rads death analysis functions.
+checks for required columns and validates data formats.
 }
 \details{
 This function performs the following validation checks:
@@ -61,8 +60,7 @@ This function performs the following validation checks:
 \itemize{
 \item \code{ph.data} is a data.frame or data.table
 \item The column specified by \code{icdcol} exists in \code{ph.data}
-\item ICD-10 codes in \code{icdcol} are cleaned using \code{\link[=death_icd10_clean]{death_icd10_clean()}}, consistent
-with what all rads death functions do internally
+\item ICD-10 codes in \code{icdcol} are consistent with the expectations of the rads death functions
 }
 
 \strong{Checked if present:}
@@ -77,6 +75,7 @@ with what all rads death functions do internally
 must exist in \code{ph.data}
 \item A warning is issued if fewer than 20 such columns are found, as typically
 20 contributing cause columns are expected
+\item ICD-10 codes in `<contributing_cols>_#`` are consistent with the expectations of the rads death functions
 }
 }
 \examples{
@@ -90,11 +89,11 @@ validated_data2 <- death_validate_data(ph.data = mydata, check_multicause = TRUE
 }
 \seealso{
 \itemize{
+\item \code{\link[=death_icd10_clean]{death_icd10_clean()}} for ICD-10 code cleaning
 \item \code{\link[=death_113_count]{death_113_count()}} for NCHS 113 causes of death counts
 \item \code{\link[=death_130_count]{death_130_count()}} for NCHS 130 causes of infant death counts
 \item \code{\link[=death_injury_matrix_count]{death_injury_matrix_count()}} for injury matrix counts
 \item \code{\link[=death_other_count]{death_other_count()}} for other cause of death counts
 \item \code{\link[=death_multicause_count]{death_multicause_count()}} for counts using both underlying and contributing causes
-\item \code{\link[=death_icd10_clean]{death_icd10_clean()}} for ICD-10 code cleaning details
 }
 }
