@@ -791,6 +791,8 @@ death_injury_matrix_count <- function(ph.data,
                           icdcol = icdcol,
                           verbose = FALSE)
 
+      ph.data <- data.table::copy(ph.data)
+
     # intent ----
       if(isFALSE(is.character(intent)) || length(intent) > 5){
         stop("\n\U0001f47f `intent` must specify a character vector with a lenghth <= 5.\nTo select all options, use intent = '*'.")
@@ -1259,6 +1261,8 @@ death_multicause_count <- function(ph.data,
                           contributing_cols = contributing_cols,
                           verbose = FALSE)
 
+      ph.data <- data.table::copy(ph.data)
+
     # cause_name vs underlying/contributing codes ----
       if (!is.null(cause_name) && (!is.null(underlying_codes) || !is.null(contributing_codes))) {
         warning("\n\u26A0\ufe0f You specified both `cause_name` and custom codes. \n",
@@ -1715,6 +1719,8 @@ death_other_count <- function(ph.data,
                           icdcol = icdcol,
                           verbose = FALSE)
 
+      ph.data <- data.table::copy(ph.data)
+
     # cause ----
       if(missing(cause)){
         stop("\n\U0001f47f `cause` cannot be missing. Please specify the `cause = XXX` argument and submit again")
@@ -1996,8 +2002,8 @@ death_other_count <- function(ph.data,
 #' - ICD-10 codes in `<contributing_cols>_#`` are consistent with the expectations of the rads death functions
 #'
 #' @return
-#' Returns a data.table with the ICD-10 column cleaned via [death_icd10_clean()].
-#' Informative messages, warnings, and errors are printed as appropriate.
+#' Returns `invisible(TRUE)` if validation passes. Informative messages, warnings, and errors are
+#' printed as appropriate.
 #'
 #' @seealso
 #' - [death_icd10_clean()] for ICD-10 code cleaning
@@ -2255,6 +2261,8 @@ death_xxx_count <- function(ph.data,
       death_validate_data(ph.data = ph.data,
                           icdcol = icdcol,
                           verbose = FALSE)
+
+      ph.data <- data.table::copy(ph.data)
 
     # causeids ----
       if (is.null(causeids) & is.null(cause)) {
