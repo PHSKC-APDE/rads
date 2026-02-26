@@ -44,8 +44,8 @@ warnings and errors.
 The default is \code{verbose = TRUE}}
 }
 \value{
-Returns a data.table with the ICD-10 column cleaned via \code{\link[=death_icd10_clean]{death_icd10_clean()}}.
-Informative messages, warnings, and errors are printed as appropriate.
+Returns \code{invisible(TRUE)} if validation passes. Informative messages, warnings, and errors are
+printed as appropriate.
 }
 \description{
 Validates that a dataset meets the requirements for use with
@@ -80,11 +80,11 @@ must exist in \code{ph.data}
 }
 \examples{
 # Validate synthetic death data
-mydata <- rads.data::synthetic_death
-validated_data <- death_validate_data(ph.data = mydata)
+deathDT <- rads.data::synthetic_death
+death_validate_data(ph.data = deathDT)
 
 # Also validate contributing cause columns for use with death_multicause_count()
-validated_data2 <- death_validate_data(ph.data = mydata, check_multicause = TRUE)
+death_validate_data(ph.data = deathDT, check_multicause = TRUE)
 
 }
 \seealso{

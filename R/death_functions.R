@@ -37,7 +37,7 @@
 #' @examples
 #' # Save and view table as a data.table named 'blah'
 #' blah <- death_113()
-#' blah[]
+#' print(blah)
 #'
 #' @import data.table rads.data
 #'
@@ -162,39 +162,25 @@ death_113 <- function(){
 #'
 #' @examples
 #' # example 1: death count only
-#' set.seed(98104)
-#' deathdata <- data.table::data.table(
-#'   cod.icd10 = c(rep("A85.2", round(runif(1, 30, 100000), 0)),
-#'                 rep("B51", round(runif(1, 30, 100000), 0)),
-#'                 rep("U071", round(runif(1, 30, 100000), 0)),
-#'                 rep("E44", round(runif(1, 30, 100000), 0)),
-#'                 rep("E62", round(runif(1, 30, 100000), 0)),
-#'                 rep("G00", round(runif(1, 30, 100000), 0)),
-#'                 rep("J10", round(runif(1, 30, 100000), 0)),
-#'                 rep("J15", round(runif(1, 30, 100000), 0)),
-#'                 rep("V874", round(runif(1, 30, 100000), 0)))
-#' )
-#' eg1 <- death_113_count(ph.data = deathdata,
+#' deathDT <- rads.data::synthetic_death
+#'
+#' eg1 <- death_113_count(ph.data = deathDT,
 #'                        causeids = seq(1, 113, 1),
 #'                        cause = NULL,
-#'                        icdcol = "cod.icd10",
+#'                        icdcol = "underlying_cod_code",
 #'                        kingco = FALSE,
 #'                        ypll_age = NULL,
 #'                        death_age_col = NULL)
 #' head(eg1)
 #'
 #' # example 2: with YPLL calculation
-#' deathdata2 <- data.table::copy(deathdata)
-#' set.seed(98104)
-#' deathdata2[, ageofdeath := rads::round2(rnorm(1, mean = 70, sd = 5 ), 0),
-#'            1:nrow(deathdata2)] # synthetic age of death
-#' eg2 <- death_113_count(ph.data = deathdata2,
+#' eg2 <- death_113_count(ph.data = deathDT,
 #'                        causeids = seq(1, 113, 1),
 #'                        cause = NULL,
-#'                        icdcol = "cod.icd10",
+#'                        icdcol = "underlying_cod_code",
 #'                        kingco = FALSE,
 #'                        ypll_age = 65,
-#'                        death_age_col = "ageofdeath")
+#'                        death_age_col = "chi_age")
 #' head(eg2)
 #'
 #' @import data.table rads.data
@@ -259,7 +245,7 @@ death_113_count <- function(ph.data,
 #' @examples
 #' # Save and view table as a data.table named 'blah'
 #' blah <- death_130()
-#' blah[]
+#' print(blah)
 #'
 #' @import data.table rads.data
 #'
@@ -380,22 +366,12 @@ death_130<- function(){
 #'
 #' @examples
 #' # example 1: death count only
-#' set.seed(98104)
-#' deathdata <- data.table::data.table(
-#'   cod.icd10 = c(rep("P36.3", round(runif(1, 30, 100000), 0)),
-#'                 rep("V022", round(runif(1, 30, 100000), 0)),
-#'                 rep("P021", round(runif(1, 30, 100000), 0)),
-#'                 rep("P202", round(runif(1, 30, 100000), 0)),
-#'                 rep("I26", round(runif(1, 30, 100000), 0)),
-#'                 rep("R951", round(runif(1, 30, 100000), 0)),
-#'                 rep("P080", round(runif(1, 30, 100000), 0)),
-#'                 rep("A09", round(runif(1, 30, 100000), 0)),
-#'                 rep("P702", round(runif(1, 30, 100000), 0)))
-#' )
-#' eg1 <- death_130_count(ph.data = deathdata,
+#' deathDT <- rads.data::synthetic_death
+#'
+#' eg1 <- death_130_count(ph.data = deathDT,
 #'                        causeids = seq(1, 130, 1),
 #'                        cause = NULL,
-#'                        icdcol = "cod.icd10",
+#'                        icdcol = "underlying_cod_code",
 #'                        kingco = FALSE,
 #'                        ypll_age = NULL,
 #'                        death_age_col = NULL)
@@ -446,23 +422,21 @@ death_130_count <- function(ph.data,
 #' @return A cleaned and standardized character vector of ICD-10 codes.
 #'
 #' @examples
-#' \donttest{
 #' # Create sample data
 #' icd_codes <- c("A85.2", "B99-1", "J20.9", "INVALID", "C34")
-#' icd_cols <- c('underlying_ICD', paste0('contributing_icd_', 1:20))
-#' ph.data <- data.table()
-#' ph.data[, (icd_cols) := lapply(1:21, function(i) sample(icd_codes, 5, replace = TRUE))]
+#' deathDT <- rads.data::synthetic_death
 #'
 #' # Example cleaning a vector
 #' print(icd_codes)
 #' print(death_icd10_clean(icd_codes))
 #'
 #' # Example cleaning underlying cause of death in a data.table
-#' ph.data[, underlying_ICD := death_icd10_clean(underlying_ICD)]
+#' deathDT[, underlying_cod_code := death_icd10_clean(underlying_cod_code)]
 #'
 #' # Example cleaning underlying & contributing causes of death in a data.table
-#' ph.data[, (icd_cols) := lapply(.SD, death_icd10_clean), .SDcols = icd_cols]
-#' }
+#' icd_cols <- c('underlying_cod_code', grep('record_axis', names(deathDT), value = TRUE))
+#' deathDT[, (icd_cols) := lapply(.SD, death_icd10_clean), .SDcols = icd_cols]
+#'
 #' @export
 #'
 death_icd10_clean <- function(icdcol){
@@ -687,86 +661,56 @@ death_injury_matrix<- function(){
 #' @name death_injury_matrix_count
 #'
 #' @examples
-#' # create synthetic line level data
-#' set.seed(98104)
-#' injurydata <- data.table::data.table(
-#'   cod.icd10 = c(
-#'     # Cut/pierce, Homicide
-#'     rep("X99", round(runif(1, 30, 10000), 0)),
-#'     # Drowning, Unintentional
-#'     rep("W65", round(runif(1, 30, 10000), 0)),
-#'     # Fall, Suicide
-#'     rep("X80", round(runif(1, 30, 10000), 0)),
-#'     # Fire/flame, Undetermined
-#'     rep("Y26", round(runif(1, 30, 10000), 0)),
-#'     # Firearm, Legal intervention/war
-#'     rep("Y350", round(runif(1, 30, 10000), 0)),
-#'     # Poisoning, Unintentional
-#'     rep("X40", round(runif(1, 30, 10000), 0)),
-#'     # Overexertion, Unintentional
-#'     rep("X50", round(runif(1, 30, 10000), 0)),
-#'     # Other land transport, Homicide
-#'     rep("Y03", round(runif(1, 30, 10000), 0)),
-#'     # Pedal cyclist, other, Unintentional
-#'     rep("V10", round(runif(1, 30, 10000), 0)))
-#' )
-#'
-#' injurydata[, year := sample(2015:2020, nrow(injurydata), replace = TRUE)]
-#'
 #' # example 1: every available combination of mechanism and intent
-#' eg1 <- death_injury_matrix_count(ph.data = injurydata,
+#' deathDT <- rads.data::synthetic_death
+#'
+#' eg1 <- death_injury_matrix_count(ph.data = deathDT,
 #'                             intent = "*",
 #'                             mechanism = "*",
-#'                             icdcol = "cod.icd10",
+#'                             icdcol = "underlying_cod_code",
 #'                             kingco = FALSE,
 #'                             ypll_age = NULL,
 #'                             death_age_col = NULL)
-#' head(eg1) # note the data are stratified by year because year was in ph.data
+#' head(eg1)
 #'
 #' # example 2: falls designated as homicides and or suicides
-#' eg2 <- death_injury_matrix_count(ph.data = injurydata,
+#' eg2 <- death_injury_matrix_count(ph.data = deathDT,
 #'                             intent = "icide",
 #'                             mechanism = "fall",
-#'                             icdcol = "cod.icd10",
+#'                             icdcol = "underlying_cod_code",
 #'                             kingco = FALSE,
 #'                             ypll_age = NULL,
 #'                             death_age_col = NULL)
 #' head(eg2)
 #'
 #' # example 3: summary of all injury deaths regardless of intent and mechanism
-#' eg3 <- death_injury_matrix_count(ph.data = injurydata,
+#' eg3 <- death_injury_matrix_count(ph.data = deathDT,
 #'                             intent = "none",
 #'                             mechanism = "none",
-#'                             icdcol = "cod.icd10",
+#'                             icdcol = "underlying_cod_code",
 #'                             kingco = FALSE,
 #'                             ypll_age = NULL,
 #'                             death_age_col = NULL)
 #' eg3[]
 #'
 #' # example 4: any intent and mechanism with YPLL_65 given death_age_col
-#' injurydata4 <- data.table::copy(injurydata)
-#' set.seed(98104)
-#' injurydata4[, ageofdeath := rads::round2(rnorm(1, mean = 70, sd = 5 ), 0),
-#' 1:nrow(injurydata4)] # synthetic age of death
-#' eg4 <- death_injury_matrix_count(ph.data = injurydata4,
+#' eg4 <- death_injury_matrix_count(ph.data = deathDT,
 #'                             intent = "none",
 #'                             mechanism = "none",
-#'                             icdcol = "cod.icd10",
+#'                             icdcol = "underlying_cod_code",
 #'                             kingco = FALSE,
 #'                             ypll_age = 65,
-#'                             death_age_col = "ageofdeath")
+#'                             death_age_col = "chi_age")
 #' eg4[]
 #'
 #' # example 5: all suicides, regardless of mechanism, stratified by age
 #'
-#' injurydata5 <- data.table::copy(injurydata4)
-#'
-#' eg5 <- death_injury_matrix_count(ph.data = injurydata5,
+#' eg5 <- death_injury_matrix_count(ph.data = deathDT,
 #'                             intent = "suicide",
 #'                             mechanism = "none",
-#'                             icdcol = "cod.icd10",
+#'                             icdcol = "underlying_cod_code",
 #'                             kingco = FALSE,
-#'                             group_by = 'ageofdeath',
+#'                             group_by = 'chi_age',
 #'                             ypll_age = NULL,
 #'                             death_age_col = NULL)
 #' eg5[]
@@ -1220,10 +1164,12 @@ death_multicause <- function(){
 #' @name death_multicause_count
 #'
 #' @examples
-#' \dontrun{
 #' # Example using reference table definition
+#'
+#' deathDT <- rads.data::synthetic_death
+#'
 #' opioid_deaths <- death_multicause_count(
-#'   ph.data = death_data,
+#'   ph.data = deathDT,
 #'   cause_name = "Opioid",
 #'   icdcol = "underlying_cod_code",
 #'   contributing_cols = "record_axis_code",
@@ -1232,7 +1178,7 @@ death_multicause <- function(){
 #'
 #' # Example using custom codes
 #' custom_deaths <- death_multicause_count(
-#'   ph.data = death_data,
+#'   ph.data = deathDT,
 #'   underlying_codes = c("X40", "X41", "X42"),
 #'   contributing_codes = c("T400", "T401"),
 #'   contributing_logic = "ANY",
@@ -1240,7 +1186,6 @@ death_multicause <- function(){
 #'   contributing_cols = "record_axis_code",
 #'   kingco = FALSE
 #' )
-#' }
 #'
 death_multicause_count <- function(ph.data,
                                    cause_name = NULL,
@@ -1665,37 +1610,23 @@ death_other<- function(){
 #'
 #' @examples
 #' # example 1: death count only
-#' set.seed(98104)
-#' deathdata <- data.table::data.table(
-#'   cod.icd10 = c(rep("D52.1", round(runif(1, 30, 100000), 0)),
-#'                 rep("E66.1", round(runif(1, 30, 100000), 0)),
-#'                 rep("K85.3", round(runif(1, 30, 100000), 0)),
-#'                 rep("X85", round(runif(1, 30, 100000), 0)),
-#'                 rep("R78.4", round(runif(1, 30, 100000), 0)),
-#'                 rep("Y13.2", round(runif(1, 30, 100000), 0)),
-#'                 rep("X42.3", round(runif(1, 30, 100000), 0)),
-#'                 rep("X60.7", round(runif(1, 30, 100000), 0)),
-#'                 rep("J70.3", round(runif(1, 30, 100000), 0)))
-#' )
-#' eg1 <- death_other_count(ph.data = deathdata,
+#' deathDT <- rads.data::synthetic_death
+#'
+#' eg1 <- death_other_count(ph.data = deathDT,
 #'                        cause = "dose|induce",
-#'                        icdcol = "cod.icd10",
+#'                        icdcol = "underlying_cod_code",
 #'                        kingco = FALSE,
 #'                        ypll_age = NULL,
 #'                        death_age_col = NULL)
 #' head(eg1)
 #'
 #' # example 2: with YPLL calculation
-#' deathdata2 <- data.table::copy(deathdata)
-#' set.seed(98104)
-#' deathdata2[, ageofdeath := rads::round2(rnorm(1, mean = 70, sd = 5 ), 0),
-#'            1:nrow(deathdata2)] # synthetic age of death
-#' eg2 <- death_other_count(ph.data = deathdata2,
+#' eg2 <- death_other_count(ph.data = deathDT,
 #'                        cause = "dose|induce",
-#'                        icdcol = "cod.icd10",
+#'                        icdcol = "underlying_cod_code",
 #'                        kingco = FALSE,
 #'                        ypll_age = 65,
-#'                        death_age_col = "ageofdeath")
+#'                        death_age_col = "chi_age")
 #' head(eg2)
 #'
 #' @import data.table rads.data
@@ -2017,11 +1948,11 @@ death_other_count <- function(ph.data,
 #'
 #' @examples
 #' # Validate synthetic death data
-#' mydata <- rads.data::synthetic_death
-#' death_validate_data(ph.data = mydata)
+#' deathDT <- rads.data::synthetic_death
+#' death_validate_data(ph.data = deathDT)
 #'
 #' # Also validate contributing cause columns for use with death_multicause_count()
-#' death_validate_data(ph.data = mydata, check_multicause = TRUE)
+#' death_validate_data(ph.data = deathDT, check_multicause = TRUE)
 #'
 death_validate_data <- function(ph.data = NULL,
                                 icdcol = 'underlying_cod_code',
@@ -2213,22 +2144,12 @@ death_validate_data <- function(ph.data = NULL,
 #'
 #' @examples
 #' # example 1: death count only
-#' set.seed(98104)
-#' deathdata <- data.table::data.table(
-#'   cod.icd10 = c(rep("A85.2", round(runif(1, 30, 100000), 0)),
-#'                 rep("B51", round(runif(1, 30, 100000), 0)),
-#'                 rep("U071", round(runif(1, 30, 100000), 0)),
-#'                 rep("E44", round(runif(1, 30, 100000), 0)),
-#'                 rep("E62", round(runif(1, 30, 100000), 0)),
-#'                 rep("G00", round(runif(1, 30, 100000), 0)),
-#'                 rep("J10", round(runif(1, 30, 100000), 0)),
-#'                 rep("J15", round(runif(1, 30, 100000), 0)),
-#'                 rep("V874", round(runif(1, 30, 100000), 0)))
-#' )
-#' eg1 <- death_xxx_count(ph.data = deathdata,
+#' deathDT <- rads.data::synthetic_death
+#'
+#' eg1 <- death_xxx_count(ph.data = deathDT,
 #'                        causeids = seq(1, 113, 1),
 #'                        cause = NULL,
-#'                        icdcol = "cod.icd10",
+#'                        icdcol = "underlying_cod_code",
 #'                        kingco = FALSE,
 #'                        ypll_age = NULL,
 #'                        death_age_col = NULL,

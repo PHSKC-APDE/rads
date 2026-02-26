@@ -118,10 +118,12 @@ The function will automatically include "All causes" in addition to your
 specified multicause definition.
 }
 \examples{
-\dontrun{
 # Example using reference table definition
+
+deathDT <- rads.data::synthetic_death
+
 opioid_deaths <- death_multicause_count(
-  ph.data = death_data,
+  ph.data = deathDT,
   cause_name = "Opioid",
   icdcol = "underlying_cod_code",
   contributing_cols = "record_axis_code",
@@ -130,7 +132,7 @@ opioid_deaths <- death_multicause_count(
 
 # Example using custom codes
 custom_deaths <- death_multicause_count(
-  ph.data = death_data,
+  ph.data = deathDT,
   underlying_codes = c("X40", "X41", "X42"),
   contributing_codes = c("T400", "T401"),
   contributing_logic = "ANY",
@@ -138,7 +140,6 @@ custom_deaths <- death_multicause_count(
   contributing_cols = "record_axis_code",
   kingco = FALSE
 )
-}
 
 }
 \seealso{

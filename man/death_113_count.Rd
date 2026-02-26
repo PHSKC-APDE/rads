@@ -107,39 +107,25 @@ Calls upon \code{rads::death_xxx_count}.
 }
 \examples{
 # example 1: death count only
-set.seed(98104)
-deathdata <- data.table::data.table(
-  cod.icd10 = c(rep("A85.2", round(runif(1, 30, 100000), 0)),
-                rep("B51", round(runif(1, 30, 100000), 0)),
-                rep("U071", round(runif(1, 30, 100000), 0)),
-                rep("E44", round(runif(1, 30, 100000), 0)),
-                rep("E62", round(runif(1, 30, 100000), 0)),
-                rep("G00", round(runif(1, 30, 100000), 0)),
-                rep("J10", round(runif(1, 30, 100000), 0)),
-                rep("J15", round(runif(1, 30, 100000), 0)),
-                rep("V874", round(runif(1, 30, 100000), 0)))
-)
-eg1 <- death_113_count(ph.data = deathdata,
+deathDT <- rads.data::synthetic_death
+
+eg1 <- death_113_count(ph.data = deathDT,
                        causeids = seq(1, 113, 1),
                        cause = NULL,
-                       icdcol = "cod.icd10",
+                       icdcol = "underlying_cod_code",
                        kingco = FALSE,
                        ypll_age = NULL,
                        death_age_col = NULL)
 head(eg1)
 
 # example 2: with YPLL calculation
-deathdata2 <- data.table::copy(deathdata)
-set.seed(98104)
-deathdata2[, ageofdeath := rads::round2(rnorm(1, mean = 70, sd = 5 ), 0),
-           1:nrow(deathdata2)] # synthetic age of death
-eg2 <- death_113_count(ph.data = deathdata2,
+eg2 <- death_113_count(ph.data = deathDT,
                        causeids = seq(1, 113, 1),
                        cause = NULL,
-                       icdcol = "cod.icd10",
+                       icdcol = "underlying_cod_code",
                        kingco = FALSE,
                        ypll_age = 65,
-                       death_age_col = "ageofdeath")
+                       death_age_col = "chi_age")
 head(eg2)
 
 }

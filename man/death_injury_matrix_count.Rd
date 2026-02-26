@@ -116,86 +116,56 @@ because they are not included in the coding used by WA DOH. If they are
 needed, they can be obtained from the CDC link below.
 }
 \examples{
-# create synthetic line level data
-set.seed(98104)
-injurydata <- data.table::data.table(
-  cod.icd10 = c(
-    # Cut/pierce, Homicide
-    rep("X99", round(runif(1, 30, 10000), 0)),
-    # Drowning, Unintentional
-    rep("W65", round(runif(1, 30, 10000), 0)),
-    # Fall, Suicide
-    rep("X80", round(runif(1, 30, 10000), 0)),
-    # Fire/flame, Undetermined
-    rep("Y26", round(runif(1, 30, 10000), 0)),
-    # Firearm, Legal intervention/war
-    rep("Y350", round(runif(1, 30, 10000), 0)),
-    # Poisoning, Unintentional
-    rep("X40", round(runif(1, 30, 10000), 0)),
-    # Overexertion, Unintentional
-    rep("X50", round(runif(1, 30, 10000), 0)),
-    # Other land transport, Homicide
-    rep("Y03", round(runif(1, 30, 10000), 0)),
-    # Pedal cyclist, other, Unintentional
-    rep("V10", round(runif(1, 30, 10000), 0)))
-)
-
-injurydata[, year := sample(2015:2020, nrow(injurydata), replace = TRUE)]
-
 # example 1: every available combination of mechanism and intent
-eg1 <- death_injury_matrix_count(ph.data = injurydata,
+deathDT <- rads.data::synthetic_death
+
+eg1 <- death_injury_matrix_count(ph.data = deathDT,
                             intent = "*",
                             mechanism = "*",
-                            icdcol = "cod.icd10",
+                            icdcol = "underlying_cod_code",
                             kingco = FALSE,
                             ypll_age = NULL,
                             death_age_col = NULL)
-head(eg1) # note the data are stratified by year because year was in ph.data
+head(eg1)
 
 # example 2: falls designated as homicides and or suicides
-eg2 <- death_injury_matrix_count(ph.data = injurydata,
+eg2 <- death_injury_matrix_count(ph.data = deathDT,
                             intent = "icide",
                             mechanism = "fall",
-                            icdcol = "cod.icd10",
+                            icdcol = "underlying_cod_code",
                             kingco = FALSE,
                             ypll_age = NULL,
                             death_age_col = NULL)
 head(eg2)
 
 # example 3: summary of all injury deaths regardless of intent and mechanism
-eg3 <- death_injury_matrix_count(ph.data = injurydata,
+eg3 <- death_injury_matrix_count(ph.data = deathDT,
                             intent = "none",
                             mechanism = "none",
-                            icdcol = "cod.icd10",
+                            icdcol = "underlying_cod_code",
                             kingco = FALSE,
                             ypll_age = NULL,
                             death_age_col = NULL)
 eg3[]
 
 # example 4: any intent and mechanism with YPLL_65 given death_age_col
-injurydata4 <- data.table::copy(injurydata)
-set.seed(98104)
-injurydata4[, ageofdeath := rads::round2(rnorm(1, mean = 70, sd = 5 ), 0),
-1:nrow(injurydata4)] # synthetic age of death
-eg4 <- death_injury_matrix_count(ph.data = injurydata4,
+eg4 <- death_injury_matrix_count(ph.data = deathDT,
                             intent = "none",
                             mechanism = "none",
-                            icdcol = "cod.icd10",
+                            icdcol = "underlying_cod_code",
                             kingco = FALSE,
                             ypll_age = 65,
-                            death_age_col = "ageofdeath")
+                            death_age_col = "chi_age")
 eg4[]
 
 # example 5: all suicides, regardless of mechanism, stratified by age
 
-injurydata5 <- data.table::copy(injurydata4)
-
-eg5 <- death_injury_matrix_count(ph.data = injurydata5,
+eg5 <- death_injury_matrix_count(ph.data = deathDT,
                             intent = "suicide",
                             mechanism = "none",
-                            icdcol = "cod.icd10",
+                            icdcol = "underlying_cod_code",
                             kingco = FALSE,
-                            group_by = 'ageofdeath',
+                            group_by = 'chi_age',
                             ypll_age = NULL,
                             death_age_col = NULL)
 eg5[]
