@@ -21,116 +21,98 @@ library('testthat')
 
 # Check death_113_count ----
   # death_113_count() create data ----
-  set.seed(98104)
-  # create synthetic line level data
-  d113data <- data.table::data.table(
-    cod.icd10 = c(rep("A85.2", round(runif(1, 30, 10000), 0)), # code should drop the decimal
-                  rep("B51", round(runif(1, 30, 10000), 0)),
-                  rep("U071", round(runif(1, 30, 10000), 0)),
-                  rep("E44", round(runif(1, 30, 10000), 0)),
-                  rep("E62", round(runif(1, 30, 10000), 0)),
-                  rep("G00", round(runif(1, 30, 10000), 0)),
-                  rep("J10", round(runif(1, 30, 10000), 0)),
-                  rep("J15", round(runif(1, 30, 10000), 0)),
-                  rep("V874", round(runif(1, 30, 10000), 0)))
-  )
-
-  d113data2 <- data.table::copy(d113data)
-  set.seed(98104)
-  d113data2[, ageofdeath := rads::round2(rnorm(1, mean = 70, sd = 5 ), 0),
-            1:nrow(d113data2)]
-  d113data2[, strata := sample(c("one", "two", "three"), size = nrow(d113data2), replace = T)]
-  d113data2_clean <- copy(d113data2)[, cod.icd10 := death_icd10_clean(cod.icd10)]
-
-  # create reference table for testing (I know these values are correct because I chose the ICD10 #s)
-  COD = data.table(cod = c("Arthropod-borne viral encephalitis",
-                           "Malaria",
-                           "COVID-19 (U07.1)",
-                           "Malnutrition",
-                           "Other nutritional deficiencies",
-                           "Meningitis",
-                           "Influenza",
-                           "Pneumonia",
-                           "Motor vehicle crash"),
-                   id = gsub("\\.", "", sort(unique(d113data$cod.icd10))) )
+    deathDT <- rads.data::synthetic_death
 
   # death_113_count() create output ----
-  d113data_clean <- copy(d113data)[, cod.icd10 := death_icd10_clean(cod.icd10)]
-  d113res.default <- suppressWarnings(death_113_count(ph.data = d113data_clean,
-                                                      causeids = seq(1, 113, 1),
-                                                      cause = NULL,
-                                                      icdcol = "cod.icd10",
-                                                      kingco = FALSE))
+    cod.of.interest <- c("Arthropod-borne viral encephalitis",
+                         "Malaria",
+                         "Malnutrition",
+                         "Other nutritional deficiencies",
+                         "Meningitis",
+                         "Influenza",
+                         "Pneumonia",
+                         "Motor vehicle crash")
 
-  d113res.manual <- copy(d113data)
-  d113res.manual[, cod.icd10 := gsub("\\.", "", cod.icd10)]
-  d113res.manual <- merge(d113res.manual, COD, by.x = "cod.icd10", by.y = "id", all = TRUE)
-  d113res.manual <- d113res.manual[, .(manual.count = .N), cod]
+    cod.of.interest.ref <- rads.data::icd_nchs113causes[cause.of.death %in% cod.of.interest,
+                                                        list(cause.of.death, underlying_cod_code = icd10)]
+
+    d113res.manual <- merge(deathDT,
+                            cod.of.interest.ref,
+                            by = "underlying_cod_code",
+                            all.x = TRUE, all.y = F)[!is.na(cause.of.death)]
+    d113res.manual <- d113res.manual[, .(manual.count = .N), cause.of.death]
+
+
+    d113res.default <- suppressWarnings(death_113_count(ph.data = deathDT,
+                                                        causeids = NULL,
+                                                        cause = cod.of.interest,
+                                                        icdcol = "underlying_cod_code",
+                                                        kingco = FALSE))
+    d113res.default <- d113res.default[cause.of.death %in% cod.of.interest]
+
 
   # death_113_count() tests ----
   test_that("Check for proper triggering of errors ...", {
-    expect_error(death_113_count(ph.data = "d113data", kingco = FALSE)) # name of data.table must be unquoted
-    expect_error(death_113_count(ph.data = d113data, icdcol = "cod.icd10", kingco = FALSE)) # warning because of period in A85.2
-    expect_error(suppressWarnings(death_113_count(ph.data = d113data, kingco = TRUE))) # Should error because there is no KC data here
-    expect_error(death_113_count(ph.data = d113data, causeids = seq(1, 115, 1), kingco = FALSE)) # Should error because highest causeid is 114
-    expect_error(death_113_count(ph.data = d113data, causeids = seq(0, 114, 1), kingco = FALSE)) # Should error because lowest causeid is 0
-    expect_error(death_113_count(ph.data = d113data, causeids = c(2, 5, "7", 13), kingco = FALSE)) # Should error because of a non-numeric causeid
-    expect_error(death_113_count(ph.data = d113data, causeids = c(2, 5, 7.3, 13), kingco = FALSE)) # Should error because of a non-integer causeid
-    expect_error(death_113_count(ph.data = d113data, icdcol = cod.icd10, kingco = FALSE)) # Should error because icdcol should be quoted
-    expect_error(death_113_count(ph.data = d113data, icdcol = "cod.icd10x", kingco = FALSE)) # Should error because icdcol does not exist
-    expect_error(suppressWarnings(death_113_count(ph.data = d113data2, icdcol = "cod.icd10", kingco = FALSE, ypll_age = "65"))) # Should error because ypll_age is character
-    expect_error(suppressWarnings(death_113_count(ph.data = d113data2, icdcol = "cod.icd10", kingco = FALSE, ypll_age = 65))) # Should error bc need to specify dob/dod or death_age_col
-    expect_error(suppressWarnings(death_113_count(ph.data = d113data2, icdcol = "cod.icd10", kingco = FALSE, ypll_age = 65, death_age_col = ageofdeath))) # Should error ageofdeath not quoted
-    expect_error(suppressWarnings(death_113_count(ph.data = d113data2, icdcol = 'cod.icd10', kingco = F, group_by = c('stratum')))) # stratum does not exist, should be `strata`
+    expect_error(death_113_count(ph.data = "deathDT", kingco = FALSE)) # name of data.table must be unquoted
+    expect_error(death_113_count(ph.data = deathDT, icdcol = "cod.icd10", kingco = FALSE)) # warning because of period in A85.2
+    expect_error(suppressWarnings(death_113_count(ph.data = copy(deathDT)[, chi_geo_kc := NULL], kingco = TRUE))) # Should error because there is no KC data here
+    expect_error(death_113_count(ph.data = deathDT, causeids = seq(1, 115, 1), kingco = FALSE)) # Should error because highest causeid is 114
+    expect_error(death_113_count(ph.data = deathDT, causeids = seq(0, 114, 1), kingco = FALSE)) # Should error because lowest causeid is 0
+    expect_error(death_113_count(ph.data = deathDT, causeids = c(2, 5, "7", 13), kingco = FALSE)) # Should error because of a non-numeric causeid
+    expect_error(death_113_count(ph.data = deathDT, causeids = c(2, 5, 7.3, 13), kingco = FALSE)) # Should error because of a non-integer causeid
+    expect_error(death_113_count(ph.data = deathDT, icdcol = cod.icd10, kingco = FALSE)) # Should error because icdcol should be quoted
+    expect_error(death_113_count(ph.data = deathDT, icdcol = "cod.icd10x", kingco = FALSE)) # Should error because icdcol does not exist
+    expect_error(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = "cod.icd10", kingco = FALSE, ypll_age = "65"))) # Should error because ypll_age is character
+    expect_error(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = "cod.icd10", kingco = FALSE, ypll_age = 65))) # Should error bc need to specify dob/dod or death_age_col
+    expect_error(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = "cod.icd10", kingco = FALSE, ypll_age = 65, death_age_col = ageofdeath))) # Should error ageofdeath not quoted
+    expect_error(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = 'cod.icd10', kingco = F, group_by = c('stratum')))) # stratum does not exist, should be `strata`
   })
 
   test_that("Death counts by cause are accurate ...", {
-    expect_equal(nrow(d113res.default), nrow(d113res.manual) + 1 ) # 1 extra rows in function (cause.of.death == 'All causes')
-    expect_equal(length(intersect(d113res.default$cause.of.death, d113res.manual$cod)), 9) # confirm names of causes of death
-    expect_equal(sum(d113res.default[!cause.of.death %in% c('All causes')]$deaths),
-                 sum(d113res.manual$manual.count)) # confirm count
-    expect_equal(suppressWarnings(sum(death_113_count(ph.data = d113data2_clean, icdcol = 'cod.icd10', kingco = F, group_by = c('strata'))[cause.of.death == 'All causes']$deaths)),
-                 d113res.default[cause.of.death == 'All causes']$deaths) # confirm no changes in total deaths when using group_by (all cause)
-    expect_equal(suppressWarnings(sum(death_113_count(ph.data = d113data2_clean, icdcol = 'cod.icd10', kingco = F, group_by = c('strata'))[cause.of.death != 'All causes']$deaths)),
-                 sum(d113res.default[cause.of.death != 'All causes']$deaths)) # confirm no changes in total deaths when using group_by (cause specific)
+    expect_equal(nrow(d113res.default), nrow(d113res.manual))
+    expect_equal(length(intersect(d113res.default$cause.of.death, d113res.manual$cause.of.death)), 6) # confirm names of causes of death
+    expect_equal(sum(d113res.default$deaths), sum(d113res.manual$manual.count)) # confirm count
+
+    expect_equal(sum(death_113_count(ph.data = deathDT, icdcol = 'underlying_cod_code', kingco = F, group_by = c('temperament'))[cause.of.death %in% cod.of.interest]$deaths),
+                 sum(d113res.default$deaths)) # confirm no changes in total deaths when using group_by (all cause)
   })
 
   test_that("'cause' argument works correctly ...", {
     expect_equal(
-      suppressWarnings(death_113_count(ph.data = d113data_clean,
+      suppressWarnings(death_113_count(ph.data = deathDT,
                                        causeids = c(16, 96),
                                        cause = NULL,
-                                       icdcol = "cod.icd10",
+                                       icdcol = "underlying_cod_code",
                                        kingco = FALSE)),
-      suppressWarnings(death_113_count(ph.data = d113data_clean,
+      suppressWarnings(death_113_count(ph.data = deathDT,
                                        causeids = c(1:113),
                                        cause = c("malaria", "motor vehicle"),
-                                       icdcol = "cod.icd10",
+                                       icdcol = "underlying_cod_code",
                                        kingco = FALSE)))
     expect_equal(
-      suppressWarnings(death_113_count(ph.data = d113data_clean,
+      suppressWarnings(death_113_count(ph.data = deathDT,
                                        causeids = c(16, 96),
                                        cause = c("malaria|motor vehicle"),
-                                       icdcol = "cod.icd10",
+                                       icdcol = "underlying_cod_code",
                                        kingco = FALSE)),
-      suppressWarnings(death_113_count(ph.data = d113data_clean,
+      suppressWarnings(death_113_count(ph.data = deathDT,
                                        causeids = c(1:113),
                                        cause = c("malaria", "motor vehicle"),
-                                       icdcol = "cod.icd10",
+                                       icdcol = "underlying_cod_code",
                                        kingco = FALSE)))
   })
 
   test_that("Structure of output table is as expected ...", {
-    expect_equal(nrow(d113res.default), 10) # eight causeids should be present, PLUS COVID, PLUS 'All causes'
+    expect_equal(nrow(d113res.default), 6) # because zero malaria and anthropod-borne viral deaths
     expect_equal(sort(names(d113res.default)), c("cause.of.death", "causeid", "deaths"))
-    expect_equal(nrow(suppressWarnings(death_113_count(ph.data = d113data2_clean, icdcol = "cod.icd10", kingco = FALSE, ypll_age = 65, death_age_col = "ageofdeath"))),
-                 10) # eight causeids should be present, PLUS COVID, PLUS 'All causes'
-    expect_equal(sort(names(suppressWarnings(death_113_count(ph.data = d113data2_clean, icdcol = "cod.icd10", kingco = FALSE, ypll_age = 85, death_age_col = "ageofdeath")))),
+    expect_equal(nrow(death_113_count(ph.data = deathDT, icdcol = "underlying_cod_code", cause = cod.of.interest, kingco = FALSE, ypll_age = 65, death_age_col = "chi_age")),
+                 8) # six causeids should be present, PLUS COVID, PLUS 'All causes'
+    expect_equal(sort(names(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = "underlying_cod_code", kingco = FALSE, ypll_age = 85, death_age_col = "chi_age")))),
                  c("cause.of.death", "causeid", "deaths", "ypll_85"))
-    expect_equal(names(suppressWarnings(death_113_count(ph.data = d113data2_clean, icdcol = 'cod.icd10', kingco = F, group_by = c('strata')))[]),
-                 c('cause.of.death', 'causeid', 'deaths', 'strata'))
-    expect_equal(sort(unique(suppressWarnings(death_113_count(ph.data = d113data2_clean, icdcol = 'cod.icd10', kingco = F, group_by = c('strata')))[]$strata)),
-                 c('one', 'three', 'two')) # ensure all strata are present
+    expect_equal(names(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = 'underlying_cod_code', kingco = F, group_by = c('temperament')))[]),
+                 c('cause.of.death', 'causeid', 'deaths', 'temperament'))
+    expect_equal(sort(unique(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = 'underlying_cod_code', kingco = F, group_by = c('temperament')))[]$temperament)),
+                 c('Active', 'Calm', 'Moderate')) # ensure all strata are present
   })
 
 # Check death_130 ----
