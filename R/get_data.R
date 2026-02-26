@@ -729,6 +729,10 @@ get_data_death <- function(cols = NA,
 
       dat <- data.table::as.data.table(DBI::dbGetQuery(con, query.string))
 
+  # clean standard ICD-10 columns (ICD-10 implemented in 1999, so applies to all of our data)
+      icd_cols_2_clean <- c('underlying_cod_code', paste0('record_axis_code_', 1:20))
+      dat[, (icd_cols_2_clean) := lapply(.SD, death_icd10_clean), .SDcols = icd_cols_2_clean]
+
   # Top code age (if wanted) ----
       if('chi_age' %in% names(dat) ){
         dat[chi_age < 0, chi_age := NA] # cannot have a negative age (due to 9999 as year of birth)
