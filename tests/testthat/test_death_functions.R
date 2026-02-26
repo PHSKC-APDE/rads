@@ -519,131 +519,91 @@ library('testthat')
 
 # Check death_injury_matrix_count ----
   # death_injury_matrix_count() create data ----
-  set.seed(98104)
-  # create synthetic line level data
-  injurydata <- data.table::data.table(
-    cod.icd10 = c(rep("X99", round(runif(1, 30, 10000), 0)), # Cut/pierce, Homicide
-                  rep("W65", round(runif(1, 30, 10000), 0)), # Drowning, Unintentional
-                  rep("X80", round(runif(1, 30, 10000), 0)), # Fall, Suicide
-                  rep("Y26", round(runif(1, 30, 10000), 0)), # Fire/flame, Undetermined
-                  rep("Y350", round(runif(1, 30, 10000), 0)), # Firearm, Legal intervention/war
-                  rep("X40", round(runif(1, 30, 10000), 0)), # Poisoning, Unintentional
-                  rep("X50", round(runif(1, 30, 10000), 0)), # Overexertion, Unintentional
-                  rep("Y03", round(runif(1, 30, 10000), 0)), # Other land transport, Homicide
-                  rep("V10", round(runif(1, 30, 10000), 0))) # Pedal cyclist, other, Unintentional
-  )
-
-  # create copy of synthetic data with an age of death
-  injurydata4 <- copy(injurydata)
-  injurydata4[, year := sample(2015:2020, nrow(injurydata), replace = TRUE)]
-  set.seed(98104)
-  injurydata4[, ageofdeath := rads::round2(rnorm(1, mean = 70, sd = 5 ), 0), 1:nrow(injurydata4)] # synthetic age of death
-
-  # create a copy of synthetic data with date_of_birth and date_of_death
-  injurydata5 <- copy(injurydata4)
-  set.seed(98104)
-  injurydata5[, date_of_death := as.Date(paste0(year, "-", sample(1:12, 1, replace = T), "-", sample(1:28, 1, replace = T)) ), 1:nrow(injurydata5)] # synthetic date_of_death
-  injurydata5[, date_of_birth := date_of_death - (365*ageofdeath + sample(1:360, 1, replace = T))] # synthetic date_of_birth
-  injurydata5[, c("ageofdeath") := NULL]
-
-  injurydata5[, strata := sample(c("one", "two", "three"), size = nrow(injurydata5), replace = T)]
-
-
-  minimatrix <- data.table(
-    cod.icd10 = unique(injurydata$cod.icd10),
-    mechanism = c("Cut/pierce", "Drowning", "Fall", "Fire/flame", "Firearm", "Poisoning", "Overexertion", "Other land transport", "Pedal cyclist, other"),
-    intent = c("Homicide", "Unintentional", "Suicide", "Undetermined", "Legal intervention/war", "Unintentional", "Unintentional", "Homicide", "Unintentional")
-  )
-
-  injurydata_clean <- copy(injurydata)[, cod.icd10 := death_icd10_clean(cod.icd10)]
-  injurydata4 <- copy(injurydata4)[, cod.icd10 := death_icd10_clean(cod.icd10)]
-  injurydata5 <- copy(injurydata5)[, cod.icd10 := death_icd10_clean(cod.icd10)]
+    deathDT <- rads.data::synthetic_death
 
   # death_injury_matrix_count() create output ----
-  # manually
-  injuries_m <- injurydata[, .(deaths = .N), "cod.icd10"]
-  injuries_m <- merge(injuries_m, minimatrix, by = "cod.icd10", all = FALSE)
-  injuries_m <- rbind(injuries_m[, .(mechanism = "All injury", deaths = sum(deaths)), "intent"], injuries_m, fill = TRUE)
-  setcolorder(injuries_m, c("mechanism", "intent", "deaths"))
+    # using the function
+    injuries.rads <- death_injury_matrix_count(ph.data = deathDT,
+                                               intent = "*",
+                                               mechanism = "*",
+                                               icdcol = "underlying_cod_code",
+                                               kingco = F)
+    injuries.rads <- injuries.rads[!mechanism %in% c("All transport", "Fire/hot object or substance")] # These are summary categories
+    injuries.rads <- injuries.rads[deaths != 0]
 
-  # using the function
-  injuries_f <- death_injury_matrix_count(ph.data = injurydata_clean,
-                                     intent = "*",
-                                     mechanism = "*",
-                                     icdcol = "cod.icd10",
-                                     kingco = F)
-  injuries_f <- injuries_f[!mechanism %in% c("All transport", "Fire/hot object or substance")] # These are summary categories
+    # manually
+    cod.of.interest.ref <- rads.data::icd10_death_injury_matrix[, .(underlying_cod_code = icd10, mechanism, intent)]
+    injuries.manual <- merge(deathDT[, .(underlying_cod_code, chi_age)], cod.of.interest.ref, by = "underlying_cod_code", all = FALSE)
+    injuries.manual[, ypll_65 := fifelse(chi_age < 65, 65 - chi_age, 0)]
+    injuries.manual <- injuries.manual[, .(deaths = .N, ypll_65 = sum(ypll_65)), by = c('mechanism', 'intent')]
+    setcolorder(injuries.manual, names(injuries.rads))
+    injuries.manual <- injuries.manual[!mechanism %in% c("All transport", "Fire/hot object or substance")] # These are summary categories
 
   # death_injury_matrix_count() tests ----
   test_that("Check for proper triggering of errors ...", {
-    expect_error(death_injury_matrix_count(ph.data = "injurydata", kingco = FALSE)) # name of data.table must be unquoted
-    expect_error(death_injury_matrix_count(ph.data = injurydatum, kingco = FALSE)) # warning because data.table doesn't exist
-    expect_error(suppressWarnings(death_injury_matrix_count(ph.data = injurydata_clean, icdcol = "cod.icd10", kingco = TRUE))) # Should error because there is no KC data here
-    expect_error(death_injury_matrix_count(ph.data = injurydata_clean, intent = "z", , icdcol = "cod.icd10", kingco = FALSE)) # Should error because none of the intents have 'z'
-    expect_error(death_injury_matrix_count(ph.data = injurydata_clean, , icdcol = "cod.icd10", mechanism = "z", kingco = FALSE)) # Should error because none of the mechanisms have 'z'
-    expect_error(death_injury_matrix_count(ph.data = injurydata_clean, , icdcol = "cod.icd10", intent = 100, kingco = FALSE)) # Should error because intent must be a character
-    expect_error(death_injury_matrix_count(ph.data = injurydata_clean, , icdcol = "cod.icd10", mechanism = 100, kingco = FALSE)) # Should error because mechanism must be a character
-    expect_error(death_injury_matrix_count(ph.data = injurydata_clean, icdcol = cod.icd10, kingco = FALSE)) # Should error because icdcol should be quoted
-    expect_error(death_injury_matrix_count(ph.data = injurydata_clean, icdcol = "cod.icd10x", kingco = FALSE)) # Should error because icdcol does not exist
-    expect_error(death_injury_matrix_count(ph.data = injurydata_clean, icdcol = "cod.icd10", kingco = FALSE, ypll_age = 65)) # Should error because data lacks dob/dod
-    expect_error(death_injury_matrix_count(ph.data = injurydata4, icdcol = "cod.icd10", kingco = FALSE, ypll_age = 65)) # Should error because didn't specify age
-    expect_error(death_injury_matrix_count(ph.data = injurydata5, icdcol = "cod.icd10", kingco = FALSE, ypll_age = "65")) # Should error because ypll_age is character
-    expect_error(death_injury_matrix_count(ph.data = injurydata5, icdcol = "cod.icd10", kingco = FALSE, ypll_age = 65.1)) # Should error because ypll_age is not integer
-    expect_error(death_injury_matrix_count(ph.data = injurydata5, icdcol = "cod.icd10", kingco = FALSE, group_by = 'stratum')) # Should error because column is `strata`, not stratum
+    expect_error(death_injury_matrix_count(ph.data = "deathDT", kingco = FALSE)) # name of data.table must be unquoted
+    expect_error(death_injury_matrix_count(ph.data = deathDTx, kingco = FALSE)) # warning because data.table doesn't exist
+    expect_error(suppressWarnings(death_injury_matrix_count(ph.data = copy(deathDT)[chi_geo_kc], icdcol = "underlying_cod_code", kingco = TRUE))) # Should error because there is no KC data here
+    expect_error(death_injury_matrix_count(ph.data = injurydata_clean, intent = "z", , icdcol = "underlying_cod_code", kingco = FALSE)) # Should error because none of the intents have 'z'
+    expect_error(death_injury_matrix_count(ph.data = injurydata_clean, , icdcol = "underlying_cod_code", mechanism = "z", kingco = FALSE)) # Should error because none of the mechanisms have 'z'
+    expect_error(death_injury_matrix_count(ph.data = injurydata_clean, , icdcol = "underlying_cod_code", intent = 100, kingco = FALSE)) # Should error because intent must be a character
+    expect_error(death_injury_matrix_count(ph.data = injurydata_clean, , icdcol = "underlying_cod_code", mechanism = 100, kingco = FALSE)) # Should error because mechanism must be a character
+    expect_error(death_injury_matrix_count(ph.data = injurydata_clean, icdcol = underlying_cod_code, kingco = FALSE)) # Should error because icdcol should be quoted
+    expect_error(death_injury_matrix_count(ph.data = injurydata_clean, icdcol = "underlying_cod_codex", kingco = FALSE)) # Should error because icdcol does not exist
+    expect_error(death_injury_matrix_count(ph.data = injurydata_clean, icdcol = "underlying_cod_code", kingco = FALSE, ypll_age = 65)) # Should error because data lacks dob/dod
+    expect_error(death_injury_matrix_count(ph.data = injurydata4, icdcol = "underlying_cod_code", kingco = FALSE, ypll_age = 65)) # Should error because didn't specify age
+    expect_error(death_injury_matrix_count(ph.data = injurydata5, icdcol = "underlying_cod_code", kingco = FALSE, ypll_age = "65")) # Should error because ypll_age is character
+    expect_error(death_injury_matrix_count(ph.data = injurydata5, icdcol = "underlying_cod_code", kingco = FALSE, ypll_age = 65.1)) # Should error because ypll_age is not integer
+    expect_error(death_injury_matrix_count(ph.data = injurydata5, icdcol = "underlying_cod_code", kingco = FALSE, group_by = 'stratum')) # Should error because column is `strata`, not stratum
   })
 
   test_that("Filtering by intent and mechanism work properly ...", {
-    intent.check <- death_injury_matrix_count(ph.data = injurydata_clean,
+    intent.check <- death_injury_matrix_count(ph.data = deathDT,
                                               intent = "suicide",
                                               mechanism = "*",
-                                              icdcol = "cod.icd10",
+                                              icdcol = "underlying_cod_code",
                                               kingco = F)
-    mechanism.check <- death_injury_matrix_count(ph.data = injurydata_clean,
+    mechanism.check <- death_injury_matrix_count(ph.data = deathDT,
                                                  intent = "*",
                                                  mechanism = "firearm",
-                                                 icdcol = "cod.icd10",
+                                                 icdcol = "underlying_cod_code",
                                                  kingco = F)
-    double.none <- suppressWarnings(death_injury_matrix_count(ph.data = injurydata_clean,
+    double.none <- suppressWarnings(death_injury_matrix_count(ph.data = deathDT,
                                                               intent = "none",
                                                               mechanism = "none",
-                                                              icdcol = "cod.icd10",
+                                                              icdcol = "underlying_cod_code",
                                                               kingco = F))
-    expect_equal(nrow(intent.check), 2) # 1 for Fall/suicide and 1 for All injury/suicide
+    expect_equal(unique(intent.check$intent), 'Suicide')
     expect_equal(nrow(mechanism.check), 5) # the '*' gets all five intents
     expect_equal(nrow(double.none), 1) # All injury/Any intent
   })
 
   test_that("Death counts are accurate ...", {
-    expect_equal(sum(injuries_f[mechanism == "All injury"]$deaths), sum(injuries_m[mechanism == "All injury"]$deaths)) # summary by intent
-    expect_equal(sum(injuries_f[mechanism != "All injury"]$deaths), sum(injuries_m[mechanism != "All injury"]$deaths)) # individual mechanisms
-    expect_equal(sum(death_injury_matrix_count(ph.data = injurydata5, icdcol = "cod.icd10", kingco = FALSE, group_by = 'strata')[]$deaths),
-                 sum(death_injury_matrix_count(ph.data = injurydata5, icdcol = "cod.icd10", kingco = FALSE)[]$deaths)) # group_by should not impact total
+    expect_equal(sum(injuries.rads[mechanism == "All injury"]$deaths), sum(injuries.manual[mechanism == "All injury"]$deaths)) # summary by intent
+    expect_equal(sum(injuries.rads[mechanism != "All injury"]$deaths), sum(injuries.manual[mechanism != "All injury"]$deaths)) # individual mechanisms
+    expect_equal(sum(death_injury_matrix_count(ph.data = deathDT, icdcol = "underlying_cod_code", kingco = FALSE, group_by = 'temperament')[]$deaths),
+                 sum(death_injury_matrix_count(ph.data = deathDT, icdcol = "underlying_cod_code", kingco = FALSE)[]$deaths)) # group_by should not impact total
   })
 
   test_that("YPLL counts are accurate ...", {
-    manual5 <- copy(injurydata5)[, AGEz := rads::calc_age(date_of_birth, date_of_death)] # manually calc age
-    manual5[AGEz <= 65, ypll_65 := 65 - AGEz]
-
     # compare to manually calculated YPLL_65
-    expect_equal(sum(suppressWarnings(death_injury_matrix_count(ph.data = injurydata4[year == 2020],
+    expect_equal(sum(suppressWarnings(death_injury_matrix_count(ph.data = deathDT,
                                                intent = "none",
                                                mechanism = "none",
-                                               icdcol = "cod.icd10",
+                                               icdcol = "underlying_cod_code",
                                                kingco = FALSE,
                                                ypll_age = 65,
-                                               death_age_col = "ageofdeath"))[]$ypll_65),
-                 sum(manual5[year == 2020]$ypll_65, na.rm = T))
+                                               death_age_col = "chi_age"))[]$ypll_65),
+                 sum(injuries.manual[mechanism == 'All injury']$ypll_65))
 
   })
 
   test_that("Structure of output table is as expected ...", {
-    expect_equal(nrow(injuries_f), 50) # there are 10 mechanisms (9 unique + 'All injury') X 5 intents
-    expect_equal(nrow(injuries_f[deaths != 0]), 14) # there are only 14 valid combinations of mechanism and intent in this data
-    expect_equal(sort(names(injuries_f)), c("deaths", "intent", "mechanism"))
-    expect_equal(sort(names(death_injury_matrix_count(ph.data = injurydata5, icdcol = "cod.icd10", kingco = FALSE, group_by = 'strata'))),
-                 sort(c('mechanism', 'intent', 'deaths', 'strata')))
-    expect_equal(sort(unique(death_injury_matrix_count(ph.data = injurydata5, icdcol = "cod.icd10", kingco = FALSE, group_by = 'strata')[]$strata)),
-                 sort(c('one', 'two', 'three')))
+    expect_equal(sort(names(injuries.rads)), c("deaths", "intent", "mechanism"))
+    expect_equal(sort(names(death_injury_matrix_count(ph.data = deathDT, icdcol = "underlying_cod_code", kingco = FALSE, group_by = 'temperament'))),
+                 sort(c('mechanism', 'intent', 'deaths', 'temperament')))
+    expect_equal(sort(unique(death_injury_matrix_count(ph.data = deathDT, icdcol = "underlying_cod_code", kingco = FALSE, group_by = 'temperament')[]$temperament)),
+                 sort(c('Active', 'Calm', 'Moderate')))
   })
 
 # Check death_icd10_clean ----
