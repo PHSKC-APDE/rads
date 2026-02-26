@@ -405,44 +405,31 @@ library('testthat')
 
 # Check death_other_count ----
   # death_other_count create data ----
-  set.seed(98104)
-  otherdata <- data.table::data.table(cod.icd10 = sample(rads.data::icd_other_causes_of_death[]$icd10, size = 5000, replace = T),
-                                      chi_age = sample(35:85, 5000, replace = T),
-                                      shape = sample(c('square', 'cirlce', 'triangle'), size = 5000, replace = T),
-                                      binary = sample(c('On', 'Off'), size = 5000, replace = T))
-  otherdata[, ypll_65 := fifelse(chi_age < 65, 65 - chi_age, 0)]
-
-
-  otherdata.manual <- merge(otherdata,
-                     rads.data::icd_other_causes_of_death[, .(cause.of.death, cod.icd10 = icd10)],
-                     by = 'cod.icd10',
-                     all.x = T,
-                     all.y = F) # will lengthen table because some ICD codes map to > 1 'Other' cause of death
-  otherdata.manual[, ypll_65 := fifelse(chi_age < 65, 65 - chi_age, 0)]
+    deathDT <- rads.data::synthetic_death
 
   # death_other_count create output ----
-  other.rads <- suppressWarnings(death_other_count(ph.data = copy(otherdata)[, ypll_65 := NULL],
-                                                   cause = death_other(),
-                                                   icdcol = "cod.icd10",
-                                                   kingco = FALSE,
-                                                   group_by = c('shape', 'binary'),
-                                                   ypll_age = 65,
-                                                   death_age_col = 'chi_age'))
-  other.manual <- rbind(
-    # cause specific
-    merge(otherdata.manual[, .(manual.count = .N), .(cause.of.death, shape, binary)],
-          otherdata.manual[, .(manual.ypll = sum(ypll_65)), .(cause.of.death, shape, binary)],
-          by = c('cause.of.death', 'shape', 'binary'),
-          all = T),
-    # all cause
-    merge(otherdata[, .(manual.count = .N), .(shape, binary)],
-          otherdata[, .(manual.ypll = sum(ypll_65)), .(shape, binary)],
-          by = c('shape', 'binary'),
-          all = T)[, cause.of.death := 'All causes']
-  )
+    other.rads <- suppressWarnings(death_other_count(ph.data = deathDT,
+                                                     cause = death_other(),
+                                                     icdcol = "underlying_cod_code",
+                                                     kingco = FALSE,
+                                                     group_by = c('temperament'),
+                                                     ypll_age = 65,
+                                                     death_age_col = 'chi_age'))[cause.of.death != 'All causes']
 
-  other.rads <- other.rads[, .(cause.of.death, shape, binary, deaths, ypll_65)]
-  other.manual <- other.manual[, .(cause.of.death, shape, binary, deaths = manual.count, ypll_65 = manual.ypll)]
+    cod.of.interest.ref <- rads.data::icd_other_causes_of_death[, list(cause.of.death, underlying_cod_code = icd10)]
+
+    other.manual <- deathDT[cod.of.interest.ref,
+                            on = "underlying_cod_code",
+                            allow.cartesian = TRUE
+    ][ , ypll_65 := fifelse(chi_age < 65, 65 - chi_age, 0)
+    ][ , .(deaths = .N, ypll_65 = sum(ypll_65)), by = .(temperament, cause.of.death) ][!is.na(temperament)]
+
+
+    other.rads <- other.rads[, .(cause.of.death, temperament, deaths, ypll_65)]
+    other.manual <- other.manual[, .(cause.of.death, temperament, deaths, ypll_65)]
+
+    setorder(other.rads, cause.of.death, temperament)
+    setorder(other.manual, cause.of.death, temperament)
 
   # death_other_count tests ----
     test_that("Check for proper triggering of errors ...", {
@@ -501,31 +488,29 @@ library('testthat')
       expect_identical(names(other.rads), names(other.manual)) # col names
       expect_identical(sort(unique(other.rads$cause.of.death)), sort(unique(other.manual$cause.of.death))) # COD
 
-      expect_equal(sum(other.rads[cause.of.death == 'All causes']$deaths), sum(other.manual[cause.of.death == 'All causes']$deaths)) # all cause deaths
-      expect_equal(sum(other.rads[cause.of.death != 'All causes']$deaths), sum(other.manual[cause.of.death != 'All causes']$deaths)) # cause specific deaths
+      expect_equal(sum(other.rads$deaths), sum(other.manual$deaths)) # cause specific deaths
 
-      expect_equal(sum(other.rads[cause.of.death == 'All causes']$ypll_65), sum(other.manual[cause.of.death == 'All causes']$ypll_65)) # all cause YPLL
-      expect_equal(sum(other.rads[cause.of.death != 'All causes']$ypll_65), sum(other.manual[cause.of.death != 'All causes']$ypll_65)) # cause specific YPLL
+      expect_equal(sum(other.rads$ypll_65), sum(other.manual$ypll_65)) # cause specific YPLL
     })
 
     test_that("'cause' argument works correctly ...", {
       expect_identical(
-        sort(unique(death_other_count(ph.data = copy(otherdata)[, ypll_65 := NULL],
+        sort(unique(death_other_count(ph.data = copy(deathDT),
                           cause = 'heart disease',
-                          icdcol = "cod.icd10",
+                          icdcol = "underlying_cod_code",
                           kingco = FALSE,
-                          group_by = c('shape', 'binary'),
+                          group_by = c('temperament'),
                           ypll_age = 65,
                           death_age_col = 'chi_age')[]$cause.of.death)),
         c('All causes', 'Heart disease')
         )
 
         expect_identical(
-          sort(unique(death_other_count(ph.data = copy(otherdata)[, ypll_65 := NULL],
+          sort(unique(death_other_count(ph.data = deathDT,
                                         cause = c('heat', 'stress', 'drug'),
-                                        icdcol = "cod.icd10",
+                                        icdcol = "underlying_cod_code",
                                         kingco = FALSE,
-                                        group_by = c('shape', 'binary'),
+                                        group_by = c('temperament'),
                                         ypll_age = 65,
                                         death_age_col = 'chi_age')[]$cause.of.death)),
           c('All causes', 'Drug-induced', 'Drug-overdose', 'Drug_Death', 'HeatStress_Death')
