@@ -26,9 +26,19 @@ It is used internally by \code{rads} death functions but can also be used as a
 standalone function.
 }
 \examples{
-\donttest{
+# Create sample data
 icd_codes <- c("A85.2", "B99-1", "J20.9", "INVALID", "C34")
-cleaned_icd_codes <- death_icd10_clean(icd_codes)
-print(cleaned_icd_codes)
-}
+deathDT <- rads.data::synthetic_death
+
+# Example cleaning a vector
+print(icd_codes)
+print(death_icd10_clean(icd_codes))
+
+# Example cleaning underlying cause of death in a data.table
+deathDT[, underlying_cod_code := death_icd10_clean(underlying_cod_code)]
+
+# Example cleaning underlying & contributing causes of death in a data.table
+icd_cols <- c('underlying_cod_code', grep('record_axis', names(deathDT), value = TRUE))
+deathDT[, (icd_cols) := lapply(.SD, death_icd10_clean), .SDcols = icd_cols]
+
 }

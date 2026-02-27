@@ -103,22 +103,12 @@ Calls upon \code{rads::death_xxx_count}.
 }
 \examples{
 # example 1: death count only
-set.seed(98104)
-deathdata <- data.table::data.table(
-  cod.icd10 = c(rep("P36.3", round(runif(1, 30, 100000), 0)),
-                rep("V022", round(runif(1, 30, 100000), 0)),
-                rep("P021", round(runif(1, 30, 100000), 0)),
-                rep("P202", round(runif(1, 30, 100000), 0)),
-                rep("I26", round(runif(1, 30, 100000), 0)),
-                rep("R951", round(runif(1, 30, 100000), 0)),
-                rep("P080", round(runif(1, 30, 100000), 0)),
-                rep("A09", round(runif(1, 30, 100000), 0)),
-                rep("P702", round(runif(1, 30, 100000), 0)))
-)
-eg1 <- death_130_count(ph.data = deathdata,
+deathDT <- rads.data::synthetic_death
+
+eg1 <- death_130_count(ph.data = deathDT,
                        causeids = seq(1, 130, 1),
                        cause = NULL,
-                       icdcol = "cod.icd10",
+                       icdcol = "underlying_cod_code",
                        kingco = FALSE,
                        ypll_age = NULL,
                        death_age_col = NULL)

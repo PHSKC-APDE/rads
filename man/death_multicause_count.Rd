@@ -21,7 +21,10 @@ death_multicause_count(
 \arguments{
 \item{ph.data}{a data.table or data.frame. Must contain death data structured
 with one person per row, with at least one column of ICD10 underlying cause
-codes and columns for contributing cause codes.}
+codes and columns for contributing cause codes.
+
+#' \strong{Note:}* \code{ph.data}, \code{icdcol}, and \code{contributing_cols} are validated by
+\code{\link[=death_validate_data]{death_validate_data()}}}
 
 \item{cause_name}{a character vector of length one that specifies the multicause
 death definition from the reference table. For example, \code{"Opioid"}. To see
@@ -115,10 +118,12 @@ The function will automatically include "All causes" in addition to your
 specified multicause definition.
 }
 \examples{
-\dontrun{
 # Example using reference table definition
+
+deathDT <- rads.data::synthetic_death
+
 opioid_deaths <- death_multicause_count(
-  ph.data = death_data,
+  ph.data = deathDT,
   cause_name = "Opioid",
   icdcol = "underlying_cod_code",
   contributing_cols = "record_axis_code",
@@ -127,7 +132,7 @@ opioid_deaths <- death_multicause_count(
 
 # Example using custom codes
 custom_deaths <- death_multicause_count(
-  ph.data = death_data,
+  ph.data = deathDT,
   underlying_codes = c("X40", "X41", "X42"),
   contributing_codes = c("T400", "T401"),
   contributing_logic = "ANY",
@@ -135,7 +140,6 @@ custom_deaths <- death_multicause_count(
   contributing_cols = "record_axis_code",
   kingco = FALSE
 )
-}
 
 }
 \seealso{
