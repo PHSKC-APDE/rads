@@ -16,8 +16,8 @@ A character vector with the name of each available cause of death.
 Function to view "Other" Causes of Death that are availbe in RADS (via
 \href{https://github.com/PHSKC-APDE/rads.data}{rads.data}). These are causes
 of death that are NOT included in the NCHS 113 Causes of death
-(see \code{?death_113_count}) or the CDC death injury matrix (see
-\code{?death_injury_matrix_count}).
+(see \code{\link[=death_113_count]{death_113_count()}} or the CDC death injury matrix (see
+\code{\link[=death_injury_matrix_count]{death_injury_matrix_count()}}.
 
 Generates a character vector with the names of all available causes of death.
 }

@@ -18,7 +18,9 @@ death_xxx_count(
 }
 \arguments{
 \item{ph.data}{a data.table or data.frame. Must contain death data structured
-with one person per row and with at least one column of ICD10 death codes.}
+with one person per row and with at least one column of ICD10 death codes.
+
+\strong{Note:}* \code{ph.data} and \code{icdcol} are validated by \code{\link[=death_validate_data]{death_validate_data()}}}
 
 \item{causeids}{an integer vector, with a minimum value of 1 and a maximum
 value of dependent upon the NCHS reference table.}
@@ -101,22 +103,12 @@ of available causesid and cause values.
 }
 \examples{
 # example 1: death count only
-set.seed(98104)
-deathdata <- data.table::data.table(
-  cod.icd10 = c(rep("A85.2", round(runif(1, 30, 100000), 0)),
-                rep("B51", round(runif(1, 30, 100000), 0)),
-                rep("U071", round(runif(1, 30, 100000), 0)),
-                rep("E44", round(runif(1, 30, 100000), 0)),
-                rep("E62", round(runif(1, 30, 100000), 0)),
-                rep("G00", round(runif(1, 30, 100000), 0)),
-                rep("J10", round(runif(1, 30, 100000), 0)),
-                rep("J15", round(runif(1, 30, 100000), 0)),
-                rep("V874", round(runif(1, 30, 100000), 0)))
-)
-eg1 <- death_xxx_count(ph.data = deathdata,
+deathDT <- rads.data::synthetic_death
+
+eg1 <- death_xxx_count(ph.data = deathDT,
                        causeids = seq(1, 113, 1),
                        cause = NULL,
-                       icdcol = "cod.icd10",
+                       icdcol = "underlying_cod_code",
                        kingco = FALSE,
                        ypll_age = NULL,
                        death_age_col = NULL,

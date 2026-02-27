@@ -16,7 +16,9 @@ death_other_count(
 }
 \arguments{
 \item{ph.data}{a data.table or data.frame. Must contain death data structured
-with one person per row and with at least one column of ICD10 death codes.}
+with one person per row and with at least one column of ICD10 death codes.
+
+\strong{Note:}* \code{ph.data} and \code{icdcol} are validated by \code{\link[=death_validate_data]{death_validate_data()}}}
 
 \item{cause}{a character vector specifying the complete or partial
 keyword for the cause of death of interest. It is not case sensitive and you
@@ -86,37 +88,23 @@ None
 }
 \examples{
 # example 1: death count only
-set.seed(98104)
-deathdata <- data.table::data.table(
-  cod.icd10 = c(rep("D52.1", round(runif(1, 30, 100000), 0)),
-                rep("E66.1", round(runif(1, 30, 100000), 0)),
-                rep("K85.3", round(runif(1, 30, 100000), 0)),
-                rep("X85", round(runif(1, 30, 100000), 0)),
-                rep("R78.4", round(runif(1, 30, 100000), 0)),
-                rep("Y13.2", round(runif(1, 30, 100000), 0)),
-                rep("X42.3", round(runif(1, 30, 100000), 0)),
-                rep("X60.7", round(runif(1, 30, 100000), 0)),
-                rep("J70.3", round(runif(1, 30, 100000), 0)))
-)
-eg1 <- death_other_count(ph.data = deathdata,
+deathDT <- rads.data::synthetic_death
+
+eg1 <- death_other_count(ph.data = deathDT,
                        cause = "dose|induce",
-                       icdcol = "cod.icd10",
+                       icdcol = "underlying_cod_code",
                        kingco = FALSE,
                        ypll_age = NULL,
                        death_age_col = NULL)
 head(eg1)
 
 # example 2: with YPLL calculation
-deathdata2 <- data.table::copy(deathdata)
-set.seed(98104)
-deathdata2[, ageofdeath := rads::round2(rnorm(1, mean = 70, sd = 5 ), 0),
-           1:nrow(deathdata2)] # synthetic age of death
-eg2 <- death_other_count(ph.data = deathdata2,
+eg2 <- death_other_count(ph.data = deathDT,
                        cause = "dose|induce",
-                       icdcol = "cod.icd10",
+                       icdcol = "underlying_cod_code",
                        kingco = FALSE,
                        ypll_age = 65,
-                       death_age_col = "ageofdeath")
+                       death_age_col = "chi_age")
 head(eg2)
 
 }

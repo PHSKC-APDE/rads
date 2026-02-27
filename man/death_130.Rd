@@ -30,7 +30,7 @@ This function does not take any arguments
 \examples{
 # Save and view table as a data.table named 'blah'
 blah <- death_130()
-blah[]
+print(blah)
 
 }
 \references{
