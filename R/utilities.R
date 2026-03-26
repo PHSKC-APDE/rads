@@ -3157,7 +3157,7 @@ tsql_validate_field_types <- function(ph.data = NULL,
 
   # Define type compatibility and constraints ----
       type_compatibility <- list(
-        integer = c("tinyint", "smallint", "int", "bigint", "bit"),
+        integer = c("tinyint", "smallint", "int", "bigint", "bit", "float", "real"),
         numeric = c("tinyint", "smallint", "int", "bigint", "decimal", "numeric", "float", "real", "money", "smallmoney"),
         character = c("char", "varchar", "text", "nchar", "nvarchar", "ntext"),
         factor = c("char", "varchar", "text", "nchar", "nvarchar", "ntext"),
