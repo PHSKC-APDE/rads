@@ -3164,7 +3164,8 @@ tsql_validate_field_types <- function(ph.data = NULL,
         logical = "bit",
         Date = "date",
         POSIXct = c("datetime", "datetime2", "smalldatetime", "datetimeoffset"),
-        raw = c("binary", "varbinary", "image")
+        raw = c("binary", "varbinary", "image"),
+        integer64 = "bigint"
       )
 
       type_constraints <- list(
