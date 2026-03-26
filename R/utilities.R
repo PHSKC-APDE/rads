@@ -3310,17 +3310,11 @@ tsql_validate_field_types <- function(ph.data = NULL,
         message('\U0001f642 Success! Your desired TSQL data types are suitable for your dataset.')
       } else {
         invalid_columns <- validation_results[is_valid == FALSE]
-        stop(paste0(
-          '\n\U1F6D1\U0001f47f The following columns in your dataset did not ',
-          'align with the proposed TSQL field types:\n',
-          paste0(
-            "     column: ", invalid_columns$colname,
-            ", R Type: ", invalid_columns$R_type,
-            ", TSQL Type: ", invalid_columns$tsql_type,
-            ", issue: ", invalid_columns$issue,
-            collapse = "\n"
-          )
-        ))
+        cat("\n================ INVALID FIELD TYPES ================\n")
+        print(invalid_columns)
+        cat("======================================================\n")
+        stop(paste0('\n\U1F6D1\U0001f47f One or more columns did not align with the proposed TSQL field types.\n',
+                    'See the printed table above for full details.'))
       }
 
   # Return validation results ----
