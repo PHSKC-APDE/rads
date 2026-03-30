@@ -1,6 +1,7 @@
 library(testthat)
 library(DBI)
 library(data.table)
+library(bit64)
 
 # as_table_brfss() & as_imputed_brfss() ----
 test_that("confirm conversion to dtsurvey / data.table", {
@@ -1184,27 +1185,27 @@ test_that("function fails with incompatible field types", {
 
   bad_field_types <- data.table::copy(my_field_types)
   bad_field_types["col1"] <- "tinyint" # tinyint is too small (up to 255)
-  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = bad_field_types), 'column: col1')
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = bad_field_types), 'One or more columns did not align with the proposed TSQL field types')
 
   bad_field_types <- data.table::copy(my_field_types)
   bad_field_types["col2"] <- "nvarchar(20)" # does not expect moving dates to non dates in TSQL
-  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = bad_field_types), 'column: col2')
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = bad_field_types), 'One or more columns did not align with the proposed TSQL field types')
 
   bad_field_types <- data.table::copy(my_field_types)
   bad_field_types["col3"] <- "INT" # numeric cannot be changed to integer without loss
-  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = bad_field_types), 'column: col3')
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = bad_field_types), 'One or more columns did not align with the proposed TSQL field types')
 
   bad_field_types <- data.table::copy(my_field_types)
   bad_field_types["col4"] <- "nvarchar(25)" # not long enough for number of characters
-  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = bad_field_types), 'column: col4')
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = bad_field_types), 'One or more columns did not align with the proposed TSQL field types')
 
   bad_field_types <- data.table::copy(my_field_types)
   bad_field_types["col5"] <- "date" # R POSIXct should only map to some sort of datetime, not date
-  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = bad_field_types), 'column: col5')
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = bad_field_types), 'One or more columns did not align with the proposed TSQL field types')
 
   bad_field_types <- data.table::copy(my_field_types)
   bad_field_types["col6"] <- "bit" # bit is limited to logical or integers with only 0|1 values
-  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = bad_field_types), 'column: col6')
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = bad_field_types), 'One or more columns did not align with the proposed TSQL field types')
 
 })
 
@@ -1241,7 +1242,7 @@ test_that("function handles unsupported R data types gracefully", {
 test_that("function correctly handles character fields at size limit", {
   mydt <- data.table(col1 = c("abc", "defgh", "ijklm"))
   expect_message(tsql_validate_field_types(ph.data = mydt, field_types = c(col1 = 'varchar(5)')), "Success")
-  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = c(col1 = 'varchar(4)')), "Fails constraints")
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = c(col1 = 'varchar(4)')), "One or more columns did not align with the proposed TSQL field types")
 })
 
 test_that("function correctly handles numeric to integer conversion", {
@@ -1250,7 +1251,7 @@ test_that("function correctly handles numeric to integer conversion", {
   expect_message(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types), "Success")
 
   mydt <- data.table(col1 = c(1.1, 2.0, 3.0), col2 = c(4.0, 5.0, 6.0))
-  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types), "Numeric values cannot be safely converted to integer")
+  expect_error(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types), "One or more columns did not align with the proposed TSQL field types")
 })
 
 test_that("function correctly handles POSIXct types", {
@@ -1269,3 +1270,18 @@ test_that("function handles NA and NULL values correctly", {
   my_field_types <- c(col1 = 'int', col2 = 'varchar(10)', col3 = 'bit')
   expect_warning(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types))
 })
+
+test_that("function supports integer64 and maps to bigint", {
+  mydt <- data.table(col1 = as.integer64(1:10))
+  my_field_types <- c(col1 = "bigint")
+  expect_message(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types), "Success")
+})
+
+test_that("function allows integer to varchar but gives a warning", {
+  mydt <- data.table(col1 = 1:10)
+  my_field_types <- c(col1 = "varchar(10)")
+  expect_warning(tsql_validate_field_types(ph.data = mydt, field_types = my_field_types),
+                 "integer stored as character")
+})
+
+

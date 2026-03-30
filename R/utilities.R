@@ -3157,14 +3157,15 @@ tsql_validate_field_types <- function(ph.data = NULL,
 
   # Define type compatibility and constraints ----
       type_compatibility <- list(
-        integer = c("tinyint", "smallint", "int", "bigint", "bit"),
+        integer = c("tinyint", "smallint", "int", "bigint", "bit", "float", "real"),
         numeric = c("tinyint", "smallint", "int", "bigint", "decimal", "numeric", "float", "real", "money", "smallmoney"),
         character = c("char", "varchar", "text", "nchar", "nvarchar", "ntext"),
         factor = c("char", "varchar", "text", "nchar", "nvarchar", "ntext"),
         logical = "bit",
         Date = "date",
         POSIXct = c("datetime", "datetime2", "smalldatetime", "datetimeoffset"),
-        raw = c("binary", "varbinary", "image")
+        raw = c("binary", "varbinary", "image"),
+        integer64 = "bigint"
       )
 
       type_constraints <- list(
@@ -3183,6 +3184,11 @@ tsql_validate_field_types <- function(ph.data = NULL,
 
     # Function to check type compatibility ----
         check_compatibility <- function(R_type, tsql_type) {
+          # Allow integer >> character types (varchar, char, nvarchar, nchar)
+          if (R_type == "integer" && tsql_type %in% c("char", "varchar", "nchar", "nvarchar")) {
+            return(TRUE)
+          }
+
           compatible_types <- unlist(type_compatibility[R_type])
           tsql_type %in% compatible_types
         }
@@ -3262,10 +3268,16 @@ tsql_validate_field_types <- function(ph.data = NULL,
         tsql_type = tsql_type,
         is_valid = is_compatible & meets_constraints,
         issue = fcase(
+          R_type == "integer" & tsql_type %in% c("char","varchar","nchar","nvarchar"),
+          "Warning: integer stored as character (allowed, but non-standard)",
+
           !is_compatible, "Incompatible types",
+
           !meets_constraints & R_type == "numeric" & tsql_type %in% c("tinyint", "smallint", "int", "bigint"),
           "Numeric values cannot be safely converted to integer",
+
           !meets_constraints, "Fails constraints",
+
           default = NA_character_
         )
       )]
@@ -3276,22 +3288,33 @@ tsql_validate_field_types <- function(ph.data = NULL,
       na_cols <- names(na_cols)[as.logical(na_cols)]
       if(length(na_cols) > 0){warning('\u26A0\ufe0f Validation may be flawed for the following variables because they are 100% missing: ', paste0(na_cols, collapse = ', '))}
 
+      # Give warnings for nonstandard conversions
+      warning_rows <- validation_results[grepl("^Warning:", issue)]
+
+      if (nrow(warning_rows) > 0) {
+        warning(
+          "\nThe following columns have non-standard but allowed conversions:\n",
+          paste0(
+            "     column: ", warning_rows$colname,
+            ", R Type: ", warning_rows$R_type,
+            ", TSQL Type: ", warning_rows$tsql_type,
+            ", issue: ", warning_rows$issue,
+            collapse = "\n"
+          )
+        )
+      }
+
+
       # report back overall validation
       if (all(validation_results$is_valid)) {
         message('\U0001f642 Success! Your desired TSQL data types are suitable for your dataset.')
       } else {
         invalid_columns <- validation_results[is_valid == FALSE]
-        stop(paste0(
-          '\n\U1F6D1\U0001f47f The following columns in your dataset did not ',
-          'align with the proposed TSQL field types:\n',
-          paste0(
-            "     column: ", invalid_columns$colname,
-            ", R Type: ", invalid_columns$R_type,
-            ", TSQL Type: ", invalid_columns$tsql_type,
-            ", issue: ", invalid_columns$issue,
-            collapse = "\n"
-          )
-        ))
+        cat("\n================ INVALID FIELD TYPES ================\n")
+        print(invalid_columns)
+        cat("======================================================\n")
+        stop(paste0('\n\U1F6D1\U0001f47f One or more columns did not align with the proposed TSQL field types.\n',
+                    'See the printed table above for full details.'))
       }
 
   # Return validation results ----

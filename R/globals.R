@@ -35,6 +35,7 @@ utils::globalVariables(c(
   "injury_nature_narrow",
   "intent",
   "intent_ignore",
+  "issue",
   "KeepMe",
   "lower_ci",
   "mean_est",
