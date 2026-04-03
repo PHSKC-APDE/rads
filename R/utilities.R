@@ -3321,7 +3321,7 @@ tsql_validate_field_types <- function(ph.data = NULL,
       }
 
   # Return validation results ----
-  return(validation_results)
+    invisible(validation_results)
 }
 
 
