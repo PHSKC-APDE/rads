@@ -3187,7 +3187,7 @@ tsql_validate_field_types <- function(ph.data = NULL,
     # Function to check type compatibility ----
         check_compatibility <- function(R_type, tsql_type) {
           # Allow integer >> character types (varchar, char, nvarchar, nchar)
-          if (R_type == "integer" && tsql_type %in% c("char", "varchar", "nchar", "nvarchar")) {
+          if (R_type %in% c("integer", "integer64") && tsql_type %in% c("char", "varchar", "nchar", "nvarchar")) {
             return(TRUE)
           }
 
@@ -3271,7 +3271,7 @@ tsql_validate_field_types <- function(ph.data = NULL,
         tsql_type = tsql_type,
         is_valid = is_compatible & meets_constraints,
         issue = fcase(
-          R_type == "integer" & tsql_type %in% c("char","varchar","nchar","nvarchar"),
+          R_type %in% c("integer", "integer64") & tsql_type %in% c("char","varchar","nchar","nvarchar"),
           "Warning: integer stored as character (allowed, but non-standard)",
 
           !is_compatible, "Incompatible types",
