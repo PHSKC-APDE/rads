@@ -2858,7 +2858,7 @@ tsql_convert_types <- function(ph.data = NULL,
     }
 
     tryCatch({
-      tsql_validate_field_types(ph.data, field_types) # if there is no error, no need to convert anything
+      suppressMessages(tsql_validate_field_types(ph.data, field_types)) # if there is no error, no need to convert anything
       if (verbose) {
         message('\U0001f642 Success! Your desired TSQL data types are already compatible with your dataset. No conversion needed.')
       }
@@ -3045,7 +3045,7 @@ tsql_convert_types <- function(ph.data = NULL,
     }
 
     tryCatch({
-      tsql_validate_field_types(ph.data, field_types) # if there are errors give more informative feedback
+      suppressMessages(tsql_validate_field_types(ph.data, field_types)) # if there are errors give more informative feedback
       if (verbose) {
         message('\U0001f642 Success! Post-conversion validation passed.')
       }
