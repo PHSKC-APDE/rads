@@ -3163,6 +3163,7 @@ tsql_validate_field_types <- function(ph.data = NULL,
         factor = c("char", "varchar", "text", "nchar", "nvarchar", "ntext"),
         logical = "bit",
         Date = "date",
+        IDate = "date",
         POSIXct = c("datetime", "datetime2", "smalldatetime", "datetimeoffset"),
         raw = c("binary", "varbinary", "image"),
         integer64 = "bigint"
@@ -3221,6 +3222,7 @@ tsql_validate_field_types <- function(ph.data = NULL,
         key = "colname"
       )
       RtypesDT[R_type %in% c('POSIXt', 'POSIXlt'), R_type := 'POSIXct']
+      RtypesDT[R_type == 'IDate', R_type := 'Date']
 
       valid_R_types <- unique(names(type_compatibility))
       if(nrow(RtypesDT[!R_type %in% valid_R_types]) > 0){
