@@ -3484,8 +3484,8 @@ tsql_chunk_loader <- function(ph.data = NULL, # R data.frame/data.table
         }
 
     # validate_field_types
-        if(!is.logical(validate_upload )){
-          stop('\n\U1F6D1 {validate_upload } must be specified as a logical (i.e., TRUE, T, FALSE, or F)')
+        if(!is.logical(validate_field_types )){
+          stop('\n\U1F6D1 {validate_field_types } must be specified as a logical (i.e., TRUE, T, FALSE, or F)')
         }
         if(validate_field_types == TRUE & is.null(field_types)){
           validate_field_types = FALSE
