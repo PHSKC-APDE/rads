@@ -2890,6 +2890,7 @@ tsql_convert_types <- function(ph.data = NULL,
     tinyint = "integer",
     smallint = "integer",
     int = "integer",
+    integer = "integer",
     bigint = "numeric", # R integers can't handle all BIGINT
     decimal = "numeric",
     numeric = "numeric",
@@ -3157,8 +3158,8 @@ tsql_validate_field_types <- function(ph.data = NULL,
 
   # Define type compatibility and constraints ----
       type_compatibility <- list(
-        integer = c("tinyint", "smallint", "int", "bigint", "bit", "float", "real"),
-        numeric = c("tinyint", "smallint", "int", "bigint", "decimal", "numeric", "float", "real", "money", "smallmoney"),
+        integer = c("tinyint", "smallint", "int", "integer", "bigint", "bit", "float", "real"),
+        numeric = c("tinyint", "smallint", "int", "integer", "bigint", "decimal", "numeric", "float", "real", "money", "smallmoney"),
         character = c("char", "varchar", "text", "nchar", "nvarchar", "ntext"),
         factor = c("char", "varchar", "text", "nchar", "nvarchar", "ntext"),
         logical = "bit",
