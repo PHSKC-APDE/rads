@@ -2858,7 +2858,7 @@ tsql_convert_types <- function(ph.data = NULL,
     }
 
     tryCatch({
-      tsql_validate_field_types(ph.data, field_types) # if there is no error, no need to convert anything
+      suppressMessages(tsql_validate_field_types(ph.data, field_types)) # if there is no error, no need to convert anything
       if (verbose) {
         message('\U0001f642 Success! Your desired TSQL data types are already compatible with your dataset. No conversion needed.')
       }
@@ -2890,6 +2890,7 @@ tsql_convert_types <- function(ph.data = NULL,
     tinyint = "integer",
     smallint = "integer",
     int = "integer",
+    integer = "integer",
     bigint = "numeric", # R integers can't handle all BIGINT
     decimal = "numeric",
     numeric = "numeric",
@@ -3044,7 +3045,7 @@ tsql_convert_types <- function(ph.data = NULL,
     }
 
     tryCatch({
-      tsql_validate_field_types(ph.data, field_types) # if there are errors give more informative feedback
+      suppressMessages(tsql_validate_field_types(ph.data, field_types)) # if there are errors give more informative feedback
       if (verbose) {
         message('\U0001f642 Success! Post-conversion validation passed.')
       }
@@ -3157,12 +3158,13 @@ tsql_validate_field_types <- function(ph.data = NULL,
 
   # Define type compatibility and constraints ----
       type_compatibility <- list(
-        integer = c("tinyint", "smallint", "int", "bigint", "bit", "float", "real"),
-        numeric = c("tinyint", "smallint", "int", "bigint", "decimal", "numeric", "float", "real", "money", "smallmoney"),
+        integer = c("tinyint", "smallint", "int", "integer", "bigint", "bit", "float", "real"),
+        numeric = c("tinyint", "smallint", "int", "integer", "bigint", "decimal", "numeric", "float", "real", "money", "smallmoney"),
         character = c("char", "varchar", "text", "nchar", "nvarchar", "ntext"),
         factor = c("char", "varchar", "text", "nchar", "nvarchar", "ntext"),
         logical = "bit",
         Date = "date",
+        IDate = "date",
         POSIXct = c("datetime", "datetime2", "smalldatetime", "datetimeoffset"),
         raw = c("binary", "varbinary", "image"),
         integer64 = "bigint"
@@ -3185,7 +3187,7 @@ tsql_validate_field_types <- function(ph.data = NULL,
     # Function to check type compatibility ----
         check_compatibility <- function(R_type, tsql_type) {
           # Allow integer >> character types (varchar, char, nvarchar, nchar)
-          if (R_type == "integer" && tsql_type %in% c("char", "varchar", "nchar", "nvarchar")) {
+          if (R_type %in% c("integer", "integer64") && tsql_type %in% c("char", "varchar", "nchar", "nvarchar")) {
             return(TRUE)
           }
 
@@ -3221,6 +3223,7 @@ tsql_validate_field_types <- function(ph.data = NULL,
         key = "colname"
       )
       RtypesDT[R_type %in% c('POSIXt', 'POSIXlt'), R_type := 'POSIXct']
+      RtypesDT[R_type == 'IDate', R_type := 'Date']
 
       valid_R_types <- unique(names(type_compatibility))
       if(nrow(RtypesDT[!R_type %in% valid_R_types]) > 0){
@@ -3268,7 +3271,7 @@ tsql_validate_field_types <- function(ph.data = NULL,
         tsql_type = tsql_type,
         is_valid = is_compatible & meets_constraints,
         issue = fcase(
-          R_type == "integer" & tsql_type %in% c("char","varchar","nchar","nvarchar"),
+          R_type %in% c("integer", "integer64") & tsql_type %in% c("char","varchar","nchar","nvarchar"),
           "Warning: integer stored as character (allowed, but non-standard)",
 
           !is_compatible, "Incompatible types",
@@ -3318,7 +3321,7 @@ tsql_validate_field_types <- function(ph.data = NULL,
       }
 
   # Return validation results ----
-  return(validation_results)
+    invisible(validation_results)
 }
 
 
@@ -3481,8 +3484,8 @@ tsql_chunk_loader <- function(ph.data = NULL, # R data.frame/data.table
         }
 
     # validate_field_types
-        if(!is.logical(validate_upload )){
-          stop('\n\U1F6D1 {validate_upload } must be specified as a logical (i.e., TRUE, T, FALSE, or F)')
+        if(!is.logical(validate_field_types )){
+          stop('\n\U1F6D1 {validate_field_types } must be specified as a logical (i.e., TRUE, T, FALSE, or F)')
         }
         if(validate_field_types == TRUE & is.null(field_types)){
           validate_field_types = FALSE
