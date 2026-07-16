@@ -34,14 +34,14 @@ the decedent's date of birth. The referenced column must be of class
 'date' or class 'character' in the format "YYYY-MM-DD" or "YYYY/MM/DD."
 
 The default is \code{dobvar = "date_of_birth"}, which is the dob variable
-available via \code{rads::get_data_death()}.}
+available in \code{rads.data::synthetic_death}.}
 
 \item{dodvar}{character vector of length one identifying a column with
 the decedent's date of death. The referenced column must be of class
 'date' or class 'character' in the format "YYYY-MM-DD" or "YYYY/MM/DD."
 
 The default is \code{dodvar = "date_of_death"}, which is the dod variable
-available via \code{rads::get_data_death()}.}
+available in \code{rads.data::synthetic_death}.}
 
 \item{group_by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
@@ -65,9 +65,8 @@ This table is collapsed/aggregated by age bin and optionally, by
 demographics, for use with \code{\link{life_table}}.
 }
 \details{
-Note that population data (from \code{\link{get_population}}) must be merged
-onto the returned data.table before running it through
-\code{\link{life_table}}.
+Note that population data must be merged onto the returned data.table
+before running it through \code{\link{life_table}}.
 }
 \examples{
 \donttest{

@@ -57,12 +57,12 @@ The default is \code{'*'}, which selects all possible mechanisms}
 \item{icdcol}{a character vector of length one that specifies the name of the
 column in ph.data that contains the ICD10 death codes of interest.
 
-The default is \code{underlying_cod_code}, which is found in the properly
-formatted death data obtained using the \code{get_data_death()} function.}
+The default is \code{underlying_cod_code}, which is found in properly
+formatted death data structured like \code{rads.data::synthetic_death}.}
 
 \item{kingco}{a logical vector of length one. It specifies whether you want to
 limit the analysis to King County. Note that this only works with data
-imported from the \code{get_data_death()} function.
+structured like \code{rads.data::synthetic_death}.
 
 The default is \code{kingco = TRUE}.}
 
@@ -178,7 +178,7 @@ CDC: \url{https://www.cdc.gov/nchs/data/ice/icd10_transcode.pdf}
 \seealso{
 \itemize{
 \item \code{\link[=death_injury_matrix]{death_injury_matrix()}} for viewing available injury death mechanisms and intents
-\item \code{\link[=get_data_death]{get_data_death()}} for importing properly formatted death data
+\item \link[rads.data:synthetic_death]{rads.data::synthetic_death} for properly formatted synthetic death data
 \item \code{\link[=death_icd10_clean]{death_icd10_clean()}} for preparing ICD-10 codes for use with all rads death functions
 \item \code{\link[=age_standardize]{age_standardize()}} for calculating age standardized rates
 \item \code{\link[=death_113_count]{death_113_count()}} for generating CDC NCHS 113 leading causes of death counts

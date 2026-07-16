@@ -16,8 +16,7 @@ chars_icd_ccs_count(
   detailed = NULL,
   icdcol = "diag1",
   group_by = NULL,
-  kingco = TRUE,
-  ...
+  kingco = TRUE
 )
 }
 \arguments{
@@ -108,8 +107,6 @@ CHARS data and requires the column \code{chi_geo_kc}, which is provided by
 For users outside of King County or Washington State, set \code{kingco = FALSE}.
 
 The default is \code{kingco = TRUE}}
-
-\item{...}{Additional arguments passed to other methods (currently unused).}
 }
 \value{
 Generates a table with columns for each of the search terms you entered (e.g.,

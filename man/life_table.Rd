@@ -44,8 +44,9 @@ The default value is \code{mydeaths = "deaths"}.}
 \item{mypops}{a character vector of length one identifying a numeric column
 with the total population in the age intervals corresponding to mydeaths.
 This is technically the mid-year population. In practice we usually
-use \href{https://ofm.wa.gov/}{OFM} population estimates available from
-\code{\link{get_population}}.
+use \href{https://ofm.wa.gov/}{OFM} population estimates, e.g., from
+\code{apde.data::population()} for KC users, or your own population
+data source structured similarly.
 
 The default value is \code{mypops = "pop"}.}
 

@@ -616,8 +616,6 @@ chars_icd_ccs <- function(ref_type = 'all',
 #'
 #' The default is `kingco = TRUE`
 #'
-#' @param ... Additional arguments passed to other methods (currently unused).
-#'
 #' @return
 #' Generates a table with columns for each of the search terms you entered (e.g.,
 #' `icdcm`, `broad`, and/or `detailed`) as well as
@@ -655,24 +653,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
                                 detailed = NULL,
                                 icdcol = 'diag1',
                                 group_by = NULL,
-                                kingco = TRUE,
-                                ...){
-
-  # Note deprecation of `mykeys` parameter ----
-    dots <- list(...)
-
-    if ("mykey" %in% names(dots)) {
-      lifecycle::deprecate_warn(
-        "1.6.0",
-        "chars_icd_ccs_count(mykey = )",
-        details = "The `mykey` argument is no longer used."
-      )
-    }
-
-    unused <- setdiff(names(dots), "mykey")
-    if (length(unused) > 0) {
-      stop("Unused arguments: ", paste(unused, collapse = ", "), call. = FALSE)
-    }
+                                kingco = TRUE){
 
   # Check arguments & filter reference table of all ICD CM (CMtable) ----
     # ph.data ----

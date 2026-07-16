@@ -93,14 +93,14 @@ death_113 <- function(){
 #' @param icdcol a character vector of length one that specifies the name of the
 #' column in ph.data that contains the ICD10 death codes of interest.
 #'
-#' The default is \code{underlying_cod_code}, which is found in the properly
-#' formatted death data obtained using the \code{get_data_death()} function.
+#' The default is \code{underlying_cod_code}, which is found in properly
+#' formatted death data structured like \code{rads.data::synthetic_death}.
 #'
 #' @param kingco a logical vector of length one. It specifies whether you want to
 #' limit the analysis to King County.
 #'
-#' **NOTE** this only works with data imported with the \code{get_data_death()}
-#' function because it needs the variable \code{chi_geo_kc}.
+#' **NOTE** this only works with data structured like \code{rads.data::synthetic_death}
+#' because it needs the variable \code{chi_geo_kc}.
 #'
 #' The default is kingco = TRUE.
 #'
@@ -135,7 +135,7 @@ death_113 <- function(){
 #'
 #' @seealso
 #' - [death_113()] for viewing teh CDC NCHS 113 leading causes of death
-#' - [get_data_death()] for importing properly formatted death data
+#' - [rads.data::synthetic_death] for properly formatted synthetic death data
 #' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
 #' - [age_standardize()] for calculating age standardized rates
 #' - [death_130_count()] for generating CDC NCHS 130 causes of infant death counts
@@ -297,14 +297,14 @@ death_130<- function(){
 #' @param icdcol a character vector of length one that specifies the name of the
 #' column in ph.data that contains the ICD10 death codes of interest.
 #'
-#' The default is \code{underlying_cod_code}, which is found in the properly
-#' formatted death data obtained using the \code{get_data_death()} function.
+#' The default is \code{underlying_cod_code}, which is found in properly
+#' formatted death data structured like \code{rads.data::synthetic_death}.
 #'
 #' @param kingco a logical vector of length one. It specifies whether you want to
 #' limit the analysis to King County.
 #'
-#' **NOTE** this only works with data imported with the \code{get_data_death()}
-#' function because it needs the variable \code{chi_geo_kc}.
+#' **NOTE** this only works with data structured like \code{rads.data::synthetic_death}
+#' because it needs the variable \code{chi_geo_kc}.
 #'
 #' The default is kingco = TRUE.
 #'
@@ -339,7 +339,7 @@ death_130<- function(){
 #'
 #' @seealso
 #' - [death_130()] for viewing the CDC NCHS 130 causes of infant death
-#' - [get_data_death()] for importing properly formatted death data
+#' - [rads.data::synthetic_death] for properly formatted synthetic death data
 #' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
 #' - [age_standardize()] for calculating age standardized rates
 #' - [death_113_count()] for generating CDC NCHS 113 leading causes of death counts
@@ -584,12 +584,12 @@ death_injury_matrix<- function(){
 #' @param icdcol a character vector of length one that specifies the name of the
 #' column in ph.data that contains the ICD10 death codes of interest.
 #'
-#' The default is \code{underlying_cod_code}, which is found in the properly
-#' formatted death data obtained using the \code{get_data_death()} function.
+#' The default is \code{underlying_cod_code}, which is found in properly
+#' formatted death data structured like \code{rads.data::synthetic_death}.
 #'
 #' @param kingco a logical vector of length one. It specifies whether you want to
 #' limit the analysis to King County. Note that this only works with data
-#' imported from the \code{get_data_death()} function.
+#' structured like \code{rads.data::synthetic_death}.
 #'
 #' The default is \code{kingco = TRUE}.
 #'
@@ -624,7 +624,7 @@ death_injury_matrix<- function(){
 #'
 #' @seealso
 #' - [death_injury_matrix()] for viewing available injury death mechanisms and intents
-#' - [get_data_death()] for importing properly formatted death data
+#' - [rads.data::synthetic_death] for properly formatted synthetic death data
 #' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
 #' - [age_standardize()] for calculating age standardized rates
 #' - [death_113_count()] for generating CDC NCHS 113 leading causes of death counts
@@ -1095,7 +1095,7 @@ death_multicause <- function(){
 #' column in ph.data that contains the underlying ICD10 death codes.
 #'
 #' The default is `"underlying_cod_code"`, which is found in properly formatted
-#' death data obtained using the `get_data_death()` function.
+#' death data structured like `rads.data::synthetic_death`.
 #'
 #' @param contributing_cols a character vector of length one that specifies the
 #' stem of the column names containing contributing cause codes. The function
@@ -1112,8 +1112,8 @@ death_multicause <- function(){
 #' @param kingco a logical vector of length one. It specifies whether you want to
 #' limit the analysis to King County.
 #'
-#' **NOTE** this only works with data imported with the `get_data_death()`
-#' function because it needs the variable `chi_geo_kc`.
+#' **NOTE** this only works with data structured like `rads.data::synthetic_death`
+#' because it needs the variable `chi_geo_kc`.
 #'
 #' The default is `kingco = TRUE`.
 #'
@@ -1143,7 +1143,7 @@ death_multicause <- function(){
 #'
 #' @seealso
 #' - [death_multicause()] for viewing available multicause definitions
-#' - [get_data_death()] for importing properly formatted death data
+#' - [rads.data::synthetic_death] for properly formatted synthetic death data
 #' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
 #' - [age_standardize()] for calculating age standardized rates
 #' - [death_113_count()] for generating CDC NCHS 113 leading causes of death counts
@@ -1550,14 +1550,14 @@ death_other<- function(){
 #' @param icdcol a character vector of length one that specifies the name of the
 #' column in ph.data that contains the ICD10 death codes of interest.
 #'
-#' The default is \code{underlying_cod_code}, which is found in the properly
-#' formatted death data obtained using the \code{get_data_death()} function.
+#' The default is \code{underlying_cod_code}, which is found in properly
+#' formatted death data structured like \code{rads.data::synthetic_death}.
 #'
 #' @param kingco a logical vector of length one. It specifies whether you want to
 #' limit the analysis to King County.
 #'
 #' **NOTE**
-#' this only works with data imported with the \code{get_data_death()} function.
+#' this only works with data structured like \code{rads.data::synthetic_death}.
 #'
 #' The default is kingco = TRUE.
 #'
@@ -1590,7 +1590,7 @@ death_other<- function(){
 #'
 #' @seealso
 #' - [death_other()] for viewing available 'Other' cause of death definitions
-#' - [get_data_death()] for importing properly formatted death data
+#' - [rads.data::synthetic_death] for properly formatted synthetic death data
 #' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
 #' - [age_standardize()] for calculating age standardized rates
 #' - [death_113_count()] for generating CDC NCHS 113 leading causes of death counts
@@ -2087,14 +2087,14 @@ death_validate_data <- function(ph.data = NULL,
 #' @param icdcol a character vector of length one that specifies the name of the
 #' column in ph.data that contains the ICD10 death codes of interest.
 #'
-#' The default is \code{underlying_cod_code}, which is found in the properly
-#' formatted death data obtained using the \code{get_data_death()} function.
+#' The default is \code{underlying_cod_code}, which is found in properly
+#' formatted death data structured like \code{rads.data::synthetic_death}.
 #'
 #' @param kingco a logical vector of length one. It specifies whether you want to
 #' limit the analysis to King County.
 #'
-#' **NOTE** this only works with data imported with the \code{get_data_death()}
-#' function because it needs the variable \code{chi_geo_kc}.
+#' **NOTE** this only works with data structured like \code{rads.data::synthetic_death}
+#' because it needs the variable \code{chi_geo_kc}.
 #'
 #' The default is kingco = TRUE.
 #'
@@ -2477,8 +2477,9 @@ death_xxx_count <- function(ph.data,
 #' @param mypops a character vector of length one identifying a numeric column
 #' with the total population in the age intervals corresponding to mydeaths.
 #' This is technically the mid-year population. In practice we usually
-#' use [OFM](https://ofm.wa.gov/) population estimates available from
-#' \code{\link{get_population}}.
+#' use [OFM](https://ofm.wa.gov/) population estimates, e.g., from
+#' \code{apde.data::population()} for KC users, or your own population
+#' data source structured similarly.
 #'
 #' The default value is \code{mypops = "pop"}.
 #' @param myprops a character vector of length one identifying a numeric column
@@ -3175,14 +3176,14 @@ life_table_predict_mx <- function(ph.data = ph.data,
 #' 'date' or class 'character' in the format "YYYY-MM-DD" or "YYYY/MM/DD."
 #'
 #' The default is \code{dobvar = "date_of_birth"}, which is the dob variable
-#' available via `rads::get_data_death()`.
+#' available in \code{rads.data::synthetic_death}.
 #'
 #' @param dodvar character vector of length one identifying a column with
 #' the decedent's date of death. The referenced column must be of class
 #' 'date' or class 'character' in the format "YYYY-MM-DD" or "YYYY/MM/DD."
 #'
 #' The default is \code{dodvar = "date_of_death"}, which is the dod variable
-#' available via `rads::get_data_death()`.
+#' available in \code{rads.data::synthetic_death}.
 #'
 #' @param group_by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
@@ -3200,9 +3201,8 @@ life_table_predict_mx <- function(ph.data = ph.data,
 #' age interval lived by those who died in that interval).
 #'
 #' @details
-#' Note that population data (from \code{\link{get_population}}) must be merged
-#' onto the returned data.table before running it through
-#' \code{\link{life_table}}.
+#' Note that population data must be merged onto the returned data.table
+#' before running it through \code{\link{life_table}}.
 #'
 #' @export
 #' @name life_table_prep
