@@ -70,17 +70,14 @@
 #' @examples
 #'
 #' #record data
-#' test.data <- get_data_birth(
-#'                year = 2015:2017,
-#'                cols = c("chi_year", "kotelchuck",
-#'                         "chi_sex", "fetal_pres"))
+#' test.data <- rads.data::synthetic_birth
 #'
 #' test.results <- calc(test.data,
 #'                      what = c("kotelchuck", "fetal_pres"),
-#'                      chi_year == 2016 & chi_sex %in% c('Male', 'Female'),
-#'                       by = c("chi_year", "chi_sex"),
-#'                       metrics = c("mean", "numerator", "denominator",
-#'                                   "total"))
+#'                      where = chi_year == 2016 &
+#'                              chi_sex %in% c('Male', 'Female'),
+#'                      by = c("chi_year", "chi_sex"),
+#'                      metrics = c("mean", "numerator", "denominator", "total"))
 #'
 #' print(test.results)
 #'
