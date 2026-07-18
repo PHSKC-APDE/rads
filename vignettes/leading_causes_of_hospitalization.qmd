@@ -266,14 +266,14 @@ counts[is.na(hospitalizations), hospitalizations := 0]
 
 ## (4) Merge corresponding population onto the count data
 
-Be sure that your call to `rads::get_population` provides the same years and demographic strata that you have in your death counts!
+Be sure that your call to `apde.data::population` provides the same years and demographic strata that you have in your death counts!
 
 Also ***remember that King County in CHARS data is defined by truncated ZIP codes (980## and 981##)*** and the population denominator should be defined the same way.
 
 ```{r}
 #| warning: false
 # Get ZIP code level population data
-pop <- get_population(kingco = FALSE,
+pop <- apde.data::population(kingco = FALSE,
                       years = 2017:2021,
                       geo_type = 'zip', 
                       group_by = c('ages', 'genders'))

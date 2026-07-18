@@ -384,11 +384,11 @@ You quickly pull up [CHAT](https://www.doh.wa.gov/ForPublicHealthandHealthcarePr
 **Get birth counts for 15 to 19 year olds in 2019**
 
 ```{r, warning=FALSE, message=FALSE, eval=TRUE, results='hide'}
-  kcbirth <- get_data_birth(cols = c("chi_age", "chi_year"), year = 2019, kingco = T)
-  wabirth <- get_data_birth(cols = c("chi_age", "chi_year"), year = 2019, kingco = F)
+  kcbirth <- rads.data::synthetic_birth[chi_year == 2019 & chi_geo_kc == 'King County', .(chi_age, chi_year)] 
+  wabirth <- rads.data::synthetic_birth[chi_year == 2019, .(chi_age, chi_year)]
   
   births <- rbind(kcbirth[, geo := "King County"], wabirth[, geo := "WA State"])
-      births <- births[chi_age %in% 15:19]
+  births <- births[chi_age %in% 15:19]
   
   # collapse / aggregate
   births <- births[, .(births = .N), by = c("chi_age", "geo")] 
@@ -404,12 +404,12 @@ pretty_kable(head(births))
 **Get the female populations corresponding to the birth counts**
 
 ```{r, warning=FALSE, message=FALSE, eval=TRUE, results='hide'}
-  kcpop <- get_population(kingco = T, years = 2019, ages = 15:19, 
+  kcpop <- apde.data::population(kingco = T, years = 2019, ages = 15:19, 
                           genders = "Female", group_by = "ages", 
                           geo_vintage = 2020, census_vintage = 2020)
   kcpop <- kcpop[, .(age, geo = geo_id, pop)] 
   
-  wapop <- get_population(kingco = F, years = 2019, ages = 15:19, 
+  wapop <- apde.data::population(kingco = F, years = 2019, ages = 15:19, 
                           genders = "Female", group_by = "ages", 
                           geo_type = "zip", geo_vintage = 2020, 
                           census_vintage = 2020)

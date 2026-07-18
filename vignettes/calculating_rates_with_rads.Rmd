@@ -114,10 +114,10 @@ The table above confirms shows that we created a summary table of event (fall de
 
 ### STEP 2: Create a table of **population denominators**
 
-We can easily get the corresponding population data using [rads::get_population()](https://github.com/PHSKC-APDE/rads/wiki/get_population)
+Let's load some populatoin data using `rads.data::synthetic_pop`
 
 ```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
-population <- rads::get_population(years = c(2016:2020), 
+population <- apde.data::population(years = c(2016:2020), 
                                    geo_type = 'kc', 
                                    group_by = c('ages'))
 head(population)
@@ -261,10 +261,10 @@ This table of deaths by region shows that the number of deaths in South King Cou
 
 ### STEP 2: Create a table of **population denominators**
 
-We again use [rads::get_population()](https://github.com/PHSKC-APDE/rads/wiki/get_population) to the necessary population data
+We again use `rads.data::synthetic_pop`
 
 ```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
-population <- rads::get_population(years = c(2019), 
+population <- apde.data::population(years = c(2019), 
                                    geo_type = 'region', 
                                    group_by = c('ages', 'geo_id'))
 head(population)

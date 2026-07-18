@@ -8,33 +8,33 @@ editor: visual
 
 ### Some important notes before we begin
 
--   The CDC's [National Center for Health Statistics (NCHS)](https://www.cdc.gov/nchs/index.htm) collects death certificate data from state vital statistics offices. NCHS performs extensive quality assurance, codes the causes of death using the 10th revision of the International Classification of Diseases (ICD-10), and sends the standardized death data back to state vital statistics offices. They also compile the data to form a comprehensive national database of mortality statistics. Each year they publish an instruction manual with ICD-10 cause of death lists for tabulating mortality statistics, [like this one from 2020](https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf). The two key tables for the purposes of PHSKC analyses (including leading causes of death analyses) are:
+- The CDC's [National Center for Health Statistics (NCHS)](https://www.cdc.gov/nchs/index.htm) collects death certificate data from state vital statistics offices. NCHS performs extensive quality assurance, codes the causes of death using the 10th revision of the International Classification of Diseases (ICD-10), and sends the standardized death data back to state vital statistics offices. They also compile the data to form a comprehensive national database of mortality statistics. Each year they publish an instruction manual with ICD-10 cause of death lists for tabulating mortality statistics, [like this one from 2020](https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf). The two key tables for the purposes of PHSKC analyses (including leading causes of death analyses) are:
 
-    -   **113 Selected Causes of Death, Enterocolitis due to *Clostridium difficile*, and COVID-19,** which is used for the general analysis of mortality and for ranking leading causes of death. APDE uses this list for individuals aged 1 year and older.. You can view this list with `rads::death_113()` and can generate counts using `rads::death_113_count()`.
+  - **113 Selected Causes of Death, Enterocolitis due to *Clostridium difficile*, and COVID-19,** which is used for the general analysis of mortality and for ranking leading causes of death. APDE uses this list for individuals aged 1 year and older.. You can view this list with `rads::death_113()` and can generate counts using `rads::death_113_count()`.
 
-    -   **130 Selected Causes of Infant Death**, which is used for the analysis of infant mortality and for ranking leading causes of infant death. APDE uses this list for infants, i.e., those who are under 1 year old. You can view this list with `rads::death_130()` and can generate counts using `rads::death_130_count()`.
+  - **130 Selected Causes of Infant Death**, which is used for the analysis of infant mortality and for ranking leading causes of infant death. APDE uses this list for infants, i.e., those who are under 1 year old. You can view this list with `rads::death_130()` and can generate counts using `rads::death_130_count()`.
 
--   Infant death analyses are special.
+- Infant death analyses are special.
 
-    -   In addition to using a different set of cause of death functions, *infant death analyses do not use the standard death certificate & population data* available from `rads::get_data_death()` and `rads::get_population()`.
+  - In addition to using a different set of cause of death functions, *infant death analyses do not use the standard death certificate & population data* available from `rads::get_data_death()` and `apde.data::population()`.
 
-        -   The ***numerator*** comes from the infant death files, which are downloaded from [secureaccess.wa.gov/doh/chsdatafiles/](https://secureaccess.wa.gov/doh/chsdatafiles/) and saved (as of 2024-03-01) in `\\dphcifs\APDE-CDIP\InfantDeath\`. This has not gone through an ETL process, so you will have to clean the necessary variables as needed.
+    - The ***numerator*** comes from the infant death files, which are downloaded from [secureaccess.wa.gov/doh/chsdatafiles/](https://secureaccess.wa.gov/doh/chsdatafiles/) and saved (as of 2024-03-01) in `\\dphcifs\APDE-CDIP\InfantDeath\`. This has not gone through an ETL process, so you will have to clean the necessary variables as needed.
 
-        -   The ***denominator*** is the number of *live births* rather than the estimated population with age zero (though they are very similar).
+    - The ***denominator*** is the number of *live births* rather than the estimated population with age zero (though they are very similar).
 
-    -   The ***rate*** is *per 1,000* rather than per 100,000.
+  - The ***rate*** is *per 1,000* rather than per 100,000.
 
-    -   We define King County infant deaths by **either** birth to a mother who is a King County resident **or** the death of an infant who is a King County resident.
+  - We define King County infant deaths by **either** birth to a mother who is a King County resident **or** the death of an infant who is a King County resident.
 
-    -   If we do not have have geocoded InfantDeath data, we can extract geographic data from the main birth data by linking with the `birth_cert_encrypt`. For those that were included due to being a resident at the time of death, we can extract geographies from the death data by linking with the `state_file_number`. However, this will not be relevant below because we are not stratifying by region or HRA.
+  - If we do not have have geocoded InfantDeath data, we can extract geographic data from the main birth data by linking with the `birth_cert_encrypt`. For those that were included due to being a resident at the time of death, we can extract geographies from the death data by linking with the `state_file_number`. However, this will not be relevant below because we are not stratifying by region or HRA.
 
-    -   Since the numerator and the denominator come from two different datasets, it is easiest to treat them as counts (infant deaths) and populations (live births) for use with `rads::age_standardize`. Age adjusting for a single age group doesn't make sense, so we use the crude results and confidence intervals.
+  - Since the numerator and the denominator come from two different datasets, it is easiest to treat them as counts (infant deaths) and populations (live births) for use with `rads::age_standardize`. Age adjusting for a single age group doesn't make sense, so we use the crude results and confidence intervals.
 
--   By default, [rads death functions](https://github.com/PHSKC-APDE/rads/wiki/death_functions) use the ICD-10 codes in the `underlying_cod_code` column available through `rads::get_data_death()`. This is the column that you will want to use for an *underlying cause of death* analysis, which is almost certainly what you will want to do. If you want to change this default, think deeply about your rationale while holding your breath for 2 minutes and 30 seconds.
+- By default, [rads death functions](https://github.com/PHSKC-APDE/rads/wiki/death_functions) use the ICD-10 codes in the `underlying_cod_code` column available through `rads::get_data_death()`. This is the column that you will want to use for an *underlying cause of death* analysis, which is almost certainly what you will want to do. If you want to change this default, think deeply about your rationale while holding your breath for 2 minutes and 30 seconds.
 
--   Additional relevant information regarding analysis of death data may be available in the [APDE Analysis Guide](https://kc1.sharepoint.com/:w:/r/teams/DPH-APDEData/_layouts/15/Doc.aspx?sourcedoc=%7BA49D6E2C-6FF4-49E9-95D4-7AE7B2C34E5D%7D&file=APDE_Analysis_Guide.docx&action=default&mobileredirect=true).
+- Additional relevant information regarding analysis of death data may be available in the [APDE Analysis Guide](https://kc1.sharepoint.com/:w:/r/teams/DPH-APDEData/_layouts/15/Doc.aspx?sourcedoc=%7BA49D6E2C-6FF4-49E9-95D4-7AE7B2C34E5D%7D&file=APDE_Analysis_Guide.docx&action=default&mobileredirect=true).
 
--   The [death directory in the CHI repo](https://github.com/PHSKC-APDE/chi/tree/main/death) has the code used to create the leading causes of death for CHNA / CHI. It is somewhat complex because of the various iterations needed for these projects. However, underneath the complexity, it ***should*** follow the structure described above.
+- The [death directory in the CHI repo](https://github.com/PHSKC-APDE/chi/tree/main/death) has the code used to create the leading causes of death for CHNA / CHI. It is somewhat complex because of the various iterations needed for these projects. However, underneath the complexity, it ***should*** follow the structure described above.
 
 ### Overview
 
@@ -340,12 +340,12 @@ pretty_kable(head(infdeath_count[deaths >= 10]))
 
 ### Non-infants (ages ≥ 1)
 
-Be sure that your call to `rads::get_population` provides the same years and demographic strata that you have in your death counts!
+Be sure that your call to `apde.data::population` provides the same years and demographic strata that you have in your death counts!
 
 ```{r}
 #| warning: false
 # Get population for the years and demographic strata corresponding to your death counts
-pop <- get_population(years = 2017:2021, ages = 1:100, group_by = c('genders', 'ages'))
+pop <- apde.data::population(years = 2017:2021, ages = 1:100, group_by = c('genders', 'ages'))
 pop <- pop[, .(pop, age, gender)]
 
 # Merge the population data onto the non-infant death count data
