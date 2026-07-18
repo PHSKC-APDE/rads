@@ -14,9 +14,9 @@ pretty_kable <- function(dt) {
 
 # Introduction
 
-`calc()` is the analytic workhorse of `rads`. It provides a standardized method for obtaining most of what we usually want to calculate: means, medians, counts, confidence intervals, standard errors, relative standard errors (RSE), numerators, denominators, the number missing, and the proportion missing. `calc()` can be used with record data (e.g., vital statistics, census, enrollment numbers, etc.) as well as survey data (e.g., [BRFSS](https://www.cdc.gov/brfss/index.html), [ACS PUMS](https://github.com/PHSKC-APDE/svy_acs), etc.). 
+`calc()` is the analytic workhorse of `rads`. It provides a standardized method for obtaining most of what we usually want to calculate in public health practice: means, medians, counts, confidence intervals, standard errors, relative standard errors (RSE), numerators, denominators, the number missing, and the proportion missing. `calc()` can be used with record data (e.g., vital statistics, census, enrollment numbers, etc.) as well as survey data (e.g., [BRFSS](https://www.cdc.gov/brfss/index.html), [ACS PUMS](https://github.com/PHSKC-APDE/svy_acs), etc.). 
 
-`calc()` provides a unified interface built on top of common R packages, including `data.table`, which can make it faster than implementing custom functions with base R or dplyr in some cases. This makes it a convenient and efficient option, allowing APDE staff to use consistent syntax across different data sources. While all `calc()` functionality could be achieved with other packages directly, the primary benefit is standardization and ease of use—even if some specialized packages might occasionally offer more efficient implementations for specific analyses.
+`calc()` provides a unified interface built on top of common R packages, including `data.table`, which can make it faster than implementing custom functions with base R or dplyr in some cases. This makes it a convenient and efficient option, allowing staff to use consistent syntax across different data sources. While all `calc()` functionality could be achieved with other packages directly, the primary benefit is standardization and ease of use—even if some specialized packages might occasionally offer more efficient implementations for specific analyses.
 
 This vignette will provide some examples to introduce the `calc()` function by walking through basic analyses with vital statistics (birth data) and survey data (ACS PUMS). To get the most out of this vignette, we recommend that you type each and every bit of code into R. Doing so will almost definitely help you learn the syntax much faster than just reading the vignette or copying and pasting the code.
 
@@ -28,7 +28,7 @@ Arguments are the values that we send to a function when it is called. The stand
 
 2)  `what` \<- a character vector of the variable(s) for which you want to calculate the metrics. E.g., `what = c("uninsured")`
 
-3)  `where` \<- think of this as a SQL `WHERE` clause, i.e., a filtering or subsetting of data. E.g., `ages %in% c(0:17) & gender == "Female"`
+3)  `where` \<- think of this as a SQL `WHERE` clause, i.e., a filtering or subsetting of data. E.g., `where = ages %in% c(0:17) & gender == "Female"`
 
 4)  `by` \<- a character vector of the variables that you want to computer the `what` by, i.e., the cross-tab variable(s). E.g., `by = c("gender")` would stratify results by gender
 
@@ -36,13 +36,13 @@ Arguments are the values that we send to a function when it is called. The stand
 
 6)  `per` \<- an integer, which is the denominator when `rate` is selected as a metric. Metrics will be multiplied by this value. E.g., `per = 1000`. **NOTE** this is just a scalar. At present this does not calculate a true rate (i.e., the relevant population denominator is not used).
 
-7)  `win` \<- an integer, which is the number of consecutive units of time (e.g., years, months, etc.) over which the metrics will be calculated, i.e., the 'window' for a rolling average, sum, etc. E.g. `win = 5` will perform calculations over every 5 time unit window.
+7)  `win` \<- an integer, which is the number of consecutive units of time (e.g., years, months, etc.) over which the metrics will be calculated, i.e., the 'window' for a rolling average, sum, etc. E.g. `win = 5` will perform calculations over every 5 time unit window. Used in conjuction with the `time_var` argument.
 
 8)  `time_var` \<- a character, which is the name of the time variable in the dataset. Used in combination with the `win` argument to generate time windowed calculations.
 
-9)  `fancy_time` \<- a logical (i.e., `T` or `F`) flag. If TRUE, a record of all the years going into the data is returned. If FALSE, just a simple range (where certain years within the range might not be represented in your data).
+9)  `fancy_time` \<- a logical (i.e., `T` or `F`) flag. If TRUE, a record of the specific years going into the data is returned. If FALSE, just a simple range. For example, if your actual years were `c(2015, 2017, 2019:2021)`, `fancy_time = T` would return *`r rads::format_time(c(2015, 2017, 2019:2021))`* whereas `fancy_time = F` would return *`r rads::format_time_simple(c(2015, 2017, 2019:2021))`*.
 
-10) `proportion` \<- a logical (i.e., `T` or `F`) flag determining whether the metrics should be calculated as a proportion. Currently only relevant for survey data. The default is FALSE.
+10) `proportion` \<- a logical (i.e., `T` or `F`) flag determining whether the metrics should be calculated as a proportion. Currently only relevant for survey data. 
 
 11) `ci` \<- a numeric value between 0 & 1 for the confidence level returned in the estimates. E.g., 0.95 == 95% confidence interval
 
@@ -50,309 +50,295 @@ Arguments are the values that we send to a function when it is called. The stand
 
 There is no need to specify all of the arguments listed above. As you can see in the following example, the `calc` function simply needs a specified dataset (i.e., `ph.data`) and at least one `what` variable to return an intelligible result.
 
-```{r, echo=TRUE, results='hide'}
+```{r, echo=TRUE, results='hide', warning=FALSE}
 library(rads)
 library(data.table)
 data(mtcars)
-calc(ph.data = mtcars, what = c("mpg"))[]
+my.est <- calc(ph.data = mtcars, 
+               what = c("mpg"))
+print(my.est)
 ```
 
 ```{r, echo=FALSE}
-pretty_kable(calc(ph.data = mtcars, what = c("mpg"))[])
+pretty_kable(my.est)
 ```
-
-**Note:** *The use of `[]` after `calc()` is used to print the output to the console. Typically, you would not print the results but would save them as an object. E.g., `my.est <- calc()`.*
-
 
 # Example vital statistics analyses
 
-**First get the birth data (cf. [get_data vignette](https://github.com/PHSKC-APDE/rads/wiki/get_data))**
+**First, get birth data **
 
 ```{r}
-birth <- get_data_birth(cols = c("chi_year", "chi_sex", "chi_race_eth8", 
-                                 "preterm", "birth_weight_grams", "mother_birthplace_state"), 
-                        year = c(2013:2019), 
-                        kingco = T)
+birth <- rads.data::synthetic_birth
+birth <- birth[, .(chi_year, chi_geo_kc, chi_sex, race4, preterm, birth_weight_grams)]
+birth <- birth[chi_geo_kc == 'King County' & chi_year %in% 2019:2023]
 ```
 
-**Mean (proportion) for a binary over multiple years**
+**Mean (proportion) for a binary variable over multiple years**
 
-```{r, echo=TRUE, eval=FALSE}
-calc(ph.data = birth, 
-     what = c("preterm"), 
-     metrics = c("mean", "rse", "numerator", "denominator"), 
-     time_var = "chi_year")[]
+```{r, echo=TRUE, eval=TRUE, results='hide'}
+my.est <- calc(ph.data = birth, 
+               what = c("preterm"), 
+               metrics = c("mean", "rse", "numerator", "denominator"), 
+               time_var = "chi_year")
+print(my.est)
 ```
 
 ```{r, echo=FALSE}
-pretty_kable(calc(ph.data = birth, 
-     what = c("preterm"), 
-     metrics = c("mean", "rse", "numerator", "denominator"), 
-     time_var = "chi_year")[])
+pretty_kable(my.est)
 ```
-**Mean (proportion) for a binary over multiple years -- `where` newborn is male**
+**Mean (proportion) for a binary over multiple years -- `where` the newborn is male**
 
-```{r, echo=TRUE, eval=FALSE}
-calc(ph.data = birth, 
-     what = c("preterm"), 
-     where = chi_sex == "Male",
-     metrics = c("mean", "rse", "numerator", "denominator"), 
-     time_var = "chi_year")[]
+```{r, echo=TRUE, eval=TRUE, results='hide'}
+my.est <- calc(ph.data = birth, 
+               what = c("preterm"), 
+               where = chi_sex == "Male",
+               metrics = c("mean", "rse", "numerator", "denominator"), 
+               time_var = "chi_year")
+print(my.est)
 ```
 
 ```{r, echo = FALSE}
-pretty_kable(calc(ph.data = birth, 
-     what = c("preterm"), 
-     where = chi_sex == "Male",
-     metrics = c("mean", "rse", "numerator", "denominator"), 
-     time_var = "chi_year")[])
+pretty_kable(my.est)
 ```
 
 **Mean (proportion) for a binary over multiple years -- `where` newborn is male born to a Hispanic mother**
 
-```{r, echo=TRUE, eval=FALSE}
-calc(ph.data = birth, 
-     what = c("preterm"), 
-     where = chi_sex == "Male" & chi_race_eth8 == "Hispanic",
-     metrics = c("mean", "rse", "numerator", "denominator"), 
-     time_var = "chi_year")[]
+```{r, echo=TRUE, eval=TRUE, results='hide'}
+my.est <- calc(ph.data = birth, 
+               what = c("preterm"), 
+               where = chi_sex == "Male" & race4 == "Hispanic",
+               metrics = c("mean", "rse", "numerator", "denominator"), 
+               time_var = "chi_year")
+print(my.est)
 ```
 
 ```{r, echo=FALSE}
-pretty_kable(calc(ph.data = birth, 
-     what = c("preterm"), 
-     where = chi_sex == "Male" & chi_race_eth8 == "Hispanic",
-     metrics = c("mean", "rse", "numerator", "denominator"), 
-     time_var = "chi_year")[])
+pretty_kable(my.est)
 ```
 
 **Mean (proportion) for a binary over individual years**
 
+***Note!** You cannot use the same variable name for both the `time_var` and `by` arguments. So, make a copy of the time variable first.*
+
 ```{r, echo=TRUE, eval=TRUE, results='hide'}
-birth[, cy := chi_year]
-calc(ph.data = birth, 
-     what = c("preterm"), 
-     metrics = c("mean", "rse", "numerator", "denominator"), 
-     time_var = "chi_year", 
-     by = "cy")[]
+birth[, calyear := chi_year]
+
+my.est <- calc(ph.data = birth, 
+               what = c("preterm"), 
+               metrics = c("mean", "rse", "numerator", "denominator"), 
+               time_var = "chi_year", 
+               by = "calyear")
+print(my.est)
 ```
 
 ```{r, echo=FALSE}
-pretty_kable(calc(ph.data = birth, 
-     what = c("preterm"), 
-     metrics = c("mean", "rse", "numerator", "denominator"), 
-     time_var = "chi_year", 
-     by = "cy")[])
+pretty_kable(my.est)
 ```
 
 **Mean (proportion) for a binary over windowed years**
 
-```{r, echo=TRUE, eval=FALSE}
-calc(ph.data = birth, 
-     what = c("preterm"), 
-     metrics = c("mean", "rse", "numerator", "denominator"), 
-     time_var = "chi_year", 
-     win = 3)[]
+```{r, echo=TRUE, eval=TRUE, results='hide'}
+my.est <- calc(ph.data = birth, 
+               what = c("preterm"), 
+               metrics = c("mean", "rse", "numerator", "denominator"), 
+               time_var = "chi_year", 
+               win = 3)
+print(my.est)
 ```
 
 ```{r, echo=FALSE}
-pretty_kable(calc(ph.data = birth, 
-     what = c("preterm"), 
-     metrics = c("mean", "rse", "numerator", "denominator"), 
-     time_var = "chi_year", 
-     win = 3)[])
+pretty_kable(my.est)
 ```
 
-**Mean for a continuous over windowed years**
+**Mean for a continuous variable over windowed years**
 
-```{r, echo=TRUE, eval=FALSE}
-calc(ph.data = birth, 
-     what = c("birth_weight_grams"), 
-     metrics = c("mean", "rse"), 
-     time_var = "chi_year", 
-     win = 3)[]
+```{r, echo=TRUE, eval=TRUE, results='hide'}
+my.est <- calc(ph.data = birth, 
+               what = c("birth_weight_grams"), 
+               metrics = c("mean", "rse"), 
+               time_var = "chi_year", 
+               win = 3)
+print(my.est)
 ```
 
 ```{r, echo=FALSE}
-pretty_kable(calc(ph.data = birth, 
-     what = c("birth_weight_grams"), 
-     metrics = c("mean", "rse"), 
-     time_var = "chi_year", 
-     win = 3)[])
+pretty_kable(my.est)
 ```
 
-**Mean for a continuous in 2019, by gender and race/eth**
+**Mean for a continuous in 2019, by mother's race and child's sex**
 
-```{r, echo=TRUE, eval=FALSE}
-calc(ph.data = birth, 
-     what = c("birth_weight_grams"), 
-     chi_year == 2019,
-     metrics = c("mean", "rse"), 
-     by = c("chi_race_eth8", "chi_sex"))[]
+```{r, echo=TRUE, eval=TRUE, results='hide', warning=FALSE}
+my.est <- calc(ph.data = birth, 
+               what = c("birth_weight_grams"), 
+               where = chi_year == 2019,
+               metrics = c("mean", "rse"), 
+               by = c("race4", "chi_sex"))
+print(my.est)
 ```
 
-```{r, echo=FALSE}
-pretty_kable(calc(ph.data = birth, 
-     what = c("birth_weight_grams"), 
-     chi_year == 2019,
-     metrics = c("mean", "rse"), 
-     by = c("chi_race_eth8", "chi_sex"))[])
+```{r, echo=FALSE, warning=FALSE}
+pretty_kable(my.est)
 ```
 
-**Proportion of 2017-2019 births among each race/eth group**
+**Proportion of 2019-2021 births among each racial group**
 
-```{r, warning=FALSE, echo=TRUE, eval=FALSE}
-calc(ph.data = birth, 
-     what = c("chi_race_eth8"), 
-     chi_year %in% 2017:2019,
-     metrics = c("mean", "rse", "obs", "numerator", "denominator"))[]
+```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
+my.est <- calc(ph.data = birth, 
+               what = c("race4"), 
+               where = chi_year %in% 2019:2021,
+               metrics = c("mean", "rse", "obs", "numerator", "denominator"))
+print(my.est)
 ```
 
 ```{r, warning=FALSE, echo=FALSE}
-pretty_kable(calc(ph.data = birth, 
-     what = c("chi_race_eth8"), 
-     chi_year %in% 2017:2019,
-     metrics = c("mean", "rse", "obs", "numerator", "denominator"))[])
+pretty_kable(my.est)
 ```
 
-**2017-2019 rate per 100k of births among each race/eth group**
+**2019-2021 rate per 100k of births among each racial group**
 
-```{r, warning=FALSE, echo=TRUE, eval=FALSE}
-calc(ph.data = birth, 
-     what = c("chi_race_eth8"), 
-     chi_year %in% 2017:2019,
-     metrics = c("obs", "numerator", "denominator", "rate"), 
-     per = 100000)[]
+```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
+my.est <- calc(ph.data = birth, 
+               what = c("race4"), 
+               where = chi_year %in% 2019:2023,
+               metrics = c("obs", "numerator", "denominator", "rate"), 
+               per = 100000)
+print(my.est)
 ```
 
 ```{r, warning=FALSE, echo=FALSE}
-pretty_kable(calc(ph.data = birth, 
-     what = c("chi_race_eth8"), 
-     chi_year %in% 2017:2019,
-     metrics = c("obs", "numerator", "denominator", "rate"), 
-     per = 100000)[])
+pretty_kable(my.est)
 ```
 
 **Number and proportion of missing gender by year**
 
-```{r, warning=FALSE, echo=TRUE, eval=FALSE}
-calc(ph.data = birth, 
-     what = c("chi_sex"), 
-     chi_year %in% 2017:2019,
-     metrics = c("obs", "missing", "missing.prop"), 
-     by = "chi_year")[]
+```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
+my.est <- calc(ph.data = birth, 
+               what = c("chi_sex"), 
+               where = chi_year %in% 2019:2023,
+               metrics = c("obs", "missing", "missing.prop"), 
+               by = "chi_year")
+print(my.est)
 ```
+
 ```{r, warning=FALSE, echo=FALSE}
-pretty_kable(calc(ph.data = birth, 
-     what = c("chi_sex"), 
-     chi_year %in% 2017:2019,
-     metrics = c("obs", "missing", "missing.prop"), 
-     by = "chi_year")[])
+pretty_kable(my.est)
 ```
 
 # Example survey analyses
 
-Survey data must be 'set' to use the proper survey design. However, survey data accessed through `rads::get_data()` functions have already been set as data.table/[dtsurvey](https://github.com/PHSKC-APDE/dtsurvey) objects and are ready for analysis with `calc()`.
+Survey data must be 'set' to use the proper survey design. In this case, PUMS data will use replicate weights as specified by the Census Bureau. 
 
 ```{r, warning=FALSE}
-pums <- get_data_pums(year = 2021, kingco = F, records = 'person')
+mysurvey <- rads.data::synthetic_survey
 
+mysurvey <- survey::svrepdesign(
+  data = mysurvey, 
+  weights = ~pwgtp,
+  repweights = mysurvey[, grep("pwgtp[0-9]+", names(mysurvey),value = TRUE), with = FALSE], 
+  type = "JK1",
+  combined.weights = TRUE, 
+  scale = 4/80, 
+  rscales = rep(1, 80), mse = TRUE)
 ```
 
-**Let's get on the same page re: the meaning of the columns from `calc()`**
+Setting it as a `dtsurvey` object will allow us to manipulate the survey object with `data.table` syntax and will play nicely with `rads::calc()`.
+
+```{r, warning=FALSE}
+mysurvey <- dtsurvey::dtrepsurvey(mysurvey)
+```
+
+Checking the class of mysurvey you can see that it is both a `data.table` and a `dtrepsurvey` object.
+```{r, warning=FALSE}
+class(mysurvey)
+```
+
+
+**Let's get on the same page re: the meaning of the columns output by `calc()` when analysing survey data**
 
 First, create a simple tabulation of the population of Seattle after sub-setting PUMS to King County.
 
 ```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
-test1 <- calc(ph.data = pums, 
-             what = "nonseattle", 
-             metrics = c('mean', 'numerator', 'denominator', 'obs', 'total'), 
-             where = chi_geo_kc == "King County")
-print(test1)
+my.est <- calc(ph.data = mysurvey, 
+               what = "seattle", 
+               metrics = c('mean', 'numerator', 'denominator', 'obs', 'total'), 
+               proportion = T,
+               where = chi_geo_kc == "King County")
+print(my.est)
 ```
 
 ```{r, warning=FALSE, echo=FALSE}
-pretty_kable(test1)
+pretty_kable(my.est)
 ```
 
 -   `mean`: The proportion of the total population (i.e., King County) that lives in Seattle
--   `total`: The survey weighted population Seattle and NonSeattle residents in King County
--   `numerator`: The number of rows with people living in Seattle, compare to `nrow(pums[nonseattle == 'Seattle])`
--   `denominator`: The number of rows in the the dataset where the 'what' variable can be assessed because it is not missing, compare to `nrow(pums[!is.na(nonseattle)])`
+-   `total`: The survey weighted population of Seattle and seattle residents in King County
+-   `numerator`: The number of rows with people living in Seattle, compare to `nrow(mysurvey[seattle == 'Seattle'])`
+-   `denominator`: The number of rows in the the dataset where the 'what' variable can be assessed because it is not missing, compare to `nrow(mysurvey[!is.na(seattle)])`
 -   `obs`: The number of rows in the dataset after filtering by the 'where' argument.
 
-To highlight the difference between `denominator` and `obs`, in this next example we introduce 100 missing values to our 'what' variable (nonseattle), thereby lowering the denominator by 100 but leaving the obs the same as above.
+To highlight the difference between `denominator` and `obs`, in this next example we introduce 100 missing values to our 'what' variable (seattle), thereby lowering the denominator by 100 but leaving the obs the same as above.
 
 ```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
-pums2 <- copy(pums)
-pums2 <- pums2[nonseattle == 'Seattle', nonseattle := ifelse(rowid(nonseattle) <= 100, NA, nonseattle)]
-test2 <- calc(ph.data = pums2, 
-             what = "nonseattle", 
-             metrics = c('mean', 'numerator', 'denominator', 'obs', 'total'), 
-             where = chi_geo_kc == "King County")
-print(test2)
+mysurvey2 <- copy(mysurvey)
+mysurvey2 <- mysurvey2[seattle == 'Seattle', seattle := ifelse(rowid(seattle) <= 100, NA, seattle)]
+my.est <- calc(ph.data = mysurvey2, 
+               what = "seattle", 
+               metrics = c('denominator', 'obs'), 
+               where = chi_geo_kc == "King County")
+print(my.est)
 ```
 
 ```{r, warning=FALSE, echo=FALSE}
-pretty_kable(test2)
+pretty_kable(my.est)
 ```
 
-As expected, the `obs` value is the same as in table test1 above (`r format(test2[1]$obs, big.mark = ',')`), but the `denominator` value decreased by 100 to `r format(test2[1]$denominator, big.mark = ',')`.
+As expected, the `obs` value is the same as in table test1 above (`r format(my.est[1]$obs, big.mark = ',')`), but the `denominator` value decreased by 100 to `r format(my.est[1]$denominator, big.mark = ',')`.
 
-**Mean (proportion) of those near poverty or disabled, by King County (vs. remainder of WA)**
+**Mean (proportion) of respondents who commute by public transportation or by driving -- stratified by sex**
 
-```{r, warning=FALSE, echo=TRUE, eval=FALSE}
-calc(ph.data = pums, 
-     what = c("disability", "GEpov200"), 
-     metrics = c("mean", "rse", "obs", "numerator", "denominator"), 
-     proportion = T, 
-     by = "chi_geo_kc")[]
-```
-
-```{r, warning=FALSE, echo=FALSE}
-pretty_kable( calc(ph.data = pums, 
-     what = c("disability", "GEpov200"), 
-     metrics = c("mean", "rse", "obs", "numerator", "denominator"), 
-     proportion = T, 
-     by = "chi_geo_kc")[])
-```
-
-
-**Proportion in each CHNA age group, by disability status**
-
-```{r, warning=FALSE, echo=TRUE, eval=FALSE}
-calc(ph.data = pums, 
-     what = c("age6"), 
-     metrics = c("mean", "rse", "obs", "numerator", "denominator"), 
-     proportion = F, 
-     by = "disability")[]
+```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
+my.est <- calc(ph.data = mysurvey, 
+               what = c("pubtran", "drive"), 
+               metrics = c("mean", "rse"), 
+               proportion = T, 
+               by = "chi_sex")
+print(my.est)
 ```
 
 ```{r, warning=FALSE, echo=FALSE}
-pretty_kable(calc(ph.data = pums, 
-     what = c("age6"), 
-     metrics = c("mean", "rse", "obs", "numerator", "denominator"), 
-     proportion = F, 
-     by = "disability")[])
+pretty_kable(my.est)
+```
+
+
+**Proportion in six age groups, by disability status**
+
+```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
+my.est <- calc(ph.data = mysurvey, 
+               what = c("age6"), 
+               metrics = c("mean", "rse"), 
+               proportion = F, 
+               by = "disability")
+print(my.est)
+```
+
+```{r, warning=FALSE, echo=FALSE}
+pretty_kable(my.est)
 ```
 
 
 **Mean & median age in King County, by disability status**
 
-```{r, warning=FALSE, echo=TRUE, eval=FALSE}
-calc(ph.data = pums, 
-     what = c("agep"),
-     chi_geo_kc == "King County",
-     metrics = c("mean", "median", "rse", "obs", "numerator", "denominator"), 
-     by = "disability")[]
+```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
+my.est <- calc(ph.data = mysurvey, 
+               what = c("agep"),
+               where = chi_geo_kc == "King County",
+               metrics = c("mean", "median", "rse"), 
+               by = "disability")[]
+print(my.est)
 ```
 
 ```{r, warning=FALSE, echo=FALSE}
-calc(ph.data = pums, 
-     what = c("agep"),
-     chi_geo_kc == "King County",
-     metrics = c("mean", "median", "rse", "obs", "numerator", "denominator"), 
-     by = "disability")[]
+pretty_kable(my.est)
 ```
 
 
@@ -385,11 +371,11 @@ We see that we created a dataset of 2000 rows with grades in four schools betwee
 ```{r, warning=FALSE, message=FALSE, echo=TRUE, eval=TRUE, results='hide'}
 grades.distribution <- calc(
   ph.data = mydt, 
-  school %in% c("Alpha", "Beta"), 
+  where = school %in% c("Alpha", "Beta"), 
   what = "grades", 
   by = "school", 
   time_var = "year", 
-  metrics = c("numerator", "denominator", "mean"), proportion = F)
+  metrics = c("mean"), proportion = F)
 
 print(grades.distribution[level %in% c("A", "B")])
 ```
@@ -412,7 +398,6 @@ mydt[, mywghts := sample(50:1300, 2000, replace = T)]
 # survey set the data
 # This uses the dtsurvey package
 # similar logic applies for survey and srvyr package
-mydt[, `_id` := NULL] # remove id to make things play nice
 mysvy <-dtsurvey::dtsurvey(data.table(mydt), weight = 'mywghts')
 ```
 
@@ -421,11 +406,11 @@ mysvy <-dtsurvey::dtsurvey(data.table(mydt), weight = 'mywghts')
 ```{r, warning=FALSE, message=FALSE, echo=TRUE, eval=TRUE, results='hide'}
 grades.distribution2 <- calc(
   ph.data = mysvy, 
-  school %in% c("Alpha", "Beta"), 
   what = "grades", 
+  where = school %in% c("Alpha", "Beta"), 
   by = "school", 
   time_var = "year", 
-  metrics = c("numerator", "denominator", "mean"), proportion = FALSE)
+  metrics = c("mean"), proportion = FALSE)
 
 print(grades.distribution2[level %in% c("A", "B")])
 ```
@@ -438,17 +423,22 @@ You'll note that using the survey design caused small changes in the results. Fo
 
 # Example analyses with resampled data/multiple imputation
 
-There may be a few instances where a variable you want to compute some metrics using (multiple) imputed data. `calc` can work with these sorts of situations.
+There may be a few instances where you want to compute some metrics using (multiple) imputed data. `calc` can work with these sorts of situations.
 
-The following code creates a fake survey of 100 people and then creates 10 different iterations of the survey with differing values of `v` (to represent the imputed variable).
+The following code creates a fake survey of 100 people and then creates 10 different iterations of the survey with differing values of `impvar` (to represent the imputed variable).
 
 ```{r, warning=FALSE, message= FALSE}
 # Create some fake data
 library('data.table')
-base = data.table::data.table(id = 1:100, bin = sample(0:1, 100, T), psu = sample(1:3, 100, T), weight = runif(100, 0,2))
+base = data.table::data.table(id = 1:100, 
+                              bin = sample(0:1, 100, T), 
+                              psu = sample(1:3, 100, T), 
+                              weight = runif(100, 0,2))
 base = dtsurvey::dtsurvey(base, psu = 'psu', weight = 'weight')
-midat = lapply(1:10, function(i){
-  r = data.table::copy(base)[, v := sample(1:3, 100, T)]
+
+# create a list tables with imputed values
+mi_data = lapply(1:10, function(i){
+  r = data.table::copy(base)[, impvar := sample(1:3, 100, T)]
 })
 
 ```
@@ -456,30 +446,36 @@ midat = lapply(1:10, function(i){
 To use the imputation version of calc, the ph.data argument must be an `imputationList` object. You can turn your list of plausible datasets into an `imputationList` via the `mitools::imputationList` function. You may need to install the `mitools` package for this to work.
 
 ```{r, warning = FALSE, message = FALSE}
-midat = mitools::imputationList(midat)
-class(midat)
+mi_data = mitools::imputationList(mi_data)
+class(mi_data)
 ```
 
 Now that `midat` is the right type/class of object, you can pass it to the `calc` function as you would any other dataset. The slight exception is that the metrics argument must be explicitly specified. For fun, a version of the results from one imputation is also computed.
 
 **Results using MI combining methods**
 ```{r, warning = FALSE, message = FALSE, echo=TRUE, results='hide'}
-withmi = calc(ph.data =midat, what = 'bin', by = 'v', metrics = 'mean', proportion = T)
+withmi = calc(ph.data = mi_data, 
+              what = 'bin', 
+              by = 'impvar', 
+              metrics = 'mean', 
+              proportion = T)
 print(withmi)
 ```
 
 ```{r, echo = FALSE}
-pretty_kable(withmi[, .(v, variable, mean, mean_se, mean_lower, mean_upper)])
+pretty_kable(withmi[, .(impvar, variable, mean, mean_se, mean_lower, mean_upper)])
 ```
 
 **Results of one iteration**
 ```{r, warning = FALSE, message = FALSE, echo=TRUE, results='hide'}
-nomi = calc(ph.data = midat$imputations[[1]], what = 'bin', by = 'v')
+nomi = calc(ph.data = mi_data$imputations[[1]], 
+            what = 'bin', 
+            by = 'impvar')
 print(nomi)
 ```
 
 ```{r, echo = FALSE}
-pretty_kable(nomi[, .(v, variable, mean, mean_se, mean_lower, mean_upper)])
+pretty_kable(nomi[, .(impvar, variable, mean, mean_se, mean_lower, mean_upper)])
 ```
 
 Some additional notes:
