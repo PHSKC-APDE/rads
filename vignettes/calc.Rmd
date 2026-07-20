@@ -69,8 +69,8 @@ pretty_kable(my.est)
 
 ```{r}
 birth <- rads.data::synthetic_birth
-birth <- birth[, .(chi_year, chi_geo_kc, chi_sex, race4, preterm, birth_weight_grams)]
-birth <- birth[chi_geo_kc == 'King County' & chi_year %in% 2019:2023]
+birth <- birth[, .(year, geo_kc, sex, race, preterm, birth_weight_grams)]
+birth <- birth[geo_kc == 'King County' & year %in% 2019:2023]
 ```
 
 **Mean (proportion) for a binary variable over multiple years**
@@ -79,7 +79,7 @@ birth <- birth[chi_geo_kc == 'King County' & chi_year %in% 2019:2023]
 my.est <- calc(ph.data = birth, 
                what = c("preterm"), 
                metrics = c("mean", "rse", "numerator", "denominator"), 
-               time_var = "chi_year")
+               time_var = "year")
 print(my.est)
 ```
 
@@ -91,9 +91,9 @@ pretty_kable(my.est)
 ```{r, echo=TRUE, eval=TRUE, results='hide'}
 my.est <- calc(ph.data = birth, 
                what = c("preterm"), 
-               where = chi_sex == "Male",
+               where = sex == "Male",
                metrics = c("mean", "rse", "numerator", "denominator"), 
-               time_var = "chi_year")
+               time_var = "year")
 print(my.est)
 ```
 
@@ -106,9 +106,9 @@ pretty_kable(my.est)
 ```{r, echo=TRUE, eval=TRUE, results='hide'}
 my.est <- calc(ph.data = birth, 
                what = c("preterm"), 
-               where = chi_sex == "Male" & race4 == "Hispanic",
+               where = sex == "Male" & race == "Hispanic",
                metrics = c("mean", "rse", "numerator", "denominator"), 
-               time_var = "chi_year")
+               time_var = "year")
 print(my.est)
 ```
 
@@ -121,12 +121,12 @@ pretty_kable(my.est)
 ***Note!** You cannot use the same variable name for both the `time_var` and `by` arguments. So, make a copy of the time variable first.*
 
 ```{r, echo=TRUE, eval=TRUE, results='hide'}
-birth[, calyear := chi_year]
+birth[, calyear := year]
 
 my.est <- calc(ph.data = birth, 
                what = c("preterm"), 
                metrics = c("mean", "rse", "numerator", "denominator"), 
-               time_var = "chi_year", 
+               time_var = "year", 
                by = "calyear")
 print(my.est)
 ```
@@ -141,7 +141,7 @@ pretty_kable(my.est)
 my.est <- calc(ph.data = birth, 
                what = c("preterm"), 
                metrics = c("mean", "rse", "numerator", "denominator"), 
-               time_var = "chi_year", 
+               time_var = "year", 
                win = 3)
 print(my.est)
 ```
@@ -156,7 +156,7 @@ pretty_kable(my.est)
 my.est <- calc(ph.data = birth, 
                what = c("birth_weight_grams"), 
                metrics = c("mean", "rse"), 
-               time_var = "chi_year", 
+               time_var = "year", 
                win = 3)
 print(my.est)
 ```
@@ -170,9 +170,9 @@ pretty_kable(my.est)
 ```{r, echo=TRUE, eval=TRUE, results='hide', warning=FALSE}
 my.est <- calc(ph.data = birth, 
                what = c("birth_weight_grams"), 
-               where = chi_year == 2019,
+               where = year == 2019,
                metrics = c("mean", "rse"), 
-               by = c("race4", "chi_sex"))
+               by = c("race", "sex"))
 print(my.est)
 ```
 
@@ -184,8 +184,8 @@ pretty_kable(my.est)
 
 ```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
 my.est <- calc(ph.data = birth, 
-               what = c("race4"), 
-               where = chi_year %in% 2019:2021,
+               what = c("race"), 
+               where = year %in% 2019:2021,
                metrics = c("mean", "rse", "obs", "numerator", "denominator"))
 print(my.est)
 ```
@@ -198,8 +198,8 @@ pretty_kable(my.est)
 
 ```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
 my.est <- calc(ph.data = birth, 
-               what = c("race4"), 
-               where = chi_year %in% 2019:2023,
+               what = c("race"), 
+               where = year %in% 2019:2023,
                metrics = c("obs", "numerator", "denominator", "rate"), 
                per = 100000)
 print(my.est)
@@ -213,10 +213,10 @@ pretty_kable(my.est)
 
 ```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
 my.est <- calc(ph.data = birth, 
-               what = c("chi_sex"), 
-               where = chi_year %in% 2019:2023,
+               what = c("sex"), 
+               where = year %in% 2019:2023,
                metrics = c("obs", "missing", "missing.prop"), 
-               by = "chi_year")
+               by = "year")
 print(my.est)
 ```
 
