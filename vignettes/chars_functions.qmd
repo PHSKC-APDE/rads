@@ -10,11 +10,11 @@ editor: visual
 
 The [rads package](https://github.com/PHSKC-APDE/rads/) has a suite of tools designed to facilitate and accelerate the analysis of standardized CHARS (Comprehensive Hospital Abstract Reporting System) data. Combining the `rads` functions below with the clean CHARS data (or with practice data from `rads.data`, which is installed automatically with rads) should allow analysts to conduct custom analyses with relative ease. The core `rads` CHARS functions are:
 
--   `chars_icd_ccs()`: view available CHARS ICD-9-CM and ICD-10-CM descriptions as well as 'superlevel', 'broad', 'midlevel', and 'detailed' aggregations derived from [AHRQ's HCUP CCSR](https://hcup-us.ahrq.gov/toolssoftware/ccsr/ccs_refined.jsp) that can be used with `chars_icd_ccs_count()`
--   `chars_icd_ccs_count()`: generate counts of CHARS hospitalizations using ICD-9-CM or ICD-10-CM descriptions or 'superlevel', 'broad', 'midlevel', and 'detailed' categories.
--   `chars_injury_matrix()`: view all available intents and mechanisms that can be used with `chars_injury_matrix_count()` (2012+)
--   `chars_injury_matrix_count()`: generate counts of injury related hospitalizations by intent and mechanism (2012+)
--   `chars_validate_data()`: validate that your CHARS dataset has the proper structure and columns needed for the injury and ICD-CM analysis functions
+- `chars_icd_ccs()`: view available CHARS ICD-9-CM and ICD-10-CM descriptions as well as 'superlevel', 'broad', 'midlevel', and 'detailed' aggregations derived from [AHRQ's HCUP CCSR](https://hcup-us.ahrq.gov/toolssoftware/ccsr/ccs_refined.jsp) that can be used with `chars_icd_ccs_count()`
+- `chars_icd_ccs_count()`: generate counts of CHARS hospitalizations using ICD-9-CM or ICD-10-CM descriptions or 'superlevel', 'broad', 'midlevel', and 'detailed' categories.
+- `chars_injury_matrix()`: view all available intents and mechanisms that can be used with `chars_injury_matrix_count()` (2012+)
+- `chars_injury_matrix_count()`: generate counts of injury related hospitalizations by intent and mechanism (2012+)
+- `chars_validate_data()`: validate that your CHARS dataset has the proper structure and columns needed for the injury and ICD-CM analysis functions
 
 Additionally, if you have APDE credentials and are working within King County's infrastructure, you can easily download standardized CHARS data from SQL into R (2012+) using `apde.data::chars()`.
 
@@ -22,10 +22,10 @@ All of these functions have detailed help files that are accessible by typing `?
 
 ***A few quick notes before we begin ...***
 
--   `apde.data::chars()` can provide you with ICD-9-CM data (2012-2015) as well as ICD-10-CM data (2016+).
--   `chars_injury_matrix()` and `chars_injury_matrix_count()` are agnostic as to whether the underlying data are ICD-9-CM or ICD-10-CM.
--   `chars_icd_ccs()` & `chars_icd_ccs_count()` need you to specify which ICD-CM version you have in your data. This means you can analyze 2012-2015 data or 2016+ data, but not both at the same time in a single command.
--   If you want to create age-adjusted rates, we recommend you read the [age_standardize](https://github.com/PHSKC-APDE/rads/wiki/age_standardize) and [calculating_rates_with_rads](https://github.com/PHSKC-APDE/rads/wiki/calculating_rates_with_rads) vignettes after working through this one.
+- `apde.data::chars()` can provide you with ICD-9-CM data (2012-2015) as well as ICD-10-CM data (2016+).
+- `chars_injury_matrix()` and `chars_injury_matrix_count()` are agnostic as to whether the underlying data are ICD-9-CM or ICD-10-CM.
+- `chars_icd_ccs()` & `chars_icd_ccs_count()` need you to specify which ICD-CM version you have in your data. This means you can analyze 2012-2015 data or 2016+ data, but not both at the same time in a single command.
+- If you want to create age-adjusted rates, we recommend you read the [age_standardize](https://github.com/PHSKC-APDE/rads/wiki/age_standardize) and [calculating_rates_with_rads](https://github.com/PHSKC-APDE/rads/wiki/calculating_rates_with_rads) vignettes after working through this one.
 
 # Set up the environment
 
@@ -60,13 +60,13 @@ str(synthetic_chars)
 
 The synthetic dataset includes the key columns needed for injury and ICD-CM analyses:
 
--   `seq_no`: unique patient-visit identifier
--   `diag1`: ICD-10-CM primary diagnosis code
--   `injury_nature_broad` & `injury_nature_narrow`: designation of the type of injury definition used. 'narrow' follows the CDC recommendation and 'broad' follows a more expansive definition. see `?rads.data::synthetic_chars` for details
--   `injury_intent`: injury intent classification (e.g., 'assault', 'unintentional')
--   `injury_mechanism`: injury mechanism classification (e.g., 'fall', 'firearm')
--   `chi_geo_kc`: King County indicator
--   `temperament`: a categorical 'demographic' indicator for practice stratification
+- `seq_no`: unique patient-visit identifier
+- `diag1`: ICD-10-CM primary diagnosis code
+- `injury_nature_broad` & `injury_nature_narrow`: designation of the type of injury definition used. 'narrow' follows the CDC recommendation and 'broad' follows a more expansive definition. see `?rads.data::synthetic_chars` for details
+- `injury_intent`: injury intent classification (e.g., 'assault', 'unintentional')
+- `injury_mechanism`: injury mechanism classification (e.g., 'fall', 'firearm')
+- `chi_geo_kc`: King County indicator
+- `temperament`: a categorical 'demographic' indicator for practice stratification
 
 This synthetic dataset is perfect for testing code before running analyses on real data.
 
@@ -76,14 +76,14 @@ This synthetic dataset is perfect for testing code before running analyses on re
 
 `apde.data::chars()` takes nine potential arguments:
 
--   `cols`: character. the names of the columns that you want to download. Limiting this list to only the variables you truly need can significantly improve download speed. In most cases, this includes any demographic stratifiers of interest along with "seq_no", "diag1", "injury_nature_broad", "injury_nature_narrow", "injury_intent", and "injury_mechanism".
--   `year`: the year(s) of interest, from 2012 to the present.
--   `kingco`: logical (T\|F) . True or false specifies whether to limit the download to King County, based on **truncated** ZIP codes (980## and 981##).
--   `version`: character. Either `'final'` or `'stage'.`
--   `wastate`: logical (T\|F). When false, data will include Oregon.
--   `inpatient`: logical (T\|F). When false, data will include observation patients (i.e., outpatients).
--   `deaths`: logical (T\|F). When true, the data will include those who died while in the hospital.
--   `topcode`: logical (T\|F). When true, `chi_age` will be top coded to 100 to match population data top coding.
+- `cols`: character. the names of the columns that you want to download. Limiting this list to only the variables you truly need can significantly improve download speed. In most cases, this includes any demographic stratifiers of interest along with "seq_no", "diag1", "injury_nature_broad", "injury_nature_narrow", "injury_intent", and "injury_mechanism".
+- `year`: the year(s) of interest, from 2012 to the present.
+- `kingco`: logical (T\|F) . True or false specifies whether to limit the download to King County, based on **truncated** ZIP codes (980## and 981##).
+- `version`: character. Either `'final'` or `'stage'.`
+- `wastate`: logical (T\|F). When false, data will include Oregon.
+- `inpatient`: logical (T\|F). When false, data will include observation patients (i.e., outpatients).
+- `deaths`: logical (T\|F). When true, the data will include those who died while in the hospital.
+- `topcode`: logical (T\|F). When true, `chi_age` will be top coded to 100 to match population data top coding.
 
 If you do not specify any of the arguments, you will get all CHARS data columns, for the latest year, for King County (defined by truncated ZIP codes), limited to inpatients, including those who died while hospitalized, with ages top coded to 100.
 
@@ -146,11 +146,11 @@ validated_chars <- chars_validate_data(ph.data = charsDT,
 
 This function validates:
 
--   Required columns exist: `seq_no`, `injury_nature_broad`, `injury_nature_narrow`, `injury_intent`, `injury_mechanism`, and the ICD column
--   `seq_no` contains unique values (one per patient-visit)
--   Injury columns have appropriate data types (logical for nature columns, character for intent/mechanism)
--   ICD codes are properly formatted
--   Standard injury intent and mechanism categories are present (with informative messages if any are missing)
+- Required columns exist: `seq_no`, `injury_nature_broad`, `injury_nature_narrow`, `injury_intent`, `injury_mechanism`, and the ICD column
+- `seq_no` contains unique values (one per patient-visit)
+- Injury columns have appropriate data types (logical for nature columns, character for intent/mechanism)
+- ICD codes are properly formatted
+- Standard injury intent and mechanism categories are present (with informative messages if any are missing)
 
 The function returns the validated data (with any necessary cleaning applied to ICD codes) and is especially useful when working with custom or external CHARS datasets.
 
@@ -158,8 +158,8 @@ The function returns the validated data (with any necessary cleaning applied to 
 
 `chars_icd_ccs()` takes three arguments:
 
--   `ref_typ`: specifies the hospital diagnosis descriptions that are of interest to you. Acceptable options include: 'all', 'icdcm', 'superlevel', 'broad', 'midlevel', & 'detailed'.
--   `icdcm_version`: specifies the ICD-CM version that you want to reference. Acceptable options include: 9 & 10, with 10 being the default.
+- `ref_typ`: specifies the hospital diagnosis descriptions that are of interest to you. Acceptable options include: 'all', 'icdcm', 'superlevel', 'broad', 'midlevel', & 'detailed'.
+- `icdcm_version`: specifies the ICD-CM version that you want to reference. Acceptable options include: 9 & 10, with 10 being the default.
 
 Do not attempt to manually browse through `chars_icd_ccs()` ... you will lose your mind because it has more than 100,000 rows! Rather, use it to identify the type of non-injury hospitalization of interest. The structure is simple and (hopefully!) self-explanatory. Let's take a look at the first three rows as an example by typing `chars_icd_ccs()[1:3]`:
 
@@ -186,16 +186,16 @@ kable(chars_icd_ccs()[grep('I110', icdcm_code)], format = "markdown")
 
 However, before we begin, let's review the possible arguments used by `chars_icd_ccs_count()`:
 
--   `ph.data`: the name of a person level data.table/data.frame of CHARS data with ICD10-cm codes
--   `icdcm_version`: specifies the ICD-CM version that you want to reference. Acceptable options include: 9 & 10, with 10 being the default.
--   `icdcm`: the ICD-CM code of interest OR its description. It is case insensivitive and partial strings are allowed.
--   `superlevel`: 'superlevel' level descriptions that are of interest. Case insensivitive and partial strings are allowed.
--   `broad`: CCSR derived 'broad' level descriptions that are of interest. Case insensivitive and partial strings are allowed.
--   `midlevel`: 'midlevel level descriptions that are of interest. Case insensivitive and partial strings are allowed.
--   `detailed`: CCSR derived 'detailed' level descriptions that are of interest. Case insensivitive and partial strings are allowed.
--   `icdcol`: the name of the column in `ph.data` that contains the ICD10-cm codes. Default is `diag1`, which is provided when you use `apde.data::chars()`.
--   `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
--   `kingco`: logical (T\|F) specifying whether to limit the data analysis to King County. Only works if ph.data still has the `chi_geo_kc` column.
+- `ph.data`: the name of a person level data.table/data.frame of CHARS data with ICD10-cm codes
+- `icdcm_version`: specifies the ICD-CM version that you want to reference. Acceptable options include: 9 & 10, with 10 being the default.
+- `icdcm`: the ICD-CM code of interest OR its description. It is case insensivitive and partial strings are allowed.
+- `superlevel`: 'superlevel' level descriptions that are of interest. Case insensivitive and partial strings are allowed.
+- `broad`: CCSR derived 'broad' level descriptions that are of interest. Case insensivitive and partial strings are allowed.
+- `midlevel`: 'midlevel level descriptions that are of interest. Case insensivitive and partial strings are allowed.
+- `detailed`: CCSR derived 'detailed' level descriptions that are of interest. Case insensivitive and partial strings are allowed.
+- `icdcol`: the name of the column in `ph.data` that contains the ICD10-cm codes. Default is `diag1`, which is provided when you use `apde.data::chars()`.
+- `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
+- `kingco`: logical (T\|F) specifying whether to limit the data analysis to King County. Only works if ph.data still has the `chi_geo_kc` column.
 
 ## getting CHARS counts by ICD-10-CM code
 
@@ -304,13 +304,13 @@ sort(as.character(unique(chars_injury_matrix()[]$mechanism)))
 
 The `chars_injury_matrix_count()` function is similar to the `chars_icd_ccs_count()` function above, except that it counts injury related hospitalizations. `chars_injury_matrix_count()` takes seven potential arguments:
 
--   `ph.data`: the name of a person level data.table/data.frame of CHARS data downloaded with `apde.data::chars()` or structured like `rads.data::synthetic_chars`. Note that the intents and mechanisms are pre-calculated so you will need to ensure `ph.data` has the relevant `injury_mechanism` and `injury_intent` columns. The easiest way to do this with real data is to have `apde.data::chars()` download all the columns.
--   `intent`: the injury intent of interest. Partial strings are allowed. Use `'none'` or `'any'` to ignore intent and return "Any intent". Use `'*'` (the default wildcard) to return all possible intents.
--   `mechanism`: the injury mechanism of interest. Partial strings are allowed. Use `'none'` or `'any'` to ignore mechanism and return "Any mechanism". Use `'*'` (the default wildcard) to return all possible mechanisms.
--   `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
--   `def`: acceptable values are 'narrow' or 'broad'. It specifies whether you want to use the CDC's recommended 'narrow' approach, which requires that the **principal diagnosis** of an injury hospitalization be a nature-of-injury ICD-10-CM code. Or, alternatively, the 'broad' definition that searches all available diagnosis fields on the hospital discharge record. See [this document](https://kc1.sharepoint.com/teams/DPH-APDEData/Shared%20Documents/Forms/AllItems.aspx?id=%2Fteams%2FDPH%2DAPDEData%2FShared%20Documents%2FCHARS%2FAPDE%20injury%20hospitalization%20method%5F2023%2Epdf&parent=%2Fteams%2FDPH%2DAPDEData%2FShared%20Documents%2FCHARS) for details.
--   `primary_ecode`: logical (T\|F) specifying whether to limit the analysis to using just the primary ecode (i.e., the `injury_ecode` variable), rather than all available ecodes. The vast majority of the time you will want to keep the default setting.
--   `kingco`: logical (T\|F) specifying whether to limit the data analysis to King County. Only works if ph.data still has the `chi_geo_kc` column.
+- `ph.data`: the name of a person level data.table/data.frame of CHARS data downloaded with `apde.data::chars()` or structured like `rads.data::synthetic_chars`. Note that the intents and mechanisms are pre-calculated so you will need to ensure `ph.data` has the relevant `injury_mechanism` and `injury_intent` columns. The easiest way to do this with real data is to have `apde.data::chars()` download all the columns.
+- `intent`: the injury intent of interest. Partial strings are allowed. Use `'none'` or `'any'` to ignore intent and return "Any intent". Use `'*'` (the default wildcard) to return all possible intents.
+- `mechanism`: the injury mechanism of interest. Partial strings are allowed. Use `'none'` or `'any'` to ignore mechanism and return "Any mechanism". Use `'*'` (the default wildcard) to return all possible mechanisms.
+- `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
+- `def`: acceptable values are 'narrow' or 'broad'. It specifies whether you want to use the CDC's recommended 'narrow' approach, which requires that the **principal diagnosis** of an injury hospitalization be a nature-of-injury ICD-10-CM code. Or, alternatively, the 'broad' definition that searches all available diagnosis fields on the hospital discharge record. See [this document](https://kc1.sharepoint.com/teams/DPH-APDEData/Shared%20Documents/Forms/AllItems.aspx?id=%2Fteams%2FDPH%2DAPDEData%2FShared%20Documents%2FCHARS%2FAPDE%20injury%20hospitalization%20method%5F2023%2Epdf&parent=%2Fteams%2FDPH%2DAPDEData%2FShared%20Documents%2FCHARS) for details.
+- `primary_ecode`: logical (T\|F) specifying whether to limit the analysis to using just the primary ecode (i.e., the `injury_ecode` variable), rather than all available ecodes. The vast majority of the time you will want to keep the default setting.
+- `kingco`: logical (T\|F) specifying whether to limit the data analysis to King County. Only works if ph.data still has the `chi_geo_kc` column.
 
 ## Specifying a single intent and ignoring the mechanism
 

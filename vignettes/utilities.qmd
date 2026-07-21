@@ -15,24 +15,23 @@ The `rads` package includes a suite of small utility functions designed to simpl
 
 The core utility functions we'll cover in this vignette are:
 
--   [`calc_age()`](#calc_age): Calculate age based on two dates
--   [`convert_to_date()`](#convert_to_date): Convert various formats to Date objects
--   [`create_dictionary()`](#create_dictionary): Generate a comprehensive data dictionary for a data.table or data.frame
--   [`data_modeler()`](#data_modeler): Create uncorrelated data and code that recreates data for sharing publicly
--   [`format_time()`](#format_time-and-format_time_simple): Format numeric values into human-readable time chunks
--   [`format_time_simple()`](#format_time-and-format_time_simple): Format numeric values into a single time chunk
--   [`generate_yaml()`](#generate_yaml): Generate a YAML file for loading R data to SQL
--   [`multi_t_test()`](#multi_t_test): Perform t-tests for Multiple Comparisons with Aggregate Estimates
--   [`round2()`](#round2): Improved rounding function
--   [`string_clean()`](#string_clean): Clean string and factor columns
--   [`std_error()`](#std_error): Calculate standard error of the mean
--   [`substrRight()`](#substrright): Extract substring from the right
--   [`tsql_validate_field_types()`](#tsql_validate_field_types): Validate R data against field types for SQL Server
--   [`tsql_chunk_loader()`](#tsql_chunk_loader): Load large datasets to SQL Server in chunks
--   [`validate_hhsaw_key()`](#validate_hhsaw_key): Validates HHSAW keys and, if possible, opens a connection to HHSAW
+- [`calc_age()`](#calc_age): Calculate age based on two dates
+- [`convert_to_date()`](#convert_to_date): Convert various formats to Date objects
+- [`create_dictionary()`](#create_dictionary): Generate a comprehensive data dictionary for a data.table or data.frame
+- [`data_modeler()`](#data_modeler): Create uncorrelated data and code that recreates data for sharing publicly
+- [`format_time()`](#format_time-and-format_time_simple): Format numeric values into human-readable time chunks
+- [`format_time_simple()`](#format_time-and-format_time_simple): Format numeric values into a single time chunk
+- [`generate_yaml()`](#generate_yaml): Generate a YAML file for loading R data to SQL
+- [`multi_t_test()`](#multi_t_test): Perform t-tests for Multiple Comparisons with Aggregate Estimates
+- [`round2()`](#round2): Improved rounding function
+- [`string_clean()`](#string_clean): Clean string and factor columns
+- [`std_error()`](#std_error): Calculate standard error of the mean
+- [`substrRight()`](#substrright): Extract substring from the right
+- [`tsql_validate_field_types()`](#tsql_validate_field_types): Validate R data against field types for SQL Server
+- [`tsql_chunk_loader()`](#tsql_chunk_loader): Load large datasets to SQL Server in chunks
+- [`validate_hhsaw_key()`](#validate_hhsaw_key): Validates HHSAW keys and, if possible, opens a connection to HHSAW
 
 Let's explore each of these functions with examples to demonstrate their usage and benefits.
-
 
 # Setting up the environment
 
@@ -227,15 +226,15 @@ pretty_kable(head(large_dict, 8))
 
 `data_modeler()` receives a data.table object and returns a data.table of similar structure and content, but with uncorrelated data across columns. For example, a column of dates will become a column of dates of a similar range, and distribution, but randomly distributed across observations. Common use cases include:
 
--   demonstrating a statistic or visualization without exposing the audience to "real" data or results
--   sharing code that generates a data set for minimally viable examples used in requesting help from, or teaching, others
--   creating data sets programmatically for (unit) testing or training
+- demonstrating a statistic or visualization without exposing the audience to "real" data or results
+- sharing code that generates a data set for minimally viable examples used in requesting help from, or teaching, others
+- creating data sets programmatically for (unit) testing or training
 
 There are two kinds of output that `data_modeler()` returns, either the data table itself, or a list object of strings that can be evaluated to create the data table. In addition, `data_modeler()` can output-to-terminal a human readable version of the generation code that the user can copy and paste into their own scripts for sharing publicly.
 
 `data_modeler()` makes some guesses as to if a column's content should be randomized (such as person names or blood pressures) or kept but randomly distributed (such as levels of response to a question or city names). This is intended to generate random data or to retain original categories where appropriate. It bases these guesses on the data type (integer or string), and complexity (e.g. 75% being unique data), but not the meaning of the data (i.e. it doesn't know that a number is a "zip code" and doesn't know that a string is a "human name"). Variables that are identified as non-categorical will, in most cases, be replaced with a uniform distribution of noisy, but similarly shaped, data (e.g. floating point numbers of the same range and precision, but in a random uniform distribution, or a "lore ipsum" string of similar lengths). Variables identified as categorical will, in most cases, be replaced with identical categories in a similar distribution to the original, but randomly assigned across observations (a data set of 95% males and 5% females would still generate a data set of roughly 95% males and 5% females).
 
-Two parameters are available to adjust the assumptions data_modeler uses to identify categorical values. These are "categorical_threshold" and "proportional_threshold". 
+Two parameters are available to adjust the assumptions data_modeler uses to identify categorical values. These are "categorical_threshold" and "proportional_threshold".
 
 - "categorical_threshold": defines how many unique categories can exist in the variable before data_modeler assumes the variable isn't categorical. Above this number, and the value will not be considered categorical. This currently defaults to 61.
 - "proportional_threshold": defines the proportion of values that can be unique before data_modeler() assumes the variable isn't categorical. This currently defaults to 0.75.
@@ -248,7 +247,7 @@ Two parameters are available to adjust the assumptions data_modeler uses to iden
 
 ### walkthrough
 
-For the examples below, we create a "real" data set and show how to use `data_modeler()` and how the synthetic and "real" data differ. 
+For the examples below, we create a "real" data set and show how to use `data_modeler()` and how the synthetic and "real" data differ.
 
 Our demo "real" data has one indicator variable that represents an outcome that is never in the White population, sometimes in the Asian population, and always in other Races. In an uncorrelated (and so non-informative) synthetic data set, we would expect this indicator to no longer be biased by race.
 
@@ -499,10 +498,10 @@ pretty_kable(head(birthweight_comparison))
 
 1.  **Flexible degrees of freedom calculation**: The function offers four methods for calculating degrees of freedom:
 
-    -   "**estimated**" (default): Uses the Welch–Satterthwaite equation
-    -   "**conservative**": Uses the minimum possible degrees of freedom (df = 2); lower Type I Error (false +) and higher Type II Error (false -)
-    -   "**moderate**": Uses the number of groups minus 1 (df = k - 1)
-    -   "**liberal**": Assumes infinite degrees of freedom (df = Inf); higher Type 1 Error (false +) and lower Type II Error (false -)
+    - "**estimated**" (default): Uses the Welch–Satterthwaite equation
+    - "**conservative**": Uses the minimum possible degrees of freedom (df = 2); lower Type I Error (false +) and higher Type II Error (false -)
+    - "**moderate**": Uses the number of groups minus 1 (df = k - 1)
+    - "**liberal**": Assumes infinite degrees of freedom (df = Inf); higher Type 1 Error (false +) and lower Type II Error (false -)
 
 2.  **Sample size estimation**: If sample sizes are not provided, the function can estimate them based on the distribution of mean values.
 
@@ -687,12 +686,12 @@ validation_result <- tsql_validate_field_types(dt, field_types)
 
 Benefits include:
 
--   Loads large datasets in chunks, preventing memory and batch size issues
--   Reduces risk of network timeouts during data transfer
--   Attempts multiple uploads per chunk for error resilience
--   Provides progress tracking
--   Allows SQL data type specification and validation
--   Verifies complete data upload
+- Loads large datasets in chunks, preventing memory and batch size issues
+- Reduces risk of network timeouts during data transfer
+- Attempts multiple uploads per chunk for error resilience
+- Provides progress tracking
+- Allows SQL data type specification and validation
+- Verifies complete data upload
 
 ```{r}
 #| echo: true

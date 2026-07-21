@@ -55,7 +55,7 @@ For this wiki, we will use a prepared synthetic dataset (`rads.data::synthetic_d
 #| message: false
 deaths <- rads.data::synthetic_death
 names(deaths)
-summary(deaths$chi_age)
+summary(deaths$age)
 summary(deaths$date_of_death)
 table(deaths$chi_geo_kc, useNA = 'always')
 table(deaths$temperament)
@@ -83,7 +83,8 @@ The function can also be used within a data.table. Notice that this time it give
 ```{r}
 #| echo: TRUE
 #| results: hide
-mydt <- data.table(icd_codes = c('G309', 'I251', 'I250', 'C349', 'U071', '3X44'))
+mydt <- data.table(icd_codes = c('G309', 'I251', 'I250', 
+                                 'C349', 'U071', '3X44'))
 mydt[, cleaned_icd_codes := death_icd10_clean(icd_codes)]
 
 ```
@@ -146,13 +147,14 @@ Please refer to the help file for more details.
 
 ### example #1: Count 2020 deaths from COVID-19 or viral hepatitis
 
-
 Count deaths due to COVID-19 or viral hepatitis
 
 ```{r}
 #| warning: false
 #| message: false
-deaths.20 <- deaths[between(date_of_death, as.Date('2020-01-01'), as.Date('2020-12-31'))]
+deaths.20 <- deaths[between(date_of_death, 
+                            as.Date('2020-01-01'), 
+                            as.Date('2020-12-31'))]
 
 dt1 <- death_113_count(ph.data = deaths.20, 
                        cause = 'viral hep|covid') 
@@ -188,7 +190,10 @@ First, let's subset to the 2019 & 2020 data ...
 ```{r}
 #| warning: false
 #| message: false
-deaths.19_20 <- deaths[between(date_of_death, as.Date('2019-01-01'), as.Date('2020-12-31'))]
+deaths.19_20 <- deaths[between(date_of_death, 
+                               as.Date('2019-01-01'), 
+                               as.Date('2020-12-31'))]
+
 deaths.19_20[, year := year(date_of_death)]
 ```
 
@@ -231,7 +236,7 @@ First, identify deaths due to COVID-19. Remember COVID-19 is not one of the offi
 dt3 <- death_113_count(ph.data = deaths.20, 
                        causeids = 1,
                        kingco = FALSE,
-                       death_age_col = 'chi_age',
+                       death_age_col = 'age',
                        ypll_age = 65)
 dt3 <- dt3[cause.of.death == 'COVID-19 (U07.1)'] # limit output to COVID-19
 ```
@@ -320,7 +325,10 @@ Run `death_injury_matrix_count`
 ```{r}
 #| message: false
 #| warning: false
-deaths.19_23 <- deaths[between(date_of_death, as.Date('2019-01-01'), as.Date('2023-12-31'))]
+deaths.19_23 <- deaths[between(date_of_death, 
+                               as.Date('2019-01-01'), 
+                               as.Date('2023-12-31'))]
+
 deaths.19_23[, year := year(date_of_death)]
 
 dt5 <- death_injury_matrix_count(ph.data = deaths.19_23, 
@@ -346,7 +354,7 @@ dt6 <- death_injury_matrix_count(ph.data = deaths.19_23,
                                  intent = "homicide", 
                                  mechanism = "firearm", 
                                  kingco = FALSE, 
-                                 death_age_col = 'chi_age',
+                                 death_age_col = 'age',
                                  ypll_age = 65)
 ```
 
@@ -451,11 +459,14 @@ Run `death_other_count`
 ```{r}
 #| message: false
 #| warning: false
-deaths.21 <- deaths[between(date_of_death, as.Date('2021-01-01'), as.Date('2021-12-31'))]
+deaths.21 <- deaths[between(date_of_death, 
+                            as.Date('2021-01-01'), 
+                            as.Date('2021-12-31'))]
 
 dt9 <- death_other_count(ph.data = deaths.21, 
                          cause = "cancer|heart", 
                          kingco = FALSE, 
+                         death_age_col = 'age',
                          ypll_age = 65)
 ```
 
@@ -513,10 +524,9 @@ The death data is now ready for `life_table`, but we still need to merge on the 
 ```{r}
 #| message: false
 #| warning: false
-pop <- apde.data::population(kingco = T, 
-                      years = 2019:2023, 
-                      group_by = c('years', 'ages'))
-pop <- pop[, .(year, age, pop)]
+pop <- rads.data::synthetic_population
+pop <- pop[year %in% 2019:2023]
+pop <- pop[, .(pop = sum(pop)), .(year, age)]
 ```
 
 ```{r}
@@ -530,7 +540,8 @@ Now we need to aggregate the population data to use the same age intervals as th
 ```{r}
 #| message: false
 #| warning: false
-my.cuts <- c(0, 1, 5, 10, 15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85)
+my.cuts <- c(0, 1, 5, 10, 15, 18, 20, 25, 30, 35, 40, 
+             45, 50, 55, 60, 65, 70, 75, 80, 85)
 pop[, ages := cut(age, my.cuts, right = F)] # create age intervals
 pop[, ages := gsub("\\[|\\]|\\)", "", ages)] # tidy
 pop[, ages := gsub("\\,", "-", ages)] #tidy
@@ -575,13 +586,16 @@ Display the first row of the life table for each year, which is for children age
 #| message: false
 #| warning: false
 #| results: 'hide'
-dt10.lifetable[ages == '0-1',]
+dt10.lifetable <- dt10.lifetable[ages == '0-1',]
+dt10.lifetable <- dt10.lifetable[, .(year, ages, ex, ex_lower, ex_upper, ex_se)]
 ```
 
 ```{r}
 #| echo: false
-kable(dt10.lifetable[ages == '0-1',], format = "markdown")
+kable(dt10.lifetable, format = "markdown")
 ```
+
+***Note!** The life expectancy values in the table above are irrationally high because we used synthetic data, which do not accurately reflect the age at death in the original population.* 
 
 # Conclusion
 
