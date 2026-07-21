@@ -19,7 +19,7 @@ pretty_kable <- function(dt) {
 
 # Introduction
 
-Many PHSKC metrics are simple counts or means/proportions/fractions. The `rads::calc()` function was created to calculate these metrics from survey and line-level data. However, there are certain metrics and datasets (e.g., death & CHARS) where **true rates --** **with a population denominator** -- are of interest. Most of the time these rates need to be [age-adjusted](https://github.com/PHSKC-APDE/rads/wiki/age_standardize) and most of the time DOH and APDE adjust to the US 2000 Standard Population with 11 age groups (see `rads.data::population_reference_pop_11_age_groups`). The [rads package](https://github.com/PHSKC-APDE/rads/) has a suite of tools that were developed to facilitate these types of analyses. This vignette explains how to use these tools in **four steps**.
+Many public health metrics are simple counts or means/proportions/fractions. The `rads::calc()` function was created to calculate these metrics from survey and line-level data. However, there are certain metrics and datasets (e.g., death & CHARS) where **true rates --** ***with a population denominator*** -- are of interest. Most of the time these rates need to be [age-adjusted](https://github.com/PHSKC-APDE/rads/wiki/age_standardize) and most of the time we adjust to the US 2000 Standard Population with 11 age groups (see `rads.data::population_reference_pop_11_age_groups`). The [rads package](https://github.com/PHSKC-APDE/rads/) has a suite of tools that were developed to facilitate these types of analyses. This vignette explains how to use these tools in **four steps**.
 
 # The four steps: an overview
 
@@ -66,60 +66,60 @@ Many PHSKC metrics are simple counts or means/proportions/fractions. The `rads::
 
 # The four steps: example 1
 
-As a simple example, let's assess the King County death rate from falls in 2016 through 2020, by intent.
+As a simple example, let's assess the King County death rate from falls in 2019-2023, by intent.
 
 ### STEP 1: Create a summary **table of event counts**
 
-We will pull down the relevant death data using `rads::get_data_death` and use `rads::death_injury_matrix_count` to process the ICD-10 death codes into human readable mechanisms and intents.
+We will load sample death data using `rads.data::synthetic_death` and use `rads::death_injury_matrix_count` to process the ICD-10 death codes into human readable mechanisms and intents.
 
-Let's use `rads` to get our death data and check if it seems reasonable:
+Let's grab the data from [`rads.data`](https://github.com/PHSKC-APDE/rads.data):
 
 ```{r}
-deaths <- get_data_death(cols = c('chi_age', 'chi_year', 'nonseattle', 
-                                  'underlying_cod_code'), 
-                               year = c(2016:2020), 
-                               kingco = T)
-names(deaths) 
-nrow(deaths) # should be ~65,000 based on apriori knowledge
+deaths <- rads.data::synthetic_death
+
+deaths <- deaths[chi_geo_kc == 'King County' & year %in% 2019:2023]
+
+deaths <- deaths[, .(year, age, seattle, underlying_cod_code)]
 ```
 
-We see that the column names and the number of rows are what we expected. Now, let's identify the deaths from falls using the `rads::death_injury_matrix_count` function. To learn about this function, type `?death_injury_matrix_count` in your console or walk through the [death_functions wiki](https://github.com/PHSKC-APDE/rads/wiki). For now, just trust that this is the correct syntax:
+Now, let's identify the deaths from falls using the `rads::death_injury_matrix_count` function. To learn about this function, type `?death_injury_matrix_count` in your console or walk through the [death_functions wiki](https://github.com/PHSKC-APDE/rads/wiki). For now, just trust that this is the correct syntax:
 
 ```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
 deaths <- death_injury_matrix_count(ph.data = deaths,
-                               intent = "*", # all five intents
-                               mechanism = "fall",
-                               icdcol = 'underlying_cod_code',
-                               kingco = F, # False because already subset
-                               group_by = 'chi_age') 
-head(deaths[deaths >9]) # only display non-suppressed data
+                                    intent = "*", # all five intents
+                                    mechanism = "fall",
+                                    icdcol = 'underlying_cod_code',
+                                    kingco = F, # False because already subset
+                                    group_by = 'age') 
+head(deaths[deaths > 9])
 ```
 
 ```{r, echo=FALSE}
-pretty_kable(head(deaths[deaths >9]))
+pretty_kable(head(deaths[deaths > 9]))
 ```
 
-Glancing at the output from the `death_injury_matrix_count` function, we see the that we have **aggregated** `deaths` by `chi_age` and stratified by `intent`. This is all we really need. Let's tidy our data set and rename the two essential columns at the same time:
+Glancing at the output from the `death_injury_matrix_count` function, we see the that we have **aggregated** `deaths` by `age` and stratified by `intent`. This is all we really need. Let's tidy our data set and rename the `deaths` column:
 
 ```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
-deaths <- deaths[, .(intent, age = chi_age, count = deaths)]
-head(deaths[count >9]) # only display non-suppressed data
+deaths <- deaths[, .(mechanism, intent, age, count = deaths)]
+head(deaths[count > 9])
 ```
 
 ```{r, echo=FALSE}
-pretty_kable(head(deaths[count >9]))
+pretty_kable(head(deaths[count > 9]))
 ```
 
-The table above confirms shows that we created a summary table of event (fall deaths) counts by age and intent. Congratulations, you've completed step 1.
+Congratulations, you've completed step 1.
 
 ### STEP 2: Create a table of **population denominators**
 
 Let's load some populatoin data using `rads.data::synthetic_pop`
 
 ```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
-population <- apde.data::population(years = c(2016:2020), 
-                                   geo_type = 'kc', 
-                                   group_by = c('ages'))
+population <- rads.data::synthetic_population
+
+population <- population[year %in% 2019:2023 & geo == 'King County']
+  
 head(population)
 ```
 
@@ -127,10 +127,9 @@ head(population)
 pretty_kable(head(population))
 ```
 
-The essential columns of interest are `pop` and `age`, so let's drop the other columns.
-
+Note that the populations are for individual years, but we want the population for the entirety of 2019-2023. We also only need the `age` and `pop` columns for our analysis. So, let's aggregate the `pop` by `age`. 
 ```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
-population <- population[, .(age, pop)]
+population <- population[, .(pop = sum(pop)), .(age)]
 head(population)
 ```
 
@@ -190,38 +189,18 @@ head(est)
 pretty_kable(head(est))
 ```
 
-Here we see that the King County **crude** and **adjusted** fall death rates can differ substantially (e.g., Unintentional) or slightly (e.g., Undetermined). 
+Here we see that the King County **crude** and **adjusted** fall death rates relatively similar. We also see that the vast majority of fall related deaths are unintentional. 
 
 # The four steps: example 2
 
-In this example we will calculate the adjusted rate of deaths from any cause by King County Regions in 2019. Because Regions are not baked into the death data, we will have to crosswalk from HRAs to Regions.
+In this example we will calculate the adjusted rate of deaths from ***any cause*** by King County in 2019, stratified by race. 
 
 ### STEP 1: Create a summary **table of event counts**
 
 ```{r message=FALSE, warning=FALSE}
-deaths <- get_data_death(cols = c('chi_age', 
-                                  'chi_year',
-                                  'apde_geo_hra2010_short', 
-                                  'underlying_cod_code'), 
-                               year = c(2019), 
-                               kingco = T)
-```
-
-Now let's crosswalk from King County HRAs to Regions using `rads::get_walk()`.
-
-```{r message=FALSE, warning=FALSE, paged.print=FALSE}
-xwalk <- rads::get_xwalk(geo1 = 'region10', geo2 = 'hra10')
-
-deaths <- merge(deaths, xwalk, 
-                by.x = "apde_geo_hra2010_short", by.y = "hra10", 
-                all.x = T, all.y = F)
-
-deaths <- deaths[, .(age = chi_age, underlying_cod_code, Region = region10)]
-
-nrow(deaths[is.na(Region)]) # rows with missing Region information
-```
-
-```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
+deaths <- rads.data::synthetic_death
+deaths <- deaths[year == 2019 & chi_geo_kc == 'King County']
+deaths <- deaths[, .(year, age, race)]
 head(deaths)
 ```
 
@@ -229,17 +208,10 @@ head(deaths)
 pretty_kable(head(deaths))
 ```
 
-As you can see, there are few rows where the death data are missing a Region (due to a missing HRA). For simplicity sake, let's drop these rows.
-
-```{r message=FALSE, warning=FALSE, paged.print=FALSE}
-deaths <- deaths[!is.na(Region)]
-
-```
-
-Remember that step 1 is supposed to create a **summary** table. So, let's collapse/aggregate/sum the data to get the count of deaths by age and region:
+Remember that step 1 is supposed to create a **summary** table. So, let's collapse/aggregate/sum the data to get the count of deaths by age and race:
 
 ```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
-deaths <- deaths[, .(count = .N), .(age, Region)]
+deaths <- deaths[, .(count = .N), .(age, race)]
 head(deaths)
 ```
 
@@ -247,26 +219,28 @@ head(deaths)
 pretty_kable(head(deaths))
 ```
 
-Finally, let's take a peak at the number of deaths by region:
+Finally, let's take a peek at the number of deaths by race:
 
 ```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
-deaths[, sum(count), Region]
+deaths[, .(count = sum(count)), race]
 ```
 
 ```{r, echo=FALSE}
-pretty_kable(deaths[, sum(count), Region])
+pretty_kable(deaths[, .(count = sum(count)), race])
 ```
 
-This table of deaths by region shows that the number of deaths in South King County is five times higher than those in North King County (`r deaths[Region == 'South', .(total = sum(count))][['total']]` vs. `r deaths[Region == 'North', .(total = sum(count))][['total']]`). Does that mean the death *rates* in South King County are five times higher than those in North King County? Let's get the corresponding population data and find out.
+This table of deaths by race shows that the number of deaths among White residents (`r format(sum(deaths[race == 'White']$count), big.mark = ',')`) is more than 18 times higher than that among the next highest racial group (Asian = `r sum(deaths[race == 'Asian']$count)`). Does that mean the death *rates* among White residents are are also exceptionally high? Let's get the corresponding population data and find out.
 
 ### STEP 2: Create a table of **population denominators**
 
-We again use `rads.data::synthetic_pop`
-
 ```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
-population <- apde.data::population(years = c(2019), 
-                                   geo_type = 'region', 
-                                   group_by = c('ages', 'geo_id'))
+population <- rads.data::synthetic_population
+
+population <- population[year == 2019 & geo == 'King County']
+
+# aggregate to pop per race and age
+population <- population[, .(pop = sum(pop)), .(race, age)]
+
 head(population)
 ```
 
@@ -274,25 +248,14 @@ head(population)
 pretty_kable(head(population))
 ```
 
-The key columns of interest are `pop`, `geo_id` (which has our regions), and `age`. The other columns are all constants, so let's just keep what we need.
+Let's confirm that we have complete population data set (ages 0 to 100) for each race.
 
 ```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
-population <- population[, .(Region = geo_id, age, pop)]
-head(population)
+population[, .N, race]
 ```
 
 ```{r, echo=FALSE}
-pretty_kable(head(population))
-```
-
-Note that, unlike in the example above, we already have a complete population data set (ages 0 to 100) for each strata.
-
-```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
-population[, .N, Region]
-```
-
-```{r, echo=FALSE}
-pretty_kable(population[, .N, Region])
+pretty_kable(population[, .N, race])
 ```
 
 ### STEP 3: **Merge** the denominators onto the numerators
@@ -302,7 +265,7 @@ Just do it!
 ```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
 deaths <- merge(deaths, 
                 population, 
-                by = c('Region', 'age'), 
+                by = c('race', 'age'), 
                 all.x = F, 
                 all.y = T) 
 deaths[is.na(count), count := 0] # set rows with zero counts to zero
@@ -323,7 +286,7 @@ est <- age_standardize(ph.data = deaths,
                        my.pop = 'pop',
                        per = 100000,
                        conf.level = 0.95, 
-                       group_by = 'Region')
+                       group_by = 'race')
 head(est)
 ```
 
@@ -331,7 +294,7 @@ head(est)
 pretty_kable(head(est))
 ```
 
-Here we see that the the **crude rate is lower** in South King County (`r est[Region=="South"]$crude.rate`) compared to North King County (`r est[Region=="North"]$crude.rate`). This flips the relationship we saw with the counts (`r est[Region=="South"]$count` vs `r est[Region=="North"]$count`), but does not account for differences in the population structure in the two regions. In contrast, the **adjusted rate is higher** in South King County (`r est[Region=="South"]$adj.rate`) vs. North King County(`r est[Region=="North"]$adj.rate`) .
+Reviewing the age adjusted rates (`adj.rate`) in this *synthetic data analysis*, we see that the rate of death for White residents is middle of the road (`r format(round(est[race == 'White']$adj.rate), big.mark = ',')`). Their rate is much higher than those for Asian residents (`r format(round(est[race == 'Asian']$adj.rate), big.mark = ',')`) and lower than those for American Indian Alaska Native residents (`r format(round(est[race == 'AIAN']$adj.rate), big.mark = ',')`).
 
 ### (OPTIONAL) Calculating the standard error (SE) and relative standard error (RSE)
 
