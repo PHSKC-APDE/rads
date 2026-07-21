@@ -74,7 +74,7 @@
 #'
 #' test.results <- calc(test.data,
 #'                      what = c("kotelchuck", "fetal_pres"),
-#'                      where = year == 2016 &
+#'                      where = year == 2022 &
 #'                              sex %in% c('Male', 'Female'),
 #'                      by = c("year", "sex"),
 #'                      metrics = c("mean", "numerator", "denominator", "total"))

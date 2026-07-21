@@ -317,12 +317,12 @@ compute <- function(DT,
   if('vcov' %in% metrics){
     stopifnot( 'One of `mean` or `total` must be in the metrics for vcov to make sense' = any(c('mean', 'total') %in% metrics))
     if('mean' %in% metrics){
-      mean_vcov_fun = substitute(sur_var(x, na.rm = T, type = 'mean', as_list = TRUE,  sv = sv(DT), ids = `_id`, st = st(DT)), list(x=x))
+      mean_vcov_fun = substitute(dtsurvey::sur_var(x, na.rm = T, type = 'mean', as_list = TRUE,  sv = dtsurvey::sv(DT), ids = `_id`, st = dtsurvey::st(DT)), list(x=x))
     }else{
       mean_vcov_fun = NULL
     }
     if('total' %in% metrics){
-      total_vcov_fun = substitute(sur_var(x, na.rm = T, type = 'total', as_list = TRUE,  sv = sv(DT), ids = `_id`, st = st(DT)), list(x=x))
+      total_vcov_fun = substitute(dtsurvey::sur_var(x, na.rm = T, type = 'total', as_list = TRUE,  sv = dtsurvey::sv(DT), ids = `_id`, st = dtsurvey::st(DT)), list(x=x))
     }else{
       total_vcov_fun = NULL
     }

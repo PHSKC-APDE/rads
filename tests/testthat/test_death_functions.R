@@ -105,9 +105,9 @@ library('testthat')
   test_that("Structure of output table is as expected ...", {
     expect_equal(nrow(d113res.default), 6) # because zero malaria and anthropod-borne viral deaths
     expect_equal(sort(names(d113res.default)), c("cause.of.death", "causeid", "deaths"))
-    expect_equal(nrow(death_113_count(ph.data = deathDT, icdcol = "underlying_cod_code", cause = cod.of.interest, kingco = FALSE, ypll_age = 65, death_age_col = "chi_age")),
+    expect_equal(nrow(death_113_count(ph.data = deathDT, icdcol = "underlying_cod_code", cause = cod.of.interest, kingco = FALSE, ypll_age = 65, death_age_col = "age")),
                  8) # six causeids should be present, PLUS COVID, PLUS 'All causes'
-    expect_equal(sort(names(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = "underlying_cod_code", kingco = FALSE, ypll_age = 85, death_age_col = "chi_age")))),
+    expect_equal(sort(names(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = "underlying_cod_code", kingco = FALSE, ypll_age = 85, death_age_col = "age")))),
                  c("cause.of.death", "causeid", "deaths", "ypll_85"))
     expect_equal(names(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = 'underlying_cod_code', kingco = F, group_by = c('temperament')))[]),
                  c('cause.of.death', 'causeid', 'deaths', 'temperament'))
@@ -185,7 +185,7 @@ library('testthat')
 
     test_that("Death counts by cause are accurate ...", {
       expect_equal(nrow(d130res.default), nrow(d130res.manual))
-      expect_equal(length(intersect(d130res.default$cause.of.death, d130res.manual$cause.of.death)), 7) # confirm names of causes of death
+      expect_equal(length(intersect(d130res.default$cause.of.death, d130res.manual$cause.of.death)), 8) # confirm names of causes of death
       expect_equal(sum(d130res.default$deaths), sum(d130res.manual$manual.count)) # confirm count
 
       expect_equal(sum(death_130_count(ph.data = deathDT, icdcol = 'underlying_cod_code', kingco = F, group_by = c('temperament'))[cause.of.death %in% cod.of.interest]$deaths),
@@ -218,11 +218,11 @@ library('testthat')
     })
 
     test_that("Structure of output table is as expected ...", {
-      expect_equal(nrow(d130res.default), 7)
+      expect_equal(nrow(d130res.default), 8)
       expect_equal(sort(names(d130res.default)), c("cause.of.death", "causeid", "deaths"))
-      expect_equal(nrow(death_130_count(ph.data = deathDT, icdcol = "underlying_cod_code", cause = cod.of.interest, kingco = FALSE, ypll_age = 65, death_age_col = "chi_age")),
-                   9) # seven causeids should be present, PLUS COVID, PLUS 'All causes'
-      expect_equal(sort(names(suppressWarnings(death_130_count(ph.data = deathDT, icdcol = "underlying_cod_code", kingco = FALSE, ypll_age = 85, death_age_col = "chi_age")))),
+      expect_equal(nrow(death_130_count(ph.data = deathDT, icdcol = "underlying_cod_code", cause = cod.of.interest, kingco = FALSE, ypll_age = 65, death_age_col = "age")),
+                   10) # eight cod.of.interest should be present, PLUS COVID, PLUS 'All causes'
+      expect_equal(sort(names(suppressWarnings(death_130_count(ph.data = deathDT, icdcol = "underlying_cod_code", kingco = FALSE, ypll_age = 85, death_age_col = "age")))),
                    c("cause.of.death", "causeid", "deaths", "ypll_85"))
       expect_equal(names(suppressWarnings(death_130_count(ph.data = deathDT, icdcol = 'underlying_cod_code', kingco = F, group_by = c('temperament')))[]),
                    c('cause.of.death', 'causeid', 'deaths', 'temperament'))
@@ -275,7 +275,7 @@ library('testthat')
                                          kingco = TRUE,
                                          group_by = c('temperament'),
                                          ypll_age = 65,
-                                         death_age_col = 'chi_age')
+                                         death_age_col = 'age')
 
   # death_multicause_count tests ----
     test_that("Check for proper triggering of errors ...", {
@@ -414,14 +414,14 @@ library('testthat')
                                                      kingco = FALSE,
                                                      group_by = c('temperament'),
                                                      ypll_age = 65,
-                                                     death_age_col = 'chi_age'))[cause.of.death != 'All causes']
+                                                     death_age_col = 'age'))[cause.of.death != 'All causes']
 
     cod.of.interest.ref <- rads.data::icd_other_causes_of_death[, list(cause.of.death, underlying_cod_code = icd10)]
 
     other.manual <- deathDT[cod.of.interest.ref,
                             on = "underlying_cod_code",
                             allow.cartesian = TRUE
-    ][ , ypll_65 := fifelse(chi_age < 65, 65 - chi_age, 0)
+    ][ , ypll_65 := fifelse(age < 65, 65 - age, 0)
     ][ , .(deaths = .N, ypll_65 = sum(ypll_65)), by = .(temperament, cause.of.death) ][!is.na(temperament)]
 
 
@@ -435,7 +435,7 @@ library('testthat')
     test_that("Check for proper triggering of errors ...", {
       ph.data <- data.table(underlying_cod_code = c("A00", "A01", "A02"),
                             chi_geo_kc = c("King County", "King County", "King County"),
-                            chi_age = c(65, 70, 75))
+                            age = c(65, 70, 75))
       ph.data_clean <- copy(ph.data)[, underlying_cod_code := death_icd10_clean(underlying_cod_code)]
 
       # missing ph.data
@@ -501,7 +501,7 @@ library('testthat')
                           kingco = FALSE,
                           group_by = c('temperament'),
                           ypll_age = 65,
-                          death_age_col = 'chi_age')[]$cause.of.death)),
+                          death_age_col = 'age')[]$cause.of.death)),
         c('All causes', 'Heart disease')
         )
 
@@ -512,7 +512,7 @@ library('testthat')
                                         kingco = FALSE,
                                         group_by = c('temperament'),
                                         ypll_age = 65,
-                                        death_age_col = 'chi_age')[]$cause.of.death)),
+                                        death_age_col = 'age')[]$cause.of.death)),
           c('All causes', 'Drug-induced', 'Drug-overdose', 'Drug_Death', 'HeatStress_Death')
         )
     })
@@ -533,8 +533,8 @@ library('testthat')
 
     # manually
     cod.of.interest.ref <- rads.data::icd10_death_injury_matrix[, .(underlying_cod_code = icd10, mechanism, intent)]
-    injuries.manual <- merge(deathDT[, .(underlying_cod_code, chi_age)], cod.of.interest.ref, by = "underlying_cod_code", all = FALSE)
-    injuries.manual[, ypll_65 := fifelse(chi_age < 65, 65 - chi_age, 0)]
+    injuries.manual <- merge(deathDT[, .(underlying_cod_code, age)], cod.of.interest.ref, by = "underlying_cod_code", all = FALSE)
+    injuries.manual[, ypll_65 := fifelse(age < 65, 65 - age, 0)]
     injuries.manual <- injuries.manual[, .(deaths = .N, ypll_65 = sum(ypll_65)), by = c('mechanism', 'intent')]
     setcolorder(injuries.manual, names(injuries.rads))
     injuries.manual <- injuries.manual[!mechanism %in% c("All transport", "Fire/hot object or substance")] # These are summary categories
@@ -593,7 +593,7 @@ library('testthat')
                                                icdcol = "underlying_cod_code",
                                                kingco = FALSE,
                                                ypll_age = 65,
-                                               death_age_col = "chi_age"))[]$ypll_65),
+                                               death_age_col = "age"))[]$ypll_65),
                  sum(injuries.manual[mechanism == 'All injury']$ypll_65))
 
   })

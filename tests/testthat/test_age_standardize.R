@@ -1,5 +1,4 @@
 library('testthat')
-library(DBI)
 library(data.table)
 
 # adjust_direct() ----

@@ -180,7 +180,7 @@ death_113 <- function(){
 #'                        icdcol = "underlying_cod_code",
 #'                        kingco = FALSE,
 #'                        ypll_age = 65,
-#'                        death_age_col = "chi_age")
+#'                        death_age_col = "age")
 #' head(eg2)
 #'
 #' @import data.table rads.data
@@ -700,7 +700,7 @@ death_injury_matrix<- function(){
 #'                             icdcol = "underlying_cod_code",
 #'                             kingco = FALSE,
 #'                             ypll_age = 65,
-#'                             death_age_col = "chi_age")
+#'                             death_age_col = "age")
 #' eg4[]
 #'
 #' # example 5: all suicides, regardless of mechanism, stratified by age
@@ -710,7 +710,7 @@ death_injury_matrix<- function(){
 #'                             mechanism = "none",
 #'                             icdcol = "underlying_cod_code",
 #'                             kingco = FALSE,
-#'                             group_by = 'chi_age',
+#'                             group_by = 'age',
 #'                             ypll_age = NULL,
 #'                             death_age_col = NULL)
 #' eg5[]
@@ -1626,7 +1626,7 @@ death_other<- function(){
 #'                        icdcol = "underlying_cod_code",
 #'                        kingco = FALSE,
 #'                        ypll_age = 65,
-#'                        death_age_col = "chi_age")
+#'                        death_age_col = "age")
 #' head(eg2)
 #'
 #' @import data.table rads.data

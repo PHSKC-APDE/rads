@@ -155,7 +155,7 @@ eg4 <- death_injury_matrix_count(ph.data = deathDT,
                             icdcol = "underlying_cod_code",
                             kingco = FALSE,
                             ypll_age = 65,
-                            death_age_col = "chi_age")
+                            death_age_col = "age")
 eg4[]
 
 # example 5: all suicides, regardless of mechanism, stratified by age
@@ -165,7 +165,7 @@ eg5 <- death_injury_matrix_count(ph.data = deathDT,
                             mechanism = "none",
                             icdcol = "underlying_cod_code",
                             kingco = FALSE,
-                            group_by = 'chi_age',
+                            group_by = 'age',
                             ypll_age = NULL,
                             death_age_col = NULL)
 eg5[]

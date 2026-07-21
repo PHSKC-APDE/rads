@@ -104,7 +104,7 @@ eg2 <- death_other_count(ph.data = deathDT,
                        icdcol = "underlying_cod_code",
                        kingco = FALSE,
                        ypll_age = 65,
-                       death_age_col = "chi_age")
+                       death_age_col = "age")
 head(eg2)
 
 }
