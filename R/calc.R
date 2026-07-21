@@ -74,9 +74,9 @@
 #'
 #' test.results <- calc(test.data,
 #'                      what = c("kotelchuck", "fetal_pres"),
-#'                      where = chi_year == 2016 &
-#'                              chi_sex %in% c('Male', 'Female'),
-#'                      by = c("chi_year", "chi_sex"),
+#'                      where = year == 2016 &
+#'                              sex %in% c('Male', 'Female'),
+#'                      by = c("year", "sex"),
 #'                      metrics = c("mean", "numerator", "denominator", "total"))
 #'
 #' print(test.results)
