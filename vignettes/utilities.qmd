@@ -6,7 +6,7 @@ format:
     self-contained: true
   pdf: default
   html: default
-editor: visual
+editor: source
 ---
 
 # Introduction
@@ -21,15 +21,11 @@ The core utility functions we'll cover in this vignette are:
 - [`data_modeler()`](#data_modeler): Create uncorrelated data and code that recreates data for sharing publicly
 - [`format_time()`](#format_time-and-format_time_simple): Format numeric values into human-readable time chunks
 - [`format_time_simple()`](#format_time-and-format_time_simple): Format numeric values into a single time chunk
-- [`generate_yaml()`](#generate_yaml): Generate a YAML file for loading R data to SQL
 - [`multi_t_test()`](#multi_t_test): Perform t-tests for Multiple Comparisons with Aggregate Estimates
 - [`round2()`](#round2): Improved rounding function
 - [`string_clean()`](#string_clean): Clean string and factor columns
 - [`std_error()`](#std_error): Calculate standard error of the mean
 - [`substrRight()`](#substrright): Extract substring from the right
-- [`tsql_validate_field_types()`](#tsql_validate_field_types): Validate R data against field types for SQL Server
-- [`tsql_chunk_loader()`](#tsql_chunk_loader): Load large datasets to SQL Server in chunks
-- [`validate_hhsaw_key()`](#validate_hhsaw_key): Validates HHSAW keys and, if possible, opens a connection to HHSAW
 
 Let's explore each of these functions with examples to demonstrate their usage and benefits.
 
@@ -419,42 +415,6 @@ head(dt)
 pretty_kable(head(dt))
 ```
 
-## generate_yaml() {#generate_yaml}
-
-`generate_yaml()` generates a YAML file for SQL loading based on a data.frame or data.table.
-
-```{r, echo=TRUE, eval=FALSE, results='hide'}
-#| echo: true
-#| results: 'hide'
-data <- data.table(
-  id = 1:5,
-  name = c("Alicia", "Bianca", "Clarence", "Dwane", "Eve"),
-  age = c(25.1, 30.2, 35.3, 40.4, 45.5)
-)
-
-yaml_output <- generate_yaml(data, schema = "dbo", table = "example_table", datasource = 'WADOH_CHS')
-print(yaml_output)
-```
-
-```{r}
-#| echo: false
-data <- data.table(
-  id = 1:5,
-  name = c("Alicia", "Bianca", "Clarence", "Dwane", "Eve"),
-  age = c(25.1, 30.2, 35.3, 40.4, 45.5)
-)
-
-yaml_output <- quiet(generate_yaml(data, schema = "dbo", table = "example_table", datasource = 'WADOH_CHS'))
-print(yaml_output)
-```
-
-The output can be be used to specify the field_types for the `tsql_validate_field_types()` and `tsql_chunk_loader()` functions described below.
-
-```{r}
-#| echo: true
-field_types <- unlist(yaml_output$vars)
-print(field_types)
-```
 
 ## multi_t_test() {#multi_t_test}
 
@@ -631,102 +591,6 @@ print(substr_right)
 ```
 
 This function is useful when you need to extract the right hand portions of strings, e.g., the last 4 digits of a phone number.
-
-## tsql_validate_field_types() {#tsql_validate_field_types}
-
-`tsql_validate_field_types()` validates whether a named vector of TSQL data types is compatible with a data.table. This function is useful when you have a yaml file specifying the TSQL field types to be used when uploading your data to a server.
-
-### A successful validation
-
-```{r}
-#| echo: true
-#| results: 'hide'
-dt <- data.table(
-  id = 1:5,
-  name = c("Alicia", "Bianca", "Clarence", "Dwane", "Eve"),
-  age = c(25, 30, 35, 40, 45), 
-  time = Sys.time()
-)
-
-field_types <- c(id = "int", 
-                 name = "varchar(50)", 
-                 age = "int", 
-                 time = 'datetime')
-validation_result <- tsql_validate_field_types(dt, field_types)
-head(validation_result)
-```
-
-```{r}
-#| echo: false
-pretty_kable(head(validation_result))
-```
-
-### A failed validation
-
-```{r}
-#| echo: true
-#| error: true
-dt <- data.table(
-  id = 1:5,
-  name = c("Alicia", "Bianca", "Clarence", "Dwane", "Eve"),
-  age = as.character(c(25, 30, 35, 40, 45)), 
-  time = Sys.Date()
-)
-
-field_types <- c(id = "int", 
-                 name = "varchar(50)", 
-                 age = "int", # should generate an error
-                 time = 'datetime') # should generate an error
-validation_result <- tsql_validate_field_types(dt, field_types)
-```
-
-## tsql_chunk_loader() {#tsql_chunk_loader}
-
-`tsql_chunk_loader()` loads large datasets to Microsoft SQL Server in 'chunks'. It is suitable for datasets too large for single upload. For extreme sizes try using [bcp](https://learn.microsoft.com/en-us/sql/tools/bcp-utility?view=sql-server-ver16&tabs=windows).
-
-Benefits include:
-
-- Loads large datasets in chunks, preventing memory and batch size issues
-- Reduces risk of network timeouts during data transfer
-- Attempts multiple uploads per chunk for error resilience
-- Provides progress tracking
-- Allows SQL data type specification and validation
-- Verifies complete data upload
-
-```{r}
-#| echo: true
-
- mydt = data.table(col1 = 1:10000L,  # create integer
-                   col2 = 1:10000/3) # create float
- mydt[, col3 := as.Date(Sys.Date()) - col1] # create date
- mydt[, col4 := as.character(col3)] # create string
- 
- myfieldtypes <- c(col1 = 'int', col2 = 'float', 
-                   col3 = 'date', col4 = 'nvarchar(20)')
-
- tsql_chunk_loader(
-   ph.data = mydt,
-   db_conn = rads::validate_hhsaw_key(), # connect to Azure 16 hhs_analytics_workspace
-   chunk_size = 3333,
-   schema_name = Sys.getenv("USERNAME"),
-   table_name = 'JustTesting',
-   overwrite = TRUE,
-   append = FALSE,
-   field_types = myfieldtypes,
-   validate_field_types = TRUE, # uses tsql_validate_field_types()
-   validate_upload = TRUE
- )
-```
-
-## validate_hhsaw_key() {#validate_hhsaw_key}
-
-`validate_hhsaw_key()` validates HHSAW keys **and** opens a connection to HHSAW when possible.
-
-```{r}
-#| echo: true
- myConnection <- validate_hhsaw_key(hhsaw_key = 'hhsaw')
- print(myConnection)
-```
 
 # Conclusion
 
