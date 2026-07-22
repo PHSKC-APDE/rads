@@ -61,7 +61,7 @@ table(deaths$chi_geo_kc, useNA = 'always')
 table(deaths$temperament)
 ```
 
-Our synthetic death data has one columns for the underlying cause of death (`underlying_cod_code`) and 20 for the contributing causes of death (`record_axis_code_`*). It is top coded at age 100, spans from 2019-2023, and has death and birth dates. If your data set has equivalent columns, you should be able to use all of the death functions. In addition, the synthetic data has a King County, WA indicator as well as a categorical 'temperament' variable that we will use to demonstrate stratification below. 
+Our synthetic death data has one column for the underlying cause of death (`underlying_cod_code`) and 20 for the contributing causes of death (`record_axis_code_`*). It is top coded at age 100, spans from 2019-2023, and has death and birth dates. If your data set has equivalent columns, you should be able to use all of the death functions. In addition, the synthetic data has a King County, WA indicator as well as a categorical 'temperament' variable that we will use to demonstrate stratification below. 
 
 # death_icd10_clean()
 
@@ -228,7 +228,7 @@ kable(dt113_19_20, format = "markdown")
 
 ### example #3: Calculating years of potential life lost due to COVID-19 in 2020, assuming age of death at 65 as the standard
 
-First, identify deaths due to COVID-19. Remember COVID-19 is not one of the official 113 causes of death, so let's arbitrarily get causeid #1 (Salmonella infections), knowing that it will also give us COVID-19.
+First, identify deaths due to COVID-19. COVID-19 is not one of the official 113 causes of death. So let's arbitrarily get causeid #1 (Salmonella infections), knowing that COVID-19 is always returned in addition to your specified cause(s).
 
 ```{r}
 #| warning: false
@@ -366,7 +366,7 @@ kable(dt6, format = "markdown")
 
 # death_multicause_count()
 
-`death_multicause_count()` allows the user to get counts causes of death requiring **BOTH** *underlying* **AND** *contributing* causes. To view available analytic ready multicause death categories, simply type `death_multicause()`. If you want to add more causes of death to this list, [please submit a GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new?template=issue_form.yml). In the meantime the function will allow you to specify the underlying cause of death and contributing cause of death ICD-10 of interest.
+`death_multicause_count()` allows the user to get counts of causes of death requiring **BOTH** *underlying* **AND** *contributing* causes. To view available analytic ready multicause death categories, simply type `death_multicause()`. If you want to add more causes of death to this list, [please submit a GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new?template=issue_form.yml). In the meantime the function will allow you to specify the underlying cause of death and contributing cause of death ICD-10 of interest.
 
 ```{r}
 #| echo: TRUE

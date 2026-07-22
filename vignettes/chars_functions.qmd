@@ -110,7 +110,7 @@ Teaching about [regular expression, a.k.a. *regex*](https://stat.ethz.ch/R-manua
 
 # chars_icd_ccs_count()
 
-`chars_icd_ccs_count()` allows the user to get CHARS counts by ICD-CM code, ICD-cm description, or the 'superlevel', 'broad', 'midlevel', or 'detailed' categories. I provide examples of each of these below, in order of decreasing granularity / specificity using hypertensive heart disease as a case study. Here is the relevant row from `chars_icd_ccs()`:
+`chars_icd_ccs_count()` allows the user to get CHARS counts by ICD-CM code, ICD-CM description, or the 'superlevel', 'broad', 'midlevel', or 'detailed' categories. I provide examples of each of these below, in order of decreasing granularity / specificity using hypertensive heart disease as a case study. Here is the relevant row from `chars_icd_ccs()`:
 
 ```{r}
 #| echo: FALSE
@@ -119,14 +119,14 @@ kable(chars_icd_ccs()[grep('I110', icdcm_code)], format = "markdown")
 
 However, before we begin, let's review the possible arguments used by `chars_icd_ccs_count()`:
 
-- `ph.data`: the name of a person level data.table/data.frame of CHARS data with ICD10-cm codes
+- `ph.data`: the name of a person level data.table/data.frame of CHARS data with ICD-10-CM codes
 - `icdcm_version`: specifies the ICD-CM version that you want to reference. Acceptable options include: 9 & 10, with 10 being the default.
-- `icdcm`: the ICD-CM code of interest OR its description. It is case insensivitive and partial strings are allowed.
-- `superlevel`: 'superlevel' level descriptions that are of interest. Case insensivitive and partial strings are allowed.
-- `broad`: CCSR derived 'broad' level descriptions that are of interest. Case insensivitive and partial strings are allowed.
-- `midlevel`: 'midlevel level descriptions that are of interest. Case insensivitive and partial strings are allowed.
-- `detailed`: CCSR derived 'detailed' level descriptions that are of interest. Case insensivitive and partial strings are allowed.
-- `icdcol`: the name of the column in `ph.data` that contains the ICD10-cm codes. Default is `diag1`.
+- `icdcm`: the ICD-CM code of interest OR its description. It is case insensitive and partial strings are allowed.
+- `superlevel`: 'superlevel' level descriptions that are of interest. Case insensitive and partial strings are allowed.
+- `broad`: CCSR derived 'broad' level descriptions that are of interest. Case insensitive and partial strings are allowed.
+- `midlevel`: 'midlevel' level descriptions that are of interest. Case insensitive and partial strings are allowed.
+- `detailed`: CCSR derived 'detailed' level descriptions that are of interest. Case insensitive and partial strings are allowed.
+- `icdcol`: the name of the column in `ph.data` that contains the ICD-10-CM codes. Default is `diag1`.
 - `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
 - `kingco`: logical (T\|F) specifying whether to limit the data analysis to King County. Only works if ph.data still has the `chi_geo_kc` column.
 

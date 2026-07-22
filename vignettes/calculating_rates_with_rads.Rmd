@@ -23,7 +23,7 @@ Many public health metrics are simple counts or means/proportions/fractions. The
 
 # The four steps: an overview
 
-**STEP 1:** Create a **summary table of event counts** (deaths, hospitalizations, etc.) **by single year age groups and strata** of interest. For example, part of your your table might look like this:
+**STEP 1:** Create a **summary table of event counts** (deaths, hospitalizations, etc.) **by single year age groups and strata** of interest. For example, part of your table might look like this:
 
 | event_name | counts | age | year | region  |
 |:-----------|:-------|:----|:-----|:--------|
@@ -98,7 +98,7 @@ head(deaths[deaths > 9])
 pretty_kable(head(deaths[deaths > 9]))
 ```
 
-Glancing at the output from the `death_injury_matrix_count` function, we see the that we have **aggregated** `deaths` by `age` and stratified by `intent`. This is all we really need. Let's tidy our data set and rename the `deaths` column:
+Glancing at the output from the `death_injury_matrix_count` function, we see that we have **aggregated** `deaths` by `age` and stratified by `intent`. This is all we really need. Let's tidy our data set and rename the `deaths` column:
 
 ```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
 deaths <- deaths[, .(mechanism, intent, age, count = deaths)]
@@ -113,7 +113,7 @@ Congratulations, you've completed step 1.
 
 ### STEP 2: Create a table of **population denominators**
 
-Let's load some populatoin data using `rads.data::synthetic_pop`
+Let's load some population data using `rads.data::synthetic_pop`
 
 ```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
 population <- rads.data::synthetic_population
@@ -171,7 +171,7 @@ pretty_kable(head(deaths[count > 9]))
 
 ### STEP 4: Use [rads::age_standardize()](https://github.com/PHSKC-APDE/rads/wiki/age_standardize)
 
-The documentation tells us that `rads::age_standardize` needs a data set with either an `age` or `agecat` column. Since we have the former, we are good to go as long as we choose the correct reference population. Typing `list_ref_pop` will show you all the available reference populations, however we already know that that DOH uses the 2000 US standard population with 11 age groups, so we can plug that into the function.
+The documentation tells us that `rads::age_standardize` needs a data set with either an `age` or `agecat` column. Since we have the former, we are good to go as long as we choose the correct reference population. Typing `list_ref_pop` will show you all the available reference populations, however we already know that DOH uses the 2000 US standard population with 11 age groups, so we can plug that into the function.
 
 ```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
 est <- age_standardize(ph.data = deaths,
@@ -189,7 +189,7 @@ head(est)
 pretty_kable(head(est))
 ```
 
-Here we see that the King County **crude** and **adjusted** fall death rates relatively similar. We also see that the vast majority of fall related deaths are unintentional. 
+Here we see that the King County **crude** and **adjusted** fall death rates are relatively similar. We also see that the vast majority of fall related deaths are unintentional. 
 
 # The four steps: example 2
 
@@ -229,7 +229,7 @@ deaths[, .(count = sum(count)), race]
 pretty_kable(deaths[, .(count = sum(count)), race])
 ```
 
-This table of deaths by race shows that the number of deaths among White residents (`r format(sum(deaths[race == 'White']$count), big.mark = ',')`) is more than 18 times higher than that among the next highest racial group (Asian = `r sum(deaths[race == 'Asian']$count)`). Does that mean the death *rates* among White residents are are also exceptionally high? Let's get the corresponding population data and find out.
+This table of deaths by race shows that the number of deaths among White residents (`r format(sum(deaths[race == 'White']$count), big.mark = ',')`) is more than 18 times higher than that among the next highest racial group (Asian = `r sum(deaths[race == 'Asian']$count)`). Does that mean the death *rates* among White residents are also exceptionally high? Let's get the corresponding population data and find out.
 
 ### STEP 2: Create a table of **population denominators**
 

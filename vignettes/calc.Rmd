@@ -30,13 +30,13 @@ Arguments are the values that we send to a function when it is called. The stand
 
 3)  `where` \<- think of this as a SQL `WHERE` clause, i.e., a filtering or subsetting of data. E.g., `where = ages %in% c(0:17) & gender == "Female"`
 
-4)  `by` \<- a character vector of the variables that you want to computer the `what` by, i.e., the cross-tab variable(s). E.g., `by = c("gender")` would stratify results by gender
+4)  `by` \<- a character vector of the variables that you want to compute the `what` by, i.e., the cross-tab variable(s). E.g., `by = c("gender")` would stratify results by gender
 
 5)  `metrics` \<- a character vector of the metrics that you want returned. E.g., `metrics = c("mean", "rse")`. You can see a complete list of available metrics by typing `metrics()` and get detailed descriptions of what each metric means by typing `?metrics()`.
 
 6)  `per` \<- an integer, which is the denominator when `rate` is selected as a metric. Metrics will be multiplied by this value. E.g., `per = 1000`. **NOTE** this is just a scalar. At present this does not calculate a true rate (i.e., the relevant population denominator is not used).
 
-7)  `win` \<- an integer, which is the number of consecutive units of time (e.g., years, months, etc.) over which the metrics will be calculated, i.e., the 'window' for a rolling average, sum, etc. E.g. `win = 5` will perform calculations over every 5 time unit window. Used in conjuction with the `time_var` argument.
+7)  `win` \<- an integer, which is the number of consecutive units of time (e.g., years, months, etc.) over which the metrics will be calculated, i.e., the 'window' for a rolling average, sum, etc. E.g. `win = 5` will perform calculations over every 5 time unit window. Used in conjunction with the `time_var` argument.
 
 8)  `time_var` \<- a character, which is the name of the time variable in the dataset. Used in combination with the `win` argument to generate time windowed calculations.
 
@@ -253,7 +253,7 @@ class(mysurvey)
 ```
 
 
-**Let's get on the same page re: the meaning of the columns output by `calc()` when analysing survey data**
+**Let's get on the same page re: the meaning of the columns output by `calc()` when analyzing survey data**
 
 First, create a simple tabulation of the population of Seattle after sub-setting PUMS to King County.
 
@@ -273,7 +273,7 @@ pretty_kable(my.est)
 -   `mean`: The proportion of the total population (i.e., King County) that lives in Seattle
 -   `total`: The survey weighted population of Seattle and seattle residents in King County
 -   `numerator`: The number of rows with people living in Seattle, compare to `nrow(mysurvey[seattle == 'Seattle'])`
--   `denominator`: The number of rows in the the dataset where the 'what' variable can be assessed because it is not missing, compare to `nrow(mysurvey[!is.na(seattle)])`
+-   `denominator`: The number of rows in the dataset where the 'what' variable can be assessed because it is not missing, compare to `nrow(mysurvey[!is.na(seattle)])`
 -   `obs`: The number of rows in the dataset after filtering by the 'where' argument.
 
 To highlight the difference between `denominator` and `obs`, in this next example we introduce 100 missing values to our 'what' variable (seattle), thereby lowering the denominator by 100 but leaving the obs the same as above.
@@ -364,7 +364,7 @@ head(mydt)
 pretty_kable(head(mydt))
 ```
 
-We see that we created a dataset of 2000 rows with grades in four schools between with 2016 and 2021.
+We see that we created a dataset of 2000 rows with grades in four schools between 2016 and 2021.
 
 **Calculate the proportion of A's and B's in the Alpha and Beta schools**
 
@@ -450,7 +450,7 @@ mi_data = mitools::imputationList(mi_data)
 class(mi_data)
 ```
 
-Now that `midat` is the right type/class of object, you can pass it to the `calc` function as you would any other dataset. The slight exception is that the metrics argument must be explicitly specified. For fun, a version of the results from one imputation is also computed.
+Now that `mi_data` is the right type/class of object, you can pass it to the `calc` function as you would any other dataset. The slight exception is that the metrics argument must be explicitly specified. For fun, a version of the results from one imputation is also computed.
 
 **Results using MI combining methods**
 ```{r, warning = FALSE, message = FALSE, echo=TRUE, results='hide'}

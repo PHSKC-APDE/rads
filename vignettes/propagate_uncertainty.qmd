@@ -54,7 +54,7 @@ library(rads)
 library(data.table)
 library(ggplot2)
 
-# Set the parameteres
+# Set the parameters
 smallville_mean <- 34.3  # Mean age in Smallville
 smallville_se <- 0.2
 megalopolis_mean <- 37.2 # Mean age in Megalopolis
@@ -112,7 +112,7 @@ This approach is valid regardless of the underlying distributions and automatica
 
 ## Visualizing the Monte Carlo Approach
 
-Let's see how Monte Carlo simulation works by comparing it with the familiar case of estimates from normal distributions. These are condition under which traditional parametric methods work.
+Let's see how Monte Carlo simulation works by comparing it with the familiar case of estimates from normal distributions. These are the conditions under which traditional parametric methods work.
 
 Define the age distributions
 
@@ -229,7 +229,7 @@ The `propagate_uncertainty()` function automates this Monte Carlo approach, allo
 
 - `contrast_fn`: Function defining your operation. Default: `function(x, y) x - y`
 - `dist`: Distribution assumption - `"normal"` or `"lognormal"`. Default: `"normal"`
-- `draws`: Number of Monte Carlo draws. Default: `10,000`
+- `draws`: Number of Monte Carlo draws. Default: `10000`
 
 **Infrequently Modified Parameters:**
 

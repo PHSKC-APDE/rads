@@ -57,7 +57,7 @@ Arguments are the values that we send to a function when we call it. The standar
 
 2)  `ref.popname`: a character vector whose only valid options are "none" (used when ph.data has a 'stdpop' column) or one of the reference standards contained in `list_ref_pop()`
 
-3)  `collapse`: a logical vector (T\|F), determines whether or not to to collapse the 'age' column in ph.data to match those in ref.popname. If your data is already collapsed / aggregated into the same age bins as your reference population, and if that variable is named "agecat", then you can set collapse to F. The default is T
+3)  `collapse`: a logical vector (T\|F), determines whether or not to collapse the 'age' column in ph.data to match those in ref.popname. If your data is already collapsed / aggregated into the same age bins as your reference population, and if that variable is named "agecat", then you can set collapse to F. The default is T
 
 4)  `my.count`: a character vector, identifies the column name for the **aggregated** event count data in ph.data. The default is "count"
 
@@ -297,7 +297,7 @@ pretty_kable(head(temp3))
 
 **Calculate the rates when `ref.pop = "none"`**
 
-The data set already contains a `stdpop` column, so we can set `ref.popname = "none"`. Also note that we need to specify `collapse = F` because the function expects data to be pre-aggregated when I have the column `stdpop`.
+The data set already contains a `stdpop` column, so we can set `ref.popname = "none"`. Also note that we need to specify `collapse = F` because the function expects data to be pre-aggregated when you have the column `stdpop`.
 
 ```{r, warning = FALSE, message = FALSE, echo=TRUE, results='hide'}
 ex3.1 <- age_standardize(ph.data = temp3,
@@ -322,7 +322,7 @@ Notice that the crude rates are identical to those in ex2.2, but the adjusted ra
 
 ## Example #4: When else should I specify `collapse = F`?
 
-In example #3 above, we specified `collapse = F` because `age_standardardize()` expects the data to be pre-aggregated when you provide a `stdpop` column. The other time when you will want to set `collapse = F` is if you have data that has already been collapsed down to a standard reference population's age bins. **This is uncommon.** It isn't worth your time and energy to manually collapse the data -- so don't do it! This functionality is here just in case you receive data that has already been structured this way.
+In example #3 above, we specified `collapse = F` because `age_standardize()` expects the data to be pre-aggregated when you provide a `stdpop` column. The other time when you will want to set `collapse = F` is if you have data that has already been collapsed down to a standard reference population's age bins. **This is uncommon.** It isn't worth your time and energy to manually collapse the data -- so don't do it! This functionality is here just in case you receive data that has already been structured this way.
 
 **Let's reuse the dataset with age, disease, pop, and gender from example #2**
 
@@ -380,7 +380,7 @@ Note the results in ex4.1 are exactly the same as those in ex2.2. This makes sen
 
 ## Example #5: Real world analysis
 
-You're staffing data requests today and receive the following message: "*Hi! For a class, I'd like to get the 2019 15 to 18 birth rate for King County and WA State as a whole. Since the age distribution in the county may differ from the rest of the state, it would be appreciated if you could provide crude and age-standardized rates. If you could standardize to "World (WHO 2000-2025) Std Million (single ages to 84)", that would be great! Thank you, S. Capstone*"
+You're staffing data requests today and receive the following message: "*Hi! For a class, I'd like to get the 2019 15 to 18 birth rate for King County and WA State as a whole. Since the age distribution in the county may differ from the rest of the state, it would be appreciated if you could provide crude and age-standardized rates. If you could standardize to 'World (WHO 2000-2025) Std Million (single ages to 84)', that would be great! Thank you, S. Capstone*"
 
 You quickly pull up [CHAT](https://www.doh.wa.gov/ForPublicHealthandHealthcareProviders/PublicHealthSystemResourcesandServices/CommunityHealthAssessmentandImprovement/CHAT) only to find that this specific indicator doesn't exist. You remember that [CHI](https://kingcounty.gov/chi/) has an adolescent birth rate indicator, but are downcast when you find that it applies to those 15 to 19. In desperation, you resign yourself to using `rads`.
 
