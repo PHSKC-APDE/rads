@@ -1196,7 +1196,7 @@ multi_t_test <- function(means,
     )
 
     t.results = rbind(r, data.table::data.table(
-      comparison = paste0("Group ", reference_index, " - Referent"),
+      comparison = paste0("Group ", reference_index, " (Reference)"),
       diff_means = 0,
       ci_lower = NA_real_,
       ci_upper = NA_real_,
