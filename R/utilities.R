@@ -282,7 +282,7 @@ convert_to_date <- function(x, origin = "1899-12-30") {
 
   # all failed?
   if (all(is.na(date_out))) {
-    warning('\n⚠️ `', x_name, '` cannot be converted to a date.')
+    warning('\u26A0\ufe0f `', x_name, '` cannot be converted to a date.')
   }
 
   return(date_out)
@@ -651,7 +651,7 @@ list_ref_pop <- function(){
 #' * Input vectors containing any `NA` values are rejected, because
 #'   raw vectors cannot represent missing data (`as.raw(NA)` ==
 #'   `as.raw(0)`).
-#' * All values must be whole numbers in the range 0–255.
+#' * All values must be whole numbers in the range 0-255.
 #'   Values outside this range or non-integer numerics trigger a
 #'   warning and are not converted.
 #'
@@ -971,7 +971,7 @@ metrics = function(){
 #' @param alpha Numeric value for significance level (default is \strong{`0.05`}).
 #' @param df_method String specifying the method for calculating degrees of
 #' freedom. Options are:
-#'    - \strong{`'estimated'`} (Welch–Satterthwaite equation): This method, which
+#'    - \strong{`'estimated'`} (Welch-Satterthwaite equation): This method, which
 #'    corresponds to Welch's t-test, calculates an approximation of the degrees
 #'    of freedom based on the sample variances and sizes. It's particularly
 #'    useful when groups have unequal variances and/or unequal sample sizes,
@@ -1150,7 +1150,7 @@ multi_t_test <- function(means,
 
     df <- switch(df_method,
                  "estimated" = (ses^2 + se_ref^2)^2 /
-                   ((ses^4 / (n - 1)) + (se_ref^4 / (n_ref - 1))), # Welch–Satterthwaite equation
+                   ((ses^4 / (n - 1)) + (se_ref^4 / (n_ref - 1))), # Welch-Satterthwaite equation
                  "conservative" = 2,
                  "moderate" = k - 1,
                  "liberal" = Inf

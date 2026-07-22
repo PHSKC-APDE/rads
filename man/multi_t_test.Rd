@@ -29,7 +29,7 @@ multi_t_test(
 \item{df_method}{String specifying the method for calculating degrees of
 freedom. Options are:
 \itemize{
-\item \strong{\code{'estimated'}} (Welch–Satterthwaite equation): This method, which
+\item \strong{\code{'estimated'}} (Welch-Satterthwaite equation): This method, which
 corresponds to Welch's t-test, calculates an approximation of the degrees
 of freedom based on the sample variances and sizes. It's particularly
 useful when groups have unequal variances and/or unequal sample sizes,
