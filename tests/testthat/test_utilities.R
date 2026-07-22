@@ -41,9 +41,10 @@ test_that("numeric values are converted correctly using default and custom origi
 test_that("non-date strings return NA and a warning", {
   expect_warning(out <- convert_to_date(c("dogs", "cats")),
                  "cannot be converted to a date")
-  expect_equal(out, c("dogs", "cats"))
+  expect_true(all(is.na(out)))
+  expect_s3_class(out, "Date")
   expect_true(is.na(suppressWarnings(convert_to_date(NA_character_))))
-  expect_type(suppressWarnings(convert_to_date(NA_character_)), "character")
+  expect_s3_class(expect_warning(convert_to_date(NA_character_)), "Date")
 })
 
 # Test that origin must be in %Y-%m-%d format
@@ -85,6 +86,30 @@ test_that("mixed column in data.table gives proper results", {
   expect_equal(unique(mydt$result), as.Date('2024-01-15'))
 })
 
+test_that("YYYYMMDD works when mixed with other formats", {
+  vec <- c("20240728", "2024-07-29", "July 30, 2024", "42000")
+  res <- convert_to_date(vec)
+  expect_equal(res[1], as.Date("2024-07-28"))
+  expect_equal(res[2], as.Date("2024-07-29"))
+  expect_equal(res[3], as.Date("2024-07-30"))
+  expect_equal(res[4], as.Date("2014-12-27"))  # Excel serial 42000
+})
+
+# Test 'YYYYMMDD'
+test_that("YYYYMMDD format is parsed correctly", {
+  expect_equal(convert_to_date("20240728"), as.Date("2024-07-28"))
+})
+
+# Test that random spaces are addressed properly
+test_that("leading/trailing whitespace does not break conversion", {
+  expect_equal(convert_to_date(" 20240102 "), as.Date("2024-01-02"))
+})
+
+# Test that gigantic numbers are addressed properly
+test_that("large numeric strings are NOT treated as dates", {
+  out <- expect_warning(convert_to_date("99999999"))
+  expect_true(is.na(out))
+})
 
 # format_time() ----
 test_that('format_time',{

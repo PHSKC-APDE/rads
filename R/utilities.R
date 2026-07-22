@@ -215,29 +215,27 @@ compare_estimate <- function (mydt,
 #'
 #' @export
 convert_to_date <- function(x, origin = "1899-12-30") {
-  # validation of 'origin'
+  # clean random spaces
+  if (is.character(x)) {
+    tmp <- data.table::data.table(val = x)
+    tmp <- string_clean(tmp)
+    x   <- tmp$val
+  }
+
+  # validate origin
   if (! grepl("^\\d{4}-\\d{1,2}-\\d{1,2}$", origin) ||
       is.na(as.Date(origin))) {
     stop("Origin date must be in 'YYYY-MM-DD' format, e.g., '1970-01-01'")
   }
 
-  # get name of 'x'
   x_name <- deparse(substitute(x))
-
-  # get copy of original data
   x_orig <- data.table::copy(x)
 
-  # if already a date, return it unchanged
-  if (inherits(x, 'Date')) {
-    return(x)
-  }
+  # early return for Date input
+  if (inherits(x, 'Date')) return(x)
 
-  # convert numerics first, then strings
-  if (is.numeric(x)) {
-    return(as.Date(x, origin = origin))
-  }
+  is_yyyymmdd <- grepl("^\\d{8}$", x) & grepl("^(19|20)\\d{2}", x)
 
-  # character input
   parse_orders <- c(
     "%d%b%Y", "%d-%b-%Y",
     "%d %B, %Y", "%d %B %Y",
@@ -245,7 +243,8 @@ convert_to_date <- function(x, origin = "1899-12-30") {
     "%m/%d/%Y", "%m-%d-%Y",
     "%B %d, %Y",
     "%Y-%m-%d %H:%M:%S", "%Y/%m/%d %H:%M:%S",
-    "%m/%d/%y", "%m-%d-%y"
+    "%m/%d/%y", "%m-%d-%y",
+    "%Y%m%d"
   )
 
   parse_dates <- function(vec) {
@@ -254,20 +253,36 @@ convert_to_date <- function(x, origin = "1899-12-30") {
     ))
   }
 
-  is_serial <- grepl("^\\d+$", x) & !is.na(suppressWarnings(as.numeric(x)))
-  date_out  <- rep(as.Date(NA), length(x)) # create empty vector that will be filled
+  is_serial <- grepl("^\\d+$", x) &
+    !is_yyyymmdd &
+    !is.na(suppressWarnings(as.numeric(x)))
+
+  date_out <- rep(as.Date(NA), length(x))
+
+  # apply YYYYMMDD conversion first
+  if (any(is_yyyymmdd)) {
+    date_out[is_yyyymmdd] <- as.Date(x[is_yyyymmdd], format = "%Y%m%d")
+  }
+
+  # apply Excel serial conversion
 
   if (any(is_serial)) {
-    date_out [is_serial] <- as.Date(suppressWarnings(as.numeric(x[is_serial])),
-                                    origin = origin)
-  }
-  if (any(!is_serial)) {
-    date_out [!is_serial] <- parse_dates(x[!is_serial])
+    max_excel <- 73051   # Jan 1, 2100
+    nums <- suppressWarnings(as.numeric(x[is_serial]))
+    nums[nums > max_excel] <- NA
+    date_out[is_serial] <- as.Date(nums, origin = origin)
   }
 
+
+  # remaining character dates
+  remaining <- !is_serial & !is_yyyymmdd
+  if (any(remaining)) {
+    date_out[remaining] <- parse_dates(x[remaining])
+  }
+
+  # all failed?
   if (all(is.na(date_out))) {
-    warning('\n\u26A0\ufe0f `', x_name, '` cannot be converted to a date. Your original data will be returned.')
-    return(x_orig)
+    warning('\n⚠️ `', x_name, '` cannot be converted to a date.')
   }
 
   return(date_out)
