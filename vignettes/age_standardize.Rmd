@@ -418,7 +418,7 @@ pretty_kable(head(births))
 
   pop <- rbind(kcpop, wapop)
   
-  pop <- pop[, .(age, geo, pop)]
+  pop <- pop[, .(pop = sum(pop)), .(age, geo)] # aggregate because it has rows for each race
   
   head(pop)
 ```
@@ -457,7 +457,7 @@ pretty_kable(head(temp5))
 pretty_kable(head(ex5.1))
 ```
 
-According to your analysis, the crude King County teen birth rate is lower than (`r ex5.1[geo=="King County"]$crude.rate` vs `r ex5.1[geo=="Washington State"]$crude.rate`) the WA State teen birth rate. This relationship remains largely unchanged after age-standardization (`r ex5.1[geo=="King County"]$adj.rate` vs `r ex5.1[geo=="Washington State"]$adj.rate`).
+According to your analysis, the crude King County teen birth rate is lower than (`r rads::round2(ex5.1[geo=="King County"]$crude.rate, 1)` vs `r rads::round2(ex5.1[geo=="Washington State"]$crude.rate, 1)`) the WA State teen birth rate. This relationship remains largely unchanged after age-standardization (`r rads::round2(ex5.1[geo=="King County"]$adj.rate, 1)` vs `r rads::round2(ex5.1[geo=="Washington State"]$adj.rate, 1)`).
 
 ------------------------------------------------------------------------
 
