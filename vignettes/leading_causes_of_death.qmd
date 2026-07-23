@@ -8,7 +8,7 @@ editor: source
 
 ### Some important notes before we begin
 
-- The CDC's [National Center for Health Statistics (NCHS)](https://www.cdc.gov/nchs/index.htm) collects death certificate data from state vital statistics offices. NCHS performs extensive quality assurance, codes the causes of death using the 10th revision of the International Classification of Diseases (ICD-10), and sends the standardized death data back to state vital statistics offices. They also compile the data to form a comprehensive national database of mortality statistics. Each year they publish an instruction manual with ICD-10 cause of death lists for tabulating mortality statistics, [like this one from 2020](https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf). The two key tables for the purposes of many public health practice analyses are:
+- The CDC's [National Center for Health Statistics (NCHS)](https://www.cdc.gov/nchs/index.htm) collects death certificate data from state vital statistics offices. NCHS performs extensive quality assurance, codes the causes of death using the 10th revision of the International Classification of Diseases (ICD-10), and sends the standardized death data back to state vital statistics offices. They also compile the data to form a comprehensive national database of mortality statistics. Each year they publish an instruction manual with ICD-10 cause of death lists for tabulating mortality statistics, [like this one from 2020](https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf). The two key tables for the purposes of public health practice are:
 
   - **113 Selected Causes of Death, Enterocolitis due to *Clostridium difficile*, and COVID-19,** which is used for the general analysis of mortality and for ranking leading causes of death. This list is typically used for individuals aged 1 year and older.. You can view this list with `rads::death_113()` and can generate counts using `rads::death_113_count()`.
 
@@ -18,13 +18,13 @@ editor: source
 
   - In addition to using a different set of cause of death functions, *infant death analyses do not use standard death certificate & population data*.
 
-    - The ***numerator*** comes from the infant death files. In Washington State, they are downloaded from [secureaccess.wa.gov/doh/chsdatafiles/](https://secureaccess.wa.gov/doh/chsdatafiles/).
+    - The ***numerator*** comes from the infant death files. In Washington State, these are downloaded from [secureaccess.wa.gov/doh/chsdatafiles/](https://secureaccess.wa.gov/doh/chsdatafiles/).
 
     - The ***denominator*** is the number of *live births* recorded in birth certificate data rather than the estimated population with age less than 1 year (though they are very similar).
 
   - The ***rate*** is *per 1,000* rather than per 100,000.
 
-  - Infant deaths for a given geography include any infant who dies and **either** was born to a mother who lived in that geography at the time of birth **or** was an infant who resided in that geography at the time of death.
+  - Infant deaths for a given geography include any infant who dies and **either** was born to a mother who resided in that geography at the time of birth **or** was an infant who resided in that geography at the time of death.
 
   - If infant death data lack geocoded information, you can extract geographic data from birth certificate data by linking with the `birth_cert_encrypt` or by linking to the `state_file_number` in death certificate data.
 
@@ -34,7 +34,7 @@ editor: source
 
 ### Overview
 
-The code below provides an example of how to conduct a leading causes of death analysis using RADS. For the sake of simplicity, we limit the stratification to gender (female & male) for the years 2019 to 2023.
+The code below provides an example of how to conduct a leading causes of death analysis using RADS. For the sake of simplicity, we limit the stratification to sex/gender (female & male) for the years 2019 to 2023.
 
 This protocol has six steps:
 
@@ -89,7 +89,7 @@ infdeath <- rads.data::synthetic_infdeath
 
 infdeath <- infdeath[year %in% 2019:2023]
 
-infdeath <- infdeath[, .(year, sex, age, underlying_cod_code)]
+infdeath <- infdeath[, .(year, sex, underlying_cod_code)]
 
 ```
 
@@ -138,7 +138,7 @@ death_count <- death_113_count(
   ph.data = death,
   icdcol = 'underlying_cod_code',
   by = c('sex', 'age'),
-  kingco = TRUE
+  kingco = FALSE
 )
 ```
 
@@ -175,9 +175,6 @@ death_count <- death_count[cause != '999']
 # Delete if missing sex because cannot merge with population
 death_count <- death_count[!is.na(sex)]
 
-# Ensure age is an integer for merging with population
-death_count[, age := as.integer(age)] 
-
 # Sum deaths for each unique strata and keep select columns 
 # This is necessary because a single `cause` can map to more than one `cause.of.death`
 death_count <- death_count[ ,
@@ -209,8 +206,8 @@ pretty_kable(head(death_count[deaths >= 10]))
 infdeath_count <- death_130_count(
   ph.data = infdeath, 
   icdcol = 'underlying_cod_code',
-  by = c('sex'),
-  kingco = TRUE 
+  by = 'sex',
+  kingco = FALSE 
 )
 ```
 
@@ -271,7 +268,7 @@ pretty_kable(head(infdeath_count[deaths >= 10]))
 
 ### Non-infants (ages ≥ 1)
 
-Be sure that your call to `apde.data::population` provides the same years and demographic strata that you have in your death counts!
+Be sure that your population data provides the same years and demographic strata that you have in your death counts!
 
 ```{r}
 #| warning: false
@@ -309,7 +306,7 @@ infpop <- infpop[!is.na(gender)]
 # Merge the population (live birth) data onto the infant death count data
 infcombo <- merge(infdeath_count, 
                infpop, 
-               by = c('gender'), 
+               by = 'gender', 
                all.x= TRUE, 
                all.y= TRUE)
 
