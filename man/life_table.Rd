@@ -10,7 +10,7 @@ life_table(
   mydeaths = "deaths",
   mypops = "pop",
   myprops = "fraction",
-  group_by = NULL,
+  by = NULL,
   ci = 0.95
 )
 }
@@ -57,13 +57,13 @@ days past their 80th birthday, myprops would be 0.54 (1000/(365.25*5)).
 
 The default value is \code{myprops = "fraction"}.}
 
-\item{group_by}{a character vector used to
+\item{by}{a character vector used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{group_by = c('chi_sex',
+results. For example, if you specified \code{by = c('chi_sex',
 'chi_race_6')}, the results would be stratified by each combination of sex
 and race.
 
-The default is \code{group_by = NULL}}
+The default is \code{by = NULL}}
 
 \item{ci}{a numeric value representing the confidence level, which must be
 greater than 0 and less than 1.
@@ -126,7 +126,7 @@ nogroups <- life_table(ph.data = dt,
                      mydeaths = 'deaths',
                      mypops = 'pop',
                      myprops = 'fraction',
-                     group_by = NULL,
+                     by = NULL,
                      ci = 0.95)
 head(nogroups)
 
@@ -135,7 +135,7 @@ yesgroups <- life_table(ph.data = dt_groups,
                       mydeaths = 'deaths',
                       mypops = 'pop',
                       myprops = 'fraction',
-                      group_by = c('shape', 'color'),
+                      by = c('shape', 'color'),
                       ci = 0.95)
 head(yesgroups)
 }
@@ -148,5 +148,5 @@ World Health Organization. https://apps.who.int/iris/handle/10665/62916
 
 Silcocks PB, Jenner DA, Reza R. Life expectancy as a summary of mortality in
 a population: Statistical considerations and suitability for use by health
-authorities. J Epidemiol Community Health 55(1):38–43. 2001
+authorities. J Epidemiol Community Health 55(1):38â€“43. 2001
 }

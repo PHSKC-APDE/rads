@@ -1,4 +1,4 @@
----
+﻿---
 title: "age_standardize()"
 output:
   github_document: default
@@ -23,9 +23,9 @@ pretty_kable <- function(dt) {
 
 ## Introduction
 
-The comparison of crude health indicator rates across populations is often confounded by different age structures. For example, in 2019 the mean age of Hispanic King County residents was \~12.5 years younger than that of white residents (27.5 vs 40). Given this age discrepancy, we should expect higher mortality rates among white residents. However, you might be thinking, *“Is there a way to compare Hispanic and white mortality rates while fully accounting for their different age structures? I.e., is there a way to standardize or adjust for age?”*
+The comparison of crude health indicator rates across populations is often confounded by different age structures. For example, in 2019 the mean age of Hispanic King County residents was \~12.5 years younger than that of white residents (27.5 vs 40). Given this age discrepancy, we should expect higher mortality rates among white residents. However, you might be thinking, *â€œIs there a way to compare Hispanic and white mortality rates while fully accounting for their different age structures? I.e., is there a way to standardize or adjust for age?â€*
 
-While you can use Poisson regression or other advanced statistical techniques to calculate age adjusted rates, for simplicity and broader comparison with the work of others, it is often beneficial to adjust your data using a standard reference population. This process is called ***age standardization***. Age standardization answers the question, *“What rates would I observe if my data had the same age structure as a different population?”*
+While you can use Poisson regression or other advanced statistical techniques to calculate age adjusted rates, for simplicity and broader comparison with the work of others, it is often beneficial to adjust your data using a standard reference population. This process is called ***age standardization***. Age standardization answers the question, *â€œWhat rates would I observe if my data had the same age structure as a different population?â€*
 
 There are 35 reference populations baked into `rads` (via its dependency on [`rads.data`](https://github.com/PHSKC-APDE/rads.data)). Their names are visible when you type `list_ref_pop()`. Here are the first five as an example:
 
@@ -67,9 +67,9 @@ Arguments are the values that we send to a function when we call it. The standar
 
 7)  `conf.level`: a numeric value between 0.00 & 0.99, designates the confidence level (i.e., 1 - alpha) to be used in the calculations. The default is 0.95
 
-8)  `group_by`: a character vector, specifies the variable(s) by which to stratify the rate results (if any). The default is NULL (i.e., no stratification)
+8)  `by`: a character vector, specifies the variable(s) by which to stratify the rate results (if any). The default is NULL (i.e., no stratification)
 
-9)  `diagnostic_report`: If `group_by` is used and there are groups with missing ages, setting `diagnostic_report = TRUE` returns a diagnostic table instead of normal results. Use this option if a warning about missing age groups appears when running the function normally.
+9)  `diagnostic_report`: If `by` is used and there are groups with missing ages, setting `diagnostic_report = TRUE` returns a diagnostic table instead of normal results. Use this option if a warning about missing age groups appears when running the function normally.
 
 ## Preparing your dataset
 
@@ -251,7 +251,7 @@ ex2.2 <- age_standardize(ph.data = temp2,
                        my.pop = "pop", 
                        per = 1000, 
                        conf.level = 0.95, 
-                       group_by = "gender")
+                       by = "gender")
 
 head(ex2.2)
 ```
@@ -307,7 +307,7 @@ ex3.1 <- age_standardize(ph.data = temp3,
                        my.pop = "pop", 
                        per = 1000, 
                        conf.level = 0.95, 
-                       group_by = "gender")
+                       by = "gender")
 
 head(ex3.1)
 ```
@@ -365,7 +365,7 @@ ex4.1 <- age_standardize(ph.data = copy(temp4),
                          my.pop = "pop", 
                          per = 1000, 
                          conf.level = 0.95, 
-                         group_by = "gender")
+                         by = "gender")
 
 head(ex4.1)
 ```
@@ -449,7 +449,7 @@ pretty_kable(head(temp5))
                            my.pop = "pop", 
                            per = 1000, 
                            conf.level = 0.95, 
-                           group_by = "geo")
+                           by = "geo")
   head(ex5.1)
 ```
 
@@ -463,7 +463,7 @@ According to your analysis, the crude King County teen birth rate is lower than 
 
 ### (OPTIONAL) Calculating the standard error (SE) and relative standard error (RSE)
 
-The method used by rads to calculate the confidence intervals is that recommended by WA DOH, i.e., the [Fay-Feuer method](https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf). Unfortunately, this method does not have a corresponding SE. We consulted with a WA DOH biostatistician who said, **"*SE’s are not particularly useful for approximating the sampling distribution on the scale of adjusted rates*."** We therefore calculate **approximations** of the SE and RSE, as suggested by various state health departments. This means that the SE will be internally inconsistent with the confidence intervals ... *c'est la vie!*
+The method used by rads to calculate the confidence intervals is that recommended by WA DOH, i.e., the [Fay-Feuer method](https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf). Unfortunately, this method does not have a corresponding SE. We consulted with a WA DOH biostatistician who said, **"*SEâ€™s are not particularly useful for approximating the sampling distribution on the scale of adjusted rates*."** We therefore calculate **approximations** of the SE and RSE, as suggested by various state health departments. This means that the SE will be internally inconsistent with the confidence intervals ... *c'est la vie!*
 
 For reference, here are the approximations: $$SE = {\text{adjusted rate} \over{\sqrt{{\text{number of cases}}}}}$$
 

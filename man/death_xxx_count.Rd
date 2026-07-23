@@ -10,7 +10,7 @@ death_xxx_count(
   cause = NULL,
   icdcol = "underlying_cod_code",
   kingco = TRUE,
-  group_by = NULL,
+  by = NULL,
   ypll_age = NULL,
   death_age_col = NULL,
   nchsnum = NULL
@@ -48,13 +48,13 @@ because it needs the variable \code{chi_geo_kc}.
 
 The default is kingco = TRUE.}
 
-\item{group_by}{a character vector of indeterminate length. This is used to
+\item{by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{group_by = c('chi_sex',
+results. For example, if you specified \code{by = c('chi_sex',
 'chi_race_6')}, the results would be stratified by each combination of sex
 and race.
 
-The default is \code{group_by = NULL}}
+The default is \code{by = NULL}}
 
 \item{ypll_age}{an optional numeric vector of length 1. When specified, it
 should be the age (an integer) used for \strong{Years of Potential Life Lost} (YPLL)
@@ -80,7 +80,7 @@ COD (\code{rads::death_113()}) or NCHS 130 Selected Causes of Infant Death
 \value{
 Generates a table with three columns, \code{causeid},  \code{cause.of.death},
 and \code{deaths}. If \code{ypll_age} is specified, a \code{ypll_##} column
-will also be added to the table. Columns in the \code{group_by}
+will also be added to the table. Columns in the \code{by}
 argument will also be returned.
 
 By default, it will return all relevant causes of death. You can specify which

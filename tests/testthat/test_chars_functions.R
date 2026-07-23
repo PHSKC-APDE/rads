@@ -1,4 +1,4 @@
-library('data.table')
+﻿library('data.table')
 library('testthat')
 
 # Check chars_icd_ccs() ----
@@ -46,7 +46,7 @@ library('testthat')
                                         detailed = NULL,
                                         icdcm = '^kidney transplant',
                                         icdcol = 'diag1',
-                                        group_by = NULL,
+                                        by = NULL,
                                         kingco = F)
       expect_equal(nrow(icd.result), 4)
       expect_equal(sort(names(icd.result)), sort(c('icdcm_desc', 'hospitalizations')))
@@ -82,14 +82,14 @@ library('testthat')
       expect_equal(nrow(superlevel.result), 2) # 2 b/c infectious and chronic
       expect_equal(sort(names(superlevel.result)), sort(c('superlevel_desc', 'hospitalizations')))
 
-    # test group_by argument ----
-      group_by.result <- chars_icd_ccs_count(ph.data = charsdata[chi_sex %in% c("Male", "Female")],
+    # test by argument ----
+      by.result <- chars_icd_ccs_count(ph.data = charsdata[chi_sex %in% c("Male", "Female")],
                                              detailed = 'chronic kidney disease',
                                              kingco = F,
-                                             group_by = c('chi_sex', 'temperament'))
-      expect_equal(nrow(group_by.result), 6) # two sex * 3 temperament == 6 rows
-      expect_equal(sort(names(group_by.result)), sort(c('chi_sex', 'temperament', 'detailed_desc', 'hospitalizations')))
-      expect_equal(sum(group_by.result$hospitalizations),
+                                             by = c('chi_sex', 'temperament'))
+      expect_equal(nrow(by.result), 6) # two sex * 3 temperament == 6 rows
+      expect_equal(sort(names(by.result)), sort(c('chi_sex', 'temperament', 'detailed_desc', 'hospitalizations')))
+      expect_equal(sum(by.result$hospitalizations),
                    nrow(charsdata[diag1 %in% chars_icd_ccs()[grepl('chronic kidney disease', detailed, ignore.case = T)]$icdcm_cod]))
 
     # test valid combination of search terms (and confirm search is case insensitive) ----
@@ -110,7 +110,7 @@ library('testthat')
                                         detailed = NULL,
                                         icdcm = '^kidney transplant',
                                         icdcol = 'diag2',
-                                        group_by = NULL,
+                                        by = NULL,
                                         kingco = F)
       expect_identical(icd.result, icd.result2)
 
@@ -148,8 +148,8 @@ library('testthat')
     expect_error(chars_icd_ccs_count(ph.data = charsdata, icdcm = '^Kidney transplant', kingco = F, icdcol = NULL))
     expect_error(chars_icd_ccs_count(ph.data = charsdata, icdcm = '^Kidney transplant', kingco = F, icdcol = 'mycolumn'))
 
-    # should error due to group_by because 'blah' is not a column in the dataset
-    expect_error(chars_icd_ccs_count(ph.data = charsdata, broad = 'Chronic kidney disease', kingco = F, group_by = 'blah'))
+    # should error due to by because 'blah' is not a column in the dataset
+    expect_error(chars_icd_ccs_count(ph.data = charsdata, broad = 'Chronic kidney disease', kingco = F, by = 'blah'))
 
     # should error message when filter out all values at more granular level
     expect_error(chars_icd_ccs_count(ph.data = charsdata,
@@ -214,8 +214,8 @@ library('testthat')
     expect_true(nrow(chars6) > 1)
     expect_identical('firearm', unique(chars6$mechanism))
 
-  # test group_by argument ----
-    chars7 <- (chars_injury_matrix_count(ph.data = charsdt, mechanism = 'none', intent = 'none', group_by = 'race4'))
+  # test by argument ----
+    chars7 <- (chars_injury_matrix_count(ph.data = charsdt, mechanism = 'none', intent = 'none', by = 'race4'))
     expect_true(nrow(chars7) > 1)
     expect_identical(sort(as.character(chars7$race4)),
                      c("AIAN", "Asian", "Black", "Hispanic", "Multiple", "NHPI", "White"))
@@ -246,8 +246,8 @@ library('testthat')
     expect_error(chars_injury_matrix_count(ph.data = NULL, kingco = F))
     expect_error(chars_injury_matrix_count(ph.data = charsdt2, kingco = F))
 
-    # should error when have illogical group_by values
-    expect_error(chars_injury_matrix_count(ph.data = charsdt, group_by = c('race4', 'blah', 'chi_sex')))
+    # should error when have illogical by values
+    expect_error(chars_injury_matrix_count(ph.data = charsdt, by = c('race4', 'blah', 'chi_sex')))
 
     # should error because missing chi_geo_kc
     expect_error(chars_injury_matrix_count(ph.data = copy(charsdata)[, chi_geo_kc := NULL], kingco = T))

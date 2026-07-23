@@ -1,4 +1,4 @@
----
+﻿---
 title: "CHARS Functions"
 format: gfm
 prefer-html: false
@@ -127,7 +127,7 @@ However, before we begin, let's review the possible arguments used by `chars_icd
 - `midlevel`: 'midlevel' level descriptions that are of interest. Case insensitive and partial strings are allowed.
 - `detailed`: CCSR derived 'detailed' level descriptions that are of interest. Case insensitive and partial strings are allowed.
 - `icdcol`: the name of the column in `ph.data` that contains the ICD-10-CM codes. Default is `diag1`.
-- `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
+- `by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
 - `kingco`: logical (T\|F) specifying whether to limit the data analysis to King County. Only works if ph.data still has the `chi_geo_kc` column.
 
 ## getting CHARS counts by ICD-10-CM code
@@ -240,7 +240,7 @@ The `chars_injury_matrix_count()` function is similar to the `chars_icd_ccs_coun
 - `ph.data`: the name of a person level data.table/data.frame of CHARS data structured like `rads.data::synthetic_chars`. Note that the intents and mechanisms are pre-calculated so you will need to ensure `ph.data` has the relevant `injury_mechanism` and `injury_intent` columns. 
 - `intent`: the injury intent of interest. Partial strings are allowed. Use `'none'` or `'any'` to ignore intent and return "Any intent". Use `'*'` (the default wildcard) to return all possible intents.
 - `mechanism`: the injury mechanism of interest. Partial strings are allowed. Use `'none'` or `'any'` to ignore mechanism and return "Any mechanism". Use `'*'` (the default wildcard) to return all possible mechanisms.
-- `group_by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
+- `by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
 - `def`: acceptable values are 'narrow' or 'broad'. It specifies whether you want to use the CDC's recommended 'narrow' approach, which requires that the **principal diagnosis** of an injury hospitalization be a nature-of-injury ICD-10-CM code. Or, alternatively, the 'broad' definition that searches all available diagnosis fields on the hospital discharge record.
 - `primary_ecode`: logical (T\|F) specifying whether to limit the analysis to using just the primary ecode (i.e., the `injury_ecode` variable), rather than all available ecodes. The vast majority of the time you will want to keep the default setting of `primary_ecode = TRUE`.
 - `kingco`: logical (T\|F) specifying whether to limit the data analysis to King County. Only works if ph.data still has the `chi_geo_kc` column.

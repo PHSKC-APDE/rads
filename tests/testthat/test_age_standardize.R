@@ -1,4 +1,4 @@
-library('testthat')
+﻿library('testthat')
 library(data.table)
 
 # adjust_direct() ----
@@ -34,15 +34,15 @@ test_that('adjust_direct calculations',{
 
   expect_equal(2, temp.direct[["crude.rate"]] )
 
-  expect_equal(1.2217, round(temp.direct[["crude.lci"]], 4) ) # checked vis-à-vis survival::cipoisson() exact method
+  expect_equal(1.2217, round(temp.direct[["crude.lci"]], 4) ) # checked vis-Ã -vis survival::cipoisson() exact method
 
-  expect_equal(3.0888, round(temp.direct[["crude.uci"]], 4) ) # checked vis-à-vis survival::cipoisson() exact method
+  expect_equal(3.0888, round(temp.direct[["crude.uci"]], 4) ) # checked vis-Ã -vis survival::cipoisson() exact method
 
-  expect_equal(1.9882, round(temp.direct[["adj.rate"]], 4) ) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(1.9882, round(temp.direct[["adj.rate"]], 4) ) # checked vis-Ã -vis epitools::ageadjust.direct
 
-  expect_equal(1.2133, round(temp.direct[["adj.lci"]], 4) ) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(1.2133, round(temp.direct[["adj.lci"]], 4) ) # checked vis-Ã -vis epitools::ageadjust.direct
 
-  expect_equal(3.0820, round(temp.direct[["adj.uci"]], 4) ) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(3.0820, round(temp.direct[["adj.uci"]], 4) ) # checked vis-Ã -vis epitools::ageadjust.direct
 
 })
 
@@ -117,15 +117,15 @@ test_that('age_standardize ... valid output',{
 
   expect_equal(round(1000*sum(temp.dt1$count) / sum(temp.dt1$pop), 4), temp.agestd1[["crude.rate"]])
 
-  expect_equal(29.8335, temp.agestd1[["crude.lci"]] ) # checked vis-à-vis survival::cipoisson() exact method
+  expect_equal(29.8335, temp.agestd1[["crude.lci"]] ) # checked vis-Ã -vis survival::cipoisson() exact method
 
-  expect_equal(37.1309, temp.agestd1[["crude.uci"]] ) # checked vis-à-vis survival::cipoisson() exact method
+  expect_equal(37.1309, temp.agestd1[["crude.uci"]] ) # checked vis-Ã -vis survival::cipoisson() exact method
 
-  expect_equal(35.1021, temp.agestd1[["adj.rate"]] ) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(35.1021, temp.agestd1[["adj.rate"]] ) # checked vis-Ã -vis epitools::ageadjust.direct
 
-  expect_equal(30.6216, temp.agestd1[["adj.lci"]] ) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(30.6216, temp.agestd1[["adj.lci"]] ) # checked vis-Ã -vis epitools::ageadjust.direct
 
-  expect_equal(40.2520, temp.agestd1[["adj.uci"]] ) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(40.2520, temp.agestd1[["adj.uci"]] ) # checked vis-Ã -vis epitools::ageadjust.direct
 
 
   temp.dt2 <- data.table(sex = c(rep("M", 11), rep("F", 11)), age = rep(50:60, 2),
@@ -133,16 +133,16 @@ test_that('age_standardize ... valid output',{
                          stdpop = rep(1000, 22))
 
   expect_message(age_standardize(ph.data = temp.dt2, ref.popname = "none", collapse = F, my.count = "count",
-                                 my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex", diagnostic_report = TRUE),
+                                 my.pop = "pop", per = 1000, conf.level = 0.95, by = "sex", diagnostic_report = TRUE),
                  'Returning diagnostic report')
 
   diagreport <- suppressMessages(age_standardize(ph.data = temp.dt2, ref.popname = "none", collapse = F, my.count = "count",
-                                                 my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex", diagnostic_report = TRUE))
+                                                 my.pop = "pop", per = 1000, conf.level = 0.95, by = "sex", diagnostic_report = TRUE))
   expect_identical(unique(diagreport$missing), '0-49, 61-100')
   expect_identical(sort(unique(diagreport$sex)), c('F', 'M'))
 
   temp.agestd2 <- suppressWarnings(age_standardize(ph.data = temp.dt2, ref.popname = "none", collapse = F, my.count = "count",
-                                                   my.pop = "pop", per = 1000, conf.level = 0.95, group_by = "sex"))
+                                                   my.pop = "pop", per = 1000, conf.level = 0.95, by = "sex"))
 
   expect_equal(sum(temp.dt2[sex == "M"]$count) , temp.agestd2[sex == "M"]$count)
   expect_equal(sum(temp.dt2[sex == "F"]$count) , temp.agestd2[sex == "F"]$count)
@@ -150,20 +150,20 @@ test_that('age_standardize ... valid output',{
   expect_equal(round(1000*sum(temp.dt2[sex == "M"]$count) / sum(temp.dt2[sex == "M"]$pop), 4) , temp.agestd2[sex == "M"]$crude.rate)
   expect_equal(round(1000*sum(temp.dt2[sex == "F"]$count) / sum(temp.dt2[sex == "F"]$pop), 4) , temp.agestd2[sex == "F"]$crude.rate)
 
-  expect_equal(28.2633 , temp.agestd2[sex == "M"]$crude.lci) # checked vis-à-vis survival::cipoisson() exact method
-  expect_equal(26.4730 , temp.agestd2[sex == "F"]$crude.lci) # checked vis-à-vis survival::cipoisson() exact method
+  expect_equal(28.2633 , temp.agestd2[sex == "M"]$crude.lci) # checked vis-Ã -vis survival::cipoisson() exact method
+  expect_equal(26.4730 , temp.agestd2[sex == "F"]$crude.lci) # checked vis-Ã -vis survival::cipoisson() exact method
 
-  expect_equal(35.1766 , temp.agestd2[sex == "M"]$crude.uci) # checked vis-à-vis survival::cipoisson() exact method
-  expect_equal(32.8298 , temp.agestd2[sex == "F"]$crude.uci) # checked vis-à-vis survival::cipoisson() exact method
+  expect_equal(35.1766 , temp.agestd2[sex == "M"]$crude.uci) # checked vis-Ã -vis survival::cipoisson() exact method
+  expect_equal(32.8298 , temp.agestd2[sex == "F"]$crude.uci) # checked vis-Ã -vis survival::cipoisson() exact method
 
-  expect_equal(31.7250 , temp.agestd2[sex == "M"]$adj.rate) # checked vis-à-vis epitools::ageadjust.direct
-  expect_equal(29.6415 , temp.agestd2[sex == "F"]$adj.rate) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(31.7250 , temp.agestd2[sex == "M"]$adj.rate) # checked vis-Ã -vis epitools::ageadjust.direct
+  expect_equal(29.6415 , temp.agestd2[sex == "F"]$adj.rate) # checked vis-Ã -vis epitools::ageadjust.direct
 
-  expect_equal(28.3923 , temp.agestd2[sex == "M"]$adj.lci) # checked vis-à-vis epitools::ageadjust.direct
-  expect_equal(26.5772 , temp.agestd2[sex == "F"]$adj.lci) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(28.3923 , temp.agestd2[sex == "M"]$adj.lci) # checked vis-Ã -vis epitools::ageadjust.direct
+  expect_equal(26.5772 , temp.agestd2[sex == "F"]$adj.lci) # checked vis-Ã -vis epitools::ageadjust.direct
 
-  expect_equal(35.3468 , temp.agestd2[sex == "M"]$adj.uci) # checked vis-à-vis epitools::ageadjust.direct
-  expect_equal(32.9665 , temp.agestd2[sex == "F"]$adj.uci) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(35.3468 , temp.agestd2[sex == "M"]$adj.uci) # checked vis-Ã -vis epitools::ageadjust.direct
+  expect_equal(32.9665 , temp.agestd2[sex == "F"]$adj.uci) # checked vis-Ã -vis epitools::ageadjust.direct
 })
 
 test_that('age_standardize ... errors & warnings',{
@@ -198,7 +198,7 @@ test_that('age_standardize ... errors & warnings',{
   expect_error(age_standardize(copy(temp.dt3)[, age := NULL][, agecat := 10], my.count = "count", my.pop = "pop"),
                "The 'agecat' column is neither character nor factor")
 
-  # detailed warnings when missing ages in specific groups defined by group_by
+  # detailed warnings when missing ages in specific groups defined by by
   set.seed(98104)
   tempy <- data.table(
     gender = sample(c('F', 'M'), 20000, replace = T),
@@ -219,7 +219,7 @@ test_that('age_standardize ... errors & warnings',{
                                  my.pop = 'pop',
                                  per = 100000,
                                  conf.level = 0.95,
-                                 group_by = c('height', 'weight', 'gender')),
+                                 by = c('height', 'weight', 'gender')),
                  'Missing ages detected in tempy for 7 groups.')
 
   # Warnings when only two groups
@@ -234,7 +234,7 @@ test_that('age_standardize ... errors & warnings',{
                                  my.pop = "pop",
                                  per = 1000,
                                  conf.level = 0.95,
-                                 group_by = "sex"),
+                                 by = "sex"),
                  'Missing ages detected in temp.dt2:')
 
   expect_warning(age_standardize(ph.data = temp.dt2,
@@ -244,7 +244,7 @@ test_that('age_standardize ... errors & warnings',{
                                  my.pop = "pop",
                                  per = 1000,
                                  conf.level = 0.95,
-                                 group_by = "sex"),
+                                 by = "sex"),
                  'M 0-49, 61-100')
 
 
@@ -275,7 +275,7 @@ test_that('age_standardize ... errors & warnings',{
                                my.pop = "pop",
                                per = 1000,
                                conf.level = 0.95,
-                               group_by = "gender"),
+                               by = "gender"),
                "The agecat values in ph.data must match those in your reference")
 
 })

@@ -12,7 +12,7 @@ age_standardize(
   my.pop = "pop",
   per = 1e+05,
   conf.level = 0.95,
-  group_by = NULL,
+  by = NULL,
   diagnostic_report = FALSE,
   event_type = "unique"
 )
@@ -38,10 +38,10 @@ when per = 1000, the rates are per 1000 people}
 \item{conf.level}{A numeric vector of length 1. The confidence interval used
 in the calculations, >0 & <1, typically 0.95}
 
-\item{group_by}{Character vector of indeterminate length. By which variable(s)
+\item{by}{Character vector of indeterminate length. By which variable(s)
 do you want to stratify the rate results, if any?}
 
-\item{diagnostic_report}{Logical vector of length 1. If \code{group_by} is used and
+\item{diagnostic_report}{Logical vector of length 1. If \code{by} is used and
 there are groups with missing ages, setting \code{diagnostic_report = TRUE} returns
 a diagnostic table instead of normal results. Use this option if a warning about
 missing age groups appears when running the function normally.}
@@ -52,7 +52,7 @@ events that can only occur once per person (e.g., death, first diagnosis), or
 When \code{"unique"}, rates are capped at 100\%; when "repeatable", rates can exceed 100\%.}
 }
 \value{
-A data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'group_by' variable(s) -- if any
+A data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'by' variable(s) -- if any
 }
 \description{
 Calculate age standardized rates from a data.table with age, counts, and population columns.
@@ -115,7 +115,7 @@ my.count = "count",
 my.pop = "pop",
 per = 1000,
 conf.level = 0.95,
-group_by = "sex")[]
+by = "sex")[]
 }
 }
 \references{

@@ -15,7 +15,7 @@ chars_icd_ccs_count(
   midlevel = NULL,
   detailed = NULL,
   icdcol = "diag1",
-  group_by = NULL,
+  by = NULL,
   kingco = TRUE
 )
 }
@@ -85,19 +85,19 @@ in \code{ph.data} that contains ICD-CM diagnosis codes.
 
 Values must be properly formatted ICD-9-CM or ICD-10-CM codes; codes are
 automatically coerced to uppercase and stripped of punctuation by
-\code{\link[=chars_validate_data]{chars_validate_data()}} (e.g., \code{A85.2} → \code{A852}). For ICD-10-CM, codes
+\code{\link[=chars_validate_data]{chars_validate_data()}} (e.g., \code{A85.2} â†’ \code{A852}). For ICD-10-CM, codes
 must begin with a capital letter followed by a digit (invalid codes are set
 to \code{NA}).
 
 The default is \code{icdcol = 'diag1'}, which refers to the principal
 diagnosis code provided by \code{\link[apde.data:chars]{apde.data::chars()}}.}
 
-\item{group_by}{a character vector of indeterminate length. This is used to
+\item{by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{group_by = c('chi_sex', 'chi_race_6')}, the results would be stratified by each combination of sex
+results. For example, if you specified \code{by = c('chi_sex', 'chi_race_6')}, the results would be stratified by each combination of sex
 and race.
 
-The default is \code{group_by = NULL}}
+The default is \code{by = NULL}}
 
 \item{kingco}{a logical vector of length one. It specifies whether you want to
 limit the analysis to King County. This parameter is specific to Washington State
@@ -111,7 +111,7 @@ The default is \code{kingco = TRUE}}
 \value{
 Generates a table with columns for each of the search terms you entered (e.g.,
 \code{icdcm}, \code{broad}, and/or \code{detailed}) as well as
-any \code{group_by} variables and a column named \code{hospitalizations} that
+any \code{by} variables and a column named \code{hospitalizations} that
 contains the relevant counts.
 }
 \description{
@@ -124,7 +124,7 @@ ICD-CM column (e.g., the data available from \code{\link[apde.data:chars]{apde.d
 See \code{\link[=chars_icd_ccs]{chars_icd_ccs()}} for a complete list of available ICD-10-CM,
 ICD-9-CM, and superlevel, broad, midlevel, and narrow classifications.
 
-\strong{¡¡¡REMEMBER!!!} ICD-10-CM started in 2016! Be sure to use the correct
+\strong{Â¡Â¡Â¡REMEMBER!!!} ICD-10-CM started in 2016! Be sure to use the correct
 \strong{\code{icdcm_version}}.
 }
 \details{
@@ -156,7 +156,7 @@ error because your resulting table will have zero rows.
 \donttest{
 myresult <- chars_icd_ccs_count(ph.data = rads.data::synthetic_chars,
                                 detailed = 'headache',
-                                group_by = c('temperament'),
+                                by = c('temperament'),
                                 kingco = FALSE)
 print(myresult)
 
@@ -164,7 +164,7 @@ myrefTable <- chars_icd_ccs()
 myresult <- chars_icd_ccs_count(ph.data = rads.data::synthetic_chars,
                                 CMtable = myrefTable,
                                 detailed = 'asthma',
-                                group_by = c('temperament'),
+                                by = c('temperament'),
                                 kingco = FALSE)
 print(myresult)
 }

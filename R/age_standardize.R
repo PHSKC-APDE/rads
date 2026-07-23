@@ -1,4 +1,4 @@
-# adjust_direct() ----
+﻿# adjust_direct() ----
 #' Calculate crude and directly adjusted rates
 #'
 #' @param count Numeric vector of indeterminate length. The number of events of interest (e.g., deaths, births, etc.)
@@ -233,9 +233,9 @@ adjust_direct <- function(count,
 #' when per = 1000, the rates are per 1000 people
 #' @param conf.level A numeric vector of length 1. The confidence interval used
 #' in the calculations, >0 & <1, typically 0.95
-#' @param group_by Character vector of indeterminate length. By which variable(s)
+#' @param by Character vector of indeterminate length. By which variable(s)
 #' do you want to stratify the rate results, if any?
-#' @param diagnostic_report Logical vector of length 1. If `group_by` is used and
+#' @param diagnostic_report Logical vector of length 1. If `by` is used and
 #' there are groups with missing ages, setting `diagnostic_report = TRUE` returns
 #' a diagnostic table instead of normal results. Use this option if a warning about
 #' missing age groups appears when running the function normally.
@@ -275,7 +275,7 @@ adjust_direct <- function(count,
 #' rate calculation. These adjustments ensure stable results and only minimally bias
 #' estimates, since such anomalies usually occur in small strata.
 #'
-#' @return A data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'group_by' variable(s) -- if any
+#' @return A data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'by' variable(s) -- if any
 #'
 #' @seealso [adjust_direct()] for calculating crude and directly adjusted rates.
 #'
@@ -304,7 +304,7 @@ adjust_direct <- function(count,
 #' my.pop = "pop",
 #' per = 1000,
 #' conf.level = 0.95,
-#' group_by = "sex")[]
+#' by = "sex")[]
 #' }
 #' @importFrom data.table ":=" setDT
 
@@ -315,7 +315,7 @@ age_standardize <- function (ph.data,
                              my.pop = "pop",
                              per = 100000,
                              conf.level = 0.95,
-                             group_by = NULL,
+                             by = NULL,
                              diagnostic_report = FALSE,
                              event_type = "unique") {
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
@@ -442,7 +442,7 @@ age_standardize <- function (ph.data,
     }
 
     # Identify when missing ages
-    if (is.null(group_by)) {
+    if (is.null(by)) {
       check_result <- check_full_age_range(ph.data)
       if (!check_result$full_range) {
         warning(paste0("\n\u26A0\ufe0f ph.data (", ph.data.name, ") does not include all ages 0-100.\n",
@@ -457,7 +457,7 @@ age_standardize <- function (ph.data,
 
       }
     } else {
-      age_chk = ph.data[, list(complete = all(0:100 %in% age), missing = list(setdiff(0:100, age))), by = group_by]
+      age_chk = ph.data[, list(complete = all(0:100 %in% age), missing = list(setdiff(0:100, age))), by = by]
       age_chk = age_chk[complete == FALSE][, complete := NULL]
       age_chk[, missing := vapply(missing, function(x) format_time(unlist(x)), character(1))] # better formatting in table of missing
 
@@ -543,24 +543,24 @@ age_standardize <- function (ph.data,
   }
 
 
-  # Check group_by ----
-  if(!is.null(group_by)) {
-    if(!is.character(group_by)) {
-      stop("The `group_by` argument must be a character vector.")
+  # Check by ----
+  if(!is.null(by)) {
+    if(!is.character(by)) {
+      stop("The `by` argument must be a character vector.")
     }
-    missing_cols <- setdiff(group_by, names(ph.data))
+    missing_cols <- setdiff(by, names(ph.data))
     if(length(missing_cols) > 0) {
-      stop(paste0("The following `group_by` columns do not exist in ph.data: ",
+      stop(paste0("The following `by` columns do not exist in ph.data: ",
                   paste(missing_cols, collapse = ", ")))
     }
   }
 
-  # Check that group_by doesn't conflict with required columns
-  if(!is.null(group_by)) {
+  # Check that by doesn't conflict with required columns
+  if(!is.null(by)) {
     reserved_cols <- c("age", "agecat", "count", "pop", "stdpop")
-    conflicts <- intersect(group_by, reserved_cols)
+    conflicts <- intersect(by, reserved_cols)
     if(length(conflicts) > 0) {
-      stop(paste0("\n\U1F6D1 The `group_by` argument cannot include reserved column names: ",
+      stop(paste0("\n\U1F6D1 The `by` argument cannot include reserved column names: ",
                   paste(conflicts, collapse = ", ")))
     }
   }
@@ -588,8 +588,8 @@ age_standardize <- function (ph.data,
     for(z in seq(1, nrow(my.ref.pop))){
       ph.data[age %in% my.ref.pop[z, age_start]:my.ref.pop[z, age_end], agecat := my.ref.pop[z, agecat]]
     }
-    if(!is.null(group_by)){ph.data <- ph.data[, list(count = sum(count), pop = sum(pop)), by = c("agecat", group_by)]}
-    if(is.null(group_by)){ph.data <- ph.data[, list(count = sum(count), pop = sum(pop)), by = "agecat"]}
+    if(!is.null(by)){ph.data <- ph.data[, list(count = sum(count), pop = sum(pop)), by = c("agecat", by)]}
+    if(is.null(by)){ph.data <- ph.data[, list(count = sum(count), pop = sum(pop)), by = "agecat"]}
   }
 
   # Warning when pop < count in age collapsed data ----
@@ -610,12 +610,12 @@ age_standardize <- function (ph.data,
   }
 
   # Calculate crude & adjusted rates with CI ----
-  if(!is.null(group_by)){
+  if(!is.null(by)){
     my.rates <- ph.data[, as.list(adjust_direct(count = count, pop = pop, stdpop = stdpop,
                                                 conf.level = as.numeric(conf.level), per = per,
-                                                event_type = event_type)), by = group_by]
+                                                event_type = event_type)), by = by]
   }
-  if(is.null(group_by)){
+  if(is.null(by)){
     my.rates <- ph.data[, as.list(adjust_direct(count = count, pop = pop, stdpop = stdpop,
                                                 conf.level = as.numeric(conf.level), per = per,
                                                 event_type = event_type))]

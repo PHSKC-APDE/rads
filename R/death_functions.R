@@ -1,4 +1,4 @@
-# death_113() ----
+﻿# death_113() ----
 #' View the NCHS 113 COD causeids
 #'
 #' @description
@@ -104,13 +104,13 @@ death_113 <- function(){
 #'
 #' The default is kingco = TRUE.
 #'
-#' @param group_by a character vector of indeterminate length. This is used to
+#' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified \code{group_by = c('chi_sex',
+#' results. For example, if you specified \code{by = c('chi_sex',
 #' 'chi_race_6')}, the results would be stratified by each combination of sex
 #' and race.
 #'
-#' The default is \code{group_by = NULL}
+#' The default is \code{by = NULL}
 #'
 #' @param ypll_age an optional numeric vector of length 1. When specified, it
 #' should be the age (an integer) used for **Years of Potential Life Lost** (YPLL)
@@ -146,7 +146,7 @@ death_113 <- function(){
 #' @return
 #' Generates a table with three columns, \code{causeid},  \code{cause.of.death},
 #' and \code{deaths}. If \code{ypll_age} is specified, a \code{ypll_##} column
-#' will also be added to the table. Columns in the \code{group_by}
+#' will also be added to the table. Columns in the \code{by}
 #' argument will also be returned.
 #'
 #' By default, it will return all 113 causes of death. You can specify which
@@ -190,7 +190,7 @@ death_113_count <- function(ph.data,
                             cause = NULL,
                             icdcol = "underlying_cod_code",
                             kingco = TRUE,
-                            group_by = NULL,
+                            by = NULL,
                             ypll_age = NULL,
                             death_age_col = NULL){
 
@@ -200,7 +200,7 @@ death_113_count <- function(ph.data,
                                     cause = cause,
                                     icdcol = icdcol,
                                     kingco = kingco,
-                                    group_by = group_by,
+                                    by = by,
                                     ypll_age = ypll_age,
                                     death_age_col = death_age_col,
                                     nchsnum = 113)
@@ -308,13 +308,13 @@ death_130<- function(){
 #'
 #' The default is kingco = TRUE.
 #'
-#' @param group_by a character vector of indeterminate length. This is used to
+#' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified \code{group_by = c('sex',
+#' results. For example, if you specified \code{by = c('sex',
 #' 'race')}, the results would be stratified by each combination of sex
 #' and race.
 #'
-#' The default is \code{group_by = NULL}
+#' The default is \code{by = NULL}
 #'
 #' @param ypll_age an optional numeric vector of length 1. When specified, it
 #' should be the age (an integer) used for **Years of Potential Life Lost** (YPLL)
@@ -350,7 +350,7 @@ death_130<- function(){
 #' @return
 #' Generates a table with three columns, \code{causeid},  \code{cause.of.death},
 #' and \code{deaths}. If \code{ypll_age} is specified, a \code{ypll_##} column
-#' will also be added to the table. Columns identifies by the \code{group_by}
+#' will also be added to the table. Columns identifies by the \code{by}
 #' argument will also be returned.
 #'
 #' By default, it will return all 130 causes of death. You can specify which
@@ -384,7 +384,7 @@ death_130_count <- function(ph.data,
                             cause = NULL,
                             icdcol = "underlying_cod_code",
                             kingco = TRUE,
-                            group_by = NULL,
+                            by = NULL,
                             ypll_age = NULL,
                             death_age_col = NULL){
 
@@ -394,7 +394,7 @@ death_130_count <- function(ph.data,
                                     cause = cause,
                                     icdcol = icdcol,
                                     kingco = kingco,
-                                    group_by =  group_by,
+                                    by =  by,
                                     ypll_age = ypll_age,
                                     death_age_col = death_age_col,
                                     nchsnum = 130)
@@ -593,13 +593,13 @@ death_injury_matrix<- function(){
 #'
 #' The default is \code{kingco = TRUE}.
 #'
-#' @param group_by a character vector of indeterminate length. This is used to
+#' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified \code{group_by = c('chi_sex',
+#' results. For example, if you specified \code{by = c('chi_sex',
 #' 'chi_race_6')}, the results would be stratified by each combination of sex
 #' and race.
 #'
-#' The default is \code{group_by = NULL}
+#' The default is \code{by = NULL}
 #'
 #' @param ypll_age an optional numeric vector of length 1. When specified, it
 #' should be the age (an integer) used for **Years of Potential Life Lost** (YPLL)
@@ -635,7 +635,7 @@ death_injury_matrix<- function(){
 #' @return
 #' The function returns a data.table with a minimum of three columns:
 #' \code{mechanism}, \code{intent}, & \code{deaths}. \code{ypll_##} and
-#' \code{group_by} columns will also be returned if specified in the arguments.
+#' \code{by} columns will also be returned if specified in the arguments.
 #'
 #' @note
 #' The function default is to return the matrix of all intents and mechanisms
@@ -710,7 +710,7 @@ death_injury_matrix<- function(){
 #'                             mechanism = "none",
 #'                             icdcol = "underlying_cod_code",
 #'                             kingco = FALSE,
-#'                             group_by = 'age',
+#'                             by = 'age',
 #'                             ypll_age = NULL,
 #'                             death_age_col = NULL)
 #' eg5[]
@@ -721,7 +721,7 @@ death_injury_matrix_count <- function(ph.data,
                                 mechanism = "*",
                                 icdcol = "underlying_cod_code",
                                 kingco = TRUE,
-                                group_by = NULL,
+                                by = NULL,
                                 ypll_age = NULL,
                                 death_age_col = NULL){
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
@@ -768,13 +768,13 @@ death_injury_matrix_count <- function(ph.data,
         ph.data <- ph.data[chi_geo_kc == 'King County']
       }
 
-    # group_by ----
-      if (!is.null(group_by)) {
-        group_col_error <- setdiff(group_by, names(ph.data))
+    # by ----
+      if (!is.null(by)) {
+        group_col_error <- setdiff(by, names(ph.data))
         if (length(group_col_error) > 0) {
           stop(
             paste0(
-              "\U0001f6d1 The following `group_by` values are not column names in `ph.data`: ",
+              "\U0001f6d1 The following `by` values are not column names in `ph.data`: ",
               paste0(group_col_error, collapse = ', '),
               "."
             )
@@ -883,18 +883,18 @@ death_injury_matrix_count <- function(ph.data,
 
     # calculate YPLL count ----
       if(is.null(ypll_age)){
-        x_combo <- x_combo[, list(deaths = .N), by = c("mechanism", "intent", group_by)]
+        x_combo <- x_combo[, list(deaths = .N), by = c("mechanism", "intent", by)]
       } else {
         # create table with ypll summary
           x_ypll <- copy(x_combo)
           x_ypll[get(death_age_col) < ypll_age, ypll_col_name := ypll_age - get(death_age_col)]
           x_ypll[, c(death_age_col) := NULL]
           x_ypll <- x_ypll[, list(temp_ypll = sum(ypll_col_name, na.rm = TRUE)), # use temporary name because data.table doesn't accept quoted value after list(
-                           by = c("mechanism", "intent", group_by)]
+                           by = c("mechanism", "intent", by)]
           setnames(x_ypll, "temp_ypll", ypll_col_name)
 
         # calculate death count
-          x_combo <- x_combo[, list(deaths = .N), by = c("mechanism", "intent", group_by)]
+          x_combo <- x_combo[, list(deaths = .N), by = c("mechanism", "intent", by)]
 
         # merge ypll onto death summaries
           x_combo <- merge(x_combo, x_ypll, all = T)
@@ -943,11 +943,11 @@ death_injury_matrix_count <- function(ph.data,
       # Fill deaths with zeros
         x_combo[is.na(deaths), deaths := 0]
 
-      # Ensure ALL combinations of group_by variables are present
-        if (!is.null(group_by)) {
+      # Ensure ALL combinations of by variables are present
+        if (!is.null(by)) {
           # Create template from ALL combinations in original data
-          unique_col_vals <- lapply(group_by, function(col) unique(ph.data[[col]]))
-          names(unique_col_vals) <- group_by
+          unique_col_vals <- lapply(by, function(col) unique(ph.data[[col]]))
+          names(unique_col_vals) <- by
 
           # Add the mechanism and intent columns
           unique_col_vals[["mechanism"]] <- unique(x_combo$mechanism)
@@ -1117,12 +1117,12 @@ death_multicause <- function(){
 #'
 #' The default is `kingco = TRUE`.
 #'
-#' @param group_by a character vector of indeterminate length. This is used to
+#' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified `group_by = c('chi_sex', 'chi_race_6')`,
+#' results. For example, if you specified `by = c('chi_sex', 'chi_race_6')`,
 #' the results would be stratified by each combination of sex and race.
 #'
-#' The default is `group_by = NULL`
+#' The default is `by = NULL`
 #'
 #' @param ypll_age an optional numeric vector of length 1. When specified, it
 #' should be the age (an integer) used for **Years of Potential Life Lost** (YPLL)
@@ -1156,7 +1156,7 @@ death_multicause <- function(){
 #'
 #' @return
 #' Generates a table with three columns: `cause.of.death`, `deaths`, and
-#' if specified, `ypll_##`. Columns in the `group_by` argument will also be
+#' if specified, `ypll_##`. Columns in the `by` argument will also be
 #' returned.
 #'
 #' @export
@@ -1195,7 +1195,7 @@ death_multicause_count <- function(ph.data,
                                    contributing_cols = "record_axis_code",
                                    contributing_logic = "ANY",
                                    kingco = TRUE,
-                                   group_by = NULL,
+                                   by = NULL,
                                    ypll_age = NULL,
                                    death_age_col = NULL) {
   # Check arguments ----
@@ -1312,11 +1312,11 @@ death_multicause_count <- function(ph.data,
         ph.data <- ph.data[chi_geo_kc == 'King County']
       }
 
-    # group_by ----
-      if (!is.null(group_by)) {
-        group_col_error <- setdiff(group_by, names(ph.data))
+    # by ----
+      if (!is.null(by)) {
+        group_col_error <- setdiff(by, names(ph.data))
         if (length(group_col_error) > 0) {
-          stop("\n\U0001f6d1 The following `group_by` values are not column names in `ph.data`: ",
+          stop("\n\U0001f6d1 The following `by` values are not column names in `ph.data`: ",
                paste0(group_col_error, collapse = ', '), ".")
         }
       }
@@ -1397,25 +1397,25 @@ death_multicause_count <- function(ph.data,
     if (is.null(ypll_age)) {
       # All causes
       all_causes <- ph.data[, list(cause.of.death = "All causes",
-                                deaths = .N), by = group_by]
+                                deaths = .N), by = by]
 
       # Specific multicause
       specific_cause <- ph.data[meets_criteria == TRUE,
                                 list(cause.of.death = cause_label,
-                                  deaths = .N), by = group_by]
+                                  deaths = .N), by = by]
     } else {
       # All causes with YPLL
       all_causes <- ph.data[, list(cause.of.death = "All causes",
                                 deaths = .N,
                                 temp_ypll = sum(get(ypll_col_name), na.rm = TRUE)),
-                            by = group_by]
+                            by = by]
 
       # Specific multicause with YPLL
       specific_cause <- ph.data[meets_criteria == TRUE,
                                 list(cause.of.death = cause_label,
                                   deaths = .N,
                                   temp_ypll = sum(get(ypll_col_name), na.rm = TRUE)),
-                                by = group_by]
+                                by = by]
 
       # Rename YPLL column
       setnames(all_causes, "temp_ypll", ypll_col_name)
@@ -1561,13 +1561,13 @@ death_other<- function(){
 #'
 #' The default is kingco = TRUE.
 #'
-#' @param group_by a character vector of indeterminate length. This is used to
+#' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified \code{group_by = c('chi_sex',
+#' results. For example, if you specified \code{by = c('chi_sex',
 #' 'chi_race_6')}, the results would be stratified by each combination of sex
 #' and race.
 #'
-#' The default is \code{group_by = NULL}
+#' The default is \code{by = NULL}
 #'
 #' @param ypll_age an optional numeric vector of length 1. When specified, it
 #' should be the age (an integer) used for **Years of Potential Life Lost** (YPLL)
@@ -1601,7 +1601,7 @@ death_other<- function(){
 #' @return
 #' Generates a table with two columns: \code{cause.of.death} and \code{deaths}.
 #' If \code{ypll_age} is specified, a \code{ypll_##} column will also be added to the
-#' table. Columns in the \code{group_by} argument will also be returned.
+#' table. Columns in the \code{by} argument will also be returned.
 #'
 #'
 #' @export
@@ -1635,7 +1635,7 @@ death_other_count <- function(ph.data,
                                cause,
                                icdcol = "underlying_cod_code",
                                kingco = TRUE,
-                               group_by = NULL,
+                               by = NULL,
                                ypll_age = NULL,
                                death_age_col = NULL){
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
@@ -1679,13 +1679,13 @@ death_other_count <- function(ph.data,
         ph.data <- ph.data[chi_geo_kc == 'King County']
       }
 
-    # group_by ----
-      if (!is.null(group_by)) {
-        group_col_error <- setdiff(group_by, names(ph.data))
+    # by ----
+      if (!is.null(by)) {
+        group_col_error <- setdiff(by, names(ph.data))
         if (length(group_col_error) > 0) {
           stop(
             paste0(
-              "\U0001f6d1 The following `group_by` values are not column names in `ph.data`: ",
+              "\U0001f6d1 The following `by` values are not column names in `ph.data`: ",
               paste0(group_col_error, collapse = ', '),
               "."
             )
@@ -1785,9 +1785,9 @@ death_other_count <- function(ph.data,
     # calculate death count ----
     if(is.null(ypll_age)){
       x_all <- ph.data[, list(cause.of.death = "All causes", deaths = .N),
-                             by = group_by]
+                             by = by]
 
-      x_combo <- x_combo[, list(deaths = .N), by = c("cause.of.death", group_by)]
+      x_combo <- x_combo[, list(deaths = .N), by = c("cause.of.death", by)]
 
       x_combo <- rbind(x_all, x_combo)
     } else {
@@ -1796,12 +1796,12 @@ death_other_count <- function(ph.data,
       x_all <- ph.data[, list(cause.of.death = "All causes",
                                  deaths = .N,
                                  temp_ypll = sum(get(ypll_col_name), na.rm = TRUE)),
-                             by = group_by]
+                             by = by]
 
       # NCHS causes of death
       x_combo <- x_combo[, list(deaths = .N,
                                    temp_ypll = sum(get(ypll_col_name), na.rm = TRUE)),
-                               by = c('cause.of.death', group_by)]
+                               by = c('cause.of.death', by)]
 
       # combine all_deaths + NCHS_113
       x_combo <- rbind(x_all, x_combo)
@@ -1832,11 +1832,11 @@ death_other_count <- function(ph.data,
       # Fill deaths with zeros
         x_combo[is.na(deaths), deaths := 0]
 
-      # Ensure ALL combinations of group_by variables are present
-        if (!is.null(group_by)) {
+      # Ensure ALL combinations of by variables are present
+        if (!is.null(by)) {
           # Create template from ALL combinations in original data
-          unique_col_vals <- lapply(group_by, function(col) unique(ph.data[[col]]))
-          names(unique_col_vals) <- group_by
+          unique_col_vals <- lapply(by, function(col) unique(ph.data[[col]]))
+          names(unique_col_vals) <- by
 
           # Add the cause.of.death column
           unique_col_vals[["cause.of.death"]] <- unique(x_combo$cause.of.death)
@@ -2098,13 +2098,13 @@ death_validate_data <- function(ph.data = NULL,
 #'
 #' The default is kingco = TRUE.
 #'
-#' @param group_by a character vector of indeterminate length. This is used to
+#' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified \code{group_by = c('chi_sex',
+#' results. For example, if you specified \code{by = c('chi_sex',
 #' 'chi_race_6')}, the results would be stratified by each combination of sex
 #' and race.
 #'
-#' The default is \code{group_by = NULL}
+#' The default is \code{by = NULL}
 #'
 #' @param ypll_age an optional numeric vector of length 1. When specified, it
 #' should be the age (an integer) used for **Years of Potential Life Lost** (YPLL)
@@ -2135,7 +2135,7 @@ death_validate_data <- function(ph.data = NULL,
 #' @return
 #' Generates a table with three columns, \code{causeid},  \code{cause.of.death},
 #' and \code{deaths}. If \code{ypll_age} is specified, a \code{ypll_##} column
-#' will also be added to the table. Columns in the \code{group_by}
+#' will also be added to the table. Columns in the \code{by}
 #' argument will also be returned.
 #'
 #' By default, it will return all relevant causes of death. You can specify which
@@ -2167,7 +2167,7 @@ death_xxx_count <- function(ph.data,
                             cause = NULL,
                             icdcol = "underlying_cod_code",
                             kingco = TRUE,
-                            group_by = NULL,
+                            by = NULL,
                             ypll_age = NULL,
                             death_age_col = NULL,
                             nchsnum = NULL) {
@@ -2240,13 +2240,13 @@ death_xxx_count <- function(ph.data,
         ph.data <- ph.data[chi_geo_kc == 'King County']
       }
 
-    # group_by ----
-      if (!is.null(group_by)) {
-        group_col_error <- setdiff(group_by, names(ph.data))
+    # by ----
+      if (!is.null(by)) {
+        group_col_error <- setdiff(by, names(ph.data))
         if (length(group_col_error) > 0) {
           stop(
             paste0(
-              "\U0001f6d1 The following `group_by` values are not column names in `ph.data`: ",
+              "\U0001f6d1 The following `by` values are not column names in `ph.data`: ",
               paste0(group_col_error, collapse = ', '),
               "."
             )
@@ -2351,8 +2351,8 @@ death_xxx_count <- function(ph.data,
     if (is.null(ypll_age)) {
       x_all <- ph.data[, list(causeid = NA_character_,
                            cause.of.death = "All causes",
-                           deaths = .N), by = group_by]
-      x_combo <- x_combo[, list(deaths = .N), by = c("causeid", "cause.of.death", group_by)]
+                           deaths = .N), by = by]
+      x_combo <- x_combo[, list(deaths = .N), by = c("causeid", "cause.of.death", by)]
       x_combo <- rbind(x_all, x_combo)
     } else {
       x_all <- ph.data[, list(
@@ -2360,9 +2360,9 @@ death_xxx_count <- function(ph.data,
         cause.of.death = "All causes",
         deaths = .N,
         temp_ypll = sum(get(ypll_col_name), na.rm = TRUE)
-      ), by = group_by]
+      ), by = by]
       x_combo <- x_combo[, list(deaths = .N,
-                             temp_ypll = sum(get(ypll_col_name), na.rm = TRUE)), by = c("causeid", "cause.of.death", group_by)]
+                             temp_ypll = sum(get(ypll_col_name), na.rm = TRUE)), by = c("causeid", "cause.of.death", by)]
       x_combo <- rbind(x_all, x_combo)
       setnames(x_combo, "temp_ypll", ypll_col_name)
     }
@@ -2449,7 +2449,7 @@ death_xxx_count <- function(ph.data,
 #'
 #' Silcocks PB, Jenner DA, Reza R. Life expectancy as a summary of mortality in
 #' a population: Statistical considerations and suitability for use by health
-#' authorities. J Epidemiol Community Health 55(1):38–43. 2001
+#' authorities. J Epidemiol Community Health 55(1):38â€“43. 2001
 #'
 #' @param ph.data a data.table or data.frame. Must contain aggregated deaths and
 #' corresponding populations, as well as the age interval and the average
@@ -2492,13 +2492,13 @@ death_xxx_count <- function(ph.data,
 #' greater than 0 and less than 1.
 #'
 #' The default value is \code{ci = 0.95}.
-#' @param group_by a character vector used to
+#' @param by a character vector used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified \code{group_by = c('chi_sex',
+#' results. For example, if you specified \code{by = c('chi_sex',
 #' 'chi_race_6')}, the results would be stratified by each combination of sex
 #' and race.
 #'
-#' The default is \code{group_by = NULL}
+#' The default is \code{by = NULL}
 #'
 #' @return a data.table with the pre-existing columns plus the
 #' standard life table columns
@@ -2558,7 +2558,7 @@ death_xxx_count <- function(ph.data,
 #'                      mydeaths = 'deaths',
 #'                      mypops = 'pop',
 #'                      myprops = 'fraction',
-#'                      group_by = NULL,
+#'                      by = NULL,
 #'                      ci = 0.95)
 #' head(nogroups)
 #'
@@ -2567,7 +2567,7 @@ death_xxx_count <- function(ph.data,
 #'                       mydeaths = 'deaths',
 #'                       mypops = 'pop',
 #'                       myprops = 'fraction',
-#'                       group_by = c('shape', 'color'),
+#'                       by = c('shape', 'color'),
 #'                       ci = 0.95)
 #' head(yesgroups)
 #' }
@@ -2581,7 +2581,7 @@ life_table <- function(ph.data,
                        mydeaths = "deaths",
                        mypops = "pop",
                        myprops = "fraction",
-                       group_by = NULL,
+                       by = NULL,
                        ci = 0.95){
 
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
@@ -2610,10 +2610,10 @@ life_table <- function(ph.data,
 
       ph.data <- data.table::setDT(data.table::copy(ph.data)) # to prevent changing of original by reference
 
-    # group_by ----
-      if(!is.null(group_by)){
-        group_col_error <- setdiff(group_by, names(ph.data))
-        if(length(group_col_error) > 0){stop(paste0("\U0001f6d1\n The following `group_by` values are not column names in `ph.data`: ", paste0(group_col_error, collapse = ', '), "."))}
+    # by ----
+      if(!is.null(by)){
+        group_col_error <- setdiff(by, names(ph.data))
+        if(length(group_col_error) > 0){stop(paste0("\U0001f6d1\n The following `by` values are not column names in `ph.data`: ", paste0(group_col_error, collapse = ', '), "."))}
       }
 
     # myages ----
@@ -2627,16 +2627,16 @@ life_table <- function(ph.data,
       if(nrow(ph.data[!is.na(get(myages))]) != nrow(ph.data[!is.na(get(myages)) & get(myages) %like% "[0-9]-[0-9]|[0-9]\\+"])){
         stop(paste0("\n\U0001f47f The values in 'myages' (i.e., ", myages, ") must be in the form #-# or #+, e.g., '10-15' or '85+'"))}
 
-      # check that myages is unique per combination of values in group_by
-        if (is.null(group_by)) {
+      # check that myages is unique per combination of values in by
+        if (is.null(by)) {
           if(nrow(ph.data) != length(unique(ph.data[[myages]]))){
             stop(paste0("\n\U0001f47f The values in 'myages' (i.e., ", myages, ") must be unique"))}
         } else {
           # Create a temporary data.table to check for duplicates
-          temp <- ph.data[, list(count = .N), by = c(myages, group_by)]
+          temp <- ph.data[, list(count = .N), by = c(myages, by)]
           # Check if any group has more than one entry (which would mean a duplicate)
           if(any(temp$count > 1)){
-            stop(paste0("\n\U0001f47f The values in 'myages' (i.e., ", myages, ") must be unique for each combination of the values in the `group_by` variables"))}
+            stop(paste0("\n\U0001f47f The values in 'myages' (i.e., ", myages, ") must be unique for each combination of the values in the `by` variables"))}
         }
 
       if(sum(grepl("[0-9]\\+", unique(ph.data[[myages]]))) != 1){
@@ -2688,12 +2688,12 @@ life_table <- function(ph.data,
   # Split myages to create intervals ----
     ph.data[,c("istart", "iend") := tstrsplit(gsub("\\+", "", get(myages)), "-")]
     ph.data[, c("istart", "iend") := lapply(.SD, as.integer), .SDcols = c("istart", "iend")]
-    if(is.null(group_by)){
+    if(is.null(by)){
       ph.data[, irank := rank(istart)]
         setorder(ph.data, istart) # critical that table is sorted from youngest to oldest
     }else{
-        ph.data[, irank := rank(istart), group_by]
-        setorderv(ph.data, c(group_by, 'istart'))
+        ph.data[, irank := rank(istart), by]
+        setorderv(ph.data, c(by, 'istart'))
       }
     ph.data[, ilength := iend - istart]
     ph.data[is.na(iend), ilength := 100-istart] # adjustment for final interval
@@ -2713,22 +2713,22 @@ life_table <- function(ph.data,
       }
 
     # Use the distribute_deaths function
-      if(is.null(group_by)){
+      if(is.null(by)){
         ph.data <- distribute_deaths(ph.data.sub = ph.data, myages = myages, mydeaths = mydeaths)
       } else {
-        ph.split <- split(ph.data, by = group_by) # create a list of tables with unique combo of group_by values
+        ph.split <- split(ph.data, by = by) # create a list of tables with unique combo of by values
         ph.data <- rbindlist(lapply(ph.split,
                                FUN = function(x) distribute_deaths(ph.data.sub = x, myages = myages, mydeaths = mydeaths)), use.names = T)
       }
 
   # Check that beginning of each interval == end of previous interval ----
-    if (is.null(group_by)) {
+    if (is.null(by)) {
       invalid_rows <- ph.data[, list(rownumber = .I[shift(iend, n = 1L, type = "lag") != istart
                                                  & !is.na(shift(iend, n = 1L, type = "lag"))])]
       } else {
         invalid_rows <- ph.data[, list(rownumber = .I[shift(iend, n = 1L, type = "lag") != istart
                                                & !is.na(shift(iend, n = 1L, type = "lag"))]),
-                            by = c(group_by)]
+                            by = c(by)]
       }
 
     if(nrow(invalid_rows) > 0){
@@ -2740,9 +2740,9 @@ life_table <- function(ph.data,
   # ax ... the proportion (i.e., fraction) of person-years lived in the interval by those who died in the interval ----
     # Note that CDC approximates with 0.5 for 1 year intervals, but I have real data so will use that instead when possible.
     ph.data[get(myprops) == 0, paste0(myprops) := 0.5] # when zero deaths in age bin, approximate fraction half the time period
-    if(is.null(group_by)){
+    if(is.null(by)){
       ph.data[irank == max(irank), paste0(myprops) := NA]} else { # fraction for oldest age bin is set to NA following WA DOH example for Adams County
-        ph.data[irank == max(irank), paste0(myprops) := NA, group_by]
+        ph.data[irank == max(irank), paste0(myprops) := NA, by]
       }
 
   # mx ... calculate the age specific death rate ----
@@ -2754,7 +2754,7 @@ life_table <- function(ph.data,
     # Use predicted mx for highest age group if necessary
       if(nrow(ph.data[grepl('[0-9]+\\+', get(myages)) & mx == 0]) > 0){
 
-        mxPredicted <- life_table_predict_mx(ph.data, group_by, myages)
+        mxPredicted <- life_table_predict_mx(ph.data, by, myages)
 
         warning(paste0(
           "\n\u26A0\ufe0f",
@@ -2766,7 +2766,7 @@ life_table <- function(ph.data,
           "\n\nPlease double-check your data preparation and consider whether life table calculations ",
           "\nare appropriate for your population size."))
 
-        if(is.null(group_by)){
+        if(is.null(by)){
           ph.data <- merge(ph.data,
                            mxPredicted,
                            by = myages,
@@ -2774,7 +2774,7 @@ life_table <- function(ph.data,
         } else {
           ph.data <- merge(ph.data,
                            mxPredicted,
-                           by = c(group_by, myages),
+                           by = c(by, myages),
                            all = T)
         }
 
@@ -2790,9 +2790,9 @@ life_table <- function(ph.data,
     ph.data[, qx := ilength*mx / (1 + ((1-get(myprops))*ilength*mx))] # Chiang formula 1.4 & 2.3
     ph.data[qx > 1, qx := 1]
 
-    if(is.null(group_by)){
+    if(is.null(by)){
       ph.data[irank == max(irank), qx := 1] # probability of death for those in final age group is always 100%
-      } else { ph.data[irank == max(irank), qx := 1, group_by]}
+      } else { ph.data[irank == max(irank), qx := 1, by]}
 
   # lx ... # alive at the start of the age interval ----
     # create mini-function to calculate lx
@@ -2804,10 +2804,10 @@ life_table <- function(ph.data,
         return(ph.data.sub)
       }
     # use create_lx()
-      if(is.null(group_by)){
+      if(is.null(by)){
         ph.data <- create_lx(ph.data.sub = ph.data)
       } else {
-        ph.split <- split(ph.data, by = group_by) # create a list of tables with unique combo of group_by values
+        ph.split <- split(ph.data, by = by) # create a list of tables with unique combo of by values
         ph.data <- rbindlist(lapply(ph.split,
                                     FUN = function(x) create_lx(ph.data.sub = x)), use.names = T)
       }
@@ -2818,28 +2818,28 @@ life_table <- function(ph.data,
   # Lx ... calculate person-years lived in age interval ----
     # ph.data[!grepl("^0", age.range), Lx := lx - (0.5*dx)] # approximation, approximation doesn't apply to first year
     ph.data[, Lx := ilength*(lx - dx) + (ilength*get(myprops)*dx)] # Chiang formula 2.3 & 2.7
-    if(is.null(group_by)){
+    if(is.null(by)){
       ph.data[irank == max(irank), Lx := dx / mx] # Chiang formula 3.10, for final interval which is open ended
-    }else{ph.data[irank == max(irank), Lx := dx / mx, group_by]}
+    }else{ph.data[irank == max(irank), Lx := dx / mx, by]}
 
   # Tx ... calculate total number of person-years lived over start of age interval ----
     # this is a sum of all Lx for the same age range or older
     # table is sorted from youngest to oldest, so reverse Lx before applying cumulative sum
     # then need to reverse the cumulative sum
-    if(is.null(group_by)){
+    if(is.null(by)){
       ph.data[, Tx := rev(cumsum(rev(Lx)))]
       ph.data[irank == max(irank), Tx := Lx] # Chiang formula 3.12, for final interval which is open ended
     } else {
-      ph.data[, Tx := rev(cumsum(rev(Lx))), group_by]
-      ph.data[irank == max(irank), Tx := Lx, group_by] # Chiang formula 3.12, for final interval which is open ended
+      ph.data[, Tx := rev(cumsum(rev(Lx))), by]
+      ph.data[irank == max(irank), Tx := Lx, by] # Chiang formula 3.12, for final interval which is open ended
     }
 
   # ex ... expectation of life (aka life expectancy) at start of age interval ----
     ph.data[, ex := Tx / lx]
-    if(is.null(group_by)){
+    if(is.null(by)){
       ph.data[irank == max(irank), ex := 1/mx] # Chiang formula 3.12, for final interval which is open ended
     } else {
-      ph.data[irank == max(irank), ex := 1/mx, group_by]
+      ph.data[irank == max(irank), ex := 1/mx, by]
     }
 
   # Calculate uncertainty for life expectancy ----
@@ -2847,12 +2847,12 @@ life_table <- function(ph.data,
     # when have zero deaths, would have 0/0 (undefined) as variance, so ascribe the median of the
     # observed variances (except zero for 85+)
     # first create small function
-      fill_variance <- function(ph.data.sub, group_by = NULL){
-        # Get the group identification if group_by is provided
+      fill_variance <- function(ph.data.sub, by = NULL){
+        # Get the group identification if by is provided
         group_text <- ""
-        if(!is.null(group_by) && length(group_by) > 0) {
+        if(!is.null(by) && length(by) > 0) {
           # Create a vector of "column = value" pairs
-          group_pairs <- sapply(group_by, function(col) {
+          group_pairs <- sapply(by, function(col) {
             val <- unique(ph.data.sub[[col]])
             if(length(val) == 1) {  # Most common case - one value per split group
               paste0(col, " = ", val)
@@ -2881,20 +2881,20 @@ life_table <- function(ph.data,
       }
 
     # Then apply fill.variance() function
-      if(is.null(group_by)){
-        ph.data <- fill_variance(ph.data.sub = ph.data, group_by)
+      if(is.null(by)){
+        ph.data <- fill_variance(ph.data.sub = ph.data, by)
       } else {
-        ph.split <- split(ph.data, by = group_by) # create a list of tables with unique combo of group_by values
+        ph.split <- split(ph.data, by = by) # create a list of tables with unique combo of by values
         ph.data <- rbindlist(lapply(ph.split,
-                                    FUN = function(x) fill_variance(ph.data.sub = x, group_by)), use.names = T)
+                                    FUN = function(x) fill_variance(ph.data.sub = x, by)), use.names = T)
       }
 
   ph.data[, px_variance := qx_variance] # Chiang 3.6, variance prob(survival) == variance of prob(death)
 
-  if(is.null(group_by)){
+  if(is.null(by)){
       ph.data[, ex_temp := (lx^2) * ((((1-get(myprops))*ilength) + shift(ex, 1L, type = "lead"))^2) * px_variance] # Chiang page 137
   } else {
-    ph.split <- split(ph.data, by = group_by) # create a list of tables with unique combo of group_by values
+    ph.split <- split(ph.data, by = by) # create a list of tables with unique combo of by values
     ph.data <- rbindlist(lapply(ph.split,
                                 FUN = function(x){
                                   x[, ex_temp := (lx^2) * ((((1-get(myprops))*ilength) + shift(ex, 1L, type = "lead"))^2) * px_variance]
@@ -2904,12 +2904,12 @@ life_table <- function(ph.data,
     # get original order
       ph.data[, original_order := .I]
 
-    # sort by rank (and group_by if needed)
-      setorderv(setorder(ph.data, -irank), group_by)
+    # sort by rank (and by if needed)
+      setorderv(setorder(ph.data, -irank), by)
 
     # generate cumulative sum
       ph.data[!is.na(ex_temp), ex_temp_cumsum := cumsum(ex_temp),
-              by = if (is.null(group_by)) NULL else mget(group_by)]
+              by = if (is.null(by)) NULL else mget(by)]
 
     # restore order
       setorder(ph.data, original_order)
@@ -2945,10 +2945,10 @@ life_table <- function(ph.data,
           ex_variance := (0.5*ph.data[irank == max(irank)-1]$Lx) *
             (4 / get(mydeaths)*(mx^2))]
 
-  if(is.null(group_by)){
+  if(is.null(by)){
     ph.data[irank == max(irank), ex_variance := (0.5*ph.data[irank == max(irank)-1]$Lx) * (4 / get(mydeaths)*(mx^2))]
   } else {
-    ph.split <- split(ph.data, by = group_by) # create a list of tables with unique combo of group_by values
+    ph.split <- split(ph.data, by = by) # create a list of tables with unique combo of by values
     ph.data <- rbindlist(lapply(ph.split,
                                 FUN = function(x){
                                   x[irank == max(irank), ex_variance := (0.5*x[irank == max(irank)-1]$Lx) * (4 / get(mydeaths)*(mx^2))]
@@ -2994,7 +2994,7 @@ life_table <- function(ph.data,
 #' \code{\link{life_table}} only.
 #'
 #' @details
-#' The function uses a simplification of the Gompertz–Makeham law of mortality.
+#' The function uses a simplification of the Gompertzâ€“Makeham law of mortality.
 #' In the log10-linear model `log10(mx) = a + b * istart`:
 #' - `a` (intercept) represents the Makeham age-independent mortality term
 #' - `b` represents the Gompertz age-dependent term
@@ -3014,9 +3014,9 @@ life_table <- function(ph.data,
 #' The default is \code{ph.data = ph.data}, where `ph.data` is passed
 #' from `rads::life_table()`
 #'
-#' @param group_by Variables used for stratification
+#' @param by Variables used for stratification
 #'
-#' The default is \code{group_by = group_by}, where `group_by` is passed
+#' The default is \code{by = by}, where `by` is passed
 #' from `rads::life_table()`
 #'
 #' @param myages A vector of length one containing the name of the column with
@@ -3047,7 +3047,7 @@ life_table <- function(ph.data,
 #' # generate predictions ----
 #' output <- rads:::life_table_predict_mx(
 #'            ph.data = deaths,
-#'            group_by = 'gender',
+#'            by = 'gender',
 #'            myages = 'ages'
 #' )
 #'
@@ -3063,18 +3063,18 @@ life_table <- function(ph.data,
 #' It is exposed for transparency and documentation purposes only.
 #'
 life_table_predict_mx <- function(ph.data = ph.data,
-                                  group_by = group_by,
+                                  by = by,
                                   myages = myages,
                                   empirical_adjustment_factor = 1.8) {
   # Global variables used by data.table declared as NULL here to play nice with devtools::check()
   istart <- mx <- any_zero_mx <- mygroup <- NULL
 
   # Filter for ages 30 and above, excluding the highest age group
-  if (is.null(group_by)) {
+  if (is.null(by)) {
     ph.data_2mod <- copy(ph.data)[istart >= 30 & istart < max(istart)]
   } else {
     ph.data_2mod <- copy(ph.data)
-    ph.data_2mod[, mygroup := .GRP, by = c(group_by)]
+    ph.data_2mod[, mygroup := .GRP, by = c(by)]
     ph.data_2mod <- ph.data_2mod[mygroup %in% ph.data_2mod[grepl('[0-9]+\\+', get(myages)) & mx == 0]$mygroup]
     ph.data_2mod[, mygroup := NULL]
     ph.data_2mod <- ph.data_2mod[istart >= 30 & istart < max(istart)]
@@ -3086,7 +3086,7 @@ life_table_predict_mx <- function(ph.data = ph.data,
   # Function to perform log10-linear extrapolation for a single group
   extrapolate_group <- function(group) {
     # Fit log10-linear model: log10(mx) = a + b * istart
-    # This is an empirically informed simplification of Gompertz–Makeham law of mortality
+    # This is an empirically informed simplification of Gompertzâ€“Makeham law of mortality
     model <- stats::lm(log10(mx) ~ istart, data = group)
 
     # Extract coefficients
@@ -3099,9 +3099,9 @@ life_table_predict_mx <- function(ph.data = ph.data,
   }
 
   # Function to check if any group has mx == 0
-  check_for_zero_mx <- function(tempdt, group_by) {
+  check_for_zero_mx <- function(tempdt, by) {
     # Check for groups where any mx is zero
-    zero_mx_groups <- tempdt[, list(any_zero_mx = any(mx == 0)), by = group_by]
+    zero_mx_groups <- tempdt[, list(any_zero_mx = any(mx == 0)), by = by]
 
     # Filter for groups where any mx is zero
     problematic_groups <- zero_mx_groups[any_zero_mx == TRUE]
@@ -3110,13 +3110,13 @@ life_table_predict_mx <- function(ph.data = ph.data,
     return(problematic_groups)
   }
 
-  if (is.null(group_by)) {
+  if (is.null(by)) {
     # If no strata variables, perform extrapolation on entire dataset
     result <- data.table(ages = unique(ph.data[istart == max(istart)][[myages]]),
                          predicted_mx = extrapolate_group(ph.data_2mod))
   } else {
     # Check for groups with mx == 0
-    problematic_groups <- check_for_zero_mx(ph.data_2mod, group_by)[, any_zero_mx := NULL]
+    problematic_groups <- check_for_zero_mx(ph.data_2mod, by)[, any_zero_mx := NULL]
 
     if (nrow(problematic_groups) > 0) {
       # Generate a message listing the problematic groups
@@ -3141,7 +3141,7 @@ life_table_predict_mx <- function(ph.data = ph.data,
     # Perform extrapolation within each stratum
     result <- ph.data_2mod[, list(ages = unique(ph.data[istart == max(istart)][[myages]]),
                                   predicted_mx = extrapolate_group(.SD)),
-                           by = group_by]
+                           by = by]
   }
 
   return(result)
@@ -3185,18 +3185,18 @@ life_table_predict_mx <- function(ph.data = ph.data,
 #' The default is \code{dodvar = "date_of_death"}, which is the dod variable
 #' available in \code{rads.data::synthetic_death}.
 #'
-#' @param group_by a character vector of indeterminate length. This is used to
+#' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified \code{group_by = c('chi_sex',
+#' results. For example, if you specified \code{by = c('chi_sex',
 #' 'chi_race_6')}, the results would be grouped by each combination of sex
-#' and race. If you leave it blank (i.e., `group_by = NULL`), it will only
+#' and race. If you leave it blank (i.e., `by = NULL`), it will only
 #' provide the death counts and death fractions by age group
 #' described by `cuts`.
 #'
-#' The default is \code{group_by = NULL}
+#' The default is \code{by = NULL}
 #'
 #' @return a data.table with deaths aggregated by any demographics specified in
-#' the `group_by` argument, as well as `ages` (age group), `deaths` (deaths per
+#' the `by` argument, as well as `ages` (age group), `deaths` (deaths per
 #' demographic group and age group), and `fraction` (the mean fraction of the
 #' age interval lived by those who died in that interval).
 #'
@@ -3225,8 +3225,8 @@ life_table_predict_mx <- function(ph.data = ph.data,
 #'  output1 <- life_table_prep(ph.data = deaths)
 #'  head(output1)
 #'
-#'  # process with life_table_prep using group_by argument----
-#'  output2 <- life_table_prep(ph.data = deaths, group_by = c('gender', 'race_eth'))
+#'  # process with life_table_prep using by argument----
+#'  output2 <- life_table_prep(ph.data = deaths, by = c('gender', 'race_eth'))
 #'  head(output2)
 #' }
 #'
@@ -3237,7 +3237,7 @@ life_table_prep <- function(ph.data,
                             cuts = c(0, 1, 5, 10, 15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85),
                             dobvar = "date_of_birth",
                             dodvar = "date_of_death",
-                            group_by = NULL){
+                            by = NULL){
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
   orig_cols <- dob <- dod <- dob_na <- dob_na <- death_age <- tempz <- NULL
   end <- start <- interval <- age.lab <- ages <- length.interval <- NULL
@@ -3286,10 +3286,10 @@ life_table_prep <- function(ph.data,
         ph.data[get(dodvar) < get(dobvar), paste0(dobvar) := NA]
       }
 
-    # group_by ----
-      if(!is.null(group_by)){
-        group_col_error <- setdiff(group_by, names(ph.data))
-        if(length(group_col_error) > 0){stop(paste0("\U0001f6d1\nThe following `group_by` values are not column names in `ph.data`: ", paste0(group_col_error, collapse = ', '), "."))}
+    # by ----
+      if(!is.null(by)){
+        group_col_error <- setdiff(by, names(ph.data))
+        if(length(group_col_error) > 0){stop(paste0("\U0001f6d1\nThe following `by` values are not column names in `ph.data`: ", paste0(group_col_error, collapse = ', '), "."))}
       }
 
   # Copy ph.data to prevent changing original by reference ----
@@ -3326,31 +3326,31 @@ life_table_prep <- function(ph.data,
     ph.data[fraction > 1, fraction := 1] # for oldest age group, can actually live > 100, but capped at 100 because of pop data, so force max prop to 1
 
   # Collapse/aggregate  ----
-  if(!is.null(group_by)){
-    collapse_cols <- c(group_by, "ages", "fraction")
+  if(!is.null(by)){
+    collapse_cols <- c(by, "ages", "fraction")
   } else {collapse_cols <- c("ages", "fraction")}
   ph.data <- ph.data[, .SD, .SDcols = collapse_cols]
   ph.datasum <- ph.data[, list(deaths = .N, fraction = mean(fraction, na.rm = T)), by = setdiff(collapse_cols, "fraction")]
   data.table::setorderv(ph.datasum, c("ages", setdiff(collapse_cols, "ages")))
 
-  # Ensure every possible combo of group_by and ages is present ----
+  # Ensure every possible combo of by and ages is present ----
   possibleAges <- cut(0:100, cuts, right = F)
   possibleAges <- gsub("\\[|\\]|\\)", "", possibleAges)
   possibleAges <- unique(gsub("\\,", "-", possibleAges))
   possibleAges[is.na(possibleAges)] <- paste0(max(cuts), "+")
 
-  if(!is.null(group_by)){
-    possibleGroupBy <- lapply(group_by,
+  if(!is.null(by)){
+    possibleGroupBy <- lapply(by,
                              function(col){
                                unique(ph.data[!is.na(ph.data[[col]]), col, with = FALSE][[1]])})
     possibleGroupBy <- do.call(CJ, possibleGroupBy)
-    setnames(possibleGroupBy, group_by)
+    setnames(possibleGroupBy, by)
     template <- possibleGroupBy[rep(1:.N, each = length(possibleAges))]
     template[, ages := rep(possibleAges, times = .N/length(possibleAges))]
 
     ph.datasum <- merge(template,
                         ph.datasum,
-                        by = c('ages', group_by),
+                        by = c('ages', by),
                         all = T)
   } else {
     template <- data.table(ages = possibleAges)

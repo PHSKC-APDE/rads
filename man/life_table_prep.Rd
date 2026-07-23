@@ -9,7 +9,7 @@ life_table_prep(
   cuts = c(0, 1, 5, 10, 15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85),
   dobvar = "date_of_birth",
   dodvar = "date_of_death",
-  group_by = NULL
+  by = NULL
 )
 }
 \arguments{
@@ -43,19 +43,19 @@ the decedent's date of death. The referenced column must be of class
 The default is \code{dodvar = "date_of_death"}, which is the dod variable
 available in \code{rads.data::synthetic_death}.}
 
-\item{group_by}{a character vector of indeterminate length. This is used to
+\item{by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{group_by = c('chi_sex',
+results. For example, if you specified \code{by = c('chi_sex',
 'chi_race_6')}, the results would be grouped by each combination of sex
-and race. If you leave it blank (i.e., \code{group_by = NULL}), it will only
+and race. If you leave it blank (i.e., \code{by = NULL}), it will only
 provide the death counts and death fractions by age group
 described by \code{cuts}.
 
-The default is \code{group_by = NULL}}
+The default is \code{by = NULL}}
 }
 \value{
 a data.table with deaths aggregated by any demographics specified in
-the \code{group_by} argument, as well as \code{ages} (age group), \code{deaths} (deaths per
+the \code{by} argument, as well as \code{ages} (age group), \code{deaths} (deaths per
 demographic group and age group), and \code{fraction} (the mean fraction of the
 age interval lived by those who died in that interval).
 }
@@ -87,8 +87,8 @@ deaths[, date_of_birth := date_of_death - sample(1:43800, 10000, replace = TRUE)
  output1 <- life_table_prep(ph.data = deaths)
  head(output1)
 
- # process with life_table_prep using group_by argument----
- output2 <- life_table_prep(ph.data = deaths, group_by = c('gender', 'race_eth'))
+ # process with life_table_prep using by argument----
+ output2 <- life_table_prep(ph.data = deaths, by = c('gender', 'race_eth'))
  head(output2)
 }
 

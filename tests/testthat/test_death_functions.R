@@ -1,4 +1,4 @@
-library('data.table')
+﻿library('data.table')
 library('testthat')
 
 # Check death_113 ----
@@ -65,7 +65,7 @@ library('testthat')
     expect_error(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = "cod.icd10", kingco = FALSE, ypll_age = "65"))) # Should error because ypll_age is character
     expect_error(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = "cod.icd10", kingco = FALSE, ypll_age = 65))) # Should error bc need to specify dob/dod or death_age_col
     expect_error(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = "cod.icd10", kingco = FALSE, ypll_age = 65, death_age_col = ageofdeath))) # Should error ageofdeath not quoted
-    expect_error(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = 'cod.icd10', kingco = F, group_by = c('stratum')))) # stratum does not exist, should be `strata`
+    expect_error(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = 'cod.icd10', kingco = F, by = c('stratum')))) # stratum does not exist, should be `strata`
   })
 
   test_that("Death counts by cause are accurate ...", {
@@ -73,8 +73,8 @@ library('testthat')
     expect_equal(length(intersect(d113res.default$cause.of.death, d113res.manual$cause.of.death)), 6) # confirm names of causes of death
     expect_equal(sum(d113res.default$deaths), sum(d113res.manual$manual.count)) # confirm count
 
-    expect_equal(sum(death_113_count(ph.data = deathDT, icdcol = 'underlying_cod_code', kingco = F, group_by = c('temperament'))[cause.of.death %in% cod.of.interest]$deaths),
-                 sum(d113res.default$deaths)) # confirm no changes in total deaths when using group_by (all cause)
+    expect_equal(sum(death_113_count(ph.data = deathDT, icdcol = 'underlying_cod_code', kingco = F, by = c('temperament'))[cause.of.death %in% cod.of.interest]$deaths),
+                 sum(d113res.default$deaths)) # confirm no changes in total deaths when using by (all cause)
   })
 
   test_that("'cause' argument works correctly ...", {
@@ -109,9 +109,9 @@ library('testthat')
                  8) # six causeids should be present, PLUS COVID, PLUS 'All causes'
     expect_equal(sort(names(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = "underlying_cod_code", kingco = FALSE, ypll_age = 85, death_age_col = "age")))),
                  c("cause.of.death", "causeid", "deaths", "ypll_85"))
-    expect_equal(names(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = 'underlying_cod_code', kingco = F, group_by = c('temperament')))[]),
+    expect_equal(names(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = 'underlying_cod_code', kingco = F, by = c('temperament')))[]),
                  c('cause.of.death', 'causeid', 'deaths', 'temperament'))
-    expect_equal(sort(unique(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = 'underlying_cod_code', kingco = F, group_by = c('temperament')))[]$temperament)),
+    expect_equal(sort(unique(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = 'underlying_cod_code', kingco = F, by = c('temperament')))[]$temperament)),
                  c('Active', 'Calm', 'Moderate')) # ensure all strata are present
   })
 
@@ -180,7 +180,7 @@ library('testthat')
       expect_error(suppressWarnings(death_130_count(ph.data = deathDT, icdcol = "cod.icd10", kingco = FALSE, ypll_age = "65"))) # Should error because ypll_age is character
       expect_error(suppressWarnings(death_130_count(ph.data = deathDT, icdcol = "cod.icd10", kingco = FALSE, ypll_age = 65))) # Should error bc need to specify dob/dod or death_age_col
       expect_error(suppressWarnings(death_130_count(ph.data = deathDT, icdcol = "cod.icd10", kingco = FALSE, ypll_age = 65, death_age_col = ageofdeath))) # Should error ageofdeath not quoted
-      expect_error(suppressWarnings(death_130_count(ph.data = deathDT, icdcol = 'cod.icd10', kingco = F, group_by = c('stratum')))) # stratum does not exist, should be `strata`
+      expect_error(suppressWarnings(death_130_count(ph.data = deathDT, icdcol = 'cod.icd10', kingco = F, by = c('stratum')))) # stratum does not exist, should be `strata`
     })
 
     test_that("Death counts by cause are accurate ...", {
@@ -188,8 +188,8 @@ library('testthat')
       expect_equal(length(intersect(d130res.default$cause.of.death, d130res.manual$cause.of.death)), 8) # confirm names of causes of death
       expect_equal(sum(d130res.default$deaths), sum(d130res.manual$manual.count)) # confirm count
 
-      expect_equal(sum(death_130_count(ph.data = deathDT, icdcol = 'underlying_cod_code', kingco = F, group_by = c('temperament'))[cause.of.death %in% cod.of.interest]$deaths),
-                   sum(d130res.default$deaths)) # confirm no changes in total deaths when using group_by (all cause)
+      expect_equal(sum(death_130_count(ph.data = deathDT, icdcol = 'underlying_cod_code', kingco = F, by = c('temperament'))[cause.of.death %in% cod.of.interest]$deaths),
+                   sum(d130res.default$deaths)) # confirm no changes in total deaths when using by (all cause)
     })
 
     test_that("'cause' argument works correctly ...", {
@@ -224,9 +224,9 @@ library('testthat')
                    10) # eight cod.of.interest should be present, PLUS COVID, PLUS 'All causes'
       expect_equal(sort(names(suppressWarnings(death_130_count(ph.data = deathDT, icdcol = "underlying_cod_code", kingco = FALSE, ypll_age = 85, death_age_col = "age")))),
                    c("cause.of.death", "causeid", "deaths", "ypll_85"))
-      expect_equal(names(suppressWarnings(death_130_count(ph.data = deathDT, icdcol = 'underlying_cod_code', kingco = F, group_by = c('temperament')))[]),
+      expect_equal(names(suppressWarnings(death_130_count(ph.data = deathDT, icdcol = 'underlying_cod_code', kingco = F, by = c('temperament')))[]),
                    c('cause.of.death', 'causeid', 'deaths', 'temperament'))
-      expect_equal(sort(unique(suppressWarnings(death_130_count(ph.data = deathDT, icdcol = 'underlying_cod_code', kingco = F, group_by = c('temperament')))[]$temperament)),
+      expect_equal(sort(unique(suppressWarnings(death_130_count(ph.data = deathDT, icdcol = 'underlying_cod_code', kingco = F, by = c('temperament')))[]$temperament)),
                    c('Active', 'Calm', 'Moderate')) # ensure all strata are present
     })
 
@@ -273,7 +273,7 @@ library('testthat')
                                          contributing_cols = "record_axis_code",
                                          contributing_logic = "ANY",
                                          kingco = TRUE,
-                                         group_by = c('temperament'),
+                                         by = c('temperament'),
                                          ypll_age = 65,
                                          death_age_col = 'age')
 
@@ -311,9 +311,9 @@ library('testthat')
       expect_error(death_multicause_count(ph.data = copy(deathDT)[, chi_geo_kc := NULL], cause_name = "opioid", kingco = TRUE),
                    "\U0001f47f `ph.data` does not have the column `chi_geo_kc`")
 
-      # valid group_by columns
-      expect_error(death_multicause_count(ph.data = deathDT, cause_name = "opioid", group_by = c("invalid_column")),
-                   "\U0001f6d1 The following `group_by` values are not column names in `ph.data`")
+      # valid by columns
+      expect_error(death_multicause_count(ph.data = deathDT, cause_name = "opioid", by = c("invalid_column")),
+                   "\U0001f6d1 The following `by` values are not column names in `ph.data`")
 
       # valid ypll_age values
       expect_error(death_multicause_count(ph.data = deathDT, cause_name = "opioid", ypll_age = 0),
@@ -412,7 +412,7 @@ library('testthat')
                                                      cause = death_other(),
                                                      icdcol = "underlying_cod_code",
                                                      kingco = FALSE,
-                                                     group_by = c('temperament'),
+                                                     by = c('temperament'),
                                                      ypll_age = 65,
                                                      death_age_col = 'age'))[cause.of.death != 'All causes']
 
@@ -466,9 +466,9 @@ library('testthat')
       expect_error(death_other_count(ph.data = copy(ph.data_clean)[, chi_geo_kc := NULL], cause = "A00", kingco = TRUE),
                    "\U0001f47f `ph.data` does not have the column `chi_geo_kc`, which is required for King County data.")
 
-      # valid group_by columns
-      expect_error(death_other_count(ph.data = ph.data_clean, cause = "A00", group_by = c("invalid_column")),
-                   "\U0001f6d1 The following `group_by` values are not column names in `ph.data`: invalid_column.")
+      # valid by columns
+      expect_error(death_other_count(ph.data = ph.data_clean, cause = "A00", by = c("invalid_column")),
+                   "\U0001f6d1 The following `by` values are not column names in `ph.data`: invalid_column.")
 
       # valid ypll_age values
       expect_error(death_other_count(ph.data = ph.data_clean, cause = "A00", ypll_age = 0),
@@ -499,7 +499,7 @@ library('testthat')
                           cause = 'heart disease',
                           icdcol = "underlying_cod_code",
                           kingco = FALSE,
-                          group_by = c('temperament'),
+                          by = c('temperament'),
                           ypll_age = 65,
                           death_age_col = 'age')[]$cause.of.death)),
         c('All causes', 'Heart disease')
@@ -510,7 +510,7 @@ library('testthat')
                                         cause = c('heat', 'stress', 'drug'),
                                         icdcol = "underlying_cod_code",
                                         kingco = FALSE,
-                                        group_by = c('temperament'),
+                                        by = c('temperament'),
                                         ypll_age = 65,
                                         death_age_col = 'age')[]$cause.of.death)),
           c('All causes', 'Drug-induced', 'Drug-overdose', 'Drug_Death', 'HeatStress_Death')
@@ -554,7 +554,7 @@ library('testthat')
     expect_error(death_injury_matrix_count(ph.data = injurydata4, icdcol = "underlying_cod_code", kingco = FALSE, ypll_age = 65)) # Should error because didn't specify age
     expect_error(death_injury_matrix_count(ph.data = injurydata5, icdcol = "underlying_cod_code", kingco = FALSE, ypll_age = "65")) # Should error because ypll_age is character
     expect_error(death_injury_matrix_count(ph.data = injurydata5, icdcol = "underlying_cod_code", kingco = FALSE, ypll_age = 65.1)) # Should error because ypll_age is not integer
-    expect_error(death_injury_matrix_count(ph.data = injurydata5, icdcol = "underlying_cod_code", kingco = FALSE, group_by = 'stratum')) # Should error because column is `strata`, not stratum
+    expect_error(death_injury_matrix_count(ph.data = injurydata5, icdcol = "underlying_cod_code", kingco = FALSE, by = 'stratum')) # Should error because column is `strata`, not stratum
   })
 
   test_that("Filtering by intent and mechanism work properly ...", {
@@ -581,8 +581,8 @@ library('testthat')
   test_that("Death counts are accurate ...", {
     expect_equal(sum(injuries.rads[mechanism == "All injury"]$deaths), sum(injuries.manual[mechanism == "All injury"]$deaths)) # summary by intent
     expect_equal(sum(injuries.rads[mechanism != "All injury"]$deaths), sum(injuries.manual[mechanism != "All injury"]$deaths)) # individual mechanisms
-    expect_equal(sum(death_injury_matrix_count(ph.data = deathDT, icdcol = "underlying_cod_code", kingco = FALSE, group_by = 'temperament')[]$deaths),
-                 sum(death_injury_matrix_count(ph.data = deathDT, icdcol = "underlying_cod_code", kingco = FALSE)[]$deaths)) # group_by should not impact total
+    expect_equal(sum(death_injury_matrix_count(ph.data = deathDT, icdcol = "underlying_cod_code", kingco = FALSE, by = 'temperament')[]$deaths),
+                 sum(death_injury_matrix_count(ph.data = deathDT, icdcol = "underlying_cod_code", kingco = FALSE)[]$deaths)) # by should not impact total
   })
 
   test_that("YPLL counts are accurate ...", {
@@ -600,9 +600,9 @@ library('testthat')
 
   test_that("Structure of output table is as expected ...", {
     expect_equal(sort(names(injuries.rads)), c("deaths", "intent", "mechanism"))
-    expect_equal(sort(names(death_injury_matrix_count(ph.data = deathDT, icdcol = "underlying_cod_code", kingco = FALSE, group_by = 'temperament'))),
+    expect_equal(sort(names(death_injury_matrix_count(ph.data = deathDT, icdcol = "underlying_cod_code", kingco = FALSE, by = 'temperament'))),
                  sort(c('mechanism', 'intent', 'deaths', 'temperament')))
-    expect_equal(sort(unique(death_injury_matrix_count(ph.data = deathDT, icdcol = "underlying_cod_code", kingco = FALSE, group_by = 'temperament')[]$temperament)),
+    expect_equal(sort(unique(death_injury_matrix_count(ph.data = deathDT, icdcol = "underlying_cod_code", kingco = FALSE, by = 'temperament')[]$temperament)),
                  sort(c('Active', 'Calm', 'Moderate')))
   })
 
@@ -720,7 +720,7 @@ library('testthat')
     expect_equal( test1, test2)
   })
 
-  test_that('Confirm that group_by argument works when specified...',{
+  test_that('Confirm that by argument works when specified...',{
     # Create arbitrary small variations for 'demographic' groups ----
       # first create an empty table
         mygroups <- data.table::CJ(shape = c('circle', 'square'), color = c('blue', 'orange'))
@@ -742,7 +742,7 @@ library('testthat')
                                                 mydeaths = 'deaths',
                                                 mypops = 'pop',
                                                 myprops = 'fraction',
-                                                group_by = c('shape', 'color'),
+                                                by = c('shape', 'color'),
                                                 ci = 0.95))
       expect_equal(nrow(test_groups), 76) # 76 because 4 stratum and 19 age groups
 
@@ -751,7 +751,7 @@ library('testthat')
                                                  mydeaths = 'deaths',
                                                  mypops = 'pop',
                                                  myprops = 'fraction',
-                                                 group_by = c('shape', 'color'),
+                                                 by = c('shape', 'color'),
                                                  ci = 0.95))
       expect_identical(test1, # original data, run by itself
                        test_groups2[is.na(shape) & is.na(color)][, c('shape', 'color') := NULL] # original data when run with other groups
@@ -795,7 +795,7 @@ library('testthat')
     expect_gte(sum(dtna_table$deaths), (sum(test1$deaths) + 16000 - 3)) # allow some buffer for rounding
   })
 
-# Check life_table (with group_by) ----
+# Check life_table (with by) ----
   # life_table() create data ----
     dt <- data.table(
       sex = "Male",
@@ -814,19 +814,19 @@ library('testthat')
     )
 
   # life_table() create output ----
-    test1 <- life_table(ph.data = copy(dt)[], group_by=c('sex', 'city'))
-    test2 <- suppressWarnings(life_table(ph.data = copy(dt)[ages %in% c('80-85'), deaths := 0], group_by=c('sex', 'city')))
-    test3 <- suppressWarnings(life_table(ph.data = copy(dt)[ages %in% c('85+'), deaths := 0], group_by=c('sex', 'city')))
-    test4 <- suppressWarnings(life_table(ph.data = copy(dt)[as.numeric(substr(ages, 1, 2)) <=60 , deaths := 0], group_by=c('sex', 'city')))
+    test1 <- life_table(ph.data = copy(dt)[], by=c('sex', 'city'))
+    test2 <- suppressWarnings(life_table(ph.data = copy(dt)[ages %in% c('80-85'), deaths := 0], by=c('sex', 'city')))
+    test3 <- suppressWarnings(life_table(ph.data = copy(dt)[ages %in% c('85+'), deaths := 0], by=c('sex', 'city')))
+    test4 <- suppressWarnings(life_table(ph.data = copy(dt)[as.numeric(substr(ages, 1, 2)) <=60 , deaths := 0], by=c('sex', 'city')))
 
   # life_table() tests ----
-    expect_no_warning(life_table(ph.data = copy(dt)[], group_by=c('sex', 'city')))
-    expect_no_warning(life_table(ph.data = copy(dt)[ages %in% c('80-85'), deaths := 0], group_by=c('sex', 'city')))
-    expect_warning(life_table(ph.data = copy(dt)[ages %in% c('85+'), deaths := 0], group_by=c('sex', 'city')),
+    expect_no_warning(life_table(ph.data = copy(dt)[], by=c('sex', 'city')))
+    expect_no_warning(life_table(ph.data = copy(dt)[ages %in% c('80-85'), deaths := 0], by=c('sex', 'city')))
+    expect_warning(life_table(ph.data = copy(dt)[ages %in% c('85+'), deaths := 0], by=c('sex', 'city')),
                    "function has provided modeled `mx` values")
-    expect_warning(life_table(ph.data = copy(dt)[as.numeric(substr(ages, 1, 2)) <=60 , deaths := 0], group_by=c('sex', 'city')),
+    expect_warning(life_table(ph.data = copy(dt)[as.numeric(substr(ages, 1, 2)) <=60 , deaths := 0], by=c('sex', 'city')),
                    "Small population issue for sex = Male, city = Gotham")
-    expect_error(life_table(ph.data = copy(dt)[ages %in% c('80-85', '85+'), deaths := 0], group_by=c('sex', 'city')),
+    expect_error(life_table(ph.data = copy(dt)[ages %in% c('80-85', '85+'), deaths := 0], by=c('sex', 'city')),
                  "This almost certainly means that your population is too small for life table estimation")
 
     # when set deaths to zero for second oldest group, expect life expectancy to bump up
@@ -868,12 +868,12 @@ library('testthat')
                 copy(dt)[, shape := paste0(shape, "2")][ages == '85+', c('deaths', 'fraction') := 0])
 
   # Create output ----
-    mylifetable <- suppressWarnings(life_table(ph.data = dt, group_by = 'shape'))
+    mylifetable <- suppressWarnings(life_table(ph.data = dt, by = 'shape'))
     setorder(mylifetable, ages, shape)
 
   # Tests ----
     test_that("Check messages, proper filling of missing values, and LE0 estimates ...", {
-      expect_warning(life_table(ph.data = dt, group_by = 'shape'), "Zero deaths detected")
+      expect_warning(life_table(ph.data = dt, by = 'shape'), "Zero deaths detected")
       expect_equal(nrow(mylifetable[deaths == 0]), 2)
       expect_equal(nrow(mylifetable[is.na(mx)]), 0)
       expect_equal(nrow(mylifetable[is.na(ex)]), 0)
@@ -898,7 +898,7 @@ library('testthat')
 
   # life_table_prep() create output ----
   ltp_output <- life_table_prep(ph.data = ltp)
-  ltp_output_group <- life_table_prep(ph.data = ltp, group_by = c('year', 'race_eth'))
+  ltp_output_group <- life_table_prep(ph.data = ltp, by = c('year', 'race_eth'))
 
   # life_table_prep() tests ----
   test_that("Check for errors based on validation failure...", {
@@ -927,7 +927,7 @@ library('testthat')
     expect_equal(life_table_prep(ltp), life_table_prep(ltp2))
   })
 
-  test_that("Check that group_by command works as expected ...", {
+  test_that("Check that by command works as expected ...", {
     expect_identical(
       sort(setdiff(names(ltp), c('date_of_death', 'date_of_birth'))),
       sort(setdiff(names(ltp_output_group), c('ages', 'deaths', 'fraction')))
@@ -948,7 +948,7 @@ library('testthat')
     ltp_alt[race_eth == 'Hispanic', race_eth := fifelse(calc_age(date_of_birth, date_of_death) >= 64, 'White', race_eth)]
 
     # run
-    ltp_output_group_alt <- life_table_prep(ph.data = ltp, group_by = c('year', 'race_eth'))
+    ltp_output_group_alt <- life_table_prep(ph.data = ltp, by = c('year', 'race_eth'))
 
     # test
     expect_identical(ltp_output_group_alt[race_eth == 'Hispanic' & ages == '85+']$deaths, 0L)

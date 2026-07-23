@@ -9,7 +9,7 @@ chars_injury_matrix_count(
   ph.data = NULL,
   intent = "*",
   mechanism = "*",
-  group_by = NULL,
+  by = NULL,
   def = "narrow",
   primary_ecode = TRUE,
   kingco = TRUE
@@ -63,12 +63,12 @@ hospitalizations for any of these MVT subcategories.
 
 The default is \code{mechanism = '*'}, which selects all possible mechanisms}
 
-\item{group_by}{a character vector of indeterminate length. This is used to
+\item{by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{group_by = c('chi_sex', 'race3')}, the results would be stratified by each combination of sex
+results. For example, if you specified \code{by = c('chi_sex', 'race3')}, the results would be stratified by each combination of sex
 and race.
 
-The default is \code{group_by = NULL}}
+The default is \code{by = NULL}}
 
 \item{def}{a character vector of length one, limited to 'narrow' or 'broad'.
 It specifies whether you want to use the CDC's recommended 'narrow' approach,
@@ -106,7 +106,7 @@ The default is \code{kingco = TRUE}}
 \value{
 The function returns a data.table with a minimum of three columns:
 \code{mechanism}, \code{intent}, & \code{hospitalizations}. Any
-\code{group_by} variables would also have their own columns.
+\code{by} variables would also have their own columns.
 
 The function default is to return the matrix of all intents and mechanisms
 of injury related hospitalizations. You can choose to only return the intent
@@ -135,14 +135,14 @@ please examine the analytic data directly.
 myresult <- chars_injury_matrix_count(ph.data = rads.data::synthetic_chars,
                                       intent = '^intentional',
                                       mechanism = 'none',
-                                      group_by = c('temperament'),
+                                      by = c('temperament'),
                                       kingco = FALSE)
 print(myresult)
 
 myresult <- chars_injury_matrix_count(ph.data = rads.data::synthetic_chars,
                                       intent = 'unintentional',
                                       mechanism = 'fall',
-                                      group_by = c('temperament'),
+                                      by = c('temperament'),
                                       kingco = FALSE)
 print(myresult)
 }

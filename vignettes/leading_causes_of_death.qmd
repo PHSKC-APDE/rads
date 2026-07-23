@@ -206,10 +206,10 @@ As you can see with Tuberculosis in rows 4 & 5, multiple `causeid`s will sometim
 #| message: false
 # Do not specify`cause` or `causeids` arguments in order to get all causes of death
 death_count <- death_113_count(
-  ph.data = death, 
+  ph.data = death,
   icdcol = 'underlying_cod_code',
-  group_by = c('chi_sex', 'chi_age'),
-  kingco = TRUE 
+  by = c('chi_sex', 'chi_age'),
+  kingco = TRUE
 )
 ```
 
@@ -278,7 +278,7 @@ pretty_kable(head(death_count[deaths >= 10]))
 infdeath_count <- death_130_count(
   ph.data = infdeath, 
   icdcol = 'underlying_cod_code',
-  group_by = c('chi_sex'),
+  by = c('chi_sex'),
   kingco = TRUE 
 )
 ```
@@ -386,7 +386,7 @@ rates <- rads::age_standardize(
   ph.data = combo, 
   my.count = 'deaths', 
   my.pop = 'pop', 
-  group_by = c('gender', 'cause', 'cause_category')
+  by = c('gender', 'cause', 'cause_category')
 )
 
 rates <- rates[, .(gender, 
@@ -422,7 +422,7 @@ infrates <- rads::age_standardize(
   ph.data = infcombo, 
   my.count = 'deaths', 
   my.pop = 'pop', 
-  group_by = c('gender', 'cause', 'cause_category'), 
+  by = c('gender', 'cause', 'cause_category'),
   per = 1000 # 100,000 except for infant mortality
 )
 
