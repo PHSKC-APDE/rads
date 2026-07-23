@@ -85,7 +85,7 @@ in \code{ph.data} that contains ICD-CM diagnosis codes.
 
 Values must be properly formatted ICD-9-CM or ICD-10-CM codes; codes are
 automatically coerced to uppercase and stripped of punctuation by
-\code{\link[=chars_validate_data]{chars_validate_data()}} (e.g., \code{A85.2} â†’ \code{A852}). For ICD-10-CM, codes
+\code{\link[=chars_validate_data]{chars_validate_data()}} (e.g., \code{A85.2} >> \code{A852}). For ICD-10-CM, codes
 must begin with a capital letter followed by a digit (invalid codes are set
 to \code{NA}).
 
@@ -124,7 +124,7 @@ ICD-CM column (e.g., the data available from \code{\link[apde.data:chars]{apde.d
 See \code{\link[=chars_icd_ccs]{chars_icd_ccs()}} for a complete list of available ICD-10-CM,
 ICD-9-CM, and superlevel, broad, midlevel, and narrow classifications.
 
-\strong{Â¡Â¡Â¡REMEMBER!!!} ICD-10-CM started in 2016! Be sure to use the correct
+\strong{¡¡¡REMEMBER!!!} ICD-10-CM started in 2016! Be sure to use the correct
 \strong{\code{icdcm_version}}.
 }
 \details{

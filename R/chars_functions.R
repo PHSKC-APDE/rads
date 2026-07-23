@@ -1,4 +1,4 @@
-﻿# chars_injury_matrix() ----
+# chars_injury_matrix() ----
 #' View available combinations of CHARS injury mechanisms and intents
 #'
 #' @description
@@ -499,7 +499,7 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' See [chars_icd_ccs()] for a complete list of available ICD-10-CM,
 #' ICD-9-CM, and superlevel, broad, midlevel, and narrow classifications.
 #'
-#' **Â¡Â¡Â¡REMEMBER!!!** ICD-10-CM started in 2016! Be sure to use the correct
+#' **¡¡¡REMEMBER!!!** ICD-10-CM started in 2016! Be sure to use the correct
 #' **`icdcm_version`**.
 #'
 #'
@@ -592,7 +592,7 @@ chars_icd_ccs <- function(ref_type = 'all',
 #'
 #' Values must be properly formatted ICD-9-CM or ICD-10-CM codes; codes are
 #' automatically coerced to uppercase and stripped of punctuation by
-#' [chars_validate_data()] (e.g., `A85.2` â†’ `A852`). For ICD-10-CM, codes
+#' [chars_validate_data()] (e.g., `A85.2` >> `A852`). For ICD-10-CM, codes
 #' must begin with a capital letter followed by a digit (invalid codes are set
 #' to `NA`).
 #'

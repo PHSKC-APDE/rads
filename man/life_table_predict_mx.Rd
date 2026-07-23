@@ -42,7 +42,7 @@ calculating it directly. It is intended for internal use by \code{rads}'
 \code{\link{life_table}} only.
 }
 \details{
-The function uses a simplification of the Gompertzâ€“Makeham law of mortality.
+The function uses a simplification of the Gompertz-Makeham law of mortality.
 In the log10-linear model \code{log10(mx) = a + b * istart}:
 \itemize{
 \item \code{a} (intercept) represents the Makeham age-independent mortality term

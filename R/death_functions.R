@@ -1,4 +1,4 @@
-﻿# death_113() ----
+# death_113() ----
 #' View the NCHS 113 COD causeids
 #'
 #' @description
@@ -2449,7 +2449,7 @@ death_xxx_count <- function(ph.data,
 #'
 #' Silcocks PB, Jenner DA, Reza R. Life expectancy as a summary of mortality in
 #' a population: Statistical considerations and suitability for use by health
-#' authorities. J Epidemiol Community Health 55(1):38â€“43. 2001
+#' authorities. J Epidemiol Community Health 55(1):38-43. 2001
 #'
 #' @param ph.data a data.table or data.frame. Must contain aggregated deaths and
 #' corresponding populations, as well as the age interval and the average
@@ -2994,7 +2994,7 @@ life_table <- function(ph.data,
 #' \code{\link{life_table}} only.
 #'
 #' @details
-#' The function uses a simplification of the Gompertzâ€“Makeham law of mortality.
+#' The function uses a simplification of the Gompertz-Makeham law of mortality.
 #' In the log10-linear model `log10(mx) = a + b * istart`:
 #' - `a` (intercept) represents the Makeham age-independent mortality term
 #' - `b` represents the Gompertz age-dependent term
@@ -3086,7 +3086,7 @@ life_table_predict_mx <- function(ph.data = ph.data,
   # Function to perform log10-linear extrapolation for a single group
   extrapolate_group <- function(group) {
     # Fit log10-linear model: log10(mx) = a + b * istart
-    # This is an empirically informed simplification of Gompertzâ€“Makeham law of mortality
+    # This is an empirically informed simplification of Gompertz-Makeham law of mortality
     model <- stats::lm(log10(mx) ~ istart, data = group)
 
     # Extract coefficients

@@ -1,5 +1,4 @@
-﻿library('data.table')
-library('testthat')
+library(data.table)
 
 # Check chars_icd_ccs() ----
   ccstable <- chars_icd_ccs()

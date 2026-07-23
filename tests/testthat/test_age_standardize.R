@@ -1,4 +1,3 @@
-﻿library('testthat')
 library(data.table)
 
 # adjust_direct() ----
@@ -34,15 +33,15 @@ test_that('adjust_direct calculations',{
 
   expect_equal(2, temp.direct[["crude.rate"]] )
 
-  expect_equal(1.2217, round(temp.direct[["crude.lci"]], 4) ) # checked vis-Ã -vis survival::cipoisson() exact method
+  expect_equal(1.2217, round(temp.direct[["crude.lci"]], 4) ) # checked vis-à-vis survival::cipoisson() exact method
 
-  expect_equal(3.0888, round(temp.direct[["crude.uci"]], 4) ) # checked vis-Ã -vis survival::cipoisson() exact method
+  expect_equal(3.0888, round(temp.direct[["crude.uci"]], 4) ) # checked vis-à-vis survival::cipoisson() exact method
 
-  expect_equal(1.9882, round(temp.direct[["adj.rate"]], 4) ) # checked vis-Ã -vis epitools::ageadjust.direct
+  expect_equal(1.9882, round(temp.direct[["adj.rate"]], 4) ) # checked vis-à-vis epitools::ageadjust.direct
 
-  expect_equal(1.2133, round(temp.direct[["adj.lci"]], 4) ) # checked vis-Ã -vis epitools::ageadjust.direct
+  expect_equal(1.2133, round(temp.direct[["adj.lci"]], 4) ) # checked vis-à-vis epitools::ageadjust.direct
 
-  expect_equal(3.0820, round(temp.direct[["adj.uci"]], 4) ) # checked vis-Ã -vis epitools::ageadjust.direct
+  expect_equal(3.0820, round(temp.direct[["adj.uci"]], 4) ) # checked vis-à-vis epitools::ageadjust.direct
 
 })
 
@@ -117,15 +116,15 @@ test_that('age_standardize ... valid output',{
 
   expect_equal(round(1000*sum(temp.dt1$count) / sum(temp.dt1$pop), 4), temp.agestd1[["crude.rate"]])
 
-  expect_equal(29.8335, temp.agestd1[["crude.lci"]] ) # checked vis-Ã -vis survival::cipoisson() exact method
+  expect_equal(29.8335, temp.agestd1[["crude.lci"]] ) # checked vis-à-vis survival::cipoisson() exact method
 
-  expect_equal(37.1309, temp.agestd1[["crude.uci"]] ) # checked vis-Ã -vis survival::cipoisson() exact method
+  expect_equal(37.1309, temp.agestd1[["crude.uci"]] ) # checked vis-à-vis survival::cipoisson() exact method
 
-  expect_equal(35.1021, temp.agestd1[["adj.rate"]] ) # checked vis-Ã -vis epitools::ageadjust.direct
+  expect_equal(35.1021, temp.agestd1[["adj.rate"]] ) # checked vis-à-vis epitools::ageadjust.direct
 
-  expect_equal(30.6216, temp.agestd1[["adj.lci"]] ) # checked vis-Ã -vis epitools::ageadjust.direct
+  expect_equal(30.6216, temp.agestd1[["adj.lci"]] ) # checked vis-à-vis epitools::ageadjust.direct
 
-  expect_equal(40.2520, temp.agestd1[["adj.uci"]] ) # checked vis-Ã -vis epitools::ageadjust.direct
+  expect_equal(40.2520, temp.agestd1[["adj.uci"]] ) # checked vis-à-vis epitools::ageadjust.direct
 
 
   temp.dt2 <- data.table(sex = c(rep("M", 11), rep("F", 11)), age = rep(50:60, 2),
@@ -150,20 +149,20 @@ test_that('age_standardize ... valid output',{
   expect_equal(round(1000*sum(temp.dt2[sex == "M"]$count) / sum(temp.dt2[sex == "M"]$pop), 4) , temp.agestd2[sex == "M"]$crude.rate)
   expect_equal(round(1000*sum(temp.dt2[sex == "F"]$count) / sum(temp.dt2[sex == "F"]$pop), 4) , temp.agestd2[sex == "F"]$crude.rate)
 
-  expect_equal(28.2633 , temp.agestd2[sex == "M"]$crude.lci) # checked vis-Ã -vis survival::cipoisson() exact method
-  expect_equal(26.4730 , temp.agestd2[sex == "F"]$crude.lci) # checked vis-Ã -vis survival::cipoisson() exact method
+  expect_equal(28.2633 , temp.agestd2[sex == "M"]$crude.lci) # checked vis-à-vis survival::cipoisson() exact method
+  expect_equal(26.4730 , temp.agestd2[sex == "F"]$crude.lci) # checked vis-à-vis survival::cipoisson() exact method
 
-  expect_equal(35.1766 , temp.agestd2[sex == "M"]$crude.uci) # checked vis-Ã -vis survival::cipoisson() exact method
-  expect_equal(32.8298 , temp.agestd2[sex == "F"]$crude.uci) # checked vis-Ã -vis survival::cipoisson() exact method
+  expect_equal(35.1766 , temp.agestd2[sex == "M"]$crude.uci) # checked vis-à-vis survival::cipoisson() exact method
+  expect_equal(32.8298 , temp.agestd2[sex == "F"]$crude.uci) # checked vis-à-vis survival::cipoisson() exact method
 
-  expect_equal(31.7250 , temp.agestd2[sex == "M"]$adj.rate) # checked vis-Ã -vis epitools::ageadjust.direct
-  expect_equal(29.6415 , temp.agestd2[sex == "F"]$adj.rate) # checked vis-Ã -vis epitools::ageadjust.direct
+  expect_equal(31.7250 , temp.agestd2[sex == "M"]$adj.rate) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(29.6415 , temp.agestd2[sex == "F"]$adj.rate) # checked vis-à-vis epitools::ageadjust.direct
 
-  expect_equal(28.3923 , temp.agestd2[sex == "M"]$adj.lci) # checked vis-Ã -vis epitools::ageadjust.direct
-  expect_equal(26.5772 , temp.agestd2[sex == "F"]$adj.lci) # checked vis-Ã -vis epitools::ageadjust.direct
+  expect_equal(28.3923 , temp.agestd2[sex == "M"]$adj.lci) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(26.5772 , temp.agestd2[sex == "F"]$adj.lci) # checked vis-à-vis epitools::ageadjust.direct
 
-  expect_equal(35.3468 , temp.agestd2[sex == "M"]$adj.uci) # checked vis-Ã -vis epitools::ageadjust.direct
-  expect_equal(32.9665 , temp.agestd2[sex == "F"]$adj.uci) # checked vis-Ã -vis epitools::ageadjust.direct
+  expect_equal(35.3468 , temp.agestd2[sex == "M"]$adj.uci) # checked vis-à-vis epitools::ageadjust.direct
+  expect_equal(32.9665 , temp.agestd2[sex == "F"]$adj.uci) # checked vis-à-vis epitools::ageadjust.direct
 })
 
 test_that('age_standardize ... errors & warnings',{

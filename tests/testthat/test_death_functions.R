@@ -1,5 +1,4 @@
-﻿library('data.table')
-library('testthat')
+library(data.table)
 
 # Check death_113 ----
   # death_113() create data ----

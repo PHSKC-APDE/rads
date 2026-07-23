@@ -148,5 +148,5 @@ World Health Organization. https://apps.who.int/iris/handle/10665/62916
 
 Silcocks PB, Jenner DA, Reza R. Life expectancy as a summary of mortality in
 a population: Statistical considerations and suitability for use by health
-authorities. J Epidemiol Community Health 55(1):38â€“43. 2001
+authorities. J Epidemiol Community Health 55(1):38-43. 2001
 }
