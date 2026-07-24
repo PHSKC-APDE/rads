@@ -77,9 +77,9 @@ Let's grab the data from [`rads.data`](https://github.com/PHSKC-APDE/rads.data):
 ```{r}
 deaths <- rads.data::synthetic_death
 
-deaths <- deaths[chi_geo_kc == 'King County' & year %in% 2019:2023]
+deaths <- deaths[year %in% 2019:2023]
 
-deaths <- deaths[, .(year, age, seattle, underlying_cod_code)]
+deaths <- deaths[, .(year, age, underlying_cod_code)]
 ```
 
 Now, let's identify the deaths from falls using the `rads::death_injury_matrix_count` function. To learn about this function, type `?death_injury_matrix_count` in your console or walk through the [death_functions wiki](https://github.com/PHSKC-APDE/rads/wiki). For now, just trust that this is the correct syntax:
@@ -118,7 +118,7 @@ Let's load some population data using `rads.data::synthetic_pop`
 ```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
 population <- rads.data::synthetic_population
 
-population <- population[year %in% 2019:2023 & geo == 'King County']
+population <- population[year %in% 2019:2023]
   
 head(population)
 ```
@@ -199,7 +199,7 @@ In this example we will calculate the adjusted rate of deaths from ***any cause*
 
 ```{r message=FALSE, warning=FALSE}
 deaths <- rads.data::synthetic_death
-deaths <- deaths[year == 2019 & chi_geo_kc == 'King County']
+deaths <- deaths[year == 2019]
 deaths <- deaths[, .(year, age, race)]
 head(deaths)
 ```
@@ -236,7 +236,7 @@ This table of deaths by race shows that the number of deaths among White residen
 ```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
 population <- rads.data::synthetic_population
 
-population <- population[year == 2019 & geo == 'King County']
+population <- population[year == 2019]
 
 # aggregate to pop per race and age
 population <- population[, .(pop = sum(pop)), .(race, age)]

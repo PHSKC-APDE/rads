@@ -1,4 +1,4 @@
-﻿---
+---
 title: "Death Functions"
 format: gfm
 prefer-html: false
@@ -57,7 +57,6 @@ deaths <- rads.data::synthetic_death
 names(deaths)
 summary(deaths$age)
 summary(deaths$date_of_death)
-table(deaths$chi_geo_kc, useNA = 'always')
 table(deaths$temperament)
 ```
 
@@ -157,7 +156,8 @@ deaths.20 <- deaths[between(date_of_death,
                             as.Date('2020-12-31'))]
 
 dt1 <- death_113_count(ph.data = deaths.20, 
-                       cause = 'viral hep|covid') 
+                       cause = 'viral hep|covid', 
+                       kingco = FALSE) 
 ```
 
 ```{r}
@@ -174,7 +174,8 @@ We could have specified 'Viral hepatitis' using `causeids` rather than the `caus
 #| warning: false
 #| message: false
 dt1.alt <- death_113_count(ph.data = deaths.20, 
-                           causeids = 14)
+                           causeids = 14, 
+                           kingco = FALSE)
 ```
 
 ```{r}
@@ -203,7 +204,8 @@ Now, let's use `by` to get the 113 cause of death counts by year
 #| warning: false
 #| message: false
 dt113_19_20 <- death_113_count(ph.data = deaths.19_20, 
-                               by = 'year')
+                               by = 'year', 
+                               kingco = FALSE)
 ```
 
 Finally, let's select the top five causes of death by year using data.table
@@ -235,9 +237,9 @@ First, identify deaths due to COVID-19. COVID-19 is not one of the official 113 
 #| message: false
 dt3 <- death_113_count(ph.data = deaths.20, 
                        causeids = 1,
-                       kingco = FALSE,
                        death_age_col = 'age',
-                       ypll_age = 65)
+                       ypll_age = 65, 
+                       kingco = FALSE)
 dt3 <- dt3[cause.of.death == 'COVID-19 (U07.1)'] # limit output to COVID-19
 ```
 
@@ -308,8 +310,8 @@ kable(dt4[deaths >10], format = "markdown")
 dt4.alt <- death_injury_matrix_count(ph.data = deaths.19_20, 
                                      intent = "none", 
                                      mechanism = "none",
-                                     kingco = FALSE, 
-                                     by = 'temperament')
+                                     by = 'temperament', 
+                                     kingco = FALSE)
 ```
 
 ```{r}
@@ -334,8 +336,8 @@ deaths.19_23[, year := year(date_of_death)]
 dt5 <- death_injury_matrix_count(ph.data = deaths.19_23, 
                                  intent = "homicide", 
                                  mechanism = "firearm", 
-                                 kingco = FALSE, 
-                                 by = 'temperament')
+                                 by = 'temperament', 
+                                 kingco = FALSE)
 ```
 
 ```{r}
@@ -353,9 +355,9 @@ Run `death_injury_matrix_count`
 dt6 <- death_injury_matrix_count(ph.data = deaths.19_23, 
                                  intent = "homicide", 
                                  mechanism = "firearm", 
-                                 kingco = FALSE, 
                                  death_age_col = 'age',
-                                 ypll_age = 65)
+                                 ypll_age = 65, 
+                                 kingco = FALSE)
 ```
 
 ```{r}

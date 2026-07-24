@@ -1,4 +1,4 @@
-﻿---
+---
 title: "CHARS Functions"
 format: gfm
 prefer-html: false
@@ -134,7 +134,8 @@ However, before we begin, let's review the possible arguments used by `chars_icd
 
 ```{r}
   mycode <- chars_icd_ccs_count(ph.data = charsDT, 
-                                icdcm = 'I110')
+                                icdcm = 'I110', 
+                                kingco = FALSE)
 ```
 
 ```{r}
@@ -147,7 +148,8 @@ However, before we begin, let's review the possible arguments used by `chars_icd
 
 ```{r}
   mydesc <- chars_icd_ccs_count(ph.data = charsDT, 
-                                icdcm = 'Hypertensive heart disease with heart failure')
+                                icdcm = 'Hypertensive heart disease with heart failure', 
+                                kingco = FALSE)
 ```
 
 ```{r}
@@ -162,7 +164,8 @@ These results are identical to searching by code because, for hypertensive heart
 
 ```{r}
   mydetailed <- chars_icd_ccs_count(ph.data = charsDT, 
-                                detailed = '^hypertension$')
+                                    detailed = '^hypertension$', 
+                                    kingco = FALSE)
 ```
 
 ```{r}
@@ -175,7 +178,8 @@ These results are identical to searching by code because, for hypertensive heart
 
 ```{r}
   mymidlevel <- chars_icd_ccs_count(ph.data = charsDT, 
-                                midlevel = '^hypertension$')
+                                    midlevel = '^hypertension$', 
+                                    kingco = FALSE)
 ```
 
 ```{r}
@@ -188,7 +192,8 @@ These results are identical to searching by code because, for hypertensive heart
 
 ```{r}
   mybroad <- chars_icd_ccs_count(ph.data = charsDT, 
-                                broad = 'Diseases of the circulatory system')
+                                 broad = 'Diseases of the circulatory system', 
+                                 kingco = FALSE)
 ```
 
 ```{r}
@@ -201,7 +206,8 @@ These results are identical to searching by code because, for hypertensive heart
 
 ```{r}
   mysuperlevel <- chars_icd_ccs_count(ph.data = charsDT, 
-                                superlevel = 'Chronic diseases')
+                                      superlevel = 'Chronic diseases', 
+                                      kingco = FALSE)
 ```
 
 ```{r}
@@ -250,7 +256,8 @@ The `chars_injury_matrix_count()` function is similar to the `chars_icd_ccs_coun
 ```{r}
   mat1 <- chars_injury_matrix_count(ph.data = charsDT, 
                                     intent = 'assault', 
-                                    mechanism = 'none')
+                                    mechanism = 'none', 
+                                    kingco = FALSE)
 ```
 
 ```{r}
@@ -265,7 +272,8 @@ The `chars_injury_matrix_count()` function is similar to the `chars_icd_ccs_coun
 #| message: false
   mat2 <- chars_injury_matrix_count(ph.data = charsDT, 
                                     intent = 'assault|undetermined', 
-                                    mechanism = 'none')
+                                    mechanism = 'none', 
+                                    kingco = FALSE)
 ```
 
 ```{r}
@@ -280,7 +288,8 @@ Note that you can also specify more than one intent or mechanism using a vector 
 #| message: false
   mat2.alt <- chars_injury_matrix_count(ph.data = charsDT, 
                                         intent = c('assault', 'undetermined'), 
-                                        mechanism = 'none')
+                                        mechanism = 'none', 
+                                        kingco = FALSE)
 ```
 
 ```{r}
@@ -295,7 +304,8 @@ Note that you can also specify more than one intent or mechanism using a vector 
 #| message: false
   mat3 <- chars_injury_matrix_count(ph.data = charsDT, 
                                     intent = 'none', 
-                                    mechanism = 'motor_vehicle_traffic')
+                                    mechanism = 'motor_vehicle_traffic', 
+                                    kingco = FALSE)
 ```
 
 ```{r}
@@ -312,7 +322,8 @@ You get hospitalizations due to any injury.
 #| message: false
   mat4 <- chars_injury_matrix_count(ph.data = charsDT, 
                                     intent = 'none', 
-                                    mechanism = 'none')
+                                    mechanism = 'none', 
+                                    kingco = FALSE)
 ```
 
 ```{r}
@@ -328,7 +339,7 @@ You get every possible combination of mechanism and intent. Let's look at just t
 ```{r}
 #| warning: false
 #| message: false
-  mat5 <- chars_injury_matrix_count(ph.data = charsDT)[1:10]
+  mat5 <- chars_injury_matrix_count(ph.data = charsDT, kingco = FALSE)[1:10]
 ```
 
 ```{r}
@@ -345,12 +356,14 @@ You get every possible combination of mechanism and intent. Let's look at just t
   mat6 <- chars_injury_matrix_count(ph.data = charsDT, 
                                     intent = 'none', 
                                     mechanism = 'none', 
-                                    def = 'narrow')
+                                    def = 'narrow', 
+                                    kingco = FALSE)
 
   mat7 <- chars_injury_matrix_count(ph.data = charsDT, 
                                     intent = 'none', 
                                     mechanism = 'none', 
-                                    def = 'broad')
+                                    def = 'broad', 
+                                    kingco = FALSE)
   
   deftable <- rbind(cbind(def = 'narrow', mat6),
                     cbind(def = 'broad', mat7))

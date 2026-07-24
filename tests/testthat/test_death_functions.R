@@ -54,7 +54,6 @@ library(data.table)
   test_that("Check for proper triggering of errors ...", {
     expect_error(death_113_count(ph.data = "deathDT", kingco = FALSE)) # name of data.table must be unquoted
     expect_error(death_113_count(ph.data = deathDT, icdcol = "cod.icd10", kingco = FALSE)) # warning because of period in A85.2
-    expect_error(suppressWarnings(death_113_count(ph.data = copy(deathDT)[, chi_geo_kc := NULL], kingco = TRUE))) # Should error because there is no KC data here
     expect_error(death_113_count(ph.data = deathDT, causeids = seq(1, 115, 1), kingco = FALSE)) # Should error because highest causeid is 114
     expect_error(death_113_count(ph.data = deathDT, causeids = seq(0, 114, 1), kingco = FALSE)) # Should error because lowest causeid is 0
     expect_error(death_113_count(ph.data = deathDT, causeids = c(2, 5, "7", 13), kingco = FALSE)) # Should error because of a non-numeric causeid
@@ -169,7 +168,6 @@ library(data.table)
     test_that("Check for proper triggering of errors ...", {
       expect_error(death_130_count(ph.data = "deathDT", kingco = FALSE)) # name of data.table must be unquoted
       expect_error(death_130_count(ph.data = deathDT, icdcol = "cod.icd10", kingco = FALSE)) # warning because of period in A85.2
-      expect_error(suppressWarnings(death_130_count(ph.data = copy(deathDT)[, chi_geo_kc := NULL], kingco = TRUE))) # Should error because there is no KC data here
       expect_error(death_130_count(ph.data = deathDT, causeids = seq(1, 150, 1), kingco = FALSE)) # Should error because highest causeid is 130
       expect_error(death_130_count(ph.data = deathDT, causeids = seq(0, 114, 1), kingco = FALSE)) # Should error because lowest causeid is 0
       expect_error(death_130_count(ph.data = deathDT, causeids = c(2, 5, "7", 13), kingco = FALSE)) # Should error because of a non-numeric causeid
@@ -271,7 +269,7 @@ library(data.table)
                                          icdcol = "underlying_cod_code",
                                          contributing_cols = "record_axis_code",
                                          contributing_logic = "ANY",
-                                         kingco = TRUE,
+                                         kingco = FALSE,
                                          by = c('temperament'),
                                          ypll_age = 65,
                                          death_age_col = 'age')
@@ -306,22 +304,18 @@ library(data.table)
       expect_error(death_multicause_count(ph.data = deathDT, cause_name = "opioid", kingco = "TRUE"),
                    "\U0001f47f `kingco` must be a logical value, i.e., TRUE or FALSE")
 
-      # missing chi_geo_kc when kingco == TRUE
-      expect_error(death_multicause_count(ph.data = copy(deathDT)[, chi_geo_kc := NULL], cause_name = "opioid", kingco = TRUE),
-                   "\U0001f47f `ph.data` does not have the column `chi_geo_kc`")
-
       # valid by columns
-      expect_error(death_multicause_count(ph.data = deathDT, cause_name = "opioid", by = c("invalid_column")),
+      expect_error(death_multicause_count(ph.data = deathDT, cause_name = "opioid", by = c("invalid_column"), kingco = FALSE),
                    "\U0001f6d1 The following `by` values are not column names in `ph.data`")
 
       # valid ypll_age values
-      expect_error(death_multicause_count(ph.data = deathDT, cause_name = "opioid", ypll_age = 0),
+      expect_error(death_multicause_count(ph.data = deathDT, cause_name = "opioid", ypll_age = 0, kingco = FALSE),
                    "\U0001f47f `ypll_age` must be an integer between 1 and 99")
-      expect_error(death_multicause_count(ph.data = deathDT, cause_name = "opioid", ypll_age = 100),
+      expect_error(death_multicause_count(ph.data = deathDT, cause_name = "opioid", ypll_age = 100, kingco = FALSE),
                    "\U0001f47f `ypll_age` must be an integer between 1 and 99")
 
       # valid death_age_col
-      expect_error(death_multicause_count(ph.data = deathDT, cause_name = "opioid", ypll_age = 75, death_age_col = "invalid_column"),
+      expect_error(death_multicause_count(ph.data = deathDT, cause_name = "opioid", ypll_age = 75, death_age_col = "invalid_column", kingco = FALSE),
                    "\U0001f47f `death_age_col` must be the name of column that exists in `ph.data`")
     })
 
@@ -334,14 +328,14 @@ library(data.table)
       # Test with cause_name
       result1 <- death_multicause_count(ph.data = deathDT,
                                         cause_name = 'Opioid',
-                                        kingco = TRUE)
+                                        kingco = FALSE)
 
       # Test with custom codes
       result2 <- death_multicause_count(ph.data = deathDT,
                                         underlying_codes = opioid_underlying,
                                         contributing_codes = opioid_contributing,
                                         contributing_logic = "ANY",
-                                        kingco = TRUE)
+                                        kingco = FALSE)
 
       expect_identical(sort(unique(result2$cause.of.death)), c('All causes', 'Custom multicause'))
     })
@@ -351,13 +345,13 @@ library(data.table)
       result_any <- death_multicause_count(ph.data = deathDT,
                                            cause_name = 'opioid',
                                            contributing_logic = "ANY",
-                                           kingco = TRUE)
+                                           kingco = FALSE)
 
       # Test ALL logic
       result_all <- death_multicause_count(ph.data = deathDT,
                                            cause_name = 'opioid',
                                            contributing_logic = "ALL",
-                                           kingco = TRUE)
+                                           kingco = FALSE)
 
       # ALL logic should result in fewer deaths
       expect_true(result_all[cause.of.death == 'Opioid', deaths] <= result_any[cause.of.death == 'Opioid', deaths])
@@ -375,13 +369,13 @@ library(data.table)
                                        cause_name = 'opioid',
                                        icdcol = "underlyingCOD",
                                        contributing_cols = "contributing_icd10_",
-                                       kingco = TRUE)
+                                       kingco = FALSE)
 
       result.og <- death_multicause_count(ph.data = deathDT,
                                        cause_name = 'opioid',
                                        icdcol = "underlying_cod_code",
                                        contributing_cols = "record_axis_code",
-                                       kingco = TRUE)
+                                       kingco = FALSE)
 
       expect_identical(result.alt, result.og)
     })
@@ -461,10 +455,6 @@ library(data.table)
       expect_error(death_other_count(ph.data = ph.data_clean, cause = "A00", kingco = "TRUE"),
                    "\U0001f47f `kingco` must be a logical value, i.e., TRUE or FALSE.")
 
-      # missing chi_geo_kc when when kingco == T
-      expect_error(death_other_count(ph.data = copy(ph.data_clean)[, chi_geo_kc := NULL], cause = "A00", kingco = TRUE),
-                   "\U0001f47f `ph.data` does not have the column `chi_geo_kc`, which is required for King County data.")
-
       # valid by columns
       expect_error(death_other_count(ph.data = ph.data_clean, cause = "A00", by = c("invalid_column")),
                    "\U0001f6d1 The following `by` values are not column names in `ph.data`: invalid_column.")
@@ -542,7 +532,7 @@ library(data.table)
   test_that("Check for proper triggering of errors ...", {
     expect_error(death_injury_matrix_count(ph.data = "deathDT", kingco = FALSE)) # name of data.table must be unquoted
     expect_error(death_injury_matrix_count(ph.data = deathDTx, kingco = FALSE)) # warning because data.table doesn't exist
-    expect_error(suppressWarnings(death_injury_matrix_count(ph.data = copy(deathDT)[chi_geo_kc], icdcol = "underlying_cod_code", kingco = TRUE))) # Should error because there is no KC data here
+    expect_error(suppressWarnings(death_injury_matrix_count(ph.data = copy(deathDT)[chi_geo_kc], icdcol = "underlying_cod_code", kingco = FALSE))) # Should error because there is no KC data here
     expect_error(death_injury_matrix_count(ph.data = injurydata_clean, intent = "z", , icdcol = "underlying_cod_code", kingco = FALSE)) # Should error because none of the intents have 'z'
     expect_error(death_injury_matrix_count(ph.data = injurydata_clean, , icdcol = "underlying_cod_code", mechanism = "z", kingco = FALSE)) # Should error because none of the mechanisms have 'z'
     expect_error(death_injury_matrix_count(ph.data = injurydata_clean, , icdcol = "underlying_cod_code", intent = 100, kingco = FALSE)) # Should error because intent must be a character
@@ -952,3 +942,4 @@ library(data.table)
     # test
     expect_identical(ltp_output_group_alt[race_eth == 'Hispanic' & ages == '85+']$deaths, 0L)
   })
+

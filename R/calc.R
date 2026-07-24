@@ -1,7 +1,7 @@
 #' Compute metrics from record (e.g. vital stats) or survey data
 #' @name calc
 #' @param ph.data data.table or tbl_svy. Dataset.
-#' @param what character vector. Variable to calculate metrics for.
+#' @param what character vector. Variable to calculate metrics for. Must refer to a numeric or factor column.
 #' @param where subsetting expression
 #' @param by character vector. Must refer to variables within ph.data. The variables within ph.data to compute `what` by
 #' @param metrics character. See \code{\link{metrics}} or scroll below for the available options.
@@ -68,9 +68,10 @@
 #' @export
 #'
 #' @examples
-#'
-#' #record data
 #' test.data <- rads.data::synthetic_birth
+#'
+#' # convert string to character for calculation
+#' test.data[, fetal_pres := as.factor(fetal_pres)]
 #'
 #' test.results <- calc(test.data,
 #'                      what = c("kotelchuck", "fetal_pres"),

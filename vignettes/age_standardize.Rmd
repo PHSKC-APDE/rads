@@ -286,7 +286,10 @@ pretty_kable(head(new.standard))
 **Merge the standard population onto the data**
 
 ```{r, warning=FALSE, message=FALSE, echo=TRUE, results='hide'}
-temp3 <- merge(temp2, new.standard, by = c("age", "gender"), all = T)
+temp3 <- merge(temp2, 
+               new.standard, 
+               by = c("age", "gender"), 
+               all = T)
 
 head(temp3)
 ```
@@ -380,22 +383,19 @@ Note the results in ex4.1 are exactly the same as those in ex2.2. This makes sen
 
 ## Example #5: Real world analysis
 
-You're staffing data requests today and receive the following message: "*Hi! For a class, I'd like to get the 2019 15 to 18 birth rate for King County and WA State as a whole. Since the age distribution in the county may differ from the rest of the state, it would be appreciated if you could provide crude and age-standardized rates. If you could standardize to 'World (WHO 2000-2025) Std Million (single ages to 84)', that would be great! Thank you, S. Capstone*"
+You're staffing data requests today and receive the following message: "*Hi! For a class, I'd like to get the 2019 15 to 18 birth rate for WA State. It would be appreciated if you could provide crude and age-standardized rates. If you could standardize to 'World (WHO 2000-2025) Std Million (single ages to 84)', that would be great! Thank you, S. Capstone*"
 
-You quickly pull up [CHAT](https://www.doh.wa.gov/ForPublicHealthandHealthcareProviders/PublicHealthSystemResourcesandServices/CommunityHealthAssessmentandImprovement/CHAT) only to find that this specific indicator doesn't exist. You remember that [CHI](https://kingcounty.gov/chi/) has an adolescent birth rate indicator, but are downcast when you find that it applies to those 15 to 19. In desperation, you resign yourself to using `rads`.
+You quickly pull up [CHAT](https://www.doh.wa.gov/ForPublicHealthandHealthcareProviders/PublicHealthSystemResourcesandServices/CommunityHealthAssessmentandImprovement/CHAT) only to find that this specific indicator doesn't exist. In desperation, you resign yourself to using `rads`.
 
 **Get birth counts for 15 to 18 year olds in 2019**
 
 ```{r, warning=FALSE, message=FALSE, eval=TRUE, results='hide'}
-  kcbirth <- rads.data::synthetic_birth[year == 2019 & geo_kc == 'King County', .(age, year)] 
-  wabirth <- rads.data::synthetic_birth[year == 2019, .(age, year)]
+  births <- rads.data::synthetic_birth[year == 2019 & age %in% 15:18, .(age)]
   
-  births <- rbind(kcbirth[, geo := "King County"], wabirth[, geo := "Washington State"])
-  births <- births[age %in% 15:18]
+  births <- births[, .(births = .N), by = c("age")]  # collapse / aggregate
   
-  # collapse / aggregate
-  births <- births[, .(births = .N), by = c("age", "geo")] 
-  setorder(births, geo, age)
+  setorder(births, age)
+  
   head(births)
 ```
 
@@ -406,19 +406,11 @@ pretty_kable(head(births))
 **Get the female populations corresponding to the birth counts**
 
 ```{r, warning=FALSE, message=FALSE, eval=TRUE, results='hide'}
-  kcpop <- rads.data::synthetic_population[gender == 'Female' &
-                                             geo == 'King County' & 
-                                             age %in% 15:18 & 
-                                             year == 2019]  
+  pop <- rads.data::synthetic_population[gender == 'Female' &
+                                         age %in% 15:18 & 
+                                         year == 2019]  
 
-  wapop <- rads.data::synthetic_population[gender == 'Female' &
-                                             geo == 'Washington State' & 
-                                             age %in% 15:18 & 
-                                             year == 2019]  
-
-  pop <- rbind(kcpop, wapop)
-  
-  pop <- pop[, .(pop = sum(pop)), .(age, geo)] # aggregate because it has rows for each race
+  pop <- pop[, .(pop = sum(pop)), .(age)] # aggregate because it has rows for each race
   
   head(pop)
 ```
@@ -430,7 +422,7 @@ pretty_kable(head(pop))
 **Merge population onto to birth counts**
 
 ```{r, warning=FALSE, message=FALSE, echo = TRUE, results='hide'}
-  temp5 <- merge(births, pop, by = c("age", "geo"), all = T)
+  temp5 <- merge(births, pop, by = "age", all = T)
   
   head(temp5)
 ```
@@ -448,8 +440,7 @@ pretty_kable(head(temp5))
                            my.count = "births", 
                            my.pop = "pop", 
                            per = 1000, 
-                           conf.level = 0.95, 
-                           by = "geo")
+                           conf.level = 0.95)
   head(ex5.1)
 ```
 
@@ -457,7 +448,7 @@ pretty_kable(head(temp5))
 pretty_kable(head(ex5.1))
 ```
 
-According to your analysis, the crude King County teen birth rate is lower than (`r rads::round2(ex5.1[geo=="King County"]$crude.rate, 1)` vs `r rads::round2(ex5.1[geo=="Washington State"]$crude.rate, 1)`) the WA State teen birth rate. This relationship remains largely unchanged after age-standardization (`r rads::round2(ex5.1[geo=="King County"]$adj.rate, 1)` vs `r rads::round2(ex5.1[geo=="Washington State"]$adj.rate, 1)`).
+According to your analysis, the crude rate (`r rads::round2(ex5.1$crude.rate, 2)` / 1,000) is slightly higher than the adjusted rate (`r rads::round2(ex5.1$adj.rate, 2)` / 1,000).
 
 ------------------------------------------------------------------------
 

@@ -28,7 +28,7 @@ calc(ph.data, ...)
 
 \item{...}{not implemented}
 
-\item{what}{character vector. Variable to calculate metrics for.}
+\item{what}{character vector. Variable to calculate metrics for. Must refer to a numeric or factor column.}
 
 \item{where}{subsetting expression}
 
@@ -97,9 +97,10 @@ For survey data, use the \code{proportion} argument where relevant to ensure met
 methods. That is, when you want to find the fraction of ____, toggle \code{proportion} to \code{TRUE}.
 }
 \examples{
-
-#record data
 test.data <- rads.data::synthetic_birth
+
+# convert string to character for calculation
+test.data[, fetal_pres := as.factor(fetal_pres)]
 
 test.results <- calc(test.data,
                      what = c("kotelchuck", "fetal_pres"),

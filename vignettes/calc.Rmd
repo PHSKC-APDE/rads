@@ -69,8 +69,8 @@ pretty_kable(my.est)
 
 ```{r}
 birth <- rads.data::synthetic_birth
-birth <- birth[, .(year, geo_kc, sex, race, preterm, birth_weight_grams)]
-birth <- birth[geo_kc == 'King County' & year %in% 2019:2023]
+birth <- birth[, .(year, sex, race, preterm, birth_weight_grams)]
+birth <- birth[year %in% 2019:2023]
 ```
 
 **Mean (proportion) for a binary variable over multiple years**
@@ -182,6 +182,13 @@ pretty_kable(my.est)
 
 **Proportion of 2019-2021 births among each racial group**
 
+`calc()` doesn't know how to calculate metrics for a character, so we first need to change `race` to a factor:
+
+```{r}
+birth[, race := as.factor(race)]
+```
+
+Now we can continue with our calculations:
 ```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
 my.est <- calc(ph.data = birth, 
                what = c("race"), 

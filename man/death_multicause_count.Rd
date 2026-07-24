@@ -127,7 +127,7 @@ opioid_deaths <- death_multicause_count(
   cause_name = "Opioid",
   icdcol = "underlying_cod_code",
   contributing_cols = "record_axis_code",
-  kingco = TRUE
+  kingco = FALSE
 )
 
 # Example using custom codes
