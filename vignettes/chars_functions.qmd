@@ -60,7 +60,6 @@ The synthetic dataset includes the key columns needed for injury and ICD-10-CM a
 - `injury_nature_broad` & `injury_nature_narrow`: designation of the type of injury definition used. 'narrow' follows the CDC recommendation and 'broad' follows a more expansive definition. see `?rads.data::synthetic_chars` for details
 - `injury_intent`: injury intent classification from the ICD-10-CM External Cause-of-Injury Matrix (e.g., 'assault', 'unintentional')
 - `injury_mechanism`: injury mechanism classification from the ICD-10-CM External Cause-of-Injury Matrix (e.g., 'fall', 'firearm')
-- `chi_geo_kc`: King County indicator
 - `temperament`: a categorical 'demographic' indicator for practice stratification
 
 This synthetic dataset is perfect for testing code before running analyses on real data.
@@ -128,14 +127,12 @@ However, before we begin, let's review the possible arguments used by `chars_icd
 - `detailed`: CCSR derived 'detailed' level descriptions that are of interest. Case insensitive and partial strings are allowed.
 - `icdcol`: the name of the column in `ph.data` that contains the ICD-10-CM codes. Default is `diag1`.
 - `by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
-- `kingco`: logical (T\|F) specifying whether to limit the data analysis to King County. Only works if ph.data still has the `chi_geo_kc` column.
 
 ## getting CHARS counts by ICD-10-CM code
 
 ```{r}
-  mycode <- chars_icd_ccs_count(ph.data = charsDT, 
-                                icdcm = 'I110', 
-                                kingco = FALSE)
+  mycode <- chars_icd_ccs_count(ph.data = charsDT,
+                                icdcm = 'I110')
 ```
 
 ```{r}
@@ -147,9 +144,8 @@ However, before we begin, let's review the possible arguments used by `chars_icd
 ## getting CHARS counts by ICD-10-CM description
 
 ```{r}
-  mydesc <- chars_icd_ccs_count(ph.data = charsDT, 
-                                icdcm = 'Hypertensive heart disease with heart failure', 
-                                kingco = FALSE)
+  mydesc <- chars_icd_ccs_count(ph.data = charsDT,
+                                icdcm = 'Hypertensive heart disease with heart failure')
 ```
 
 ```{r}
@@ -163,9 +159,8 @@ These results are identical to searching by code because, for hypertensive heart
 ## getting CHARS counts by `detailed` ICD-CM category
 
 ```{r}
-  mydetailed <- chars_icd_ccs_count(ph.data = charsDT, 
-                                    detailed = '^hypertension$', 
-                                    kingco = FALSE)
+  mydetailed <- chars_icd_ccs_count(ph.data = charsDT,
+                                    detailed = '^hypertension$')
 ```
 
 ```{r}
@@ -177,9 +172,8 @@ These results are identical to searching by code because, for hypertensive heart
 ## getting CHARS counts by `midlevel` ICD-CM category
 
 ```{r}
-  mymidlevel <- chars_icd_ccs_count(ph.data = charsDT, 
-                                    midlevel = '^hypertension$', 
-                                    kingco = FALSE)
+  mymidlevel <- chars_icd_ccs_count(ph.data = charsDT,
+                                    midlevel = '^hypertension$')
 ```
 
 ```{r}
@@ -191,9 +185,8 @@ These results are identical to searching by code because, for hypertensive heart
 ## getting CHARS counts by `broad` ICD-CM category
 
 ```{r}
-  mybroad <- chars_icd_ccs_count(ph.data = charsDT, 
-                                 broad = 'Diseases of the circulatory system', 
-                                 kingco = FALSE)
+  mybroad <- chars_icd_ccs_count(ph.data = charsDT,
+                                 broad = 'Diseases of the circulatory system')
 ```
 
 ```{r}
@@ -205,9 +198,8 @@ These results are identical to searching by code because, for hypertensive heart
 ## getting CHARS counts by `superlevel` ICD-CM category
 
 ```{r}
-  mysuperlevel <- chars_icd_ccs_count(ph.data = charsDT, 
-                                      superlevel = 'Chronic diseases', 
-                                      kingco = FALSE)
+  mysuperlevel <- chars_icd_ccs_count(ph.data = charsDT,
+                                      superlevel = 'Chronic diseases')
 ```
 
 ```{r}
@@ -249,15 +241,13 @@ The `chars_injury_matrix_count()` function is similar to the `chars_icd_ccs_coun
 - `by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
 - `def`: acceptable values are 'narrow' or 'broad'. It specifies whether you want to use the CDC's recommended 'narrow' approach, which requires that the **principal diagnosis** of an injury hospitalization be a nature-of-injury ICD-10-CM code. Or, alternatively, the 'broad' definition that searches all available diagnosis fields on the hospital discharge record.
 - `primary_ecode`: logical (T\|F) specifying whether to limit the analysis to using just the primary ecode (i.e., the `injury_ecode` variable), rather than all available ecodes. The vast majority of the time you will want to keep the default setting of `primary_ecode = TRUE`.
-- `kingco`: logical (T\|F) specifying whether to limit the data analysis to King County. Only works if ph.data still has the `chi_geo_kc` column.
 
 ## Specifying a single intent and ignoring the mechanism
 
 ```{r}
-  mat1 <- chars_injury_matrix_count(ph.data = charsDT, 
-                                    intent = 'assault', 
-                                    mechanism = 'none', 
-                                    kingco = FALSE)
+  mat1 <- chars_injury_matrix_count(ph.data = charsDT,
+                                    intent = 'assault',
+                                    mechanism = 'none')
 ```
 
 ```{r}
@@ -270,10 +260,9 @@ The `chars_injury_matrix_count()` function is similar to the `chars_icd_ccs_coun
 ```{r}
 #| warning: false
 #| message: false
-  mat2 <- chars_injury_matrix_count(ph.data = charsDT, 
-                                    intent = 'assault|undetermined', 
-                                    mechanism = 'none', 
-                                    kingco = FALSE)
+  mat2 <- chars_injury_matrix_count(ph.data = charsDT,
+                                    intent = 'assault|undetermined',
+                                    mechanism = 'none')
 ```
 
 ```{r}
@@ -286,10 +275,9 @@ Note that you can also specify more than one intent or mechanism using a vector 
 ```{r}
 #| warning: false
 #| message: false
-  mat2.alt <- chars_injury_matrix_count(ph.data = charsDT, 
-                                        intent = c('assault', 'undetermined'), 
-                                        mechanism = 'none', 
-                                        kingco = FALSE)
+  mat2.alt <- chars_injury_matrix_count(ph.data = charsDT,
+                                        intent = c('assault', 'undetermined'),
+                                        mechanism = 'none')
 ```
 
 ```{r}
@@ -302,10 +290,9 @@ Note that you can also specify more than one intent or mechanism using a vector 
 ```{r}
 #| warning: false
 #| message: false
-  mat3 <- chars_injury_matrix_count(ph.data = charsDT, 
-                                    intent = 'none', 
-                                    mechanism = 'motor_vehicle_traffic', 
-                                    kingco = FALSE)
+  mat3 <- chars_injury_matrix_count(ph.data = charsDT,
+                                    intent = 'none',
+                                    mechanism = 'motor_vehicle_traffic')
 ```
 
 ```{r}
@@ -320,10 +307,9 @@ You get hospitalizations due to any injury.
 ```{r}
 #| warning: false
 #| message: false
-  mat4 <- chars_injury_matrix_count(ph.data = charsDT, 
-                                    intent = 'none', 
-                                    mechanism = 'none', 
-                                    kingco = FALSE)
+  mat4 <- chars_injury_matrix_count(ph.data = charsDT,
+                                    intent = 'none',
+                                    mechanism = 'none')
 ```
 
 ```{r}
@@ -339,7 +325,7 @@ You get every possible combination of mechanism and intent. Let's look at just t
 ```{r}
 #| warning: false
 #| message: false
-  mat5 <- chars_injury_matrix_count(ph.data = charsDT, kingco = FALSE)[1:10]
+  mat5 <- chars_injury_matrix_count(ph.data = charsDT)[1:10]
 ```
 
 ```{r}
@@ -353,17 +339,15 @@ You get every possible combination of mechanism and intent. Let's look at just t
 ```{r}
 #| warning: false
 #| message: false
-  mat6 <- chars_injury_matrix_count(ph.data = charsDT, 
-                                    intent = 'none', 
-                                    mechanism = 'none', 
-                                    def = 'narrow', 
-                                    kingco = FALSE)
+  mat6 <- chars_injury_matrix_count(ph.data = charsDT,
+                                    intent = 'none',
+                                    mechanism = 'none',
+                                    def = 'narrow')
 
-  mat7 <- chars_injury_matrix_count(ph.data = charsDT, 
-                                    intent = 'none', 
-                                    mechanism = 'none', 
-                                    def = 'broad', 
-                                    kingco = FALSE)
+  mat7 <- chars_injury_matrix_count(ph.data = charsDT,
+                                    intent = 'none',
+                                    mechanism = 'none',
+                                    def = 'broad')
   
   deftable <- rbind(cbind(def = 'narrow', mat6),
                     cbind(def = 'broad', mat7))

@@ -1,5 +1,4 @@
-old_get_population <- function(kingco = T,
-                           years = NA,
+old_get_population <- function(years = NA,
                            ages = c(0:100),
                            genders = c("f", "m"),
                            races = c("aian", "asian", "black", "hispanic", "multiple", "nhpi", "white"),
@@ -91,11 +90,6 @@ old_get_population <- function(kingco = T,
 
 
 
-  # check kingco ----
-  if( !is.logical(kingco) | length(kingco) != 1){
-    stop(paste0("The `kingco` argument ('", paste(kingco, collapse = ', '), "') you entered is invalid. It must be a logcial vector (i.e., TRUE or FALSE) of length 1"))
-  }
-
   # check years ----
   avail.years <- as.integer(DBI::dbGetQuery(conn = con, "SELECT DISTINCT year from [ref].[pop]")[]$year)
 
@@ -155,14 +149,6 @@ old_get_population <- function(kingco = T,
 
   if(geo_type == "seattle"){seattle = 1; geo_type = 'region'} # Seattle is just one of four regions, so set to region and then subset results at end
   if(geo_type == "wa"){wastate = 1; geo_type = 'county'} # WA State is just the sum of all counties
-
-  if(kingco == F & !geo_type %in% c('blk', 'blkgrp', 'lgd', 'tract', 'scd', 'zip')){
-    stop("When 'kingco = F', permissible geo_types are limited to 'blk', 'blkgrp', 'scd', 'tract', and 'zip'.")
-  }
-
-  if(kingco == F & ! geo_type %in% c("lgd", "scd", "zip")){
-    warning("When 'kingco = F', all permissible geo_types except for 'county', 'lgd', 'scd', 'wa', and 'zip' will provide estimates for King, Snohomish, and Pierce counties only.")
-  }
 
   # check group_by ----
   if(!is.null(group_by)){
@@ -241,10 +227,10 @@ old_get_population <- function(kingco = T,
                          AND age IN ({tmpages})
                          AND raw_gender IN ({tmpgenders})
                          AND {tmprace_type} ", .con = con)
-  if(kingco == T & geo_type %in% c("blk", "blkgrp")){sql_query = glue::glue_sql("{sql_query} AND fips_co = 33 ", .con = con)}
-  if(kingco == T & geo_type == "lgd"){sql_query = glue::glue_sql("{sql_query} AND geo_id IN ({tmplgds}) ", .con = con)}
-  if(kingco == T & geo_type == "scd"){sql_query = glue::glue_sql("{sql_query} AND geo_id IN ({tmpscds}) ", .con = con)}
-  if(kingco == T & geo_type == "zip"){sql_query = glue::glue_sql("{sql_query} AND geo_id IN ({tmpzips}) ", .con = con)}
+  if(geo_type %in% c("blk", "blkgrp")){sql_query = glue::glue_sql("{sql_query} AND fips_co = 33 ", .con = con)}
+  if(geo_type == "lgd"){sql_query = glue::glue_sql("{sql_query} AND geo_id IN ({tmplgds}) ", .con = con)}
+  if(geo_type == "scd"){sql_query = glue::glue_sql("{sql_query} AND geo_id IN ({tmpscds}) ", .con = con)}
+  if(geo_type == "zip"){sql_query = glue::glue_sql("{sql_query} AND geo_id IN ({tmpzips}) ", .con = con)}
   if(!is.null(group_by)){sql_query = glue::glue_sql("{sql_query} GROUP BY {tmpgroup_by} ORDER BY {tmpgroup_by}", .con = con)}
 
   # generate supplemental SQL query for Hispanic ethnicity ----
@@ -384,18 +370,8 @@ old_get_population <- function(kingco = T,
 
   # zip ----
   if(is.null(group_by)){
-    if(geo_type_orig == "zip" & kingco == T ){
+    if(geo_type_orig == "zip"){
       pop.dt[, geo_id := "All KC zip codes"]
-    }
-    if(geo_type_orig == "zip" & kingco == F ){
-      pop.dt[, geo_id := "All WA zip codes"]
-    }
-    if(geo_type_orig != "zip" & kingco == F){
-      pop.dt[, geo_id := "King, Pierce, & Snohomish counties"]
-    }
-  }else{
-    if(geo_type_orig == "zip" & kingco == F & !"geo_id" %in% group_by_orig ){
-      pop.dt[, geo_id := "WA State"]
     }
   }
 

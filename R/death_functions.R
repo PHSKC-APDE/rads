@@ -96,14 +96,6 @@ death_113 <- function(){
 #' The default is \code{underlying_cod_code}, which is found in properly
 #' formatted death data structured like \code{rads.data::synthetic_death}.
 #'
-#' @param kingco a logical vector of length one. It specifies whether you want to
-#' limit the analysis to King County.
-#'
-#' **NOTE** this only works with data structured like \code{rads.data::synthetic_death}
-#' because it needs the variable \code{chi_geo_kc}.
-#'
-#' The default is kingco = TRUE.
-#'
 #' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
 #' results. For example, if you specified \code{by = c('chi_sex',
@@ -168,7 +160,6 @@ death_113 <- function(){
 #'                        causeids = seq(1, 113, 1),
 #'                        cause = NULL,
 #'                        icdcol = "underlying_cod_code",
-#'                        kingco = FALSE,
 #'                        ypll_age = NULL,
 #'                        death_age_col = NULL)
 #' head(eg1)
@@ -178,7 +169,6 @@ death_113 <- function(){
 #'                        causeids = seq(1, 113, 1),
 #'                        cause = NULL,
 #'                        icdcol = "underlying_cod_code",
-#'                        kingco = FALSE,
 #'                        ypll_age = 65,
 #'                        death_age_col = "age")
 #' head(eg2)
@@ -189,7 +179,6 @@ death_113_count <- function(ph.data,
                             causeids = seq(1, 113, 1),
                             cause = NULL,
                             icdcol = "underlying_cod_code",
-                            kingco = TRUE,
                             by = NULL,
                             ypll_age = NULL,
                             death_age_col = NULL){
@@ -199,7 +188,6 @@ death_113_count <- function(ph.data,
                                     causeids = causeids,
                                     cause = cause,
                                     icdcol = icdcol,
-                                    kingco = kingco,
                                     by = by,
                                     ypll_age = ypll_age,
                                     death_age_col = death_age_col,
@@ -300,14 +288,6 @@ death_130<- function(){
 #' The default is \code{underlying_cod_code}, which is found in properly
 #' formatted death data structured like \code{rads.data::synthetic_death}.
 #'
-#' @param kingco a logical vector of length one. It specifies whether you want to
-#' limit the analysis to King County.
-#'
-#' **NOTE** this only works with data structured like \code{rads.data::synthetic_death}
-#' because it needs the variable \code{chi_geo_kc}.
-#'
-#' The default is kingco = TRUE.
-#'
 #' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
 #' results. For example, if you specified \code{by = c('sex',
@@ -372,7 +352,6 @@ death_130<- function(){
 #'                        causeids = seq(1, 130, 1),
 #'                        cause = NULL,
 #'                        icdcol = "underlying_cod_code",
-#'                        kingco = FALSE,
 #'                        ypll_age = NULL,
 #'                        death_age_col = NULL)
 #' head(eg1)
@@ -383,7 +362,6 @@ death_130_count <- function(ph.data,
                             causeids = seq(1, 130, 1),
                             cause = NULL,
                             icdcol = "underlying_cod_code",
-                            kingco = TRUE,
                             by = NULL,
                             ypll_age = NULL,
                             death_age_col = NULL){
@@ -393,7 +371,6 @@ death_130_count <- function(ph.data,
                                     causeids = causeids,
                                     cause = cause,
                                     icdcol = icdcol,
-                                    kingco = kingco,
                                     by =  by,
                                     ypll_age = ypll_age,
                                     death_age_col = death_age_col,
@@ -587,12 +564,6 @@ death_injury_matrix<- function(){
 #' The default is \code{underlying_cod_code}, which is found in properly
 #' formatted death data structured like \code{rads.data::synthetic_death}.
 #'
-#' @param kingco a logical vector of length one. It specifies whether you want to
-#' limit the analysis to King County. Note that this only works with data
-#' structured like \code{rads.data::synthetic_death}.
-#'
-#' The default is \code{kingco = TRUE}.
-#'
 #' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
 #' results. For example, if you specified \code{by = c('chi_sex',
@@ -668,7 +639,6 @@ death_injury_matrix<- function(){
 #'                             intent = "*",
 #'                             mechanism = "*",
 #'                             icdcol = "underlying_cod_code",
-#'                             kingco = FALSE,
 #'                             ypll_age = NULL,
 #'                             death_age_col = NULL)
 #' head(eg1)
@@ -678,7 +648,6 @@ death_injury_matrix<- function(){
 #'                             intent = "icide",
 #'                             mechanism = "fall",
 #'                             icdcol = "underlying_cod_code",
-#'                             kingco = FALSE,
 #'                             ypll_age = NULL,
 #'                             death_age_col = NULL)
 #' head(eg2)
@@ -688,7 +657,6 @@ death_injury_matrix<- function(){
 #'                             intent = "none",
 #'                             mechanism = "none",
 #'                             icdcol = "underlying_cod_code",
-#'                             kingco = FALSE,
 #'                             ypll_age = NULL,
 #'                             death_age_col = NULL)
 #' eg3[]
@@ -698,7 +666,6 @@ death_injury_matrix<- function(){
 #'                             intent = "none",
 #'                             mechanism = "none",
 #'                             icdcol = "underlying_cod_code",
-#'                             kingco = FALSE,
 #'                             ypll_age = 65,
 #'                             death_age_col = "age")
 #' eg4[]
@@ -709,7 +676,6 @@ death_injury_matrix<- function(){
 #'                             intent = "suicide",
 #'                             mechanism = "none",
 #'                             icdcol = "underlying_cod_code",
-#'                             kingco = FALSE,
 #'                             by = 'age',
 #'                             ypll_age = NULL,
 #'                             death_age_col = NULL)
@@ -720,13 +686,12 @@ death_injury_matrix_count <- function(ph.data,
                                 intent = "*",
                                 mechanism = "*",
                                 icdcol = "underlying_cod_code",
-                                kingco = TRUE,
                                 by = NULL,
                                 ypll_age = NULL,
                                 death_age_col = NULL){
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
   x_intent <- x_mechanism <- x_reftable <- x_combo <- orig.coding <- orig.order <- underlying_cod_code <- NULL
-  chi_geo_kc <- '.' <- deaths <- icd10 <- icd10_tempy <- NULL
+  '.' <- deaths <- icd10 <- icd10_tempy <- NULL
   calculated.age <- x_ypll <- date_of_death <- date_of_birth <-  NULL
 
   # Check arguments ----
@@ -751,22 +716,6 @@ death_injury_matrix_count <- function(ph.data,
     # icdcol ----
       # validated by death_validate_data()
       ph.data[, icd10_tempy := get(icdcol)]
-
-    # kingco ----
-      # chi_geo_kc validated by death_validate_data() if it exists in ph.data
-      if (!is.logical(kingco)) {
-        stop("\n\U0001f47f `kingco` must be a logical value, i.e., TRUE or FALSE.")
-      }
-
-      if (kingco && !"chi_geo_kc" %in% names(ph.data)) {
-        stop(
-          "\n\U0001f47f `ph.data` does not have the column `chi_geo_kc`, which is required for King County data."
-        )
-      }
-
-      if (kingco) {
-        ph.data <- ph.data[chi_geo_kc == 'King County']
-      }
 
     # by ----
       if (!is.null(by)) {
@@ -1109,14 +1058,6 @@ death_multicause <- function(){
 #'
 #' The default is `"ANY"`.
 #'
-#' @param kingco a logical vector of length one. It specifies whether you want to
-#' limit the analysis to King County.
-#'
-#' **NOTE** this only works with data structured like `rads.data::synthetic_death`
-#' because it needs the variable `chi_geo_kc`.
-#'
-#' The default is `kingco = TRUE`.
-#'
 #' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
 #' results. For example, if you specified `by = c('chi_sex', 'chi_race_6')`,
@@ -1172,8 +1113,7 @@ death_multicause <- function(){
 #'   ph.data = deathDT,
 #'   cause_name = "Opioid",
 #'   icdcol = "underlying_cod_code",
-#'   contributing_cols = "record_axis_code",
-#'   kingco = FALSE
+#'   contributing_cols = "record_axis_code"
 #' )
 #'
 #' # Example using custom codes
@@ -1183,8 +1123,7 @@ death_multicause <- function(){
 #'   contributing_codes = c("T400", "T401"),
 #'   contributing_logic = "ANY",
 #'   icdcol = "underlying_cod_code",
-#'   contributing_cols = "record_axis_code",
-#'   kingco = FALSE
+#'   contributing_cols = "record_axis_code"
 #' )
 #'
 death_multicause_count <- function(ph.data,
@@ -1194,7 +1133,6 @@ death_multicause_count <- function(ph.data,
                                    icdcol = "underlying_cod_code",
                                    contributing_cols = "record_axis_code",
                                    contributing_logic = "ANY",
-                                   kingco = TRUE,
                                    by = NULL,
                                    ypll_age = NULL,
                                    death_age_col = NULL) {
@@ -1297,20 +1235,6 @@ death_multicause_count <- function(ph.data,
 
       # Clean contributing causes columns in ph.data
       ph.data[, (contrib_col_names) := lapply(.SD, death_icd10_clean), .SDcols = contrib_col_names]
-
-    # kingco ----
-      if (!is.logical(kingco)) {
-        stop("\n\U0001f47f `kingco` must be a logical value, i.e., TRUE or FALSE.")
-      }
-
-      if (kingco && !"chi_geo_kc" %in% names(ph.data)) {
-        stop("\n\U0001f47f `ph.data` does not have the column `chi_geo_kc`, ",
-             "which is required for King County data.")
-      }
-
-      if (kingco) {
-        ph.data <- ph.data[chi_geo_kc == 'King County']
-      }
 
     # by ----
       if (!is.null(by)) {
@@ -1553,14 +1477,6 @@ death_other<- function(){
 #' The default is \code{underlying_cod_code}, which is found in properly
 #' formatted death data structured like \code{rads.data::synthetic_death}.
 #'
-#' @param kingco a logical vector of length one. It specifies whether you want to
-#' limit the analysis to King County.
-#'
-#' **NOTE**
-#' this only works with data structured like \code{rads.data::synthetic_death}.
-#'
-#' The default is kingco = TRUE.
-#'
 #' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
 #' results. For example, if you specified \code{by = c('chi_sex',
@@ -1615,7 +1531,6 @@ death_other<- function(){
 #' eg1 <- death_other_count(ph.data = deathDT,
 #'                        cause = "dose|induce",
 #'                        icdcol = "underlying_cod_code",
-#'                        kingco = FALSE,
 #'                        ypll_age = NULL,
 #'                        death_age_col = NULL)
 #' head(eg1)
@@ -1624,7 +1539,6 @@ death_other<- function(){
 #' eg2 <- death_other_count(ph.data = deathDT,
 #'                        cause = "dose|induce",
 #'                        icdcol = "underlying_cod_code",
-#'                        kingco = FALSE,
 #'                        ypll_age = 65,
 #'                        death_age_col = "age")
 #' head(eg2)
@@ -1634,14 +1548,13 @@ death_other<- function(){
 death_other_count <- function(ph.data,
                                cause,
                                icdcol = "underlying_cod_code",
-                               kingco = TRUE,
                                by = NULL,
                                ypll_age = NULL,
                                death_age_col = NULL){
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
   problem.icds <- long113 <-  cause.of.death <- deaths <- '.' <- NULL
   x_reftable <- x_combo <- x_covid <- x_cause <- x_all <- x_ypll <- NULL
-  chi_geo_kc <- underlying_cod_code <- icd10_tempy <- ypll_col_name <- NULL
+  underlying_cod_code <- icd10_tempy <- ypll_col_name <- NULL
   date_of_death <- date_of_birth <- calculated.age <- orig.coding <- icd10 <- NULL
 
   # Check arguments ----
@@ -1663,21 +1576,6 @@ death_other_count <- function(ph.data,
     # icdcol ----
       # validated by death_validate_data()
       ph.data[, icd10_tempy := get(icdcol)]
-
-    # check that kingco is a logical ----
-      if (!is.logical(kingco)) {
-        stop("\n\U0001f47f `kingco` must be a logical value, i.e., TRUE or FALSE.")
-      }
-
-      if (kingco && !"chi_geo_kc" %in% names(ph.data)) {
-        stop(
-          "\n\U0001f47f `ph.data` does not have the column `chi_geo_kc`, which is required for King County data."
-        )
-      }
-
-      if (kingco) {
-        ph.data <- ph.data[chi_geo_kc == 'King County']
-      }
 
     # by ----
       if (!is.null(by)) {
@@ -1921,10 +1819,6 @@ death_other_count <- function(ph.data,
 #' - The column specified by `icdcol` exists in `ph.data`
 #' - ICD-10 codes in `icdcol` are consistent with the expectations of the rads death functions
 #'
-#' **Checked if present:**
-#' - `chi_geo_kc`: if this column exists in `ph.data`, it must contain only
-#'   `"King County"` or `NA`
-#'
 #' **Checked when `check_multicause = TRUE`:**
 #' - Columns matching `<contributing_cols>_1`, `<contributing_cols>_2`, etc.
 #'   must exist in `ph.data`
@@ -2033,14 +1927,6 @@ death_validate_data <- function(ph.data = NULL,
       stop("\n\U0001f47f `verbose` must be a logical vector of length 1, i.e., TRUE or FALSE.")
     }
 
-  # Validate chi_geo_kc (if it exists) ----
-    if ('chi_geo_kc' %in% names(ph.data) &&
-        length(setdiff(unique(ph.data$chi_geo_kc), c('King County', NA))) > 0) {
-      stop('\n\U0001F6D1 `chi_geo_kc` exists and has values other than "King County" and NA.\n',
-           "If your analyses are not specific to King County, WA, feel free to delete the chi_geo_kc column.\n",
-           "Otherwise, please fix chi_geo_kc and run again.")
-    }
-
   # Return success message if verbose = TRUE ----
     if (verbose) {
       message("\U0001f642 Validation passed! Data is ready for use with rads death analysis functions.")
@@ -2089,14 +1975,6 @@ death_validate_data <- function(ph.data = NULL,
 #'
 #' The default is \code{underlying_cod_code}, which is found in properly
 #' formatted death data structured like \code{rads.data::synthetic_death}.
-#'
-#' @param kingco a logical vector of length one. It specifies whether you want to
-#' limit the analysis to King County.
-#'
-#' **NOTE** this only works with data structured like \code{rads.data::synthetic_death}
-#' because it needs the variable \code{chi_geo_kc}.
-#'
-#' The default is kingco = TRUE.
 #'
 #' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
@@ -2150,7 +2028,6 @@ death_validate_data <- function(ph.data = NULL,
 #'                        causeids = seq(1, 113, 1),
 #'                        cause = NULL,
 #'                        icdcol = "underlying_cod_code",
-#'                        kingco = FALSE,
 #'                        ypll_age = NULL,
 #'                        death_age_col = NULL,
 #'                        nchsnum = 113)
@@ -2166,7 +2043,6 @@ death_xxx_count <- function(ph.data,
                             causeids = NULL,
                             cause = NULL,
                             icdcol = "underlying_cod_code",
-                            kingco = TRUE,
                             by = NULL,
                             ypll_age = NULL,
                             death_age_col = NULL,
@@ -2174,7 +2050,7 @@ death_xxx_count <- function(ph.data,
   # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
     problem.icds  <-  causeid <- cause.of.death <- deaths <- '.' <- NULL
     x_reftable <- x_combo <- x_covid <- x_cause <- x_all <- x_ypll <- NULL
-    chi_geo_kc <- underlying_cod_code <- icd10 <- x.causeid <- icd10_tempy <- NULL
+    underlying_cod_code <- icd10 <- x.causeid <- icd10_tempy <- NULL
     date_of_death <- date_of_birth <- calculated.age <- orig.coding <- ypll_col_name <- NULL
 
   # Check arguments ----
@@ -2224,21 +2100,6 @@ death_xxx_count <- function(ph.data,
     # icdcol ----
       # validated by death_validate_data()
       ph.data[, icd10_tempy := get(icdcol)]
-
-    # kingco ----
-      if (!is.logical(kingco)) {
-        stop("\n\U0001f47f `kingco` must be a logical value, i.e., TRUE or FALSE.")
-      }
-
-      if (kingco && !"chi_geo_kc" %in% names(ph.data)) {
-        stop(
-          "\n\U0001f47f `ph.data` does not have the column `chi_geo_kc`, which is required for King County data."
-        )
-      }
-
-      if (kingco) {
-        ph.data <- ph.data[chi_geo_kc == 'King County']
-      }
 
     # by ----
       if (!is.null(by)) {

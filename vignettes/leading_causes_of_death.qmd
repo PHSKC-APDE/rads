@@ -137,8 +137,7 @@ As you can see with Tuberculosis in rows 4 & 5, multiple `causeid`s will sometim
 death_count <- death_113_count(
   ph.data = death,
   icdcol = 'underlying_cod_code',
-  by = c('sex', 'age'),
-  kingco = FALSE
+  by = c('sex', 'age')
 )
 ```
 
@@ -204,10 +203,9 @@ pretty_kable(head(death_count[deaths >= 10]))
 #| warning: false
 # Do not specify`cause` or `causeids` arguments in order to get all causes of death
 infdeath_count <- death_130_count(
-  ph.data = infdeath, 
+  ph.data = infdeath,
   icdcol = 'underlying_cod_code',
-  by = 'sex',
-  kingco = FALSE 
+  by = 'sex'
 )
 ```
 

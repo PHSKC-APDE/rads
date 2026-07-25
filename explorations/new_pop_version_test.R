@@ -23,9 +23,6 @@ test_that('get_population',{
   expect_equal(get_population(years = 2018, geo_type = "kc", census_vintage = 2020, geo_vintage = 2020, schema = schema, table_prefix = prefix, mykey = con)$pop,
                get_population(years = 2018, census_vintage = 2020, geo_vintage = 2020, schema = schema, table_prefix = prefix, mykey = con)$pop)  # KC 2018
 
-  expect_gt( nrow(suppressWarnings(get_population(geo_type = "zip", kingco = F, census_vintage = 2020, geo_vintage = 2020, schema = schema, table_prefix = prefix, mykey = con))),
-             nrow(get_population(geo_type = "zip", kingco = T, census_vintage = 2020, geo_vintage = 2020, schema = schema, table_prefix = prefix, mykey = con))) # confirm kingco=T works
-
 
   expect_equal(get_population(race_type = "race_eth", races = c("hispanic"), census_vintage = 2020, geo_vintage = 2020, schema = schema, table_prefix = prefix, mykey = con)$pop,
                get_population(race_type = "race", races = c("hispanic"), census_vintage = 2020, geo_vintage = 2020, group_by = "race", schema = schema, table_prefix = prefix, mykey = con)$pop) # check Hispanic ethnicity == Hispanic race when sole race/eth selected, independent of group_by
@@ -37,7 +34,7 @@ test_that('get_population',{
              get_population(race_type = "race_eth", races = c("hispanic", "white"), group_by = "race_eth", census_vintage = 2020, geo_vintage = 2020, schema = schema, table_prefix = prefix, mykey = con)[race_eth == "White"]$pop) # White >> White-NH
 
 
-  expect_equal(17, nrow(get_population(geo_type = "lgd", years = 2020, geo_vintage = 2020, census_vintage = 2020, round = T, schema = schema, table_prefix = prefix, mykey = con))) # ensure kingco = T (default) subsets to KC districts only
+  expect_equal(17, nrow(get_population(geo_type = "lgd", years = 2020, geo_vintage = 2020, census_vintage = 2020, round = T, schema = schema, table_prefix = prefix, mykey = con))) # ensure default subsets to KC districts only
 
   # expectations for race_eth, race, and race_aic
   r1.1 = get_population(geo_type = 'county', years = c(2000,2010,2022), ages = c(0:10, 90:100), genders = 'F', races = c('aian', 'hispanic'), race_type = 'race_eth', group_by = 'race_eth', geo_vintage = 2020, census_vintage = 2020, schema = schema, table_prefix = prefix, mykey = con)

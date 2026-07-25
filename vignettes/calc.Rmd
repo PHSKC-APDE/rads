@@ -262,14 +262,14 @@ class(mysurvey)
 
 **Let's get on the same page re: the meaning of the columns output by `calc()` when analyzing survey data**
 
-First, create a simple tabulation of the population of Seattle after sub-setting PUMS to King County.
+First, create a simple tabulation of the population of Seattle after sub-setting PUMS to adults (age 18+).
 
 ```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
-my.est <- calc(ph.data = mysurvey, 
-               what = "seattle", 
-               metrics = c('mean', 'numerator', 'denominator', 'obs', 'total'), 
+my.est <- calc(ph.data = mysurvey,
+               what = "seattle",
+               metrics = c('mean', 'numerator', 'denominator', 'obs', 'total'),
                proportion = T,
-               where = chi_geo_kc == "King County")
+               where = agep >= 18)
 print(my.est)
 ```
 
@@ -277,8 +277,8 @@ print(my.est)
 pretty_kable(my.est)
 ```
 
--   `mean`: The proportion of the total population (i.e., King County) that lives in Seattle
--   `total`: The survey weighted population of Seattle and seattle residents in King County
+-   `mean`: The proportion of the total population (i.e., adults) that lives in Seattle
+-   `total`: The survey weighted population of Seattle and seattle residents among adults
 -   `numerator`: The number of rows with people living in Seattle, compare to `nrow(mysurvey[seattle == 'Seattle'])`
 -   `denominator`: The number of rows in the dataset where the 'what' variable can be assessed because it is not missing, compare to `nrow(mysurvey[!is.na(seattle)])`
 -   `obs`: The number of rows in the dataset after filtering by the 'where' argument.
@@ -288,10 +288,10 @@ To highlight the difference between `denominator` and `obs`, in this next exampl
 ```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
 mysurvey2 <- copy(mysurvey)
 mysurvey2 <- mysurvey2[seattle == 'Seattle', seattle := ifelse(rowid(seattle) <= 100, NA, seattle)]
-my.est <- calc(ph.data = mysurvey2, 
-               what = "seattle", 
-               metrics = c('denominator', 'obs'), 
-               where = chi_geo_kc == "King County")
+my.est <- calc(ph.data = mysurvey2,
+               what = "seattle",
+               metrics = c('denominator', 'obs'),
+               where = agep >= 18)
 print(my.est)
 ```
 
@@ -333,13 +333,13 @@ pretty_kable(my.est)
 ```
 
 
-**Mean & median age in King County, by disability status**
+**Mean & median age of adults, by disability status**
 
 ```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
-my.est <- calc(ph.data = mysurvey, 
+my.est <- calc(ph.data = mysurvey,
                what = c("agep"),
-               where = chi_geo_kc == "King County",
-               metrics = c("mean", "median", "rse"), 
+               where = agep >= 18,
+               metrics = c("mean", "median", "rse"),
                by = "disability")[]
 print(my.est)
 ```

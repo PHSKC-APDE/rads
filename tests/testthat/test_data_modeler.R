@@ -2,7 +2,6 @@ test_that("data_modeler creates matching types", {
   observations <- 1000
   DTTest <- data.table(
     id = 1:observations,
-    chi_geo_kc = sample(c('King County',NA_character_), observations, replace = T),
     chi_race_7 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), observations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
     chi_sex = as.factor(sample(c("Male","Female"), observations, replace = T)),
     chi_geo_region = factor(sample(c("South", "North", "Seattle", "East"), observations, replace = T), levels = c("South","North","Seattle","East")),

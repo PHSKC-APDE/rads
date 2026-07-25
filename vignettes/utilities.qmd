@@ -250,7 +250,6 @@ Our demo "real" data has one indicator variable that represents an outcome that 
 ```{r create demonstration "real" data}
 DT.real.data <- data.table(
    id = 1:1000,
-   chi_geo_kc = sample(c('King County',NA), 1000, replace = T),
    chi_race_7 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), 1000, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
    chi_sex = as.factor(sample(c("Male","Female"), 1000, replace = T)),
    chi_geo_region = factor(sample(c("South", "North", "Seattle", "East"), 1000, replace = T), levels = c("South","North","Seattle","East")))
@@ -307,10 +306,9 @@ DT.synthetic.data <- data_modeler(ph.data = DT.real.data,
 The code below is what is used to generate the synthetic data. Using this approach you can see the data, sample approach and rates for each variable. Because we ran `data_modeler()` with `comments = TRUE`, we also see a human-readable string at the end of each line describing how each variable was classified by data_modeler. This allows you to review the logic, make changes, and share the code with others.
 
 ```{r code from terminal}
-DT <- data.table( 
-`id` = as.integer(1:100), # as an identifying (all unique) integer 
-`chi_geo_kc` = sample(c(NA, "King County"), 100, replace = TRUE, prob = c(0.494, 0.506)), # as categorical character (non factor) 
-`chi_race_7` = factor(sample(c("Black", "White", "AIAN", NA, "Asian", "Multiple", "Other", "NHPI", "Hispanic"), 100, replace = TRUE, prob = c(0.193, 0.014, 0.067, 0.11, 0.012, 0.36, 0.064, 0.157, 0.023)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple"), ordered = FALSE), # as factor 
+DT <- data.table(
+`id` = as.integer(1:100), # as an identifying (all unique) integer
+`chi_race_7` = factor(sample(c("Black", "White", "AIAN", NA, "Asian", "Multiple", "Other", "NHPI", "Hispanic"), 100, replace = TRUE, prob = c(0.193, 0.014, 0.067, 0.11, 0.012, 0.36, 0.064, 0.157, 0.023)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple"), ordered = FALSE), # as factor
 `chi_sex` = factor(sample(c("Male", "Female"), 100, replace = TRUE, prob = c(0.518, 0.482)), levels = c("Female", "Male"), ordered = FALSE), # as factor 
 `chi_geo_region` = factor(sample(c("Seattle", "South", "North", "East"), 100, replace = TRUE, prob = c(0.241, 0.229, 0.258, 0.272)), levels = c("South", "North", "Seattle", "East"), ordered = FALSE), # as factor 
 `indicator1` = sample(c("always", "never", NA, "sometimes"), 100, replace = TRUE, prob = c(0.424, 0.36, 0.193, 0.023))) # as categorical character (non factor)

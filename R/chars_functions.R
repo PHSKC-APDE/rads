@@ -140,15 +140,6 @@ chars_injury_matrix <- function(){
 #'
 #' The default is `primary_ecode = TRUE`
 #'
-#' @param kingco a logical vector of length one. It specifies whether you want to
-#' limit the analysis to King County. This parameter is specific to Washington State
-#' CHARS data and requires the column `chi_geo_kc`, which is provided by
-#' [apde.data::chars()].
-#'
-#' For users outside of King County or Washington State, set `kingco = FALSE`.
-#'
-#' The default is `kingco = TRUE`
-#'
 #' @details
 #' Since the injury analysis uses many columns, we suggest that you obtain
 #' ph.data with `apde.data::chars(cols = NA)`, rather than trying to specify the
@@ -185,15 +176,13 @@ chars_injury_matrix <- function(){
 #' myresult <- chars_injury_matrix_count(ph.data = rads.data::synthetic_chars,
 #'                                       intent = '^intentional',
 #'                                       mechanism = 'none',
-#'                                       by = c('temperament'),
-#'                                       kingco = FALSE)
+#'                                       by = c('temperament'))
 #' print(myresult)
 #'
 #' myresult <- chars_injury_matrix_count(ph.data = rads.data::synthetic_chars,
 #'                                       intent = 'unintentional',
 #'                                       mechanism = 'fall',
-#'                                       by = c('temperament'),
-#'                                       kingco = FALSE)
+#'                                       by = c('temperament'))
 #' print(myresult)
 #' }
 #'
@@ -202,8 +191,7 @@ chars_injury_matrix_count <- function(ph.data = NULL,
                                       mechanism = "*",
                                       by = NULL,
                                       def = 'narrow',
-                                      primary_ecode = TRUE,
-                                      kingco = TRUE){
+                                      primary_ecode = TRUE){
   # Check arguments ----
   # ph.data ----
   ph.data <- chars_validate_data(ph.data = ph.data,
@@ -249,14 +237,6 @@ chars_injury_matrix_count <- function(ph.data = NULL,
   if(isFALSE(primary_ecode)){stop(paste0("\n\U1F6D1 \U2620 \U0001f47f\n",
                                          " You set 'primary_ecode = F'. This is no longer a valid option. If you want to use other ecodes\n",
                                          " you will have to perform a custom analysis using [chars].[stage_diag] & [chars].[stage_ecode]."))}
-
-  # kingco ----
-  if(!(identical(kingco, TRUE) || identical(kingco, FALSE))){stop("\n\U0001f47f `kingco` must be a logical vector of length 1, i.e., TRUE or FALSE.")}
-  if (isTRUE(kingco) & (!"chi_geo_kc" %in% names(ph.data))){
-    stop("\n\U0001f47f You specified kingco=TRUE, but `ph.data` does not have the following columns that identify King County data:
-                   chi_geo_kc")
-  }
-  if (isTRUE(kingco)){ph.data <- ph.data[chi_geo_kc == "King County"]}
 
   # Apply narrow or broad definition ----
   if(def == 'narrow'){ph.data <- ph.data[injury_nature_narrow == T & !is.na(injury_intent) & !is.na(injury_mechanism)]}
@@ -607,15 +587,6 @@ chars_icd_ccs <- function(ref_type = 'all',
 #'
 #' The default is `by = NULL`
 #'
-#' @param kingco a logical vector of length one. It specifies whether you want to
-#' limit the analysis to King County. This parameter is specific to Washington State
-#' CHARS data and requires the column `chi_geo_kc`, which is provided by
-#' [apde.data::chars()].
-#'
-#' For users outside of King County or Washington State, set `kingco = FALSE`.
-#'
-#' The default is `kingco = TRUE`
-#'
 #' @return
 #' Generates a table with columns for each of the search terms you entered (e.g.,
 #' `icdcm`, `broad`, and/or `detailed`) as well as
@@ -630,16 +601,14 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' \donttest{
 #' myresult <- chars_icd_ccs_count(ph.data = rads.data::synthetic_chars,
 #'                                 detailed = 'headache',
-#'                                 by = c('temperament'),
-#'                                 kingco = FALSE)
+#'                                 by = c('temperament'))
 #' print(myresult)
 #'
 #' myrefTable <- chars_icd_ccs()
 #' myresult <- chars_icd_ccs_count(ph.data = rads.data::synthetic_chars,
 #'                                 CMtable = myrefTable,
 #'                                 detailed = 'asthma',
-#'                                 by = c('temperament'),
-#'                                 kingco = FALSE)
+#'                                 by = c('temperament'))
 #' print(myresult)
 #' }
 #'
@@ -652,8 +621,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
                                 midlevel = NULL,
                                 detailed = NULL,
                                 icdcol = 'diag1',
-                                by = NULL,
-                                kingco = TRUE){
+                                by = NULL){
 
   # Check arguments & filter reference table of all ICD CM (CMtable) ----
     # ph.data ----
@@ -788,13 +756,6 @@ chars_icd_ccs_count <- function(ph.data = NULL,
           }
         }
 
-    # kingco ----
-        if(!is.logical(kingco) || length(kingco) != 1 || is.na(kingco)){stop("\n\U0001f47f `kingco` must be a logical vector of length 1, i.e., TRUE or FALSE.")}
-        if (isTRUE(kingco) & (!"chi_geo_kc" %in% names(ph.data))){
-          stop("\U0001f47f You specified kingco=TRUE, but `ph.data` does not have the column `chi_geo_kc` that identifies King County")
-        }
-        if (isTRUE(kingco)){ph.data <- ph.data[chi_geo_kc == 'King County']}
-
   # Drop unnecessary columns from reference table (CMtable) ----
     KeepMe <- c("icdcm_code")
     for(grr in c('icdcm', 'superlevel', 'broad', 'midlevel', 'detailed')){
@@ -900,9 +861,6 @@ chars_icd_ccs_count <- function(ph.data = NULL,
 #' - `injury_intent`: character column with values like "assault", "unintentional", etc.
 #' - `injury_mechanism`: character column with values like "fall", "firearm", etc.
 #' - ICD column (specified by `icdcol`, default is `diag1`)
-#'
-#' **Optional columns:**
-#' - `chi_geo_kc`: if present, must only contain `"King County"` or `NA`
 #'
 #' **Data transformations:**
 #' - ICDcm codes cleaned and updated to a standardized format
@@ -1016,13 +974,6 @@ chars_validate_data <- function(ph.data = NULL,
   if (length(extra_mechanism) != 0){
     if(verbose){message("\U00002139 The injury_mechanism column has the following non-standard mechanism value(s):\n",
                         paste0(extra_mechanism, collapse = ', '))}
-  }
-
-  # Validate chi_geo_kc (if it exists) ----
-  if ('chi_geo_kc' %in% names(ph.data) & length(setdiff(unique(ph.data$chi_geo_kc), c('King County', NA))) > 0){
-    stop('\n\U1F6D1 chi_geo_kc exists and has values other than "King County" and NA.\n',
-         "If you're analyses are not specific to King County, WA, feel free to delete the chi_geo_kc column.\n",
-         "Otherwise, please fix chi_geo_kc and run again.")
   }
 
   # Validate ICD column format ----

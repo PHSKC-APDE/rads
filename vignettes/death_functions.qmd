@@ -137,7 +137,6 @@ kable((nchs113), format = "markdown")
 -   `causeids`: specifies the causeid(s) for NCHS 113 Causes of Death (1:113).
 -   `cause`: a character vector specifying the causes of death of interest. When specified, it is used in lieu of the `causeids`. It is case insensitive and matches partial strings.
 -   `icdcol`: name of the column with the ICD codes of interest. Defaults to `"underlying_cod_code"`, which is used in APDE's data.
--   `kingco`: logical (T\|F) specifying whether to limit the analysis to King County.
 -   `by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
 -   `ypll_age`: The age in years (an integer) used for calculating Years of Potential Life Lost.
 -   `death_age_col`: Name of the age column used if `ypll_age` is specified.
@@ -155,9 +154,8 @@ deaths.20 <- deaths[between(date_of_death,
                             as.Date('2020-01-01'), 
                             as.Date('2020-12-31'))]
 
-dt1 <- death_113_count(ph.data = deaths.20, 
-                       cause = 'viral hep|covid', 
-                       kingco = FALSE) 
+dt1 <- death_113_count(ph.data = deaths.20,
+                       cause = 'viral hep|covid')
 ```
 
 ```{r}
@@ -173,9 +171,8 @@ We could have specified 'Viral hepatitis' using `causeids` rather than the `caus
 ```{r}
 #| warning: false
 #| message: false
-dt1.alt <- death_113_count(ph.data = deaths.20, 
-                           causeids = 14, 
-                           kingco = FALSE)
+dt1.alt <- death_113_count(ph.data = deaths.20,
+                           causeids = 14)
 ```
 
 ```{r}
@@ -203,9 +200,8 @@ Now, let's use `by` to get the 113 cause of death counts by year
 ```{r}
 #| warning: false
 #| message: false
-dt113_19_20 <- death_113_count(ph.data = deaths.19_20, 
-                               by = 'year', 
-                               kingco = FALSE)
+dt113_19_20 <- death_113_count(ph.data = deaths.19_20,
+                               by = 'year')
 ```
 
 Finally, let's select the top five causes of death by year using data.table
@@ -235,11 +231,10 @@ First, identify deaths due to COVID-19. COVID-19 is not one of the official 113 
 ```{r}
 #| warning: false
 #| message: false
-dt3 <- death_113_count(ph.data = deaths.20, 
+dt3 <- death_113_count(ph.data = deaths.20,
                        causeids = 1,
                        death_age_col = 'age',
-                       ypll_age = 65, 
-                       kingco = FALSE)
+                       ypll_age = 65)
 dt3 <- dt3[cause.of.death == 'COVID-19 (U07.1)'] # limit output to COVID-19
 ```
 
@@ -275,7 +270,6 @@ The table above tells us that, if everyone who died from COVID-19 in 2020 had li
 -   `intent`: specifies the intent(s) of interest as per options available in `death_injury_matrix()`. `'none'` will ignore intent and return 'Any intent'. `'\*'` is a wildcard for all possible intents.
 -   `mechanism`: specifies the mechanism(s) of interest as per options available in `death_injury_matrix`. `'none'` will ignore mechanism and return 'Any mechanism'. `'\*'` is a wildcard for all possible mechanisms.
 -   `icdcol`: name of the column with the ICD codes of interest. Defaults to `"underlying_cod_code"`, which is used in APDE's data.
--   `kingco`: logical (T\|F) specifying whether to limit the analysis to King County.
 -   `by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
 -   `ypll_age`: The age in years (an integer) used for calculating Years of Potential Life Lost.
 -   `death_age_col`: Name of the age column used if `ypll_age` is specified.
@@ -289,10 +283,9 @@ Run `death_injury_matrix_count()` and show the six random rows
 ```{r}
 #| message: false
 #| warning: false
-dt4 <- death_injury_matrix_count(ph.data = deaths.19_20, 
-                                 intent = "*", 
+dt4 <- death_injury_matrix_count(ph.data = deaths.19_20,
+                                 intent = "*",
                                  mechanism = "*",
-                                 kingco = FALSE,
                                  by = 'temperament')
 ```
 
@@ -307,11 +300,10 @@ kable(dt4[deaths >10], format = "markdown")
 ```{r}
 #| message: false
 #| warning: false
-dt4.alt <- death_injury_matrix_count(ph.data = deaths.19_20, 
-                                     intent = "none", 
+dt4.alt <- death_injury_matrix_count(ph.data = deaths.19_20,
+                                     intent = "none",
                                      mechanism = "none",
-                                     by = 'temperament', 
-                                     kingco = FALSE)
+                                     by = 'temperament')
 ```
 
 ```{r}
@@ -333,11 +325,10 @@ deaths.19_23 <- deaths[between(date_of_death,
 
 deaths.19_23[, year := year(date_of_death)]
 
-dt5 <- death_injury_matrix_count(ph.data = deaths.19_23, 
-                                 intent = "homicide", 
-                                 mechanism = "firearm", 
-                                 by = 'temperament', 
-                                 kingco = FALSE)
+dt5 <- death_injury_matrix_count(ph.data = deaths.19_23,
+                                 intent = "homicide",
+                                 mechanism = "firearm",
+                                 by = 'temperament')
 ```
 
 ```{r}
@@ -352,12 +343,11 @@ Run `death_injury_matrix_count`
 ```{r}
 #| message: false
 #| warning: false
-dt6 <- death_injury_matrix_count(ph.data = deaths.19_23, 
-                                 intent = "homicide", 
-                                 mechanism = "firearm", 
+dt6 <- death_injury_matrix_count(ph.data = deaths.19_23,
+                                 intent = "homicide",
+                                 mechanism = "firearm",
                                  death_age_col = 'age',
-                                 ypll_age = 65, 
-                                 kingco = FALSE)
+                                 ypll_age = 65)
 ```
 
 ```{r}
@@ -390,7 +380,6 @@ kable(death_multicause(), format = "markdown")
 -   `icdcol`: name of the column with the underlying cause of death ICD codes. Defaults to `"underlying_cod_code"`, which is used in APDE's data.
 -   `contributing_cols`: a character vector specifying the stem of the column names containing contributing cause codes. The function expects columns named with this stem followed by numbers 1â€“20. The default, `"record_axis_code"`, leads the function to expect columns named `'record_axis_code_1'`, `'record_axis_code_2'`, ... `'record_axis_code_20'`.
 -   `contributing_logic`: a character vector specifying whether `"ANY"` (default) or `"ALL"` of the `contributing_codes` must be present.
--   `kingco`: logical (T\|F) specifying whether to limit the analysis to King County.
 -   `by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
 -   `ypll_age`: The age in years (an integer) used for calculating Years of Potential Life Lost.
 -   `death_age_col`: Name of the age column used if `ypll_age` is specified.
@@ -402,9 +391,8 @@ Please refer to the help file for more details.
 ```{r}
 #| message: false
 #| warning: false
-dt7 <- death_multicause_count(ph.data = deaths.19_23, 
-                                 cause_name = "Opioid", 
-                                 kingco = FALSE, 
+dt7 <- death_multicause_count(ph.data = deaths.19_23,
+                                 cause_name = "Opioid",
                                  by = "temperament")
 dt7 <- dt7[cause.of.death != 'All causes']
 ```
@@ -428,7 +416,6 @@ death_other()
 -   `ph.data`: the name of a person level data.table/data.frame of death data with ICD codes
 -   `cause`: a character vector specifying the cause(s) of death of interest taken from the list provided by `death_other()`. It is case insensitive and matches partial strings.
 -   `icdcol`: name of the column with the ICD codes of interest. Defaults to `"underlying_cod_code"`, which is used in APDE's data.
--   `kingco`: logical (T\|F) specifying whether to limit the analysis to King County.
 -   `by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
 -   `ypll_age`: The age in years (an integer) used for calculating Years of Potential Life Lost.
 -   `death_age_col`: Name of the age column used if `ypll_age` is specified.
@@ -440,9 +427,8 @@ Please refer to the help file for more details.
 ```{r}
 #| message: false
 #| warning: false
-dt8 <- death_other_count(ph.data = deaths.19_23, 
-                         cause = "pneumonia", 
-                         kingco = FALSE, 
+dt8 <- death_other_count(ph.data = deaths.19_23,
+                         cause = "pneumonia",
                          by = "year")
 dt8 <- dt8[cause.of.death != 'All causes']
 setorder(dt8, year, cause.of.death)
@@ -465,9 +451,8 @@ deaths.21 <- deaths[between(date_of_death,
                             as.Date('2021-01-01'), 
                             as.Date('2021-12-31'))]
 
-dt9 <- death_other_count(ph.data = deaths.21, 
-                         cause = "cancer|heart", 
-                         kingco = FALSE, 
+dt9 <- death_other_count(ph.data = deaths.21,
+                         cause = "cancer|heart",
                          death_age_col = 'age',
                          ypll_age = 65)
 ```
