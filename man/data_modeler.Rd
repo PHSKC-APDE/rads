@@ -63,7 +63,6 @@ A warning about data privacy:
   observations <- 1000
   ph.data <- data.table(
     id = 1:observations,
-    chi_geo_kc = sample(c('King County',NA_character_), observations, replace = TRUE),
     chi_race_7 = factor(sample(
       c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA),
       observations, replace = TRUE, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)),

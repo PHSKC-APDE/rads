@@ -11,8 +11,7 @@ chars_injury_matrix_count(
   mechanism = "*",
   by = NULL,
   def = "narrow",
-  primary_ecode = TRUE,
-  kingco = TRUE
+  primary_ecode = TRUE
 )
 }
 \arguments{
@@ -93,15 +92,6 @@ an analysis with other ecodes would need to perform a custom analysis in SQL usi
 the \code{chars.stage_diag} & \code{chars.stage_ecode} tables.
 
 The default is \code{primary_ecode = TRUE}}
-
-\item{kingco}{a logical vector of length one. It specifies whether you want to
-limit the analysis to King County. This parameter is specific to Washington State
-CHARS data and requires the column \code{chi_geo_kc}, which is provided by
-\code{\link[apde.data:chars]{apde.data::chars()}}.
-
-For users outside of King County or Washington State, set \code{kingco = FALSE}.
-
-The default is \code{kingco = TRUE}}
 }
 \value{
 The function returns a data.table with a minimum of three columns:
@@ -135,15 +125,13 @@ please examine the analytic data directly.
 myresult <- chars_injury_matrix_count(ph.data = rads.data::synthetic_chars,
                                       intent = '^intentional',
                                       mechanism = 'none',
-                                      by = c('temperament'),
-                                      kingco = FALSE)
+                                      by = c('temperament'))
 print(myresult)
 
 myresult <- chars_injury_matrix_count(ph.data = rads.data::synthetic_chars,
                                       intent = 'unintentional',
                                       mechanism = 'fall',
-                                      by = c('temperament'),
-                                      kingco = FALSE)
+                                      by = c('temperament'))
 print(myresult)
 }
 

@@ -15,8 +15,7 @@ chars_icd_ccs_count(
   midlevel = NULL,
   detailed = NULL,
   icdcol = "diag1",
-  by = NULL,
-  kingco = TRUE
+  by = NULL
 )
 }
 \arguments{
@@ -98,15 +97,6 @@ results. For example, if you specified \code{by = c('chi_sex', 'chi_race_6')}, t
 and race.
 
 The default is \code{by = NULL}}
-
-\item{kingco}{a logical vector of length one. It specifies whether you want to
-limit the analysis to King County. This parameter is specific to Washington State
-CHARS data and requires the column \code{chi_geo_kc}, which is provided by
-\code{\link[apde.data:chars]{apde.data::chars()}}.
-
-For users outside of King County or Washington State, set \code{kingco = FALSE}.
-
-The default is \code{kingco = TRUE}}
 }
 \value{
 Generates a table with columns for each of the search terms you entered (e.g.,
@@ -156,16 +146,14 @@ error because your resulting table will have zero rows.
 \donttest{
 myresult <- chars_icd_ccs_count(ph.data = rads.data::synthetic_chars,
                                 detailed = 'headache',
-                                by = c('temperament'),
-                                kingco = FALSE)
+                                by = c('temperament'))
 print(myresult)
 
 myrefTable <- chars_icd_ccs()
 myresult <- chars_icd_ccs_count(ph.data = rads.data::synthetic_chars,
                                 CMtable = myrefTable,
                                 detailed = 'asthma',
-                                by = c('temperament'),
-                                kingco = FALSE)
+                                by = c('temperament'))
 print(myresult)
 }
 
