@@ -250,14 +250,15 @@ Our demo "real" data has one indicator variable that represents an outcome that 
 ```{r create demonstration "real" data}
 DT.real.data <- data.table(
    id = 1:1000,
-   chi_race_7 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), 1000, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
-   chi_sex = as.factor(sample(c("Male","Female"), 1000, replace = T)),
-   chi_geo_region = factor(sample(c("South", "North", "Seattle", "East"), 1000, replace = T), levels = c("South","North","Seattle","East")))
+   geo_county = sample(c("County1", "County2"), 100, replace = TRUE, prob = c(0.494, 0.506)),
+   race = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), 1000, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
+   sex = as.factor(sample(c("Male","Female"), 1000, replace = T)),
+   geo_region = factor(sample(c("North", "South", "East", "West"), 100, replace = TRUE, prob = c(0.241, 0.229, 0.258, 0.272)), levels = c("North", "South", "East", "West"), ordered = FALSE))
 
 # Attach a biased indicator.
 #indicator1, all White population are "never", all Asians population, "sometimes", and everyone else, "always"
-   DT.real.data[, indicator1 := ifelse(chi_race_7 == "White", "never",
-                         ifelse(chi_race_7 == "Asian", "sometimes",
+   DT.real.data[, indicator1 := ifelse(race == "White", "never",
+                         ifelse(race == "Asian", "sometimes",
                                 "always"))]
 ```
 
@@ -277,16 +278,15 @@ You can observe that the data structures are the same for both data frames:
 
 ```{r}
 #| echo: fenced
-str(DT.real.data)
-str(DT.synthetic.data)
+identical(str(DT.real.data), str(DT.synthetic.data))
 ```
 
 But we can see that the original bias of Whites in the never group, Asians in the sometimes group, and all others in the always group now no longer holds.
 
 ```{r}
 #| echo: true
-prop.table(table(DT.real.data[,.(indicator1,chi_race_7)]))
-prop.table(table(DT.synthetic.data[,.(indicator1,chi_race_7)]))
+prop.table(table(DT.real.data[,.(indicator1,race)]))
+prop.table(table(DT.synthetic.data[,.(indicator1,race)]))
 ```
 
 Notice that you may see extreme, apparently biased, results in the outcomes. This is still randomly distributed and you can observe these change if you recreate the synthetic.
@@ -297,22 +297,13 @@ You can review, share, and execute the code used to create the synthetic data in
 #| echo: true
 
 DT.synthetic.data <- data_modeler(ph.data = DT.real.data,
-                                number_of_observations =  100, 
-                                comments = TRUE, 
-                                return_code = FALSE,
-                              print_code = TRUE) # change this to true to copy code from your terminal output
+                                  number_of_observations =  100, 
+                                  comments = TRUE, 
+                                  return_code = FALSE,
+                                  print_code = TRUE) # TRUE allows you to copy code from your terminal output
 ```
 
 The code below is what is used to generate the synthetic data. Using this approach you can see the data, sample approach and rates for each variable. Because we ran `data_modeler()` with `comments = TRUE`, we also see a human-readable string at the end of each line describing how each variable was classified by data_modeler. This allows you to review the logic, make changes, and share the code with others.
-
-```{r code from terminal}
-DT <- data.table(
-`id` = as.integer(1:100), # as an identifying (all unique) integer
-`chi_race_7` = factor(sample(c("Black", "White", "AIAN", NA, "Asian", "Multiple", "Other", "NHPI", "Hispanic"), 100, replace = TRUE, prob = c(0.193, 0.014, 0.067, 0.11, 0.012, 0.36, 0.064, 0.157, 0.023)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple"), ordered = FALSE), # as factor
-`chi_sex` = factor(sample(c("Male", "Female"), 100, replace = TRUE, prob = c(0.518, 0.482)), levels = c("Female", "Male"), ordered = FALSE), # as factor 
-`chi_geo_region` = factor(sample(c("Seattle", "South", "North", "East"), 100, replace = TRUE, prob = c(0.241, 0.229, 0.258, 0.272)), levels = c("South", "North", "Seattle", "East"), ordered = FALSE), # as factor 
-`indicator1` = sample(c("always", "never", NA, "sometimes"), 100, replace = TRUE, prob = c(0.424, 0.36, 0.193, 0.023))) # as categorical character (non factor)
-```
 
 Note, the above approach requires the user to copy and paste output from their terminal. If you wish to check, modify, and extract the code without human intervention, you need to receive the text as a list object using `return_code = TRUE`:
 
@@ -321,7 +312,7 @@ Note, the above approach requires the user to copy and paste output from their t
 DT.synthetic.data.instructions <- data_modeler(ph.data = DT.real.data,
                                 number_of_observations =  100, 
                                 comments = FALSE, 
-                                return_code = TRUE, #setting this to "TRUE" will cause data_modeler() to return a list object of the text instead of a DT of synthetic data
+                                return_code = TRUE, #TRUE will cause data_modeler() to return a list object of the text instead of a DT of synthetic data
                                 print_code = FALSE)
 
 head(DT.synthetic.data.instructions)

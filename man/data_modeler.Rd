@@ -63,13 +63,14 @@ A warning about data privacy:
   observations <- 1000
   ph.data <- data.table(
     id = 1:observations,
-    chi_race_7 = factor(sample(
+    county = sample(c('County1', 'County2'), observations, replace = TRUE),
+    race = factor(sample(
       c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA),
       observations, replace = TRUE, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)),
       levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
-    chi_sex = as.factor(sample(c("Male","Female"), observations, replace = TRUE)),
-    chi_geo_region = factor(sample(c("South", "North", "Seattle", "East"), observations,
-      replace = TRUE), levels = c("South","North","Seattle","East")),
+    sex = as.factor(sample(c("Male","Female"), observations, replace = TRUE)),
+    region = factor(sample(c("North", "South", "East", "West"), observations,
+      replace = TRUE), levels = c("North", "South", "East", "West")),
     indicator1 = as.factor(sample(c("never","sometimes", "always", NA), observations,
     replace = TRUE)))
 

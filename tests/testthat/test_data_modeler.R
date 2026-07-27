@@ -2,9 +2,10 @@ test_that("data_modeler creates matching types", {
   observations <- 1000
   DTTest <- data.table(
     id = 1:observations,
-    chi_race_7 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), observations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
-    chi_sex = as.factor(sample(c("Male","Female"), observations, replace = T)),
-    chi_geo_region = factor(sample(c("South", "North", "Seattle", "East"), observations, replace = T), levels = c("South","North","Seattle","East")),
+    county = sample(c('County1', 'County2'), observations, replace = TRUE),
+    race = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), observations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
+    sex = as.factor(sample(c("Male","Female"), observations, replace = T)),
+    geo_region = factor(sample(c("South", "North", "Seattle", "East"), observations, replace = T), levels = c("South","North","Seattle","East")),
     indicator1 = as.factor(sample(c("never","sometimes", "always", NA), observations, replace = T)),
     indicator2 = as.factor(sample(c(1,2,3,4, NA), observations, replace = T)),
     indicator3 = as.factor(sample(c("<20","21-40","41-60","61<"),  observations, replace = T)),
@@ -40,7 +41,7 @@ test_that("data_modeler handles single column DT objects", {
   observations <- 1000
 
   DTTest.1.cat <- data.table(
-    chi_race_7 = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), observations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA))
+    race = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), observations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA))
   )
 
   DTTest.1.num <- data.table(
