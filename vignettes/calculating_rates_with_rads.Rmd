@@ -89,8 +89,7 @@ deaths <- death_injury_matrix_count(ph.data = deaths,
                                     intent = "*", # all five intents
                                     mechanism = "fall",
                                     icdcol = 'underlying_cod_code',
-                                    kingco = F, # False because already subset
-                                    by = 'age') 
+                                    by = 'age')
 head(deaths[deaths > 9])
 ```
 

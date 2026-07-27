@@ -9,7 +9,6 @@ death_113_count(
   causeids = seq(1, 113, 1),
   cause = NULL,
   icdcol = "underlying_cod_code",
-  kingco = TRUE,
   by = NULL,
   ypll_age = NULL,
   death_age_col = NULL
@@ -39,14 +38,6 @@ column in ph.data that contains the ICD10 death codes of interest.
 
 The default is \code{underlying_cod_code}, which is found in properly
 formatted death data structured like \code{rads.data::synthetic_death}.}
-
-\item{kingco}{a logical vector of length one. It specifies whether you want to
-limit the analysis to King County.
-
-\strong{NOTE} this only works with data structured like \code{rads.data::synthetic_death}
-because it needs the variable \code{chi_geo_kc}.
-
-The default is kingco = TRUE.}
 
 \item{by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
@@ -113,7 +104,6 @@ eg1 <- death_113_count(ph.data = deathDT,
                        causeids = seq(1, 113, 1),
                        cause = NULL,
                        icdcol = "underlying_cod_code",
-                       kingco = FALSE,
                        ypll_age = NULL,
                        death_age_col = NULL)
 head(eg1)
@@ -123,7 +113,6 @@ eg2 <- death_113_count(ph.data = deathDT,
                        causeids = seq(1, 113, 1),
                        cause = NULL,
                        icdcol = "underlying_cod_code",
-                       kingco = FALSE,
                        ypll_age = 65,
                        death_age_col = "age")
 head(eg2)

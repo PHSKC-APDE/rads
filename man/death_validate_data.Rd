@@ -63,12 +63,6 @@ This function performs the following validation checks:
 \item ICD-10 codes in \code{icdcol} are consistent with the expectations of the rads death functions
 }
 
-\strong{Checked if present:}
-\itemize{
-\item \code{chi_geo_kc}: if this column exists in \code{ph.data}, it must contain only
-\code{"King County"} or \code{NA}
-}
-
 \strong{Checked when \code{check_multicause = TRUE}:}
 \itemize{
 \item Columns matching \verb{<contributing_cols>_1}, \verb{<contributing_cols>_2}, etc.

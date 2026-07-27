@@ -5,7 +5,6 @@ utils::globalVariables(c(
   "broad_desc",
   "cause.of.death",
   "chars_injury_matrix_count",
-  "chi_geo_kc",
   "CMtable.expanded",
   "CMtable_cols",
   "comp_lower",

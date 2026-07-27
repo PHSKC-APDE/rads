@@ -12,7 +12,6 @@ death_multicause_count(
   icdcol = "underlying_cod_code",
   contributing_cols = "record_axis_code",
   contributing_logic = "ANY",
-  kingco = TRUE,
   by = NULL,
   ypll_age = NULL,
   death_age_col = NULL
@@ -62,14 +61,6 @@ through \code{record_axis_code_20}.}
 ANY or ALL of the \code{contributing_codes} must be present.
 
 The default is \code{"ANY"}.}
-
-\item{kingco}{a logical vector of length one. It specifies whether you want to
-limit the analysis to King County.
-
-\strong{NOTE} this only works with data structured like \code{rads.data::synthetic_death}
-because it needs the variable \code{chi_geo_kc}.
-
-The default is \code{kingco = TRUE}.}
 
 \item{by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
@@ -126,8 +117,7 @@ opioid_deaths <- death_multicause_count(
   ph.data = deathDT,
   cause_name = "Opioid",
   icdcol = "underlying_cod_code",
-  contributing_cols = "record_axis_code",
-  kingco = FALSE
+  contributing_cols = "record_axis_code"
 )
 
 # Example using custom codes
@@ -137,8 +127,7 @@ custom_deaths <- death_multicause_count(
   contributing_codes = c("T400", "T401"),
   contributing_logic = "ANY",
   icdcol = "underlying_cod_code",
-  contributing_cols = "record_axis_code",
-  kingco = FALSE
+  contributing_cols = "record_axis_code"
 )
 
 }
