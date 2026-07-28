@@ -24,9 +24,6 @@
 #'
 #' @keywords rounding,
 #'
-#' @importFrom data.table setDT ":=" .SD data.table
-#'
-#'
 #' @examples
 #'
 #'  set.seed(98104)
@@ -50,8 +47,6 @@ digits <- function(digit_data = NULL,
                    digits_1 = 3,
                    vars_2 = c("se"),
                    digits_2 = 4){
-
-  ## Global variables used by data.table declared as NULL here to play nice with devtools::check()
 
   ## VALIDATION ----
       #validate 'digit_data'

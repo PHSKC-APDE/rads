@@ -135,7 +135,6 @@
 #'                                  ph.ref = ph.ref)
 #' print(dictionary2[])
 #'
-#' @import data.table
 #' @export
 #'
 create_dictionary <- function(ph.data,
@@ -145,10 +144,6 @@ create_dictionary <- function(ph.data,
                               max_unique_values = 8,
                               truncation_threshold = 5,
                               ph.ref = NULL) {
-  # Visible bindings for data.table/check global variables ----
-  desc <- notes <- varname <- dict_updated <- NULL
-  values <- factor_labels <- desc.desc <- notes.desc <- NULL
-
   # Check arguments ----
   # Check if input is a data.frame or data.table ----
   if (!is.data.frame(ph.data)) {
@@ -156,8 +151,8 @@ create_dictionary <- function(ph.data,
   }
 
   # Convert to data.table if it's a data.frame ----
-  if (!is.data.table(ph.data)) {
-    ph.data <- as.data.table(ph.data)
+  if (!data.table::is.data.table(ph.data)) {
+    ph.data <- data.table::as.data.table(ph.data)
   }
 
   # Check ph.data has column names ----
@@ -226,12 +221,12 @@ create_dictionary <- function(ph.data,
 
   # Check ph.ref if provided ----
   if (!is.null(ph.ref)) {
-    if (!is.data.table(ph.ref) && !is.data.frame(ph.ref)) {
+    if (!data.table::is.data.table(ph.ref) && !is.data.frame(ph.ref)) {
       stop("\n\U2620 ph.ref must be a data.frame or data.table")
     }
 
-    if (!is.data.table(ph.ref)) {
-      ph.ref <- as.data.table(ph.ref)
+    if (!data.table::is.data.table(ph.ref)) {
+      ph.ref <- data.table::as.data.table(ph.ref)
     }
 
     required_cols <- c("source", "varname", "desc")
@@ -268,7 +263,7 @@ create_dictionary <- function(ph.data,
     mycolnamez <- sort(mycolnamez)
   }
 
-  result <- rbindlist(lapply(mycolnamez, function(col) {
+  result <- data.table::rbindlist(lapply(mycolnamez, function(col) {
     # Check if the column contains non-atomic types (e.g., lists or expressions)
     if (!is.atomic(ph.data[[col]])) {
       vartype <- "other"
@@ -333,7 +328,7 @@ create_dictionary <- function(ph.data,
     }
 
     # Create the data.table ----
-    dt <- data.table(
+    dt <- data.table::data.table(
       source = source,
       varname = col,
       vartype = vartype,
@@ -351,7 +346,7 @@ create_dictionary <- function(ph.data,
   }))
 
   # Reorder columns in the result ----
-  setcolorder(
+  data.table::setcolorder(
     result,
     c(
       "source",
@@ -407,7 +402,7 @@ create_dictionary <- function(ph.data,
   result[, varname := factor(varname,
                              levels = intersect(mycolnamez,
                                                 unique(result$varname)))]
-  setorder(result, varname)
+  data.table::setorder(result, varname)
   result[, varname := as.character(varname)]
 
   # Add creation date

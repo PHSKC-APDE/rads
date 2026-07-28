@@ -16,4 +16,5 @@ Return vector of all reference populations available in RADS
 \donttest{
  list_ref_pop()
 }
+
 }

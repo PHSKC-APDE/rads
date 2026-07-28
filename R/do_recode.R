@@ -8,14 +8,9 @@
 #' @param update logical. Governs whether x is modified in place. If `x` is a factor, this will also carry forward any labels unless overwritten by new_label
 #' @param verbose logical. Should warnings be displayed/provided?
 #'
-#' @importFrom methods as
-#'
 #'
 #' @export
 do_recode = function(x, old, new, new_label = NULL, update = FALSE, verbose = FALSE){
-
-  # Global variables used by data.table declared as NULL here to play nice with devtools::check()
-    value <- label <- NULL
 
   #Initial checks
   stopifnot(length(new) == length(old))

@@ -49,8 +49,6 @@ calc_age <- function(from, to) {
 #' @param tidy logical. Determines whether to drop intermediate variables with
 #' the estimate, lower bound, and upper bound for the referent.
 #'
-#' @importFrom data.table setnames ":=" setDT data.table
-#'
 #' @return data.table comprised of the original data.table and two additional
 #' columns ... 'comp' and 'comp_sig' (or alternatively specified names)
 #'
@@ -84,17 +82,14 @@ compare_estimate <- function (mydt,
                               key_where ,
                               new_col = "comp",
                               tidy = T){
-  #Bindings for data.table/check global variables
-  comparator_vars <- comp_est <- comp_upper <- comp_lower <- NULL
-
   # validate 'mydt' ----
   if(is.null(mydt)){
     stop("You must specify a dataset (i.e., 'mydt' must be defined)")
   }
 
-  if(!is.data.table(mydt)){
+  if(!data.table::is.data.table(mydt)){
     if(is.data.frame(mydt)){
-      data.table::setDT(copy(mydt))
+      data.table::setDT(data.table::copy(mydt))
     } else {
       stop(paste0("<{mydt}> must be the name of a data.frame or data.table."))
     }
@@ -114,7 +109,7 @@ compare_estimate <- function (mydt,
       warning('`key_where` is a string. It was converted so that it would work, but in the future, this might turn into an error.
                   In the future, please pass unquoted commands that will resolve to a logical' )
 
-    } else {where = copy(call[['key_where']])}
+    } else {where = data.table::copy(call[['key_where']])}
 
     e <- substitute(expr = where) # get parse tree expression `where`
     r <- eval(expr = e, envir = mydt, enclos = parent.frame()) # evaluate
@@ -203,8 +198,6 @@ compare_estimate <- function (mydt,
 #' - Character values are parsed using several common American date formats.
 #'   If all conversion attempts fail, a warning is issued and the original data
 #'   is returned.
-#'
-#'@importFrom lubridate parse_date_time
 #'
 #' @examples
 #' convert_to_date(c("2024-01-01", "February 13, 1999", "2024/02/01",
@@ -431,9 +424,6 @@ format_time_simple <- function(x){
 #'
 #' @return a data.table with two columns of geographic identifiers
 #' @export
-#' @import rads.data
-#' @importFrom data.table copy setnames
-#' @importFrom utils data
 #' @name get_xwalk
 #' @examples
 #' \donttest{
@@ -441,13 +431,9 @@ format_time_simple <- function(x){
 #'  myxwalk[]
 #' }
 get_xwalk <- function(geo1 = NA, geo2 = NA){
-  # bindings for data.table/check global variables ----
-  ref_get_xwalk <- input <- output <- lgd10 <- scd10 <- region10 <- tract10 <-
-    tract10_new <- x <- hra10 <- NULL
-
   # load xwalk table ----
-  data("ref_get_xwalk", envir=environment()) # import ref_get_xwalk from /data as a promise
-  geodt <- copy(ref_get_xwalk) # evaluate / import the promise
+  utils::data("ref_get_xwalk", envir=environment()) # import ref_get_xwalk from /data as a promise
+  geodt <- data.table::copy(ref_get_xwalk) # evaluate / import the promise
   geodt <- string_clean(geodt)
 
   # validate input and output ----
@@ -468,7 +454,7 @@ get_xwalk <- function(geo1 = NA, geo2 = NA){
     stop("The combination of `geo1` & `geo2` returned more than 1 row in the reference table. Please submit an issue on GitHub.")
   }
   if(nrow(geodt.sub) == 1){
-    geodt <- copy(geodt.sub)
+    geodt <- data.table::copy(geodt.sub)
   }
 
   # get crosswalk data ----
@@ -477,7 +463,7 @@ get_xwalk <- function(geo1 = NA, geo2 = NA){
   string_clean(xwalkdt)
   keepers <- c(geodt$inputvar, geodt$outputvar)
   xwalkdt <- xwalkdt[, (keepers), with = FALSE] # alternative to xwalkdt[, ..keepers]
-  setnames(xwalkdt, c(geodt$inputvar, geodt$outputvar), c(geodt$input, geodt$output))
+  data.table::setnames(xwalkdt, c(geodt$inputvar, geodt$outputvar), c(geodt$input, geodt$output))
 
   # clean crosswalk data ----
   xwalkdt <- xwalkdt[!is.na(get(geodt$input)) & !is.na(get(geodt$output))] # drop when either value is missing
@@ -521,13 +507,8 @@ get_xwalk <- function(geo1 = NA, geo2 = NA){
 #' \donttest{
 #'  head(get_ref_pop("2000 U.S. Std Population (single ages to 84 - Census P25-1130)"))
 #' }
-#' @importFrom data.table copy
-#' @import rads.data
 #'
 get_ref_pop <- function(ref_name = NULL){
-  #global variables used by data.table declared as NULL here to play nice with devtools::check()
-  standard <- agecat <- age_start <- age_end <- pop <- ref_pop_name <- uploaded <- NULL
-
   ref_single_to_99 <- data.table::copy(rads.data::population_reference_pop_single_age_to_99)
   ref_single_to_84 <- data.table::copy(rads.data::population_reference_pop_single_age_to_84)
   ref_agecat_11 <- data.table::copy(rads.data::population_reference_pop_11_age_groups)
@@ -579,19 +560,14 @@ get_ref_pop <- function(ref_name = NULL){
 #' @return a data.table with two columns (geo1 & geo2), which define the acceptable
 #' geographic pairings for get_xwalk
 #' @export
-#' @import rads.data
-#' @importFrom data.table copy
-#' @importFrom utils data
 #' @name list_ref_xwalk
 #' @examples
 #' \donttest{
 #'  list_ref_xwalk()
 #' }
 list_ref_xwalk <- function(){
-  # bindings for data.table/check global variables ----
-  ref_get_xwalk <- input <- output <- NULL
-  data("ref_get_xwalk", envir=environment()) # import ref_get_xwalk from /data as a promise
-  geodt <- copy(ref_get_xwalk) # evaluate / import the promise
+  utils::data("ref_get_xwalk", envir=environment()) # import ref_get_xwalk from /data as a promise
+  geodt <- data.table::copy(ref_get_xwalk) # evaluate / import the promise
   geodt <- string_clean(geodt)
   geodt <- geodt[, list(geo1 = input, geo2 = output)]
   return(geodt)
@@ -607,13 +583,8 @@ list_ref_xwalk <- function(){
 #' \donttest{
 #'  list_ref_pop()
 #' }
-#' @importFrom data.table copy
-#' @import rads.data
 #'
 list_ref_pop <- function(){
-  #global variables used by data.table declared as NULL here to play nice with devtools::check()
-  standard <- NULL
-
   ref_single_to_99 <- data.table::copy(rads.data::population_reference_pop_single_age_to_99)
   ref_single_to_84 <- data.table::copy(rads.data::population_reference_pop_single_age_to_84)
   ref_agecat_11 <- data.table::copy(rads.data::population_reference_pop_11_age_groups)
@@ -624,8 +595,9 @@ list_ref_pop <- function(){
                                 ref_agecat_11[, list(standard)],
                                 ref_agecat_18[, list(standard)],
                                 ref_agecat_19[, list(standard)]))
-  setorder(ref_pop_table, standard)
-  ref_pop_table <- rbind(ref_pop_table[standard %like% "2000 U.S. Std P"], ref_pop_table[!standard %like% "2000 U.S. Std P"])
+  data.table::setorder(ref_pop_table, standard)
+  ref_pop_table <- rbind(ref_pop_table[grepl("2000 U.S. Std P", standard)],
+                         ref_pop_table[!grepl("2000 U.S. Std P", standard)])
   return(ref_pop_table$standard)
 }
 
@@ -1033,7 +1005,6 @@ metrics = function(){
 #'
 #' print(birthweight_comparison)
 #'
-#' @import data.table
 #' @seealso [`propagate_uncertainty()`] for more robust uncertainty
 #'   propagation when comparing two estimates with potentially asymmetric
 #'   confidence intervals or non-normal distributions.
@@ -1046,9 +1017,6 @@ multi_t_test <- function(means,
                          df_method = "estimated",
                          alternative = "two.sided",
                          adjust_method = NULL) {
-  # Bindings for data.table/check global variables ----
-  comparison <- p.value <- significant <- NULL
-
   # Input validation ----
     if (!is.numeric(means) || !is.numeric(ses)) {
       stop("\n\U1F6D1 'means' and 'ses' must be numeric vectors.")
@@ -1280,8 +1248,6 @@ round2 = function(x, n = 0) {
 #'              stringsAsFactors = FALSE,
 #'              convert_to_utf8 = FALSE)
 #' @export
-#' @importFrom utf8 utf8_encode
-#' @importFrom data.table fifelse is.data.table setcolorder setDT
 #' @return A modified data.table, invisibly.
 #' @examples
 #' \donttest{
@@ -1392,7 +1358,6 @@ string_clean <- function (ph.data = NULL,
 #' @return numeric
 #' @name std_error
 #' @source plotrix R package July 11, 2022: \url{https://github.com/plotrix/plotrix/blob/master/R/std_error.R}.
-#' @importFrom stats sd
 #' @examples
 #' \donttest{
 #' temp1 <- data.table::data.table(x = c(seq(0, 400, 100), seq(1000, 1800, 200), NA),
@@ -1410,7 +1375,7 @@ std_error <- function(x) {
     if (all(is.na(x))) stop("\n\U1F6D1 Input contains only NA values.")
     if (sum(!is.na(x)) < 2) stop("\n\U1F6D1 At least two non-NA values are required to calculate standard error.")
 
-    se <- sd(x, na.rm = TRUE) / sqrt(sum(!is.na(x))) # standard error or mean is sd / sqrt(# samples)
+    se <- stats::sd(x, na.rm = TRUE) / sqrt(sum(!is.na(x))) # standard error or mean is sd / sqrt(# samples)
 
     if (is.nan(se) || is.infinite(se)) {
       warning("\n\u26A0\ufe0f Calculation resulted in NaN or Inf. Check your input data.")

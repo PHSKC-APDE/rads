@@ -39,13 +39,8 @@
 #' blah <- death_113()
 #' print(blah)
 #'
-#' @import data.table rads.data
-#'
 death_113 <- function(){
-  # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-  deaths113_causeid_list <- causeid <- cause.of.death <-  NULL
-
-  deaths113_causeid_list <- copy(rads.data::icd_nchs113causes_raw)
+  deaths113_causeid_list <- data.table::copy(rads.data::icd_nchs113causes_raw)
   deaths113_causeid_list <- deaths113_causeid_list[, .SD, .SDcols = c("causeid", "cause.of.death")] # from rads.data
   return(deaths113_causeid_list)
 }
@@ -173,8 +168,6 @@ death_113 <- function(){
 #'                        death_age_col = "age")
 #' head(eg2)
 #'
-#' @import data.table rads.data
-#'
 death_113_count <- function(ph.data,
                             causeids = seq(1, 113, 1),
                             cause = NULL,
@@ -235,13 +228,8 @@ death_113_count <- function(ph.data,
 #' blah <- death_130()
 #' print(blah)
 #'
-#' @import data.table rads.data
-#'
 death_130<- function(){
-  # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-  deaths130_causeid_list <- causeid <- cause.of.death <-  NULL
-
-  deaths130_causeid_list <- copy(rads.data::icd_nchs130causes_raw)
+  deaths130_causeid_list <- data.table::copy(rads.data::icd_nchs130causes_raw)
   deaths130_causeid_list <- deaths130_causeid_list[, .SD, .SDcols = c("causeid", "cause.of.death")] # from rads.data
   return(deaths130_causeid_list)
 }
@@ -355,8 +343,6 @@ death_130<- function(){
 #'                        ypll_age = NULL,
 #'                        death_age_col = NULL)
 #' head(eg1)
-#'
-#' @import data.table rads.data
 #'
 death_130_count <- function(ph.data,
                             causeids = seq(1, 130, 1),
@@ -504,12 +490,7 @@ death_icd10_clean <- function(icdcol){
 #' blah <- death_injury_matrix()
 #' print(blah)
 #'
-#' @import data.table rads.data
-#'
 death_injury_matrix<- function(){
-  # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-  death_injury_matrix_list <- mechanism <- intent <-  NULL
-
   death_injury_matrix_list <- unique(rads.data::icd10_death_injury_matrix[, list(mechanism, intent)])
 
   return(death_injury_matrix_list)
@@ -680,8 +661,6 @@ death_injury_matrix<- function(){
 #'                             ypll_age = NULL,
 #'                             death_age_col = NULL)
 #' eg5[]
-#' @import data.table rads.data
-#'
 death_injury_matrix_count <- function(ph.data,
                                 intent = "*",
                                 mechanism = "*",
@@ -689,11 +668,6 @@ death_injury_matrix_count <- function(ph.data,
                                 by = NULL,
                                 ypll_age = NULL,
                                 death_age_col = NULL){
-  # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-  x_intent <- x_mechanism <- x_reftable <- x_combo <- orig.coding <- orig.order <- underlying_cod_code <- NULL
-  '.' <- deaths <- icd10 <- icd10_tempy <- NULL
-  calculated.age <- x_ypll <- date_of_death <- date_of_birth <-  NULL
-
   # Check arguments ----
     # ph.data ----
       death_validate_data(ph.data = ph.data,
@@ -706,7 +680,7 @@ death_injury_matrix_count <- function(ph.data,
       if(isFALSE(is.character(intent)) || length(intent) > 5){
         stop("\n\U0001f47f `intent` must specify a character vector with a lenghth <= 5.\nTo select all options, use intent = '*'.")
       }
-      myorig.intent <- copy(intent)
+      myorig.intent <- data.table::copy(intent)
 
     # mechanism ----
       if(isFALSE(is.character(mechanism)) || length(mechanism) > 28){
@@ -835,12 +809,12 @@ death_injury_matrix_count <- function(ph.data,
         x_combo <- x_combo[, list(deaths = .N), by = c("mechanism", "intent", by)]
       } else {
         # create table with ypll summary
-          x_ypll <- copy(x_combo)
+          x_ypll <- data.table::copy(x_combo)
           x_ypll[get(death_age_col) < ypll_age, ypll_col_name := ypll_age - get(death_age_col)]
           x_ypll[, c(death_age_col) := NULL]
           x_ypll <- x_ypll[, list(temp_ypll = sum(ypll_col_name, na.rm = TRUE)), # use temporary name because data.table doesn't accept quoted value after list(
                            by = c("mechanism", "intent", by)]
-          setnames(x_ypll, "temp_ypll", ypll_col_name)
+          data.table::setnames(x_ypll, "temp_ypll", ypll_col_name)
 
         # calculate death count
           x_combo <- x_combo[, list(deaths = .N), by = c("mechanism", "intent", by)]
@@ -859,7 +833,7 @@ death_injury_matrix_count <- function(ph.data,
           x_combo[, intent := 'Any intent']
           x_combo <- x_combo[, list(deaths = sum(deaths), temp_ypll = sum(get(ypll_col_name))),
                              by = setdiff(names(x_combo), c("deaths", ypll_col_name))]
-          setnames(x_combo, "temp_ypll", paste0("ypll_", ypll_age))
+          data.table::setnames(x_combo, "temp_ypll", paste0("ypll_", ypll_age))
         }
       }
 
@@ -923,9 +897,9 @@ death_injury_matrix_count <- function(ph.data,
         }
 
     # Sort columns and rows ----
-      setcolorder(x_combo, c("mechanism", "intent", "deaths", grep('^ypll_', names(x_combo), value = TRUE)))
+      data.table::setcolorder(x_combo, c("mechanism", "intent", "deaths", grep('^ypll_', names(x_combo), value = TRUE)))
       sort_cols <- c("mechanism", "intent", setdiff(names(x_combo), c("deaths", "mechanism", "intent", grep('^ypll_', names(x_combo), value = TRUE))))
-      setorderv(x_combo, sort_cols)
+      data.table::setorderv(x_combo, sort_cols)
 
   # Return data ----
     return(x_combo)
@@ -967,12 +941,7 @@ death_injury_matrix_count <- function(ph.data,
 #' available_causes <- death_multicause()
 #' print(available_causes)
 #'
-#' @import data.table rads.data
-#'
 death_multicause <- function(){
-  # Global variables used by data.table declared as NULL to play nice with devtools::check() ----
-  cause_name <- underlying_contributing <- icd10 <- n_underlying <- n_contributing <- NULL
-
   # Get the reference table
   multicause_ref <- rads.data::icd10_multicause
 
@@ -1312,7 +1281,7 @@ death_multicause_count <- function(ph.data,
 
   # Calculate YPLL if needed ----
     if (!is.null(ypll_age)) {
-      ph.data[, (ypll_col_name) := fifelse(get(death_age_col) < ypll_age,
+      ph.data[, (ypll_col_name) := data.table::fifelse(get(death_age_col) < ypll_age,
                                            ypll_age - get(death_age_col),
                                            0)]
     }
@@ -1342,8 +1311,8 @@ death_multicause_count <- function(ph.data,
                                 by = by]
 
       # Rename YPLL column
-      setnames(all_causes, "temp_ypll", ypll_col_name)
-      setnames(specific_cause, "temp_ypll", ypll_col_name)
+      data.table::setnames(all_causes, "temp_ypll", ypll_col_name)
+      data.table::setnames(specific_cause, "temp_ypll", ypll_col_name)
     }
 
     # Combine results
@@ -1377,15 +1346,15 @@ death_multicause_count <- function(ph.data,
 
   # Sort columns and rows ----
     if (!is.null(ypll_age)) {
-      setcolorder(result, c("cause.of.death", "deaths", ypll_name))
+      data.table::setcolorder(result, c("cause.of.death", "deaths", ypll_name))
       sort_cols <- c("cause.of.death", setdiff(names(result),
                                                c("deaths", "cause.of.death", ypll_name)))
     } else {
-      setcolorder(result, c("cause.of.death", "deaths"))
+      data.table::setcolorder(result, c("cause.of.death", "deaths"))
       sort_cols <- c("cause.of.death", setdiff(names(result),
                                                c("deaths", "cause.of.death")))
     }
-    setorderv(result, sort_cols)
+    data.table::setorderv(result, sort_cols)
 
   # Return result ----
     return(result)
@@ -1432,12 +1401,7 @@ death_multicause_count <- function(ph.data,
 #' blah <- death_other()
 #' print(blah)
 #'
-#' @import data.table rads.data
-#'
 death_other<- function(){
-  # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-  death_other_list <- cause.of.death <-  NULL
-
   death_other_list <- rads.data::icd_other_causes_of_death
   death_other_list <- unique(death_other_list$cause.of.death) # from rads.data
   return(death_other_list)
@@ -1543,20 +1507,12 @@ death_other<- function(){
 #'                        death_age_col = "age")
 #' head(eg2)
 #'
-#' @import data.table rads.data
-#'
 death_other_count <- function(ph.data,
                                cause,
                                icdcol = "underlying_cod_code",
                                by = NULL,
                                ypll_age = NULL,
                                death_age_col = NULL){
-  # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-  problem.icds <- long113 <-  cause.of.death <- deaths <- '.' <- NULL
-  x_reftable <- x_combo <- x_covid <- x_cause <- x_all <- x_ypll <- NULL
-  underlying_cod_code <- icd10_tempy <- ypll_col_name <- NULL
-  date_of_death <- date_of_birth <- calculated.age <- orig.coding <- icd10 <- NULL
-
   # Check arguments ----
     # ph.data ----
       death_validate_data(ph.data = ph.data,
@@ -1659,7 +1615,7 @@ death_other_count <- function(ph.data,
 
     # calculate YPLL line level if needed ----
     if(!(is.null(ypll_age))){
-      ph.data[, c(ypll_col_name) := fifelse(get(death_age_col) < ypll_age,
+      ph.data[, c(ypll_col_name) := data.table::fifelse(get(death_age_col) < ypll_age,
                                             ypll_age - get(death_age_col),
                                             0)]
       ph.data[, c(death_age_col) := NULL]
@@ -1670,7 +1626,7 @@ death_other_count <- function(ph.data,
     # e.g., drug-overdose is a subset of drug-induced
       unique_cod <- unique(x_reftable$cause.of.death)
 
-      x_combo <- rbindlist(
+      x_combo <- data.table::rbindlist(
         lapply(unique_cod, function(each.cod) {
           ph.data[x_reftable[cause.of.death == each.cod], # data.table join faster alternative to merge
                   on = list(icd10_tempy = icd10),
@@ -1704,7 +1660,7 @@ death_other_count <- function(ph.data,
       # combine all_deaths + NCHS_113
       x_combo <- rbind(x_all, x_combo)
       rm(list = c("x_all"))
-      setnames(x_combo, "temp_ypll", ypll_col_name)
+      data.table::setnames(x_combo, "temp_ypll", ypll_col_name)
     }
 
   # Tidy ----
@@ -1761,11 +1717,11 @@ death_other_count <- function(ph.data,
 
     # Sort columns and rows ----
       if(!is.null(ypll_age)){
-        setcolorder(x_combo, c("cause.of.death", "deaths", ypll_name))
-        setorderv(x_combo, c('cause.of.death', setdiff(names(x_combo), c("deaths", 'cause.of.death', ypll_name)) ))
+        data.table::setcolorder(x_combo, c("cause.of.death", "deaths", ypll_name))
+        data.table::setorderv(x_combo, c('cause.of.death', setdiff(names(x_combo), c("deaths", 'cause.of.death', ypll_name)) ))
       } else{
-        setorderv(x_combo, c('cause.of.death', setdiff(names(x_combo), c("deaths", 'cause.of.death')) ))
-        setcolorder(x_combo, c("cause.of.death", "deaths"))
+        data.table::setorderv(x_combo, c('cause.of.death', setdiff(names(x_combo), c("deaths", 'cause.of.death')) ))
+        data.table::setcolorder(x_combo, c("cause.of.death", "deaths"))
       }
 
   # Return data ----
@@ -2037,8 +1993,6 @@ death_validate_data <- function(ph.data = NULL,
 #'
 #' @name death_xxx_count
 #'
-#' @import data.table rads.data
-#'
 death_xxx_count <- function(ph.data,
                             causeids = NULL,
                             cause = NULL,
@@ -2047,11 +2001,6 @@ death_xxx_count <- function(ph.data,
                             ypll_age = NULL,
                             death_age_col = NULL,
                             nchsnum = NULL) {
-  # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-    problem.icds  <-  causeid <- cause.of.death <- deaths <- '.' <- NULL
-    x_reftable <- x_combo <- x_covid <- x_cause <- x_all <- x_ypll <- NULL
-    underlying_cod_code <- icd10 <- x.causeid <- icd10_tempy <- NULL
-    date_of_death <- date_of_birth <- calculated.age <- orig.coding <- ypll_col_name <- NULL
 
   # Check arguments ----
     # ph.data ----
@@ -2193,15 +2142,15 @@ death_xxx_count <- function(ph.data,
 
   # Calculate YPLL line level if needed ----
     if (!is.null(ypll_age) && !is.null(death_age_col)) {
-      ph.data[, (ypll_col_name) := fifelse(get(death_age_col) < ypll_age,
+      ph.data[, (ypll_col_name) := data.table::fifelse(get(death_age_col) < ypll_age,
                                            ypll_age - get(death_age_col),
                                            0)]
       ph.data[, (death_age_col) := NULL]
     }
 
   # Merge reference table onto death data ----
-    setkey(ph.data, icd10_tempy)
-    setkey(x_reftable, icd10)
+    data.table::setkey(ph.data, icd10_tempy)
+    data.table::setkey(x_reftable, icd10)
     x_combo <- x_reftable[ph.data, on = list(icd10 = icd10_tempy), allow.cartesian = TRUE] # data.table join faster alternative to merge
     x_combo[, icd10 := tolower(icd10)]
     x_combo[icd10 == "u071" |
@@ -2225,7 +2174,7 @@ death_xxx_count <- function(ph.data,
       x_combo <- x_combo[, list(deaths = .N,
                              temp_ypll = sum(get(ypll_col_name), na.rm = TRUE)), by = c("causeid", "cause.of.death", by)]
       x_combo <- rbind(x_all, x_combo)
-      setnames(x_combo, "temp_ypll", ypll_col_name)
+      data.table::setnames(x_combo, "temp_ypll", ypll_col_name)
     }
 
   # Tidy ----
@@ -2269,15 +2218,15 @@ death_xxx_count <- function(ph.data,
 
     # Sort columns and rows ----
       if (!is.null(ypll_age)) {
-        setcolorder(x_combo,
+        data.table::setcolorder(x_combo,
                     c("cause.of.death", "causeid", "deaths", ypll_name))
-        setorderv(x_combo, c('cause.of.death', setdiff(
+        data.table::setorderv(x_combo, c('cause.of.death', setdiff(
           names(x_combo),
           c("deaths", 'cause.of.death', "causeid", ypll_name)
         )))
       } else {
-        setcolorder(x_combo, c("cause.of.death", "causeid", "deaths"))
-        setorderv(x_combo, c('cause.of.death', setdiff(
+        data.table::setcolorder(x_combo, c("cause.of.death", "causeid", "deaths"))
+        data.table::setorderv(x_combo, c('cause.of.death', setdiff(
           names(x_combo), c("deaths", 'cause.of.death', "causeid")
         )))
       }
@@ -2433,9 +2382,6 @@ death_xxx_count <- function(ph.data,
 #' head(yesgroups)
 #' }
 #'
-#' @import data.table
-#' @importFrom stats qnorm
-#'
 
 life_table <- function(ph.data,
                        myages = "ages",
@@ -2445,12 +2391,6 @@ life_table <- function(ph.data,
                        by = NULL,
                        ci = 0.95){
 
-  # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-  istart <- iend <- irank <- ilength <- mx <- qx <- lx <- dx <- Lx <- Tx <- ex <- NULL
-  ax <- mx_upper <- mx_lower <- mx_se <- qnorm <- qx_variance <- px_variance <- NULL
-  ex_temp <- ex_temp_cumsum <- ex_variance <- ex_se <- ex_lower <- ex_upper <- NULL
-  ordered_cols <- newdeaths <- original_order <- NULL
-  predicted_mx <- deaths_original <- deaths <- pop <- NULL
 
   # Get name of the data.frame/data.table ----
   ph.dataname <- deparse(substitute(ph.data))
@@ -2485,7 +2425,7 @@ life_table <- function(ph.data,
       if(!myages %in% names(ph.data)){
         stop(paste0("\n\U0001f47f 'myages' (", myages, ") is not the name of a column in 'ph.data'."))}
 
-      if(nrow(ph.data[!is.na(get(myages))]) != nrow(ph.data[!is.na(get(myages)) & get(myages) %like% "[0-9]-[0-9]|[0-9]\\+"])){
+      if(nrow(ph.data[!is.na(get(myages))]) != nrow(ph.data[!is.na(get(myages)) & grepl("[0-9]-[0-9]|[0-9]\\+", get(myages))])){
         stop(paste0("\n\U0001f47f The values in 'myages' (i.e., ", myages, ") must be in the form #-# or #+, e.g., '10-15' or '85+'"))}
 
       # check that myages is unique per combination of values in by
@@ -2531,7 +2471,7 @@ life_table <- function(ph.data,
         stop(paste0("\n\U0001f47f 'myprops' (", myprops, ") is not the name of a column in 'ph.data'."))}
       if(!is.numeric(ph.data[[myprops]])){
         stop(paste0("\n\U0001f47f 'myprops' (i.e.,", myprops, ") must be of class == numeric"))}
-      if(nrow(ph.data[!get(myprops) %between% 0:1]) > 0){
+      if(nrow(ph.data[get(myprops) < 0 | get(myprops) > 1]) > 0){
         stop(paste0("\n\U0001f47f 'myprops' (i.e., ", ax, ") should be a proportion (i.e., it must be between 0 & 1)"))}
 
     # ci ----
@@ -2547,14 +2487,14 @@ life_table <- function(ph.data,
     orig_cols <- data.table::copy(names(ph.data))
 
   # Split myages to create intervals ----
-    ph.data[,c("istart", "iend") := tstrsplit(gsub("\\+", "", get(myages)), "-")]
+    ph.data[,c("istart", "iend") := data.table::tstrsplit(gsub("\\+", "", get(myages)), "-")]
     ph.data[, c("istart", "iend") := lapply(.SD, as.integer), .SDcols = c("istart", "iend")]
     if(is.null(by)){
       ph.data[, irank := rank(istart)]
-        setorder(ph.data, istart) # critical that table is sorted from youngest to oldest
+        data.table::setorder(ph.data, istart) # critical that table is sorted from youngest to oldest
     }else{
         ph.data[, irank := rank(istart), by]
-        setorderv(ph.data, c(by, 'istart'))
+        data.table::setorderv(ph.data, c(by, 'istart'))
       }
     ph.data[, ilength := iend - istart]
     ph.data[is.na(iend), ilength := 100-istart] # adjustment for final interval
@@ -2568,7 +2508,7 @@ life_table <- function(ph.data,
           # Distribute unknown death among rows with ages
           ph.data.sub[, newdeaths := get(mydeaths) + (deaths.unk.age * get(mydeaths) / sum(ph.data.sub[[mydeaths]])), by = list(get(myages))]
           ph.data.sub[, (mydeaths) := NULL] # drop original death count b/c to be replaced by newdeaths
-          setnames(ph.data.sub, 'newdeaths', mydeaths)
+          data.table::setnames(ph.data.sub, 'newdeaths', mydeaths)
         }
         return(ph.data.sub)
       }
@@ -2578,17 +2518,17 @@ life_table <- function(ph.data,
         ph.data <- distribute_deaths(ph.data.sub = ph.data, myages = myages, mydeaths = mydeaths)
       } else {
         ph.split <- split(ph.data, by = by) # create a list of tables with unique combo of by values
-        ph.data <- rbindlist(lapply(ph.split,
+        ph.data <- data.table::rbindlist(lapply(ph.split,
                                FUN = function(x) distribute_deaths(ph.data.sub = x, myages = myages, mydeaths = mydeaths)), use.names = T)
       }
 
   # Check that beginning of each interval == end of previous interval ----
     if (is.null(by)) {
-      invalid_rows <- ph.data[, list(rownumber = .I[shift(iend, n = 1L, type = "lag") != istart
-                                                 & !is.na(shift(iend, n = 1L, type = "lag"))])]
+      invalid_rows <- ph.data[, list(rownumber = .I[data.table::shift(iend, n = 1L, type = "lag") != istart
+                                                 & !is.na(data.table::shift(iend, n = 1L, type = "lag"))])]
       } else {
-        invalid_rows <- ph.data[, list(rownumber = .I[shift(iend, n = 1L, type = "lag") != istart
-                                               & !is.na(shift(iend, n = 1L, type = "lag"))]),
+        invalid_rows <- ph.data[, list(rownumber = .I[data.table::shift(iend, n = 1L, type = "lag") != istart
+                                               & !is.na(data.table::shift(iend, n = 1L, type = "lag"))]),
                             by = c(by)]
       }
 
@@ -2644,7 +2584,7 @@ life_table <- function(ph.data,
       }
 
     ph.data[, mx_upper := stats::qgamma((ci+(1-ci)/2), get(mydeaths) + 1) / get(mypops)] # exact Poisson upper CI
-    ph.data[, mx_se := (mx_upper - mx) / qnorm((ci+(1-ci)/2))] # reverse_engineer poisson standard error
+    ph.data[, mx_se := (mx_upper - mx) / stats::qnorm((ci+(1-ci)/2))] # reverse_engineer poisson standard error
     ph.data[, mx_upper := NULL]
 
   # qx ... probability of dying in the interval ----
@@ -2669,7 +2609,7 @@ life_table <- function(ph.data,
         ph.data <- create_lx(ph.data.sub = ph.data)
       } else {
         ph.split <- split(ph.data, by = by) # create a list of tables with unique combo of by values
-        ph.data <- rbindlist(lapply(ph.split,
+        ph.data <- data.table::rbindlist(lapply(ph.split,
                                     FUN = function(x) create_lx(ph.data.sub = x)), use.names = T)
       }
 
@@ -2737,7 +2677,7 @@ life_table <- function(ph.data,
             "Life expectancy calculations may be unreliable.\n"
           ))
         }
-        ph.data.sub[is.nan(qx_variance), qx_variance := median(obs.variances)]
+        ph.data.sub[is.nan(qx_variance), qx_variance := stats::median(obs.variances)]
         return(ph.data.sub)
       }
 
@@ -2746,19 +2686,19 @@ life_table <- function(ph.data,
         ph.data <- fill_variance(ph.data.sub = ph.data, by)
       } else {
         ph.split <- split(ph.data, by = by) # create a list of tables with unique combo of by values
-        ph.data <- rbindlist(lapply(ph.split,
+        ph.data <- data.table::rbindlist(lapply(ph.split,
                                     FUN = function(x) fill_variance(ph.data.sub = x, by)), use.names = T)
       }
 
   ph.data[, px_variance := qx_variance] # Chiang 3.6, variance prob(survival) == variance of prob(death)
 
   if(is.null(by)){
-      ph.data[, ex_temp := (lx^2) * ((((1-get(myprops))*ilength) + shift(ex, 1L, type = "lead"))^2) * px_variance] # Chiang page 137
+      ph.data[, ex_temp := (lx^2) * ((((1-get(myprops))*ilength) + data.table::shift(ex, 1L, type = "lead"))^2) * px_variance] # Chiang page 137
   } else {
     ph.split <- split(ph.data, by = by) # create a list of tables with unique combo of by values
-    ph.data <- rbindlist(lapply(ph.split,
+    ph.data <- data.table::rbindlist(lapply(ph.split,
                                 FUN = function(x){
-                                  x[, ex_temp := (lx^2) * ((((1-get(myprops))*ilength) + shift(ex, 1L, type = "lead"))^2) * px_variance]
+                                  x[, ex_temp := (lx^2) * ((((1-get(myprops))*ilength) + data.table::shift(ex, 1L, type = "lead"))^2) * px_variance]
                                   return(x)} ), use.names = T)}
 
   # reverse cumulative sum, so flip, get cumsum, then flip back
@@ -2766,14 +2706,14 @@ life_table <- function(ph.data,
       ph.data[, original_order := .I]
 
     # sort by rank (and by if needed)
-      setorderv(setorder(ph.data, -irank), by)
+      data.table::setorderv(data.table::setorder(ph.data, -irank), by)
 
     # generate cumulative sum
       ph.data[!is.na(ex_temp), ex_temp_cumsum := cumsum(ex_temp),
               by = if (is.null(by)) NULL else mget(by)]
 
     # restore order
-      setorder(ph.data, original_order)
+      data.table::setorder(ph.data, original_order)
       ph.data[, original_order := NULL]
 
   # divide ex_temp_cumsum by lx^2 to get sample variance
@@ -2810,14 +2750,14 @@ life_table <- function(ph.data,
     ph.data[irank == max(irank), ex_variance := (0.5*ph.data[irank == max(irank)-1]$Lx) * (4 / get(mydeaths)*(mx^2))]
   } else {
     ph.split <- split(ph.data, by = by) # create a list of tables with unique combo of by values
-    ph.data <- rbindlist(lapply(ph.split,
+    ph.data <- data.table::rbindlist(lapply(ph.split,
                                 FUN = function(x){
                                   x[irank == max(irank), ex_variance := (0.5*x[irank == max(irank)-1]$Lx) * (4 / get(mydeaths)*(mx^2))]
                                   return(x)} ), use.names = T)}
 
   # Use variance to calculate confidence intervals
   ph.data[, ex_se := sqrt(ex_variance)]
-  zscore = qnorm(1 - (1-ci)/2) # since two sided, need to split the alpha for upper and lower tails
+  zscore = stats::qnorm(1 - (1-ci)/2) # since two sided, need to split the alpha for upper and lower tails
   ph.data[, ex_lower := ex - ex_se * zscore]
   ph.data[, ex_upper := ex + ex_se * zscore]
 
@@ -2916,9 +2856,6 @@ life_table <- function(ph.data,
 #' }
 #' @keywords internal
 #'
-#' @import data.table
-#' @importFrom stats lm coef
-#'
 #' @note
 #' This is an internal function and should not be called directly by users.
 #' It is exposed for transparency and documentation purposes only.
@@ -2927,14 +2864,11 @@ life_table_predict_mx <- function(ph.data = ph.data,
                                   by = by,
                                   myages = myages,
                                   empirical_adjustment_factor = 1.8) {
-  # Global variables used by data.table declared as NULL here to play nice with devtools::check()
-  istart <- mx <- any_zero_mx <- mygroup <- NULL
-
   # Filter for ages 30 and above, excluding the highest age group
   if (is.null(by)) {
-    ph.data_2mod <- copy(ph.data)[istart >= 30 & istart < max(istart)]
+    ph.data_2mod <- data.table::copy(ph.data)[istart >= 30 & istart < max(istart)]
   } else {
-    ph.data_2mod <- copy(ph.data)
+    ph.data_2mod <- data.table::copy(ph.data)
     ph.data_2mod[, mygroup := .GRP, by = c(by)]
     ph.data_2mod <- ph.data_2mod[mygroup %in% ph.data_2mod[grepl('[0-9]+\\+', get(myages)) & mx == 0]$mygroup]
     ph.data_2mod[, mygroup := NULL]
@@ -2951,8 +2885,8 @@ life_table_predict_mx <- function(ph.data = ph.data,
     model <- stats::lm(log10(mx) ~ istart, data = group)
 
     # Extract coefficients
-    a <- coef(model)[1] # Makeham age-independent component
-    b <- coef(model)[2] # Gompertz age-dependent component
+    a <- stats::coef(model)[1] # Makeham age-independent component
+    b <- stats::coef(model)[2] # Gompertz age-dependent component
 
     # Predict mx for the maximum istart value with adjustment
     predicted_mx <- unname(empirical_adjustment_factor * 10^(a + b * max_istart))
@@ -2973,7 +2907,7 @@ life_table_predict_mx <- function(ph.data = ph.data,
 
   if (is.null(by)) {
     # If no strata variables, perform extrapolation on entire dataset
-    result <- data.table(ages = unique(ph.data[istart == max(istart)][[myages]]),
+    result <- data.table::data.table(ages = unique(ph.data[istart == max(istart)][[myages]]),
                          predicted_mx = extrapolate_group(ph.data_2mod))
   } else {
     # Check for groups with mx == 0
@@ -2981,7 +2915,7 @@ life_table_predict_mx <- function(ph.data = ph.data,
 
     if (nrow(problematic_groups) > 0) {
       # Generate a message listing the problematic groups
-      problematic_groups <- paste(capture.output(print(problematic_groups, row.names = FALSE, class = FALSE, print.keys = FALSE)), collapse = "\n")
+      problematic_groups <- paste(utils::capture.output(print(problematic_groups, row.names = FALSE, class = FALSE, print.keys = FALSE)), collapse = "\n")
 
       problematic_groups_message <- paste0(
         "\n\U1F6D1 Your oldest age bin for at least one of your groups had zero deaths. This results in ",
@@ -3091,19 +3025,11 @@ life_table_predict_mx <- function(ph.data = ph.data,
 #'  head(output2)
 #' }
 #'
-#' @import data.table
-#' @importFrom lubridate years add_with_rollback
-#'
 life_table_prep <- function(ph.data,
                             cuts = c(0, 1, 5, 10, 15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85),
                             dobvar = "date_of_birth",
                             dodvar = "date_of_death",
                             by = NULL){
-  # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-  orig_cols <- dob <- dod <- dob_na <- dob_na <- death_age <- tempz <- NULL
-  end <- start <- interval <- age.lab <- ages <- length.interval <- NULL
-  interval.start <- interval.end <- fraction <- ph.datasum <- '.' <- deaths <- NULL
-
   # Check arguments ----
     # ph.data ----
       ph.data.name <- deparse(substitute(ph.data))
@@ -3176,7 +3102,7 @@ life_table_prep <- function(ph.data,
     ph.data[death_age >= max(cuts), ages := paste0(max(cuts), "+")]
 
   # Calculate proportion of interval lived within the interval in which the person died ----
-    ph.data[,  c("start", "end") := tstrsplit(gsub("\\+", "", ages), "-")]
+    ph.data[,  c("start", "end") := data.table::tstrsplit(gsub("\\+", "", ages), "-")]
     ph.data[, c("start", "end") := lapply(.SD, as.integer), .SDcols = c("start", "end")]
     ph.data[start == max(as.numeric(ph.data$start), na.rm = T), end := 100] # set max age == 100 because pop also tops out at 100
 
@@ -3204,8 +3130,8 @@ life_table_prep <- function(ph.data,
     possibleGroupBy <- lapply(by,
                              function(col){
                                unique(ph.data[!is.na(ph.data[[col]]), col, with = FALSE][[1]])})
-    possibleGroupBy <- do.call(CJ, possibleGroupBy)
-    setnames(possibleGroupBy, by)
+    possibleGroupBy <- do.call(data.table::CJ, possibleGroupBy)
+    data.table::setnames(possibleGroupBy, by)
     template <- possibleGroupBy[rep(1:.N, each = length(possibleAges))]
     template[, ages := rep(possibleAges, times = .N/length(possibleAges))]
 
@@ -3214,7 +3140,7 @@ life_table_prep <- function(ph.data,
                         by = c('ages', by),
                         all = T)
   } else {
-    template <- data.table(ages = possibleAges)
+    template <- data.table::data.table(ages = possibleAges)
     ph.datasum <- merge(template,
                         ph.datasum,
                         by = c('ages'),

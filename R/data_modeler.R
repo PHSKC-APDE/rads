@@ -493,15 +493,15 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
 
   if(comments) {
     if(length(codeList) == 1) {
-      codeListParsed <- c(list("DT <- data.table("),gsub(" #",") #",codeList[length(codeList)]))
+      codeListParsed <- c(list("DT <- data.table::data.table("),gsub(" #",") #",codeList[length(codeList)]))
     } else {
-      codeListParsed <- c(list("DT <- data.table("),gsub(" #", ", #", codeList[1:(length(codeList)-1)]), gsub(" #",") #",codeList[length(codeList)]))
+      codeListParsed <- c(list("DT <- data.table::data.table("),gsub(" #", ", #", codeList[1:(length(codeList)-1)]), gsub(" #",") #",codeList[length(codeList)]))
     }
   } else {
     if(length(codeList) == 1) {
-      codeListParsed <- c(list("DT <- data.table("),paste0(codeList[length(codeList)], ")"))
+      codeListParsed <- c(list("DT <- data.table::data.table("),paste0(codeList[length(codeList)], ")"))
     } else {
-      codeListParsed <- c(list("DT <- data.table("),paste0(codeList[1:(length(codeList)-1)], ","), paste0(codeList[length(codeList)], ")"))
+      codeListParsed <- c(list("DT <- data.table::data.table("),paste0(codeList[1:(length(codeList)-1)], ","), paste0(codeList[length(codeList)], ")"))
     }
   }
 
