@@ -89,7 +89,7 @@ compare_estimate <- function (mydt,
 
   if(!data.table::is.data.table(mydt)){
     if(is.data.frame(mydt)){
-      data.table::setDT(data.table::copy(mydt))
+      mydt <- data.table::setDT(data.table::copy(mydt))
     } else {
       stop(paste0("<{mydt}> must be the name of a data.frame or data.table."))
     }

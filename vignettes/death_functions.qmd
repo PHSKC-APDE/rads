@@ -482,7 +482,7 @@ Please refer to the help file for more details.
 
 ### example #10: Get life expectancy at birth for King County residents born 2019-2023, stratified by year
 
-Use `life_table_prep()` to aggregate the age interval specific count of deaths and the average fraction of the interval lived by those who died in that interval, stratified by sex. **Note**, by default `life_table_prep()` uses the standard age intervals used by the CDC and WA DOH. These intervals can easily be customized if desired. Here we show just the top six rows so you can see the data structure.
+Use `life_table_prep()` to aggregate the age interval specific count of deaths and the average fraction of the interval lived by those who died in that interval, stratified by year of death. **Note**, by default `life_table_prep()` uses the standard age intervals used by the CDC and WA DOH. These intervals can easily be customized if desired. Here we show just the top six rows so you can see the data structure.
 
 ```{r}
 #| message: false
