@@ -21,6 +21,20 @@ If NULL or all NA indicates no (new) labelling}
 
 \item{verbose}{logical. Should warnings be displayed/provided?}
 }
+\value{
+A vector of the same length as \code{x} with recoded values (or, when
+\code{new_label} is supplied and \code{update = FALSE}, a factor with those labels).
+}
 \description{
 Recode a vector
+}
+\examples{
+# simple value recode
+do_recode(x = c("M", "F", "M"), old = c("M", "F"), new = c("Male", "Female"))
+
+# binning recode
+do_recode(x = c(5, 15, 25),
+          old = c("[0,10)", "[10,20)", "[20,30)"),
+          new = c("child", "teen", "adult"))
+
 }

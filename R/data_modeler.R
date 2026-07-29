@@ -34,7 +34,7 @@
 #'
 #' @export
 #' @name data_modeler
-#' @references \url{https://github.com/PHSKC-APDE/rads/wiki/utilities#data_modeler}
+#' @references <https://github.com/PHSKC-APDE/rads/wiki/utilities#data_modeler>
 #'
 #' @examples
 #' \donttest{

@@ -1,28 +1,28 @@
-# death_113() ----
+﻿# death_113() ----
 #' View the NCHS 113 COD causeids
 #'
 #' @description
 #' Function to view the National Center for Health Statistics (NCHS) 113
 #' Selected Causes of Death (COD) causeids.
 #'
-#' Generates a table with two columns, \code{causeid} & \code{cause.of.death}.
-#' Use it to identify the causeids given as an argument in \code{death_113_count}.
+#' Generates a table with two columns, `causeid` & `cause.of.death`.
+#' Use it to identify the causeids given as an argument in `death_113_count`.
 #'
 #' @details
 #' There are actually 114 rows, with causeid 114 being the official
-#' \code{CDC version of causeid 95 (Residual)}, i.e., \code{All other diseases
-#' (Residual)}. Causeid 95 was intentionally changed to match the definition
+#' `CDC version of causeid 95 (Residual)`, i.e., `All other diseases
+#' (Residual)`. Causeid 95 was intentionally changed to match the definition
 #' used by WA DOH.
 #'
 #' @note
 #' This function does not take any arguments
 #'
 #' @source
-#' \code{rads.data::icd_nchs113causes_raw}
+#' `rads.data::icd_nchs113causes_raw`
 #'
 #' @references
-#' \url{https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf} &
-#' \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS113CausesOfDeath.pdf}
+#' <https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf> &
+#' <https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS113CausesOfDeath.pdf>
 #'
 #' @seealso
 #' [death_113_count()] for using this information to count the NCHS 113 leading causes of death
@@ -53,19 +53,19 @@ death_113 <- function(){
 #' Statistics (NCHS) 113 Selected Causes of Death (COD). Needs line-level death
 #' data with a properly formatted ICD10 column.
 #'
-#' In addition to the causes of death you specify with \code{causeids} or
-#' \code{cause}, it will automatically return the total deaths as well as
+#' In addition to the causes of death you specify with `causeids` or
+#' `cause`, it will automatically return the total deaths as well as
 #' COVID-19 deaths (since they do not have their own NCHS category).
 #'
-#' See \code{rads::death_113()} for a complete list of available causesid
+#' See `rads::death_113()` for a complete list of available causesid
 #' and cause values.
 #'
 #' @details
 #' There are actually 114 rows, with causeid 114 being the official
-#' \code{CDC version of causeid 95 (Residual)}, i.e., \code{All other diseases
-#' (Residual)}. Causeid 95 was intentionally changed to match the definition
+#' `CDC version of causeid 95 (Residual)`, i.e., `All other diseases
+#' (Residual)`. Causeid 95 was intentionally changed to match the definition
 #' used by WA DOH. You can get results for any or all of the 113(+1) causes of
-#' death using the \code{causeids} or \code{cause} arguments.
+#' death using the `causeids` or `cause` arguments.
 #'
 #' @param ph.data a data.table or data.frame. Must contain death data structured
 #' with one person per row and with at least one column of ICD10 death codes.
@@ -73,52 +73,52 @@ death_113 <- function(){
 #' @param causeids an integer vector of length >=1 & <= 114, with a minimum value
 #' of 1 and a maximum value of 114.
 #'
-#' The default is \code{1:113}, i.e., the standard panel of WA DOH / NCHS 113
+#' The default is `1:113`, i.e., the standard panel of WA DOH / NCHS 113
 #' causes of death.
 #'
 #' @param  cause an OPTIONAL character vector specifying the complete or partial
 #' keyword for the cause of death of interest. It is not case sensitive and you
-#' can specify it in two ways: 1) \code{cause = c('viral', 'cough')} or 2)
-#' \code{cause = c("viral|cough")}. If you specify any keyword(s),
-#' the function will ignore the \code{causeids} argument.
+#' can specify it in two ways: 1) `cause = c('viral', 'cough')` or 2)
+#' `cause = c("viral|cough")`. If you specify any keyword(s),
+#' the function will ignore the `causeids` argument.
 #'
-#' The default is \code{NULL}, i.e., the function will rely on the \code{causeids}
+#' The default is `NULL`, i.e., the function will rely on the `causeids`
 #' argument to identify the causes of death.
 #'
 #' @param icdcol a character vector of length one that specifies the name of the
 #' column in ph.data that contains the ICD10 death codes of interest.
 #'
-#' The default is \code{underlying_cod_code}, which is found in properly
-#' formatted death data structured like \code{rads.data::synthetic_death}.
+#' The default is `underlying_cod_code`, which is found in properly
+#' formatted death data structured like `rads.data::synthetic_death`.
 #'
 #' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified \code{by = c('chi_sex',
-#' 'chi_race_6')}, the results would be stratified by each combination of sex
+#' results. For example, if you specified `by = c('chi_sex',
+#' 'chi_race_6')`, the results would be stratified by each combination of sex
 #' and race.
 #'
-#' The default is \code{by = NULL}
+#' The default is `by = NULL`
 #'
 #' @param ypll_age an optional numeric vector of length 1. When specified, it
 #' should be the age (an integer) used for **Years of Potential Life Lost** (YPLL)
 #' calculations. Valid values are between 1 & 99 (inclusive), though 65 and 85 are the most
-#' common. For example, \code{ypll_age = 65} would sum the total number of years
+#' common. For example, `ypll_age = 65` would sum the total number of years
 #' that could have been lived had everyone in the data lived to at least 65.
 #' Note that this function returns the total number of YPLL. Additional
 #' processing is necessary to calculate rates per 100,000.
 #'
-#' The default is \code{ypll_age = NULL}, which will skip YPLL calculations.
+#' The default is `ypll_age = NULL`, which will skip YPLL calculations.
 #'
 #' @param death_age_col an optional character vector of length one that specifies
 #' the name of the column in ph.data with the decedents' age at death
-#' in years. It is only needed if \code{ypll_age} is
-#' specified AND if ph.data lacks a column named \code{chi_age}.
+#' in years. It is only needed if `ypll_age` is
+#' specified AND if ph.data lacks a column named `chi_age`.
 #'
-#' The default is \code{death_age_col = NULL}.
+#' The default is `death_age_col = NULL`.
 #'
 #' @references
-#' \url{https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf} &
-#' \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS113CausesOfDeath.pdf}
+#' <https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf> &
+#' <https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS113CausesOfDeath.pdf>
 #'
 #' @seealso
 #' - [death_113()] for viewing teh CDC NCHS 113 leading causes of death
@@ -131,17 +131,17 @@ death_113 <- function(){
 #' - [death_other_count()] for generating counts of causes NOT included in the NCHS
 #'
 #' @return
-#' Generates a table with three columns, \code{causeid},  \code{cause.of.death},
-#' and \code{deaths}. If \code{ypll_age} is specified, a \code{ypll_##} column
-#' will also be added to the table. Columns in the \code{by}
+#' Generates a table with three columns, `causeid`,  `cause.of.death`,
+#' and `deaths`. If `ypll_age` is specified, a `ypll_##` column
+#' will also be added to the table. Columns in the `by`
 #' argument will also be returned.
 #'
 #' By default, it will return all 113 causes of death. You can specify which
-#' causes of death you want to assess using the \code{causeids} or \code{cause}
+#' causes of death you want to assess using the `causeids` or `cause`
 #' arguments.
 #'
 #' @note
-#' Calls upon \code{rads::death_xxx_count}.
+#' Calls upon `rads::death_xxx_count`.
 #'
 #' @export
 #'
@@ -195,23 +195,23 @@ death_113_count <- function(ph.data,
 #' Function to view the National Center for Health Statistics (NCHS) 130
 #' Selected Causes of Infant Death (COD) causeids.
 #'
-#' Generates a table with two columns, \code{causeid} & \code{cause.of.death}.
-#' Use it to identify the causeids given as an argument in \code{death_130_count}.
+#' Generates a table with two columns, `causeid` & `cause.of.death`.
+#' Use it to identify the causeids given as an argument in `death_130_count`.
 #'
 #' @details
 #' To see the corresponding leading cause groups and 'levels' (i.e., the
-#' hierarchy), check out \code{?rads.data::icd_nchs130causes_raw} &
-#' \code{?rads.data::icd_nchs130causes}.
+#' hierarchy), check out `?rads.data::icd_nchs130causes_raw` &
+#' `?rads.data::icd_nchs130causes`.
 #'
 #' @note
 #' This function does not take any arguments
 #'
 #' @source
-#' \code{rads.data::icd_nchs130causes_raw}
+#' `rads.data::icd_nchs130causes_raw`
 #'
 #' @references
-#' \url{https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf}, Table C.
-#' \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS130CausesInfantDeath_Codes.pdf}
+#' <https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf>, Table C.
+#' <https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS130CausesInfantDeath_Codes.pdf>
 #'
 #' @seealso
 #' [death_130_count()] for using this information to count the NCHS 130 causes of infant deaths
@@ -242,11 +242,11 @@ death_130<- function(){
 #' Statistics (NCHS) 130 Selected Causes of Infant Death. Needs line-level death
 #' data with a properly formatted ICD10 column.
 #'
-#' In addition to the causes of death you specify with \code{causeids} or
-#' \code{cause}, it will automatically return the total deaths as well as
+#' In addition to the causes of death you specify with `causeids` or
+#' `cause`, it will automatically return the total deaths as well as
 #' COVID-19 deaths (since they do not have their own NCHS category).
 #'
-#' See \code{rads::death_130()} for a complete list of available causesid
+#' See `rads::death_130()` for a complete list of available causesid
 #' and cause values.
 #'
 #' @details
@@ -258,52 +258,52 @@ death_130<- function(){
 #' @param causeids an integer vector of length >=1 & <= 130, with a minimum value
 #' of 1 and a maximum value of 130.
 #'
-#' The default is \code{1:130}, i.e., the compolte standard panel of WA DOH /
+#' The default is `1:130`, i.e., the compolte standard panel of WA DOH /
 #' NCHS 130 causes of death.
 #'
 #' @param  cause an OPTIONAL character vector specifying the complete or partial
 #' keyword for the cause of death of interest. It is not case sensitive and you
-#' can specify it in two ways: 1) \code{cause = c('viral', 'cough')} or 2)
-#' \code{cause = c("viral|cough")}. If you specify any keyword(s),
-#' the function will ignore the \code{causeids} argument.
+#' can specify it in two ways: 1) `cause = c('viral', 'cough')` or 2)
+#' `cause = c("viral|cough")`. If you specify any keyword(s),
+#' the function will ignore the `causeids` argument.
 #'
-#' The default is \code{NULL}, i.e., the function will rely on the \code{causeids}
+#' The default is `NULL`, i.e., the function will rely on the `causeids`
 #' argument to identify the causes of death.
 #'
 #' @param icdcol a character vector of length one that specifies the name of the
 #' column in ph.data that contains the ICD10 death codes of interest.
 #'
-#' The default is \code{underlying_cod_code}, which is found in properly
-#' formatted death data structured like \code{rads.data::synthetic_death}.
+#' The default is `underlying_cod_code`, which is found in properly
+#' formatted death data structured like `rads.data::synthetic_death`.
 #'
 #' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified \code{by = c('sex',
-#' 'race')}, the results would be stratified by each combination of sex
+#' results. For example, if you specified `by = c('sex',
+#' 'race')`, the results would be stratified by each combination of sex
 #' and race.
 #'
-#' The default is \code{by = NULL}
+#' The default is `by = NULL`
 #'
 #' @param ypll_age an optional numeric vector of length 1. When specified, it
 #' should be the age (an integer) used for **Years of Potential Life Lost** (YPLL)
 #' calculations. Valid values are between 1 & 99 (inclusive), though 65 and 85 are the most
-#' common. For example, \code{ypll_age = 65} would sum the total number of years
+#' common. For example, `ypll_age = 65` would sum the total number of years
 #' that could have been lived had everyone in the data lived to at least 65.
 #' Note that this function returns the total number of YPLL. Additional
 #' processing is necessary to calculate rates per 100,000.
 #'
-#' The default is \code{ypll_age = NULL}, which will skip YPLL calculations.
+#' The default is `ypll_age = NULL`, which will skip YPLL calculations.
 #'
 #' @param death_age_col an optional character vector of length one that specifies
 #' the name of the column in ph.data with the decedents' age at death
-#' in years. It is only needed if \code{ypll_age} is
-#' specified AND if ph.data lacks a column named \code{chi_age}.
+#' in years. It is only needed if `ypll_age` is
+#' specified AND if ph.data lacks a column named `chi_age`.
 #'
-#' The default is \code{death_age_col = NULL}.
+#' The default is `death_age_col = NULL`.
 #'
 #' @references
-#' \url{https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf} &
-#' \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS130CausesInfantDeath_Codes.pdf}
+#' <https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf> &
+#' <https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS130CausesInfantDeath_Codes.pdf>
 #'
 #' @seealso
 #' - [death_130()] for viewing the CDC NCHS 130 causes of infant death
@@ -316,17 +316,17 @@ death_130<- function(){
 #' - [death_other_count()] for generating counts of causes NOT included in the NCHS
 #'
 #' @return
-#' Generates a table with three columns, \code{causeid},  \code{cause.of.death},
-#' and \code{deaths}. If \code{ypll_age} is specified, a \code{ypll_##} column
-#' will also be added to the table. Columns identifies by the \code{by}
+#' Generates a table with three columns, `causeid`,  `cause.of.death`,
+#' and `deaths`. If `ypll_age` is specified, a `ypll_##` column
+#' will also be added to the table. Columns identifies by the `by`
 #' argument will also be returned.
 #'
 #' By default, it will return all 130 causes of death. You can specify which
-#' causes of death you want to assess using the \code{causeids} or \code{cause}
+#' causes of death you want to assess using the `causeids` or `cause`
 #' arguments.
 #'
 #' @note
-#' Calls upon \code{rads::death_xxx_count}.
+#' Calls upon `rads::death_xxx_count`.
 #'
 #' @export
 #'
@@ -455,9 +455,9 @@ death_icd10_clean <- function(icdcol){
 #' Collaborative Effort on Injury Statistics) combinations of mechanism and
 #' intent available in rads.
 #'
-#' Generates a table with two columns, \code{mechanism} & \code{intent}.
-#' Use it to identify the combinations of \code{mechanism} & \code{intent} that
-#' you want to use in \code{death_injury_matrix_count}.
+#' Generates a table with two columns, `mechanism` & `intent`.
+#' Use it to identify the combinations of `mechanism` & `intent` that
+#' you want to use in `death_injury_matrix_count`.
 #'
 #' @details
 #' This function provides the terms used by the death/mortality function and may
@@ -467,19 +467,19 @@ death_icd10_clean <- function(icdcol){
 #' This function does not take any arguments
 #'
 #' @source
-#' \code{rads.data::icd10_death_injury_matrix}
+#' `rads.data::icd10_death_injury_matrix`
 #'
 #' @references
-#' \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/CHATInjury(ICE)codes.pdf}
+#' <https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/CHATInjury(ICE)codes.pdf>
 #'
-#' \url{https://www.cdc.gov/nchs/data/ice/icd10_transcode.pdf}
+#' <https://www.cdc.gov/nchs/data/ice/icd10_transcode.pdf>
 #'
 #' @seealso
 #' [death_injury_matrix_count()] for using this information to count injury related deaths
 #' by mechanism and intent
 #'
 #' @return
-#' A data.table with 88 rows and two columns: \code{mechanism} & \code{intent}.
+#' A data.table with 88 rows and two columns: `mechanism` & `intent`.
 #'
 #' @export
 #'
@@ -517,10 +517,10 @@ death_injury_matrix<- function(){
 #' **NOTE**
 #' You do not have to type the entire keyword for the intent, a
 #' partial string match is sufficient and is case insensitive. E.g.,
-#' \code{intent = c("cide")} would return both "Suicide" and "Homicide" and
-#' \code{intent = c("un")} would return both "Unintentional" and "Undetermined".
+#' `intent = c("cide")` would return both "Suicide" and "Homicide" and
+#' `intent = c("un")` would return both "Unintentional" and "Undetermined".
 #'
-#' The default is \code{'*'}, which selects all possible intents.
+#' The default is `'*'`, which selects all possible intents.
 #'
 #' @param mechanism a character vector of length 1 to 28. It specifies the
 #' mechanism of death that you want returned (E.g., "Cut/pierce", "Drowning",
@@ -528,47 +528,47 @@ death_injury_matrix<- function(){
 #' and only return the intent of death.
 #'
 #' To see the complete list of mechanisms, type
-#' \code{unique(rads.data::icd10_death_injury_matrix$mechanism)} in your
+#' `unique(rads.data::icd10_death_injury_matrix$mechanism)` in your
 #' R console.
 #'
 #' **NOTE**
 #' You do not have to type the entire keyword for the mechanism, a
 #' partial string match is sufficient and is case insensitive. E.g.,
-#' \code{mechanism = c("cycl")} would return both "Pedal cyclist" and
+#' `mechanism = c("cycl")` would return both "Pedal cyclist" and
 #' "Motorcyclist".
 #'
-#' The default is \code{'*'}, which selects all possible mechanisms
+#' The default is `'*'`, which selects all possible mechanisms
 #'
 #' @param icdcol a character vector of length one that specifies the name of the
 #' column in ph.data that contains the ICD10 death codes of interest.
 #'
-#' The default is \code{underlying_cod_code}, which is found in properly
-#' formatted death data structured like \code{rads.data::synthetic_death}.
+#' The default is `underlying_cod_code`, which is found in properly
+#' formatted death data structured like `rads.data::synthetic_death`.
 #'
 #' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified \code{by = c('chi_sex',
-#' 'chi_race_6')}, the results would be stratified by each combination of sex
+#' results. For example, if you specified `by = c('chi_sex',
+#' 'chi_race_6')`, the results would be stratified by each combination of sex
 #' and race.
 #'
-#' The default is \code{by = NULL}
+#' The default is `by = NULL`
 #'
 #' @param ypll_age an optional numeric vector of length 1. When specified, it
 #' should be the age (an integer) used for **Years of Potential Life Lost** (YPLL)
 #' calculations. Valid values are between 1 & 99 (inclusive), though 65 and 85 are the most
-#' common. For example, \code{ypll_age = 65} would sum the total number of years
+#' common. For example, `ypll_age = 65` would sum the total number of years
 #' that could have been lived had everyone in the data lived to at least 65.
 #' Note that this function returns the total number of YPLL. Additional
 #' processing is necessary to calculate rates per 100,000.
 #'
-#' The default is \code{ypll_age = NULL}, which will skip YPLL calculations.
+#' The default is `ypll_age = NULL`, which will skip YPLL calculations.
 #'
 #' @param death_age_col an optional character vector of length one that specifies
 #' the name of the column in ph.data with the decedents' age at death
-#' in years. It is only needed if \code{ypll_age} is
-#' specified AND if ph.data lacks a column named \code{chi_age}.
+#' in years. It is only needed if `ypll_age` is
+#' specified AND if ph.data lacks a column named `chi_age`.
 #'
-#' The default is \code{death_age_col = NULL}.
+#' The default is `death_age_col = NULL`.
 #'
 #' @details
 #' The matrix coding is based on the ICE (International Collaborative Effort on
@@ -586,8 +586,8 @@ death_injury_matrix<- function(){
 #'
 #' @return
 #' The function returns a data.table with a minimum of three columns:
-#' \code{mechanism}, \code{intent}, & \code{deaths}. \code{ypll_##} and
-#' \code{by} columns will also be returned if specified in the arguments.
+#' `mechanism`, `intent`, & `deaths`. `ypll_##` and
+#' `by` columns will also be returned if specified in the arguments.
 #'
 #' @note
 #' The function default is to return the matrix of all intents and mechanisms
@@ -600,12 +600,12 @@ death_injury_matrix<- function(){
 #' needed, they can be obtained from the CDC link below.
 #'
 #' @source
-#' \code{rads.data::icd10_death_injury_matrix}
+#' `rads.data::icd10_death_injury_matrix`
 #'
 #' @references
-#' WA DOH CHAT: \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/CHATInjury(ICE)codes.pdf}
+#' WA DOH CHAT: <https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/CHATInjury(ICE)codes.pdf>
 #'
-#' CDC: \url{https://www.cdc.gov/nchs/data/ice/icd10_transcode.pdf}
+#' CDC: <https://www.cdc.gov/nchs/data/ice/icd10_transcode.pdf>
 #'
 #'
 #' @export
@@ -1366,7 +1366,7 @@ death_multicause_count <- function(ph.data,
 #'
 #' @description
 #' Function to view "Other" Causes of Death that are availbe in RADS (via
-#' \href{https://github.com/PHSKC-APDE/rads.data}{rads.data}). These are causes
+#' [rads.data](https://github.com/PHSKC-APDE/rads.data)). These are causes
 #' of death that are NOT included in the NCHS 113 Causes of death
 #' (see [death_113_count()] or the CDC death injury matrix (see
 #' [death_injury_matrix_count()].
@@ -1374,17 +1374,17 @@ death_multicause_count <- function(ph.data,
 #' Generates a character vector with the names of all available causes of death.
 #'
 #' @details
-#' This function simply returns the unique values of the \code{cause.of.death}
-#' column from \code{rads.data::icd_other_causes_of_death}.
+#' This function simply returns the unique values of the `cause.of.death`
+#' column from `rads.data::icd_other_causes_of_death`.
 #'
 #' @note
 #' This function does not take any arguments
 #'
 #' @source
-#' \code{rads.data::icd_other_causes_of_death}
+#' `rads.data::icd_other_causes_of_death`
 #'
 #' @references
-#' \code{?rads.data::icd_other_causes_of_death}
+#' `?rads.data::icd_other_causes_of_death`
 #'
 #' @seealso
 #' [death_other_count()] for using this information to count 'Other' causes of death
@@ -1412,12 +1412,12 @@ death_other<- function(){
 #'
 #' @description
 #' Generate death counts for causes of death that are **NOT** included in the NCHS
-#' 113 Causes of death (see \code{?death_113_count}) or the CDC death injury
-#' matrix (see \code{?death_injury_matrix_count}).
+#' 113 Causes of death (see `?death_113_count`) or the CDC death injury
+#' matrix (see `?death_injury_matrix_count`).
 #'
 #' Needs line-level death data with a properly formatted ICD10 column.
 #'
-#' Use the \code{cause} argument to specify the cause(s) for which you desire to
+#' Use the `cause` argument to specify the cause(s) for which you desire to
 #' obtain death counts.
 #'
 #' @details
@@ -1430,43 +1430,43 @@ death_other<- function(){
 #'
 #' @param  cause a character vector specifying the complete or partial
 #' keyword for the cause of death of interest. It is not case sensitive and you
-#' can specify it in two ways: 1) \code{cause = c('induce', 'overdose')} or 2)
-#' \code{cause = c("induce|overdose")}.
+#' can specify it in two ways: 1) `cause = c('induce', 'overdose')` or 2)
+#' `cause = c("induce|overdose")`.
 #'
-#' The default is \code{cause = NULL}.
+#' The default is `cause = NULL`.
 #'
 #' @param icdcol a character vector of length one that specifies the name of the
 #' column in ph.data that contains the ICD10 death codes of interest.
 #'
-#' The default is \code{underlying_cod_code}, which is found in properly
-#' formatted death data structured like \code{rads.data::synthetic_death}.
+#' The default is `underlying_cod_code`, which is found in properly
+#' formatted death data structured like `rads.data::synthetic_death`.
 #'
 #' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified \code{by = c('chi_sex',
-#' 'chi_race_6')}, the results would be stratified by each combination of sex
+#' results. For example, if you specified `by = c('chi_sex',
+#' 'chi_race_6')`, the results would be stratified by each combination of sex
 #' and race.
 #'
-#' The default is \code{by = NULL}
+#' The default is `by = NULL`
 #'
 #' @param ypll_age an optional numeric vector of length 1. When specified, it
 #' should be the age (an integer) used for **Years of Potential Life Lost** (YPLL)
 #' calculations. Valid values are between 1 & 99 (inclusive), though 65 and 85 are the most
-#' common. For example, \code{ypll_age = 65} would sum the total number of years
+#' common. For example, `ypll_age = 65` would sum the total number of years
 #' that could have been lived had everyone in the data lived to at least 65.
 #' Note that this function returns the total number of YPLL. Additional
 #' processing is necessary to calculate rates per 100,000.
 #'
-#' The default is \code{ypll_age = NULL}, which will skip YPLL calculations.
+#' The default is `ypll_age = NULL`, which will skip YPLL calculations.
 #'
 #' @param death_age_col an optional character vector of length one that specifies
 #' the name of the column in ph.data with the decedents' age at death
-#' in years. It is only needed if \code{ypll_age} is
-#' specified AND if ph.data lacks columns named \code{date_of_birth} and
-#' \code{date_of_death} that are of class \code{"Date"}. If the latter two
+#' in years. It is only needed if `ypll_age` is
+#' specified AND if ph.data lacks columns named `date_of_birth` and
+#' `date_of_death` that are of class `"Date"`. If the latter two
 #' columns exist, the code calculates the age at death for you.
 #'
-#' The default is \code{death_age_col = NULL}.'
+#' The default is `death_age_col = NULL`.'
 #'
 #' @seealso
 #' - [death_other()] for viewing available 'Other' cause of death definitions
@@ -1479,9 +1479,9 @@ death_other<- function(){
 #' - [death_multicause_count()] for generating counts of deaths defined by BOTH underlying & contributing causes
 #'
 #' @return
-#' Generates a table with two columns: \code{cause.of.death} and \code{deaths}.
-#' If \code{ypll_age} is specified, a \code{ypll_##} column will also be added to the
-#' table. Columns in the \code{by} argument will also be returned.
+#' Generates a table with two columns: `cause.of.death` and `deaths`.
+#' If `ypll_age` is specified, a `ypll_##` column will also be added to the
+#' table. Columns in the `by` argument will also be returned.
 #'
 #'
 #' @export
@@ -1780,7 +1780,7 @@ death_other_count <- function(ph.data,
 #'   must exist in `ph.data`
 #' - A warning is issued if fewer than 20 such columns are found, as typically
 #'   20 contributing cause columns are expected
-#' - ICD-10 codes in `<contributing_cols>_#`` are consistent with the expectations of the rads death functions
+#' - ICD-10 codes in `<contributing_cols>_#` are consistent with the expectations of the rads death functions
 #'
 #' @return
 #' Returns `invisible(TRUE)` if validation passes. Informative messages, warnings, and errors are
@@ -1895,18 +1895,18 @@ death_validate_data <- function(ph.data = NULL,
 #' Summarize NCHS causes of deaths
 #'
 #' @description
-#' Generalized function that is called upon by \code{death_113_count()} and
-#' \code{death_130_count()}. Generates death counts for the National Center for
+#' Generalized function that is called upon by `death_113_count()` and
+#' `death_130_count()`. Generates death counts for the National Center for
 #' Health Statistics (NCHS) Selected Causes of Death (COD). Needs line-level
 #' death data with a properly formatted ICD10 column.
 #'
-#' In addition to the causes of death you specify with \code{causeids} or
-#' \code{cause}, it will automatically return the total deaths as well as
+#' In addition to the causes of death you specify with `causeids` or
+#' `cause`, it will automatically return the total deaths as well as
 #' COVID-19 deaths (since they do not have their own NCHS category).
 #'
 #'
 #' @details
-#' See \code{rads::death_113()} & \code{rads::death_130()} for a complete list
+#' See `rads::death_113()` & `rads::death_130()` for a complete list
 #' of available causesid and cause values.
 #'
 #' @param ph.data a data.table or data.frame. Must contain death data structured
@@ -1919,61 +1919,61 @@ death_validate_data <- function(ph.data = NULL,
 #'
 #' @param  cause an OPTIONAL character vector specifying the complete or partial
 #' keyword for the cause of death of interest. It is not case sensitive and you
-#' can specify it in two ways: 1) \code{cause = c('viral', 'cough')} or 2)
-#' \code{cause = c("viral|cough")}. If you specify any keyword(s),
-#' the function will ignore the \code{causeids} argument.
+#' can specify it in two ways: 1) `cause = c('viral', 'cough')` or 2)
+#' `cause = c("viral|cough")`. If you specify any keyword(s),
+#' the function will ignore the `causeids` argument.
 #'
-#' The default is \code{NULL}, i.e., the function will rely on the \code{causeids}
+#' The default is `NULL`, i.e., the function will rely on the `causeids`
 #' argument to identify the causes of death.
 #'
 #' @param icdcol a character vector of length one that specifies the name of the
 #' column in ph.data that contains the ICD10 death codes of interest.
 #'
-#' The default is \code{underlying_cod_code}, which is found in properly
-#' formatted death data structured like \code{rads.data::synthetic_death}.
+#' The default is `underlying_cod_code`, which is found in properly
+#' formatted death data structured like `rads.data::synthetic_death`.
 #'
 #' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified \code{by = c('chi_sex',
-#' 'chi_race_6')}, the results would be stratified by each combination of sex
+#' results. For example, if you specified `by = c('chi_sex',
+#' 'chi_race_6')`, the results would be stratified by each combination of sex
 #' and race.
 #'
-#' The default is \code{by = NULL}
+#' The default is `by = NULL`
 #'
 #' @param ypll_age an optional numeric vector of length 1. When specified, it
 #' should be the age (an integer) used for **Years of Potential Life Lost** (YPLL)
 #' calculations. Valid values are between 1 & 99 (inclusive), though 65 and 85 are the most
-#' common. For example, \code{ypll_age = 65} would sum the total number of years
+#' common. For example, `ypll_age = 65` would sum the total number of years
 #' that could have been lived had everyone in the data lived to at least 65.
 #' Note that this function returns the total number of YPLL. Additional
 #' processing is necessary to calculate rates per 100,000.
 #'
-#' The default is \code{ypll_age = NULL}, which will skip YPLL calculations.
+#' The default is `ypll_age = NULL`, which will skip YPLL calculations.
 #'
 #' @param death_age_col an optional character vector of length one that specifies
 #' the name of the column in ph.data with the decedents' age at death
-#' in years. It is only needed if \code{ypll_age} is
-#' specified AND if ph.data lacks a column named \code{chi_age}.
+#' in years. It is only needed if `ypll_age` is
+#' specified AND if ph.data lacks a column named `chi_age`.
 #'
-#' The default is \code{death_age_col = NULL}.
+#' The default is `death_age_col = NULL`.
 #'
 #' @param nchsnum specifies whether the function should reference NCHS 113 Selected
-#' COD (\code{rads::death_113()}) or NCHS 130 Selected Causes of Infant Death
-#' (\code{rads::death_130()}).
+#' COD (`rads::death_113()`) or NCHS 130 Selected Causes of Infant Death
+#' (`rads::death_130()`).
 #'
 #' @references
-#' \url{https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf} &
-#' \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS113CausesOfDeath.pdf}
-#' \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/TechnicalNotes.pdf}
+#' <https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf> &
+#' <https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS113CausesOfDeath.pdf>
+#' <https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/TechnicalNotes.pdf>
 #'
 #' @return
-#' Generates a table with three columns, \code{causeid},  \code{cause.of.death},
-#' and \code{deaths}. If \code{ypll_age} is specified, a \code{ypll_##} column
-#' will also be added to the table. Columns in the \code{by}
+#' Generates a table with three columns, `causeid`,  `cause.of.death`,
+#' and `deaths`. If `ypll_age` is specified, a `ypll_##` column
+#' will also be added to the table. Columns in the `by`
 #' argument will also be returned.
 #'
 #' By default, it will return all relevant causes of death. You can specify which
-#' causes of death you want to assess using the \code{causeids} or \code{cause}
+#' causes of death you want to assess using the `causeids` or `cause`
 #' arguments.
 #'
 #' @examples
@@ -2265,9 +2265,9 @@ death_xxx_count <- function(ph.data,
 #' corresponding populations, as well as the age interval and the average
 #' fraction of years lived in the interval by those who die in the interval. It
 #' is *highly recommended*, though not necessary, that you use
-#' \code{\link{life_table_prep}} to prepare `ph.data`.
+#' [life_table_prep()] to prepare `ph.data`.
 #'
-#' The default value is \code{ph.data = NULL}.
+#' The default value is `ph.data = NULL`.
 #' @param myages a character vector of length one identifying a column
 #' specifying the beginning and end of each age interval separated by a hyphen.
 #' Note, the start of each interval should be the end of the previous
@@ -2279,55 +2279,55 @@ death_xxx_count <- function(ph.data,
 #' at an unknown age. These deaths will be distributed proportionately over the
 #' other age groups.
 #'
-#' The default value is \code{myages = "ages"}.
+#' The default value is `myages = "ages"`.
 #' @param mydeaths a character vector of length one identifying a numeric column
 #' with the total deaths for the given age interval in the given year(s).
 #'
-#' The default value is \code{mydeaths = "deaths"}.
+#' The default value is `mydeaths = "deaths"`.
 #' @param mypops a character vector of length one identifying a numeric column
 #' with the total population in the age intervals corresponding to mydeaths.
 #' This is technically the mid-year population. In practice we usually
 #' use [OFM](https://ofm.wa.gov/) population estimates, e.g., from
-#' \code{apde.data::population()} for KC users, or your own population
+#' `apde.data::population()` for KC users, or your own population
 #' data source structured similarly.
 #'
-#' The default value is \code{mypops = "pop"}.
+#' The default value is `mypops = "pop"`.
 #' @param myprops a character vector of length one identifying a numeric column
 #' with the average proportion of the interval lived by those who died in the
 #' interval. For example, if those who died in '80-85' lived an average of 1000
 #' days past their 80th birthday, myprops would be 0.54 (1000/(365.25*5)).
 #'
-#' The default value is \code{myprops = "fraction"}.
+#' The default value is `myprops = "fraction"`.
 #' @param ci a numeric value representing the confidence level, which must be
 #' greater than 0 and less than 1.
 #'
-#' The default value is \code{ci = 0.95}.
+#' The default value is `ci = 0.95`.
 #' @param by a character vector used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified \code{by = c('chi_sex',
-#' 'chi_race_6')}, the results would be stratified by each combination of sex
+#' results. For example, if you specified `by = c('chi_sex',
+#' 'chi_race_6')`, the results would be stratified by each combination of sex
 #' and race.
 #'
-#' The default is \code{by = NULL}
+#' The default is `by = NULL`
 #'
 #' @return a data.table with the pre-existing columns plus the
 #' standard life table columns
 #' @details
 #' The function returns the following life table columns:
 #'
-#' - \emph{\bold{mx}}: age interval specific death rate
+#' - ***mx***: age interval specific death rate
 #'
-#' - \emph{\bold{qx}}: probability of dying in the age interval
+#' - ***qx***: probability of dying in the age interval
 #'
-#' - \emph{\bold{lx}}: # of (theoretical) persons alive at the start of the age interval
+#' - ***lx***: # of (theoretical) persons alive at the start of the age interval
 #'
-#' - \emph{\bold{dx}}: # of deaths during the age interval
+#' - ***dx***: # of deaths during the age interval
 #'
-#' - \emph{\bold{ax}}: average fraction of the interval lived by those who died in the interval
+#' - ***ax***: average fraction of the interval lived by those who died in the interval
 #'
-#' - \emph{\bold{Lx}}: total person years lived in the age interval
+#' - ***Lx***: total person years lived in the age interval
 #'
-#' - \emph{\bold{Tx}}: total person years lived beyond the start of the age interval
+#' - ***Tx***: total person years lived beyond the start of the age interval
 #'
 #' - ex: expectation of life (a.k.a., life expectancy) at the start of the age
 #' interval. ***The value of ex for those under one year of age is typically
@@ -2792,7 +2792,7 @@ life_table <- function(ph.data,
 #' This function predicts the `mx` value (age-specific mortality rate) for the
 #' highest age group (e.g., '85+') where there is insufficient data for
 #' calculating it directly. It is intended for internal use by `rads`'
-#' \code{\link{life_table}} only.
+#' [life_table()] only.
 #'
 #' @details
 #' The function uses a simplification of the Gompertz-Makeham law of mortality.
@@ -2812,24 +2812,24 @@ life_table <- function(ph.data,
 #'
 #' @param ph.data A data.table containing mortality data
 #'
-#' The default is \code{ph.data = ph.data}, where `ph.data` is passed
+#' The default is `ph.data = ph.data`, where `ph.data` is passed
 #' from `rads::life_table()`
 #'
 #' @param by Variables used for stratification
 #'
-#' The default is \code{by = by}, where `by` is passed
+#' The default is `by = by`, where `by` is passed
 #' from `rads::life_table()`
 #'
 #' @param myages A vector of length one containing the name of the column with
 #' the age categories in their proper format (e.g., `c('65-74', 75-84', '85+')`).
 #'
 #'
-#' The default is \code{myages = myages}, where `myages` is passed from
+#' The default is `myages = myages`, where `myages` is passed from
 #' `rads::life_table()`
 #'
 #' @param empirical_adjustment_factor Adjustment factor for predicted mx
 #'
-#' The default is \code{empirical_adjustment_factor = 1.8}
+#' The default is `empirical_adjustment_factor = 1.8`
 #'
 #' @return A data.table with predicted mx values for the highest age group
 #'
@@ -2948,13 +2948,13 @@ life_table_predict_mx <- function(ph.data = ph.data,
 #' @description
 #' Processes individual-level death data to create a standardized data table.
 #' This table is collapsed/aggregated by age bin and optionally, by
-#' demographics, for use with \code{\link{life_table}}.
+#' demographics, for use with [life_table()].
 #'
 #' @param ph.data a data.table or data.frame. Must contain individual-level
 #' death data with the date of birth, date of death, and any demographics which
 #' you want to use to aggregate the resulting table.
 #'
-#' The default value is \code{ph.data = NULL}.
+#' The default value is `ph.data = NULL`.
 #'
 #' @param cuts integer vector of any length greater than 1 (typically of
 #' length ~ 20). It specifies the cut-points for the age groupings to be created
@@ -2963,32 +2963,32 @@ life_table_predict_mx <- function(ph.data = ph.data,
 #' c(0, 5, 10, 20), the data will be grouped into ages [0,5), [5,10), [10,20), and [20,
 #' infinity).
 #'
-#' The default is \code{cuts= c(0, 1, 5, 10, 15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65,
-#' 70, 75, 80, 85)}, which creates the standard age groupings used by WA DOH.
+#' The default is `cuts= c(0, 1, 5, 10, 15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65,
+#' 70, 75, 80, 85)`, which creates the standard age groupings used by WA DOH.
 #'
 #' @param dobvar character vector of length one identifying a column with
 #' the decedent's date of birth. The referenced column must be of class
 #' 'date' or class 'character' in the format "YYYY-MM-DD" or "YYYY/MM/DD."
 #'
-#' The default is \code{dobvar = "date_of_birth"}, which is the dob variable
-#' available in \code{rads.data::synthetic_death}.
+#' The default is `dobvar = "date_of_birth"`, which is the dob variable
+#' available in `rads.data::synthetic_death`.
 #'
 #' @param dodvar character vector of length one identifying a column with
 #' the decedent's date of death. The referenced column must be of class
 #' 'date' or class 'character' in the format "YYYY-MM-DD" or "YYYY/MM/DD."
 #'
-#' The default is \code{dodvar = "date_of_death"}, which is the dod variable
-#' available in \code{rads.data::synthetic_death}.
+#' The default is `dodvar = "date_of_death"`, which is the dod variable
+#' available in `rads.data::synthetic_death`.
 #'
 #' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified \code{by = c('chi_sex',
-#' 'chi_race_6')}, the results would be grouped by each combination of sex
+#' results. For example, if you specified `by = c('chi_sex',
+#' 'chi_race_6')`, the results would be grouped by each combination of sex
 #' and race. If you leave it blank (i.e., `by = NULL`), it will only
 #' provide the death counts and death fractions by age group
 #' described by `cuts`.
 #'
-#' The default is \code{by = NULL}
+#' The default is `by = NULL`
 #'
 #' @return a data.table with deaths aggregated by any demographics specified in
 #' the `by` argument, as well as `ages` (age group), `deaths` (deaths per
@@ -2997,7 +2997,7 @@ life_table_predict_mx <- function(ph.data = ph.data,
 #'
 #' @details
 #' Note that population data must be merged onto the returned data.table
-#' before running it through \code{\link{life_table}}.
+#' before running it through [life_table()].
 #'
 #' @export
 #' @name life_table_prep

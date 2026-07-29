@@ -8,13 +8,16 @@
 A data.table with 16 rows and 6 columns: \code{input}, \code{output}, \code{object},
 \code{inputvar}, \code{outputvar}, and \code{notes}.
 }
+\source{
+Manually curated and maintained in \code{data-raw/ref_get_xwalk.csv}.
+}
 \usage{
 ref_get_xwalk
 }
 \description{
-A reference table of available geographic crosswalks used by \code{list_ref_xwalk()}
-and \code{get_xwalk()}. It informs which geographic pairs are valid, their location
-in \code{rads.data::}, and any relevant explanatory notes.
+A reference table of available geographic crosswalks used by \code{\link[=list_ref_xwalk]{list_ref_xwalk()}}
+and \code{\link[=get_xwalk]{get_xwalk()}}. It informs which geographic pairs are valid, their location
+in \verb{rads.data::}, and any relevant explanatory notes.
 }
 \examples{
 head(ref_get_xwalk)

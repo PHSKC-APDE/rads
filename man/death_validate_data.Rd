@@ -69,7 +69,7 @@ This function performs the following validation checks:
 must exist in \code{ph.data}
 \item A warning is issued if fewer than 20 such columns are found, as typically
 20 contributing cause columns are expected
-\item ICD-10 codes in `<contributing_cols>_#`` are consistent with the expectations of the rads death functions
+\item ICD-10 codes in \verb{<contributing_cols>_#} are consistent with the expectations of the rads death functions
 }
 }
 \examples{

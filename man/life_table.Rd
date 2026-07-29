@@ -19,7 +19,7 @@ life_table(
 corresponding populations, as well as the age interval and the average
 fraction of years lived in the interval by those who die in the interval. It
 is \emph{highly recommended}, though not necessary, that you use
-\code{\link{life_table_prep}} to prepare \code{ph.data}.
+\code{\link[=life_table_prep]{life_table_prep()}} to prepare \code{ph.data}.
 
 The default value is \code{ph.data = NULL}.}
 
@@ -59,8 +59,7 @@ The default value is \code{myprops = "fraction"}.}
 
 \item{by}{a character vector used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{by = c('chi_sex',
-'chi_race_6')}, the results would be stratified by each combination of sex
+results. For example, if you specified \code{by = c('chi_sex', 'chi_race_6')}, the results would be stratified by each combination of sex
 and race.
 
 The default is \code{by = NULL}}
@@ -81,13 +80,13 @@ essential attributes.
 \details{
 The function returns the following life table columns:
 \itemize{
-\item \emph{\bold{mx}}: age interval specific death rate
-\item \emph{\bold{qx}}: probability of dying in the age interval
-\item \emph{\bold{lx}}: # of (theoretical) persons alive at the start of the age interval
-\item \emph{\bold{dx}}: # of deaths during the age interval
-\item \emph{\bold{ax}}: average fraction of the interval lived by those who died in the interval
-\item \emph{\bold{Lx}}: total person years lived in the age interval
-\item \emph{\bold{Tx}}: total person years lived beyond the start of the age interval
+\item \emph{\strong{mx}}: age interval specific death rate
+\item \emph{\strong{qx}}: probability of dying in the age interval
+\item \emph{\strong{lx}}: # of (theoretical) persons alive at the start of the age interval
+\item \emph{\strong{dx}}: # of deaths during the age interval
+\item \emph{\strong{ax}}: average fraction of the interval lived by those who died in the interval
+\item \emph{\strong{Lx}}: total person years lived in the age interval
+\item \emph{\strong{Tx}}: total person years lived beyond the start of the age interval
 \item ex: expectation of life (a.k.a., life expectancy) at the start of the age
 interval. \emph{\strong{The value of ex for those under one year of age is typically
 referred to as 'Life Expectancy at Birth'.}}

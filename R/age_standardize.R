@@ -259,7 +259,7 @@ adjust_direct <- function(count,
 #'
 #' @section Note on Standard Errors:
 #' This function calculates confidence intervals using the
-#' \href{https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf}{Fay-Feuer method},
+#' [Fay-Feuer method](https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf),
 #' which does not provide direct standard error (SE) estimates. If you need SE approximations,
 #' common methods used by health departments include `SE = adjusted_rate/sqrt(cases)` and
 #' `RSE = 1/sqrt(cases)`.
@@ -282,7 +282,7 @@ adjust_direct <- function(count,
 #' @export
 #' @name age_standardize
 #'
-#' @references \url{https://github.com/PHSKC-APDE/rads/wiki/age_standardize}
+#' @references <https://github.com/PHSKC-APDE/rads/wiki/age_standardize>
 #' @examples
 #' \donttest{
 #' library(data.table)

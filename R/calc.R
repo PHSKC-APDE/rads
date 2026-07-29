@@ -4,7 +4,7 @@
 #' @param what character vector. Variable to calculate metrics for. Must refer to a numeric or factor column.
 #' @param where subsetting expression
 #' @param by character vector. Must refer to variables within ph.data. The variables within ph.data to compute `what` by
-#' @param metrics character. See \code{\link{metrics}} or scroll below for the available options.
+#' @param metrics character. See [metrics()] or scroll below for the available options.
 #' @param per integer. The denominator when "rate" or "adjusted-rate" are selected as the metric. Metrics will be multiplied by this value.
 #' @param win integer. The number of consecutive units of time (e.g., years, months, etc.) over which the metrics will be calculated,
 #' i.e., the 'window' for a rolling average, sum, etc.
@@ -16,7 +16,7 @@
 #' @param ci numeric. Confidence level, >0 & <1, typically 0.95
 #' @param verbose logical. Mostly unused, but toggles on/off printed warnings.
 #' @param ... not implemented
-#' @references \url{https://github.com/PHSKC-APDE/rads/wiki/calc}
+#' @references <https://github.com/PHSKC-APDE/rads/wiki/calc>
 #' @return a data.table containing the results
 #' @details
 #' This function calculates `metrics` for each variable in `what` from rows meeting the conditions specified
@@ -62,8 +62,8 @@
 #' Default ci (e.g. upper and lower) is 95 percent.
 #'
 #'
-#' For survey data, use the \code{proportion} argument where relevant to ensure metrics are calculated using special proportion (e.g \code{svyciprop})
-#' methods. That is, when you want to find the fraction of ____, toggle \code{proportion} to \code{TRUE}.
+#' For survey data, use the `proportion` argument where relevant to ensure metrics are calculated using special proportion (e.g `svyciprop`)
+#' methods. That is, when you want to find the fraction of ____, toggle `proportion` to `TRUE`.
 #'
 #' @export
 #'

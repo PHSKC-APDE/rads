@@ -6,7 +6,7 @@
 #' depth 2, and so on.
 #'
 #' @param this A list or other R object to analyze. If not a list, the function
-#'   returns the starting depth level defined by \code{thisdepth}.
+#'   returns the starting depth level defined by `thisdepth`.
 #' @param thisdepth Numeric. The starting depth level for the calculation.
 #'   Defaults to 0.
 #'
@@ -57,7 +57,7 @@ depth <- function(this,thisdepth=0){
 #' Validate list inputs into the tabulate functions
 #' @param x list or a vector. The instructions/groupings to be validated. Note: a vector is turned into a list.
 #' @param values vector. The values of the column that the instructions in x are relevant for.
-#' @param variable_name character. T
+#' @param variable_name character. Name of the variable being validated, used in error messages.
 #' @param prefix character of length 1. Prefix to be added to the automatic naming process.
 #' @param make_names logical. Should names be added to x if they don't exist already.
 #' @keywords internal

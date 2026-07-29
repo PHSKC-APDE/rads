@@ -40,44 +40,40 @@
 #' provided data.table or data.frame, indicating the variable types and listing
 #' unique values for each variable. Different variable types are handled as
 #' follows:
-#' \itemize{
-#'   \item \strong{Character and logical variables}: If the number of unique
+#' - **Character and logical variables**: If the number of unique
 #'   values exceeds `max_unique_values`, the function displays the first
 #'   `truncation_threshold` values followed by an ellipsis.
-#'   \item \strong{Factor variables}: The function displays factor levels and
+#' - **Factor variables**: The function displays factor levels and
 #'   their corresponding integer codes. These are displayed following the rules
 #'   for character values.
-#'   \item \strong{Numeric variables (integer, numeric)}: If the number of
+#' - **Numeric variables (integer, numeric)**: If the number of
 #'   unique values exceeds `max_unique_values`, the function displays the
 #'   minimum and maximum values.
-#'   \item \strong{Date and datetime variables}: Treated similarly to numeric
+#' - **Date and datetime variables**: Treated similarly to numeric
 #'   variables, showing minimum and maximum values if there are too many unique
 #'   values.
-#'   \item \strong{Other types}: For non-atomic types (e.g., `lists`), the
+#' - **Other types**: For non-atomic types (e.g., `lists`), the
 #'   function suggests checking the original dataset structure.
-#' }
 #' Users can hide the unique values of sensitive variables (e.g., phone numbers
 #' in `ph.data`) using the `suppress` parameter. Additionally, if a reference
 #' data.table or data.frame (`ph.ref`) is provided, it will merge descriptions
 #' and notes into the output.
 #'
 #' @return A data.table with the following columns:
-#' \describe{
-#'   \item{source}{Character: The source of the data.}
-#'   \item{varname}{Character: The name of the variable.}
-#'   \item{vartype}{Character: The type of the variable (e.g., factor,
-#'   character, logical, integer, numeric, date, datetime, other).}
-#'   \item{values}{Character: A sample of unique values or a range if the number
-#'   of unique values exceeds `max_unique_values`.}
-#'   \item{factor_labels}{Character: Labels for factor levels if the variable is
-#'   a factor.}
-#'   \item{desc}{Character: Description of the variable. This column is only
-#'   filled if a `ph.ref` data frame is provided.}
-#'   \item{notes}{Character: Additional notes about the variable. This column is
-#'   only filled if a `ph.ref` data frame is provided.}
-#'   \item{dict_updated}{Date: The date the dictionary was created, i.e., the
-#'   date you ran this function.}
-#' }
+#' - `source`: Character: The source of the data.
+#' - `varname`: Character: The name of the variable.
+#' - `vartype`: Character: The type of the variable (e.g., factor,
+#'   character, logical, integer, numeric, date, datetime, other).
+#' - `values`: Character: A sample of unique values or a range if the number
+#'   of unique values exceeds `max_unique_values`.
+#' - `factor_labels`: Character: Labels for factor levels if the variable is
+#'   a factor.
+#' - `desc`: Character: Description of the variable. This column is only
+#'   filled if a `ph.ref` data frame is provided.
+#' - `notes`: Character: Additional notes about the variable. This column is
+#'   only filled if a `ph.ref` data frame is provided.
+#' - `dict_updated`: Date: The date the dictionary was created, i.e., the
+#'   date you ran this function.
 #'
 #' @examples
 #' library(data.table)

@@ -5,6 +5,15 @@
 #' @param ignore_case logical. should the case of names(data) be ignored?
 #' @param copy logical. If false and data is a data.table object, the function omits a copy step and will alter the underlying data.table by reference
 #'
+#' @return A data.table (or data.frame) with the recoded column(s) added.
+#'
+#' @examples
+#' mydata <- data.frame(sex = c("M", "F", "M", "F"), age = c(5, 15, 25, 35))
+#' recode1 <- create_recode(old_var = "sex", new_var = "sex_recoded",
+#'                           old = c("M", "F"), new = c("Male", "Female"),
+#'                           simplify_to_numeric = FALSE)
+#' enact_recodes(mydata, recode1)
+#'
 #' @export
 #'
 enact_recodes = function(data, ..., ignore_case = TRUE, copy = TRUE){

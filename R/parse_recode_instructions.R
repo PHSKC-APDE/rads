@@ -23,6 +23,16 @@
 #'
 #' @return list of lists of recode instructions.
 #'
+#' @examples
+#' recode_df <- data.frame(
+#'   old_var = c("sex", "sex"),
+#'   old_value = c("M", "F"),
+#'   new_var = c("sex_recoded", "sex_recoded"),
+#'   new_value = c("Male", "Female"),
+#'   new_label = NA
+#' )
+#' parse_recode_instructions(recode_df, simplify_to_numeric = FALSE)
+#'
 parse_recode_instructions = function(recode, catch_NAs = TRUE, simplify_to_numeric = TRUE){
 
   #check column names

@@ -1,10 +1,10 @@
-# calc_age() ----
+﻿# calc_age() ----
 #' Proper calculation of age in years
 #'
 #' @param from Vector of dates or characters ("YYYY-MM-DD") of indeterminate length.  vector of length 1.
 #' @param to Vector of dates or characters ("YYYY-MM-DD") of indeterminate length.  vector of length 1.
 #'
-#' @return Character vector of available datasets.
+#' @return Integer vector of ages in years.
 #' @export
 #' @name calc_age
 #' @examples
@@ -366,58 +366,58 @@ format_time_simple <- function(x){
 #' This function provides a curated assortment of standardized geographic crosswalks.
 #' Though limited in scope, it provides quick and consistent access to many of the
 #' standard crosswalks used in APDE. If there is a common crosswalk missing
-#' among the options in \code{list_ref_xwalk()}, please let us know by posting a detailed
+#' among the options in `list_ref_xwalk()`, please let us know by posting a detailed
 #' request in a [GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new).
 #'
 #' If you need less common crosswalks that are not available through this function, please
 #' explore the spatial data built into [rads.data](https://github.com/PHSKC-APDE/rads.data),
-#' e.g., \code{rads.data::spatial_geocomp_blk10_kps}. These rads.data tables were
+#' e.g., `rads.data::spatial_geocomp_blk10_kps`. These rads.data tables were
 #' created by many people over many years so you should expect to invest some time
 #' in exploration and data harmonization to prepare your two columns of interest.
 #'
 #' @param geo1 character vector of length 1 defining one half of the crosswalk
-#' desired, e.g., \code{geo1 = 'zip'}
+#' desired, e.g., `geo1 = 'zip'`
 #' @param geo2 character vector of length 1 defining the other  half of the
-#' crosswalk desired, e.g., \code{geo1 = 'city'}
+#' crosswalk desired, e.g., `geo1 = 'city'`
 #' @details
 #' A list of all acceptable geographic pairings can be found by typing
-#' \code{list_ref_xwalk()}.
+#' `list_ref_xwalk()`.
 #'
 #'Note that the pairings given as arguments to this function are critical but
-#' the order is not. In other words, \code{get_xwalk(geo1 = 'zip', geo2 = 'city')}
-#' will return the same table as \code{get_xwalk(geo1 = 'city', geo2 = 'zip')}.
+#' the order is not. In other words, `get_xwalk(geo1 = 'zip', geo2 = 'city')`
+#' will return the same table as `get_xwalk(geo1 = 'city', geo2 = 'zip')`.
 #'
 #'
 #' ## geo definitions
 #'
-#' * \code{blk1}: 2010 Census Block. 15 digit Census GEOID (e.g., 530330110012006).
+#' * `blk1`: 2010 Census Block. 15 digit Census GEOID (e.g., 530330110012006).
 #'   * 1-2: State (53 = WA)
 #'   * 3-5: County (033 = King County)
 #'   * 6-11: Tract (011001)
 #'   * 12: Block group (2)
 #'   * 12-15: Block (2006)
-#' * \code{ccd10}: 2010 Seattle City Council Districts
-#' * \code{city}: King County cities
-#' * \code{coo10}: 2010 COO places.
-#' * \code{hra10}: 2010 Health Reporting Areas
-#' * \code{kc}: King County
-#' * \code{kccd10}: 2010 King County Council Districts
-#' * \code{lgd10}: 2010 WA State legislative districts
-#' * \code{puma10}: 2010 Public Use Microdata Areas
-#' * \code{region10}: King County regions (North, South, East, & Seattle)
-#' * \code{scd10}: 2010 King County school districts
-#' * \code{sea10}: Seattle or KC except Seattle
-#' * \code{tract10}: 2010 Census Tract. 11 digit Census GEOID.
-#' * \code{zip}: Zip codes in King County.
+#' * `ccd10`: 2010 Seattle City Council Districts
+#' * `city`: King County cities
+#' * `coo10`: 2010 COO places.
+#' * `hra10`: 2010 Health Reporting Areas
+#' * `kc`: King County
+#' * `kccd10`: 2010 King County Council Districts
+#' * `lgd10`: 2010 WA State legislative districts
+#' * `puma10`: 2010 Public Use Microdata Areas
+#' * `region10`: King County regions (North, South, East, & Seattle)
+#' * `scd10`: 2010 King County school districts
+#' * `sea10`: Seattle or KC except Seattle
+#' * `tract10`: 2010 Census Tract. 11 digit Census GEOID.
+#' * `zip`: Zip codes in King County.
 #'   * _Note!_ This is different from the 133 zip
-#' codes used with HCA data. To view the latter, please type \code{rads.data::spatial_zip_hca}.
+#' codes used with HCA data. To view the latter, please type `rads.data::spatial_zip_hca`.
 #'
 #' ## A note about error propagation!
 #' If you're merging the crosswalk table onto line level data, you can use
-#' \code{rads::calc}, or \code{data.table}, or whatever package you like
+#' `rads::calc`, or `data.table`, or whatever package you like
 #' for further analysis. However, if you're merging on to pre-aggregated data,
 #' to further collapse/aggregate/sum, you'll need to properly account for error
-#' propagation. Here is a line of \code{data.table} code as an example:
+#' propagation. Here is a line of `data.table` code as an example:
 #' ```
 #' DT[, list(estimate = sum(estimate), stderror = sqrt(sum(stderror)^2)), c(group_by_vars)]
 #' ```
@@ -529,34 +529,34 @@ get_ref_pop <- function(ref_name = NULL){
 # list_ref_xwalk() ----
 #' View table of geographic pairs usable in the get_xwalk() function
 #' @description
-#' Displays a table of geographic pairings that can be submitted to \code{get_xwalk()}
+#' Displays a table of geographic pairings that can be submitted to `get_xwalk()`
 #' for crosswalk table generation. The numbers in the geographies (e.g.,
-#' the \code{10} in \code{hra10}) refer to the vintage, which typically reflects
+#' the `10` in `hra10`) refer to the vintage, which typically reflects
 #' the Census Bureau's decennial updates.
 #' @details
 #' ## geo definitions
 #'
-#' * \code{blk1}: 2010 Census Block. 15 digit Census GEOID (e.g., 530330110012006).
+#' * `blk1`: 2010 Census Block. 15 digit Census GEOID (e.g., 530330110012006).
 #'   * 1-2: State (53 = WA)
 #'   * 3-5: County (033 = King County)
 #'   * 6-11: Tract (011001)
 #'   * 12: Block group (2)
 #'   * 12-15: Block (2006)
-#' * \code{ccd10}: 2010 Seattle City Council Districts
-#' * \code{city}: King County cities
-#' * \code{coo10}: 2010 COO places.
-#' * \code{hra10}: 2010 Health Reporting Areas
-#' * \code{kc}: King County
-#' * \code{kccd10}: 2010 King County Council Districts
-#' * \code{lgd10}: 2010 WA State legislative districts
-#' * \code{puma10}: 2010 Public Use Microdata Areas
-#' * \code{region10}: King County regions (North, South, East, & Seattle)
-#' * \code{scd10}: 2010 King County school districts
-#' * \code{sea}: Seattle or KC except Seattle
-#' * \code{tract10}: 2010 Census Tract. 11 digit Census GEOID.
-#' * \code{zip}: Zip codes in King County.
+#' * `ccd10`: 2010 Seattle City Council Districts
+#' * `city`: King County cities
+#' * `coo10`: 2010 COO places.
+#' * `hra10`: 2010 Health Reporting Areas
+#' * `kc`: King County
+#' * `kccd10`: 2010 King County Council Districts
+#' * `lgd10`: 2010 WA State legislative districts
+#' * `puma10`: 2010 Public Use Microdata Areas
+#' * `region10`: King County regions (North, South, East, & Seattle)
+#' * `scd10`: 2010 King County school districts
+#' * `sea`: Seattle or KC except Seattle
+#' * `tract10`: 2010 Census Tract. 11 digit Census GEOID.
+#' * `zip`: Zip codes in King County.
 #'   * _Note!_ This is different from the 133 zip
-#' codes used with HCA data. To view the latter, please type \code{rads.data::spatial_zip_hca}.
+#' codes used with HCA data. To view the latter, please type `rads.data::spatial_zip_hca`.
 #' @return a data.table with two columns (geo1 & geo2), which define the acceptable
 #' geographic pairings for get_xwalk
 #' @export
@@ -940,49 +940,49 @@ metrics = function(){
 #' @param ses Numeric vector of standard errors for each group.
 #' @param reference_index Integer indicating the index of the reference group.
 #' @param n Optional numeric vector of sample sizes for each group.
-#' @param alpha Numeric value for significance level (default is \strong{`0.05`}).
+#' @param alpha Numeric value for significance level (default is **`0.05`**).
 #' @param df_method String specifying the method for calculating degrees of
 #' freedom. Options are:
-#'    - \strong{`'estimated'`} (Welch-Satterthwaite equation): This method, which
+#'    - **`'estimated'`** (Welch-Satterthwaite equation): This method, which
 #'    corresponds to Welch's t-test, calculates an approximation of the degrees
 #'    of freedom based on the sample variances and sizes. It's particularly
 #'    useful when groups have unequal variances and/or unequal sample sizes,
 #'    making it generally more reliable than the standard t-test in these
 #'    situations. It is a data driven approach and is often preferred due to
 #'    balance between Type I Errors (false +) and Type II Errors (false -).
-#'    - \strong{`'conservative'`} (df = 2): Uses the minimum possible degrees of
+#'    - **`'conservative'`** (df = 2): Uses the minimum possible degrees of
 #'    freedom, resulting in the widest confidence intervals (for the difference
 #'    in means) and the most conservative (largest) p-values. Reduces Type I
 #'    Error (false +) and increases Type II Error (false -).
-#'    - \strong{`'moderate'`} (df = k - 1): Uses the number of groups minus 1 as the degrees
+#'    - **`'moderate'`** (df = k - 1): Uses the number of groups minus 1 as the degrees
 #'    of freedom, providing a balance between conservative and liberal approaches.
-#'    - \strong{`'liberal'`} (df = Inf): Assumes infinite degrees of freedom, resulting in
+#'    - **`'liberal'`** (df = Inf): Assumes infinite degrees of freedom, resulting in
 #'    the narrowest confidence intervals (for the difference in means) and the
 #'    most liberal (smallest) p-values. Increases Type I Error (false +) and
 #'    reduces Type II Error (false -).
 #'
-#' Default is \strong{`'estimated'`}.
-#' @param alternative String specifying the alternative hypothesis: \strong{`'two.sided'`}
-#' (default), \strong{`'less'`}, or \strong{`'greater'`}. Default is \strong{`'two.sided'`}.
+#' Default is **`'estimated'`**.
+#' @param alternative String specifying the alternative hypothesis: **`'two.sided'`**
+#' (default), **`'less'`**, or **`'greater'`**. Default is **`'two.sided'`**.
 #' @param adjust_method String specifying the method of adjustment for multiple
-#' comparisons: \strong{`NULL`}, \strong{`'Holm-Bonferroni'`},
-#' \strong{`'Benjamini-Hochberg'`}. Refer to the `holm` and `bh` descriptions
-#' in [stats::p.adjust()] for more information. Default is \strong{`NULL`}.
+#' comparisons: **`NULL`**, **`'Holm-Bonferroni'`**,
+#' **`'Benjamini-Hochberg'`**. Refer to the `holm` and `bh` descriptions
+#' in [stats::p.adjust()] for more information. Default is **`NULL`**.
 #'
 #' @return A data.table containing comparison results with the following columns:
-#'   \item{comparison}{String describing the comparison}
-#'   \item{diff_means}{Numeric difference in means}
-#'   \item{ci_lower}{Numeric lower bound of the confidence interval}
-#'   \item{ci_upper}{Numeric upper bound of the confidence interval}
-#'   \item{p.value}{Numeric p-value}
-#'   \item{significant}{Logical indicating if the result is significant (TRUE if
-#'     p-value < alpha, FALSE otherwise)}
-#'   \item{t.statistic}{Numeric t-statistic}
-#'   \item{df}{Numeric degrees of freedom}
-#'   \item{df_method}{String indicating the method used for
-#'     calculating degrees of freedom}
-#'   \item{adjust_method}{String indicating the method used for multiple
-#'     comparisons p.value adjustment (when `adjust_method` is not `NULL`)}
+#' - `comparison`: String describing the comparison
+#' - `diff_means`: Numeric difference in means
+#' - `ci_lower`: Numeric lower bound of the confidence interval
+#' - `ci_upper`: Numeric upper bound of the confidence interval
+#' - `p.value`: Numeric p-value
+#' - `significant`: Logical indicating if the result is significant (TRUE if
+#'   p-value < alpha, FALSE otherwise)
+#' - `t.statistic`: Numeric t-statistic
+#' - `df`: Numeric degrees of freedom
+#' - `df_method`: String indicating the method used for
+#'   calculating degrees of freedom
+#' - `adjust_method`: String indicating the method used for multiple
+#'   comparisons p.value adjustment (when `adjust_method` is not `NULL`)
 #'
 #' @examples
 #' # Example 1: Comparing birthweights across different maternal age groups
@@ -1215,19 +1215,19 @@ round2 = function(x, n = 0) {
 #' @param ph.data name of data.frame or data.table
 #' @param stringsAsFactors logical. Specifies whether to convert strings to
 #' factors (TRUE) or not (FALSE). Note that columns that were originally factors
-#' will always be returned as factors. Default \code{stringsAsFactors = FALSE}.
+#' will always be returned as factors. Default `stringsAsFactors = FALSE`.
 #' @param  convert_to_utf8 logical. Specifies whether to convert character strings
 #' to UTF-8 encoding. UTF-8 ensures consistent handling of international characters
 #' and special symbols across different systems and prevents display/processing
 #' errors from incompatible character encodings. If you have a few extra minutes
-#' to spare, \code{convert_to_utf8 = TRUE} is recommended. Default
-#' \code{convert_to_utf8 = FALSE}.
+#' to spare, `convert_to_utf8 = TRUE` is recommended. Default
+#' `convert_to_utf8 = FALSE`.
 #' @description
 #' `string_clean` is designed to clean and preprocess strings and factors within a
 #' data.frame or data.table after importing from SQL, text files, CSVs, etc. It
 #' removes zero-width and invisible characters, normalizes all white spaces,
 #' replaces multiple white spaces with a single white space, trims beginning and
-#' ending white spaces, converts empty strings to true \code{NA} and optionally
+#' ending white spaces, converts empty strings to true `NA` and optionally
 #' encodes text to UTF-8 and strings as factors. The function maintains the
 #' original order of columns and leaves numeric and logical columns as they were.
 #'
@@ -1237,10 +1237,10 @@ round2 = function(x, n = 0) {
 #'
 #' If you want a more thorough cleaning or if your
 #' data have international characters or special symbols, you are encouraged to
-#' set \code{convert_to_utf8 = TRUE}.
+#' set `convert_to_utf8 = TRUE`.
 #'
 #' The `string_clean` function modifies objects in place due to the use
-#' of data.table's by-reference assignment (e.g., \code{:=}). In other words, there is
+#' of data.table's by-reference assignment (e.g., `:=`). In other words, there is
 #' *no need to assign the output*, just
 #' type `string_clean(myTable)`.
 #'
@@ -1357,7 +1357,7 @@ string_clean <- function (ph.data = NULL,
 #' @export
 #' @return numeric
 #' @name std_error
-#' @source plotrix R package July 11, 2022: \url{https://github.com/plotrix/plotrix/blob/master/R/std_error.R}.
+#' @source plotrix R package July 11, 2022: <https://github.com/plotrix/plotrix/blob/master/R/std_error.R>.
 #' @examples
 #' \donttest{
 #' temp1 <- data.table::data.table(x = c(seq(0, 400, 100), seq(1000, 1800, 200), NA),
