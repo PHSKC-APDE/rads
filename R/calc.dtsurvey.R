@@ -1,8 +1,6 @@
 #' @rdname calc
 #' @export
 #' @method calc dtsurvey
-#' @importFrom stats median na.omit
-#' @importFrom utils capture.output
 calc.dtsurvey <- function(ph.data,
                          what = NULL,
                          where, #this is a change from the main calc framework
@@ -16,9 +14,6 @@ calc.dtsurvey <- function(ph.data,
                          ci = .95,
                          verbose = FALSE,
                          ...){
-
-  #global variables used by data.table declared as NULL here to play nice with devtools::check()
-  tv <- NULL
 
   if(!all(c('stype', 'sdes') %in% names(attributes(ph.data)))){
 
@@ -127,7 +122,7 @@ calc.dtsurvey <- function(ph.data,
 
   #calculate windows
   if(!is.null(time_var) & !is.null(win)){
-    times = unique(na.omit(ph.data[[time_var]]))
+    times = unique(stats::na.omit(ph.data[[time_var]]))
     if(length(times)>0 && !is.null(win)){
       wins = seq(min(times), max(times - win + 1))
       wins = lapply(wins, function(x) seq(x, x + win - 1))
@@ -172,7 +167,7 @@ calc.dtsurvey <- function(ph.data,
   })
 
 
-  res = rbindlist(res, fill = TRUE)
+  res = data.table::rbindlist(res, fill = TRUE)
 
   return(res)
 
@@ -195,10 +190,6 @@ compute <- function(DT,
 
 
   # if(nrow(DT) == 0) warning('No valid rows to compute on given `where` and `win` conditions')
-
-
-  #global variables used by data.table declared as NULL here to play nice with devtools::check()
-  cim <- l <- `_id` <- `..sv` <- `..st` <- tv <- X <- ccc <- ndistinct <- id <- total <- one <- numerator <- rse <- mean_se <- rate_per <- NULL
 
   sv = attr(DT, 'sdes')
   st = attr(DT, 'stype')
@@ -262,7 +253,7 @@ compute <- function(DT,
       med_fun = NULL
       warning('Ignoring a request to calculate the median on a factor')
     }else{
-      med_fun = substitute(median(x, na.rm = T) * 1.0, list(x=x))
+      med_fun = substitute(stats::median(x, na.rm = T) * 1.0, list(x=x))
     }
   }else{
     med_fun = NULL
@@ -395,7 +386,7 @@ compute <- function(DT,
       numerator = .N
     ),
     by = c(by, as.character(x))]
-    setnames(r2, as.character(x), 'level')
+    data.table::setnames(r2, as.character(x), 'level')
 
     r1[, id := .I]
 
@@ -416,7 +407,7 @@ compute <- function(DT,
 
     if(xisfactor){
       r1m = r1[, unlist(mean, recursive = FALSE), id]
-      setnames(r1m, c('id', 'mean', 'mean_se', 'mean_lower', 'mean_upper', 'level'))
+      data.table::setnames(r1m, c('id', 'mean', 'mean_se', 'mean_lower', 'mean_upper', 'level'))
 
     }else{
       r1m = NULL
@@ -424,7 +415,7 @@ compute <- function(DT,
         res[, mean := NULL]
         res[, c('mean', 'mean_se', 'mean_lower', 'mean_upper') := NA_real_]
       }else{
-        res[, c('mean', 'mean_se', 'mean_lower', 'mean_upper') := rbindlist(mean)]
+        res[, c('mean', 'mean_se', 'mean_lower', 'mean_upper') := data.table::rbindlist(mean)]
 
       }
     }
@@ -434,7 +425,7 @@ compute <- function(DT,
 
     if(xisfactor){
       r1t = r1[, unlist(total, recursive = FALSE), id]
-      setnames(r1t, c('id', 'total', 'total_se', 'total_lower', 'total_upper', 'level'))
+      data.table::setnames(r1t, c('id', 'total', 'total_se', 'total_lower', 'total_upper', 'level'))
 
     }else{
       r1t = NULL
@@ -442,7 +433,7 @@ compute <- function(DT,
         res[, total := NULL]
         res[, c('total', 'total_se', 'total_lower', 'total_upper') := NA_real_]
       }else{
-        res[, c('total', 'total_se', 'total_lower', 'total_upper') := rbindlist(total)]
+        res[, c('total', 'total_se', 'total_lower', 'total_upper') := data.table::rbindlist(total)]
 
       }
     }

@@ -39,7 +39,7 @@ A data.table with predicted mx values for the highest age group
 This function predicts the \code{mx} value (age-specific mortality rate) for the
 highest age group (e.g., '85+') where there is insufficient data for
 calculating it directly. It is intended for internal use by \code{rads}'
-\code{\link{life_table}} only.
+\code{\link[=life_table]{life_table()}} only.
 }
 \details{
 The function uses a simplification of the Gompertz-Makeham law of mortality.

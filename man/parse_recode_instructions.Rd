@@ -32,3 +32,14 @@ If blank, it helps identify a simpler rename operation.
 \item \code{new_label}: character (or convertable to character): The factor label that \code{old_value} will be recoded to in conjunction with the position of \code{new_value}
 }
 }
+\examples{
+recode_df <- data.frame(
+  old_var = c("sex", "sex"),
+  old_value = c("M", "F"),
+  new_var = c("sex_recoded", "sex_recoded"),
+  new_value = c("Male", "Female"),
+  new_label = NA
+)
+parse_recode_instructions(recode_df, simplify_to_numeric = FALSE)
+
+}

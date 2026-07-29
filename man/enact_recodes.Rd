@@ -15,6 +15,17 @@ enact_recodes(data, ..., ignore_case = TRUE, copy = TRUE)
 
 \item{copy}{logical. If false and data is a data.table object, the function omits a copy step and will alter the underlying data.table by reference}
 }
+\value{
+A data.table (or data.frame) with the recoded column(s) added.
+}
 \description{
 Apply a set of recode instructions to a dataset
+}
+\examples{
+mydata <- data.frame(sex = c("M", "F", "M", "F"), age = c(5, 15, 25, 35))
+recode1 <- create_recode(old_var = "sex", new_var = "sex_recoded",
+                          old = c("M", "F"), new = c("Male", "Female"),
+                          simplify_to_numeric = FALSE)
+enact_recodes(mydata, recode1)
+
 }

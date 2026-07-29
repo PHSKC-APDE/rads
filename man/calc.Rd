@@ -34,7 +34,7 @@ calc(ph.data, ...)
 
 \item{by}{character vector. Must refer to variables within ph.data. The variables within ph.data to compute \code{what} by}
 
-\item{metrics}{character. See \code{\link{metrics}} or scroll below for the available options.}
+\item{metrics}{character. See \code{\link[=metrics]{metrics()}} or scroll below for the available options.}
 
 \item{per}{integer. The denominator when "rate" or "adjusted-rate" are selected as the metric. Metrics will be multiplied by this value.}
 

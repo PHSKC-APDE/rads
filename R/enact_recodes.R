@@ -5,20 +5,24 @@
 #' @param ignore_case logical. should the case of names(data) be ignored?
 #' @param copy logical. If false and data is a data.table object, the function omits a copy step and will alter the underlying data.table by reference
 #'
-#' @importFrom data.table is.data.table ":=" set setnames
+#' @return A data.table (or data.frame) with the recoded column(s) added.
+#'
+#' @examples
+#' mydata <- data.frame(sex = c("M", "F", "M", "F"), age = c(5, 15, 25, 35))
+#' recode1 <- create_recode(old_var = "sex", new_var = "sex_recoded",
+#'                           old = c("M", "F"), new = c("Male", "Female"),
+#'                           simplify_to_numeric = FALSE)
+#' enact_recodes(mydata, recode1)
 #'
 #' @export
 #'
 enact_recodes = function(data, ..., ignore_case = TRUE, copy = TRUE){
-  # Global variables used by data.table declared as NULL here to play nice with devtools::check()
-    blankblank <- NULL
-
   stopifnot(inherits(data, 'data.frame'))
 
   isDT = data.table::is.data.table(data)
 
   #copy data here so the scope is protected
-  if(copy || !isDT) data = as.data.table(data)
+  if(copy || !isDT) data = data.table::as.data.table(data)
 
   psuedo_blankblank = !('blankblank' %in% names(data))
   if(psuedo_blankblank){
@@ -67,7 +71,7 @@ enact_recodes = function(data, ..., ignore_case = TRUE, copy = TRUE){
 
     old_names = names(data)[]
     new_names = tolower(names(data))
-    setnames(data, new_names)
+    data.table::setnames(data, new_names)
   }
 
   for(dot in dots){

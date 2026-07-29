@@ -1,10 +1,10 @@
-# calc_age() ----
+﻿# calc_age() ----
 #' Proper calculation of age in years
 #'
 #' @param from Vector of dates or characters ("YYYY-MM-DD") of indeterminate length.  vector of length 1.
 #' @param to Vector of dates or characters ("YYYY-MM-DD") of indeterminate length.  vector of length 1.
 #'
-#' @return Character vector of available datasets.
+#' @return Integer vector of ages in years.
 #' @export
 #' @name calc_age
 #' @examples
@@ -49,8 +49,6 @@ calc_age <- function(from, to) {
 #' @param tidy logical. Determines whether to drop intermediate variables with
 #' the estimate, lower bound, and upper bound for the referent.
 #'
-#' @importFrom data.table setnames ":=" setDT data.table
-#'
 #' @return data.table comprised of the original data.table and two additional
 #' columns ... 'comp' and 'comp_sig' (or alternatively specified names)
 #'
@@ -84,17 +82,14 @@ compare_estimate <- function (mydt,
                               key_where ,
                               new_col = "comp",
                               tidy = T){
-  #Bindings for data.table/check global variables
-  comparator_vars <- comp_est <- comp_upper <- comp_lower <- NULL
-
   # validate 'mydt' ----
   if(is.null(mydt)){
     stop("You must specify a dataset (i.e., 'mydt' must be defined)")
   }
 
-  if(!is.data.table(mydt)){
+  if(!data.table::is.data.table(mydt)){
     if(is.data.frame(mydt)){
-      data.table::setDT(copy(mydt))
+      mydt <- data.table::setDT(data.table::copy(mydt))
     } else {
       stop(paste0("<{mydt}> must be the name of a data.frame or data.table."))
     }
@@ -114,7 +109,7 @@ compare_estimate <- function (mydt,
       warning('`key_where` is a string. It was converted so that it would work, but in the future, this might turn into an error.
                   In the future, please pass unquoted commands that will resolve to a logical' )
 
-    } else {where = copy(call[['key_where']])}
+    } else {where = data.table::copy(call[['key_where']])}
 
     e <- substitute(expr = where) # get parse tree expression `where`
     r <- eval(expr = e, envir = mydt, enclos = parent.frame()) # evaluate
@@ -203,8 +198,6 @@ compare_estimate <- function (mydt,
 #' - Character values are parsed using several common American date formats.
 #'   If all conversion attempts fail, a warning is issued and the original data
 #'   is returned.
-#'
-#'@importFrom lubridate parse_date_time
 #'
 #' @examples
 #' convert_to_date(c("2024-01-01", "February 13, 1999", "2024/02/01",
@@ -373,67 +366,64 @@ format_time_simple <- function(x){
 #' This function provides a curated assortment of standardized geographic crosswalks.
 #' Though limited in scope, it provides quick and consistent access to many of the
 #' standard crosswalks used in APDE. If there is a common crosswalk missing
-#' among the options in \code{list_ref_xwalk()}, please let us know by posting a detailed
+#' among the options in `list_ref_xwalk()`, please let us know by posting a detailed
 #' request in a [GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new).
 #'
 #' If you need less common crosswalks that are not available through this function, please
 #' explore the spatial data built into [rads.data](https://github.com/PHSKC-APDE/rads.data),
-#' e.g., \code{rads.data::spatial_geocomp_blk10_kps}. These rads.data tables were
+#' e.g., `rads.data::spatial_geocomp_blk10_kps`. These rads.data tables were
 #' created by many people over many years so you should expect to invest some time
 #' in exploration and data harmonization to prepare your two columns of interest.
 #'
 #' @param geo1 character vector of length 1 defining one half of the crosswalk
-#' desired, e.g., \code{geo1 = 'zip'}
+#' desired, e.g., `geo1 = 'zip'`
 #' @param geo2 character vector of length 1 defining the other  half of the
-#' crosswalk desired, e.g., \code{geo1 = 'city'}
+#' crosswalk desired, e.g., `geo1 = 'city'`
 #' @details
 #' A list of all acceptable geographic pairings can be found by typing
-#' \code{list_ref_xwalk()}.
+#' `list_ref_xwalk()`.
 #'
 #'Note that the pairings given as arguments to this function are critical but
-#' the order is not. In other words, \code{get_xwalk(geo1 = 'zip', geo2 = 'city')}
-#' will return the same table as \code{get_xwalk(geo1 = 'city', geo2 = 'zip')}.
+#' the order is not. In other words, `get_xwalk(geo1 = 'zip', geo2 = 'city')`
+#' will return the same table as `get_xwalk(geo1 = 'city', geo2 = 'zip')`.
 #'
 #'
 #' ## geo definitions
 #'
-#' * \code{blk1}: 2010 Census Block. 15 digit Census GEOID (e.g., 530330110012006).
+#' * `blk1`: 2010 Census Block. 15 digit Census GEOID (e.g., 530330110012006).
 #'   * 1-2: State (53 = WA)
 #'   * 3-5: County (033 = King County)
 #'   * 6-11: Tract (011001)
 #'   * 12: Block group (2)
 #'   * 12-15: Block (2006)
-#' * \code{ccd10}: 2010 Seattle City Council Districts
-#' * \code{city}: King County cities
-#' * \code{coo10}: 2010 COO places.
-#' * \code{hra10}: 2010 Health Reporting Areas
-#' * \code{kc}: King County
-#' * \code{kccd10}: 2010 King County Council Districts
-#' * \code{lgd10}: 2010 WA State legislative districts
-#' * \code{puma10}: 2010 Public Use Microdata Areas
-#' * \code{region10}: King County regions (North, South, East, & Seattle)
-#' * \code{scd10}: 2010 King County school districts
-#' * \code{sea10}: Seattle or KC except Seattle
-#' * \code{tract10}: 2010 Census Tract. 11 digit Census GEOID.
-#' * \code{zip}: Zip codes in King County.
+#' * `ccd10`: 2010 Seattle City Council Districts
+#' * `city`: King County cities
+#' * `coo10`: 2010 COO places.
+#' * `hra10`: 2010 Health Reporting Areas
+#' * `kc`: King County
+#' * `kccd10`: 2010 King County Council Districts
+#' * `lgd10`: 2010 WA State legislative districts
+#' * `puma10`: 2010 Public Use Microdata Areas
+#' * `region10`: King County regions (North, South, East, & Seattle)
+#' * `scd10`: 2010 King County school districts
+#' * `sea10`: Seattle or KC except Seattle
+#' * `tract10`: 2010 Census Tract. 11 digit Census GEOID.
+#' * `zip`: Zip codes in King County.
 #'   * _Note!_ This is different from the 133 zip
-#' codes used with HCA data. To view the latter, please type \code{rads.data::spatial_zip_hca}.
+#' codes used with HCA data. To view the latter, please type `rads.data::spatial_zip_hca`.
 #'
 #' ## A note about error propagation!
 #' If you're merging the crosswalk table onto line level data, you can use
-#' \code{rads::calc}, or \code{data.table}, or whatever package you like
+#' `rads::calc`, or `data.table`, or whatever package you like
 #' for further analysis. However, if you're merging on to pre-aggregated data,
 #' to further collapse/aggregate/sum, you'll need to properly account for error
-#' propagation. Here is a line of \code{data.table} code as an example:
+#' propagation. Here is a line of `data.table` code as an example:
 #' ```
 #' DT[, list(estimate = sum(estimate), stderror = sqrt(sum(stderror)^2)), c(group_by_vars)]
 #' ```
 #'
 #' @return a data.table with two columns of geographic identifiers
 #' @export
-#' @import rads.data
-#' @importFrom data.table copy setnames
-#' @importFrom utils data
 #' @name get_xwalk
 #' @examples
 #' \donttest{
@@ -441,13 +431,9 @@ format_time_simple <- function(x){
 #'  myxwalk[]
 #' }
 get_xwalk <- function(geo1 = NA, geo2 = NA){
-  # bindings for data.table/check global variables ----
-  ref_get_xwalk <- input <- output <- lgd10 <- scd10 <- region10 <- tract10 <-
-    tract10_new <- x <- hra10 <- NULL
-
   # load xwalk table ----
-  data("ref_get_xwalk", envir=environment()) # import ref_get_xwalk from /data as a promise
-  geodt <- copy(ref_get_xwalk) # evaluate / import the promise
+  utils::data("ref_get_xwalk", envir=environment()) # import ref_get_xwalk from /data as a promise
+  geodt <- data.table::copy(ref_get_xwalk) # evaluate / import the promise
   geodt <- string_clean(geodt)
 
   # validate input and output ----
@@ -468,7 +454,7 @@ get_xwalk <- function(geo1 = NA, geo2 = NA){
     stop("The combination of `geo1` & `geo2` returned more than 1 row in the reference table. Please submit an issue on GitHub.")
   }
   if(nrow(geodt.sub) == 1){
-    geodt <- copy(geodt.sub)
+    geodt <- data.table::copy(geodt.sub)
   }
 
   # get crosswalk data ----
@@ -477,7 +463,7 @@ get_xwalk <- function(geo1 = NA, geo2 = NA){
   string_clean(xwalkdt)
   keepers <- c(geodt$inputvar, geodt$outputvar)
   xwalkdt <- xwalkdt[, (keepers), with = FALSE] # alternative to xwalkdt[, ..keepers]
-  setnames(xwalkdt, c(geodt$inputvar, geodt$outputvar), c(geodt$input, geodt$output))
+  data.table::setnames(xwalkdt, c(geodt$inputvar, geodt$outputvar), c(geodt$input, geodt$output))
 
   # clean crosswalk data ----
   xwalkdt <- xwalkdt[!is.na(get(geodt$input)) & !is.na(get(geodt$output))] # drop when either value is missing
@@ -521,13 +507,8 @@ get_xwalk <- function(geo1 = NA, geo2 = NA){
 #' \donttest{
 #'  head(get_ref_pop("2000 U.S. Std Population (single ages to 84 - Census P25-1130)"))
 #' }
-#' @importFrom data.table copy
-#' @import rads.data
 #'
 get_ref_pop <- function(ref_name = NULL){
-  #global variables used by data.table declared as NULL here to play nice with devtools::check()
-  standard <- agecat <- age_start <- age_end <- pop <- ref_pop_name <- uploaded <- NULL
-
   ref_single_to_99 <- data.table::copy(rads.data::population_reference_pop_single_age_to_99)
   ref_single_to_84 <- data.table::copy(rads.data::population_reference_pop_single_age_to_84)
   ref_agecat_11 <- data.table::copy(rads.data::population_reference_pop_11_age_groups)
@@ -548,50 +529,45 @@ get_ref_pop <- function(ref_name = NULL){
 # list_ref_xwalk() ----
 #' View table of geographic pairs usable in the get_xwalk() function
 #' @description
-#' Displays a table of geographic pairings that can be submitted to \code{get_xwalk()}
+#' Displays a table of geographic pairings that can be submitted to `get_xwalk()`
 #' for crosswalk table generation. The numbers in the geographies (e.g.,
-#' the \code{10} in \code{hra10}) refer to the vintage, which typically reflects
+#' the `10` in `hra10`) refer to the vintage, which typically reflects
 #' the Census Bureau's decennial updates.
 #' @details
 #' ## geo definitions
 #'
-#' * \code{blk1}: 2010 Census Block. 15 digit Census GEOID (e.g., 530330110012006).
+#' * `blk1`: 2010 Census Block. 15 digit Census GEOID (e.g., 530330110012006).
 #'   * 1-2: State (53 = WA)
 #'   * 3-5: County (033 = King County)
 #'   * 6-11: Tract (011001)
 #'   * 12: Block group (2)
 #'   * 12-15: Block (2006)
-#' * \code{ccd10}: 2010 Seattle City Council Districts
-#' * \code{city}: King County cities
-#' * \code{coo10}: 2010 COO places.
-#' * \code{hra10}: 2010 Health Reporting Areas
-#' * \code{kc}: King County
-#' * \code{kccd10}: 2010 King County Council Districts
-#' * \code{lgd10}: 2010 WA State legislative districts
-#' * \code{puma10}: 2010 Public Use Microdata Areas
-#' * \code{region10}: King County regions (North, South, East, & Seattle)
-#' * \code{scd10}: 2010 King County school districts
-#' * \code{sea}: Seattle or KC except Seattle
-#' * \code{tract10}: 2010 Census Tract. 11 digit Census GEOID.
-#' * \code{zip}: Zip codes in King County.
+#' * `ccd10`: 2010 Seattle City Council Districts
+#' * `city`: King County cities
+#' * `coo10`: 2010 COO places.
+#' * `hra10`: 2010 Health Reporting Areas
+#' * `kc`: King County
+#' * `kccd10`: 2010 King County Council Districts
+#' * `lgd10`: 2010 WA State legislative districts
+#' * `puma10`: 2010 Public Use Microdata Areas
+#' * `region10`: King County regions (North, South, East, & Seattle)
+#' * `scd10`: 2010 King County school districts
+#' * `sea`: Seattle or KC except Seattle
+#' * `tract10`: 2010 Census Tract. 11 digit Census GEOID.
+#' * `zip`: Zip codes in King County.
 #'   * _Note!_ This is different from the 133 zip
-#' codes used with HCA data. To view the latter, please type \code{rads.data::spatial_zip_hca}.
+#' codes used with HCA data. To view the latter, please type `rads.data::spatial_zip_hca`.
 #' @return a data.table with two columns (geo1 & geo2), which define the acceptable
 #' geographic pairings for get_xwalk
 #' @export
-#' @import rads.data
-#' @importFrom data.table copy
-#' @importFrom utils data
 #' @name list_ref_xwalk
 #' @examples
 #' \donttest{
 #'  list_ref_xwalk()
 #' }
 list_ref_xwalk <- function(){
-  # bindings for data.table/check global variables ----
-  ref_get_xwalk <- input <- output <- NULL
-  data("ref_get_xwalk", envir=environment()) # import ref_get_xwalk from /data as a promise
-  geodt <- copy(ref_get_xwalk) # evaluate / import the promise
+  utils::data("ref_get_xwalk", envir=environment()) # import ref_get_xwalk from /data as a promise
+  geodt <- data.table::copy(ref_get_xwalk) # evaluate / import the promise
   geodt <- string_clean(geodt)
   geodt <- geodt[, list(geo1 = input, geo2 = output)]
   return(geodt)
@@ -607,13 +583,8 @@ list_ref_xwalk <- function(){
 #' \donttest{
 #'  list_ref_pop()
 #' }
-#' @importFrom data.table copy
-#' @import rads.data
 #'
 list_ref_pop <- function(){
-  #global variables used by data.table declared as NULL here to play nice with devtools::check()
-  standard <- NULL
-
   ref_single_to_99 <- data.table::copy(rads.data::population_reference_pop_single_age_to_99)
   ref_single_to_84 <- data.table::copy(rads.data::population_reference_pop_single_age_to_84)
   ref_agecat_11 <- data.table::copy(rads.data::population_reference_pop_11_age_groups)
@@ -624,8 +595,9 @@ list_ref_pop <- function(){
                                 ref_agecat_11[, list(standard)],
                                 ref_agecat_18[, list(standard)],
                                 ref_agecat_19[, list(standard)]))
-  setorder(ref_pop_table, standard)
-  ref_pop_table <- rbind(ref_pop_table[standard %like% "2000 U.S. Std P"], ref_pop_table[!standard %like% "2000 U.S. Std P"])
+  data.table::setorder(ref_pop_table, standard)
+  ref_pop_table <- rbind(ref_pop_table[grepl("2000 U.S. Std P", standard)],
+                         ref_pop_table[!grepl("2000 U.S. Std P", standard)])
   return(ref_pop_table$standard)
 }
 
@@ -968,49 +940,49 @@ metrics = function(){
 #' @param ses Numeric vector of standard errors for each group.
 #' @param reference_index Integer indicating the index of the reference group.
 #' @param n Optional numeric vector of sample sizes for each group.
-#' @param alpha Numeric value for significance level (default is \strong{`0.05`}).
+#' @param alpha Numeric value for significance level (default is **`0.05`**).
 #' @param df_method String specifying the method for calculating degrees of
 #' freedom. Options are:
-#'    - \strong{`'estimated'`} (Welch-Satterthwaite equation): This method, which
+#'    - **`'estimated'`** (Welch-Satterthwaite equation): This method, which
 #'    corresponds to Welch's t-test, calculates an approximation of the degrees
 #'    of freedom based on the sample variances and sizes. It's particularly
 #'    useful when groups have unequal variances and/or unequal sample sizes,
 #'    making it generally more reliable than the standard t-test in these
 #'    situations. It is a data driven approach and is often preferred due to
 #'    balance between Type I Errors (false +) and Type II Errors (false -).
-#'    - \strong{`'conservative'`} (df = 2): Uses the minimum possible degrees of
+#'    - **`'conservative'`** (df = 2): Uses the minimum possible degrees of
 #'    freedom, resulting in the widest confidence intervals (for the difference
 #'    in means) and the most conservative (largest) p-values. Reduces Type I
 #'    Error (false +) and increases Type II Error (false -).
-#'    - \strong{`'moderate'`} (df = k - 1): Uses the number of groups minus 1 as the degrees
+#'    - **`'moderate'`** (df = k - 1): Uses the number of groups minus 1 as the degrees
 #'    of freedom, providing a balance between conservative and liberal approaches.
-#'    - \strong{`'liberal'`} (df = Inf): Assumes infinite degrees of freedom, resulting in
+#'    - **`'liberal'`** (df = Inf): Assumes infinite degrees of freedom, resulting in
 #'    the narrowest confidence intervals (for the difference in means) and the
 #'    most liberal (smallest) p-values. Increases Type I Error (false +) and
 #'    reduces Type II Error (false -).
 #'
-#' Default is \strong{`'estimated'`}.
-#' @param alternative String specifying the alternative hypothesis: \strong{`'two.sided'`}
-#' (default), \strong{`'less'`}, or \strong{`'greater'`}. Default is \strong{`'two.sided'`}.
+#' Default is **`'estimated'`**.
+#' @param alternative String specifying the alternative hypothesis: **`'two.sided'`**
+#' (default), **`'less'`**, or **`'greater'`**. Default is **`'two.sided'`**.
 #' @param adjust_method String specifying the method of adjustment for multiple
-#' comparisons: \strong{`NULL`}, \strong{`'Holm-Bonferroni'`},
-#' \strong{`'Benjamini-Hochberg'`}. Refer to the `holm` and `bh` descriptions
-#' in [stats::p.adjust()] for more information. Default is \strong{`NULL`}.
+#' comparisons: **`NULL`**, **`'Holm-Bonferroni'`**,
+#' **`'Benjamini-Hochberg'`**. Refer to the `holm` and `bh` descriptions
+#' in [stats::p.adjust()] for more information. Default is **`NULL`**.
 #'
 #' @return A data.table containing comparison results with the following columns:
-#'   \item{comparison}{String describing the comparison}
-#'   \item{diff_means}{Numeric difference in means}
-#'   \item{ci_lower}{Numeric lower bound of the confidence interval}
-#'   \item{ci_upper}{Numeric upper bound of the confidence interval}
-#'   \item{p.value}{Numeric p-value}
-#'   \item{significant}{Logical indicating if the result is significant (TRUE if
-#'     p-value < alpha, FALSE otherwise)}
-#'   \item{t.statistic}{Numeric t-statistic}
-#'   \item{df}{Numeric degrees of freedom}
-#'   \item{df_method}{String indicating the method used for
-#'     calculating degrees of freedom}
-#'   \item{adjust_method}{String indicating the method used for multiple
-#'     comparisons p.value adjustment (when `adjust_method` is not `NULL`)}
+#' - `comparison`: String describing the comparison
+#' - `diff_means`: Numeric difference in means
+#' - `ci_lower`: Numeric lower bound of the confidence interval
+#' - `ci_upper`: Numeric upper bound of the confidence interval
+#' - `p.value`: Numeric p-value
+#' - `significant`: Logical indicating if the result is significant (TRUE if
+#'   p-value < alpha, FALSE otherwise)
+#' - `t.statistic`: Numeric t-statistic
+#' - `df`: Numeric degrees of freedom
+#' - `df_method`: String indicating the method used for
+#'   calculating degrees of freedom
+#' - `adjust_method`: String indicating the method used for multiple
+#'   comparisons p.value adjustment (when `adjust_method` is not `NULL`)
 #'
 #' @examples
 #' # Example 1: Comparing birthweights across different maternal age groups
@@ -1033,7 +1005,6 @@ metrics = function(){
 #'
 #' print(birthweight_comparison)
 #'
-#' @import data.table
 #' @seealso [`propagate_uncertainty()`] for more robust uncertainty
 #'   propagation when comparing two estimates with potentially asymmetric
 #'   confidence intervals or non-normal distributions.
@@ -1046,9 +1017,6 @@ multi_t_test <- function(means,
                          df_method = "estimated",
                          alternative = "two.sided",
                          adjust_method = NULL) {
-  # Bindings for data.table/check global variables ----
-  comparison <- p.value <- significant <- NULL
-
   # Input validation ----
     if (!is.numeric(means) || !is.numeric(ses)) {
       stop("\n\U1F6D1 'means' and 'ses' must be numeric vectors.")
@@ -1247,19 +1215,19 @@ round2 = function(x, n = 0) {
 #' @param ph.data name of data.frame or data.table
 #' @param stringsAsFactors logical. Specifies whether to convert strings to
 #' factors (TRUE) or not (FALSE). Note that columns that were originally factors
-#' will always be returned as factors. Default \code{stringsAsFactors = FALSE}.
+#' will always be returned as factors. Default `stringsAsFactors = FALSE`.
 #' @param  convert_to_utf8 logical. Specifies whether to convert character strings
 #' to UTF-8 encoding. UTF-8 ensures consistent handling of international characters
 #' and special symbols across different systems and prevents display/processing
 #' errors from incompatible character encodings. If you have a few extra minutes
-#' to spare, \code{convert_to_utf8 = TRUE} is recommended. Default
-#' \code{convert_to_utf8 = FALSE}.
+#' to spare, `convert_to_utf8 = TRUE` is recommended. Default
+#' `convert_to_utf8 = FALSE`.
 #' @description
 #' `string_clean` is designed to clean and preprocess strings and factors within a
 #' data.frame or data.table after importing from SQL, text files, CSVs, etc. It
 #' removes zero-width and invisible characters, normalizes all white spaces,
 #' replaces multiple white spaces with a single white space, trims beginning and
-#' ending white spaces, converts empty strings to true \code{NA} and optionally
+#' ending white spaces, converts empty strings to true `NA` and optionally
 #' encodes text to UTF-8 and strings as factors. The function maintains the
 #' original order of columns and leaves numeric and logical columns as they were.
 #'
@@ -1269,10 +1237,10 @@ round2 = function(x, n = 0) {
 #'
 #' If you want a more thorough cleaning or if your
 #' data have international characters or special symbols, you are encouraged to
-#' set \code{convert_to_utf8 = TRUE}.
+#' set `convert_to_utf8 = TRUE`.
 #'
 #' The `string_clean` function modifies objects in place due to the use
-#' of data.table's by-reference assignment (e.g., \code{:=}). In other words, there is
+#' of data.table's by-reference assignment (e.g., `:=`). In other words, there is
 #' *no need to assign the output*, just
 #' type `string_clean(myTable)`.
 #'
@@ -1280,8 +1248,6 @@ round2 = function(x, n = 0) {
 #'              stringsAsFactors = FALSE,
 #'              convert_to_utf8 = FALSE)
 #' @export
-#' @importFrom utf8 utf8_encode
-#' @importFrom data.table fifelse is.data.table setcolorder setDT
 #' @return A modified data.table, invisibly.
 #' @examples
 #' \donttest{
@@ -1391,8 +1357,7 @@ string_clean <- function (ph.data = NULL,
 #' @export
 #' @return numeric
 #' @name std_error
-#' @source plotrix R package July 11, 2022: \url{https://github.com/plotrix/plotrix/blob/master/R/std_error.R}.
-#' @importFrom stats sd
+#' @source plotrix R package July 11, 2022: <https://github.com/plotrix/plotrix/blob/master/R/std_error.R>.
 #' @examples
 #' \donttest{
 #' temp1 <- data.table::data.table(x = c(seq(0, 400, 100), seq(1000, 1800, 200), NA),
@@ -1410,7 +1375,7 @@ std_error <- function(x) {
     if (all(is.na(x))) stop("\n\U1F6D1 Input contains only NA values.")
     if (sum(!is.na(x)) < 2) stop("\n\U1F6D1 At least two non-NA values are required to calculate standard error.")
 
-    se <- sd(x, na.rm = TRUE) / sqrt(sum(!is.na(x))) # standard error or mean is sd / sqrt(# samples)
+    se <- stats::sd(x, na.rm = TRUE) / sqrt(sum(!is.na(x))) # standard error or mean is sd / sqrt(# samples)
 
     if (is.nan(se) || is.infinite(se)) {
       warning("\n\u26A0\ufe0f Calculation resulted in NaN or Inf. Check your input data.")

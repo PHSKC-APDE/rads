@@ -40,44 +40,40 @@
 #' provided data.table or data.frame, indicating the variable types and listing
 #' unique values for each variable. Different variable types are handled as
 #' follows:
-#' \itemize{
-#'   \item \strong{Character and logical variables}: If the number of unique
+#' - **Character and logical variables**: If the number of unique
 #'   values exceeds `max_unique_values`, the function displays the first
 #'   `truncation_threshold` values followed by an ellipsis.
-#'   \item \strong{Factor variables}: The function displays factor levels and
+#' - **Factor variables**: The function displays factor levels and
 #'   their corresponding integer codes. These are displayed following the rules
 #'   for character values.
-#'   \item \strong{Numeric variables (integer, numeric)}: If the number of
+#' - **Numeric variables (integer, numeric)**: If the number of
 #'   unique values exceeds `max_unique_values`, the function displays the
 #'   minimum and maximum values.
-#'   \item \strong{Date and datetime variables}: Treated similarly to numeric
+#' - **Date and datetime variables**: Treated similarly to numeric
 #'   variables, showing minimum and maximum values if there are too many unique
 #'   values.
-#'   \item \strong{Other types}: For non-atomic types (e.g., `lists`), the
+#' - **Other types**: For non-atomic types (e.g., `lists`), the
 #'   function suggests checking the original dataset structure.
-#' }
 #' Users can hide the unique values of sensitive variables (e.g., phone numbers
 #' in `ph.data`) using the `suppress` parameter. Additionally, if a reference
 #' data.table or data.frame (`ph.ref`) is provided, it will merge descriptions
 #' and notes into the output.
 #'
 #' @return A data.table with the following columns:
-#' \describe{
-#'   \item{source}{Character: The source of the data.}
-#'   \item{varname}{Character: The name of the variable.}
-#'   \item{vartype}{Character: The type of the variable (e.g., factor,
-#'   character, logical, integer, numeric, date, datetime, other).}
-#'   \item{values}{Character: A sample of unique values or a range if the number
-#'   of unique values exceeds `max_unique_values`.}
-#'   \item{factor_labels}{Character: Labels for factor levels if the variable is
-#'   a factor.}
-#'   \item{desc}{Character: Description of the variable. This column is only
-#'   filled if a `ph.ref` data frame is provided.}
-#'   \item{notes}{Character: Additional notes about the variable. This column is
-#'   only filled if a `ph.ref` data frame is provided.}
-#'   \item{dict_updated}{Date: The date the dictionary was created, i.e., the
-#'   date you ran this function.}
-#' }
+#' - `source`: Character: The source of the data.
+#' - `varname`: Character: The name of the variable.
+#' - `vartype`: Character: The type of the variable (e.g., factor,
+#'   character, logical, integer, numeric, date, datetime, other).
+#' - `values`: Character: A sample of unique values or a range if the number
+#'   of unique values exceeds `max_unique_values`.
+#' - `factor_labels`: Character: Labels for factor levels if the variable is
+#'   a factor.
+#' - `desc`: Character: Description of the variable. This column is only
+#'   filled if a `ph.ref` data frame is provided.
+#' - `notes`: Character: Additional notes about the variable. This column is
+#'   only filled if a `ph.ref` data frame is provided.
+#' - `dict_updated`: Date: The date the dictionary was created, i.e., the
+#'   date you ran this function.
 #'
 #' @examples
 #' library(data.table)
@@ -135,7 +131,6 @@
 #'                                  ph.ref = ph.ref)
 #' print(dictionary2[])
 #'
-#' @import data.table
 #' @export
 #'
 create_dictionary <- function(ph.data,
@@ -145,10 +140,6 @@ create_dictionary <- function(ph.data,
                               max_unique_values = 8,
                               truncation_threshold = 5,
                               ph.ref = NULL) {
-  # Visible bindings for data.table/check global variables ----
-  desc <- notes <- varname <- dict_updated <- NULL
-  values <- factor_labels <- desc.desc <- notes.desc <- NULL
-
   # Check arguments ----
   # Check if input is a data.frame or data.table ----
   if (!is.data.frame(ph.data)) {
@@ -156,8 +147,8 @@ create_dictionary <- function(ph.data,
   }
 
   # Convert to data.table if it's a data.frame ----
-  if (!is.data.table(ph.data)) {
-    ph.data <- as.data.table(ph.data)
+  if (!data.table::is.data.table(ph.data)) {
+    ph.data <- data.table::as.data.table(ph.data)
   }
 
   # Check ph.data has column names ----
@@ -226,12 +217,12 @@ create_dictionary <- function(ph.data,
 
   # Check ph.ref if provided ----
   if (!is.null(ph.ref)) {
-    if (!is.data.table(ph.ref) && !is.data.frame(ph.ref)) {
+    if (!data.table::is.data.table(ph.ref) && !is.data.frame(ph.ref)) {
       stop("\n\U2620 ph.ref must be a data.frame or data.table")
     }
 
-    if (!is.data.table(ph.ref)) {
-      ph.ref <- as.data.table(ph.ref)
+    if (!data.table::is.data.table(ph.ref)) {
+      ph.ref <- data.table::as.data.table(ph.ref)
     }
 
     required_cols <- c("source", "varname", "desc")
@@ -268,7 +259,7 @@ create_dictionary <- function(ph.data,
     mycolnamez <- sort(mycolnamez)
   }
 
-  result <- rbindlist(lapply(mycolnamez, function(col) {
+  result <- data.table::rbindlist(lapply(mycolnamez, function(col) {
     # Check if the column contains non-atomic types (e.g., lists or expressions)
     if (!is.atomic(ph.data[[col]])) {
       vartype <- "other"
@@ -333,7 +324,7 @@ create_dictionary <- function(ph.data,
     }
 
     # Create the data.table ----
-    dt <- data.table(
+    dt <- data.table::data.table(
       source = source,
       varname = col,
       vartype = vartype,
@@ -351,7 +342,7 @@ create_dictionary <- function(ph.data,
   }))
 
   # Reorder columns in the result ----
-  setcolorder(
+  data.table::setcolorder(
     result,
     c(
       "source",
@@ -407,7 +398,7 @@ create_dictionary <- function(ph.data,
   result[, varname := factor(varname,
                              levels = intersect(mycolnamez,
                                                 unique(result$varname)))]
-  setorder(result, varname)
+  data.table::setorder(result, varname)
   result[, varname := as.character(varname)]
 
   # Add creation date
