@@ -19,6 +19,7 @@
 #' do_recode(x = c(5, 15, 25),
 #'           old = c("[0,10)", "[10,20)", "[20,30)"),
 #'           new = c("child", "teen", "adult"))
+
 #'
 #' @export
 do_recode = function(x, old, new, new_label = NULL, update = FALSE, verbose = FALSE){
