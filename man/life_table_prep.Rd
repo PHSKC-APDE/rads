@@ -26,8 +26,7 @@ cut extends through to the maximum age observed. For example, when cuts =
 c(0, 5, 10, 20), the data will be grouped into ages [0,5), [5,10), [10,20), and [20,
 infinity).
 
-The default is \code{cuts= c(0, 1, 5, 10, 15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65,
-70, 75, 80, 85)}, which creates the standard age groupings used by WA DOH.}
+The default is \code{cuts= c(0, 1, 5, 10, 15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85)}, which creates the standard age groupings used by WA DOH.}
 
 \item{dobvar}{character vector of length one identifying a column with
 the decedent's date of birth. The referenced column must be of class
@@ -45,8 +44,7 @@ available in \code{rads.data::synthetic_death}.}
 
 \item{by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{by = c('chi_sex',
-'chi_race_6')}, the results would be grouped by each combination of sex
+results. For example, if you specified \code{by = c('chi_sex', 'chi_race_6')}, the results would be grouped by each combination of sex
 and race. If you leave it blank (i.e., \code{by = NULL}), it will only
 provide the death counts and death fractions by age group
 described by \code{cuts}.
@@ -62,11 +60,11 @@ age interval lived by those who died in that interval).
 \description{
 Processes individual-level death data to create a standardized data table.
 This table is collapsed/aggregated by age bin and optionally, by
-demographics, for use with \code{\link{life_table}}.
+demographics, for use with \code{\link[=life_table]{life_table()}}.
 }
 \details{
 Note that population data must be merged onto the returned data.table
-before running it through \code{\link{life_table}}.
+before running it through \code{\link[=life_table]{life_table()}}.
 }
 \examples{
 \donttest{

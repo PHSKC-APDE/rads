@@ -36,6 +36,12 @@ a list of lists (of class recode_instruction).
 Creates/standardizes the parameters required for recoding a variable.
 }
 \details{
-This function mostly exists to help translate (via \code{parse_recode_instructions}) data.frame type read-ins of recoding into a standardized form.
-These results can then be passed to \code{enact_recoding} as part of a bulk recoding process.
+This function mostly exists to help translate (via \code{\link[=parse_recode_instructions]{parse_recode_instructions()}}) data.frame type read-ins of recoding into a standardized form.
+These results can then be passed to \code{\link[=enact_recodes]{enact_recodes()}} as part of a bulk recoding process.
+}
+\examples{
+create_recode(old_var = "sex", new_var = "sex_recoded",
+              old = c("M", "F"), new = c("Male", "Female"),
+              simplify_to_numeric = FALSE)
+
 }

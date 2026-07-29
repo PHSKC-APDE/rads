@@ -41,8 +41,7 @@ formatted death data structured like \code{rads.data::synthetic_death}.}
 
 \item{by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{by = c('chi_sex',
-'chi_race_6')}, the results would be stratified by each combination of sex
+results. For example, if you specified \code{by = c('chi_sex', 'chi_race_6')}, the results would be stratified by each combination of sex
 and race.
 
 The default is \code{by = NULL}}
@@ -88,8 +87,7 @@ and cause values.
 }
 \details{
 There are actually 114 rows, with causeid 114 being the official
-\code{CDC version of causeid 95 (Residual)}, i.e., \code{All other diseases
-(Residual)}. Causeid 95 was intentionally changed to match the definition
+\verb{CDC version of causeid 95 (Residual)}, i.e., \verb{All other diseases (Residual)}. Causeid 95 was intentionally changed to match the definition
 used by WA DOH. You can get results for any or all of the 113(+1) causes of
 death using the \code{causeids} or \code{cause} arguments.
 }

@@ -203,9 +203,6 @@
 #'
 #' }
 #'
-#' @importFrom data.table copy data.table setDT setattr :=
-#' @importFrom stats median rnorm rlnorm qnorm quantile t.test sd
-#' @importFrom utils setTxtProgressBar txtProgressBar
 #' @seealso [`multi_t_test()`] for comparing multiple groups against a
 #'   reference group when estimates have symmetric confidence intervals and
 #'   normality can be reasonably assumed.
@@ -240,15 +237,15 @@ propagate_uncertainty <- function(
         stop("\n\U0001F6D1 ph.estimates must be a data.frame or data.table")
       }
 
-      if (!is.data.table(ph.estimates)) {
-        ph.estimates <- setDT(ph.estimates)
+      if (!data.table::is.data.table(ph.estimates)) {
+        ph.estimates <- data.table::setDT(ph.estimates)
       }
 
       if (nrow(ph.estimates) == 0) {
         stop("\n\U0001F6D1 ph.estimates cannot be empty")
       }
 
-      ph.estimates <- copy(ph.estimates)
+      ph.estimates <- data.table::copy(ph.estimates)
 
     # comp_mean_col & ref_mean_col < check that they exist
       required_cols <- c(comp_mean_col, ref_mean_col)
@@ -319,7 +316,7 @@ propagate_uncertainty <- function(
       if (!is.numeric(input_ci_level) || length(input_ci_level) != 1 ||
           input_ci_level <= 0 || input_ci_level >= 1) {
         stop("\n\U0001F6D1 input_ci_level must be a single numeric value between 0 and 1")
-      } else {zscore <- qnorm(1 - (1 - input_ci_level)/2)}
+      } else {zscore <- stats::qnorm(1 - (1 - input_ci_level)/2)}
 
     # h0_value
       if (!is.null(h0_value) && (!is.numeric(h0_value) || length(h0_value) != 1 )) {
@@ -505,15 +502,15 @@ propagate_uncertainty <- function(
       # Priority: use SE if available and valid, if not it will use CI below
       if (!is.null(se) && !is.na(se) && se > 0) {
         if (dist_type == "normal") {
-          return(rnorm(draws, mean = mu, sd = se))
+          return(stats::rnorm(draws, mean = mu, sd = se))
         } else if (dist_type == "lognormal") {
           if (se_scale_type == "log") {
             # SE already on log scale
-            return(rlnorm(draws, meanlog = log(mu), sdlog = se))
+            return(stats::rlnorm(draws, meanlog = log(mu), sdlog = se))
           } else {
             # SE on original scale - convert using delta method
             selog <- se / mu
-            return(rlnorm(draws, meanlog = log(mu), sdlog = selog))
+            return(stats::rlnorm(draws, meanlog = log(mu), sdlog = selog))
           }
         }
       }
@@ -526,11 +523,11 @@ propagate_uncertainty <- function(
         if (dist_type == "normal") {
           # Back-calculate SE from CI width
           est_se <- (upper - lower) / (2 * zscore)
-          return(rnorm(draws, mean = mu, sd = est_se))
+          return(stats::rnorm(draws, mean = mu, sd = est_se))
         } else if (dist_type == "lognormal") {
           # CI symmetric on log scale for lognormal
           est_selog <- (log(upper) - log(lower)) / (2 * zscore)
-          return(rlnorm(draws, meanlog = log(mu), sdlog = est_selog))
+          return(stats::rlnorm(draws, meanlog = log(mu), sdlog = est_selog))
         }
       }
 
@@ -615,7 +612,7 @@ propagate_uncertainty <- function(
       )
 
       # Add convergence info to output
-      setattr(ph.estimates, "convergence_check", conv_results)
+      data.table::setattr(ph.estimates, "convergence_check", conv_results)
 
       # Recommendations
       if (conv_results$prop_converged < 0.8) {
@@ -634,7 +631,7 @@ propagate_uncertainty <- function(
         return(2 * min(prop_above, prop_below))
 
       } else if (method == "ttest") {
-        return(t.test(draws, mu = null_value)$p.value)
+        return(stats::t.test(draws, mu = null_value)$p.value)
       }
 
       return(NA_real_)
@@ -648,18 +645,18 @@ propagate_uncertainty <- function(
 
     if (use_futures) {
       ph.estimates[, contrast := future.apply::future_apply(contrast_draws, MARGIN = 1, mean, na.rm = TRUE)]
-      ph.estimates[, contrast_se := future.apply::future_apply(contrast_draws, MARGIN = 1, sd, na.rm = TRUE)]
-      ph.estimates[, contrast_lower := future.apply::future_apply(contrast_draws, MARGIN = 1, quantile,
+      ph.estimates[, contrast_se := future.apply::future_apply(contrast_draws, MARGIN = 1, stats::sd, na.rm = TRUE)]
+      ph.estimates[, contrast_lower := future.apply::future_apply(contrast_draws, MARGIN = 1, stats::quantile,
                                                                   probs = alpha/2, na.rm = TRUE)]
-      ph.estimates[, contrast_upper := future.apply::future_apply(contrast_draws, MARGIN = 1, quantile,
+      ph.estimates[, contrast_upper := future.apply::future_apply(contrast_draws, MARGIN = 1, stats::quantile,
                                                                   probs = 1 - alpha/2, na.rm = TRUE)]
       ph.estimates[, contrast_pvalue := future.apply::future_apply(contrast_draws, MARGIN = 1, calc_pvalue,
                                                                    method = pvalue_method, null_value = null_hypothesis)]
     } else {
       ph.estimates[, contrast := apply(contrast_draws, MARGIN = 1, mean, na.rm = TRUE)]
-      ph.estimates[, contrast_se := apply(contrast_draws, MARGIN = 1, sd, na.rm = TRUE)]
-      ph.estimates[, contrast_lower := apply(contrast_draws, MARGIN = 1, quantile, probs = alpha/2, na.rm = TRUE)]
-      ph.estimates[, contrast_upper := apply(contrast_draws, MARGIN = 1, quantile, probs = 1 - alpha/2, na.rm = TRUE)]
+      ph.estimates[, contrast_se := apply(contrast_draws, MARGIN = 1, stats::sd, na.rm = TRUE)]
+      ph.estimates[, contrast_lower := apply(contrast_draws, MARGIN = 1, stats::quantile, probs = alpha/2, na.rm = TRUE)]
+      ph.estimates[, contrast_upper := apply(contrast_draws, MARGIN = 1, stats::quantile, probs = 1 - alpha/2, na.rm = TRUE)]
       ph.estimates[, contrast_pvalue := apply(contrast_draws, MARGIN = 1, calc_pvalue, method = pvalue_method, null_value = null_hypothesis)]
     }
 
@@ -678,7 +675,7 @@ propagate_uncertainty <- function(
     message("\U0001f642 Uncertainty propagation completed successfully!")
 
   # Add metadata ----
-    setattr(ph.estimates, "propagate_uncertainty_params", list(
+    data.table::setattr(ph.estimates, "propagate_uncertainty_params", list(
       dist = dist,
       se_scale = se_scale,
       draws = draws,
@@ -737,7 +734,7 @@ check_convergence <- function(draws_vector,
   }
 
   # Calculate stats at each sample size using data.table
-  results <- data.table(
+  results <- data.table::data.table(
     n_draws = test_sizes,
     mean_est = numeric(length(test_sizes)),
     lower_ci = numeric(length(test_sizes)),
@@ -750,8 +747,8 @@ check_convergence <- function(draws_vector,
     subset_draws <- draws_vector[1:n]
 
     results[i, mean_est := mean(subset_draws, na.rm = TRUE)]
-    results[i, lower_ci := quantile(subset_draws, probs = alpha/2, na.rm = TRUE)]
-    results[i, upper_ci := quantile(subset_draws, probs = 1 - alpha/2, na.rm = TRUE)]
+    results[i, lower_ci := stats::quantile(subset_draws, probs = alpha/2, na.rm = TRUE)]
+    results[i, upper_ci := stats::quantile(subset_draws, probs = 1 - alpha/2, na.rm = TRUE)]
 
     # Calculate p-value
     prop_above <- mean(subset_draws > null_value, na.rm = TRUE)

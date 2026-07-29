@@ -19,4 +19,5 @@ Load a reference population as a data.table object in memory
 \donttest{
  head(get_ref_pop("2000 U.S. Std Population (single ages to 84 - Census P25-1130)"))
 }
+
 }

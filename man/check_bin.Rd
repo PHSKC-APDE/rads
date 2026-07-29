@@ -15,3 +15,8 @@ logical
 \description{
 Check to see if input implies a binning recode
 }
+\examples{
+check_bin("[0,5)") # TRUE, interpretable as a bin
+check_bin("male")  # FALSE, not a bin
+
+}

@@ -310,7 +310,7 @@ chars_injury_matrix_count <- function(ph.data = NULL,
   ))
 
   # count number of hospitalizations (i.e., rows)
-  hospitalization_counts <- rbindlist(lapply(1:nrow(selected.combinations), function(ii) {
+  hospitalization_counts <- data.table::rbindlist(lapply(1:nrow(selected.combinations), function(ii) {
 
       current_mechanism <- selected.combinations[ii, mechanism]
       current_intent    <- selected.combinations[ii, intent]
@@ -331,8 +331,8 @@ chars_injury_matrix_count <- function(ph.data = NULL,
 
       # create grid of all possible combinations of by vars
       gridvars <- setdiff(names(temp.ph.data), 'hospitalizations')
-      complete.grid <- do.call(CJ, lapply(gridvars, function(x) unique(temp.ph.data[[x]])))
-      setnames(complete.grid, gridvars)
+      complete.grid <- do.call(data.table::CJ, lapply(gridvars, function(x) unique(temp.ph.data[[x]])))
+      data.table::setnames(complete.grid, gridvars)
 
       # merge temp.ph.data onto complete.grid
       temp.ph.data <- merge(complete.grid, temp.ph.data, all = TRUE)
@@ -362,8 +362,8 @@ chars_injury_matrix_count <- function(ph.data = NULL,
   hospitalization_counts[intent == 'any', intent := "Any intent"]
 
   # Sort columns and rows ----
-  setcolorder(hospitalization_counts, c("mechanism", "intent", "hospitalizations"))
-  setorderv(hospitalization_counts, c("mechanism", "intent", setdiff(names(hospitalization_counts), c("hospitalizations", "mechanism", "intent")) ))
+  data.table::setcolorder(hospitalization_counts, c("mechanism", "intent", "hospitalizations"))
+  data.table::setorderv(hospitalization_counts, c("mechanism", "intent", setdiff(names(hospitalization_counts), c("hospitalizations", "mechanism", "intent")) ))
 
   # Return data ----
   return(hospitalization_counts)
@@ -774,7 +774,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
       CMtable[, query.group := .GRP, by = setdiff(names(CMtable), "icdcm_code")]
 
     # generate counts for each query.group ----
-      HospCounts <- rbindlist(lapply(unique(CMtable$query.group), function(QG) {
+      HospCounts <- data.table::rbindlist(lapply(unique(CMtable$query.group), function(QG) {
         tempHospCounts <- if (is.null(by)) {
           ph.data[get(icdcol) %in% unlist(CMtable[query.group == QG]$icdcm_code), list(hospitalizations = .N)]
         } else {
@@ -797,7 +797,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
         names(unique_vals_list) <- by
 
         # Create the Cartesian product of unique values using CJ
-        template.xyz <- do.call(CJ, unique_vals_list)
+        template.xyz <- do.call(data.table::CJ, unique_vals_list)
 
         # Expand CMtable for each combination of by variables
         CMtable.expanded <- merge(CMtable[, dummy := 1],
@@ -811,7 +811,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
                         by = intersect(names(HospCounts), names(CMtable.expanded)),
                         all = TRUE)
     HospCounts[is.na(hospitalizations), hospitalizations := 0]
-    setorderv(HospCounts, c('query.group', by))
+    data.table::setorderv(HospCounts, c('query.group', by))
     HospCounts[, c("query.group") := NULL]
 
   # Return data ----
@@ -944,8 +944,8 @@ chars_validate_data <- function(ph.data = NULL,
   }
 
   standard_intent <- unique(chars_injury_matrix()[intent != 'any']$intent)
-  missing_intent <- setdiff(standard_intent, na.omit(unique(ph.data$injury_intent)))
-  extra_intent <- setdiff(na.omit(unique(ph.data$injury_intent)), standard_intent)
+  missing_intent <- setdiff(standard_intent, stats::na.omit(unique(ph.data$injury_intent)))
+  extra_intent <- setdiff(stats::na.omit(unique(ph.data$injury_intent)), standard_intent)
 
   if (length(missing_intent) != 0){
     if(verbose){message("\U00002139 The injury_intent column is missing the following standard intent value(s):\n",
@@ -963,8 +963,8 @@ chars_validate_data <- function(ph.data = NULL,
   }
 
   standard_mechanism <- unique(chars_injury_matrix()[mechanism != 'any']$mechanism)
-  missing_mechanism <- setdiff(setdiff(standard_mechanism, na.omit(unique(ph.data$injury_mechanism))), "motor_vehicle_traffic")
-  extra_mechanism <- setdiff(na.omit(unique(ph.data$injury_mechanism)), standard_mechanism)
+  missing_mechanism <- setdiff(setdiff(standard_mechanism, stats::na.omit(unique(ph.data$injury_mechanism))), "motor_vehicle_traffic")
+  extra_mechanism <- setdiff(stats::na.omit(unique(ph.data$injury_mechanism)), standard_mechanism)
 
   if (length(missing_mechanism) != 0){
     if(verbose){message("\U00002139 The injury_mechanism column is missing the following standard mechanism value(s):\n",

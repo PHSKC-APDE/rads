@@ -259,7 +259,7 @@ adjust_direct <- function(count,
 #'
 #' @section Note on Standard Errors:
 #' This function calculates confidence intervals using the
-#' \href{https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf}{Fay-Feuer method},
+#' [Fay-Feuer method](https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf),
 #' which does not provide direct standard error (SE) estimates. If you need SE approximations,
 #' common methods used by health departments include `SE = adjusted_rate/sqrt(cases)` and
 #' `RSE = 1/sqrt(cases)`.
@@ -282,7 +282,7 @@ adjust_direct <- function(count,
 #' @export
 #' @name age_standardize
 #'
-#' @references \url{https://github.com/PHSKC-APDE/rads/wiki/age_standardize}
+#' @references <https://github.com/PHSKC-APDE/rads/wiki/age_standardize>
 #' @examples
 #' \donttest{
 #' library(data.table)
@@ -306,7 +306,6 @@ adjust_direct <- function(count,
 #' conf.level = 0.95,
 #' by = "sex")[]
 #' }
-#' @importFrom data.table ":=" setDT
 
 age_standardize <- function (ph.data,
                              ref.popname = NULL,
@@ -318,17 +317,13 @@ age_standardize <- function (ph.data,
                              by = NULL,
                              diagnostic_report = FALSE,
                              event_type = "unique") {
-  # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-  ph.data.name <- age <- age_start <- age_end <- agecat <- count <- pop <-
-    stdpop <- reference_pop <- adj.lci <- adj.uci <- complete <- id <- NULL
-
   ph.data.name <- deparse(substitute(ph.data))
-  ph.data <- copy(ph.data)
+  ph.data <- data.table::copy(ph.data)
 
   # Logic checks ----
   # Check that ph.data is a data.frame or data.table ----
   if(!inherits(ph.data, "data.frame")){stop("\n\U1F6D1 ph.data must be a data.frame or a data.table containing both counts and population data.")}
-  if(!inherits(ph.data, "data.table")){setDT(ph.data)}
+  if(!inherits(ph.data, "data.table")){data.table::setDT(ph.data)}
 
   # Check that ph.data has either 'age' or 'agecat' ----
   age_exists <- "age" %in% names(ph.data)
@@ -474,7 +469,7 @@ age_standardize <- function (ph.data,
 
       if (nrow(age_chk) >= 1) {
         if (nrow(age_chk) <= 5) { # detailed table for small number of groups
-          table_output <- paste(capture.output(print(age_chk, row.names = FALSE, class = FALSE, print.keys = FALSE)), collapse = "\n")
+          table_output <- paste(utils::capture.output(print(age_chk, row.names = FALSE, class = FALSE, print.keys = FALSE)), collapse = "\n")
           groups_display <- paste0(":\n\n", table_output, "\n\n")
           diagnostic_note <- "" # no need to run diagnostic_report
         } else { # just a count for larger number of groups

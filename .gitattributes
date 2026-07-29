@@ -1,0 +1,29 @@
+# Global rule: all text uses LF
+* text=auto eol=lf
+
+# R source files
+*.r text eol=lf
+*.R text eol=lf
+*.Rd text eol=lf
+*.Rmd text eol=lf
+*.Rproj text eol=lf
+
+# Misc text file types
+*.md text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# R package metadata
+DESCRIPTION text eol=lf
+NAMESPACE text eol=lf
+
+# Binaries / Data files
+*.jpeg binary
+*.jpg binary
+*.pdf binary
+*.png binary
+*.rda binary
+*.RData binary
+*.rds binary
+*.tiff binary
+*.zip binary

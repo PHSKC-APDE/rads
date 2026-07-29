@@ -43,7 +43,7 @@ data have international characters or special symbols, you are encouraged to
 set \code{convert_to_utf8 = TRUE}.
 
 The \code{string_clean} function modifies objects in place due to the use
-of data.table's by-reference assignment (e.g., \code{:=}). In other words, there is
+of data.table's by-reference assignment (e.g., \verb{:=}). In other words, there is
 \emph{no need to assign the output}, just
 type \code{string_clean(myTable)}.
 }

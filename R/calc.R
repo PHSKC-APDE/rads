@@ -4,7 +4,7 @@
 #' @param what character vector. Variable to calculate metrics for. Must refer to a numeric or factor column.
 #' @param where subsetting expression
 #' @param by character vector. Must refer to variables within ph.data. The variables within ph.data to compute `what` by
-#' @param metrics character. See \code{\link{metrics}} or scroll below for the available options.
+#' @param metrics character. See [metrics()] or scroll below for the available options.
 #' @param per integer. The denominator when "rate" or "adjusted-rate" are selected as the metric. Metrics will be multiplied by this value.
 #' @param win integer. The number of consecutive units of time (e.g., years, months, etc.) over which the metrics will be calculated,
 #' i.e., the 'window' for a rolling average, sum, etc.
@@ -16,7 +16,7 @@
 #' @param ci numeric. Confidence level, >0 & <1, typically 0.95
 #' @param verbose logical. Mostly unused, but toggles on/off printed warnings.
 #' @param ... not implemented
-#' @references \url{https://github.com/PHSKC-APDE/rads/wiki/calc}
+#' @references <https://github.com/PHSKC-APDE/rads/wiki/calc>
 #' @return a data.table containing the results
 #' @details
 #' This function calculates `metrics` for each variable in `what` from rows meeting the conditions specified
@@ -62,8 +62,8 @@
 #' Default ci (e.g. upper and lower) is 95 percent.
 #'
 #'
-#' For survey data, use the \code{proportion} argument where relevant to ensure metrics are calculated using special proportion (e.g \code{svyciprop})
-#' methods. That is, when you want to find the fraction of ____, toggle \code{proportion} to \code{TRUE}.
+#' For survey data, use the `proportion` argument where relevant to ensure metrics are calculated using special proportion (e.g `svyciprop`)
+#' methods. That is, when you want to find the fraction of ____, toggle `proportion` to `TRUE`.
 #'
 #' @export
 #'
@@ -130,9 +130,6 @@ calc.grouped_df <- function(ph.data, ...){
 #' @keywords internal
 #' @export
 #' @method calc imputationList
-#' @importFrom mitools MIcombine
-#' @importFrom stats coef qt as.formula
-#' @importFrom utils head
 calc.imputationList = function(ph.data,
                                what = NULL,
                                where = NULL, #this is a change from the main calc framework
@@ -147,9 +144,6 @@ calc.imputationList = function(ph.data,
                                verbose = FALSE,
                                ...){
   call = match.call()
-
-  # visible bindings ----
-  level <- lower <- upper <- se <- `_miiter` <- `mean_se` <-  NULL
 
   # dots = list()
   # dots = list(...)
@@ -215,16 +209,16 @@ calc.imputationList = function(ph.data,
 
   isfactor = !all(is.na(res[[1]][,level]))
   res = lapply(seq_along(res), function(i) res[[i]][, `_miiter` := i])
-  res = rbindlist(res)
+  res = data.table::rbindlist(res)
   print_and_capture <- function(x)
   {
-    paste(capture.output(print(x)), collapse = "\n")
+    paste(utils::capture.output(print(x)), collapse = "\n")
   }
 
   misdat = res[mean_se == 0 | is.na(mean_se), .SD, .SDcols = c('_miiter', 'variable', 'level', by)]
 
   if(nrow(misdat) > 0){
-    oot = print_and_capture((head(misdat, 10)))
+    oot = print_and_capture((utils::head(misdat, 10)))
     msg = paste0(nrow(misdat), ' permutations have a no variance (or NA). The first 10 are presented below. This usually will occur when there is no variation within a given combination of by variables (or factor levels) within one of the iterations. \n \n',
                  oot, collapse = ' ')
     warning(msg)
@@ -235,8 +229,8 @@ calc.imputationList = function(ph.data,
 
     # Convert to the format required
     lhs = paste(paste(by, collapse = ' + '), 'level', 'variable', sep = ' + ')
-    mform = as.formula(paste(lhs, '~', '`_miiter`'))
-    r = dcast(res[, .SD, .SDcols = c(by, 'level', 'variable', vvv, paste0(vvv, '_vcov'), '_miiter')],
+    mform = stats::as.formula(paste(lhs, '~', '`_miiter`'))
+    r = data.table::dcast(res[, .SD, .SDcols = c(by, 'level', 'variable', vvv, paste0(vvv, '_vcov'), '_miiter')],
               mform,
               value.var = c(vvv, paste0(vvv, '_vcov')))
 
@@ -251,7 +245,7 @@ calc.imputationList = function(ph.data,
     }
 
     # Remelt things, and split
-    r = melt(r,
+    r = data.table::melt(r,
              id.vars = c(by, 'level', 'variable'),
              measure.vars = list(val_col, vcov_col),
              variable.name = '_miiter',
@@ -277,7 +271,7 @@ calc.imputationList = function(ph.data,
     })
 
     # organize them by "by variables"
-    r = rbindlist(r)
+    r = data.table::rbindlist(r)
     if(isfactor && !is.null(by)){
       for(bbb in by){
         r[is.na(get(bbb)), (bbb) := '_NA_']
@@ -296,8 +290,8 @@ calc.imputationList = function(ph.data,
     mi = lapply(r, function(a){
       # if(!isfactor) a = list(ests = list(a$ests[[1]]), varz = list(a$varz[[1]]))
       m = mitools::MIcombine(a$ests, a$varz)
-      mdt = data.table(coef = coef(m), se = survey::SE(m))
-      crit <- qt(alpha/2, m$df, lower.tail = FALSE)
+      mdt = data.table::data.table(coef = stats::coef(m), se = survey::SE(m))
+      crit <- stats::qt(alpha/2, m$df, lower.tail = FALSE)
       mdt[, lower := coef - crit * se]
       mdt[, upper := coef + crit * se]
       mdt[, level := a$levels[1]]
@@ -306,14 +300,14 @@ calc.imputationList = function(ph.data,
     })
 
     # combine results
-    mi = rbindlist(mi)
+    mi = data.table::rbindlist(mi)
     if(isfactor && !is.null(by)){
       for(bbb in by){
         mi[get(bbb) == '_NA_', (bbb) := NA]
       }
     }
     updateme = c(vvv, paste0(vvv,'_se'), paste0(vvv, '_lower'), paste0(vvv, '_upper'))
-    setnames(mi,
+    data.table::setnames(mi,
              c('coef', 'se', 'lower', 'upper'),
              updateme
     )
