@@ -2,8 +2,12 @@ Package: rads
 Type: Package
 Title: Assisted computation of King County public health data
 Version: 2.0.0
-Author: PHSKC-APDE
-Maintainer: Daniel Casey <Data.Request@kingcounty.gov>
+Authors@R: c(
+    person("Public Health - Seattle & King County", role = "cph"),
+    person("Daniel", "Casey", email = "data.request@kingcounty.gov", role = c("aut", "cre")),
+    person("Danny", "Colombara", email = "data.request@kingcounty.gov", role = "aut")
+    person("Ronald", "Buie", email = "data.request@kingcounty.gov", role = "aut"),
+    )
 Description: Fetch and analyze data from Public Health Seattle & King County.
 License: Apache License (>= 2)
 Encoding: UTF-8
