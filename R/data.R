@@ -8,7 +8,7 @@
 #' A data.table with 16 rows and 6 columns: `input`, `output`, `object`,
 #' `inputvar`, `outputvar`, and `notes`.
 #'
-#' @source Manually curated and maintained in `data-raw/ref_get_xwalk.csv`.
+#' @source Manually curated and maintained in `inst/extdata/ref_get_xwalk.csv`.
 #'
 #' @examples
 #' head(ref_get_xwalk)

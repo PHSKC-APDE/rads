@@ -9,7 +9,7 @@ A data.table with 16 rows and 6 columns: \code{input}, \code{output}, \code{obje
 \code{inputvar}, \code{outputvar}, and \code{notes}.
 }
 \source{
-Manually curated and maintained in \code{data-raw/ref_get_xwalk.csv}.
+Manually curated and maintained in \code{inst/extdata/ref_get_xwalk.csv}.
 }
 \usage{
 ref_get_xwalk
