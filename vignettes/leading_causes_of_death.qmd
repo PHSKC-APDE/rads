@@ -9,6 +9,7 @@ vignette: >
   %\VignetteIndexEntry{Leading Causes of Death}
   %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
+  %\VignetteDepends{kableExtra}
 editor: source
 ---
 

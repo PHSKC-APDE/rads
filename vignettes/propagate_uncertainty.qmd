@@ -9,6 +9,8 @@ vignette: >
   %\VignetteIndexEntry{propagate_uncertainty()}
   %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
+  %\VignetteDepends{ggplot2}
+  %\VignetteDepends{kableExtra}
 editor: source
 ---
 

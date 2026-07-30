@@ -9,6 +9,7 @@ vignette: >
   %\VignetteIndexEntry{Death Functions}
   %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
+  %\VignetteDepends{kableExtra}
 editor: source
 ---
 

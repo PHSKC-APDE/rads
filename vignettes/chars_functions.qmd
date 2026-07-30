@@ -9,6 +9,7 @@ vignette: >
   %\VignetteIndexEntry{CHARS Functions}
   %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
+  %\VignetteDepends{kableExtra}
 editor: source
 ---
 
