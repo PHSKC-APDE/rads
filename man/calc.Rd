@@ -115,3 +115,4 @@ print(test.results)
 \references{
 \url{https://github.com/PHSKC-APDE/rads/wiki/calc}
 }
+\keyword{internal}

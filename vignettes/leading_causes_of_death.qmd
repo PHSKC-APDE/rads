@@ -1,6 +1,14 @@
 ---
 title: "Leading Causes of Death"
-format: html
+format:
+  html:
+    embed-resources: true
+  gfm:
+    prefer-html: false
+vignette: >
+  %\VignetteIndexEntry{Leading Causes of Death}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
 editor: source
 ---
 

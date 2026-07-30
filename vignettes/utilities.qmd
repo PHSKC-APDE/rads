@@ -1,11 +1,14 @@
 ---
 title: "Utility Functions"
-format: 
+format:
+  html:
+    embed-resources: true
   gfm:
     prefer-html: false
-    self-contained: true
-  pdf: default
-  html: default
+vignette: >
+  %\VignetteIndexEntry{Utility Functions}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
 editor: source
 ---
 

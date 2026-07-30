@@ -1,8 +1,14 @@
 ---
 title: "Death Functions"
-format: gfm
-prefer-html: false
-self-contained: true
+format:
+  html:
+    embed-resources: true
+  gfm:
+    prefer-html: false
+vignette: >
+  %\VignetteIndexEntry{Death Functions}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
 editor: source
 ---
 

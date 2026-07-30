@@ -1,11 +1,10 @@
-library('knitr')
 library('quarto')
 
 # Start in rads directory
 start_dir <- getwd()
 
-# Find all Rmd and Qmd files
-rmds <- normalizePath(list.files('vignettes', pattern = '\\.rmd$|\\.qmd$', full.names = TRUE, ignore.case = TRUE))
+# Find all Qmd files
+rmds <- normalizePath(list.files('vignettes', pattern = '\\.qmd$', full.names = TRUE, ignore.case = TRUE))
 
 # Set up temporary directory and clone wiki repo
 td <- tempdir()
@@ -14,26 +13,18 @@ wiki_dir <- file.path(td, 'rads.wiki')
 system('git clone https://github.com/PHSKC-APDE/rads.wiki.git')
 setwd(wiki_dir)
 
-# Knit / Render each file
+# Render each file
 for(rmd_file in rmds) {
   cat("Processing:", rmd_file, "\n")
 
   # Determine output filename
   out_file <- paste0(tools::file_path_sans_ext(basename(rmd_file)), '.md')
 
-  # Render based on file type
-  if(grepl('\\.rmd$', rmd_file, ignore.case = TRUE)) {
-    knitr::knit(
-      rmd_file,
-      output = out_file
-      )
-  } else if(grepl('\\.qmd$', rmd_file, ignore.case = TRUE)) {
-    quarto::quarto_render(
-      input = rmd_file,
-      output_format = "gfm",
-      output_file = out_file
-    )
-  }
+  quarto::quarto_render(
+    input = rmd_file,
+    output_format = "gfm",
+    output_file = out_file
+  )
 
   # Clear out YAML headers
   if(file.exists(out_file)) {

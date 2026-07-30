@@ -30,14 +30,13 @@ Remotes:
     github::PHSKC-APDE/dtsurvey
 Suggests:
     devtools,
-    future, 
+    future,
     future.apply,
-    httr, 
+    httr,
     knitr,
-    rmarkdown, 
-    markdown,
+    quarto,
     testthat,
     srvyr
-VignetteBuilder: knitr
+VignetteBuilder: quarto
 Depends: 
     R (>= 4.1.0)

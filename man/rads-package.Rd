@@ -8,4 +8,19 @@
 \description{
 Fetch and analyze data from Public Health Seattle & King County.
 }
+\author{
+\strong{Maintainer}: Daniel Casey \email{data.request@kingcounty.gov}
+
+Authors:
+\itemize{
+  \item Danny Colombara \email{data.request@kingcounty.gov}
+  \item Ronald Buie \email{data.request@kingcounty.gov}
+}
+
+Other contributors:
+\itemize{
+  \item Public Health - Seattle & King County [copyright holder]
+}
+
+}
 \keyword{internal}

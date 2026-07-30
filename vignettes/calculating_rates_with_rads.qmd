@@ -1,9 +1,15 @@
 ---
 title: "Calculating rates with rads"
-output:
-  github_document: default
-vignette: |
-  %\VignetteEngine{knitr::knitr} %\VignetteIndexEntry{calculating_rates_with_rads}
+format:
+  html:
+    embed-resources: true
+  gfm:
+    prefer-html: false
+vignette: >
+  %\VignetteIndexEntry{Calculating rates with rads}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+editor: source
 ---
 
 ```{r, echo = F, message=FALSE, warning=FALSE}

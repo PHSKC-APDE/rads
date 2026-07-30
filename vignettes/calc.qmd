@@ -1,9 +1,15 @@
 ---
 title: "calc()"
-output:
-  github_document: default
-vignette: |
-  %\VignetteEngine{knitr::knitr} %\VignetteIndexEntry{calc}
+format:
+  html:
+    embed-resources: true
+  gfm:
+    prefer-html: false
+vignette: >
+  %\VignetteIndexEntry{calc()}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+editor: source
 ---
 
 ```{r setup, include=FALSE}
