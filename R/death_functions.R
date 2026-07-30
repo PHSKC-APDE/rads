@@ -3015,6 +3015,7 @@ life_table_predict_mx <- function(ph.data = ph.data,
 #'   gender = sample(c('Male', 'Female'), 10000, replace = TRUE),
 #'   year = 2020
 #' )
+#'
 #' # Calculate a date of birth based on a maximum age of 120 years (~43800 days)
 #' deaths[, date_of_birth := date_of_death - sample(1:43800, 10000, replace = TRUE)]
 #'
@@ -3136,11 +3137,11 @@ life_table_prep <- function(ph.data,
     })
 
     # Cartesian join of all by-values
-    possibleBy <- do.call(CJ, c(byLevels, list(sorted = FALSE)))
-    setnames(possibleBy, by)
+    possibleBy <- do.call(data.table::CJ, c(byLevels, list(sorted = FALSE)))
+    data.table::setnames(possibleBy, by)
 
     # Add age dimension (full cross-product)
-    template <- possibleBy[, .(ages = possibleAges), by = by]
+    template <- possibleBy[, list(ages = possibleAges), by = by]
 
     # Merge completed template with actual summary
     ph.datasum <- merge(
@@ -3153,7 +3154,7 @@ life_table_prep <- function(ph.data,
   } else {
 
     # No `by` variables → template only consists of age bins
-    template <- data.table(ages = possibleAges)
+    template <- data.table::data.table(ages = possibleAges)
     ph.datasum <- merge(template, ph.datasum, by = "ages", all.x = TRUE)
   }
 
