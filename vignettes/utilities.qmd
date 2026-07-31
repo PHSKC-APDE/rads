@@ -1,11 +1,15 @@
 ---
 title: "Utility Functions"
-format: 
+format:
+  html:
+    embed-resources: true
   gfm:
     prefer-html: false
-    self-contained: true
-  pdf: default
-  html: default
+vignette: >
+  %\VignetteIndexEntry{Utility Functions}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteDepends{knitr}
 editor: source
 ---
 
@@ -37,10 +41,9 @@ First, let's load the necessary packages:
 #| warning: false
 #| message: false
 #| echo: false
-library(kableExtra)
 
 # function to beautify tables
-pretty_kable <- function(dt) { 
+pretty_kable <- function(dt) {
   knitr::kable(dt, format = 'markdown')
 }
 ```

@@ -1,8 +1,15 @@
 ---
 title: "Death Functions"
-format: gfm
-prefer-html: false
-self-contained: true
+format:
+  html:
+    embed-resources: true
+  gfm:
+    prefer-html: false
+vignette: >
+  %\VignetteIndexEntry{Death Functions}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteDepends{knitr}
 editor: source
 ---
 
@@ -42,8 +49,10 @@ library(data.table)
 ```
 
 ```{r}
-#| echo: FALSE
-library(knitr)
+#| echo: false
+pretty_kable <- function(dt) {
+  knitr::kable(dt, format = 'markdown')
+}
 ```
 
 # Importing death data
@@ -71,7 +80,7 @@ Our synthetic death data has one column for the underlying cause of death (`unde
 The function can be used to clean any arbitrary vector of ICD-10 codes. Notice that it gives a warning, informing you that the codes were cleaned.
 
 ```{r}
-#| echo: TRUE
+#| echo: true
 icd_codes <- c('G30.9', 'I25.1', 'I250', 'C349', 'U07-1', 'X44')
 cleaned_icd_codes <- death_icd10_clean(icd_codes)
 print(cleaned_icd_codes)
@@ -80,8 +89,8 @@ print(cleaned_icd_codes)
 The function can also be used within a data.table. Notice that this time it gives a different warning, informing you that it had to replace one of the values (i.e., '3X44') with NA because it did not appear to be an ICD-10 code.
 
 ```{r}
-#| echo: TRUE
-#| results: hide
+#| echo: true
+#| results: 'hide'
 mydt <- data.table(icd_codes = c('G309', 'I251', 'I250', 
                                  'C349', 'U071', '3X44'))
 mydt[, cleaned_icd_codes := death_icd10_clean(icd_codes)]
@@ -89,8 +98,8 @@ mydt[, cleaned_icd_codes := death_icd10_clean(icd_codes)]
 ```
 
 ```{r}
-#| echo: FALSE
-kable(head(mydt), format = 'markdown')
+#| echo: false
+pretty_kable(head(mydt))
 ```
 
 # death_validate_data()
@@ -126,9 +135,9 @@ If you didn't see an error or warning or notification, that means your data is r
 Here is a snapshot of the top 10 rows from `death_113()`
 
 ```{r}
-#| echo: FALSE
+#| echo: false
 nchs113 <- death_113()[1:10]
-kable((nchs113), format = "markdown") 
+pretty_kable(nchs113)
 ```
 
 `death_113_count()` takes eight potential arguments:
@@ -161,7 +170,7 @@ dt1 <- death_113_count(ph.data = deaths.20,
 ```{r}
 #| echo: false
 dt1[, deaths := format(deaths, big.mark = ',')]
-kable(head(dt1), format = "markdown")
+pretty_kable(head(dt1))
 ```
 
 Glancing at the table above, you'll see that you have the two causes of death of interest, PLUS the total of death from any cause ('All causes').
@@ -178,7 +187,7 @@ dt1.alt <- death_113_count(ph.data = deaths.20,
 ```{r}
 #| echo: false
 dt1.alt[, deaths := format(deaths, big.mark = ',')]
-kable(head(dt1.alt), format = "markdown")
+pretty_kable(head(dt1.alt))
 ```
 
 ### example #2: 2019 & 2020 top five causes of death in `death_113_count()`
@@ -219,7 +228,7 @@ setorder(dt113_19_20, year, rank)
 ```{r}
 #| echo: false
 dt113_19_20[, deaths := format(deaths, big.mark = ',')]
-kable(dt113_19_20, format = "markdown")
+pretty_kable(dt113_19_20)
 ```
 
 ***Note!*** Calculating the leading causes of death that we report publicly is more complicated. Please refer to the [wiki](https://github.com/PHSKC-APDE/rads/wiki/leading_causes_of_death) and [CHI repository README](https://github.com/PHSKC-APDE/chi/tree/main/death#leading-causes-of-death) for details.
@@ -242,7 +251,7 @@ dt3 <- dt3[cause.of.death == 'COVID-19 (U07.1)'] # limit output to COVID-19
 #| echo: false
 dt3[, deaths := format(deaths, big.mark = ',')]
 dt3[, ypll_65 := format(ypll_65, big.mark = ',')]
-kable(head(dt3), format = "markdown")
+pretty_kable(head(dt3))
 ```
 
 The table above tells us that, if everyone who died from COVID-19 in 2020 had lived to at least age 65, they would have lived a total of `r dt3$ypll_65` additional years.
@@ -261,7 +270,7 @@ The table above tells us that, if everyone who died from COVID-19 in 2020 had li
 
 ```{r}
 #| echo: false
-  kable(head(mech.n.intent), format = "markdown")
+  pretty_kable(head(mech.n.intent))
 ```
 
 `death_injury_matrix_count()` takes eight potential arguments:
@@ -292,7 +301,7 @@ dt4 <- death_injury_matrix_count(ph.data = deaths.19_20,
 ```{r}
 #| echo: false
 dt4[, deaths := format(deaths, big.mark = ',')]
-kable(dt4[deaths >10], format = "markdown")
+pretty_kable(dt4[deaths >10])
 ```
 
 **What happens if you set both intent & mechanism to "none"?** The function assumes you want the total injury related deaths (without regard to intent or mechanism).
@@ -309,7 +318,7 @@ dt4.alt <- death_injury_matrix_count(ph.data = deaths.19_20,
 ```{r}
 #| echo: false
 dt4.alt[, deaths := format(deaths, big.mark = ',')]
-kable(head(dt4.alt), format = "markdown")
+pretty_kable(head(dt4.alt))
 ```
 
 ### example #5: 2019-2023 King County homicides (intent) by firearms (mechanism), stratified by temperament
@@ -333,7 +342,7 @@ dt5 <- death_injury_matrix_count(ph.data = deaths.19_23,
 
 ```{r}
 #| echo: false
-kable(dt5, format = "markdown")
+pretty_kable(dt5)
 ```
 
 ### example #6: years of potential life lost due to firearm homicides 2019-2023
@@ -353,7 +362,7 @@ dt6 <- death_injury_matrix_count(ph.data = deaths.19_23,
 ```{r}
 #| echo: false
 dt6[, ypll_65 := format(ypll_65, big.mark = ',')]
-kable(dt6, format = "markdown")
+pretty_kable(dt6)
 ```
 
 # death_multicause_count()
@@ -361,14 +370,14 @@ kable(dt6, format = "markdown")
 `death_multicause_count()` allows the user to get counts of causes of death requiring **BOTH** *underlying* **AND** *contributing* causes. To view available analytic ready multicause death categories, simply type `death_multicause()`. If you want to add more causes of death to this list, [please submit a GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new?template=issue_form.yml). In the meantime the function will allow you to specify the underlying cause of death and contributing cause of death ICD-10 of interest.
 
 ```{r}
-#| echo: TRUE
-#| results: hide
+#| echo: true
+#| results: 'hide'
 death_multicause()
 ```
 
 ```{r}
 #| echo: false
-kable(death_multicause(), format = "markdown")
+pretty_kable(death_multicause())
 ```
 
 `death_multicause_count()` takes eleven potential arguments:
@@ -400,7 +409,7 @@ dt7 <- dt7[cause.of.death != 'All causes']
 ```{r}
 #| echo: false
 dt7[, deaths := format(deaths, big.mark = ',')]
-kable(dt7, format = "markdown")
+pretty_kable(dt7)
 ```
 
 # death_other_count()
@@ -437,7 +446,7 @@ setorder(dt8, year, cause.of.death)
 ```{r}
 #| echo: false
 dt8[, deaths := format(deaths, big.mark = ',')]
-kable(dt8, format = "markdown")
+pretty_kable(dt8)
 ```
 
 ### example #9: Count the number of cancer and heart disease deaths in 2021
@@ -461,7 +470,7 @@ dt9 <- death_other_count(ph.data = deaths.21,
 #| echo: false
 dt9[, deaths := format(deaths, big.mark = ',')]
 dt9[, ypll_65 := format(ypll_65, big.mark = ',')]
-kable(dt9, format = "markdown")
+pretty_kable(dt9)
 ```
 
 # life_table()
@@ -495,7 +504,7 @@ dt10 = life_table_prep(ph.data = deaths.19_23,
 
 ```{r}
 #| echo: false
-kable(head(dt10), format = "markdown")
+pretty_kable(head(dt10))
 ```
 
 Filter/delete rows with missing ages because they would not have a corresponding population.
@@ -519,7 +528,7 @@ pop <- pop[, .(pop = sum(pop)), .(year, age)]
 ```{r}
 #| echo: false
 setorder(pop, age)
-kable(head(pop), format = "markdown")
+pretty_kable(head(pop))
 ```
 
 Now we need to aggregate the population data to use the same age intervals as the death data.
@@ -539,7 +548,7 @@ pop[, year := as.integer(year)]
 
 ```{r}
 #| echo: false
-kable(head(pop), format = "markdown")
+pretty_kable(head(pop))
 ```
 
 Merge the properly formatted death and population data together.
@@ -555,7 +564,7 @@ dt10 <- merge(dt10,
 
 ```{r}
 #| echo: false
-kable(head(dt10), format = "markdown")
+pretty_kable(head(dt10))
 ```
 
 Run `life_table()` function to create life tables by year.
@@ -579,7 +588,7 @@ dt10.lifetable <- dt10.lifetable[, .(year, ages, ex, ex_lower, ex_upper, ex_se)]
 
 ```{r}
 #| echo: false
-kable(dt10.lifetable, format = "markdown")
+pretty_kable(dt10.lifetable)
 ```
 
 ***Note!** The life expectancy values in the table above are irrationally high because we used synthetic data, which do not accurately reflect the age at death in the original population.* 

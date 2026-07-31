@@ -1,17 +1,28 @@
 ---
 title: "Calculating rates with rads"
-output:
-  github_document: default
-vignette: |
-  %\VignetteEngine{knitr::knitr} %\VignetteIndexEntry{calculating_rates_with_rads}
+format:
+  html:
+    embed-resources: true
+  gfm:
+    prefer-html: false
+vignette: >
+  %\VignetteIndexEntry{Calculating rates with rads}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteDepends{knitr}
+editor: source
 ---
 
-```{r, echo = F, message=FALSE, warning=FALSE}
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
 library(rads)
 library(data.table)
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable <- function(dt) { 
   knitr::kable(dt, format = 'markdown')
 }
@@ -84,7 +95,11 @@ deaths <- deaths[, .(year, age, underlying_cod_code)]
 
 Now, let's identify the deaths from falls using the `rads::death_injury_matrix_count` function. To learn about this function, type `?death_injury_matrix_count` in your console or walk through the [death_functions wiki](https://github.com/PHSKC-APDE/rads/wiki). For now, just trust that this is the correct syntax:
 
-```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| results: 'hide'
 deaths <- death_injury_matrix_count(ph.data = deaths,
                                     intent = "*", # all five intents
                                     mechanism = "fall",
@@ -93,18 +108,24 @@ deaths <- death_injury_matrix_count(ph.data = deaths,
 head(deaths[deaths > 9])
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(deaths[deaths > 9]))
 ```
 
 Glancing at the output from the `death_injury_matrix_count` function, we see that we have **aggregated** `deaths` by `age` and stratified by `intent`. This is all we really need. Let's tidy our data set and rename the `deaths` column:
 
-```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| results: 'hide'
 deaths <- deaths[, .(mechanism, intent, age, count = deaths)]
 head(deaths[count > 9])
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(deaths[count > 9]))
 ```
 
@@ -114,7 +135,11 @@ Congratulations, you've completed step 1.
 
 Let's load some population data using `rads.data::synthetic_pop`
 
-```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| results: 'hide'
 population <- rads.data::synthetic_population
 
 population <- population[year %in% 2019:2023]
@@ -122,23 +147,33 @@ population <- population[year %in% 2019:2023]
 head(population)
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(population))
 ```
 
 Note that the populations are for individual years, but we want the population for the entirety of 2019-2023. We also only need the `age` and `pop` columns for our analysis. So, let's aggregate the `pop` by `age`. 
-```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| results: 'hide'
 population <- population[, .(pop = sum(pop)), .(age)]
 head(population)
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(population))
 ```
 
 Since we are interested in strata (i.e., `intent`), we will need a complete set of population data for each stratum.
 
-```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| results: 'hide'
 population <- rbindlist(lapply(X = 1:length(unique(deaths$intent)),
                                FUN = function(X){
                                  temp <- copy(population)[, intent := unique(deaths$intent)[X]]
@@ -146,7 +181,8 @@ population <- rbindlist(lapply(X = 1:length(unique(deaths$intent)),
 population[, .N, intent] # confirm that have 101 rows per intent
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(population[, .N, intent])
 ```
 
@@ -154,7 +190,11 @@ pretty_kable(population[, .N, intent])
 
 The title says it all:
 
-```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| results: 'hide'
 deaths <- merge(deaths, 
                 population, 
                 by = c('age', 'intent'), 
@@ -164,7 +204,8 @@ deaths[is.na(count), count := 0] # formally set rows with zero counts to zero
 head(deaths[count > 9]) # only display non-suppressed data
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(deaths[count > 9]))
 ```
 
@@ -172,7 +213,11 @@ pretty_kable(head(deaths[count > 9]))
 
 The documentation tells us that `rads::age_standardize` needs a data set with either an `age` or `agecat` column. Since we have the former, we are good to go as long as we choose the correct reference population. Typing `list_ref_pop` will show you all the available reference populations, however we already know that DOH uses the 2000 US standard population with 11 age groups, so we can plug that into the function.
 
-```{r message=FALSE, warning=FALSE, echo=TRUE, results='hide'}
+```{r}
+#| message: false
+#| warning: false
+#| echo: true
+#| results: 'hide'
 est <- age_standardize(ph.data = deaths,
                        ref.popname = "2000 U.S. Std Population (11 age groups)",
                        collapse = T,
@@ -184,7 +229,8 @@ est <- age_standardize(ph.data = deaths,
 head(est)
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(est))
 ```
 
@@ -196,35 +242,50 @@ In this example we will calculate the adjusted rate of deaths from ***any cause*
 
 ### STEP 1: Create a summary **table of event counts**
 
-```{r message=FALSE, warning=FALSE}
+```{r}
+#| message: false
+#| warning: false
 deaths <- rads.data::synthetic_death
 deaths <- deaths[year == 2019]
 deaths <- deaths[, .(year, age, race)]
 head(deaths)
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(deaths))
 ```
 
 Remember that step 1 is supposed to create a **summary** table. So, let's collapse/aggregate/sum the data to get the count of deaths by age and race:
 
-```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
+```{r}
+#| message: false
+#| warning: false
+#| paged.print: false
+#| echo: true
+#| results: 'hide'
 deaths <- deaths[, .(count = .N), .(age, race)]
 head(deaths)
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(deaths))
 ```
 
 Finally, let's take a peek at the number of deaths by race:
 
-```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
+```{r}
+#| message: false
+#| warning: false
+#| paged.print: false
+#| echo: true
+#| results: 'hide'
 deaths[, .(count = sum(count)), race]
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(deaths[, .(count = sum(count)), race])
 ```
 
@@ -232,7 +293,12 @@ This table of deaths by race shows that the number of deaths among White residen
 
 ### STEP 2: Create a table of **population denominators**
 
-```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
+```{r}
+#| message: false
+#| warning: false
+#| paged.print: false
+#| echo: true
+#| results: 'hide'
 population <- rads.data::synthetic_population
 
 population <- population[year == 2019]
@@ -243,17 +309,24 @@ population <- population[, .(pop = sum(pop)), .(race, age)]
 head(population)
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(population))
 ```
 
 Let's confirm that we have complete population data set (ages 0 to 100) for each race.
 
-```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
+```{r}
+#| message: false
+#| warning: false
+#| paged.print: false
+#| echo: true
+#| results: 'hide'
 population[, .N, race]
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(population[, .N, race])
 ```
 
@@ -261,7 +334,12 @@ pretty_kable(population[, .N, race])
 
 Just do it!
 
-```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
+```{r}
+#| message: false
+#| warning: false
+#| paged.print: false
+#| echo: true
+#| results: 'hide'
 deaths <- merge(deaths, 
                 population, 
                 by = c('race', 'age'), 
@@ -271,13 +349,19 @@ deaths[is.na(count), count := 0] # set rows with zero counts to zero
 head(deaths)
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(deaths))
 ```
 
 ### STEP 4: Use [rads::age_standardize()](https://github.com/PHSKC-APDE/rads/wiki/age_standardize)
 
-```{r message=FALSE, warning=FALSE, paged.print=FALSE, echo=TRUE, results='hide'}
+```{r}
+#| message: false
+#| warning: false
+#| paged.print: false
+#| echo: true
+#| results: 'hide'
 est <- age_standardize(ph.data = deaths,
                        ref.popname = "2000 U.S. Std Population (11 age groups)",
                        collapse = T,
@@ -289,7 +373,8 @@ est <- age_standardize(ph.data = deaths,
 head(est)
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(head(est))
 ```
 

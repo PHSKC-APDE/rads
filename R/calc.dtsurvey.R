@@ -1,5 +1,4 @@
 #' @rdname calc
-#' @keywords internal
 #' @export
 #' @method calc dtsurvey
 calc.dtsurvey <- function(ph.data,

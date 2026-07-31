@@ -1,6 +1,15 @@
 ---
 title: "Leading Causes of Death"
-format: html
+format:
+  html:
+    embed-resources: true
+  gfm:
+    prefer-html: false
+vignette: >
+  %\VignetteIndexEntry{Leading Causes of Death}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteDepends{knitr}
 editor: source
 ---
 
@@ -115,7 +124,7 @@ Take a peek at one of the reference tables you just created ...
 
 ```{r}
 #| echo: true
-#| output: false
+#| results: 'hide'
 head(death_groups)
 ```
 
@@ -188,7 +197,7 @@ Take a peek at the tidied table of non-infant death counts
 
 ```{r}
 #| echo: true
-#| output: false
+#| results: 'hide'
 head(death_count[deaths >= 10]) 
 ```
 
@@ -253,7 +262,7 @@ Take a peek at the tidied table of infant death counts
 
 ```{r}
 #| echo: true
-#| output: false
+#| results: 'hide'
 head(infdeath_count[deaths >= 10]) # suppress view
 ```
 
@@ -338,7 +347,7 @@ Take a peek at the non-infant rates ...
 ```{r}
 #| warning: false
 #| echo: true
-#| results: hide
+#| results: 'hide'
 head(rates[count >= 10]) # suppress view
 ```
 
@@ -374,7 +383,7 @@ Take a peek at the infant rates ...
 ```{r}
 #| warning: false
 #| echo: true
-#| results: hide
+#| results: 'hide'
 head(infrates[count >= 10]) # suppress view
 ```
 

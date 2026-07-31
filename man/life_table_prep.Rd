@@ -78,6 +78,7 @@ deaths <- data.table::data.table(
   gender = sample(c('Male', 'Female'), 10000, replace = TRUE),
   year = 2020
 )
+
 # Calculate a date of birth based on a maximum age of 120 years (~43800 days)
 deaths[, date_of_birth := date_of_death - sample(1:43800, 10000, replace = TRUE)]
 

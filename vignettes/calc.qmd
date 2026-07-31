@@ -1,12 +1,21 @@
 ---
 title: "calc()"
-output:
-  github_document: default
-vignette: |
-  %\VignetteEngine{knitr::knitr} %\VignetteIndexEntry{calc}
+format:
+  html:
+    embed-resources: true
+  gfm:
+    prefer-html: false
+vignette: >
+  %\VignetteIndexEntry{calc()}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteDepends{knitr}
+editor: source
 ---
 
-```{r setup, include=FALSE}
+```{r}
+#| label: setup
+#| include: false
 pretty_kable <- function(dt) { 
   knitr::kable(dt, format = 'markdown')
 }
@@ -50,7 +59,10 @@ Arguments are the values that we send to a function when it is called. The stand
 
 There is no need to specify all of the arguments listed above. As you can see in the following example, the `calc` function simply needs a specified dataset (i.e., `ph.data`) and at least one `what` variable to return an intelligible result.
 
-```{r, echo=TRUE, results='hide', warning=FALSE}
+```{r}
+#| echo: true
+#| results: 'hide'
+#| warning: false
 library(rads)
 library(data.table)
 data(mtcars)
@@ -59,7 +71,8 @@ my.est <- calc(ph.data = mtcars,
 print(my.est)
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(my.est)
 ```
 
@@ -75,7 +88,10 @@ birth <- birth[year %in% 2019:2023]
 
 **Mean (proportion) for a binary variable over multiple years**
 
-```{r, echo=TRUE, eval=TRUE, results='hide'}
+```{r}
+#| echo: true
+#| eval: true
+#| results: 'hide'
 my.est <- calc(ph.data = birth, 
                what = c("preterm"), 
                metrics = c("mean", "rse", "numerator", "denominator"), 
@@ -83,12 +99,16 @@ my.est <- calc(ph.data = birth,
 print(my.est)
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(my.est)
 ```
 **Mean (proportion) for a binary over multiple years -- `where` the newborn is male**
 
-```{r, echo=TRUE, eval=TRUE, results='hide'}
+```{r}
+#| echo: true
+#| eval: true
+#| results: 'hide'
 my.est <- calc(ph.data = birth, 
                what = c("preterm"), 
                where = sex == "Male",
@@ -97,13 +117,17 @@ my.est <- calc(ph.data = birth,
 print(my.est)
 ```
 
-```{r, echo = FALSE}
+```{r}
+#| echo: false
 pretty_kable(my.est)
 ```
 
 **Mean (proportion) for a binary over multiple years -- `where` newborn is male born to a Hispanic mother**
 
-```{r, echo=TRUE, eval=TRUE, results='hide'}
+```{r}
+#| echo: true
+#| eval: true
+#| results: 'hide'
 my.est <- calc(ph.data = birth, 
                what = c("preterm"), 
                where = sex == "Male" & race == "Hispanic",
@@ -112,7 +136,8 @@ my.est <- calc(ph.data = birth,
 print(my.est)
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(my.est)
 ```
 
@@ -120,7 +145,10 @@ pretty_kable(my.est)
 
 ***Note!** You cannot use the same variable name for both the `time_var` and `by` arguments. So, make a copy of the time variable first.*
 
-```{r, echo=TRUE, eval=TRUE, results='hide'}
+```{r}
+#| echo: true
+#| eval: true
+#| results: 'hide'
 birth[, calyear := year]
 
 my.est <- calc(ph.data = birth, 
@@ -131,13 +159,17 @@ my.est <- calc(ph.data = birth,
 print(my.est)
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(my.est)
 ```
 
 **Mean (proportion) for a binary over windowed years**
 
-```{r, echo=TRUE, eval=TRUE, results='hide'}
+```{r}
+#| echo: true
+#| eval: true
+#| results: 'hide'
 my.est <- calc(ph.data = birth, 
                what = c("preterm"), 
                metrics = c("mean", "rse", "numerator", "denominator"), 
@@ -146,13 +178,17 @@ my.est <- calc(ph.data = birth,
 print(my.est)
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(my.est)
 ```
 
 **Mean for a continuous variable over windowed years**
 
-```{r, echo=TRUE, eval=TRUE, results='hide'}
+```{r}
+#| echo: true
+#| eval: true
+#| results: 'hide'
 my.est <- calc(ph.data = birth, 
                what = c("birth_weight_grams"), 
                metrics = c("mean", "rse"), 
@@ -161,13 +197,18 @@ my.est <- calc(ph.data = birth,
 print(my.est)
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo: false
 pretty_kable(my.est)
 ```
 
 **Mean for a continuous in 2019, by mother's race and child's sex**
 
-```{r, echo=TRUE, eval=TRUE, results='hide', warning=FALSE}
+```{r}
+#| echo: true
+#| eval: true
+#| results: 'hide'
+#| warning: false
 my.est <- calc(ph.data = birth, 
                what = c("birth_weight_grams"), 
                where = year == 2019,
@@ -176,7 +217,9 @@ my.est <- calc(ph.data = birth,
 print(my.est)
 ```
 
-```{r, echo=FALSE, warning=FALSE}
+```{r}
+#| echo: false
+#| warning: false
 pretty_kable(my.est)
 ```
 
@@ -189,7 +232,11 @@ birth[, race := as.factor(race)]
 ```
 
 Now we can continue with our calculations:
-```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
+```{r}
+#| warning: false
+#| echo: true
+#| eval: true
+#| results: 'hide'
 my.est <- calc(ph.data = birth, 
                what = c("race"), 
                where = year %in% 2019:2021,
@@ -197,13 +244,19 @@ my.est <- calc(ph.data = birth,
 print(my.est)
 ```
 
-```{r, warning=FALSE, echo=FALSE}
+```{r}
+#| warning: false
+#| echo: false
 pretty_kable(my.est)
 ```
 
 **2019-2021 rate per 100k of births among each racial group**
 
-```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
+```{r}
+#| warning: false
+#| echo: true
+#| eval: true
+#| results: 'hide'
 my.est <- calc(ph.data = birth, 
                what = c("race"), 
                where = year %in% 2019:2023,
@@ -212,13 +265,19 @@ my.est <- calc(ph.data = birth,
 print(my.est)
 ```
 
-```{r, warning=FALSE, echo=FALSE}
+```{r}
+#| warning: false
+#| echo: false
 pretty_kable(my.est)
 ```
 
 **Number and proportion of missing gender by year**
 
-```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
+```{r}
+#| warning: false
+#| echo: true
+#| eval: true
+#| results: 'hide'
 my.est <- calc(ph.data = birth, 
                what = c("sex"), 
                where = year %in% 2019:2023,
@@ -227,7 +286,9 @@ my.est <- calc(ph.data = birth,
 print(my.est)
 ```
 
-```{r, warning=FALSE, echo=FALSE}
+```{r}
+#| warning: false
+#| echo: false
 pretty_kable(my.est)
 ```
 
@@ -235,7 +296,8 @@ pretty_kable(my.est)
 
 Survey data must be 'set' to use the proper survey design. In this case, PUMS data will use replicate weights as specified by the Census Bureau. 
 
-```{r, warning=FALSE}
+```{r}
+#| warning: false
 mysurvey <- rads.data::synthetic_survey
 
 mysurvey <- survey::svrepdesign(
@@ -250,12 +312,14 @@ mysurvey <- survey::svrepdesign(
 
 Setting it as a `dtsurvey` object will allow us to manipulate the survey object with `data.table` syntax and will play nicely with `rads::calc()`.
 
-```{r, warning=FALSE}
+```{r}
+#| warning: false
 mysurvey <- dtsurvey::dtrepsurvey(mysurvey)
 ```
 
 Checking the class of mysurvey you can see that it is both a `data.table` and a `dtrepsurvey` object.
-```{r, warning=FALSE}
+```{r}
+#| warning: false
 class(mysurvey)
 ```
 
@@ -264,7 +328,11 @@ class(mysurvey)
 
 First, create a simple tabulation of the proportion of females and males among adults (age 18+).
 
-```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
+```{r}
+#| warning: false
+#| echo: true
+#| eval: true
+#| results: 'hide'
 my.est <- calc(ph.data = mysurvey,
                what = "sex",
                metrics = c('mean', 'numerator', 'denominator', 'obs', 'total'),
@@ -273,7 +341,9 @@ my.est <- calc(ph.data = mysurvey,
 print(my.est)
 ```
 
-```{r, warning=FALSE, echo=FALSE}
+```{r}
+#| warning: false
+#| echo: false
 pretty_kable(my.est)
 ```
 
@@ -285,7 +355,11 @@ pretty_kable(my.est)
 
 To highlight the difference between `denominator` and `obs`, in this next example we introduce 100 missing values to our 'what' variable (`sex`), thereby lowering the denominator by 100 but leaving the obs the same as above.
 
-```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
+```{r}
+#| warning: false
+#| echo: true
+#| eval: true
+#| results: 'hide'
 mysurvey2 <- copy(mysurvey)
 mysurvey2 <- mysurvey2[agep > 18, sex := fifelse(.I <= 100, NA, sex)]
 my.est <- calc(ph.data = mysurvey2,
@@ -295,7 +369,9 @@ my.est <- calc(ph.data = mysurvey2,
 print(my.est[, .(level, numerator, denominator, obs)])
 ```
 
-```{r, warning=FALSE, echo=FALSE}
+```{r}
+#| warning: false
+#| echo: false
 pretty_kable(my.est[, .(level, numerator, denominator, obs)])
 ```
 
@@ -303,7 +379,11 @@ As expected, the `obs` value is the same as in table test1 above (`r format(my.e
 
 **Mean (proportion) of respondents who commute by public transportation or by driving -- stratified by sex**
 
-```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
+```{r}
+#| warning: false
+#| echo: true
+#| eval: true
+#| results: 'hide'
 my.est <- calc(ph.data = mysurvey, 
                what = c("pubtran", "drive"), 
                metrics = c("mean", "rse"), 
@@ -312,14 +392,20 @@ my.est <- calc(ph.data = mysurvey,
 print(my.est)
 ```
 
-```{r, warning=FALSE, echo=FALSE}
+```{r}
+#| warning: false
+#| echo: false
 pretty_kable(my.est)
 ```
 
 
 **Proportion in six age groups, by disability status**
 
-```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
+```{r}
+#| warning: false
+#| echo: true
+#| eval: true
+#| results: 'hide'
 my.est <- calc(ph.data = mysurvey, 
                what = c("age6"), 
                metrics = c("mean", "rse"), 
@@ -328,14 +414,20 @@ my.est <- calc(ph.data = mysurvey,
 print(my.est)
 ```
 
-```{r, warning=FALSE, echo=FALSE}
+```{r}
+#| warning: false
+#| echo: false
 pretty_kable(my.est)
 ```
 
 
 **Mean & median age of adults, by disability status**
 
-```{r, warning=FALSE, echo=TRUE, eval=TRUE, results='hide'}
+```{r}
+#| warning: false
+#| echo: true
+#| eval: true
+#| results: 'hide'
 my.est <- calc(ph.data = mysurvey,
                what = c("agep"),
                where = agep >= 18,
@@ -344,7 +436,9 @@ my.est <- calc(ph.data = mysurvey,
 print(my.est)
 ```
 
-```{r, warning=FALSE, echo=FALSE}
+```{r}
+#| warning: false
+#| echo: false
 pretty_kable(my.est)
 ```
 
@@ -355,7 +449,12 @@ In the examples above we used standard public health data (birth vital statistic
 
 **Create the dataset**
 
-```{r, warning=FALSE, message=FALSE, echo=TRUE, eval=TRUE, results='hide'}
+```{r}
+#| warning: false
+#| message: false
+#| echo: true
+#| eval: true
+#| results: 'hide'
 library(data.table)
 set.seed(98121) 
 
@@ -367,7 +466,10 @@ mydt <- data.table(
 head(mydt)
 ```
 
-```{r, warning=FALSE, message=FALSE, echo=FALSE}
+```{r}
+#| warning: false
+#| message: false
+#| echo: false
 pretty_kable(head(mydt))
 ```
 
@@ -375,7 +477,12 @@ We see that we created a dataset of 2000 rows with grades in four schools betwee
 
 **Calculate the proportion of A's and B's in the Alpha and Beta schools**
 
-```{r, warning=FALSE, message=FALSE, echo=TRUE, eval=TRUE, results='hide'}
+```{r}
+#| warning: false
+#| message: false
+#| echo: true
+#| eval: true
+#| results: 'hide'
 grades.distribution <- calc(
   ph.data = mydt, 
   where = school %in% c("Alpha", "Beta"), 
@@ -387,7 +494,10 @@ grades.distribution <- calc(
 print(grades.distribution[level %in% c("A", "B")])
 ```
 
-```{r, warning=FALSE, message=FALSE, echo=FALSE}
+```{r}
+#| warning: false
+#| message: false
+#| echo: false
 pretty_kable(grades.distribution[level %in% c("A", "B")])
 ```
 
@@ -397,7 +507,9 @@ These results show that the Alpha School has a higher proportion of A's (`r roun
 
 A colleague just reminded you that you forgot to add the survey weights. Let's add weights and survey set the data.
 
-```{r, warning=FALSE, message=FALSE}
+```{r}
+#| warning: false
+#| message: false
 # create weights
 set.seed(98121)
 mydt[, mywghts := sample(50:1300, 2000, replace = T)]
@@ -410,7 +522,12 @@ mysvy <-dtsurvey::dtsurvey(data.table(mydt), weight = 'mywghts')
 
 **Using the survey information, again calculate the proportion of A's and B's in the Alpha and Beta schools**
 
-```{r, warning=FALSE, message=FALSE, echo=TRUE, eval=TRUE, results='hide'}
+```{r}
+#| warning: false
+#| message: false
+#| echo: true
+#| eval: true
+#| results: 'hide'
 grades.distribution2 <- calc(
   ph.data = mysvy, 
   what = "grades", 
@@ -422,7 +539,10 @@ grades.distribution2 <- calc(
 print(grades.distribution2[level %in% c("A", "B")])
 ```
 
-```{r, warning=FALSE, message=FALSE, echo=FALSE}
+```{r}
+#| warning: false
+#| message: false
+#| echo: false
 pretty_kable(grades.distribution2[level %in% c("A", "B")])
 ```
 
@@ -434,7 +554,9 @@ There may be a few instances where you want to compute some metrics using (multi
 
 The following code creates a fake survey of 100 people and then creates 10 different iterations of the survey with differing values of `impvar` (to represent the imputed variable).
 
-```{r, warning=FALSE, message= FALSE}
+```{r}
+#| warning: false
+#| message: false
 # Create some fake data
 library('data.table')
 base = data.table::data.table(id = 1:100, 
@@ -452,7 +574,9 @@ mi_data = lapply(1:10, function(i){
 
 To use the imputation version of calc, the ph.data argument must be an `imputationList` object. You can turn your list of plausible datasets into an `imputationList` via the `mitools::imputationList` function. You may need to install the `mitools` package for this to work.
 
-```{r, warning = FALSE, message = FALSE}
+```{r}
+#| warning: false
+#| message: false
 mi_data = mitools::imputationList(mi_data)
 class(mi_data)
 ```
@@ -460,7 +584,11 @@ class(mi_data)
 Now that `mi_data` is the right type/class of object, you can pass it to the `calc` function as you would any other dataset. The slight exception is that the metrics argument must be explicitly specified. For fun, a version of the results from one imputation is also computed.
 
 **Results using MI combining methods**
-```{r, warning = FALSE, message = FALSE, echo=TRUE, results='hide'}
+```{r}
+#| warning: false
+#| message: false
+#| echo: true
+#| results: 'hide'
 withmi = calc(ph.data = mi_data, 
               what = 'bin', 
               by = 'impvar', 
@@ -469,19 +597,25 @@ withmi = calc(ph.data = mi_data,
 print(withmi)
 ```
 
-```{r, echo = FALSE}
+```{r}
+#| echo: false
 pretty_kable(withmi[, .(impvar, variable, mean, mean_se, mean_lower, mean_upper)])
 ```
 
 **Results of one iteration**
-```{r, warning = FALSE, message = FALSE, echo=TRUE, results='hide'}
+```{r}
+#| warning: false
+#| message: false
+#| echo: true
+#| results: 'hide'
 nomi = calc(ph.data = mi_data$imputations[[1]], 
             what = 'bin', 
             by = 'impvar')
 print(nomi)
 ```
 
-```{r, echo = FALSE}
+```{r}
+#| echo: false
 pretty_kable(nomi[, .(impvar, variable, mean, mean_se, mean_lower, mean_upper)])
 ```
 

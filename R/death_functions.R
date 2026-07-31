@@ -1,4 +1,4 @@
-﻿# death_113() ----
+# death_113() ----
 #' View the NCHS 113 COD causeids
 #'
 #' @description
@@ -2810,6 +2810,8 @@ life_table <- function(ph.data,
 #' `mx` for those >= 85 years old. It is recommended that you do not use use
 #' this function when the max age is is less than '80+'.
 #'
+#' @keywords internal
+#'
 #' @param ph.data A data.table containing mortality data
 #'
 #' The default is `ph.data = ph.data`, where `ph.data` is passed
@@ -3013,6 +3015,7 @@ life_table_predict_mx <- function(ph.data = ph.data,
 #'   gender = sample(c('Male', 'Female'), 10000, replace = TRUE),
 #'   year = 2020
 #' )
+#'
 #' # Calculate a date of birth based on a maximum age of 120 years (~43800 days)
 #' deaths[, date_of_birth := date_of_death - sample(1:43800, 10000, replace = TRUE)]
 #'
@@ -3126,27 +3129,36 @@ life_table_prep <- function(ph.data,
   possibleAges <- unique(gsub("\\,", "-", possibleAges))
   possibleAges[is.na(possibleAges)] <- paste0(max(cuts), "+")
 
-  if(!is.null(by)){
-    possibleGroupBy <- lapply(by,
-                             function(col){
-                               unique(ph.data[!is.na(ph.data[[col]]), col, with = FALSE][[1]])})
-    possibleGroupBy <- do.call(data.table::CJ, possibleGroupBy)
-    data.table::setnames(possibleGroupBy, by)
-    template <- possibleGroupBy[rep(1:.N, each = length(possibleAges))]
-    template[, ages := rep(possibleAges, times = .N/length(possibleAges))]
+  if (!is.null(by)) {
 
-    ph.datasum <- merge(template,
-                        ph.datasum,
-                        by = c('ages', by),
-                        all = T)
+    # For each column in `by`, get full set of observed values (including NA)
+    byLevels <- lapply(by, function(col) {
+      unique(ph.data[[col]])
+    })
+
+    # Cartesian join of all by-values
+    possibleBy <- do.call(data.table::CJ, c(byLevels, list(sorted = FALSE)))
+    data.table::setnames(possibleBy, by)
+
+    # Add age dimension (full cross-product)
+    template <- possibleBy[, list(ages = possibleAges), by = by]
+
+    # Merge completed template with actual summary
+    ph.datasum <- merge(
+      template,
+      ph.datasum,
+      by = c("ages", by),
+      all.x = TRUE
+    )
+
   } else {
+
+    # No `by` variables → template only consists of age bins
     template <- data.table::data.table(ages = possibleAges)
-    ph.datasum <- merge(template,
-                        ph.datasum,
-                        by = c('ages'),
-                        all = T)
+    ph.datasum <- merge(template, ph.datasum, by = "ages", all.x = TRUE)
   }
 
+  # Fill missing deaths & fraction
   ph.datasum[is.na(deaths), deaths := 0]
   ph.datasum[is.na(fraction), fraction := 0] # later will be changed to 0.5 when there are zero deaths in an age bin, but keeping it simpler for user of this function
 

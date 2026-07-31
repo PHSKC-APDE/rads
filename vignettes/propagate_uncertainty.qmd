@@ -1,7 +1,16 @@
 ---
 title: "propagate_uncertainty()"
-format: gfm
-prefer-html: false
+format:
+  html:
+    embed-resources: true
+  gfm:
+    prefer-html: false
+vignette: >
+  %\VignetteIndexEntry{propagate_uncertainty()}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteDepends{ggplot2}
+  %\VignetteDepends{knitr}
 editor: source
 ---
 

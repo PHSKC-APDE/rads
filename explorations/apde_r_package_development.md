@@ -1,5 +1,7 @@
 # APDE R Package Development Standards
 
+## Version 1.1 (2026-07-30)
+
 ## Getting Started
 
 -   If you are starting from scratch, consider using `usethis::create_package()` to setup a package on your laptop. E.g., `usethis::create_package("c:/code/mypkg_dir")`
@@ -193,41 +195,53 @@ After a function has been defunct for 1-2 major versions, you can completely del
 -   Try hard to break your code with corner cases.
 -   Run `devtools::test()` and update your function(s) and/or tests as needed.
 
-## Creating Wiki Style Documentation (optional, but helpful)
+## Creating CRAN Style Vignettes / Wiki Style Documentation (optional, but helpful)
 
--   If you want to provide extended usage guides or tutorials but do not need formal CRAN-style vignettes, use the following workflow:
-    -   Create a `quarto_docs/` directory at the root of the package.
-    -   Add `^quarto_docs$` to `.Rbuildignore` so these source files are not included in the package build.
-    -   In the `quarto_docs/` directory, create a file called `_quarto.yml`. This file will be referred to by all your `.qmd` files in this directory. Use it to specify that you want to save git flavored markdown files in `inst/docs` by adding the following to the file:
-        ```
-        project:
-          output-dir: ../inst/docs
+-   You could use `usethis::use_vignette("vignette-name")`, but that creates an `.Rmd` file whereas the world is moving toward `.Qmd` files. Instead, do the following:
+    -   Create `vignettes/` in your package's root directory.
 
-        format:
-          gfm:
-            prefer-html: false
-            embed-resources: false
-        ```
-    -   The header in your `.qmd` files can now be super simple like this:
-        ```
+    -   Add knitr and quarto to your DESCRIPTION under Suggests using `usethis::use_package()` or by editing the DESCRIPTION file manually.
+
+    - Add `VignetteBuilder: quarto` to your DESCRIPTION
+
+    -   Create a `.Qmd` file in `vignettes` and give it a header like the following which will render git flavored markdown (which you will need to post on a GitHub wiki):
+
+        ``` yaml
         ---
         title: "My Vignette Title"
-        editor: visual
+        format:
+          html:
+            embed-resources: true
+          gfm:
+            prefer-html: false
+        vignette: >
+          %\VignetteIndexEntry{My Vignette Index Title}
+          %\VignetteEngine{quarto::html}
+          %\VignetteEncoding{UTF-8}
+          %\VignetteDepends{knitr}
+        editor: source
         ---
         ```
-    -   When you render your `.qmd` files, they will now generate `.md` files in `inst/docs/`.
-        -   Anything placed inside `inst/` is copied into the installed package, with the `inst/` prefix removed.  
-        -   For example, `inst/docs/parsing_functions.md` will be installed as `mypkg/docs/parsing_functions.md`.
-    -   Either push these `.md` to your wiki (if one is available) or link to these `.md` files from your README so users can easily find them on GitHub. Example:
-        ```markdown
-        See [parsing functions](inst/docs/parsing_functions.md) for details.
-        ```
-    -   To access the installed copy from R, overachieving users can run:
-        ```r
-        browseURL(system.file("docs", "parsing_functions.md", package = "mypkg"))
-        ```
--   Use this method when you want wiki-style documentation bundled with the package but do not need formal vignette integration.
 
+- If you've followed this set up carefully, when you build your package, it will create CRAN stylel vignettes. In addition, you can easily render these to markdown for use in a GitHub wiki.
+
+### Quarto Code Chunk Standards
+- All Quarto vignette code chunks should use the YAML-style chunk options (`#| option: value`) rather than knitr-style options placed in the chunk header.
+- This YAML style is the modern Quarto standard.
+- Example of preferred syntax:
+
+    ```text
+    ```{r}
+    #| warning: false
+    #| message: false
+    kable(myTable, format = "markdown")
+    ```
+
+- Avoid older knitr-style options:
+    ```text
+    ```{r, warning=FALSE, messsage=FALSE}
+    kable(myTable, format = "markdown")
+    ```
 
 ## Run Tests
 
