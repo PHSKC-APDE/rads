@@ -9,7 +9,7 @@ vignette: >
   %\VignetteIndexEntry{Utility Functions}
   %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
-  %\VignetteDepends{kableExtra}
+  %\VignetteDepends{knitr}
 editor: source
 ---
 
@@ -41,10 +41,9 @@ First, let's load the necessary packages:
 #| warning: false
 #| message: false
 #| echo: false
-library(kableExtra)
 
 # function to beautify tables
-pretty_kable <- function(dt) { 
+pretty_kable <- function(dt) {
   knitr::kable(dt, format = 'markdown')
 }
 ```

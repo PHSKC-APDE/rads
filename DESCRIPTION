@@ -34,7 +34,6 @@ Suggests:
     future.apply,
     ggplot2,
     httr,
-    kableExtra,
     knitr,
     quarto,
     testthat,
