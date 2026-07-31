@@ -200,8 +200,6 @@ After a function has been defunct for 1-2 major versions, you can completely del
 -   You could use `usethis::use_vignette("vignette-name")`, but that creates an `.Rmd` file whereas the world is moving toward `.Qmd` files. Instead, do the following:
     -   Create `vignettes/` in your package's root directory.
 
-    -   Add `^vignettes$`to .Rbuildignore
-
     -   Add knitr and quarto to your DESCRIPTION under Suggests using `usethis::use_package()` or by editing the DESCRIPTION file manually.
 
     - Add `VignetteBuilder: quarto` to your DESCRIPTION
