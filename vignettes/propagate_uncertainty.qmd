@@ -10,7 +10,7 @@ vignette: >
   %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
   %\VignetteDepends{ggplot2}
-  %\VignetteDepends{kableExtra}
+  %\VignetteDepends{knitr}
 editor: source
 ---
 
