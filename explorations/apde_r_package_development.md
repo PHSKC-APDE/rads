@@ -220,7 +220,7 @@ After a function has been defunct for 1-2 major versions, you can completely del
           %\VignetteIndexEntry{My Vignette Index Title}
           %\VignetteEngine{quarto::html}
           %\VignetteEncoding{UTF-8}
-          %\VignetteDepends{kableExtra}
+          %\VignetteDepends{knitr}
         editor: source
         ---
         ```
