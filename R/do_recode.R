@@ -49,7 +49,7 @@ do_recode = function(x, old, new, new_label = NULL, update = FALSE, verbose = FA
 
   if(is.factor(x)){
     hold = unique(x)
-    hold = data.table::data.table(value =  methods::as(x, class(old)), label = as.character(hold))
+    hold = data.table::data.table(value = methods::as(hold, class(old)), label = as.character(hold))
     x = methods::as(x, class(old))
   }
 
