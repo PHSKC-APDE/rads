@@ -668,60 +668,77 @@ lossless_convert <- function(x, class, column_name = NULL) {
 }
 
 # metrics() ----
-#' List of available metric for `calc`
+#' List of available metrics for `calc`
 #' @return character vector. A vector of the available metrics for `calc`
 #' @name metrics
 #' @details
-#' 1) total: Count of people with the given value. Mostly relevant for surveys
+#' 1) **mean**: Average response and associated metrics of uncertainty.
+#' Returns mean, mean_se, mean_lower, mean_upper.
+#' Default ci (e.g. upper and lower) is 95 percent.
+#'
+#' 2) **median**: The median non NA response. Not populated when `what` is a factor
+#' or character. Even for surveys, the median is the unweighted result.
+#'
+#' 3) **total**: Count of people with the given value. Mostly relevant for surveys
 #' (where total is approximately mean * sum(pweights)).
 #' Returns total, total_se, total_upper, total_lower.
 #' total_se, total_upper, & total_lower are only valid for survey data.
 #' Default ci (e.g. upper and lower) is 95 percent.
 #'
-#' 2) mean: Average response and associated metrics of uncertainty.
-#' Returns mean, mean_se, mean_lower, mean_upper.
-#' Default ci (e.g. upper and lower) is 95 percent.
+#' 4) **rse**: Relative standard error. Normally `100*se/mean`. However, for binary
+#' variables, rse is instead
+#' calculated as `100*se/min(mean, 1-mean)`. This is because the standard error
+#' of a binary proportion is identical to the standard error of its complement
+#' (e.g., `SE(p) == SE(1-p)`), but rse is not symmetric since it is a function
+#' of both the se and the estimate itself. Using the estimate that is <=50%
+#' ensures that an estimate and its complement are assigned the same (correct)
+#' rse, rather than one artificially appearing more/less reliable than the other.
+#' This adjustment applies only to binary (two-outcome) variables. See [calc]
+#' `Proportion-like and binary variables` for details.
 #'
-#' 3) rse: Relative standard error. 100*se/mean.
-#'
-#' 4) numerator: Sum of non-NA values for `what``.
-#' The numerator is always unweighted.
-#'
-#' 5) denominator: Number of rows where `what` is not NA.
-#' The denominator is always unweighted.
-#'
-#' 6) obs: Number of unique observations (i.e., rows), agnostic as to whether
-#' there is missing data for `what`. The obs is always unweighted.
-#'
-#' 7) median: The median non NA response. Not populated when `what` is a factor
-#' or character. Even for surveys, the median is the unweighted result.
-#'
-#' 8) unique.time: Number of unique time points (from `time_var`) included in
-#' each tabulation (i.e., number of unique time points when the `what` is not missing).
-#'
-#' 9) missing: Number of rows in a given grouping with an NA value for `what`.
-#'    missing + denominator = Number of people in a given group.
-#'    When `what` is a factor/character, the missing information is provided for the other.
-#'
-#' 10) missing.prop: The proportion of the data that has an NA value for `what`.
-#'
-#' 11) rate: mean * per. Provides rescaled mean estimates (i.e., per 100 or per 100,0000).
+#' 5) **rate**: mean * per. Provides rescaled mean estimates (i.e., per 100 or per 100,0000).
 #' Returns rate, rate_se, rate_lower, rate_upper.
 #' Default ci (e.g. upper and lower) is 95 percent.
 #'
-#' 12) ndistinct: The unique number of `what` values in the given subset. For factors, it is the unique number of levels in the subset.
+#' 6) **numerator**: Sum of non-NA values for `what``.
+#' The numerator is always unweighted.
+#'
+#' 7) **denominator**: Number of rows where `what` is not NA.
+#' The denominator is always unweighted.
+#'
+#' 8) **obs**: Number of unique observations (i.e., rows), agnostic as to whether
+#' there is missing data for `what`. The obs is always unweighted.
+#'
+#' 9) **missing**: Number of rows in a given grouping with an NA value for `what`.
+#'    missing + denominator = Number of people in a given group.
+#'    When `what` is a factor/character, the missing information is provided for the other.
+#'
+#' 10) **missing.prop**: The proportion of the data that has an NA value for `what`.
+#'
+#' 11) **unique.time**: Number of unique time points (from `time_var`) included in
+#' each tabulation (i.e., number of unique time points when the `what` is not missing).
+#'
+#' 12) **ndistinct**: The unique number of `what` values in the given subset. For
+#' factors, it is the unique number of levels in the subset.
+#'
+#' 13) **vcov**: Variance-covariance matrix for `mean` and/or `total`. Requires that
+#' `mean` and/or `total` also be included in `metrics`. Returns `mean_vcov` and/or
+#' `total_vcov` accordingly (list-columns containing the variance-covariance matrix).
+#' For non-factor `what`, this is a 1x1 matrix (i.e., just the variance of the estimate);
+#' for factor `what`, it is the full covariance matrix across levels. Mainly intended
+#' for internal us rather than direct interpretation.
 #'
 #' @rdname metrics
 #' @examples
 #' print(metrics())
 #' @export
 metrics = function(){
-  c('total',
-    'mean', 'rse',
-    'numerator','denominator', 'obs', 'median',
-    'unique.time',
+  c('mean', 'median', 'total',
+    'rse', 'rate',
+    'numerator','denominator', 'obs',
     'missing', 'missing.prop',
-    'rate', 'ndistinct', 'vcov')
+    'ndistinct', 'unique.time',
+    'vcov')
 }
 
 # multi_t_test ----

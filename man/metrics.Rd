@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities.R
 \name{metrics}
 \alias{metrics}
-\title{List of available metric for \code{calc}}
+\title{List of available metrics for \code{calc}}
 \usage{
 metrics()
 }
@@ -10,37 +10,53 @@ metrics()
 character vector. A vector of the available metrics for \code{calc}
 }
 \description{
-List of available metric for \code{calc}
+List of available metrics for \code{calc}
 }
 \details{
 \enumerate{
-\item total: Count of people with the given value. Mostly relevant for surveys
+\item \strong{mean}: Average response and associated metrics of uncertainty.
+Returns mean, mean_se, mean_lower, mean_upper.
+Default ci (e.g. upper and lower) is 95 percent.
+\item \strong{median}: The median non NA response. Not populated when \code{what} is a factor
+or character. Even for surveys, the median is the unweighted result.
+\item \strong{total}: Count of people with the given value. Mostly relevant for surveys
 (where total is approximately mean * sum(pweights)).
 Returns total, total_se, total_upper, total_lower.
 total_se, total_upper, & total_lower are only valid for survey data.
 Default ci (e.g. upper and lower) is 95 percent.
-\item mean: Average response and associated metrics of uncertainty.
-Returns mean, mean_se, mean_lower, mean_upper.
-Default ci (e.g. upper and lower) is 95 percent.
-\item rse: Relative standard error. 100*se/mean.
-\item numerator: Sum of non-NA values for `what``.
-The numerator is always unweighted.
-\item denominator: Number of rows where \code{what} is not NA.
-The denominator is always unweighted.
-\item obs: Number of unique observations (i.e., rows), agnostic as to whether
-there is missing data for \code{what}. The obs is always unweighted.
-\item median: The median non NA response. Not populated when \code{what} is a factor
-or character. Even for surveys, the median is the unweighted result.
-\item unique.time: Number of unique time points (from \code{time_var}) included in
-each tabulation (i.e., number of unique time points when the \code{what} is not missing).
-\item missing: Number of rows in a given grouping with an NA value for \code{what}.
-missing + denominator = Number of people in a given group.
-When \code{what} is a factor/character, the missing information is provided for the other.
-\item missing.prop: The proportion of the data that has an NA value for \code{what}.
-\item rate: mean * per. Provides rescaled mean estimates (i.e., per 100 or per 100,0000).
+\item \strong{rse}: Relative standard error. Normally \code{100*se/mean}. However, for binary
+variables, rse is instead
+calculated as \code{100*se/min(mean, 1-mean)}. This is because the standard error
+of a binary proportion is identical to the standard error of its complement
+(e.g., \code{SE(p) == SE(1-p)}), but rse is not symmetric since it is a function
+of both the se and the estimate itself. Using the estimate that is <=50\%
+ensures that an estimate and its complement are assigned the same (correct)
+rse, rather than one artificially appearing more/less reliable than the other.
+This adjustment applies only to binary (two-outcome) variables. See \link{calc}
+\verb{Proportion-like and binary variables} for details.
+\item \strong{rate}: mean * per. Provides rescaled mean estimates (i.e., per 100 or per 100,0000).
 Returns rate, rate_se, rate_lower, rate_upper.
 Default ci (e.g. upper and lower) is 95 percent.
-\item ndistinct: The unique number of \code{what} values in the given subset. For factors, it is the unique number of levels in the subset.
+\item \strong{numerator}: Sum of non-NA values for `what``.
+The numerator is always unweighted.
+\item \strong{denominator}: Number of rows where \code{what} is not NA.
+The denominator is always unweighted.
+\item \strong{obs}: Number of unique observations (i.e., rows), agnostic as to whether
+there is missing data for \code{what}. The obs is always unweighted.
+\item \strong{missing}: Number of rows in a given grouping with an NA value for \code{what}.
+missing + denominator = Number of people in a given group.
+When \code{what} is a factor/character, the missing information is provided for the other.
+\item \strong{missing.prop}: The proportion of the data that has an NA value for \code{what}.
+\item \strong{unique.time}: Number of unique time points (from \code{time_var}) included in
+each tabulation (i.e., number of unique time points when the \code{what} is not missing).
+\item \strong{ndistinct}: The unique number of \code{what} values in the given subset. For
+factors, it is the unique number of levels in the subset.
+\item \strong{vcov}: Variance-covariance matrix for \code{mean} and/or \code{total}. Requires that
+\code{mean} and/or \code{total} also be included in \code{metrics}. Returns \code{mean_vcov} and/or
+\code{total_vcov} accordingly (list-columns containing the variance-covariance matrix).
+For non-factor \code{what}, this is a 1x1 matrix (i.e., just the variance of the estimate);
+for factor \code{what}, it is the full covariance matrix across levels. Mainly intended
+for internal us rather than direct interpretation.
 }
 }
 \examples{

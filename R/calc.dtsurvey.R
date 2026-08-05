@@ -9,7 +9,7 @@ calc.dtsurvey <- function(ph.data,
                          per = NULL,
                          win = NULL,
                          time_var = NULL,
-                         proportion = FALSE,
+                         proportion = 'autodetect',
                          fancy_time = TRUE,
                          ci = .95,
                          verbose = FALSE,
@@ -24,6 +24,13 @@ calc.dtsurvey <- function(ph.data,
   }
 
   call = match.call() # get 'call' object containing function name plus every argument
+
+  # Preserve a reference to the pre-`where`-filter data. This is used later (after `what` has been
+  # validated) to autodetect whether each `what` variable is structurally binary. Purposefully
+  # detect using *unfiltered* data because a `where` clause could entirely eliminate some `what`
+  # values within a given call. This would make an otherwise-binary variable look non-binary (or vice
+  # versa). This is just a reference, not a copy, so not costly.
+  ph.data_prefilter = ph.data
 
   #filter the dataset
   if(!missing(where)){
@@ -92,6 +99,13 @@ calc.dtsurvey <- function(ph.data,
     stop('Must specify a `metric`')
   }
 
+  #validate 'proportion'
+  # Must be one of 'autodetect', TRUE, or FALSE. Anything else (including NA, other strings, etc.) is rejected.
+  if(!(is.character(proportion) && length(proportion) == 1 && identical(proportion, 'autodetect')) &&
+     !(is.logical(proportion) && length(proportion) == 1 && !is.na(proportion))){
+    stop("\n\U0001F92C The `proportion` argument must be one of: 'autodetect' (the default), TRUE, or FALSE.")
+  }
+
   #validate rate
   if("rate" %in% metrics & is.null(per)){
     per <- 1 # default denominator of 1
@@ -142,12 +156,35 @@ calc.dtsurvey <- function(ph.data,
 
   #if multiple whats are provided, compute per what
   res = lapply(what, function(wht){
+
+    #Determine, for this specific `what` variable, whether it is:
+    # -- proportion-like (important for CI calculation)
+    # -- binary (important for RSE calculation)
+    is_proportion_detected = is_proportion_var(ph.data_prefilter[[wht]])
+    is_binary_detected = is_binary_var(ph.data_prefilter[[wht]])
+
+    if(identical(proportion, 'autodetect')){
+      proportion_resolved = is_proportion_detected
+    }else if(isTRUE(proportion)){
+      proportion_resolved = is_proportion_detected
+      if(!is_proportion_detected){
+        warning(paste0(
+          '\n\u26A0\ufe0f `proportion` was set to TRUE for `', wht, '`, but this variable does not ',
+          'seem to be proportion-like (i.e., it is not a factor, a logical, or a numeric containing ',
+          'only 0s and 1s). `proportion` cannot be honored for this variable, so standard ',
+          '(non-proportion) calculations will be used instead (equivalent to `proportion = \'autodetect\'`).'
+        ))
+      }
+    }else{
+      proportion_resolved = FALSE
+    }
+
     #Determine the type of CI method to use
     meth = 'mean' #the default
     st = attr(ph.data, 'stype')
     whatfactor = is.factor(ph.data[[wht]])
-    if(st == 'admin' && (whatfactor || proportion == T)) meth = 'unweighted_binary'
-    if(st != 'admin' && proportion == T) meth = 'xlogit'
+    if(st == 'admin' && (whatfactor || proportion_resolved)) meth = 'unweighted_binary'
+    if(st != 'admin' && proportion_resolved) meth = 'xlogit'
 
     #Compute the metric
     r = lapply(wins, function(w){
@@ -156,10 +193,17 @@ calc.dtsurvey <- function(ph.data,
         sub_i = substitute(tv %in% w, list(tv = as.name(time_var), w = w))
       }
 
-      compute(eval(substitute(ph.data[sub_i], env = list(sub_i = sub_i))), wht, by = by, metrics,
-              ci_method = meth, level = ci,
-              time_var = time_var, time_format = time_format,
-              per = per, window = !(is.logical(sub_i) && sub_i))
+      compute(DT = eval(substitute(ph.data[sub_i], env = list(sub_i = sub_i))),
+              x = wht,
+              by = by,
+              metrics,
+              ci_method = meth,
+              level = ci,
+              time_var = time_var,
+              time_format = time_format,
+              per = per,
+              window = !(is.logical(sub_i) && sub_i),
+              binary = proportion_resolved && is_binary_detected)
     })
 
     data.table::rbindlist(r)
@@ -173,8 +217,47 @@ calc.dtsurvey <- function(ph.data,
 
 }
 
+#' Determine whether a variable is structurally binary.
+#' Used by `calc.dtsurvey()` to decide whether the RSE calculation should be:
+#' RSE = 100 * mean_se / mean
+#' OR
+#' RSE = 100 * mean_se / (min(mean, 1-mean))
+#' @param x a vector -- typically a column pulled from `ph.data` prior to any `where` filtering.
+#' @noRd
+#' @keywords internal
+is_binary_var <- function(x){
+  if(is.factor(x)){
+    return(nlevels(x) == 2)
+  }
+  if(is.logical(x)){
+    return(TRUE)
+  }
+  if(is.numeric(x)){
+    vals = unique(x[!is.na(x)])
+    if(length(vals) == 0) return(FALSE)
+    return(all(vals %in% c(0, 1)))
+  }
+  return(FALSE)
+}
+
+#' Determine whether a variable is proportion-like.
+#' Any factor qualifies here regardless of how many levels it has.
+#' Used by `calc.dtsurvey()` to resolve `proportion = 'autodetect'` and
+#' to decide whether proportion-appropriate CI methods should be applied for survey analyses.
+#' @param x a vector -- typically a column pulled from `ph.data` prior to any `where` filtering.
+#' @noRd
+#' @keywords internal
+is_proportion_var <- function(x){
+  if(is.factor(x)) return(TRUE)
+  is_binary_var(x) # if it is binary, treat it as a factor for CI calculations, even if not a true factor
+}
+
 #' A function to compute a metric as part of calc.dtsurvey
 #' see the help/documentation for calc and/or smeanto better understand the inputs
+#' @param binary logical. Whether `x` should be treated as a binary variable. When TRUE, `rse` is
+#' calculated as `100 * mean_se / min(mean, 1 - mean)` instead of `100 * mean_se / mean`.
+#' In essences, this will ascribe the maximal RSE from the estimate and it's complement. See
+#' [calc] documentation for details.
 #' @noRd
 #' @keywords internal
 compute <- function(DT,
@@ -186,7 +269,8 @@ compute <- function(DT,
                     time_var,
                     time_format,
                     per = 1,
-                    window = FALSE){
+                    window = FALSE,
+                    binary = FALSE){
 
 
   # if(nrow(DT) == 0) warning('No valid rows to compute on given `where` and `win` conditions')
@@ -203,31 +287,31 @@ compute <- function(DT,
   #construct the query
   if(any(c('mean', 'rate') %in% metrics)){
     mean_fun = substitute(list(dtsurvey::smean(x,
-                                                  na.rm = T,
-                                                  var_type = c('se', 'ci'),
-                                                  ci_method = cim,
-                                                  level = l,
-                                                  ids = `_id`,
-                                                  sv = ..sv,
-                                                  st = ..st)),
-                                       list(x = x,
-                                            l = level,
-                                            cim = I(ci_method)))
+                                               na.rm = T,
+                                               var_type = c('se', 'ci'),
+                                               ci_method = cim,
+                                               level = l,
+                                               ids = `_id`,
+                                               sv = ..sv,
+                                               st = ..st)),
+                          list(x = x,
+                               l = level,
+                               cim = I(ci_method)))
   }else{
     mean_fun = NULL
   }
 
   if('total' %in% metrics){
     total_fun = substitute(list(dtsurvey::stotal(x,
-                                                    na.rm = T,
-                                                    var_type = c('se', 'ci'),
-                                                    ci_method = 'total',
-                                                    level = l,
-                                                    ids = `_id`,
-                                                    sv = ..sv,
-                                                    st = ..st)),
-                                        list(x = x,
-                                             l = level))
+                                                 na.rm = T,
+                                                 var_type = c('se', 'ci'),
+                                                 ci_method = 'total',
+                                                 level = l,
+                                                 ids = `_id`,
+                                                 sv = ..sv,
+                                                 st = ..st)),
+                           list(x = x,
+                                l = level))
   }else{
     total_fun = NULL
   }
@@ -321,10 +405,10 @@ compute <- function(DT,
     mean_vcov_fun = NULL
     total_vcov_fun = NULL
   }
-  #use something like a = DT[, list(list(a), list(b)), env = list(a = mean_fun, b = total_fun), by = byvar]
-  #to capture the se and ci returns and then break out post hoc
-  #if it is a factor, compute some things separately
-  # Following bit creates the call taht will be executed within the data.table DT
+  # use something like a = DT[, list(list(a), list(b)), env = list(a = mean_fun, b = total_fun), by = byvar]
+  # to capture the se and ci returns and then break out post hoc
+  # if it is a factor, compute some things separately
+  # Following bit creates the call that will be executed within the data.table DT
   # This construction is used for flexibility (build the whole call and take out the null bits)
   the_call = substitute(list(
     time = time_fun,
@@ -474,7 +558,11 @@ compute <- function(DT,
 
   #if asked for, compute rse and rate
   if('rse' %in% metrics){
-    res[, rse := 100*(mean_se / mean)]
+    if(isTRUE(binary)){
+      res[, rse := 100 * (mean_se / pmin(mean, 1 - mean))] # need pmin because need minimum for each row
+    }else{
+      res[, rse := 100*(mean_se / mean)]
+    }
   }
 
   if('rate' %in% metrics){
