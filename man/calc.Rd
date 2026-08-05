@@ -3,7 +3,7 @@
 \name{calc}
 \alias{calc}
 \alias{calc.dtsurvey}
-\title{Compute metrics from record (e.g. vital stats) or survey data}
+\title{Compute metrics from records (e.g. vital stats) or survey data}
 \usage{
 calc(ph.data, ...)
 
@@ -16,7 +16,7 @@ calc(ph.data, ...)
   per = NULL,
   win = NULL,
   time_var = NULL,
-  proportion = FALSE,
+  proportion = "autodetect",
   fancy_time = TRUE,
   ci = 0.95,
   verbose = FALSE,
@@ -26,7 +26,7 @@ calc(ph.data, ...)
 \arguments{
 \item{ph.data}{data.table or tbl_svy. Dataset.}
 
-\item{...}{not implemented}
+\item{...}{Additional arguments passed to specific \code{calc} methods.}
 
 \item{what}{character vector. Variable to calculate metrics for. Must refer to a numeric or factor column.}
 
@@ -34,22 +34,34 @@ calc(ph.data, ...)
 
 \item{by}{character vector. Must refer to variables within ph.data. The variables within ph.data to compute \code{what} by}
 
-\item{metrics}{character. See \code{\link[=metrics]{metrics()}} or scroll below for the available options.}
+\item{metrics}{character. What calculation(s) do you need? See \link{metrics} for the available options.}
 
-\item{per}{integer. The denominator when "rate" or "adjusted-rate" are selected as the metric. Metrics will be multiplied by this value.}
+\item{per}{integer. The denominator when "rate" is selected as the metric. Metrics will be multiplied by this value.}
 
 \item{win}{integer. The number of consecutive units of time (e.g., years, months, etc.) over which the metrics will be calculated,
 i.e., the 'window' for a rolling average, sum, etc.}
 
-\item{time_var}{character. The name of the time variable in the dataset. Used in combination with the "win" argument to do time windowed calculations.}
+\item{time_var}{character. The name of the time variable in the dataset. Used in combination with the "win" argument to perform time windowed calculations.}
 
-\item{proportion}{logical. For survey data, should metrics be calculated assuming the output is proportion-like? See details for more.
-Currently does not have functionality for non-survey data.}
+\item{proportion}{character or logical. Should metrics be calculated assuming the output is
+proportion-like? See \verb{Proportion-like and binary variables} below for more info. Must be one of
+\code{'autodetect'} (the default), \code{TRUE}, or \code{FALSE}:
+\itemize{
+\item \code{'autodetect'}: for each \code{what} variable, rads determines whether it is structurally
+proportion-like and/or binary, and applies proportion-appropriate confidence interval methods
+and/or the binary RSE adjustment accordingly.
+\item \code{TRUE}: asserts that \code{what} is expected to be proportion-like (a factor, logical, or 0/1
+numeric), which would drive the CI method for survey data. If it is not structurally
+proportion-like, a warning is issued and standard (non-proportion) calculations are used
+instead, equivalent to \code{proportion = 'autodetect'}.
+\item \code{FALSE}: force \code{what} to \emph{not} be treated as proportion-like or binary, even if it is
+structurally one or both of those things.
+}}
 
 \item{fancy_time}{logical. If TRUE, a record of all the years going into the data is provided.
 If FALSE, just a simple range (where certain years within the range might not be represented in your data).}
 
-\item{ci}{numeric. Confidence level, >0 & <1, typically 0.95}
+\item{ci}{numeric. Confidence level, \verb{[0, 1]}, typically 0.95}
 
 \item{verbose}{logical. Mostly unused, but toggles on/off printed warnings.}
 }
@@ -57,45 +69,50 @@ If FALSE, just a simple range (where certain years within the range might not be
 a data.table containing the results
 }
 \description{
-Compute metrics from record (e.g. vital stats) or survey data
+Compute metrics from records (e.g. vital stats) or survey data
 }
 \details{
 This function calculates \code{metrics} for each variable in \code{what} from rows meeting the conditions specified
-by \code{where} for each grouping implied by \code{by}.
+by \code{where} for each grouping implied by \code{by}. See the \link{metrics} helpfile for details.
+}
+\section{Proportion-like and binary variables}{
 
-Available metrics include:
-\enumerate{
-\item total: Count of people with the given value. Mostly relevant for surveys
-(where total is approximately mean * sum(pweights)).
-Returns total, total_se, total_upper, total_lower.
-total_se, total_upper, & total_lower are only valid for survey data.
-Default ci (e.g. upper and lower) is 95 percent.
-\item mean: Average response and associated metrics of uncertainty.
-Returns mean, mean_se, mean_lower, mean_upper.
-Default ci (e.g. upper and lower) is 95 percent.
-\item rse: Relative standard error. 100*se/mean.
-\item numerator: Sum of non-NA values for `what``.
-The numerator is always unweighted.
-\item denominator: Number of rows where \code{what} is not NA.
-The denominator is always unweighted.
-\item obs: Number of unique observations (i.e., rows), agnostic as to whether
-there is missing data for \code{what}. The obs is always unweighted.
-\item median: The median non NA response. Not populated when \code{what} is a factor
-or character. Even for surveys, the median is the unweighted result.
-\item unique.time: Number of unique time points (from \code{time_var}) included in
-each tabulation (i.e., number of unique time points when the \code{what} is not missing).
-\item missing: Number of rows in a given grouping with an NA value for \code{what}.
-missing + denominator = Number of people in a given group.
-When \code{what} is a factor/character, the missing information is provided for the other.
-\item missing.prop: The proportion of the data that has an NA value for \code{what}.
-\item rate: mean * per. Provides rescaled mean estimates (i.e., per 100 or per 100,0000).
-Returns rate, rate_se, rate_lower, rate_upper.
-Default ci (e.g. upper and lower) is 95 percent.
+The \code{proportion} argument (\code{'autodetect'}, \code{TRUE}, or \code{FALSE}) controls how \strong{\code{what}}
+variables that represent a proportion are handled. This covers two related but distinct
+ideas:
+\itemize{
+\item \strong{Proportion-like}: any factor (regardless of how many levels it has), a logical, or a numeric
+column containing only 0s and 1s. For these variables, every presented \code{mean} is itself a bounded
+\verb{[0, 1]} proportion -- a factor level's share of the whole, or a 0/1 indicator's prevalence.
+\item \strong{Binary}: the narrower case of a proportion-like variable that has \emph{exactly} two possible outcomes.
 }
 
-For survey data, use the \code{proportion} argument where relevant to ensure metrics are calculated using special proportion (e.g \code{svyciprop})
-methods. That is, when you want to find the fraction of ____, toggle \code{proportion} to \code{TRUE}.
+These two ideas drive different pieces of the calculation:
+\itemize{
+\item \strong{Confidence intervals (survey data only):} any \emph{proportion-like} \strong{\code{what}} gets a CI method
+appropriate for bounded \verb{[0, 1]} quantities (e.g. \code{svyciprop}-style methods) instead of a
+standard mean-based CI that could extend outside that range. This only matters for survey
+data; administrative data always uses proportion-appropriate CIs for factors regardless of this
+argument.
+\item \strong{RSE (both survey and administrative data):} only \emph{binary} \strong{\code{what}} variables get the symmetric
+RSE adjustment, which changes the RSE denominator from the estimate itself to
+\code{min(estimate, 1 - estimate)}. See \code{rse} in \link{metrics} for more detail.
 }
+
+Under \code{'autodetect'} (the default), rads determines both properties empirically,
+separately for each \strong{\code{what}} variable.
+
+\code{TRUE} asserts that \strong{\code{what}} is \emph{expected} to be proportion-like, and drives
+the CI method the same  way \code{'autodetect'} would if the expectation holds. If
+\code{what} turns out not to be structurally proportion-like, a warning is issued
+and calculations fall back to standard (non-proportion) treatment. It flags a
+mismatch between expectation and structure. As with \code{'autodetect'}, the RSE
+adjustment is only applied if the variable is \emph{also} structurally binary.
+
+\code{FALSE} forces standard (non-proportion, non-binary)
+treatment for both CIs and RSE, even if the variable is structurally proportion-like and/or binary.
+}
+
 \examples{
 test.data <- rads.data::synthetic_birth
 
