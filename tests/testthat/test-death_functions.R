@@ -22,6 +22,9 @@ library(data.table)
   # death_113_count() create data ----
     deathDT <- rads.data::synthetic_death
 
+    deathDT2 <- data.table::copy(rads.data::synthetic_death)
+    deathDT2[, age_grp := data.table::fifelse(age >= 65, "65+", "under65")]
+
   # death_113_count() create output ----
     cod.of.interest <- c("Arthropod-borne viral encephalitis",
                          "Malaria",
@@ -106,6 +109,60 @@ library(data.table)
                  c('cause.of.death', 'causeid', 'deaths', 'temperament'))
     expect_equal(sort(unique(suppressWarnings(death_113_count(ph.data = deathDT, icdcol = 'underlying_cod_code', by = c('temperament')))[]$temperament)),
                  c('Active', 'Calm', 'Moderate')) # ensure all strata are present
+  })
+
+  test_that("death_113_count() zero-fills a single `by` group with no deaths for a given cause", {
+    d <- data.table::copy(deathDT2)
+
+    # remove all "Certain other intestinal infections" (causeid == 3) deaths for NHPI
+    codes3 <- unique(rads.data::icd_nchs113causes[causeid == 3]$icd10)
+    d[race == "NHPI" & underlying_cod_code %in% codes3, underlying_cod_code := "I219"] # myocardial infarction
+
+    res <- suppressWarnings(death_113_count(ph.data = d,
+                                            causeids = 1:20,
+                                            icdcol = "underlying_cod_code",
+                                            by = "race"))
+
+    expect_complete_table(res, c("race", "cause.of.death"), "deaths") # in helpers.R
+    expect_identical(res[race == "NHPI" & causeid == "3"]$deaths, 0L)
+  })
+
+  test_that("death_113_count() zero-fills every combination of MULTIPLE `by` variables", {
+    d <- data.table::copy(deathDT2)
+
+    # remove all "Human immunodeficiency virus (HIV) disease" (causeid == 15) deaths
+    # for Hispanic decedents 65+, but leave Hispanic under65 untouched
+    codes15 <- unique(rads.data::icd_nchs113causes[causeid == 15]$icd10)
+    d[race == "Hispanic" & age_grp == "65+" & underlying_cod_code %in% codes15,
+      underlying_cod_code := "I219"]  # myocardial infarction
+
+    res <- suppressWarnings(death_113_count(ph.data = d,
+                                            causeids = 1:20,
+                                            icdcol = "underlying_cod_code",
+                                            by = c("race", "age_grp")))
+
+    expect_complete_table(res, c("race", "age_grp", "cause.of.death"), "deaths") # in helpers.R
+    expect_identical(res[race == "Hispanic" & age_grp == "65+" & causeid == "15"]$deaths, 0L)
+    # the untouched group should still show its (nonzero) count
+    expect_gt(res[race == "Hispanic" & age_grp == "under65" & causeid == "15"]$deaths, 0L)
+  })
+
+  test_that("death_113_count() zero-fill still works with ypll_age specified", {
+    d <- data.table::copy(deathDT2)
+    codes3 <- unique(rads.data::icd_nchs113causes[causeid == 3]$icd10)
+    d[race == "NHPI" & underlying_cod_code %in% codes3, underlying_cod_code := "I219"]  # myocardial infarction
+
+    res <- suppressWarnings(death_113_count(ph.data = d,
+                                            causeids = 1:20,
+                                            icdcol = "underlying_cod_code",
+                                            by = "race",
+                                            ypll_age = 65,
+                                            death_age_col = "age"))
+
+    expect_complete_table(res, c("race", "cause.of.death"), "deaths") # in helpers.R
+    expect_false(anyNA(res$ypll_65))
+    expect_identical(res[race == "NHPI" & causeid == "3"]$deaths, 0L)
+    expect_identical(res[race == "NHPI" & causeid == "3"]$ypll_65, 0)
   })
 
 # Check death_130 ----
@@ -217,6 +274,21 @@ library(data.table)
                    c('Active', 'Calm', 'Moderate')) # ensure all strata are present
     })
 
+    test_that("death_130_count() zero-fills a `by` group with no deaths for a given infant cause", {
+      d <- data.table::copy(deathDT2)
+
+      codes <- unique(rads.data::icd_nchs130causes[cause.of.death == "Sudden infant death syndrome"]$icd10)
+      d[race == "AIAN" & underlying_cod_code %in% codes, underlying_cod_code := "I219"] # myocardial infarction
+
+      res <- suppressWarnings(death_130_count(ph.data = d,
+                                              cause = "Sudden infant death syndrome",
+                                              icdcol = "underlying_cod_code",
+                                              by = "race"))
+
+      expect_complete_table(res, c("race", "cause.of.death"), "deaths") # in helpers.R
+      expect_identical(res[race == "AIAN" & cause.of.death == "Sudden infant death syndrome"]$deaths, 0L)
+    })
+
 # Check death_multicause() ----
   # death_multicause() create data ----
   # not necessary
@@ -229,7 +301,7 @@ library(data.table)
     multiz <- death_multicause()
     expect_true(inherits(multiz, 'data.table'))
     expect_identical(c('cause_name', 'description'), names(multiz))
-    expect_true(grepl("opioid", multiz$cause_name, ignore.case = T))
+    expect_equal(sum(grepl("opioid", multiz$cause_name, ignore.case = T)), 1L)
   })
 
 # Check death_multicause_count ----
@@ -359,6 +431,24 @@ library(data.table)
       expect_identical(result.alt, result.og)
     })
 
+    test_that("death_multicause_count() zero-fills a `by` group with no deaths for the specified cause", {
+      d <- data.table::copy(deathDT2)
+
+      opioid_underlying <- unique(rads.data::icd10_multicause[underlying_contributing == "underlying"]$icd10)
+      d[race == "Multiple", underlying_cod_code := data.table::fifelse(underlying_cod_code %in% opioid_underlying,
+                                                                       "I219", underlying_cod_code)]
+
+      res <- death_multicause_count(ph.data = d,
+                                    cause_name = "Opioid",
+                                    icdcol = "underlying_cod_code",
+                                    contributing_cols = "record_axis_code",
+                                    by = "race")
+
+      expect_complete_table(res, c("race", "cause.of.death"), "deaths") # in helpers.R
+      expect_identical(res[race == "Multiple" & cause.of.death == "Opioid"]$deaths, 0L) # becuase I219 is myocardial infarction
+    })
+
+
 # Check death_other ----
   # death_other create data ----
   # not necessary
@@ -477,6 +567,21 @@ library(data.table)
         )
     })
 
+    test_that("death_other_count() zero-fills a `by` group with no deaths for the specified cause", {
+      d <- data.table::copy(deathDT2)
+
+      alc_codes <- unique(rads.data::icd_other_causes_of_death[cause.of.death == "Alcohol_Death"]$icd10)
+      d[race == "NHPI" & underlying_cod_code %in% alc_codes, underlying_cod_code := "I219"] # this is myocardial infarction
+
+      res <- death_other_count(ph.data = d,
+                               cause = "Alcohol_Death",
+                               icdcol = "underlying_cod_code",
+                               by = "race")
+
+      expect_complete_table(res, c("race", "cause.of.death"), "deaths") # in helpers.R
+      expect_identical(res[race == "NHPI" & cause.of.death == "Alcohol_Death"]$deaths, 0L)
+    })
+
 # Check death_injury_matrix_count ----
   # death_injury_matrix_count() create data ----
     deathDT <- rads.data::synthetic_death
@@ -558,6 +663,42 @@ library(data.table)
                  sort(c('mechanism', 'intent', 'deaths', 'temperament')))
     expect_equal(sort(unique(death_injury_matrix_count(ph.data = deathDT, icdcol = "underlying_cod_code", by = 'temperament')[]$temperament)),
                  sort(c('Active', 'Calm', 'Moderate')))
+  })
+
+  test_that("death_injury_matrix_count() zero-fills a `by` group with zero deaths for a mechanism x intent", {
+    d <- data.table::copy(deathDT2)
+
+    firearm_codes <- unique(rads.data::icd10_death_injury_matrix[mechanism == "Firearm" &
+                                                                   intent == "Unintentional"]$icd10)
+    d[race == "Hispanic" & underlying_cod_code %in% firearm_codes, underlying_cod_code := "I219"] # myocardial infarction
+
+    res <- death_injury_matrix_count(ph.data = d,
+                                     intent = "*",
+                                     mechanism = "*",
+                                     icdcol = "underlying_cod_code",
+                                     by = "race")
+
+    expect_complete_table(res, c("race", "mechanism", "intent"), "deaths") # in helpers.R
+    expect_identical(res[race == "Hispanic" & mechanism == "Firearm" & intent == "Unintentional"]$deaths, 0L)
+  })
+
+  test_that("death_injury_matrix_count() zero-fill still works with ypll_age specified", {
+    d <- data.table::copy(deathDT2)
+    firearm_codes <- unique(rads.data::icd10_death_injury_matrix[mechanism == "Firearm" &
+                                                                   intent == "Unintentional"]$icd10)
+    d[race == "Hispanic" & underlying_cod_code %in% firearm_codes, underlying_cod_code := "I219"] # myocardial infarction
+
+    res <- death_injury_matrix_count(ph.data = d,
+                                     intent = "*",
+                                     mechanism = "*",
+                                     icdcol = "underlying_cod_code",
+                                     by = "race",
+                                     ypll_age = 65,
+                                     death_age_col = "age")
+
+    expect_complete_table(res, c("race", "mechanism", "intent"), "deaths") # in helpers.R
+    expect_false(anyNA(res$ypll_65))
+    expect_identical(res[race == "Hispanic" & mechanism == "Firearm" & intent == "Unintentional"]$deaths, 0L)
   })
 
 # Check death_icd10_clean ----
