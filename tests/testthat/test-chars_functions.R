@@ -148,6 +148,25 @@ library(data.table)
     expect_warning(chars_icd_ccs_count(ph.data = charsdata, icdcm = '^Kidney transplant', icdcol = 'chi_sex'))
     })
 
+  test_that("chars_icd_ccs_count() zero-fills a `by` group with no hospitalizations for the specified diagnosis", {
+    set.seed(98104)
+    d <- data.table::copy(rads.data::synthetic_chars)
+    d[, race := sample(c("White", "Black", "Asian", "Hispanic", "AIAN", "NHPI"), .N, replace = TRUE)]
+
+    ref <- chars_icd_ccs(icdcm_version = 10)
+    bc <- "Certain conditions originating in the perinatal period"
+    codes_in_broad <- unique(ref[broad == bc]$icdcm_code)
+    d[race == "NHPI" & diag1 %in% codes_in_broad, diag1 := "Z00"]
+
+    res <- chars_icd_ccs_count(ph.data = d,
+                               icdcm_version = 10,
+                               broad = bc,
+                               icdcol = "diag1",
+                               by = "race")
+
+    expect_complete_table(res, "race", "hospitalizations") # in helpers.R
+    expect_identical(res[race == "NHPI"]$hospitalizations, 0L)
+  })
 
 # Check chars_injury_matrix() ----
   injurytable <- chars_injury_matrix()
@@ -249,4 +268,51 @@ library(data.table)
     # should error when primary_ecode == F
     expect_error(chars_injury_matrix_count(ph.data = charsdt, mechanism = '*', intent = '*', def = 'narrow', primary_ecode = F))
 
+  })
+
+  test_that("chars_injury_matrix_count() zero-fills a `by` group with no hospitalizations for a mechanism x intent", {
+    d <- data.table::copy(charsdt)
+
+    # remove all fall/unintentional hospitalizations for NHPI (reassign to a different mechanism)
+    d[race4 == "NHPI" & injury_mechanism == "fall" & injury_intent == "unintentional",
+      injury_mechanism := "drowning"]
+
+    res <- chars_injury_matrix_count(ph.data = d,
+                                     intent = "*",
+                                     mechanism = "*",
+                                     by = "race4",
+                                     def = "narrow")
+
+    expect_complete_table(res, c("race4", "mechanism", "intent"), "hospitalizations") # in helpers
+    expect_identical(res[race4 == "NHPI" & mechanism == "fall" & intent == "unintentional"]$hospitalizations, 0L)
+  })
+
+  test_that("chars_injury_matrix_count() zero-fills every combination of MULTIPLE `by` variables", {
+    d <- data.table::copy(charsdt)
+    d[, agegrp := sample(c("under65", "65+"), .N, replace = TRUE)]
+
+    d[race4 == "NHPI" & agegrp == "65+" & injury_mechanism == "fall" & injury_intent == "unintentional",
+      injury_mechanism := "drowning"]
+
+    res <- chars_injury_matrix_count(ph.data = d,
+                                     intent = "*",
+                                     mechanism = "*",
+                                     by = c("race4", "agegrp"),
+                                     def = "narrow")
+
+    expect_complete_table(res, c("race4", "agegrp", "mechanism", "intent"), "hospitalizations") # in helpers.R
+    expect_identical(res[race4 == "NHPI" & agegrp == "65+" &
+                           mechanism == "fall" & intent == "unintentional"]$hospitalizations, 0L)
+    expect_gt(res[race4 == "NHPI" & agegrp == "under65" &
+                    mechanism == "fall" & intent == "unintentional"]$hospitalizations, 0L)
+  })
+
+  test_that("chars_injury_matrix_count() zero-fill still works with by = NULL and 'none' collapsing", {
+    res <- chars_injury_matrix_count(ph.data = data.table::copy(charsdt),
+                                     intent = "none",
+                                     mechanism = "none",
+                                     by = NULL,
+                                     def = "narrow")
+    expect_equal(nrow(res), 1L)
+    expect_false(anyNA(res$hospitalizations))
   })

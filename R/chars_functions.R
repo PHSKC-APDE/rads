@@ -329,13 +329,19 @@ chars_injury_matrix_count <- function(ph.data = NULL,
         by = by
       ]
 
-      # create grid of all possible combinations of by vars
-      gridvars <- setdiff(names(temp.ph.data), 'hospitalizations')
-      complete.grid <- do.call(data.table::CJ, lapply(gridvars, function(x) unique(temp.ph.data[[x]])))
-      data.table::setnames(complete.grid, gridvars)
+      # create grid of all possible combinations of by vars ----
+      if (!is.null(by)) {
+        complete.grid <- do.call(data.table::CJ, lapply(by, function(x) unique(ph.data[[x]])))
+        data.table::setnames(complete.grid, by)
+        complete.grid[, c("mechanism", "intent") := list(current_mechanism, current_intent)]
+      } else {
+        complete.grid <- data.table::data.table(mechanism = current_mechanism, intent = current_intent)
+      }
 
       # merge temp.ph.data onto complete.grid
-      temp.ph.data <- merge(complete.grid, temp.ph.data, all = TRUE)
+      temp.ph.data <- merge(complete.grid, temp.ph.data,
+                            by = c("mechanism", "intent", by),
+                            all = TRUE)
       temp.ph.data[is.na(hospitalizations), hospitalizations := 0L]
 
       return(temp.ph.data)
