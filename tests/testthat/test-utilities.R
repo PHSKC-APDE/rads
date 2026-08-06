@@ -1,6 +1,72 @@
 library(testthat)
 library(data.table)
 
+# bin_age() ----
+test_that('bin_age with ref.popname matches get_ref_pop bins', {
+  ref.pop <- get_ref_pop("2000 U.S. Std Population (11 age groups)")
+
+  expect_equal(
+    bin_age(age = ref.pop$age_start, ref.popname = "2000 U.S. Std Population (11 age groups)"),
+    ref.pop$agecat
+  )
+
+  expect_equal(
+    bin_age(age = c(0, 3, 10, 45, 90), ref.popname = "2000 U.S. Std Population (11 age groups)"),
+    c("0", "1-4 years", "5-14 years", "45-54 years", "85+ years")
+  )
+})
+
+test_that('bin_age with custom cuts labels bins like RADS reference populations', {
+  expect_equal(
+    bin_age(age = c(0, 1, 4, 5, 9, 10, 19, 20), cuts = c(0, 1, 5, 10, 20)),
+    c("0", "1-4", "1-4", "5-9", "5-9", "10-19", "10-19", "20+")
+  )
+
+  # unsorted cuts are handled the same as sorted cuts
+  expect_equal(
+    bin_age(age = c(0, 1, 4, 5, 9, 10, 19, 20), cuts = c(20, 0, 10, 1, 5)),
+    bin_age(age = c(0, 1, 4, 5, 9, 10, 19, 20), cuts = c(0, 1, 5, 10, 20))
+  )
+})
+
+test_that('bin_age defaults to the same reference population as age_standardize() when neither ref.popname nor cuts is given', {
+  expect_equal(
+    bin_age(age = c(0, 3, 10, 45, 90)),
+    bin_age(age = c(0, 3, 10, 45, 90), ref.popname = "2000 U.S. Std Population (11 age groups)")
+  )
+
+  expect_error(bin_age(age = 0:10, ref.popname = "2000 U.S. Std Population (11 age groups)", cuts = c(0, 18)),
+               "Only one of")
+})
+
+test_that('bin_age validates age', {
+  expect_error(bin_age(age = c(0, 5.5), cuts = c(0, 18)), "whole numbers")
+  expect_error(bin_age(age = c(-1, 5), cuts = c(0, 18)), "negative values")
+  expect_error(bin_age(age = "5", cuts = c(0, 18)), "numeric vector")
+})
+
+test_that('bin_age warns and returns NA for NA ages, rather than erroring', {
+  out <- expect_warning(bin_age(age = c(0, NA, 5), cuts = c(0, 18)), "could not be assigned")
+  expect_equal(out, c("0-17", NA, "0-17"))
+})
+
+test_that('bin_age validates ref.popname', {
+  expect_error(bin_age(age = 0:10, ref.popname = "not a real reference population"),
+               "not a valid reference population")
+})
+
+test_that('bin_age validates cuts', {
+  expect_error(bin_age(age = 0:10, cuts = c(0)), "length of at least 2")
+  expect_error(bin_age(age = 0:10, cuts = c(0, 5.5)), "non-negative whole numbers")
+  expect_error(bin_age(age = 0:10, cuts = c(-5, 5)), "non-negative whole numbers")
+  expect_error(bin_age(age = 0:10, cuts = c(0, 5, 5)), "duplicate values")
+})
+
+test_that('bin_age warns and returns NA for ages below the youngest bin', {
+  out <- expect_warning(bin_age(age = c(0, 5, 20), cuts = c(5, 18)), "could not be assigned")
+  expect_equal(out, c(NA, "5-17", "18+"))
+})
+
 # calc_age ----
 test_that("calc_age gives expected ages", {
   expect_equal(calc_age(from = as.Date('1990-08-02'), to = as.Date('2024-08-01')), 33)

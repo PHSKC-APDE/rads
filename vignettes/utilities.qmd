@@ -19,6 +19,7 @@ The `rads` package includes a suite of small utility functions designed to simpl
 
 The core utility functions we'll cover in this vignette are:
 
+- [`bin_age()`](#bin_age): Bin single-year ages into the age categories used for age-standardization
 - [`calc_age()`](#calc_age): Calculate age based on two dates
 - [`convert_to_date()`](#convert_to_date): Convert various formats to Date objects
 - [`create_dictionary()`](#create_dictionary): Generate a comprehensive data dictionary for a data.table or data.frame
@@ -56,6 +57,45 @@ library(data.table)
 ```
 
 # Functions
+
+## bin_age() {#bin_age}
+
+`age_standardize()` will automatically bin ages to align with those in a reference population. However, *if* you ever find yourself needing to manually create age bins, `bin_ages()` will be your friend. `bin_age()` collapses single-year ages into the `agecat` bins used for age-standardization, either matching a standard reference population (see `list_ref_pop()` and `get_ref_pop()`) or a custom set of user-supplied age bins. It is the same binning logic that `age_standardize()` uses internally when `collapse = TRUE`. If neither `ref.popname` nor `cuts` is specified, `bin_age()` defaults to the same reference population that `age_standardize()` uses by default: "2000 U.S. Std Population (11 age groups)".
+
+### Binning to a standard reference population
+
+```{r}
+#| echo: true
+#| results: 'hide'
+ages <- data.table(age = c(0, 2, 7, 22, 48, 63, 91))
+ages[, agecat := bin_age(age, ref.popname = "2000 U.S. Std Population (11 age groups)")]
+head(ages)
+```
+
+```{r}
+#| echo: false
+pretty_kable(head(ages))
+```
+
+Because the bins and `agecat` labels come directly from `get_ref_pop()`, the resulting `agecat` values are guaranteed to align with the standard population that will later be used in `age_standardize()`.
+
+### Binning to custom age bins
+
+If none of the standard reference populations fit your analysis, supply your own bin starting points via `cuts`. The largest value becomes the start of an open-ended top bin:
+
+```{r}
+#| echo: true
+#| results: 'hide'
+ages[, agecat_custom := bin_age(age, cuts = c(0, 18, 65))]
+head(ages)
+```
+
+```{r}
+#| echo: false
+pretty_kable(head(ages))
+```
+
+`ref.popname` and `cuts` cannot both be specified. Ages younger than the youngest bin (as well as `NA` ages) cannot be assigned to a bin and are returned as `NA` with a warning. This is a useful signal that your `cuts` (or age data) may have issues.
 
 ## calc_age() {#calc_age}
 
