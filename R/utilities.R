@@ -1,3 +1,148 @@
+# bin_age() ----
+#' Bin ages into the age categories used for age-standardization
+#'
+#' @description
+#' Collapses single-year ages into age bins (`agecat`), either matching a
+#' standard reference population (see [list_ref_pop()] / [get_ref_pop()]) or
+#' a custom set of user-supplied age bins. This is the binning logic used
+#' internally by [age_standardize()] when `collapse = TRUE`. You can use this
+#' function on its own to align a numerator and a denominator to identical age
+#' bins before calling [adjust_direct()] directly.
+#'
+#' @param age Numeric vector of indeterminate length. Ages in whole years
+#' (integers), all >= 0. `NA` values are allowed and are returned as `NA`.
+#' @param ref.popname Character vector of length 1. The name of a standard
+#' reference population, as returned by [list_ref_pop()]. Defaults to
+#' `"2000 U.S. Std Population (11 age groups)"` (the same default used by
+#' [age_standardize()]) when neither `ref.popname` nor `cuts` is specified.
+#' Cannot be specified together with `cuts`.
+#' @param cuts Numeric vector of indeterminate length (>= 2). The starting age
+#' of each bin, e.g., `c(0, 5, 10, 15, ..., 85)`. Must be non-negative whole
+#' numbers with no duplicates. The largest value is treated as the start of
+#' an open-ended top bin (e.g., `85` becomes `"85+"`). Cannot be specified
+#' together with `ref.popname`.
+#'
+#' @details
+#' At most one of `ref.popname` or `cuts` may be specified. If neither is
+#' specified, `ref.popname` defaults to `"2000 U.S. Std Population (11 age
+#' groups)"`, matching the default reference population used by [age_standardize()].
+#'
+#' When `ref.popname` is used, the bins and their `agecat` labels exactly
+#' match those returned by `get_ref_pop(ref.popname)`, guaranteeing alignment
+#' with the reference population that will be used for age-standardization.
+#'
+#' When `cuts` is specified, bins are labeled to mimic the styling of RADS's
+#' built-in reference populations, e.g., `cuts = c(0, 1, 5, 10)` creates the
+#' bins `"0"`, `"1-4"`, `"5-9"`, and `"10+"`.
+#'
+#' Ages at or above the largest bin's starting value are placed in that
+#' open-ended top bin. `NA` ages, and ages below the smallest bin's starting
+#' value, cannot be assigned to a bin and are returned as `NA`, with a warning.
+#'
+#' @return Character vector, the same length as `age`, giving the `agecat`
+#' bin to which each element of `age` belongs.
+#'
+#' @export
+#' @name bin_age
+#'
+#' @seealso [age_standardize()], which uses `bin_age()` internally when
+#' `collapse = TRUE`.
+#' @seealso [get_ref_pop()] for the age bins & population counts of a standard
+#' reference population.
+#' @seealso [list_ref_pop()] for a list of valid `ref.popname` values for
+#' `bin_age()`..
+#'
+#' @examples
+#' \donttest{
+#' # Bin ages using the default reference population
+#' bin_age(age = c(0, 3, 10, 45, 90))
+#'
+#' # Bin ages using a standard reference population
+#' bin_age(age = c(0, 3, 10, 45, 90),
+#'         ref.popname = "2000 U.S. Std Population (11 age groups)")
+#'
+#' # Bin ages using custom cuts
+#' bin_age(age = c(0, 3, 10, 45, 90), cuts = c(0, 1, 5, 10, 20, 40, 65, 85))
+#' }
+#'
+bin_age <- function(age, ref.popname = NULL, cuts = NULL) {
+  # Validate age ----
+  if(missing(age) || is.null(age)) {
+    stop("\n\U1F6D1 `age` must be specified.")
+  }
+  if(!is.numeric(age)) {
+    stop("\n\U1F6D1 `age` must be a numeric vector.")
+  }
+  if(any(age %% 1 != 0, na.rm = TRUE)) {
+    stop("\n\U1F6D1 `age` must be comprised entirely of whole numbers (i.e., integer ages).")
+  }
+  if(any(age < 0, na.rm = TRUE)) {
+    stop("\n\U1F6D1 `age` cannot contain negative values.")
+  }
+
+  # Validate ref.popname / cuts combination ----
+  if(is.null(ref.popname) && is.null(cuts)) {
+    ref.popname <- "2000 U.S. Std Population (11 age groups)" # same default used by age_standardize()
+  }
+  if(!is.null(ref.popname) && !is.null(cuts)) {
+    stop("\n\U1F6D1 Only one of `ref.popname` or `cuts` may be specified, not both.")
+  }
+
+  # Build a table of age bins (agecat & the age each bin starts at) ----
+  if(!is.null(ref.popname)) {
+    if(!is.character(ref.popname) || length(ref.popname) != 1) {
+      stop("\n\U1F6D1 `ref.popname` must be a character vector of length 1.")
+    }
+    if(!ref.popname %in% list_ref_pop()) {
+      stop(paste0("\n\U1F6D1 ref.popname ('", ref.popname, "') is not a valid reference population name.\n",
+                  "The names of standardized reference populations can be viewed by typing `list_ref_pop()`."))
+    }
+    bin_table <- get_ref_pop(ref.popname)[, list(agecat, age_start)]
+  } else {
+    if(!is.numeric(cuts) || any(is.na(cuts))) {
+      stop("\n\U1F6D1 `cuts` must be a numeric vector without any NA values.")
+    }
+    if(length(cuts) < 2) {
+      stop("\n\U1F6D1 `cuts` must have a length of at least 2, e.g., c(0, 18, 65).")
+    }
+    if(any(cuts %% 1 != 0) || any(cuts < 0)) {
+      stop("\n\U1F6D1 `cuts` must be comprised entirely of non-negative whole numbers.")
+    }
+    if(anyDuplicated(cuts)) {
+      stop("\n\U1F6D1 `cuts` cannot contain duplicate values.")
+    }
+    cuts <- sort(cuts)
+    n <- length(cuts)
+    age_end <- c(cuts[-1] - 1, NA_integer_)
+    agecat <- character(n)
+    for(i in seq_len(n)) {
+      if(i == n) {
+        agecat[i] <- paste0(cuts[i], "+")
+      } else if(cuts[i] == age_end[i]) {
+        agecat[i] <- as.character(cuts[i])
+      } else {
+        agecat[i] <- paste0(cuts[i], "-", age_end[i])
+      }
+    }
+    bin_table <- data.table::data.table(agecat = agecat, age_start = cuts)
+  }
+  data.table::setorder(bin_table, age_start)
+
+  # Assign each age to the appropriate bin ----
+  agecat_out <- as.character(cut(age,
+                                 breaks = c(bin_table$age_start, Inf),
+                                 labels = bin_table$agecat,
+                                 right = FALSE))
+
+  if(any(is.na(agecat_out))) {
+    warning(paste0("\n\u26A0\ufe0f ", sum(is.na(agecat_out)),
+                   " age value(s) could not be assigned to a bin (NA input and/or ages below the youngest bin, which starts at ",
+                   min(bin_table$age_start), ") and were returned as NA."))
+  }
+
+  return(agecat_out)
+}
+
 # calc_age() ----
 #' Proper calculation of age in years
 #'

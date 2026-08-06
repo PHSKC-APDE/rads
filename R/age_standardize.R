@@ -278,6 +278,7 @@ adjust_direct <- function(count,
 #' @return A data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'by' variable(s) -- if any
 #'
 #' @seealso [adjust_direct()] for calculating crude and directly adjusted rates.
+#' @seealso [bin_age()], used internally when `collapse = TRUE`, for binning ages on their own.
 #'
 #' @export
 #' @name age_standardize
@@ -579,10 +580,7 @@ age_standardize <- function (ph.data,
            "ph.data already has a column named 'agecat' and it will not be automatically overwritten.\n",
            "If you are sure you want to create a new column named 'agecat', delete the existing column in ph.data and run again.")
     }
-    my.ref.pop <- get_ref_pop(ref.popname)
-    for(z in seq(1, nrow(my.ref.pop))){
-      ph.data[age %in% my.ref.pop[z, age_start]:my.ref.pop[z, age_end], agecat := my.ref.pop[z, agecat]]
-    }
+    ph.data[, agecat := bin_age(age, ref.popname = ref.popname)]
     if(!is.null(by)){ph.data <- ph.data[, list(count = sum(count), pop = sum(pop)), by = c("agecat", by)]}
     if(is.null(by)){ph.data <- ph.data[, list(count = sum(count), pop = sum(pop)), by = "agecat"]}
   }

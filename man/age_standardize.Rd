@@ -123,4 +123,6 @@ by = "sex")[]
 }
 \seealso{
 \code{\link[=adjust_direct]{adjust_direct()}} for calculating crude and directly adjusted rates.
+
+\code{\link[=bin_age]{bin_age()}}, used internally when \code{collapse = TRUE}, for binning ages on their own.
 }
