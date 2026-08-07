@@ -7,9 +7,10 @@
 age_standardize(
   ph.data,
   ref.popname = NULL,
-  collapse = TRUE,
   my.count = "count",
   my.pop = "pop",
+  collapse = TRUE,
+  line_level = FALSE,
   per = 1e+05,
   conf.level = 0.95,
   by = NULL,
@@ -23,14 +24,17 @@ age_standardize(
 \item{ref.popname}{Character vector of length 1. Only valid options are those
 in \code{\link[=list_ref_pop]{list_ref_pop()}} and \code{"none"} (when standard population already exists in ph.data)}
 
+\item{my.count}{Character vector of length 1. Identifies the column name for the event count data in ph.data.}
+
+\item{my.pop}{Character vector of length 1. Identifies the column name for the population denominator corresponding to the aggregated count.}
+
 \item{collapse}{Logical vector of length 1. Do you want to collapse ph.data ages
 to match those in \code{ref.popname}?}
 
-\item{my.count}{Character vector of length 1. Identifies the column with the
-count data aggregated by the given demographics.}
-
-\item{my.pop}{Character vector of length 1. Identifies the column with the
-population corresponding to the given demographics.}
+\item{line_level}{Logical vector of length 1. Set to \code{TRUE} if \code{ph.data} is
+line-level (un-aggregated) data, e.g., one row per event with a population total
+merged onto every row. See the "Line-level (un-aggregated) data" section below
+for details. Requires \code{collapse = TRUE}.}
 
 \item{per}{Integer vector of length 1. A multiplier for all rates and CI, e.g.,
 when per = 1000, the rates are per 1000 people}
@@ -72,19 +76,54 @@ When analyzing \emph{specific age subsets} (e.g., adolescents, seniors, etc.), i
 When analyzing the \emph{whole population}, \emph{include all ages} with zero counts where no
 events occurred to ensure accurate age-standardized rates.
 }
+\section{Line-level (un-aggregated) data}{
+
+By default, \code{ph.data} is expected to already be aggregated by \code{age} (or \code{agecat}),
+i.e., one row per \code{age} (or \code{agecat}) \emph{\strong{and}} per \code{by} group, if \code{by} is used.
+
+If \code{ph.data} has multiple rows for the same 'age' (or   \code{age} + \code{by} combination,
+if \code{by} is specified), function behavior will depend on the \code{line_level} parameter:
+\itemize{
+\item By default (\code{line_level = FALSE}), \code{age_standardize()} issues a warning and
+sums \code{my.count} \emph{\strong{and}} \code{my.pop}. For example, consider the case when \code{ph.data} is
+aggregated at a finer grain than \code{by} (e.g., aggregated by age & sex, but \code{by}
+doesn't include sex). In this situation, summing \code{my.pop} per age would be legitimate
+so you can safely ignore the warning.
+\item With \code{line_level = TRUE}, you're telling \code{age_standardize()} that duplicate
+rows represent un-aggregated data (e.g., one row per event, with a
+population total merged onto every row). The function will check whether
+\code{my.pop} is identical across the duplicate rows in each group, where each group is
+defined by \code{age} (or   \code{age} + \code{by} combination, if \code{by} is specified).
+\itemize{
+\item If \code{my.pop} \emph{\strong{is identical}} across the duplicate rows in each group, \code{my.count}
+will be summed and the single, shared \code{my.pop} value will be used \emph{instead of}
+summing \code{my.pop}. This prevents accidental inflation of the population denominator.
+\item If \code{my.pop} \emph{\strong{is not identical}} across the duplicate rows in each group,
+both \code{my.count} and \code{my.pop} are summed, same as the default.
+}
+}
+
+Because identification of identical \code{my.pop} is the only signal available under
+\code{line_level = TRUE}, this automatic handling \strong{cannot} distinguish a population total merged
+onto every row from genuine per-row populations that are coincidentally identical.
+If this latter situation describes your data, your best bet is to pre-aggregate it yourself.
+See the \href{https://github.com/PHSKC-APDE/rads/wiki/age_standardize}{vigntette} for details.
+}
+
 \section{Note on Standard Errors}{
 
 This function calculates confidence intervals using the
 \href{https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf}{Fay-Feuer method},
-which does not provide direct standard error (SE) estimates. If you need SE approximations,
-common methods used by health departments include \code{SE = adjusted_rate/sqrt(cases)} and
-\code{RSE = 1/sqrt(cases)}.
+which does not provide direct standard error (SE) estimates. Public health departments commonly
+use the following formulas to approximate the SE and relative standard error (RSE):
+\deqn{SE = adjustedRate/sqrt(cases)}
+\deqn{RSE = 1/sqrt(cases)}.
 }
 
 \section{Data anomalies}{
 
 When the aggregate event count (\code{count}) is greater than the corresponding
-aggregate population (\code{pop}) AND\code{event_type = "unique"}, the function issues
+aggregate population (\code{pop}) AND \code{event_type = "unique"}, the function issues
 a warning and internally adjusts the denominator in the \code{\link[=adjust_direct]{adjust_direct()}}
 function to cap rates at 100\%. When \code{count > pop} AND \code{event_type = "repeatable"},
 no adjustment is made as rates can legitimately exceed 100\%.
@@ -97,25 +136,55 @@ estimates, since such anomalies usually occur in small strata.
 \examples{
 \donttest{
 library(data.table)
-temp1 <- data.table(age = c(50:60), count = c(25:35), pop = c(seq(1000, 900, -10)) )
-age_standardize(ph.data = temp1,
-ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)",
-collapse = TRUE,
-my.count = "count",
-my.pop = "pop",
-per = 1000,
-conf.level = 0.95)[]
 
-temp2 <- data.table(sex = c(rep("M", 11), rep("F", 11)), age = rep(50:60, 2),
-count = c(25:35, 26:36), pop = c(seq(1000, 900, -10), seq(1100, 1000, -10)),
-stdpop = rep(1000, 22))
-age_standardize(ph.data = temp2, ref.popname = "none",
-collapse = FALSE,
-my.count = "count",
-my.pop = "pop",
-per = 1000,
-conf.level = 0.95,
-by = "sex")[]
+# Example 1: default with pre-aggregated data
+temp1 <- data.table(
+   age = c(50:60),
+   count = c(25:35),
+   pop = c(seq(1000, 900, -10)) )
+
+age_standardize(
+   ph.data = temp1,
+   ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)",
+   collapse = TRUE,
+   my.count = "count",
+   my.pop = "pop",
+   per = 1000,
+   conf.level = 0.95)[]
+
+# Example 2: using a custom reference population
+temp2 <- data.table(
+   sex = c(rep("M", 11), rep("F", 11)),
+   age = rep(50:60, 2),
+   count = c(25:35, 26:36),
+   pop = c(seq(1000, 900, -10), seq(1100, 1000, -10)),
+   stdpop = rep(1000, 22))
+
+age_standardize(
+   ph.data = temp2,
+   ref.popname = "none",
+   collapse = FALSE,
+   my.count = "count",
+   my.pop = "pop",
+   per = 1000,
+   conf.level = 0.95,
+   by = "sex")[]
+
+# Example 3: line-level data
+temp3 <- data.table(
+   age = rep(50:60, 20),
+   disease = sample(0:1, 220, replace = TRUE),
+   pop = rep(seq(1000, 900, -10), 20))
+
+age_standardize(
+   ph.data = temp3,
+   ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)",
+   collapse = TRUE,
+   my.count = "disease",
+   my.pop = "pop",
+   per = 1000,
+   conf.level = 0.95,
+   line_level = TRUE)[]
 }
 }
 \references{
