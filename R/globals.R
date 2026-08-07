@@ -94,6 +94,8 @@ utils::globalVariables(c(
   'notes',
   'notes.desc',
   'numerator',
+  'n_distinct_pop',
+  'n_rows',
   'old_value',
   'old_var',
   'one',

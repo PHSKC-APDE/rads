@@ -107,7 +107,7 @@ test_that("adjust_direct: very small population edge case", {
 })
 
 # age_standardize() ----
-test_that('age_standardize ... valid output',{
+test_that('valid output',{
   temp.dt1 <- data.table(age = c(50:60), count = c(25:35), pop = c(seq(1000, 800, -20)) )
   temp.agestd1 <- suppressWarnings(age_standardize(ph.data = temp.dt1, ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)", collapse = T,
                                                    my.count = "count", my.pop = "pop", per = 1000, conf.level = 0.95))
@@ -165,7 +165,7 @@ test_that('age_standardize ... valid output',{
   expect_equal(32.9665 , temp.agestd2[sex == "F"]$adj.uci) # checked vis-à-vis epitools::ageadjust.direct
 })
 
-test_that('age_standardize ... errors & warnings',{
+test_that('errors & warnings',{
   set.seed(98104)
   temp.dt3 <- data.table(age = c(0:100), count = sample(1000:4000, size = 101), pop = sample(10000:40000, size = 101) )
 
@@ -303,5 +303,152 @@ test_that("zero count data gives finite upper CI and lower CI == 0", {
   res <- age_standardize(dt, my.count = "count", my.pop = "pop")
   expect_equal(res$adj.lci, 0)
   expect_true(is.finite(res$adj.uci))
+})
+
+test_that("line_level must be TRUE/FALSE, and requires collapse = TRUE", {
+  dt <- data.table(age = 0:100, count = 1, pop = 100)
+  expect_error(
+    age_standardize(dt, my.count = "count", my.pop = "pop", line_level = "yes"),
+    "`line_level` argument must be TRUE or FALSE"
+  )
+  dt_stdpop <- data.table(age = 0:100, count = 1, pop = 100, stdpop = 50)
+  expect_error(
+    age_standardize(dt_stdpop, my.count = "count", my.pop = "pop", collapse = FALSE,
+                    line_level = TRUE, ref.popname = "none"),
+    "`line_level = TRUE` requires `collapse = TRUE`"
+  )
+})
+
+test_that("default (line_level = FALSE) warns but doesn't change how duplicate age rows are aggregated", {
+  # This is like example #1 in the age_standardize.qmd vignette where the population denominator is inflated
+  set.seed(98104)
+  temp1 <- data.table(
+    age = rep(51:60, 100),
+    disease = sample(0:1, 1000, replace = TRUE),
+    pop = rep(seq(1000, 910, -10), 100))
+
+  expect_warning(
+    age_standardize(ph.data = copy(temp1),
+                    ref.popname = "2000 U.S. Std Population (11 age groups)",
+                    collapse = TRUE, my.count = "disease", my.pop = "pop",
+                    per = 1000, conf.level = 0.95),
+    "multiple rows per 'age' combination"
+  )
+
+  default_result <- suppressWarnings(age_standardize(ph.data = copy(temp1),
+                                                      ref.popname = "2000 U.S. Std Population (11 age groups)",
+                                                      collapse = TRUE, my.count = "disease", my.pop = "pop",
+                                                      per = 1000, conf.level = 0.95))
+  expect_true(sum(default_result$pop) > 500000) # expect massive inflation
+})
+
+test_that("line_level = TRUE correctly aggregates line-level data so it matches manual pre-aggregation", {
+  # Same temp1 as above, but opting in via line_level = TRUE.
+  set.seed(98104)
+  temp1 <- data.table(
+    age = rep(51:60, 100),
+    disease = sample(0:1, 1000, replace = TRUE),
+    pop = rep(seq(1000, 910, -10), 100))
+
+  expect_message(
+    line_level_result <- suppressWarnings(age_standardize(ph.data = copy(temp1),
+                                                           ref.popname = "2000 U.S. Std Population (11 age groups)",
+                                                           collapse = TRUE, my.count = "disease", my.pop = "pop",
+                                                           per = 1000, conf.level = 0.95, line_level = TRUE)),
+    "ph.data \\(copy\\(temp1\\)\\) has 10 'age' combination\\(s\\) with multiple rows sharing"
+  )
+
+  expect_true(sum(line_level_result$pop) < 20000) # double check that we didn't inflate teh population denominator
+
+  pre_aggregated <- temp1[, list(disease = sum(disease)), by = c("age", "pop")]
+  manual <- suppressWarnings(age_standardize(ph.data = pre_aggregated,
+                                             ref.popname = "2000 U.S. Std Population (11 age groups)",
+                                             collapse = TRUE, my.count = "disease", my.pop = "pop",
+                                             per = 1000, conf.level = 0.95))
+
+  expect_equal(line_level_result$count, manual$count)
+  expect_equal(line_level_result$pop, manual$pop)
+  expect_equal(line_level_result$adj.rate, manual$adj.rate)
+})
+
+test_that("line_level = TRUE auto-aggregates duplicate age * by rows when pop is consistent within each group", {
+  dt <- data.table(
+    grp = rep(c("A", "B"), each = 4),
+    age = rep(c(10, 20), each = 2, times = 2),
+    count = c(1, 1, 2, 2, 3, 3, 4, 4),
+    pop = c(100, 100, 200, 200, 300, 300, 400, 400))
+
+  expect_message(
+    result <- suppressWarnings(age_standardize(ph.data = copy(dt),
+                                                ref.popname = "2000 U.S. Std Population (11 age groups)",
+                                                collapse = TRUE, my.count = "count", my.pop = "pop",
+                                                per = 1000, conf.level = 0.95, by = "grp", line_level = TRUE)),
+    "ph.data \\(copy\\(dt\\)\\) has 4 'age' & 'grp' combination\\(s\\) with multiple rows sharing"
+  )
+
+  expect_equal(sum(result$count), sum(dt$count)) # double check the counts
+  expect_equal(sum(result$pop), 1000) # be sure no double counting of pop. 100 + 200 + 300 + 400
+})
+
+test_that("sums pop when it varies across duplicate age rows, regardless of line_level", {
+  dt <- data.table(
+    gender = rep(c("F", "M"), each = 2),
+    age = rep(c(10, 20), 2),
+    count = c(1, 2, 3, 4),
+    pop = c(100, 200, 150, 250))
+
+  expect_warning(
+    default_result <- age_standardize(ph.data = copy(dt),
+                                      ref.popname = "2000 U.S. Std Population (11 age groups)",
+                                      collapse = TRUE, my.count = "count", my.pop = "pop",
+                                      per = 1000, conf.level = 0.95),
+    "multiple rows per 'age' combination"
+  )
+  expect_equal(sum(default_result$count), sum(dt$count))
+  expect_equal(sum(default_result$pop), sum(dt$pop))
+
+  expect_no_message(
+    line_level_result <- suppressWarnings(age_standardize(ph.data = copy(dt),
+                                                          ref.popname = "2000 U.S. Std Population (11 age groups)",
+                                                          collapse = TRUE, my.count = "count", my.pop = "pop",
+                                                          per = 1000, conf.level = 0.95,
+                                                          line_level = TRUE))
+  )
+  expect_equal(sum(line_level_result$count), sum(dt$count))
+  expect_equal(sum(line_level_result$pop), sum(dt$pop))
+})
+
+test_that("age > 100 top-coding still correctly sums count & pop", {
+  dt <- data.table(age = c(100, 103),
+                   count = c(5, 7),
+                   pop = c(1000, 2000))
+  result <- suppressWarnings(age_standardize(ph.data = copy(dt),
+                                             collapse = TRUE,
+                                             my.count = "count",
+                                             my.pop = "pop"))
+  expect_equal(result$count, 12)
+  expect_equal(result$pop, 3000) # should be summed b/c 100 & 103 are distinct ages before top-coding
+})
+
+test_that("no warning or message when ph.data is already one row per age (+ by)", {
+  dt <- data.table(age = 0:100,
+                   count = 1,
+                   pop = 1000)
+
+  expect_no_warning(
+    age_standardize(dt,
+                    ref.popname = "2000 U.S. Std Population (11 age groups)",
+                    collapse = TRUE,
+                    my.count = "count",
+                    my.pop = "pop")
+  )
+  expect_no_message(
+    age_standardize(dt,
+                    ref.popname = "2000 U.S. Std Population (11 age groups)",
+                    collapse = TRUE,
+                    my.count = "count",
+                    my.pop = "pop",
+                    line_level = TRUE)
+  )
 })
 
