@@ -106,6 +106,29 @@ test_that("adjust_direct: very small population edge case", {
   expect_true(res[["crude.uci"]] > res[["crude.lci"]])
 })
 
+test_that("adjust_direct: crude rate is indifferent to reference pop", {
+  fine <- adjust_direct(count = c(5, 5), pop = c(3, 100), stdpop = c(50, 50), per = 100)
+  coarse <- adjust_direct(count = c(10), pop = c(103), stdpop = c(100), per = 100)
+
+  expect_equal(unname(fine["crude.rate"]), 100 * 10/103)
+  expect_equal(unname(fine["crude.rate"]), unname(coarse["crude.rate"]))
+  expect_equal(unname(fine["crude.lci"]), unname(coarse["crude.lci"]))
+  expect_equal(unname(fine["crude.uci"]), unname(coarse["crude.uci"]))
+})
+
+test_that("adjust_direct: caps crude rate at 100% when event_type = 'unique'", {
+  # In this case, sum(count) = 55 > sum(pop) = 45, so should apply a cap
+  res <- adjust_direct(
+    count = c(25, 30),
+    pop = c(20, 25),
+    stdpop = c(500, 900),
+    per = 100,
+    event_type = "unique"
+  )
+  expect_true(res[["crude.rate"]] == 100)
+  expect_true(res[["adj.rate"]] == 100)
+})
+
 # age_standardize() ----
 test_that('valid output',{
   temp.dt1 <- data.table(age = c(50:60), count = c(25:35), pop = c(seq(1000, 800, -20)) )
@@ -452,3 +475,38 @@ test_that("no warning or message when ph.data is already one row per age (+ by)"
   )
 })
 
+test_that("crude rate is independent of ref.popname", {
+  set.seed(98104)
+
+  temp1 <- data.table(
+    age = c(rep(51:60, 100), 0:50, 61:100),
+    disease = c(sample(0:1, 1000, replace = TRUE), rep(0, 91)),
+    pop = c(rep(seq(1000, 910, -10), 100), rep(0, 91))
+  )
+
+  temp1 <- temp1[, .(disease = sum(disease)), by = c("age", "pop")]
+
+
+  res1 <- age_standardize(ph.data = temp1,
+                          ref.popname = list_ref_pop()[1],
+                          collapse = T,
+                          my.count = "disease",
+                          my.pop = "pop",
+                          per = 1000,
+                          conf.level = 0.95)
+
+  res19 <- age_standardize(ph.data = temp1,
+                           ref.popname = list_ref_pop()[19],
+                           collapse = T,
+                           my.count = "disease",
+                           my.pop = "pop",
+                           per = 1000,
+                           conf.level = 0.95)
+
+  expect_equal(res1$crude.rate, res19$crude.rate)
+  expect_equal(res1$crude.lci, res19$crude.lci)
+  expect_equal(res1$crude.uci, res19$crude.uci)
+
+  # crude rate should equal the simple total
+  expect_equal(res1$crude.rate, round(1000 * sum(temp1$disease)/sum(temp1$pop), 4))
+})
