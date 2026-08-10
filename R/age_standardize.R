@@ -164,19 +164,23 @@ adjust_direct <- function(count,
     pop_calc[zero_indices & count == 0] <- 1 # to get rate = 0/1 = 0
   }
 
-  # Get sum of pop_calc for crude calculations below
-  sum_pop_calc <- sum(pop_calc)
+  # Crude rate should depend only on the TOTAL count vs TOTAL pop
+  sum_pop_crude <- sum_pop
+  if(event_type == "unique" && sum_pop_crude < sum_count) {
+    sum_pop_crude <- sum_count
+  }
+  if(sum_pop_crude == 0) sum_pop_crude <- 1  # avoid divide by zero, which is Inf in R
 
   # Basic calculations ----
   rate <- count/pop_calc
   alpha <- 1 - conf.level
-  cruderate <- sum_count/sum_pop_calc
+  cruderate <- sum_count/sum_pop_crude
   stdwt <- stdpop/sum_stdpop
 
   # Calculate exact poisson CI for crude rates ----
   dummycount <- if(sum_count == 0) 1 else sum_count
-  crude.lci <- if(sum_count == 0) 0 else stats::qgamma(alpha/2, dummycount)/sum_pop_calc
-  crude.uci <- stats::qgamma(1 - alpha/2, sum_count + 1)/sum_pop_calc
+  crude.lci <- if(sum_count == 0) 0 else stats::qgamma(alpha/2, dummycount)/sum_pop_crude
+  crude.uci <- stats::qgamma(1 - alpha/2, sum_count + 1)/sum_pop_crude
 
   # Calculate exact CI for adjusted rates ----
   dsr <- sum(stdwt * rate)
@@ -388,11 +392,11 @@ age_standardize <- function (ph.data,
   ph.data <- data.table::copy(ph.data)
 
   # Logic checks ----
-  # Check that ph.data is a data.frame or data.table ----
+  ## Check that ph.data is a data.frame or data.table ----
   if(!inherits(ph.data, "data.frame")){stop("\n\U1F6D1 ph.data must be a data.frame or a data.table containing both counts and population data.")}
   if(!inherits(ph.data, "data.table")){data.table::setDT(ph.data)}
 
-  # Check that ph.data has either 'age' or 'agecat' ----
+  ## Check that ph.data has either 'age' or 'agecat' ----
   age_exists <- "age" %in% names(ph.data)
 
   if (age_exists && (!is.numeric(ph.data$age) || !all(ph.data$age %% 1 == 0))) {
@@ -420,7 +424,7 @@ age_standardize <- function (ph.data,
     }
   }
 
-  # Check arguments needed for adjust_direct ----
+  ## Check arguments needed for adjust_direct ----
   if(!my.count %in% colnames(ph.data)){
     stop(paste0("\n\U1F6D1 The column '", my.count, "' does not exist in ph.data.\n",
                 "ph.data must have a column indicating the count of events (e.g., deaths, births, etc.) and is typically named 'count'.\n",
@@ -445,7 +449,7 @@ age_standardize <- function (ph.data,
     stop("\n\U1F6D1 'conf.level' should be a decimal between 0 and 1")
   }
 
-  # Check the reference population exists ----
+  ## Check the reference population exists ----
   if(is.null(ref.popname)){ref.popname <- "2000 U.S. Std Population (11 age groups)"}
   if(! ref.popname %in% c( list_ref_pop(), "none")){
     stop(paste0("\n\U1F6D1 ref.popname ('", ref.popname, "') is not a valid reference population name.\n",
@@ -466,12 +470,12 @@ age_standardize <- function (ph.data,
          "an 'agecat' column matching the selected reference population.")
   }
 
-  # Standardize column names ----
+  ## Standardize column names ----
   # purposefully did not use setnames() because it is possible that count | pop already exists and are intentionally using different columns for this function
   ph.data[, "count" := get(my.count)]
   ph.data[, "pop" := get(my.pop)]
 
-  # Check by ----
+  ## Check by ----
   if(!is.null(by)) {
     if(!is.character(by)) {
       stop("The `by` argument must be a character vector.")
@@ -493,12 +497,12 @@ age_standardize <- function (ph.data,
     }
   }
 
-  # Check collapse ----
+  ## Check collapse ----
   if(!is.logical(collapse) || length(collapse) != 1) {
     stop("The `collapse` argument must be TRUE or FALSE.")
   }
 
-  # Check line_level ----
+  ## Check line_level ----
   if(!is.logical(line_level) || length(line_level) != 1) {
     stop("The `line_level` argument must be TRUE or FALSE.")
   }
@@ -508,8 +512,8 @@ age_standardize <- function (ph.data,
          "`collapse = FALSE` expects ph.data to already be aggregated into agecat bins.")
   }
 
-  # Check ranges for age, count, and population ----
-  # Check age ----
+  ## Check ranges for age, count, and population ----
+  ## Check age ----
   if(!"agecat" %in% names(ph.data)){ # if given agecat, ignore these tests for single years of age
     ## Check for missing ages ----
     if(nrow(ph.data[is.na(age)]) > 0){
@@ -643,7 +647,7 @@ age_standardize <- function (ph.data,
     }
   }
 
-  # Check agecat ----
+  ## Check agecat ----
   if ("agecat" %in% names(ph.data) && ref.popname != "none") {
     if (!identical(sort(unique(ph.data$agecat)),
                    sort(unique(get_ref_pop(ref.popname)[['agecat']])))) {
@@ -653,7 +657,7 @@ age_standardize <- function (ph.data,
     }
   }
 
-  # Check count ----
+  ## Check count ----
   if(nrow(ph.data[is.na(count)]) > 0){
     warning(paste0("\u26A0\ufe0f ph.data (", ph.data.name, ") contains at least one row where my.count is missing.\n",
                    "Those values have been replaced with zero."))
@@ -664,7 +668,7 @@ age_standardize <- function (ph.data,
                 "Correct the data and try again."))
   }
 
-  # Check population ----
+  ## Check population ----
   if(nrow(ph.data[is.na(pop)]) > 0){
     stop(paste0("\n\U0001f47f ph.data (", ph.data.name, ") contains at least one row where my.pop is missing.\n",
                 "Correct the data and try again."))
@@ -674,13 +678,13 @@ age_standardize <- function (ph.data,
                 "Correct the data and try again."))
   }
 
-  # Check count vs population ----
+  ## Check count vs population ----
   if(nrow(ph.data[count > pop]) > 0 ){
     warning(paste0("\u26A0\ufe0f ph.data (", ph.data.name, ") contains at least one row where the count is greater than the population.\n",
                    "This may be correct because OFM populations are just estimates. However, you are encouraged to check the data."))
   }
 
-  # Check diagnostic_report----
+  ## Check diagnostic_report----
   if(!is.logical(diagnostic_report) || length(diagnostic_report) != 1) {
     stop("The `diagnostic_report` argument must be TRUE or FALSE.")
   }
