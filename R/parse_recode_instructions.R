@@ -9,7 +9,7 @@
 #'- `old_value`: value in the column `old_var` to be translated into a new value by recoding. If left blank/NA/""/NULL or otherwise missing, the recode operation
 #'will essentially take the form of a rename of `old_var` -> `new_var`
 #'
-#'- `new_var`: Column where the recoded values will be placed. If `new_var` doesn't exist, than it will be created. Otherwise it will be overwritten.
+#'- `new_var`: Column where the recoded values will be placed. If `new_var` doesn't exist, then it will be created. Otherwise it will be overwritten.
 #'
 #'- `new_value`: Column indicating where the new values for the recoding process exist. It is positionally (e.g. row) tied to a particular `old_value`.
 #'If blank, it helps identify a simpler rename operation.

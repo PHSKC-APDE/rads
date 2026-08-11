@@ -3,7 +3,7 @@
 #' Creates/standardizes the parameters required for recoding a variable.
 #'
 #' @param old_var character. Column in the dataset containing the values to be recoded
-#' @param new_var character. Column where the recoded values will be placed. If `new_var` doesn't exist, than it will be created. Otherwise it will be overwritten.
+#' @param new_var character. Column where the recoded values will be placed. If `new_var` doesn't exist, then it will be created. Otherwise it will be overwritten.
 #' @param old character (or coercible). value in the column `old_var` to be translated into a new value by recoding. If left blank/NA/""/NULL or otherwise missing, the recode operation
 #'                  will essentially take the form of a rename of `old_var` -> `new_var`.
 #'                  Except for renaming type situations, nothing of old_var is kept (e.g. all relevant values must have a recode row)

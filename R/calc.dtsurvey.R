@@ -256,7 +256,7 @@ is_proportion_var <- function(x){
 #' see the help/documentation for calc and/or smeanto better understand the inputs
 #' @param binary logical. Whether `x` should be treated as a binary variable. When TRUE, `rse` is
 #' calculated as `100 * mean_se / min(mean, 1 - mean)` instead of `100 * mean_se / mean`.
-#' In essences, this will ascribe the maximal RSE from the estimate and it's complement. See
+#' In essence, this will ascribe the maximal RSE from the estimate and its complement. See
 #' [calc] documentation for details.
 #' @noRd
 #' @keywords internal

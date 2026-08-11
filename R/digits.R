@@ -1,6 +1,6 @@
 #' Round data according to APDE/CHI standards or custom requests
 #'
-#' #' @description
+#' @description
 #' Default rounding is according to APDE/CHI standards
 #'
 #' By default, this function expects data that has already been formatted for CHI,

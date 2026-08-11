@@ -509,7 +509,7 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' **Note:** If you submit values for more than one of `icdcm`,
 #' `superlevel`, `broad`, `midlevel`, or `detailed`, they must
 #' be nested. For example, `broad = 'neoplasms', detailed = 'sarcoma'` will
-#' give results because sarcomas are type of cancers. However,
+#' give results because sarcomas are a type of cancer. However,
 #' `broad = 'neoplasms', detailed = 'intestinal infection'` will return an
 #' error because your resulting table will have zero rows.
 #'

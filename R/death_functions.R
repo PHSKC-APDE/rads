@@ -121,7 +121,7 @@ death_113 <- function(){
 #' <https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS113CausesOfDeath.pdf>
 #'
 #' @seealso
-#' - [death_113()] for viewing teh CDC NCHS 113 leading causes of death
+#' - [death_113()] for viewing the CDC NCHS 113 leading causes of death
 #' - [rads.data::synthetic_death] for properly formatted synthetic death data
 #' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
 #' - [age_standardize()] for calculating age standardized rates
@@ -250,7 +250,7 @@ death_130<- function(){
 #' and cause values.
 #'
 #' @details
-#' These 130 causes of death are for decedants ages < 1 year old.
+#' These 130 causes of death are for decedents ages < 1 year old.
 #'
 #' @param ph.data a data.table or data.frame. Must contain death data structured
 #' with one person per row and with at least one column of ICD10 death codes.
@@ -258,7 +258,7 @@ death_130<- function(){
 #' @param causeids an integer vector of length >=1 & <= 130, with a minimum value
 #' of 1 and a maximum value of 130.
 #'
-#' The default is `1:130`, i.e., the compolte standard panel of WA DOH /
+#' The default is `1:130`, i.e., the complete standard panel of WA DOH /
 #' NCHS 130 causes of death.
 #'
 #' @param  cause an OPTIONAL character vector specifying the complete or partial
@@ -507,7 +507,7 @@ death_injury_matrix<- function(){
 #' @param ph.data a data.table or data.frame. Must contain death data structured
 #' with one person per row and with at least one column of ICD10 death codes.
 #'
-#' **Note:*** `ph.data` and `icdcol` are validated by [death_validate_data()]
+#' **Note:** `ph.data` and `icdcol` are validated by [death_validate_data()]
 #'
 #' @param intent a character vector of length 1 to 5. It specifies the
 #' intent of death that you want returned ("Unintentional", "Suicide", "Homicide",
@@ -987,7 +987,7 @@ death_multicause <- function(){
 #' with one person per row, with at least one column of ICD10 underlying cause
 #' codes and columns for contributing cause codes.
 #'
-#' #' **Note:*** `ph.data`, `icdcol`, and `contributing_cols` are validated by
+#' **Note:** `ph.data`, `icdcol`, and `contributing_cols` are validated by
 #' [death_validate_data()]
 #'
 #' @param cause_name a character vector of length one that specifies the multicause
@@ -1397,7 +1397,7 @@ death_multicause_count <- function(ph.data,
 #' @name death_other
 #'
 #' @examples
-#' #' # Save and view table as a data.table named 'blah'
+#' # Save and view table as a data.table named 'blah'
 #' blah <- death_other()
 #' print(blah)
 #'
@@ -1426,7 +1426,7 @@ death_other<- function(){
 #' @param ph.data a data.table or data.frame. Must contain death data structured
 #' with one person per row and with at least one column of ICD10 death codes.
 #'
-#' **Note:*** `ph.data` and `icdcol` are validated by [death_validate_data()]
+#' **Note:** `ph.data` and `icdcol` are validated by [death_validate_data()]
 #'
 #' @param  cause a character vector specifying the complete or partial
 #' keyword for the cause of death of interest. It is not case sensitive and you
@@ -1466,7 +1466,7 @@ death_other<- function(){
 #' `date_of_death` that are of class `"Date"`. If the latter two
 #' columns exist, the code calculates the age at death for you.
 #'
-#' The default is `death_age_col = NULL`.'
+#' The default is `death_age_col = NULL`.
 #'
 #' @seealso
 #' - [death_other()] for viewing available 'Other' cause of death definitions
@@ -1912,7 +1912,7 @@ death_validate_data <- function(ph.data = NULL,
 #' @param ph.data a data.table or data.frame. Must contain death data structured
 #' with one person per row and with at least one column of ICD10 death codes.
 #'
-#' **Note:*** `ph.data` and `icdcol` are validated by [death_validate_data()]
+#' **Note:** `ph.data` and `icdcol` are validated by [death_validate_data()]
 #'
 #' @param causeids an integer vector, with a minimum value of 1 and a maximum
 #' value of dependent upon the NCHS reference table.
@@ -2807,8 +2807,8 @@ life_table <- function(ph.data,
 #'
 #' Age specific mortality rates and are known to increase exponentially
 #' after age 30 and the `empirical_adjustment_factor` is based on predicting
-#' `mx` for those >= 85 years old. It is recommended that you do not use use
-#' this function when the max age is is less than '80+'.
+#' `mx` for those >= 85 years old. It is recommended that you do not use
+#' this function when the max age is less than '80+'.
 #'
 #' @keywords internal
 #'

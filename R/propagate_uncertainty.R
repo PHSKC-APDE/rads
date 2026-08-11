@@ -8,7 +8,7 @@
 #' when confidence intervals are calculated using specialized methods like the
 #' [Fay-Feuer](https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf)
 #' method (which is used for age-standardized rates). Basically, unless
-#' you have point estimates and uncertainty from a linear model of from simple
+#' you have point estimates and uncertainty from a linear model or from simple
 #' means and proportions, you should probably use this function rather than
 #' traditional mathematical methods for error propagation that assume normality.
 #'
@@ -136,7 +136,7 @@
 #' and when precise estimates are needed for smaller populations.
 #'
 #' **Null Hypothesis Testing:**
-#' By default, the function tries to automatically detects the correct null hypothesis
+#' By default, the function tries to automatically detect the correct null hypothesis
 #' value, e.g., 0 for differences and 1 for ratios. You can override this by setting
 #' `h0_value`.
 #'
