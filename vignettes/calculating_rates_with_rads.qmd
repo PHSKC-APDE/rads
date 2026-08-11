@@ -77,7 +77,7 @@ Many public health metrics are simple counts or means/proportions/fractions. The
 
 # The four steps: example 1
 
-As a simple example, let's assess the King County death rate from falls in 2019-2023, by intent.
+As a simple example, let's assess the death rate from falls in 2019-2023, by intent.
 
 ### STEP 1: Create a summary **table of event counts**
 
@@ -234,11 +234,11 @@ head(est)
 pretty_kable(head(est))
 ```
 
-Here we see that the King County **crude** and **adjusted** fall death rates are relatively similar. We also see that the vast majority of fall related deaths are unintentional. 
+Here we see that the **crude** and **adjusted** fall death rates are relatively similar. We also see that the vast majority of fall related deaths are unintentional. 
 
 # The four steps: example 2
 
-In this example we will calculate the adjusted rate of deaths from ***any cause*** by King County in 2019, stratified by race. 
+In this example we will calculate the adjusted rate of deaths from ***any cause*** in 2019, stratified by race. 
 
 ### STEP 1: Create a summary **table of event counts**
 

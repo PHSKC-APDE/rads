@@ -576,7 +576,7 @@ dt10.lifetable <- life_table(ph.data = dt10,
                              by = 'year')
 ```
 
-Display the first row of the life table for each year, which is for children aged 0-1. The `ex` column is the expectation of life, which for 0-1 years olds is life expectancy at birth. To see a detailed key of what all the columns mean, type `?life_table` in your R console and read the 'Details' section.
+Display the first row of the life table for each year, which is for children aged 0-1. The `ex` column is the expectation of life, which for 0-1 year olds is life expectancy at birth. To see a detailed key of what all the columns mean, type `?life_table` in your R console and read the 'Details' section.
 
 ```{r}
 #| message: false
