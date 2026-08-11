@@ -75,8 +75,10 @@ se_diff_traditional <- sqrt(smallville_se^2 + megalopolis_se^2)
 ci_lower_traditional <- diff_traditional - 1.96 * se_diff_traditional
 ci_upper_traditional <- diff_traditional + 1.96 * se_diff_traditional
 
-print(paste0("Traditional method for difference: ", round(diff_traditional, 2),
-            " 95% CI: (", round(ci_lower_traditional, 2), ", ", round(ci_upper_traditional, 2), ")"))
+print(paste0("Traditional method for difference: ", 
+             round(diff_traditional, 2),
+            " 95% CI: (", round(ci_lower_traditional, 2), ", ", 
+            round(ci_upper_traditional, 2), ")"))
 ```
 
 ## When Traditional Methods Fail
@@ -201,10 +203,11 @@ p1 <- ggplot(plot_data, aes(x = value, fill = distribution)) +
   labs(x = "", y = "") +
   theme_minimal() +
   theme(legend.position = "none", 
-        panel.grid = element_blank()) +
+        panel.grid = element_blank(), 
+        strip.text = element_text(size = 16)) +
   geom_text(data = labels_data, aes(label = label), 
             x = Inf, y = Inf, hjust = 1.1, vjust = 1.1, 
-            size = 3, inherit.aes = FALSE)
+            size = 4.5, inherit.aes = FALSE)
 
 print(p1)
 ```
@@ -355,7 +358,7 @@ mortality_result <- propagate_uncertainty(
   ref_lower_col = "smallville_lower",
   ref_upper_col = "smallville_upper", 
   contrast_fn = function(x, y) x - y,
-  dist = "lognormal",                   # Better for rates with asymmetric CIs
+  dist = "lognormal",                   # For rates with asymmetric CI
   draws = 10000,
   seed = 98104
 )
@@ -461,7 +464,7 @@ pretty_kable(multi_result[, .(demographic, contrast, contrast_lower, contrast_up
 
 As you'll remember, when you have odds ratios or rate ratios from regression models, those estimates have been exponentiated from the log scale. This means their confidence intervals are no longer symmetric on the original scale, making traditional error propagation formulas inappropriate.
 
-Imagine we ran a logistic regression predicting the odds of knowing how to play saxophone across King County, using Seattle as the reference group. We want to compare the East King County effect to the North King County effect by calculating the ratio of their odds ratios. To do so, we'll compare a manual method against using `propagate_uncertainty()`, showing that they produce nearly equivalent results.
+Imagine we ran a logistic regression predicting the odds of knowing how to play saxophone across regions, using the Western Region as the reference group. We want to compare the East Region effect to the North Region effect by calculating the ratio of their odds ratios. To do so, we'll compare a manual method against using `propagate_uncertainty()`, showing that they produce nearly equivalent results.
 
 ### Create Regression Estimates
 
@@ -470,13 +473,13 @@ Imagine we ran a logistic regression predicting the odds of knowing how to play 
 #| message: false
 # Odds ratios from logistic regression
 sax_data <- data.table(
-  comparison = "East KC OR vs North KC OR",
-  east_kc_or = 1.85,        # OR for East KC vs Seattle
-  east_kc_lower = 1.42,     
-  east_kc_upper = 2.41,
-  north_kc_or = 1.34,       # OR for North KC vs Seattle  
-  north_kc_lower = 1.08,    
-  north_kc_upper = 1.66
+  comparison = "East Region OR vs North Region OR",
+  east_or = 1.85,        # OR for East vs West Regions
+  east_lower = 1.42,     
+  east_upper = 2.41,
+  north_or = 1.34,       # OR for North vs West Regions  
+  north_lower = 1.08,    
+  north_upper = 1.66
 )
 ```
 
@@ -491,14 +494,17 @@ pretty_kable(sax_data)
 #| warning: false
 #| message: false
 # Manual calculation: convert to log scale
-east_log_or <- log(sax_data$east_kc_or)
-north_log_or <- log(sax_data$north_kc_or)
+east_log_or <- log(sax_data$east_or)
+north_log_or <- log(sax_data$north_or)
 
 # Calculate approximate SEs from CIs on log scale
-east_se_log <- (log(sax_data$east_kc_upper) - log(sax_data$east_kc_lower)) / (2 * 1.96)
-north_se_log <- (log(sax_data$north_kc_upper) - log(sax_data$north_kc_lower)) / (2 * 1.96)
+east_se_log <- (log(sax_data$east_upper) - log(sax_data$east_lower)) / 
+                (2 * 1.96)
 
-# Now that everything is on log scale, can use traditional error propagation
+north_se_log <- (log(sax_data$north_upper) - log(sax_data$north_lower)) / 
+                 (2 * 1.96)
+
+# Everything is now on log scale, so use traditional methods
 log_diff <- east_log_or - north_log_or
 se_log_diff <- sqrt(east_se_log^2 + north_se_log^2)
 
@@ -519,12 +525,12 @@ manual_pvalue <- 2 * (1 - pnorm(abs(manual_z)))
 #| message: false
 easy_way_result <- propagate_uncertainty(
   ph.estimates = sax_data,
-  comp_mean_col = "east_kc_or",        # East KC:Seattle OR
-  comp_lower_col = "east_kc_lower",
-  comp_upper_col = "east_kc_upper",
-  ref_mean_col = "north_kc_or",        # North KC:Seattle OR
-  ref_lower_col = "north_kc_lower", 
-  ref_upper_col = "north_kc_upper",
+  comp_mean_col = "east_or",        # East:West OR
+  comp_lower_col = "east_lower",
+  comp_upper_col = "east_upper",
+  ref_mean_col = "north_or",        # North:West OR
+  ref_lower_col = "north_lower", 
+  ref_upper_col = "north_upper",
   contrast_fn = function(x, y) x / y,  # Ratio of the two ORs
   dist = "lognormal"                   # Needed for ORs
 )

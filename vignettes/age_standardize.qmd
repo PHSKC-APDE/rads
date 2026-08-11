@@ -261,7 +261,7 @@ As expected, `ex1.0d` is identical to `ex1.0b` above. This proves that pre-aggre
 
 **Run age_standardize again \<\< this time with a different reference population**
 
-Now let's see what happens if we change the reference population. We'll arbitrarily set the references population to the 19th in the list provided by `list_ref_pop()` (i.e., '`r list_ref_pop()[19]`').
+Now let's see what happens if we change the reference population. We'll arbitrarily set the reference population to the 19th in the list provided by `list_ref_pop()` (i.e., '`r list_ref_pop()[19]`').
 
 ```{r}
 #| warning: false

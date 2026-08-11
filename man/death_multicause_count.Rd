@@ -22,7 +22,7 @@ death_multicause_count(
 with one person per row, with at least one column of ICD10 underlying cause
 codes and columns for contributing cause codes.
 
-#' \strong{Note:}* \code{ph.data}, \code{icdcol}, and \code{contributing_cols} are validated by
+\strong{Note:} \code{ph.data}, \code{icdcol}, and \code{contributing_cols} are validated by
 \code{\link[=death_validate_data]{death_validate_data()}}}
 
 \item{cause_name}{a character vector of length one that specifies the multicause

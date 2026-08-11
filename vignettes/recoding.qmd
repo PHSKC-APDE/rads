@@ -56,7 +56,7 @@ library(data.table)
 ```{r}
 #| echo: true
 check_bin("[0,18)")  # TRUE -- interpretable as a bin
-check_bin(18)    # FALSE -- an single value, not a bin
+check_bin(18)    # FALSE -- a single value, not a bin
 check_bin("Male")    # FALSE -- an exact value, not a bin
 ```
 
@@ -272,7 +272,7 @@ pretty_kable(enact_recodes(survey_wave1, instructions))
 pretty_kable(enact_recodes(survey_wave2, instructions))
 ```
 
-Because the recoding logic lives in `codebook` rather than in repeated inline code, updating a single row (e,g,, changing the age breaks) automatically applies consistently to every dataset that uses `instructions`.
+Because the recoding logic lives in `codebook` rather than in repeated inline code, updating a single row (e.g., changing the age breaks) automatically applies consistently to every dataset that uses `instructions`.
 
 # Conclusion
 

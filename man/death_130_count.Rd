@@ -21,7 +21,7 @@ with one person per row and with at least one column of ICD10 death codes.}
 \item{causeids}{an integer vector of length >=1 & <= 130, with a minimum value
 of 1 and a maximum value of 130.
 
-The default is \code{1:130}, i.e., the compolte standard panel of WA DOH /
+The default is \code{1:130}, i.e., the complete standard panel of WA DOH /
 NCHS 130 causes of death.}
 
 \item{cause}{an OPTIONAL character vector specifying the complete or partial
@@ -86,7 +86,7 @@ See \code{rads::death_130()} for a complete list of available causesid
 and cause values.
 }
 \details{
-These 130 causes of death are for decedants ages < 1 year old.
+These 130 causes of death are for decedents ages < 1 year old.
 }
 \note{
 Calls upon \code{rads::death_xxx_count}.

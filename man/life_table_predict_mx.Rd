@@ -56,8 +56,8 @@ parameters best fit these mortality data.
 
 Age specific mortality rates and are known to increase exponentially
 after age 30 and the \code{empirical_adjustment_factor} is based on predicting
-\code{mx} for those >= 85 years old. It is recommended that you do not use use
-this function when the max age is is less than '80+'.
+\code{mx} for those >= 85 years old. It is recommended that you do not use
+this function when the max age is less than '80+'.
 }
 \note{
 This is an internal function and should not be called directly by users.

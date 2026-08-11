@@ -60,7 +60,7 @@ library(data.table)
 
 ## bin_age() {#bin_age}
 
-`age_standardize()` will automatically bin ages to align with those in a reference population. However, *if* you ever find yourself needing to manually create age bins, `bin_ages()` will be your friend. `bin_age()` collapses single-year ages into the `agecat` bins used for age-standardization, either matching a standard reference population (see `list_ref_pop()` and `get_ref_pop()`) or a custom set of user-supplied age bins. It is the same binning logic that `age_standardize()` uses internally when `collapse = TRUE`. If neither `ref.popname` nor `cuts` is specified, `bin_age()` defaults to the same reference population that `age_standardize()` uses by default: "2000 U.S. Std Population (11 age groups)".
+`age_standardize()` will automatically bin ages to align with those in a reference population. However, *if* you ever find yourself needing to manually create age bins, `bin_age()` will be your friend. `bin_age()` collapses single-year ages into the `agecat` bins used for age-standardization, either matching a standard reference population (see `list_ref_pop()` and `get_ref_pop()`) or a custom set of user-supplied age bins. It is the same binning logic that `age_standardize()` uses internally when `collapse = TRUE`. If neither `ref.popname` nor `cuts` is specified, `bin_age()` defaults to the same reference population that `age_standardize()` uses by default: "2000 U.S. Std Population (11 age groups)".
 
 ### Binning to a standard reference population
 

@@ -17,7 +17,7 @@ death_other_count(
 \item{ph.data}{a data.table or data.frame. Must contain death data structured
 with one person per row and with at least one column of ICD10 death codes.
 
-\strong{Note:}* \code{ph.data} and \code{icdcol} are validated by \code{\link[=death_validate_data]{death_validate_data()}}}
+\strong{Note:} \code{ph.data} and \code{icdcol} are validated by \code{\link[=death_validate_data]{death_validate_data()}}}
 
 \item{cause}{a character vector specifying the complete or partial
 keyword for the cause of death of interest. It is not case sensitive and you
@@ -56,7 +56,7 @@ specified AND if ph.data lacks columns named \code{date_of_birth} and
 \code{date_of_death} that are of class \code{"Date"}. If the latter two
 columns exist, the code calculates the age at death for you.
 
-The default is \code{death_age_col = NULL}.'}
+The default is \code{death_age_col = NULL}.}
 }
 \value{
 Generates a table with two columns: \code{cause.of.death} and \code{deaths}.

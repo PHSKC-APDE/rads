@@ -50,7 +50,7 @@
 #' @seealso [get_ref_pop()] for the age bins & population counts of a standard
 #' reference population.
 #' @seealso [list_ref_pop()] for a list of valid `ref.popname` values for
-#' `bin_age()`..
+#' `bin_age()`.
 #'
 #' @examples
 #' \donttest{
@@ -185,8 +185,6 @@ calc_age <- function(from, to) {
 #' for standard CHI tableau ready output, it should be c("indicator_key", "year")
 #' @param key_where An expression identifying the referent/comparator/key to
 #' which other data will be compared. It should be passed unquoted.
-#' rows to be filtered / excluded from secondary suppression because
-#' the categories are not mutually exclusive (e.g., race3)
 #' @param new_col Character vector of length 1. It is the name of the new column
 #' that contains the comparison results (i.e., higher, lower, or no difference).
 #' It is also the stem for the column noting the significance of the results (
@@ -841,11 +839,11 @@ lossless_convert <- function(x, class, column_name = NULL) {
 #' This adjustment applies only to binary (two-outcome) variables. See [calc]
 #' `Proportion-like and binary variables` for details.
 #'
-#' 5) **rate**: mean * per. Provides rescaled mean estimates (i.e., per 100 or per 100,0000).
+#' 5) **rate**: mean * per. Provides rescaled mean estimates (i.e., per 100 or per 100,000).
 #' Returns rate, rate_se, rate_lower, rate_upper.
 #' Default ci (e.g. upper and lower) is 95 percent.
 #'
-#' 6) **numerator**: Sum of non-NA values for `what``.
+#' 6) **numerator**: Sum of non-NA values for `what`.
 #' The numerator is always unweighted.
 #'
 #' 7) **denominator**: Number of rows where `what` is not NA.
@@ -871,7 +869,7 @@ lossless_convert <- function(x, class, column_name = NULL) {
 #' `total_vcov` accordingly (list-columns containing the variance-covariance matrix).
 #' For non-factor `what`, this is a 1x1 matrix (i.e., just the variance of the estimate);
 #' for factor `what`, it is the full covariance matrix across levels. Mainly intended
-#' for internal us rather than direct interpretation.
+#' for internal use rather than direct interpretation.
 #'
 #' @rdname metrics
 #' @examples

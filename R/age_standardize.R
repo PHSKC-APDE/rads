@@ -293,7 +293,7 @@ adjust_direct <- function(count,
 #' `line_level = TRUE`, this automatic handling **cannot** distinguish a population total merged
 #' onto every row from genuine per-row populations that are coincidentally identical.
 #' If this latter situation describes your data, your best bet is to pre-aggregate it yourself.
-#' See the [vigntette](https://github.com/PHSKC-APDE/rads/wiki/age_standardize) for details.
+#' See the [vignette](https://github.com/PHSKC-APDE/rads/wiki/age_standardize) for details.
 #'
 #' @section Note on Standard Errors:
 #' This function calculates confidence intervals using the

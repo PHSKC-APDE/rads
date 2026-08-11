@@ -16,7 +16,7 @@ create_recode(
 \arguments{
 \item{old_var}{character. Column in the dataset containing the values to be recoded}
 
-\item{new_var}{character. Column where the recoded values will be placed. If \code{new_var} doesn't exist, than it will be created. Otherwise it will be overwritten.}
+\item{new_var}{character. Column where the recoded values will be placed. If \code{new_var} doesn't exist, then it will be created. Otherwise it will be overwritten.}
 
 \item{old}{character (or coercible). value in the column \code{old_var} to be translated into a new value by recoding. If left blank/NA/""/NULL or otherwise missing, the recode operation
 will essentially take the form of a rename of \code{old_var} -> \code{new_var}.
