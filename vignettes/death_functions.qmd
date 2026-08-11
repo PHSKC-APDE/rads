@@ -69,7 +69,7 @@ summary(deaths$date_of_death)
 table(deaths$temperament)
 ```
 
-Our synthetic death data has one column for the underlying cause of death (`underlying_cod_code`) and 20 for the contributing causes of death (`record_axis_code_`*). It is top coded at age 100, spans from 2019-2023, and has death and birth dates. If your data set has equivalent columns, you should be able to use all of the death functions. In addition, the synthetic data has a King County, WA indicator as well as a categorical 'temperament' variable that we will use to demonstrate stratification below. 
+Our synthetic death data has one column for the underlying cause of death (`underlying_cod_code`) and 20 for the contributing causes of death (`record_axis_code_`*). It is top coded at age 100, spans from 2019-2023, and has death and birth dates. If your data set has equivalent columns, you should be able to use all of the death functions. In addition, the synthetic data has a categorical 'temperament' variable that we will use to demonstrate stratification below. 
 
 # death_icd10_clean()
 
@@ -285,7 +285,7 @@ The table above tells us that, if everyone who died from COVID-19 in 2020 had li
 
 Please refer to the help file for more details.
 
-### example #4: 2019-2020 King County injury related deaths (every combination of intent and mechanism), stratified by temperament
+### example #4: 2019-2020 injury related deaths (every combination of intent and mechanism), stratified by temperament
 
 Run `death_injury_matrix_count()` and show the six random rows
 
@@ -321,7 +321,7 @@ dt4.alt[, deaths := format(deaths, big.mark = ',')]
 pretty_kable(head(dt4.alt))
 ```
 
-### example #5: 2019-2023 King County homicides (intent) by firearms (mechanism), stratified by temperament
+### example #5: 2019-2023 homicides (intent) by firearms (mechanism), stratified by temperament
 
 Run `death_injury_matrix_count`
 
@@ -489,7 +489,7 @@ pretty_kable(dt9)
 
 Please refer to the help file for more details.
 
-### example #10: Get life expectancy at birth for King County residents born 2019-2023, stratified by year
+### example #10: Get life expectancy at birth for residents born 2019-2023, stratified by year
 
 Use `life_table_prep()` to aggregate the age interval specific count of deaths and the average fraction of the interval lived by those who died in that interval, stratified by year of death. **Note**, by default `life_table_prep()` uses the standard age intervals used by the CDC and WA DOH. These intervals can easily be customized if desired. Here we show just the top six rows so you can see the data structure.
 

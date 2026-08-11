@@ -13,7 +13,7 @@ vignette: >
 editor: source
 ---
 
-## **Six Steps to Identifying the Leading Causes of Death**
+## Six Steps to Identifying the Leading Causes of Death
 
 ### Some important notes before we begin
 
