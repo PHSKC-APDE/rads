@@ -107,7 +107,7 @@ Because identification of identical \code{my.pop} is the only signal available u
 \code{line_level = TRUE}, this automatic handling \strong{cannot} distinguish a population total merged
 onto every row from genuine per-row populations that are coincidentally identical.
 If this latter situation describes your data, your best bet is to pre-aggregate it yourself.
-See the \href{https://github.com/PHSKC-APDE/rads/wiki/age_standardize}{vigntette} for details.
+See the \href{https://github.com/PHSKC-APDE/rads/wiki/age_standardize}{vignette} for details.
 }
 
 \section{Note on Standard Errors}{

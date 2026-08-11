@@ -122,7 +122,7 @@ head(eg2)
 }
 \seealso{
 \itemize{
-\item \code{\link[=death_113]{death_113()}} for viewing teh CDC NCHS 113 leading causes of death
+\item \code{\link[=death_113]{death_113()}} for viewing the CDC NCHS 113 leading causes of death
 \item \link[rads.data:synthetic_death]{rads.data::synthetic_death} for properly formatted synthetic death data
 \item \code{\link[=death_icd10_clean]{death_icd10_clean()}} for preparing ICD-10 codes for use with all rads death functions
 \item \code{\link[=age_standardize]{age_standardize()}} for calculating age standardized rates

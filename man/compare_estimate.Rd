@@ -25,9 +25,7 @@ For standard rads::calc() output, id_vars should be c("variable", "level") and
 for standard CHI tableau ready output, it should be c("indicator_key", "year")}
 
 \item{key_where}{An expression identifying the referent/comparator/key to
-which other data will be compared. It should be passed unquoted.
-rows to be filtered / excluded from secondary suppression because
-the categories are not mutually exclusive (e.g., race3)}
+which other data will be compared. It should be passed unquoted.}
 
 \item{new_col}{Character vector of length 1. It is the name of the new column
 that contains the comparison results (i.e., higher, lower, or no difference).

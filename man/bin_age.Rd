@@ -72,5 +72,5 @@ bin_age(age = c(0, 3, 10, 45, 90), cuts = c(0, 1, 5, 10, 20, 40, 65, 85))
 reference population.
 
 \code{\link[=list_ref_pop]{list_ref_pop()}} for a list of valid \code{ref.popname} values for
-\code{bin_age()}..
+\code{bin_age()}.
 }

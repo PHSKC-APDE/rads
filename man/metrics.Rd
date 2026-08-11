@@ -34,10 +34,10 @@ ensures that an estimate and its complement are assigned the same (correct)
 rse, rather than one artificially appearing more/less reliable than the other.
 This adjustment applies only to binary (two-outcome) variables. See \link{calc}
 \verb{Proportion-like and binary variables} for details.
-\item \strong{rate}: mean * per. Provides rescaled mean estimates (i.e., per 100 or per 100,0000).
+\item \strong{rate}: mean * per. Provides rescaled mean estimates (i.e., per 100 or per 100,000).
 Returns rate, rate_se, rate_lower, rate_upper.
 Default ci (e.g. upper and lower) is 95 percent.
-\item \strong{numerator}: Sum of non-NA values for `what``.
+\item \strong{numerator}: Sum of non-NA values for \code{what}.
 The numerator is always unweighted.
 \item \strong{denominator}: Number of rows where \code{what} is not NA.
 The denominator is always unweighted.
@@ -56,7 +56,7 @@ factors, it is the unique number of levels in the subset.
 \code{total_vcov} accordingly (list-columns containing the variance-covariance matrix).
 For non-factor \code{what}, this is a 1x1 matrix (i.e., just the variance of the estimate);
 for factor \code{what}, it is the full covariance matrix across levels. Mainly intended
-for internal us rather than direct interpretation.
+for internal use rather than direct interpretation.
 }
 }
 \examples{

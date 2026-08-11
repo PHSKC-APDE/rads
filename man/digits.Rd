@@ -31,10 +31,8 @@ The default digits_2 = 4 i.e., 0.123456 >> 0.1234.}
 a data.table with appropriate rounding.
 }
 \description{
-#' @description
 Default rounding is according to APDE/CHI standards
-}
-\details{
+
 By default, this function expects data that has already been formatted for CHI,
 i.e., data containing result, lower_bound, upper_bound, se, rse. However, the variables
 and the number of digits to round can be readily specified.

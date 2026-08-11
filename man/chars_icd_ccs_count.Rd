@@ -138,7 +138,7 @@ including \strong{\code{^}}, \strong{\code{$}}, and \strong{\code{|}}.
 \strong{Note:} If you submit values for more than one of \code{icdcm},
 \code{superlevel}, \code{broad}, \code{midlevel}, or \code{detailed}, they must
 be nested. For example, \verb{broad = 'neoplasms', detailed = 'sarcoma'} will
-give results because sarcomas are type of cancers. However,
+give results because sarcomas are a type of cancer. However,
 \verb{broad = 'neoplasms', detailed = 'intestinal infection'} will return an
 error because your resulting table will have zero rows.
 }
