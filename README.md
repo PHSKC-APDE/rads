@@ -53,3 +53,6 @@ After installation, we highly recommend that you start by walking through a vign
 
 ## Problems?
 If you come across a bug or have specific suggestions for improvement, please click on [Issues](https://github.com/PHSKC-APDE/rads/issues) at the top of this page and then click [New Issue](https://github.com/PHSKC-APDE/rads/issues/new/choose) and provide the necessary details.
+
+## Contributing?
+Interested in contributing? See our [contribution guidelines](https://github.com/PHSKC-APDE/rads/blob/main/CONTRIBUTING.md)
