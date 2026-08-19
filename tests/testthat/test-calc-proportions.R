@@ -277,3 +277,4 @@ test_that("autodetect gives a 3-level survey factor proportion-appropriate CIs t
   # ...and differ from the plain mean-based CI (proportion = FALSE)
   expect_false(isTRUE(all.equal(res_auto$mean_lower, res_false$mean_lower)))
 })
+

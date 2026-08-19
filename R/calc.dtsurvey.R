@@ -25,12 +25,49 @@ calc.dtsurvey <- function(ph.data,
 
   call = match.call() # get 'call' object containing function name plus every argument
 
-  # Preserve a reference to the pre-`where`-filter data. This is used later (after `what` has been
-  # validated) to autodetect whether each `what` variable is structurally binary. Purposefully
-  # detect using *unfiltered* data because a `where` clause could entirely eliminate some `what`
-  # values within a given call. This would make an otherwise-binary variable look non-binary (or vice
-  # versa). This is just a reference, not a copy, so not costly.
-  ph.data_prefilter = ph.data
+  #validate what
+  # Check if `what` does not exist or is NULL
+  if (missing(what) || is.null(what)) {
+    stop("\n\U0001F92C The `what` argument must be provided!")
+  }
+
+  # Check if `what` is not a character vector
+  if (!is.character(what)) {
+    stop("\n\U0001F92C The `what` argument must be a character vector.")
+  }
+
+  # Check if `what` values are not names in `ph.data`
+  missing_columns <- setdiff(what, names(ph.data))
+  if (length(missing_columns) > 0) {
+    stop(paste0("\n\U0001F92C The following `what` values are not names of columns in `ph.data`: ",
+                paste(missing_columns, collapse = ", "), "."))
+  }
+
+  # Determine, for this specific `what` variable, whether it is:
+  # -- proportion-like (important for CI calculation)
+  # -- binary (important for RSE calculation)
+  prop_bin_detect = lapply(what, function(wht) {
+  is_proportion_detected = is_proportion_var(ph.data[[wht]])
+  is_binary_detected = is_binary_var(ph.data[[wht]])
+
+  if(identical(proportion, 'autodetect')){
+    proportion_resolved = is_proportion_detected
+  }else if(isTRUE(proportion)){
+    proportion_resolved = is_proportion_detected
+    if(!is_proportion_detected){
+      warning(paste0(
+        '\n\u26A0\ufe0f `proportion` was set to TRUE for `', wht, '`, but this variable does not ',
+        'seem to be proportion-like (i.e., it is not a factor, a logical, or a numeric containing ',
+        'only 0s and 1s). `proportion` cannot be honored for this variable, so standard ',
+        '(non-proportion) calculations will be used instead (equivalent to `proportion = \'autodetect\'`).'
+      ))
+    }
+  }else{
+    proportion_resolved = FALSE
+  }
+    list(p = proportion_resolved, b = is_binary_detected)
+  })
+  prop_bin_detect = setNames(prop_bin_detect, what)
 
   #filter the dataset
   if(!missing(where)){
@@ -54,23 +91,6 @@ calc.dtsurvey <- function(ph.data,
   }
 
   #validate other inputs
-  #validate what
-  # Check if `what` does not exist or is NULL
-      if (missing(what) || is.null(what)) {
-        stop("\n\U0001F92C The `what` argument must be provided!")
-      }
-
-      # Check if `what` is not a character vector
-      if (!is.character(what)) {
-        stop("\n\U0001F92C The `what` argument must be a character vector.")
-      }
-
-      # Check if `what` values are not names in `ph.data`
-      missing_columns <- setdiff(what, names(ph.data))
-      if (length(missing_columns) > 0) {
-        stop(paste0("\n\U0001F92C The following `what` values are not names of columns in `ph.data`: ",
-                     paste(missing_columns, collapse = ", "), "."))
-      }
 
   #validate by
       # Check if `by` is not a character vector
@@ -157,27 +177,8 @@ calc.dtsurvey <- function(ph.data,
   #if multiple whats are provided, compute per what
   res = lapply(what, function(wht){
 
-    #Determine, for this specific `what` variable, whether it is:
-    # -- proportion-like (important for CI calculation)
-    # -- binary (important for RSE calculation)
-    is_proportion_detected = is_proportion_var(ph.data_prefilter[[wht]])
-    is_binary_detected = is_binary_var(ph.data_prefilter[[wht]])
-
-    if(identical(proportion, 'autodetect')){
-      proportion_resolved = is_proportion_detected
-    }else if(isTRUE(proportion)){
-      proportion_resolved = is_proportion_detected
-      if(!is_proportion_detected){
-        warning(paste0(
-          '\n\u26A0\ufe0f `proportion` was set to TRUE for `', wht, '`, but this variable does not ',
-          'seem to be proportion-like (i.e., it is not a factor, a logical, or a numeric containing ',
-          'only 0s and 1s). `proportion` cannot be honored for this variable, so standard ',
-          '(non-proportion) calculations will be used instead (equivalent to `proportion = \'autodetect\'`).'
-        ))
-      }
-    }else{
-      proportion_resolved = FALSE
-    }
+    proportion_resolved = prop_bin_detect[[wht]]$p
+    is_binary_detected = prop_bin_detect[[wht]]$b
 
     #Determine the type of CI method to use
     meth = 'mean' #the default
