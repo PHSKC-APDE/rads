@@ -593,6 +593,7 @@ library(data.table)
                                                mechanism = "*",
                                                icdcol = "underlying_cod_code")
     injuries.rads <- injuries.rads[!mechanism %in% c("All transport", "Fire/hot object or substance")] # These are summary categories
+    injuries.rads <- injuries.rads[intent != "Any intent"] # This is a summary category, computed from the other intents
     injuries.rads <- injuries.rads[deaths != 0]
 
     # manually
@@ -634,8 +635,49 @@ library(data.table)
                                                               mechanism = "none",
                                                               icdcol = "underlying_cod_code"))
     expect_equal(unique(intent.check$intent), 'Suicide')
-    expect_equal(nrow(mechanism.check), 5) # the '*' gets all five intents
+    expect_equal(nrow(mechanism.check), 6) # the '*' gets all five intents plus an 'Any intent' total
     expect_equal(nrow(double.none), 1) # All injury/Any intent
+  })
+
+  test_that("death_injury_matrix_count() adds an 'Any intent' total when intent = '*' ...", {
+    firearm_all <- death_injury_matrix_count(ph.data = deathDT,
+                                             intent = "*",
+                                             mechanism = "firearm",
+                                             icdcol = "underlying_cod_code")
+    expect_true("Any intent" %in% unique(firearm_all$intent))
+    expect_equal(firearm_all[intent == "Any intent"]$deaths,
+                sum(firearm_all[intent != "Any intent"]$deaths))
+
+    # intent = 'none' should give the same overall total via its own (pre-existing) collapse logic
+    firearm_none <- suppressWarnings(death_injury_matrix_count(ph.data = deathDT,
+                                              intent = "none",
+                                              mechanism = "firearm",
+                                              icdcol = "underlying_cod_code"))
+    expect_equal(nrow(firearm_none), 1)
+    expect_identical(unique(firearm_none$intent), "Any intent")
+    expect_equal(firearm_none$deaths, firearm_all[intent == "Any intent"]$deaths)
+
+    # a specific (non-'*', non-'none') intent selection should NOT get an automatic total
+    firearm_specific <- death_injury_matrix_count(ph.data = deathDT,
+                                                  intent = "suicide",
+                                                  mechanism = "firearm",
+                                                  icdcol = "underlying_cod_code")
+    expect_false("Any intent" %in% unique(firearm_specific$intent))
+  })
+
+  test_that("death_injury_matrix_count() zero-fills the 'Any intent' total consistently with by groups", {
+    d <- data.table::copy(deathDT2)
+
+    firearm_codes <- unique(rads.data::icd10_death_injury_matrix[mechanism == "Firearm"]$icd10)
+    d[race == "Hispanic" & underlying_cod_code %in% firearm_codes, underlying_cod_code := "I219"] # change all firearm to myocardial infarction
+
+    res <- death_injury_matrix_count(ph.data = d,
+                                     intent = "*",
+                                     mechanism = "*",
+                                     icdcol = "underlying_cod_code",
+                                     by = "race")
+
+    expect_identical(res[race == "Hispanic" & mechanism == "Firearm" & intent == "Any intent"]$deaths, 0L)
   })
 
   test_that("Death counts are accurate ...", {
