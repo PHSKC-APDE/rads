@@ -34,7 +34,10 @@ partial string match is sufficient and is case insensitive. E.g.,
 \code{intent = c("cide")} would return both "Suicide" and "Homicide" and
 \code{intent = c("un")} would return both "Unintentional" and "Undetermined".
 
-The default is \code{'*'}, which selects all possible intents.}
+The default is \code{'*'}, which selects all possible intents. When \code{'*'} is used,
+the returned table also includes an extra \code{"Any intent"} row per mechanism,
+summing deaths across all intents. To collapse straight to a single \code{"Any intent"}
+total without the individual breakdown, use \code{intent = "none"} instead.}
 
 \item{mechanism}{a character vector of length 1 to 28. It specifies the
 mechanism of death that you want returned (E.g., "Cut/pierce", "Drowning",
@@ -103,6 +106,12 @@ of death. You can choose to only return the intent or only return the
 mechanism. If you set both to "none", you will receive a summary of all
 injury deaths without regard to the intent.
 
+When \code{intent = '*'} (the default), an additional \code{"Any intent"} row is
+included for each mechanism, giving you the total across all intents --
+e.g., firearm deaths overall AND by intent (homicide, suicide, etc.) in a
+single call. This mirrors the \code{mechanism = '*'} default, which includes an
+\code{"All injury"} total row per intent.
+
 Also note that terrorism codes (U01.#, U02.#, & U03.#) are not included
 because they are not included in the coding used by WA DOH. If they are
 needed, they can be obtained from the CDC link below.
@@ -118,6 +127,13 @@ eg1 <- death_injury_matrix_count(ph.data = deathDT,
                             ypll_age = NULL,
                             death_age_col = NULL)
 head(eg1)
+
+# example 1b: firearm deaths overall AND by intent
+eg1b <- death_injury_matrix_count(ph.data = deathDT,
+                            intent = "*",
+                            mechanism = "firearm",
+                            icdcol = "underlying_cod_code")
+eg1b[] # includes an "Any intent" row alongside Homicide, Suicide, etc.
 
 # example 2: falls designated as homicides and or suicides
 eg2 <- death_injury_matrix_count(ph.data = deathDT,

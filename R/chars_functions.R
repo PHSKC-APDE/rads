@@ -238,6 +238,15 @@ chars_injury_matrix_count <- function(ph.data = NULL,
                                          " You set 'primary_ecode = F'. This is no longer a valid option. If you want to use other ecodes\n",
                                          " you will have to perform a custom analysis using [chars].[stage_diag] & [chars].[stage_ecode]."))}
 
+  # Capture the full population's `by` levels *BEFORE* filtering to injury records ----
+  # This ensures `by` levels with zero injury hospitalizations (e.g., an
+  # age with no injuries at all) still appear in the output with a count of zero,
+  # rather than being silently dropped.
+  if(!is.null(by)){
+    by.levels <- lapply(by, function(x) unique(ph.data[[x]]))
+    names(by.levels) <- by
+  }
+
   # Apply narrow or broad definition ----
   if(def == 'narrow'){ph.data <- ph.data[injury_nature_narrow == T & !is.na(injury_intent) & !is.na(injury_mechanism)]}
   if(def == 'broad'){ph.data <- ph.data[injury_nature_broad == T & !is.na(injury_intent) & !is.na(injury_mechanism)]}
@@ -331,7 +340,7 @@ chars_injury_matrix_count <- function(ph.data = NULL,
 
       # create grid of all possible combinations of by vars ----
       if (!is.null(by)) {
-        complete.grid <- do.call(data.table::CJ, lapply(by, function(x) unique(ph.data[[x]])))
+        complete.grid <- do.call(data.table::CJ, by.levels)
         data.table::setnames(complete.grid, by)
         complete.grid[, c("mechanism", "intent") := list(current_mechanism, current_intent)]
       } else {

@@ -520,7 +520,10 @@ death_injury_matrix<- function(){
 #' `intent = c("cide")` would return both "Suicide" and "Homicide" and
 #' `intent = c("un")` would return both "Unintentional" and "Undetermined".
 #'
-#' The default is `'*'`, which selects all possible intents.
+#' The default is `'*'`, which selects all possible intents. When `'*'` is used,
+#' the returned table also includes an extra `"Any intent"` row per mechanism,
+#' summing deaths across all intents. To collapse straight to a single `"Any intent"`
+#' total without the individual breakdown, use `intent = "none"` instead.
 #'
 #' @param mechanism a character vector of length 1 to 28. It specifies the
 #' mechanism of death that you want returned (E.g., "Cut/pierce", "Drowning",
@@ -595,6 +598,12 @@ death_injury_matrix<- function(){
 #' mechanism. If you set both to "none", you will receive a summary of all
 #' injury deaths without regard to the intent.
 #'
+#' When `intent = '*'` (the default), an additional `"Any intent"` row is
+#' included for each mechanism, giving you the total across all intents --
+#' e.g., firearm deaths overall AND by intent (homicide, suicide, etc.) in a
+#' single call. This mirrors the `mechanism = '*'` default, which includes an
+#' `"All injury"` total row per intent.
+#'
 #' Also note that terrorism codes (U01.#, U02.#, & U03.#) are not included
 #' because they are not included in the coding used by WA DOH. If they are
 #' needed, they can be obtained from the CDC link below.
@@ -623,6 +632,13 @@ death_injury_matrix<- function(){
 #'                             ypll_age = NULL,
 #'                             death_age_col = NULL)
 #' head(eg1)
+#'
+#' # example 1b: firearm deaths overall AND by intent
+#' eg1b <- death_injury_matrix_count(ph.data = deathDT,
+#'                             intent = "*",
+#'                             mechanism = "firearm",
+#'                             icdcol = "underlying_cod_code")
+#' eg1b[] # includes an "Any intent" row alongside Homicide, Suicide, etc.
 #'
 #' # example 2: falls designated as homicides and or suicides
 #' eg2 <- death_injury_matrix_count(ph.data = deathDT,
@@ -823,6 +839,23 @@ death_injury_matrix_count <- function(ph.data,
           x_combo <- merge(x_combo, x_ypll, all = T)
       }
 
+  # Add an explicit 'Any intent' total when intent = '*' ----
+    # Mirrors chars_injury_matrix_count(), which provides a total row alongside
+    # the by-intent breakdown. death's reference table has no pre-coded 'Any
+    # intent' aggregate the way it does for mechanism, so we sum it here across
+    # the intents actually selected.
+    if(identical(myorig.intent, "*")){
+      agg_cols <- c("mechanism", by)
+      if(is.null(ypll_age)){
+        any_intent <- x_combo[, list(intent = "Any intent", deaths = sum(deaths)), by = agg_cols]
+      } else {
+        any_intent <- x_combo[, list(intent = "Any intent", deaths = sum(deaths),
+                                     temp_ypll = sum(get(ypll_col_name))), by = agg_cols]
+        data.table::setnames(any_intent, "temp_ypll", ypll_col_name)
+      }
+      x_combo <- rbind(x_combo, any_intent, use.names = TRUE)
+    }
+
   # Tidy ----
     # Rename & aggregate by mechanism and intent when needed ----
       if("none" %in% myorig.intent & "none" %in% mechanism){
@@ -851,7 +884,7 @@ death_injury_matrix_count <- function(ph.data,
 
       # If myorig.intent is '*', add intent column
         if (exists("myorig.intent") && myorig.intent == '*') {
-          unique_col_vals$intent <- unique(death_injury_matrix()$intent)
+          unique_col_vals$intent <- c(unique(death_injury_matrix()$intent), "Any intent")
         }
 
       # Use CJ to create all combinations

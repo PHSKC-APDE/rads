@@ -307,6 +307,28 @@ library(data.table)
                     mechanism == "fall" & intent == "unintentional"]$hospitalizations, 0L)
   })
 
+  test_that("chars_injury_matrix_count() zero-fills a `by` level with NO injury hospitalizations at all", {
+    d <- data.table::copy(charsdt)
+    d[, agegrp := sample(c("under65", "65+"), .N, replace = TRUE)]
+
+    # 'rare_bucket' has rows in the raw data but ZERO injury hospitalizations
+    # (across every mechanism and intent) -- it should still appear zero-filled, not
+    # be silently dropped from the output entirely.
+    d[1:50, agegrp := "rare_bucket"]
+    d[agegrp == "rare_bucket", `:=`(injury_nature_narrow = FALSE, injury_nature_broad = FALSE,
+                                    injury_intent = NA_character_, injury_mechanism = NA_character_)]
+
+    res <- chars_injury_matrix_count(ph.data = d,
+                                     intent = "*",
+                                     mechanism = "*",
+                                     by = "agegrp",
+                                     def = "narrow")
+
+    expect_true("rare_bucket" %in% unique(res$agegrp))
+    expect_true(all(res[agegrp == "rare_bucket"]$hospitalizations == 0L))
+    expect_equal(nrow(res[agegrp == 'rare_bucket']), nrow(res[agegrp == '65+']))
+  })
+
   test_that("chars_injury_matrix_count() zero-fill still works with by = NULL and 'none' collapsing", {
     res <- chars_injury_matrix_count(ph.data = data.table::copy(charsdt),
                                      intent = "none",
