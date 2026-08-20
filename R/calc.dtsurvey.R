@@ -67,7 +67,7 @@ calc.dtsurvey <- function(ph.data,
   }
     list(p = proportion_resolved, b = is_binary_detected)
   })
-  prop_bin_detect = setNames(prop_bin_detect, what)
+  prop_bin_detect = stats::setNames(prop_bin_detect, what)
 
   #filter the dataset
   if(!missing(where)){

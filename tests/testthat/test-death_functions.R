@@ -23,7 +23,7 @@ library(data.table)
     deathDT <- rads.data::synthetic_death
 
     deathDT2 <- data.table::copy(rads.data::synthetic_death)
-    deathDT2[, age_grp := data.table::fifelse(chi_age >= 65, "65+", "under65")]
+    deathDT2[, age_grp := data.table::fifelse(age >= 65, "65+", "under65")]
 
   # death_113_count() create output ----
     cod.of.interest <- c("Arthropod-borne viral encephalitis",
