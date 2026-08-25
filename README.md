@@ -12,25 +12,25 @@ If you haven't yet installed [`rads`](https://github.com/PHSKC-APDE/rads), follo
 
 1.  Make sure `remotes` is installed:
 
-    ```
+    ```r
     install.packages("remotes")
     ```
 
 2.  Install [`rads`](https://github.com/PHSKC-APDE/rads):
 
-    ```
+    ```r
     remotes::install_github("PHSKC-APDE/rads", auth_token = NULL)
     ```
     
     To install GitHub from a particular branch, specify it with the `ref` argument, e.g.,
     
-    ```
+    ```r
     remotes::install_github("PHSKC-APDE/rads", ref = "dev", auth_token = NULL)
     ```
 
 3.  Load [`rads`](https://github.com/PHSKC-APDE/rads):
     
-    ```
+    ```r
     library(rads)
     ```
 
@@ -52,7 +52,7 @@ Please refer to the [releases](https://github.com/PHSKC-APDE/rads/releases) page
 After installation, we highly recommend that you start by walking through a vignette on the [wiki](https://github.com/PHSKC-APDE/rads/wiki), e.g.,  [calc()](https://github.com/PHSKC-APDE/rads/wiki/calc).
 
 ## Problems?
-If you come across a bug or have specific suggestions for improvement, please click on [Issues](https://github.com/PHSKC-APDE/rads/issues) at the top of this page and then click [New Issue](https://github.com/PHSKC-APDE/rads/issues/new/choose) and provide the necessary details.
+If you come across a bug or have specific suggestions for improvement, please click on [Issues](https://github.com/PHSKC-APDE/rads/issues) at the top of this page and then click [New Issue](https://github.com/PHSKC-APDE/rads/issues/new/choose) and provide the necessary details. For guidance on what to include, see our [Issue Guidelines](https://github.com/PHSKC-APDE/rads/blob/main/.github/ISSUE_TEMPLATE/ISSUE_GUIDELINES.md).
 
 ## Contributing?
 Interested in contributing? See our [contribution guidelines](https://github.com/PHSKC-APDE/rads/blob/main/CONTRIBUTING.md)

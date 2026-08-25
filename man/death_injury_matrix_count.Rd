@@ -54,7 +54,10 @@ partial string match is sufficient and is case insensitive. E.g.,
 \code{mechanism = c("cycl")} would return both "Pedal cyclist" and
 "Motorcyclist".
 
-The default is \code{'*'}, which selects all possible mechanisms}
+The default is \code{'*'}, which selects all possible mechanisms. When \code{'*'} is
+used, the returned table also includes an extra \code{"Any mechanism"} row per
+intent, giving you the total across all mechanisms. This mirrors the
+\code{intent = '*'} default described above.}
 
 \item{icdcol}{a character vector of length one that specifies the name of the
 column in ph.data that contains the ICD10 death codes of interest.
@@ -107,10 +110,9 @@ mechanism. If you set both to "none", you will receive a summary of all
 injury deaths without regard to the intent.
 
 When \code{intent = '*'} (the default), an additional \code{"Any intent"} row is
-included for each mechanism, giving you the total across all intents --
-e.g., firearm deaths overall AND by intent (homicide, suicide, etc.) in a
+included for each mechanism, giving you the total across all intents in a
 single call. This mirrors the \code{mechanism = '*'} default, which includes an
-\code{"All injury"} total row per intent.
+\code{"Any mechanism"} total row per intent.
 
 Also note that terrorism codes (U01.#, U02.#, & U03.#) are not included
 because they are not included in the coding used by WA DOH. If they are

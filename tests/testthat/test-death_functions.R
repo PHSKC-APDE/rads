@@ -636,7 +636,7 @@ library(data.table)
                                                               icdcol = "underlying_cod_code"))
     expect_equal(unique(intent.check$intent), 'Suicide')
     expect_equal(nrow(mechanism.check), 6) # the '*' gets all five intents plus an 'Any intent' total
-    expect_equal(nrow(double.none), 1) # All injury/Any intent
+    expect_equal(nrow(double.none), 1) # Any mechanism/Any intent
   })
 
   test_that("death_injury_matrix_count() adds an 'Any intent' total when intent = '*' ...", {
@@ -681,8 +681,8 @@ library(data.table)
   })
 
   test_that("Death counts are accurate ...", {
-    expect_equal(sum(injuries.rads[mechanism == "All injury"]$deaths), sum(injuries.manual[mechanism == "All injury"]$deaths)) # summary by intent
-    expect_equal(sum(injuries.rads[mechanism != "All injury"]$deaths), sum(injuries.manual[mechanism != "All injury"]$deaths)) # individual mechanisms
+    expect_equal(sum(injuries.rads[mechanism == "Any mechanism"]$deaths), sum(injuries.manual[mechanism == "All injury"]$deaths)) # summary by intent
+    expect_equal(sum(injuries.rads[mechanism != "Any mechanism"]$deaths), sum(injuries.manual[mechanism != "All injury"]$deaths)) # individual mechanisms
     expect_equal(sum(death_injury_matrix_count(ph.data = deathDT, icdcol = "underlying_cod_code", by = 'temperament')[]$deaths),
                  sum(death_injury_matrix_count(ph.data = deathDT, icdcol = "underlying_cod_code")[]$deaths)) # by should not impact total
   })

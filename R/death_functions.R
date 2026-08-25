@@ -540,7 +540,10 @@ death_injury_matrix<- function(){
 #' `mechanism = c("cycl")` would return both "Pedal cyclist" and
 #' "Motorcyclist".
 #'
-#' The default is `'*'`, which selects all possible mechanisms
+#' The default is `'*'`, which selects all possible mechanisms. When `'*'` is
+#' used, the returned table also includes an extra `"Any mechanism"` row per
+#' intent, giving you the total across all mechanisms. This mirrors the
+#' `intent = '*'` default described above.
 #'
 #' @param icdcol a character vector of length one that specifies the name of the
 #' column in ph.data that contains the ICD10 death codes of interest.
@@ -599,10 +602,9 @@ death_injury_matrix<- function(){
 #' injury deaths without regard to the intent.
 #'
 #' When `intent = '*'` (the default), an additional `"Any intent"` row is
-#' included for each mechanism, giving you the total across all intents --
-#' e.g., firearm deaths overall AND by intent (homicide, suicide, etc.) in a
+#' included for each mechanism, giving you the total across all intents in a
 #' single call. This mirrors the `mechanism = '*'` default, which includes an
-#' `"All injury"` total row per intent.
+#' `"Any mechanism"` total row per intent.
 #'
 #' Also note that terrorism codes (U01.#, U02.#, & U03.#) are not included
 #' because they are not included in the coding used by WA DOH. If they are
@@ -841,9 +843,11 @@ death_injury_matrix_count <- function(ph.data,
 
   # Add an explicit 'Any intent' total when intent = '*' ----
     # Mirrors chars_injury_matrix_count(), which provides a total row alongside
-    # the by-intent breakdown. death's reference table has no pre-coded 'Any
-    # intent' aggregate the way it does for mechanism, so we sum it here across
-    # the intents actually selected.
+    # the by-intent breakdown. Unlike mechanism (see 'All injury' -> 'Any
+    # mechanism' relabeling below), death's reference table has no pre-coded
+    # 'Any intent' aggregate to piggyback on, so we sum it here across the
+    # intents actually selected. Both totals end up labeled consistently
+    # ('Any mechanism' / 'Any intent') despite being computed differently --
     if(identical(myorig.intent, "*")){
       agg_cols <- c("mechanism", by)
       if(is.null(ypll_age)){
@@ -870,7 +874,13 @@ death_injury_matrix_count <- function(ph.data,
         }
       }
 
-      if(mechanism == 'none'){x_combo[, mechanism := 'Any mechanism']}
+      # 'All injury' is rads.data::icd10_death_injury_matrix's pre-coded
+      # catch-all mechanism category (with its own ICD-10 codes). It surfaces
+      # in x_combo whenever mechanism = 'none' (the only category selected)
+      # or mechanism = '*' (included alongside all the individual mechanisms).
+      # Relabel it to 'Any mechanism' in both cases so the output is
+      # consistent regardless of which path produced the total.
+      x_combo[mechanism == 'All injury', mechanism := 'Any mechanism']
 
     # Create rows for zero values (otherwise rows would simply be missing) ----
       # Select columns to use for combination
