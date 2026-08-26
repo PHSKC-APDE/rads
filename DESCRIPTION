@@ -11,7 +11,6 @@ Authors@R: c(
 Description: Fetch and analyze data from Public Health Seattle & King County.
 License: Apache License (>= 2)
 Encoding: UTF-8
-RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 Imports:
     data.table,
@@ -40,3 +39,4 @@ Suggests:
 VignetteBuilder: quarto
 Depends: 
     R (>= 4.1.0)
+Config/roxygen2/version: 8.1.0
