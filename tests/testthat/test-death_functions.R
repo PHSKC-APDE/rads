@@ -667,6 +667,16 @@ library(data.table)
                                                   mechanism = "firearm",
                                                   icdcol = "underlying_cod_code")
     expect_false("Any intent" %in% unique(firearm_specific$intent))
+
+    # 'Any intent' should stay scoped to the selected mechanisms, not silently
+    # expand to a total across all intents
+    two_mech <- death_injury_matrix_count(ph.data = deathDT,
+                                          intent = '*',
+                                          mechanism = c('Fall', 'Drowning'),
+                                          icdcol = "underlying_cod_code")
+    expect_setequal(unique(two_mech[intent == "Any intent"]$mechanism), c("Fall", "Drowning"))
+    expect_equal(two_mech[mechanism == "Fall" & intent == 'Any intent']$deaths,
+                 sum(two_mech[mechanism == 'Fall' & intent != 'Any intent']$deaths))
   })
 
   test_that("death_injury_matrix_count() excludes aggregate mechanism categories from mechanism = '*' ...", {
