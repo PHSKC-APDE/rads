@@ -54,10 +54,21 @@ partial string match is sufficient and is case insensitive. E.g.,
 \code{mechanism = c("cycl")} would return both "Pedal cyclist" and
 "Motorcyclist".
 
-The default is \code{'*'}, which selects all possible mechanisms. When \code{'*'} is
-used, the returned table also includes an extra \code{"Any mechanism"} row per
-intent, giving you the total across all mechanisms. This mirrors the
-\code{intent = '*'} default described above.}
+The default is \code{'*'}, which selects all possible mechanisms \emph{except} the
+known aggregate/subtotal categories (\code{"All injury"}, \code{"All transport"},
+\code{"Motor vehicle traffic"}, \code{"Fire/hot object or substance"} -- see
+\code{\link[=death_injury_matrix]{death_injury_matrix()}} for why these are excluded). When \code{'*'} is used,
+the returned table also includes an extra \code{"Any mechanism"} row per
+intent, computed as the sum across the individual mechanisms actually
+returned.
+
+If you explicitly request one of the aggregate categories by name, it will be
+returned as its own row, but be aware that it can overlap with -- and should
+not be summed alongside -- its component mechanisms. E.g. \code{mechanism = "motor"}
+matches both \code{"Motor vehicle traffic"} and its 6 \code{"Motor vehicle traffic: ___"}
+sub-categories, since matching is partial-string based. It is your
+responsibility to avoid mixing aggregate and component mechanisms in the same
+request if you plan to sum across rows.}
 
 \item{icdcol}{a character vector of length one that specifies the name of the
 column in ph.data that contains the ICD10 death codes of interest.

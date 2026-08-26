@@ -13,6 +13,7 @@ Fetch and analyze data from Public Health Seattle & King County.
 
 Authors:
 \itemize{
+  \item Daniel Casey \email{data.request@kingcounty.gov}
   \item Danny Colombara \email{data.request@kingcounty.gov}
   \item Ronald Buie \email{data.request@kingcounty.gov}
 }
