@@ -466,6 +466,22 @@ death_icd10_clean <- function(icdcol){
 #' @note
 #' This function does not take any arguments
 #'
+#' Some values of `mechanism` are aggregates/subtotals of OTHER `mechanism` in
+#' this same table, not mutually-exclusive categories in their
+#' own right:
+#'
+#' - `"All injury"` (every mechanism combined)
+#' - `"All transport"` (every transport-related mechanism combined)
+#' - `"Motor vehicle traffic"` (the 6 `"Motor vehicle traffic: ___"` mechanisms combined)
+#' - `"Fire/hot object or substance"` (`"Fire/flame"` + `"Hot object/substance"`
+#' combined)
+#'
+#' This hierarchy comes from WA DOH's own ICE coding (with one
+#' additional aggregate, `"Motor vehicle traffic"`, synthesized by
+#' `rads.data`). If you plan to sum / aggregate across mechanisms, be sure you
+#' count either the aggregates OR the individual mechanisms, but not both!!!
+#'
+#'
 #' @source
 #' `rads.data::icd10_death_injury_matrix`
 #'
@@ -540,10 +556,21 @@ death_injury_matrix<- function(){
 #' `mechanism = c("cycl")` would return both "Pedal cyclist" and
 #' "Motorcyclist".
 #'
-#' The default is `'*'`, which selects all possible mechanisms. When `'*'` is
-#' used, the returned table also includes an extra `"Any mechanism"` row per
-#' intent, giving you the total across all mechanisms. This mirrors the
-#' `intent = '*'` default described above.
+#' The default is `'*'`, which selects all possible mechanisms *except* the
+#' known aggregate/subtotal categories (`"All injury"`, `"All transport"`,
+#' `"Motor vehicle traffic"`, `"Fire/hot object or substance"` -- see
+#' [death_injury_matrix()] for why these are excluded). When `'*'` is used,
+#' the returned table also includes an extra `"Any mechanism"` row per
+#' intent, computed as the sum across the individual mechanisms actually
+#' returned.
+#'
+#' If you explicitly request one of the aggregate categories by name, it will be
+#' returned as its own row, but be aware that it can overlap with -- and should
+#' not be summed alongside -- its component mechanisms. E.g. `mechanism = "motor"`
+#' matches both `"Motor vehicle traffic"` and its 6 `"Motor vehicle traffic: ___"`
+#' sub-categories, since matching is partial-string based. It is your
+#' responsibility to avoid mixing aggregate and component mechanisms in the same
+#' request if you plan to sum across rows.
 #'
 #' @param icdcol a character vector of length one that specifies the name of the
 #' column in ph.data that contains the ICD10 death codes of interest.
@@ -704,6 +731,7 @@ death_injury_matrix_count <- function(ph.data,
       if(isFALSE(is.character(mechanism)) || length(mechanism) > 28){
         stop("\n\U0001f47f `mechanism` must specify a character vector with a lenghth <= 28.\nTo select all options, use mechanism = '*'.")
       }
+      myorig.mechanism <- data.table::copy(mechanism)
 
     # icdcol ----
       # validated by death_validate_data()
@@ -783,9 +811,25 @@ death_injury_matrix_count <- function(ph.data,
   # Identify mechanism of interest ----
     unique_mechanisms <- unique(rads.data::icd10_death_injury_matrix$mechanism)
 
+    # Some mechanism categories in rads.data::icd10_death_injury_matrix are
+    # aggregates/subtotals of other categories in the same table, not
+    # mutually-exclusive categories in their own right -- this mirrors WA
+    # DOH's own ICE coding, plus one aggregated by rads.data:
+    #   'All injury'                   = every mechanism combined
+    #   'All transport'                = every transport-related mechanism combined
+    #   'Motor vehicle traffic'        = the 6 'Motor vehicle traffic: ___' mechanisms combined
+    #   'Fire/hot object or substance' = 'Fire/flame' + 'Hot object/substance' combined
+    # They are excluded from the automatic mechanism = '*' expansion below so
+    # that a death isn't counted once under its specific mechanism AND again
+    # under an aggregate that contains it. A user can still request any of
+    # them explicitly by name/keyword (e.g. mechanism = "all transport") --
+    # see @note in the roxygen docs above for the full explanation.
+    aggregate_mechanisms <- c("All injury", "All transport", "Motor vehicle traffic",
+                               "Fire/hot object or substance")
+
     mechanism = tolower(mechanism)
 
-    if("*" %in% mechanism){x_mechanism = unique_mechanisms}
+    if("*" %in% mechanism){x_mechanism = setdiff(unique_mechanisms, aggregate_mechanisms)}
 
     if("none" %in% mechanism){x_mechanism = "All injury"}
 
@@ -860,6 +904,24 @@ death_injury_matrix_count <- function(ph.data,
       x_combo <- rbind(x_combo, any_intent, use.names = TRUE)
     }
 
+  # Add an explicit 'Any mechanism' total when mechanism = '*' ----
+    # Same idea as the 'Any intent' block above, run second so it also picks
+    # up the 'Any intent' rows just added (their `intent` value is distinct
+    # from all the real intent labels, so grouping by intent here naturally
+    # produces the grand total 'Any mechanism' x 'Any intent' row too, when
+    # both arguments are '*', without any extra special-casing).
+    if(identical(myorig.mechanism, "*")){
+      agg_cols <- c("intent", by)
+      if(is.null(ypll_age)){
+        any_mechanism <- x_combo[, list(mechanism = "Any mechanism", deaths = sum(deaths)), by = agg_cols]
+      } else {
+        any_mechanism <- x_combo[, list(mechanism = "Any mechanism", deaths = sum(deaths),
+                                        temp_ypll = sum(get(ypll_col_name))), by = agg_cols]
+        data.table::setnames(any_mechanism, "temp_ypll", ypll_col_name)
+      }
+      x_combo <- rbind(x_combo, any_mechanism, use.names = TRUE)
+    }
+
   # Tidy ----
     # Rename & aggregate by mechanism and intent when needed ----
       if("none" %in% myorig.intent & "none" %in% mechanism){
@@ -875,11 +937,12 @@ death_injury_matrix_count <- function(ph.data,
       }
 
       # 'All injury' is rads.data::icd10_death_injury_matrix's pre-coded
-      # catch-all mechanism category (with its own ICD-10 codes). It surfaces
-      # in x_combo whenever mechanism = 'none' (the only category selected)
-      # or mechanism = '*' (included alongside all the individual mechanisms).
-      # Relabel it to 'Any mechanism' in both cases so the output is
-      # consistent regardless of which path produced the total.
+      # catch-all mechanism category (with its own ICD-10 codes). mechanism
+      # = '*' no longer includes it (see aggregate_mechanisms above), but it
+      # still surfaces in x_combo when mechanism = 'none' (the only category
+      # selected) or when a user explicitly types a keyword that matches it.
+      # Relabel it to 'Any mechanism' for consistency with the '*' path's
+      # explicitly-computed total.
       x_combo[mechanism == 'All injury', mechanism := 'Any mechanism']
 
     # Create rows for zero values (otherwise rows would simply be missing) ----
@@ -893,8 +956,16 @@ death_injury_matrix_count <- function(ph.data,
         names(unique_col_vals) <- c(cols_to_use)
 
       # If myorig.intent is '*', add intent column
-        if (exists("myorig.intent") && myorig.intent == '*') {
+        if (identical(myorig.intent, "*")) {
           unique_col_vals$intent <- c(unique(death_injury_matrix()$intent), "Any intent")
+        }
+
+      # If myorig.mechanism is '*', ensure every leaf mechanism is represented
+      # here, not just the ones with >= 1 death in this dataset -- otherwise a
+      # mechanism with zero deaths would be missing from the output entirely
+      # instead of appearing as a zero-count row.
+        if (identical(myorig.mechanism, "*")) {
+          unique_col_vals$mechanism <- c(setdiff(unique(death_injury_matrix()$mechanism), aggregate_mechanisms), "Any mechanism")
         }
 
       # Use CJ to create all combinations

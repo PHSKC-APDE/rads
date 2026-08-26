@@ -592,9 +592,11 @@ library(data.table)
                                                intent = "*",
                                                mechanism = "*",
                                                icdcol = "underlying_cod_code")
-    injuries.rads <- injuries.rads[!mechanism %in% c("All transport", "Fire/hot object or substance")] # These are summary categories
     injuries.rads <- injuries.rads[intent != "Any intent"] # This is a summary category, computed from the other intents
     injuries.rads <- injuries.rads[deaths != 0]
+    # Note: mechanism = '*' no longer returns the aggregate/subtotal mechanism
+    # categories ("All transport", "Fire/hot object or substance", "Motor
+    # vehicle traffic") -- see aggregate_mechanisms in death_injury_matrix_count().
 
     # manually
     cod.of.interest.ref <- rads.data::icd10_death_injury_matrix[, .(underlying_cod_code = icd10, mechanism, intent)]
@@ -602,7 +604,9 @@ library(data.table)
     injuries.manual[, ypll_65 := fifelse(age < 65, 65 - age, 0)]
     injuries.manual <- injuries.manual[, .(deaths = .N, ypll_65 = sum(ypll_65)), by = c('mechanism', 'intent')]
     setcolorder(injuries.manual, names(injuries.rads))
-    injuries.manual <- injuries.manual[!mechanism %in% c("All transport", "Fire/hot object or substance")] # These are summary categories
+    # Exclude the same aggregate/subtotal categories so injuries.manual's
+    # non-"All injury" mechanisms line up with injuries.rads' leaf mechanisms
+    injuries.manual <- injuries.manual[!mechanism %in% c("All transport", "Fire/hot object or substance", "Motor vehicle traffic")]
 
   # death_injury_matrix_count() tests ----
   test_that("Check for proper triggering of errors ...", {
@@ -663,6 +667,59 @@ library(data.table)
                                                   mechanism = "firearm",
                                                   icdcol = "underlying_cod_code")
     expect_false("Any intent" %in% unique(firearm_specific$intent))
+  })
+
+  test_that("death_injury_matrix_count() excludes aggregate mechanism categories from mechanism = '*' ...", {
+    everything <- death_injury_matrix_count(ph.data = deathDT,
+                                            intent = "*",
+                                            mechanism = "*",
+                                            icdcol = "underlying_cod_code")
+    expect_false(any(c("All injury", "All transport", "Motor vehicle traffic",
+                       "Fire/hot object or substance") %in% unique(everything$mechanism)))
+    expect_true("Any mechanism" %in% unique(everything$mechanism))
+
+    # explicitly requesting an aggregate by name should still work
+    transport_all <- death_injury_matrix_count(ph.data = deathDT,
+                                               intent = "*",
+                                               mechanism = "all transport",
+                                               icdcol = "underlying_cod_code")
+    expect_identical(unique(transport_all$mechanism), "All transport")
+  })
+
+  test_that("death_injury_matrix_count() adds an 'Any mechanism' total when mechanism = '*' ...", {
+    suicide_all <- death_injury_matrix_count(ph.data = deathDT,
+                                             intent = "suicide",
+                                             mechanism = "*",
+                                             icdcol = "underlying_cod_code")
+    expect_true("Any mechanism" %in% unique(suicide_all$mechanism))
+    expect_equal(suicide_all[mechanism == "Any mechanism"]$deaths,
+                sum(suicide_all[mechanism != "Any mechanism"]$deaths))
+
+    # mechanism = 'none' should give the same overall total via its own (pre-existing) collapse logic
+    suicide_none <- suppressWarnings(death_injury_matrix_count(ph.data = deathDT,
+                                              intent = "suicide",
+                                              mechanism = "none",
+                                              icdcol = "underlying_cod_code"))
+    expect_equal(nrow(suicide_none), 1)
+    expect_identical(unique(suicide_none$mechanism), "Any mechanism")
+    expect_equal(suicide_none$deaths, suicide_all[mechanism == "Any mechanism"]$deaths)
+
+    # a specific (non-'*', non-'none') mechanism selection should NOT get an automatic total
+    firearm_specific <- death_injury_matrix_count(ph.data = deathDT,
+                                                  intent = "suicide",
+                                                  mechanism = "firearm",
+                                                  icdcol = "underlying_cod_code")
+    expect_false("Any mechanism" %in% unique(firearm_specific$mechanism))
+
+    # 'Any mechanism' should stay scoped to the selected intents, not silently
+    # expand to a total across all intents
+    two_intents <- death_injury_matrix_count(ph.data = deathDT,
+                                             intent = c("suicide", "homicide"),
+                                             mechanism = "*",
+                                             icdcol = "underlying_cod_code")
+    expect_setequal(unique(two_intents[mechanism == "Any mechanism"]$intent), c("Suicide", "Homicide"))
+    expect_equal(two_intents[mechanism == "Any mechanism" & intent == "Suicide"]$deaths,
+                sum(two_intents[mechanism != "Any mechanism" & intent == "Suicide"]$deaths))
   })
 
   test_that("death_injury_matrix_count() zero-fills the 'Any intent' total consistently with by groups", {

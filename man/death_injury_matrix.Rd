@@ -27,6 +27,22 @@ not be the same as those used with hospitalization functions.
 }
 \note{
 This function does not take any arguments
+
+Some values of \code{mechanism} are aggregates/subtotals of OTHER \code{mechanism} in
+this same table, not mutually-exclusive categories in their
+own right:
+\itemize{
+\item \code{"All injury"} (every mechanism combined)
+\item \code{"All transport"} (every transport-related mechanism combined)
+\item \code{"Motor vehicle traffic"} (the 6 \code{"Motor vehicle traffic: ___"} mechanisms combined)
+\item \code{"Fire/hot object or substance"} (\code{"Fire/flame"} + \code{"Hot object/substance"}
+combined)
+}
+
+This hierarchy comes from WA DOH's own ICE coding (with one
+additional aggregate, \code{"Motor vehicle traffic"}, synthesized by
+\code{rads.data}). If you plan to sum / aggregate across mechanisms, be sure you
+count either the aggregates OR the individual mechanisms, but not both!!!
 }
 \examples{
 # Save and view table as a data.table named 'blah'
