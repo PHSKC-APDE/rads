@@ -157,7 +157,10 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
       if(is.na(instructions)) {
         orderTF <- is.ordered(oneVariable)
         detectedLevels <- levels(oneVariable)
-        instructions <- paste0('`',variableName,'`',' = factor(sample(c("',paste0(unlist(unique(oneVariable)),collapse = '", "'),'"), ', number_of_observations,', replace = TRUE, prob = c(',paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ', '),')), levels = c("',paste0(detectedLevels, collapse = '", "'),'"), ordered = ', orderTF,')', collapse = '')
+        if(anyNA(oneVariable) & !(NA %in% detectedLevels)) {
+          detectedLevels <- c(detectedLevels, NA)
+        }
+        instructions <- paste0('`',variableName,'`',' = factor(sample(c("',paste0(detectedLevels, collapse = '", "'),'"), ', number_of_observations,', replace = TRUE, prob = c(',paste0(prop.table(table(oneVariable, useNA = 'ifany')), collapse = ', '),')), levels = c("',paste0(detectedLevels, collapse = '", "'),'"), ordered = ', orderTF,')', collapse = '')
         instructions <- gsub('"NA"', 'NA', instructions)
         if(comments) {
           instructions <- paste0(instructions, ' # as factor')
