@@ -59,7 +59,7 @@ The default value is \code{myprops = "fraction"}.}
 
 \item{by}{a character vector used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{by = c('chi_sex', 'chi_race_6')}, the results would be stratified by each combination of sex
+results. For example, if you specified \code{by = c('sex', 'race_6')}, the results would be stratified by each combination of sex
 and race.
 
 The default is \code{by = NULL}}

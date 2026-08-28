@@ -91,7 +91,7 @@ for(myvar in c("vietn", "unspeclang", "uimale1864", "uige400", "uifem1864", "ui1
   calc(ph.data = dt,
        what = myvar,
        where = agep >= 65,
-       by = 'chi_sex')
+       by = 'sex')
 }
 
 # exploration #2 ... didn't work for mysterious reasons
@@ -106,7 +106,7 @@ for(myvar in c("vietn", "unspeclang", "uimale1864", "uige400", "uifem1864", "ui1
   calc(ph.data = dt,
        what = myvar,
        where = agep <65,
-       by = 'chi_sex')
+       by = 'sex')
 }
 
 # try to make a table
@@ -121,7 +121,7 @@ mytable <- rbindlist(lapply(
     temp <- calc(ph.data = dt, 
                  what = X, 
                  where = agep >= 65, 
-                 by = 'chi_sex')
+                 by = 'sex')
   }
 ), use.names = T)  
 ```
@@ -162,13 +162,13 @@ mytable <- rbindlist(lapply(
     temp <- calc(ph.data = dt, 
                  what = X, 
                  where = agep >= 65, 
-                 by = 'chi_sex')
+                 by = 'sex')
   }
 ), use.names = T)  
 
 # Expected output:
 # a data.table with columns for:
-# chi_sex: Male / Female
+# sex: Male / Female
 # level: Employed / Not in labor force / Unemployed
 # variable: employ
 # mean, mean_se, mean_lower, mean_upper, numerator, denominator

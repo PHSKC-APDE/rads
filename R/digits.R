@@ -28,8 +28,8 @@
 #'
 #'  set.seed(98104)
 #'  dt <- data.table::data.table(
-#'    chi_year = rep(2000:2019),
-#'    chi_sex = factor(sample(c("Male", "Female"), 20, rep = TRUE, prob = c(0.5, 0.5))),
+#'    year = rep(2000:2019),
+#'    sex = factor(sample(c("Male", "Female"), 20, rep = TRUE, prob = c(0.5, 0.5))),
 #'    result = rnorm(20, .75, 0.025),
 #'    se = rnorm(20, 0.0258787654654, 0.00001)
 #'  )

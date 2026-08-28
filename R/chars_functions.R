@@ -110,7 +110,7 @@ chars_injury_matrix <- function(){
 #'
 #' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified `by = c('chi_sex',
+#' results. For example, if you specified `by = c('sex',
 #' 'race3')`, the results would be stratified by each combination of sex
 #' and race.
 #'
@@ -596,8 +596,8 @@ chars_icd_ccs <- function(ref_type = 'all',
 #'
 #' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified `by = c('chi_sex',
-#' 'chi_race_6')`, the results would be stratified by each combination of sex
+#' results. For example, if you specified `by = c('sex',
+#' 'race_6')`, the results would be stratified by each combination of sex
 #' and race.
 #'
 #' The default is `by = NULL`

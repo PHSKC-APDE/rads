@@ -388,7 +388,7 @@ my.est <- calc(ph.data = mysurvey,
                what = c("pubtran", "drive"), 
                metrics = c("mean", "rse"), 
                proportion = T, 
-               by = "chi_sex")
+               by = "sex")
 print(my.est)
 ```
 

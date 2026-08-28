@@ -78,7 +78,7 @@ formatted death data structured like \code{rads.data::synthetic_death}.}
 
 \item{by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{by = c('chi_sex', 'chi_race_6')}, the results would be stratified by each combination of sex
+results. For example, if you specified \code{by = c('sex', 'race_6')}, the results would be stratified by each combination of sex
 and race.
 
 The default is \code{by = NULL}}
@@ -96,7 +96,7 @@ The default is \code{ypll_age = NULL}, which will skip YPLL calculations.}
 \item{death_age_col}{an optional character vector of length one that specifies
 the name of the column in ph.data with the decedents' age at death
 in years. It is only needed if \code{ypll_age} is
-specified AND if ph.data lacks a column named \code{chi_age}.
+specified AND if ph.data lacks a column named \code{age} or \code{chi_age}.
 
 The default is \code{death_age_col = NULL}.}
 }
