@@ -6,12 +6,15 @@ test_that("data_modeler creates matching types", {
     race = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), observations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
     sex = as.factor(sample(c("Male","Female"), observations, replace = T)),
     geo_region = factor(sample(c("South", "North", "Seattle", "East"), observations, replace = T), levels = c("South","North","Seattle","East")),
+    age = as.integer(pmin(pmax(rnorm(observations, mean = 50, sd = 15),0),100)),
+    inches = as.numeric(pmin(pmax(rnorm(observations, mean = 68, sd = 10),30),90)),
     indicator1 = as.factor(sample(c("never","sometimes", "always", NA), observations, replace = T)),
     indicator2 = as.factor(sample(c(1,2,3,4, NA), observations, replace = T)),
     indicator3 = as.factor(sample(c("<20","21-40","41-60","61<"),  observations, replace = T)),
     indicator4 = as.numeric(sample(1:100, observations, replace = T)),
     indicator5 = sample(1:3, observations, replace = T),
     indicator6 = as.double(sample(1:100, observations, replace = T)),
+    indicator7 = as.numeric(sample(1:10, observations, replace = T)),
     dates_baser = as.Date(sample(c("2025-01-01", "2025-06-01","2025-12-01"), observations, replace = T, prob = c(.33, .33, .33))),
     dates_posix14 = as.POSIXct(sample(c("2025-01-15 00:00:00 UTC","2025-02-15 00:00:00 UTC","2025-03-15 00:00:00 UTC","2025-04-15 00:00:00 UTC","2025-05-15 00:00:00 UTC","2025-06-15 00:00:00 UTC","2025-07-15 00:00:00 UTC","2025-08-15 00:00:00 UTC","2025-09-15 00:00:00 UTC","2025-10-15 00:00:00 UTC","2025-11-15 00:00:00 UTC","2025-12-15 00:00:00 UTC","2026-01-15 00:00:00 UTC","2026-02-15 00:00:00 UTC"), observations, replace = TRUE, prob = c(.05,.05,.05,.05,.05,.10,.10,.10,.10,.10,.10,.15,.05,.05)), tz = "UTC"))
 
