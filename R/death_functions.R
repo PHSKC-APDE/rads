@@ -93,8 +93,8 @@ death_113 <- function(){
 #'
 #' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified `by = c('chi_sex',
-#' 'chi_race_6')`, the results would be stratified by each combination of sex
+#' results. For example, if you specified `by = c('sex',
+#' 'race_6')`, the results would be stratified by each combination of sex
 #' and race.
 #'
 #' The default is `by = NULL`
@@ -112,7 +112,7 @@ death_113 <- function(){
 #' @param death_age_col an optional character vector of length one that specifies
 #' the name of the column in ph.data with the decedents' age at death
 #' in years. It is only needed if `ypll_age` is
-#' specified AND if ph.data lacks a column named `chi_age`.
+#' specified AND if ph.data lacks a column named `age` or `chi_age`.
 #'
 #' The default is `death_age_col = NULL`.
 #'
@@ -297,7 +297,7 @@ death_130<- function(){
 #' @param death_age_col an optional character vector of length one that specifies
 #' the name of the column in ph.data with the decedents' age at death
 #' in years. It is only needed if `ypll_age` is
-#' specified AND if ph.data lacks a column named `chi_age`.
+#' specified AND if ph.data lacks a column named `age` or `chi_age`.
 #'
 #' The default is `death_age_col = NULL`.
 #'
@@ -580,8 +580,8 @@ death_injury_matrix<- function(){
 #'
 #' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified `by = c('chi_sex',
-#' 'chi_race_6')`, the results would be stratified by each combination of sex
+#' results. For example, if you specified `by = c('sex',
+#' 'race_6')`, the results would be stratified by each combination of sex
 #' and race.
 #'
 #' The default is `by = NULL`
@@ -599,7 +599,7 @@ death_injury_matrix<- function(){
 #' @param death_age_col an optional character vector of length one that specifies
 #' the name of the column in ph.data with the decedents' age at death
 #' in years. It is only needed if `ypll_age` is
-#' specified AND if ph.data lacks a column named `chi_age`.
+#' specified AND if ph.data lacks a column named `age` or `chi_age`.
 #'
 #' The default is `death_age_col = NULL`.
 #'
@@ -777,15 +777,21 @@ death_injury_matrix_count <- function(ph.data,
       }
 
       if (is.null(death_age_col) & !is.null(ypll_age)) {
-        if ("chi_age" %in% names(ph.data)) {
+        if ("age" %in% names(ph.data)) {
+          death_age_col <- 'age'
+          message("\U0001F4E3 \nYou requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
+                  "\nThe function found and used a column named `age` for the YPLL calculation. If this was not",
+                  "\nyour intention, please specify the correct column with the decedent's age with the",
+                  "\n`death_age_col` argument.")
+        } else if ("chi_age" %in% names(ph.data)) {
           death_age_col <- 'chi_age'
           message("\U0001F4E3 \nYou requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
                   "\nThe function found and used a column named `chi_age` for the YPLL calculation. If this was not",
-                  "\nyour intention, please specify the correct column with the decendant's age with the",
+                  "\nyour intention, please specify the correct column with the decedent's age with the",
                   "\n`death_age_col` argument.")
         } else {
           stop(paste0("\n\U0001f47f You requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
-                      "\nThe function attempted to use a column named `chi_age`, but it was not found.",
+                      "\nThe function attempted to use a column named `age` or `chi_age`, but neither was found.",
                       "\nTo calculate YPLL, please set death_age_col to the name of the column with the age at death."))
         }
       }
@@ -1143,7 +1149,7 @@ death_multicause <- function(){
 #'
 #' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified `by = c('chi_sex', 'chi_race_6')`,
+#' results. For example, if you specified `by = c('sex', 'race_6')`,
 #' the results would be stratified by each combination of sex and race.
 #'
 #' The default is `by = NULL`
@@ -1161,7 +1167,7 @@ death_multicause <- function(){
 #' @param death_age_col an optional character vector of length one that specifies
 #' the name of the column in ph.data with the decedents' age at death
 #' in years. It is only needed if `ypll_age` is specified AND if ph.data lacks
-#' a column named `chi_age`.
+#' a column named `age` or `chi_age`.
 #'
 #' The default is `death_age_col = NULL`.
 #'
@@ -1356,7 +1362,13 @@ death_multicause_count <- function(ph.data,
       }
 
       if (is.null(death_age_col) & !is.null(ypll_age)) {
-        if ("chi_age" %in% names(ph.data)) {
+        if ("age" %in% names(ph.data)) {
+          death_age_col <- 'age'
+          message("\U0001F4E3 \nYou requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
+                  "\nThe function found and used a column named `age` for the YPLL calculation. If this was not",
+                  "\nyour intention, please specify the correct column with the decedent's age with the",
+                  "\n`death_age_col` argument.")
+        } else if ("chi_age" %in% names(ph.data)) {
           death_age_col <- 'chi_age'
           message("\U0001F4E3 \nYou requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
                   "\nThe function found and used a column named `chi_age` for the YPLL calculation. If this was not",
@@ -1364,7 +1376,7 @@ death_multicause_count <- function(ph.data,
                   "\n`death_age_col` argument.")
         } else {
           stop(paste0("\n\U0001f47f You requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
-                      "\nThe function attempted to use a column named `chi_age`, but it was not found.",
+                      "\nThe function attempted to use a column named `age` or `chi_age`, but neither was found.",
                       "\nTo calculate YPLL, please set death_age_col to the name of the column with the age at death."))
         }
       }
@@ -1557,8 +1569,8 @@ death_other<- function(){
 #'
 #' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified `by = c('chi_sex',
-#' 'chi_race_6')`, the results would be stratified by each combination of sex
+#' results. For example, if you specified `by = c('sex',
+#' 'race_6')`, the results would be stratified by each combination of sex
 #' and race.
 #'
 #' The default is `by = NULL`
@@ -1687,15 +1699,21 @@ death_other_count <- function(ph.data,
       }
 
       if (is.null(death_age_col) & !is.null(ypll_age)) {
-        if ("chi_age" %in% names(ph.data)) {
+        if ("age" %in% names(ph.data)) {
+          death_age_col <- 'age'
+          message("\U0001F4E3 \nYou requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
+                  "\nThe function found and used a column named `age` for the YPLL calculation. If this was not",
+                  "\nyour intention, please specify the correct column with the decedent's age with the",
+                  "\n`death_age_col` argument.")
+        } else if ("chi_age" %in% names(ph.data)) {
           death_age_col <- 'chi_age'
           message("\U0001F4E3 \nYou requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
                   "\nThe function found and used a column named `chi_age` for the YPLL calculation. If this was not",
-                  "\nyour intention, please specify the correct column with the decendant's age with the",
+                  "\nyour intention, please specify the correct column with the decedent's age with the",
                   "\n`death_age_col` argument.")
         } else {
           stop(paste0("\n\U0001f47f You requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
-                      "\nThe function attempted to use a column named `chi_age`, but it was not found.",
+                      "\nThe function attempted to use a column named `age` or `chi_age`, but neither was found.",
                       "\nTo calculate YPLL, please set death_age_col to the name of the column with the age at death."))
         }
       }
@@ -2048,8 +2066,8 @@ death_validate_data <- function(ph.data = NULL,
 #'
 #' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified `by = c('chi_sex',
-#' 'chi_race_6')`, the results would be stratified by each combination of sex
+#' results. For example, if you specified `by = c('sex',
+#' 'race_6')`, the results would be stratified by each combination of sex
 #' and race.
 #'
 #' The default is `by = NULL`
@@ -2067,7 +2085,7 @@ death_validate_data <- function(ph.data = NULL,
 #' @param death_age_col an optional character vector of length one that specifies
 #' the name of the column in ph.data with the decedents' age at death
 #' in years. It is only needed if `ypll_age` is
-#' specified AND if ph.data lacks a column named `chi_age`.
+#' specified AND if ph.data lacks a column named `age` or `chi_age`.
 #'
 #' The default is `death_age_col = NULL`.
 #'
@@ -2204,15 +2222,21 @@ death_xxx_count <- function(ph.data,
       }
 
       if (is.null(death_age_col) & !is.null(ypll_age)) {
-        if ("chi_age" %in% names(ph.data)) {
+        if ("age" %in% names(ph.data)) {
+          death_age_col <- 'age'
+          message("\U0001F4E3 \nYou requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
+                  "\nThe function found and used a column named `age` for the YPLL calculation. If this was not",
+                  "\nyour intention, please specify the correct column with the decedent's age with the",
+                  "\n`death_age_col` argument.")
+        } else if ("chi_age" %in% names(ph.data)) {
           death_age_col <- 'chi_age'
           message("\U0001F4E3 \nYou requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
                   "\nThe function found and used a column named `chi_age` for the YPLL calculation. If this was not",
-                  "\nyour intention, please specify the correct column with the decendant's age with the",
+                  "\nyour intention, please specify the correct column with the decedent's age with the",
                   "\n`death_age_col` argument.")
         } else {
           stop(paste0("\n\U0001f47f You requested the calculation of YPLL by specifying `ypll_age` and did not provide `death_age_col`.",
-                      "\nThe function attempted to use a column named `chi_age`, but it was not found.",
+                      "\nThe function attempted to use a column named `age` or `chi_age`, but neither was found.",
                       "\nTo calculate YPLL, please set death_age_col to the name of the column with the age at death."))
         }
       }
@@ -2418,8 +2442,8 @@ death_xxx_count <- function(ph.data,
 #' The default value is `ci = 0.95`.
 #' @param by a character vector used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified `by = c('chi_sex',
-#' 'chi_race_6')`, the results would be stratified by each combination of sex
+#' results. For example, if you specified `by = c('sex',
+#' 'race_6')`, the results would be stratified by each combination of sex
 #' and race.
 #'
 #' The default is `by = NULL`
@@ -3098,8 +3122,8 @@ life_table_predict_mx <- function(ph.data = ph.data,
 #'
 #' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified `by = c('chi_sex',
-#' 'chi_race_6')`, the results would be grouped by each combination of sex
+#' results. For example, if you specified `by = c('sex',
+#' 'race_6')`, the results would be grouped by each combination of sex
 #' and race. If you leave it blank (i.e., `by = NULL`), it will only
 #' provide the death counts and death fractions by age group
 #' described by `cuts`.

@@ -47,7 +47,7 @@ of the strata in the summary table.
 # create test data
 set.seed(98104)
 dt <- data.table::data.table(
-  chi_year = rep(2008:2018, 2000),
+  year = rep(2008:2018, 2000),
   fetal_pres = factor(sample(c("Breech", "Cephalic", "Other", NA),
                              22000, rep = TRUE,
                              prob = c(0.04, 0.945, 0.01, 0.005))),

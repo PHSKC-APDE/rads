@@ -35,7 +35,7 @@ library(data.table)
 
 # Check chars_icd_ccs_count() ----
   charsdata <- rads.data::synthetic_chars
-  charsdata[, chi_sex := sample(c('Male', 'Female'), .N, replace = T)]
+  charsdata[, sex := sample(c('Male', 'Female'), .N, replace = T)]
 
   test_that("Function returns expected rows, columns, and values...", {
     # test icd argument ----
@@ -77,11 +77,11 @@ library(data.table)
       expect_equal(sort(names(superlevel.result)), sort(c('superlevel_desc', 'hospitalizations')))
 
     # test by argument ----
-      by.result <- chars_icd_ccs_count(ph.data = charsdata[chi_sex %in% c("Male", "Female")],
+      by.result <- chars_icd_ccs_count(ph.data = charsdata[sex %in% c("Male", "Female")],
                                              detailed = 'chronic kidney disease',
-                                             by = c('chi_sex', 'temperament'))
+                                             by = c('sex', 'temperament'))
       expect_equal(nrow(by.result), 6) # two sex * 3 temperament == 6 rows
-      expect_equal(sort(names(by.result)), sort(c('chi_sex', 'temperament', 'detailed_desc', 'hospitalizations')))
+      expect_equal(sort(names(by.result)), sort(c('sex', 'temperament', 'detailed_desc', 'hospitalizations')))
       expect_equal(sum(by.result$hospitalizations),
                    nrow(charsdata[diag1 %in% chars_icd_ccs()[grepl('chronic kidney disease', detailed, ignore.case = T)]$icdcm_cod]))
 
@@ -145,7 +145,7 @@ library(data.table)
                                      detailed = 'mangoes'))
 
     # should give warning when pass an icdcol that has non-standard values
-    expect_warning(chars_icd_ccs_count(ph.data = charsdata, icdcm = '^Kidney transplant', icdcol = 'chi_sex'))
+    expect_warning(chars_icd_ccs_count(ph.data = charsdata, icdcm = '^Kidney transplant', icdcol = 'sex'))
     })
 
   test_that("chars_icd_ccs_count() zero-fills a `by` group with no hospitalizations for the specified diagnosis", {
@@ -180,7 +180,7 @@ library(data.table)
 
 # Check chars_injury_matrix_count() ----
   charsdt <- rads.data::synthetic_chars
-  charsdt[, chi_sex := sample(c('Male', 'Female'), .N, replace = T)]
+  charsdt[, sex := sample(c('Male', 'Female'), .N, replace = T)]
   charsdt[, race4 := sample(c("AIAN", "Asian", "Black", "Hispanic", "Multiple", "NHPI", "White"), .N, replace = T)]
 
   test_that("Function returns expected rows, columns, and values...", {
@@ -252,7 +252,7 @@ library(data.table)
     expect_error(chars_injury_matrix_count(ph.data = charsdt2))
 
     # should error when have illogical by values
-    expect_error(chars_injury_matrix_count(ph.data = charsdt, by = c('race4', 'blah', 'chi_sex')))
+    expect_error(chars_injury_matrix_count(ph.data = charsdt, by = c('race4', 'blah', 'sex')))
 
     # should error because 'blah' is not an intent or mechanism
     expect_error(suppressWarnings(chars_injury_matrix_count(ph.data = charsdt, intent = 'blah')))

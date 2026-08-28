@@ -44,7 +44,7 @@ available in \code{rads.data::synthetic_death}.}
 
 \item{by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{by = c('chi_sex', 'chi_race_6')}, the results would be grouped by each combination of sex
+results. For example, if you specified \code{by = c('sex', 'race_6')}, the results would be grouped by each combination of sex
 and race. If you leave it blank (i.e., \code{by = NULL}), it will only
 provide the death counts and death fractions by age group
 described by \code{cuts}.

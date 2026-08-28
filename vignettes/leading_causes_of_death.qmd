@@ -154,14 +154,10 @@ Tidy the table of non-infant death counts
 
 ```{r}
 #| warning: false
-# Ensure all rows have a causeid (will be missing when there was a zero count)
-death_count <- merge(death_count[, causeid := NULL], 
-                     rads::death_113(), 
-                     by = 'cause.of.death', 
-                     all.x= TRUE, 
-                     all.y= FALSE)
+# Make sure causeid is an integer 
+death_count[, causeid := as.integer(causeid)]
 
-# Add on the leading cause of death group identifier ----
+# Merge on the leading cause of death group identifier
 death_count <- merge(death_count, 
                      death_groups, 
                      by = 'causeid', 
@@ -222,11 +218,8 @@ Tidy the table of infant death counts
 
 ```{r}
 #| warning: false
-# Ensure all rows have a causeid (will be missing when there was a zero count)
-infdeath_count <- merge(infdeath_count[, causeid := NULL], 
-                     rads::death_130(), 
-                     by = 'cause.of.death', 
-                     all.x= TRUE, all.y= FALSE)
+# Make sure causeid is an integer 
+infdeath_count[, causeid := as.integer(causeid)]
 
 # Add on the leading cause of death group identifier ----
 infdeath_count <- merge(infdeath_count, 
@@ -263,7 +256,7 @@ Take a peek at the tidied table of infant death counts
 ```{r}
 #| echo: true
 #| results: 'hide'
-head(infdeath_count[deaths >= 10]) # suppress view
+head(infdeath_count[deaths >= 10]) 
 ```
 
 ```{r}
@@ -348,7 +341,7 @@ Take a peek at the non-infant rates ...
 #| warning: false
 #| echo: true
 #| results: 'hide'
-head(rates[count >= 10]) # suppress view
+head(rates[count >= 10]) 
 ```
 
 ```{r}
@@ -384,7 +377,7 @@ Take a peek at the infant rates ...
 #| warning: false
 #| echo: true
 #| results: 'hide'
-head(infrates[count >= 10]) # suppress view
+head(infrates[count >= 10]) 
 ```
 
 ```{r}

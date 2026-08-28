@@ -20,7 +20,7 @@
 #' \donttest{
 #' # Observe that modeled data looks like original data
 #' library(data.table)
-#' ph.data <- get_data_birth(cols = c('race4', 'chi_age', 'hra20_name',
+#' ph.data <- get_data_birth(cols = c('race4', 'age', 'hra20_name',
 #'                                    'sex', 'birth_weight_grams'))
 #' DT.synthetic.data <- data_modeler(ph.data = ph.data,
 #'                                   number_of_observations =  10000,
