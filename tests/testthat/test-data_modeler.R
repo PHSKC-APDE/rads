@@ -1,6 +1,6 @@
 test_that("data_modeler creates matching types", {
   observations <- 1000
-  DTTest <- data.table(
+  DTTest <- data.table::data.table(
     id = 1:observations,
     county = sample(c('County1', 'County2'), observations, replace = TRUE),
     race = factor(sample(c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA), observations, replace = T, prob = c(.19,.01,.07,.11,.01,.35,.07,.14,.02)), levels = c("Asian", "AIAN", "Black", "Hispanic", "NHPI", "White", "Other", "Multiple", NA)),
@@ -20,11 +20,27 @@ test_that("data_modeler creates matching types", {
 
   DTResult <- data_modeler(ph.data = DTTest, number_of_observations = 1000, comments = T, return_code = F, print_code = F)
 
+  DFResult <- data_modeler(ph.data = data.table::as.data.table(DTTest), number_of_observations = 1000, comments = T, return_code = F, print_code = F)
+
+  data_types_test <- sapply(DFTest, class)
+  data_types_result <- sapply(DFResult, class)
+
+
   data_types_test <- sapply(DTTest, class)
   data_types_result <- sapply(DTResult, class)
 
   #all types match
   expect_equal(all(unlist(data_types_test) == unlist(data_types_result)), TRUE)
+
+})
+
+test_that("data_modeler returns data frame when given a data frame", {
+  observations <- 1000
+  DTTest <- data.table::data.table(
+    id = 1:observations)
+  DFTest <- as.data.frame(DTTest)
+  DFResult <- data_modeler(ph.data = DFTest, number_of_observations = 1000, comments = T, return_code = F, print_code = F)
+  expect_true(inherits(DFResult, "data.frame"))
 
 })
 

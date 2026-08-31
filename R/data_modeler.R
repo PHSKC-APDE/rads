@@ -82,11 +82,19 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
   ### receives data.table object to emulate.
   ### returns a data.table of synthetic data.
 
+
+
   # Validate inputs ----
   if(missing(ph.data)){stop('\n\U1F6D1 ph.data must be provided')}
 
+
   if (is.data.frame(ph.data)) {
-    data.table::setDT(ph.data)
+    if(inherits(ph.data, "data.table")) {
+      ISDFFLAG <- FALSE
+    } else {
+      ph.data <- data.table::setDT(ph.data)
+      ISDFFLAG <- TRUE
+    }
   } else {
     stop(paste0("\n\U1F6D1 ph.data must be a data.table or data.frame."))
   }
@@ -545,7 +553,11 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
   if(return_code) {
     return(codeListParsed)
   }else{
-    DT <- eval(parse(text = paste0(codeText)))
-    return(DT)
+    synthetic.data <- eval(parse(text = paste0(codeText)))
+    if(ISDFFLAG) {
+      return(as.data.frame(synthetic.data))
+    } else {
+      return(synthetic.data)
+    }
   }
 }
