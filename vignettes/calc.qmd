@@ -93,7 +93,7 @@ birth <- birth[year %in% 2019:2023]
 #| eval: true
 #| results: 'hide'
 my.est <- calc(ph.data = birth, 
-               what = c("preterm"), 
+               what = "preterm", 
                metrics = c("mean", "rse", "numerator", "denominator"), 
                time_var = "year")
 print(my.est)
@@ -110,7 +110,7 @@ pretty_kable(my.est)
 #| eval: true
 #| results: 'hide'
 my.est <- calc(ph.data = birth, 
-               what = c("preterm"), 
+               what = "preterm", 
                where = sex == "Male",
                metrics = c("mean", "rse", "numerator", "denominator"), 
                time_var = "year")
@@ -129,7 +129,7 @@ pretty_kable(my.est)
 #| eval: true
 #| results: 'hide'
 my.est <- calc(ph.data = birth, 
-               what = c("preterm"), 
+               what = "preterm", 
                where = sex == "Male" & race == "Hispanic",
                metrics = c("mean", "rse", "numerator", "denominator"), 
                time_var = "year")
@@ -152,7 +152,7 @@ pretty_kable(my.est)
 birth[, calyear := year]
 
 my.est <- calc(ph.data = birth, 
-               what = c("preterm"), 
+               what = "preterm", 
                metrics = c("mean", "rse", "numerator", "denominator"), 
                time_var = "year", 
                by = "calyear")
@@ -171,7 +171,7 @@ pretty_kable(my.est)
 #| eval: true
 #| results: 'hide'
 my.est <- calc(ph.data = birth, 
-               what = c("preterm"), 
+               what = "preterm", 
                metrics = c("mean", "rse", "numerator", "denominator"), 
                time_var = "year", 
                win = 3)
