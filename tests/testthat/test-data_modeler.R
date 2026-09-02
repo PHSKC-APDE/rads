@@ -20,12 +20,6 @@ test_that("data_modeler creates matching types", {
 
   DTResult <- data_modeler(ph.data = DTTest, number_of_observations = 1000, comments = T, return_code = F, print_code = F)
 
-  DFResult <- data_modeler(ph.data = data.table::as.data.table(DTTest), number_of_observations = 1000, comments = T, return_code = F, print_code = F)
-
-  data_types_test <- sapply(DFTest, class)
-  data_types_result <- sapply(DFResult, class)
-
-
   data_types_test <- sapply(DTTest, class)
   data_types_result <- sapply(DTResult, class)
 
@@ -34,13 +28,16 @@ test_that("data_modeler creates matching types", {
 
 })
 
-test_that("data_modeler returns data frame when given a data frame", {
+test_that("data_modeler returns DT when given DT, and DF when given DF", {
   observations <- 1000
   DTTest <- data.table::data.table(
     id = 1:observations)
+  DTResult <- data_modeler(ph.data = DTTest, number_of_observations = 1000, comments = T, return_code = F, print_code = F)
   DFTest <- as.data.frame(DTTest)
   DFResult <- data_modeler(ph.data = DFTest, number_of_observations = 1000, comments = T, return_code = F, print_code = F)
-  expect_true(inherits(DFResult, "data.frame"))
+
+  expect_true(inherits(DTResult, "data.table"))
+  expect_false(inherits(DFResult, "data.table"))
 
 })
 

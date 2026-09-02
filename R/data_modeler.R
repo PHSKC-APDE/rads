@@ -90,10 +90,10 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
 
   if (is.data.frame(ph.data)) {
     if(inherits(ph.data, "data.table")) {
-      ISDFFLAG <- FALSE
+      FLAG_ISDF <- FALSE
     } else {
       ph.data <- data.table::setDT(ph.data)
-      ISDFFLAG <- TRUE
+      FLAG_ISDF <- TRUE
     }
   } else {
     stop(paste0("\n\U1F6D1 ph.data must be a data.table or data.frame."))
@@ -552,12 +552,13 @@ data_modeler <- function(ph.data, number_of_observations = 100, comments = TRUE,
 
   if(return_code) {
     return(codeListParsed)
-  }else{
+  } else {
     synthetic.data <- eval(parse(text = paste0(codeText)))
-    if(ISDFFLAG) {
-      return(as.data.frame(synthetic.data))
-    } else {
-      return(synthetic.data)
+    if(FLAG_ISDF) {
+      synthetic.data <- as.data.frame(synthetic.data)
     }
+
+    return(synthetic.data)
+
   }
 }
