@@ -27,7 +27,7 @@ data_modeler(
 
 \item{categorical_threshold}{integer >= 1. Threshold for the number of unique values in a variable at or below which data_modeler() will treat the value as categorical, default 61.}
 
-\item{proportional_threshold}{floating point between 0 and 1 incusive. Threshold for the proportion of observations that must be unique, below which data modeler() will treat the value as categorical, default 0.75}
+\item{proportional_threshold}{floating point between 0 and 1 inclusive. Threshold for the proportion of observations that must be unique, below which data modeler() will treat the value as categorical, default 0.75}
 }
 \value{
 When \code{return_code = FALSE}, returns a data.table containing synthetic data with the same structure as \code{ph.data}. When \code{return_code = TRUE}, returns a list of character strings that can be evaluated to generate the synthetic data. If \code{print_code = TRUE}, the generated code is also printed to the console. If \code{comments = TRUE}, code will include comments describing the data type of each column.
