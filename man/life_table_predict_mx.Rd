@@ -6,7 +6,7 @@
 \usage{
 life_table_predict_mx(
   ph.data = ph.data,
-  group_by = group_by,
+  by = by,
   myages = myages,
   empirical_adjustment_factor = 1.8
 )
@@ -17,9 +17,9 @@ life_table_predict_mx(
 The default is \code{ph.data = ph.data}, where \code{ph.data} is passed
 from \code{rads::life_table()}}
 
-\item{group_by}{Variables used for stratification
+\item{by}{Variables used for stratification
 
-The default is \code{group_by = group_by}, where \code{group_by} is passed
+The default is \code{by = by}, where \code{by} is passed
 from \code{rads::life_table()}}
 
 \item{myages}{A vector of length one containing the name of the column with
@@ -39,10 +39,10 @@ A data.table with predicted mx values for the highest age group
 This function predicts the \code{mx} value (age-specific mortality rate) for the
 highest age group (e.g., '85+') where there is insufficient data for
 calculating it directly. It is intended for internal use by \code{rads}'
-\code{\link{life_table}} only.
+\code{\link[=life_table]{life_table()}} only.
 }
 \details{
-The function uses a simplification of the Gompertz–Makeham law of mortality.
+The function uses a simplification of the Gompertz-Makeham law of mortality.
 In the log10-linear model \code{log10(mx) = a + b * istart}:
 \itemize{
 \item \code{a} (intercept) represents the Makeham age-independent mortality term
@@ -56,8 +56,8 @@ parameters best fit these mortality data.
 
 Age specific mortality rates and are known to increase exponentially
 after age 30 and the \code{empirical_adjustment_factor} is based on predicting
-\code{mx} for those >= 85 years old. It is recommended that you do not use use
-this function when the max age is is less than '80+'.
+\code{mx} for those >= 85 years old. It is recommended that you do not use
+this function when the max age is less than '80+'.
 }
 \note{
 This is an internal function and should not be called directly by users.
@@ -78,7 +78,7 @@ deaths <- data.table(
 # generate predictions ----
 output <- rads:::life_table_predict_mx(
            ph.data = deaths,
-           group_by = 'gender',
+           by = 'gender',
            myages = 'ages'
 )
 

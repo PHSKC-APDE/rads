@@ -26,9 +26,20 @@ Imports a data.frame with at a minimum of the following columns: \code{old_var},
 \item \code{old_var}: Column in the dataset containing the values to be recoded
 \item \code{old_value}: value in the column \code{old_var} to be translated into a new value by recoding. If left blank/NA/""/NULL or otherwise missing, the recode operation
 will essentially take the form of a rename of \code{old_var} -> \code{new_var}
-\item \code{new_var}: Column where the recoded values will be placed. If \code{new_var} doesn't exist, than it will be created. Otherwise it will be overwritten.
+\item \code{new_var}: Column where the recoded values will be placed. If \code{new_var} doesn't exist, then it will be created. Otherwise it will be overwritten.
 \item \code{new_value}: Column indicating where the new values for the recoding process exist. It is positionally (e.g. row) tied to a particular \code{old_value}.
 If blank, it helps identify a simpler rename operation.
 \item \code{new_label}: character (or convertable to character): The factor label that \code{old_value} will be recoded to in conjunction with the position of \code{new_value}
 }
+}
+\examples{
+recode_df <- data.frame(
+  old_var = c("sex", "sex"),
+  old_value = c("M", "F"),
+  new_var = c("sex_recoded", "sex_recoded"),
+  new_value = c("Male", "Female"),
+  new_label = NA
+)
+parse_recode_instructions(recode_df, simplify_to_numeric = FALSE)
+
 }

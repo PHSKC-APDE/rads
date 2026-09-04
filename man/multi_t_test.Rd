@@ -29,7 +29,7 @@ multi_t_test(
 \item{df_method}{String specifying the method for calculating degrees of
 freedom. Options are:
 \itemize{
-\item \strong{\code{'estimated'}} (Welch–Satterthwaite equation): This method, which
+\item \strong{\code{'estimated'}} (Welch-Satterthwaite equation): This method, which
 corresponds to Welch's t-test, calculates an approximation of the degrees
 of freedom based on the sample variances and sizes. It's particularly
 useful when groups have unequal variances and/or unequal sample sizes,
@@ -60,19 +60,21 @@ in \code{\link[stats:p.adjust]{stats::p.adjust()}} for more information. Default
 }
 \value{
 A data.table containing comparison results with the following columns:
-\item{comparison}{String describing the comparison}
-\item{diff_means}{Numeric difference in means}
-\item{ci_lower}{Numeric lower bound of the confidence interval}
-\item{ci_upper}{Numeric upper bound of the confidence interval}
-\item{p.value}{Numeric p-value}
-\item{significant}{Logical indicating if the result is significant (TRUE if
-p-value < alpha, FALSE otherwise)}
-\item{t.statistic}{Numeric t-statistic}
-\item{df}{Numeric degrees of freedom}
-\item{df_method}{String indicating the method used for
-calculating degrees of freedom}
-\item{adjust_method}{String indicating the method used for multiple
-comparisons p.value adjustment (when \code{adjust_method} is not \code{NULL})}
+\itemize{
+\item \code{comparison}: String describing the comparison
+\item \code{diff_means}: Numeric difference in means
+\item \code{ci_lower}: Numeric lower bound of the confidence interval
+\item \code{ci_upper}: Numeric upper bound of the confidence interval
+\item \code{p.value}: Numeric p-value
+\item \code{significant}: Logical indicating if the result is significant (TRUE if
+p-value < alpha, FALSE otherwise)
+\item \code{t.statistic}: Numeric t-statistic
+\item \code{df}: Numeric degrees of freedom
+\item \code{df_method}: String indicating the method used for
+calculating degrees of freedom
+\item \code{adjust_method}: String indicating the method used for multiple
+comparisons p.value adjustment (when \code{adjust_method} is not \code{NULL})
+}
 }
 \description{
 This function performs t-tests comparing multiple groups against a reference

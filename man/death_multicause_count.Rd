@@ -12,8 +12,7 @@ death_multicause_count(
   icdcol = "underlying_cod_code",
   contributing_cols = "record_axis_code",
   contributing_logic = "ANY",
-  kingco = TRUE,
-  group_by = NULL,
+  by = NULL,
   ypll_age = NULL,
   death_age_col = NULL
 )
@@ -23,7 +22,7 @@ death_multicause_count(
 with one person per row, with at least one column of ICD10 underlying cause
 codes and columns for contributing cause codes.
 
-#' \strong{Note:}* \code{ph.data}, \code{icdcol}, and \code{contributing_cols} are validated by
+\strong{Note:} \code{ph.data}, \code{icdcol}, and \code{contributing_cols} are validated by
 \code{\link[=death_validate_data]{death_validate_data()}}}
 
 \item{cause_name}{a character vector of length one that specifies the multicause
@@ -49,7 +48,7 @@ The default is \code{NULL}.}
 column in ph.data that contains the underlying ICD10 death codes.
 
 The default is \code{"underlying_cod_code"}, which is found in properly formatted
-death data obtained using the \code{get_data_death()} function.}
+death data structured like \code{rads.data::synthetic_death}.}
 
 \item{contributing_cols}{a character vector of length one that specifies the
 stem of the column names containing contributing cause codes. The function
@@ -63,20 +62,12 @@ ANY or ALL of the \code{contributing_codes} must be present.
 
 The default is \code{"ANY"}.}
 
-\item{kingco}{a logical vector of length one. It specifies whether you want to
-limit the analysis to King County.
-
-\strong{NOTE} this only works with data imported with the \code{get_data_death()}
-function because it needs the variable \code{chi_geo_kc}.
-
-The default is \code{kingco = TRUE}.}
-
-\item{group_by}{a character vector of indeterminate length. This is used to
+\item{by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{group_by = c('chi_sex', 'chi_race_6')},
+results. For example, if you specified \code{by = c('sex', 'race_6')},
 the results would be stratified by each combination of sex and race.
 
-The default is \code{group_by = NULL}}
+The default is \code{by = NULL}}
 
 \item{ypll_age}{an optional numeric vector of length 1. When specified, it
 should be the age (an integer) used for \strong{Years of Potential Life Lost} (YPLL)
@@ -91,13 +82,13 @@ The default is \code{ypll_age = NULL}, which will skip YPLL calculations.}
 \item{death_age_col}{an optional character vector of length one that specifies
 the name of the column in ph.data with the decedents' age at death
 in years. It is only needed if \code{ypll_age} is specified AND if ph.data lacks
-a column named \code{chi_age}.
+a column named \code{age} or \code{chi_age}.
 
 The default is \code{death_age_col = NULL}.}
 }
 \value{
 Generates a table with three columns: \code{cause.of.death}, \code{deaths}, and
-if specified, \code{ypll_##}. Columns in the \code{group_by} argument will also be
+if specified, \code{ypll_##}. Columns in the \code{by} argument will also be
 returned.
 }
 \description{
@@ -126,8 +117,7 @@ opioid_deaths <- death_multicause_count(
   ph.data = deathDT,
   cause_name = "Opioid",
   icdcol = "underlying_cod_code",
-  contributing_cols = "record_axis_code",
-  kingco = TRUE
+  contributing_cols = "record_axis_code"
 )
 
 # Example using custom codes
@@ -137,15 +127,14 @@ custom_deaths <- death_multicause_count(
   contributing_codes = c("T400", "T401"),
   contributing_logic = "ANY",
   icdcol = "underlying_cod_code",
-  contributing_cols = "record_axis_code",
-  kingco = FALSE
+  contributing_cols = "record_axis_code"
 )
 
 }
 \seealso{
 \itemize{
 \item \code{\link[=death_multicause]{death_multicause()}} for viewing available multicause definitions
-\item \code{\link[=get_data_death]{get_data_death()}} for importing properly formatted death data
+\item \link[rads.data:synthetic_death]{rads.data::synthetic_death} for properly formatted synthetic death data
 \item \code{\link[=death_icd10_clean]{death_icd10_clean()}} for preparing ICD-10 codes for use with all rads death functions
 \item \code{\link[=age_standardize]{age_standardize()}} for calculating age standardized rates
 \item \code{\link[=death_113_count]{death_113_count()}} for generating CDC NCHS 113 leading causes of death counts

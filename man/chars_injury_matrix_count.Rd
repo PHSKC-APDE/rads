@@ -9,10 +9,9 @@ chars_injury_matrix_count(
   ph.data = NULL,
   intent = "*",
   mechanism = "*",
-  group_by = NULL,
+  by = NULL,
   def = "narrow",
-  primary_ecode = TRUE,
-  kingco = TRUE
+  primary_ecode = TRUE
 )
 }
 \arguments{
@@ -63,12 +62,12 @@ hospitalizations for any of these MVT subcategories.
 
 The default is \code{mechanism = '*'}, which selects all possible mechanisms}
 
-\item{group_by}{a character vector of indeterminate length. This is used to
+\item{by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{group_by = c('chi_sex', 'race3')}, the results would be stratified by each combination of sex
+results. For example, if you specified \code{by = c('sex', 'race3')}, the results would be stratified by each combination of sex
 and race.
 
-The default is \code{group_by = NULL}}
+The default is \code{by = NULL}}
 
 \item{def}{a character vector of length one, limited to 'narrow' or 'broad'.
 It specifies whether you want to use the CDC's recommended 'narrow' approach,
@@ -93,20 +92,11 @@ an analysis with other ecodes would need to perform a custom analysis in SQL usi
 the \code{chars.stage_diag} & \code{chars.stage_ecode} tables.
 
 The default is \code{primary_ecode = TRUE}}
-
-\item{kingco}{a logical vector of length one. It specifies whether you want to
-limit the analysis to King County. This parameter is specific to Washington State
-CHARS data and requires the column \code{chi_geo_kc}, which is provided by
-\code{\link[apde.data:chars]{apde.data::chars()}}.
-
-For users outside of King County or Washington State, set \code{kingco = FALSE}.
-
-The default is \code{kingco = TRUE}}
 }
 \value{
 The function returns a data.table with a minimum of three columns:
 \code{mechanism}, \code{intent}, & \code{hospitalizations}. Any
-\code{group_by} variables would also have their own columns.
+\code{by} variables would also have their own columns.
 
 The function default is to return the matrix of all intents and mechanisms
 of injury related hospitalizations. You can choose to only return the intent
@@ -135,15 +125,13 @@ please examine the analytic data directly.
 myresult <- chars_injury_matrix_count(ph.data = rads.data::synthetic_chars,
                                       intent = '^intentional',
                                       mechanism = 'none',
-                                      group_by = c('temperament'),
-                                      kingco = FALSE)
+                                      by = c('temperament'))
 print(myresult)
 
 myresult <- chars_injury_matrix_count(ph.data = rads.data::synthetic_chars,
                                       intent = 'unintentional',
                                       mechanism = 'fall',
-                                      group_by = c('temperament'),
-                                      kingco = FALSE)
+                                      by = c('temperament'))
 print(myresult)
 }
 

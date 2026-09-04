@@ -164,19 +164,23 @@ adjust_direct <- function(count,
     pop_calc[zero_indices & count == 0] <- 1 # to get rate = 0/1 = 0
   }
 
-  # Get sum of pop_calc for crude calculations below
-  sum_pop_calc <- sum(pop_calc)
+  # Crude rate should depend only on the TOTAL count vs TOTAL pop
+  sum_pop_crude <- sum_pop
+  if(event_type == "unique" && sum_pop_crude < sum_count) {
+    sum_pop_crude <- sum_count
+  }
+  if(sum_pop_crude == 0) sum_pop_crude <- 1  # avoid divide by zero, which is Inf in R
 
   # Basic calculations ----
   rate <- count/pop_calc
   alpha <- 1 - conf.level
-  cruderate <- sum_count/sum_pop_calc
+  cruderate <- sum_count/sum_pop_crude
   stdwt <- stdpop/sum_stdpop
 
   # Calculate exact poisson CI for crude rates ----
   dummycount <- if(sum_count == 0) 1 else sum_count
-  crude.lci <- if(sum_count == 0) 0 else stats::qgamma(alpha/2, dummycount)/sum_pop_calc
-  crude.uci <- stats::qgamma(1 - alpha/2, sum_count + 1)/sum_pop_calc
+  crude.lci <- if(sum_count == 0) 0 else stats::qgamma(alpha/2, dummycount)/sum_pop_crude
+  crude.uci <- stats::qgamma(1 - alpha/2, sum_count + 1)/sum_pop_crude
 
   # Calculate exact CI for adjusted rates ----
   dsr <- sum(stdwt * rate)
@@ -223,19 +227,21 @@ adjust_direct <- function(count,
 #' @param ph.data a data.table or data.frame containing the data to be age-standardized.
 #' @param ref.popname Character vector of length 1. Only valid options are those
 #' in [list_ref_pop()] and `"none"` (when standard population already exists in ph.data)
+#' @param my.count Character vector of length 1. Identifies the column name for the event count data in ph.data.
+#' @param my.pop Character vector of length 1. Identifies the column name for the population denominator corresponding to the aggregated count.
 #' @param collapse Logical vector of length 1. Do you want to collapse ph.data ages
 #' to match those in `ref.popname`?
-#' @param my.count Character vector of length 1. Identifies the column with the
-#' count data aggregated by the given demographics.
-#' @param my.pop Character vector of length 1. Identifies the column with the
-#' population corresponding to the given demographics.
+#' @param line_level Logical vector of length 1. Set to `TRUE` if `ph.data` is
+#' line-level (un-aggregated) data, e.g., one row per event with a population total
+#' merged onto every row. See the "Line-level (un-aggregated) data" section below
+#' for details. Requires `collapse = TRUE`.
 #' @param per Integer vector of length 1. A multiplier for all rates and CI, e.g.,
 #' when per = 1000, the rates are per 1000 people
 #' @param conf.level A numeric vector of length 1. The confidence interval used
 #' in the calculations, >0 & <1, typically 0.95
-#' @param group_by Character vector of indeterminate length. By which variable(s)
+#' @param by Character vector of indeterminate length. By which variable(s)
 #' do you want to stratify the rate results, if any?
-#' @param diagnostic_report Logical vector of length 1. If `group_by` is used and
+#' @param diagnostic_report Logical vector of length 1. If `by` is used and
 #' there are groups with missing ages, setting `diagnostic_report = TRUE` returns
 #' a diagnostic table instead of normal results. Use this option if a warning about
 #' missing age groups appears when running the function normally.
@@ -257,16 +263,49 @@ adjust_direct <- function(count,
 #' When analyzing the *whole population*, *include all ages* with zero counts where no
 #' events occurred to ensure accurate age-standardized rates.
 #'
+#' @section Line-level (un-aggregated) data:
+#' By default, `ph.data` is expected to already be aggregated by `age` (or `agecat`),
+#' i.e., one row per `age` (or `agecat`) ***and*** per `by` group, if `by` is used.
+#'
+#' If `ph.data` has multiple rows for the same 'age' (or   `age` + `by` combination,
+#' if `by` is specified), function behavior will depend on the `line_level` parameter:
+#'
+#'  - By default (`line_level = FALSE`), `age_standardize()` issues a warning and
+#'    sums `my.count` ***and*** `my.pop`. For example, consider the case when `ph.data` is
+#'    aggregated at a finer grain than `by` (e.g., aggregated by age & sex, but `by`
+#'    doesn't include sex). In this situation, summing `my.pop` per age would be legitimate
+#'    so you can safely ignore the warning.
+#'
+#'  - With `line_level = TRUE`, you're telling `age_standardize()` that duplicate
+#'    rows represent un-aggregated data (e.g., one row per event, with a
+#'    population total merged onto every row). The function will check whether
+#'    `my.pop` is identical across the duplicate rows in each group, where each group is
+#'    defined by `age` (or   `age` + `by` combination, if `by` is specified).
+#'
+#'    - If `my.pop` ***is identical*** across the duplicate rows in each group, `my.count`
+#'      will be summed and the single, shared `my.pop` value will be used *instead of*
+#'      summing `my.pop`. This prevents accidental inflation of the population denominator.
+#'
+#'    - If `my.pop` ***is not identical*** across the duplicate rows in each group,
+#'      both `my.count` and `my.pop` are summed, same as the default.
+#'
+#' Because identification of identical `my.pop` is the only signal available under
+#' `line_level = TRUE`, this automatic handling **cannot** distinguish a population total merged
+#' onto every row from genuine per-row populations that are coincidentally identical.
+#' If this latter situation describes your data, your best bet is to pre-aggregate it yourself.
+#' See the [vignette](https://github.com/PHSKC-APDE/rads/wiki/age_standardize) for details.
+#'
 #' @section Note on Standard Errors:
 #' This function calculates confidence intervals using the
-#' \href{https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf}{Fay-Feuer method},
-#' which does not provide direct standard error (SE) estimates. If you need SE approximations,
-#' common methods used by health departments include `SE = adjusted_rate/sqrt(cases)` and
-#' `RSE = 1/sqrt(cases)`.
+#' [Fay-Feuer method](https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf),
+#' which does not provide direct standard error (SE) estimates. Public health departments commonly
+#' use the following formulas to approximate the SE and relative standard error (RSE):
+#' \deqn{SE = adjustedRate/sqrt(cases)}
+#' \deqn{RSE = 1/sqrt(cases)}.
 #'
 #' @section Data anomalies:
 #' When the aggregate event count (`count`) is greater than the corresponding
-#' aggregate population (`pop`) AND`event_type = "unique"`, the function issues
+#' aggregate population (`pop`) AND `event_type = "unique"`, the function issues
 #' a warning and internally adjusts the denominator in the [adjust_direct()]
 #' function to cap rates at 100%. When `count > pop` AND `event_type = "repeatable"`,
 #' no adjustment is made as rates can legitimately exceed 100%.
@@ -275,62 +314,89 @@ adjust_direct <- function(count,
 #' rate calculation. These adjustments ensure stable results and only minimally bias
 #' estimates, since such anomalies usually occur in small strata.
 #'
-#' @return A data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'group_by' variable(s) -- if any
+#' @return A data.table of the count, rate & adjusted rate with CIs, name of the reference population and the 'by' variable(s) -- if any
 #'
 #' @seealso [adjust_direct()] for calculating crude and directly adjusted rates.
+#' @seealso [bin_age()], used internally when `collapse = TRUE`, for binning ages on their own.
 #'
 #' @export
 #' @name age_standardize
 #'
-#' @references \url{https://github.com/PHSKC-APDE/rads/wiki/age_standardize}
+#' @references <https://github.com/PHSKC-APDE/rads/wiki/age_standardize>
 #' @examples
 #' \donttest{
 #' library(data.table)
-#' temp1 <- data.table(age = c(50:60), count = c(25:35), pop = c(seq(1000, 900, -10)) )
-#' age_standardize(ph.data = temp1,
-#' ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)",
-#' collapse = TRUE,
-#' my.count = "count",
-#' my.pop = "pop",
-#' per = 1000,
-#' conf.level = 0.95)[]
 #'
-#' temp2 <- data.table(sex = c(rep("M", 11), rep("F", 11)), age = rep(50:60, 2),
-#' count = c(25:35, 26:36), pop = c(seq(1000, 900, -10), seq(1100, 1000, -10)),
-#' stdpop = rep(1000, 22))
-#' age_standardize(ph.data = temp2, ref.popname = "none",
-#' collapse = FALSE,
-#' my.count = "count",
-#' my.pop = "pop",
-#' per = 1000,
-#' conf.level = 0.95,
-#' group_by = "sex")[]
+#' # Example 1: default with pre-aggregated data
+#' temp1 <- data.table(
+#'    age = c(50:60),
+#'    count = c(25:35),
+#'    pop = c(seq(1000, 900, -10)) )
+#'
+#' age_standardize(
+#'    ph.data = temp1,
+#'    ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)",
+#'    collapse = TRUE,
+#'    my.count = "count",
+#'    my.pop = "pop",
+#'    per = 1000,
+#'    conf.level = 0.95)[]
+#'
+#' # Example 2: using a custom reference population
+#' temp2 <- data.table(
+#'    sex = c(rep("M", 11), rep("F", 11)),
+#'    age = rep(50:60, 2),
+#'    count = c(25:35, 26:36),
+#'    pop = c(seq(1000, 900, -10), seq(1100, 1000, -10)),
+#'    stdpop = rep(1000, 22))
+#'
+#' age_standardize(
+#'    ph.data = temp2,
+#'    ref.popname = "none",
+#'    collapse = FALSE,
+#'    my.count = "count",
+#'    my.pop = "pop",
+#'    per = 1000,
+#'    conf.level = 0.95,
+#'    by = "sex")[]
+#'
+#' # Example 3: line-level data
+#' temp3 <- data.table(
+#'    age = rep(50:60, 20),
+#'    disease = sample(0:1, 220, replace = TRUE),
+#'    pop = rep(seq(1000, 900, -10), 20))
+#'
+#' age_standardize(
+#'    ph.data = temp3,
+#'    ref.popname = "2000 U.S. Std Population (18 age groups - Census P25-1130)",
+#'    collapse = TRUE,
+#'    my.count = "disease",
+#'    my.pop = "pop",
+#'    per = 1000,
+#'    conf.level = 0.95,
+#'    line_level = TRUE)[]
 #' }
-#' @importFrom data.table ":=" setDT
 
 age_standardize <- function (ph.data,
                              ref.popname = NULL,
-                             collapse = TRUE,
                              my.count = "count",
                              my.pop = "pop",
+                             collapse = TRUE,
+                             line_level = FALSE,
                              per = 100000,
                              conf.level = 0.95,
-                             group_by = NULL,
+                             by = NULL,
                              diagnostic_report = FALSE,
                              event_type = "unique") {
-  # Global variables used by data.table declared as NULL here to play nice with devtools::check() ----
-  ph.data.name <- age <- age_start <- age_end <- agecat <- count <- pop <-
-    stdpop <- reference_pop <- adj.lci <- adj.uci <- complete <- id <- NULL
-
   ph.data.name <- deparse(substitute(ph.data))
-  ph.data <- copy(ph.data)
+  ph.data <- data.table::copy(ph.data)
 
   # Logic checks ----
-  # Check that ph.data is a data.frame or data.table ----
+  ## Check that ph.data is a data.frame or data.table ----
   if(!inherits(ph.data, "data.frame")){stop("\n\U1F6D1 ph.data must be a data.frame or a data.table containing both counts and population data.")}
-  if(!inherits(ph.data, "data.table")){setDT(ph.data)}
+  if(!inherits(ph.data, "data.table")){data.table::setDT(ph.data)}
 
-  # Check that ph.data has either 'age' or 'agecat' ----
+  ## Check that ph.data has either 'age' or 'agecat' ----
   age_exists <- "age" %in% names(ph.data)
 
   if (age_exists && (!is.numeric(ph.data$age) || !all(ph.data$age %% 1 == 0))) {
@@ -358,7 +424,7 @@ age_standardize <- function (ph.data,
     }
   }
 
-  # Check arguments needed for adjust_direct ----
+  ## Check arguments needed for adjust_direct ----
   if(!my.count %in% colnames(ph.data)){
     stop(paste0("\n\U1F6D1 The column '", my.count, "' does not exist in ph.data.\n",
                 "ph.data must have a column indicating the count of events (e.g., deaths, births, etc.) and is typically named 'count'.\n",
@@ -383,7 +449,7 @@ age_standardize <- function (ph.data,
     stop("\n\U1F6D1 'conf.level' should be a decimal between 0 and 1")
   }
 
-  # Check the reference population exists ----
+  ## Check the reference population exists ----
   if(is.null(ref.popname)){ref.popname <- "2000 U.S. Std Population (11 age groups)"}
   if(! ref.popname %in% c( list_ref_pop(), "none")){
     stop(paste0("\n\U1F6D1 ref.popname ('", ref.popname, "') is not a valid reference population name.\n",
@@ -404,21 +470,107 @@ age_standardize <- function (ph.data,
          "an 'agecat' column matching the selected reference population.")
   }
 
-  # Standardize column names ----
+  ## Standardize column names ----
   # purposefully did not use setnames() because it is possible that count | pop already exists and are intentionally using different columns for this function
   ph.data[, "count" := get(my.count)]
   ph.data[, "pop" := get(my.pop)]
 
-  # Check ranges for age, count, and population ----
-  # Check age ----
+  ## Check by ----
+  if(!is.null(by)) {
+    if(!is.character(by)) {
+      stop("The `by` argument must be a character vector.")
+    }
+    missing_cols <- setdiff(by, names(ph.data))
+    if(length(missing_cols) > 0) {
+      stop(paste0("The following `by` columns do not exist in ph.data: ",
+                  paste(missing_cols, collapse = ", ")))
+    }
+  }
+
+  # Check that by doesn't conflict with required columns
+  if(!is.null(by)) {
+    reserved_cols <- c("age", "agecat", "count", "pop", "stdpop")
+    conflicts <- intersect(by, reserved_cols)
+    if(length(conflicts) > 0) {
+      stop(paste0("\n\U1F6D1 The `by` argument cannot include reserved column names: ",
+                  paste(conflicts, collapse = ", ")))
+    }
+  }
+
+  ## Check collapse ----
+  if(!is.logical(collapse) || length(collapse) != 1) {
+    stop("The `collapse` argument must be TRUE or FALSE.")
+  }
+
+  ## Check line_level ----
+  if(!is.logical(line_level) || length(line_level) != 1) {
+    stop("The `line_level` argument must be TRUE or FALSE.")
+  }
+  if(isTRUE(line_level) && !isTRUE(collapse)) {
+    stop("\n\U1F6D1 `line_level = TRUE` requires `collapse = TRUE`.\n",
+         "Line-level data has single-year ages that still need to be binned; \n",
+         "`collapse = FALSE` expects ph.data to already be aggregated into agecat bins.")
+  }
+
+  ## Check ranges for age, count, and population ----
+  ## Check age ----
   if(!"agecat" %in% names(ph.data)){ # if given agecat, ignore these tests for single years of age
-    # check for missing ages ----
+    ## Check for missing ages ----
     if(nrow(ph.data[is.na(age)]) > 0){
       stop(paste0("\n\U1F6D1 ph.data (", ph.data.name, ") contains at least one row where age is missing.\n",
                   "Correct the data and try again."))
     }
 
-    # check for ages > 100 ----
+    ## Detect potential line-level / un-aggregated data (collapse = TRUE only) ----
+    # This needs to run *BEFORE* top coding age > 100, because the top coding will
+    # generate legit age = 100 duplicates -- but it doesn't mean it is line-level.
+    #
+    # By default (line_level = FALSE), multiple rows per 'age' (or `age' * `by`, if
+    # `by` is used) combination only trigger a warning.
+    #
+    # Setting line_level = TRUE tells age_standardize() to treat duplicate rows
+    # as un-aggregated data: when `pop` is identical across the duplicate rows
+    # for a group, `count` is summed and the unique `pop` value is used
+    # instead of summing `pop`. When `pop` is NOT identical for each group,
+    # both `count` and `pop` are summed, same as the default.
+    #
+    # I know I said all this in the roxygen, but I want it here to make the
+    # code logic clear
+    if(isTRUE(collapse)){
+      age_group_cols <- c("age", by)
+
+      if(isTRUE(line_level)){
+        group_info <- ph.data[, list(n_rows = .N, n_distinct_pop = data.table::uniqueN(pop)), by = age_group_cols]
+        deduped_groups <- group_info[n_rows > 1 & n_distinct_pop == 1]
+
+        if(nrow(deduped_groups) > 0){
+          message(paste0("\u2139\ufe0f ph.data (", ph.data.name, ") has ", format(nrow(deduped_groups), big.mark = ","),
+                         " 'age'",
+                         if(!is.null(by)) paste0(" & '", paste(by, collapse = "', '"), "'") else "",
+                         " combination(s) with multiple rows sharing\n",
+                         " an identical `pop` value. `count` has been automatically summed \n",
+                         " within each such group, using the ",
+                         "unique `pop` value, before calculating rates."))
+        }
+
+        ph.data <- ph.data[, list(count = sum(count),
+                                  pop = if(data.table::uniqueN(pop) == 1L) pop[1] else sum(pop)),
+                           by = age_group_cols]
+      } else if(anyDuplicated(ph.data[, .SD, .SDcols = age_group_cols]) > 0){
+        warning(paste0("\n\u26a0\ufe0f ph.data (", ph.data.name, ") has multiple rows per 'age'",
+                       if(!is.null(by)) paste0(" & '", paste(by, collapse = "', '"), "'") else "",
+                       " combination.\n",
+                       "This is expected if ph.data is pre-aggregated at a finer grain than `by` \n",
+                       "(e.g., aggregated by age & sex, but `by` doesn't include sex).\n",
+                       "If ph.data is instead line-level / un-aggregated data (e.g., one row \n",
+                       "per event, with a population total merged onto every row), set\n",
+                       "`line_level = TRUE` so age_standardize() can aggregate it correctly for you.\n",
+                       "Otherwise, you risk massively inflating the population denominator."),
+                immediate. = TRUE, call. = FALSE)
+      }
+    }
+
+    ## Check for ages > 100 ----
     if(nrow(ph.data[age > 100]) > 0){
       warning(paste0("\n\u26A0\ufe0f ph.data (", ph.data.name, ") contains at least one row where age is greater than 100.\n",
                      "Those values have been recoded to 100 because populations pulled from\n",
@@ -427,13 +579,13 @@ age_standardize <- function (ph.data,
       ph.data[age > 100, age := 100]
     }
 
-    # check for negative ages ----
+    ## Check for negative ages ----
     if(nrow(ph.data[age < 0]) > 0){
       stop(paste0("\n\U1F6D1 ph.data (", ph.data.name, ") contains at least one row where age is negative.\n",
                   "Correct the data and try again."))
     }
 
-    # Check for full range of ages (0 to 100) overall and within groups ----
+    ## Check for full range of ages (0 to 100) overall and within groups ----
     # simple function to check whether all ages are present (T | F) and which ones are missing (if any)
     check_full_age_range <- function(tempx) {
       actual_ages <- sort(unique(tempx$age))
@@ -442,7 +594,7 @@ age_standardize <- function (ph.data,
     }
 
     # Identify when missing ages
-    if (is.null(group_by)) {
+    if (is.null(by)) {
       check_result <- check_full_age_range(ph.data)
       if (!check_result$full_range) {
         warning(paste0("\n\u26A0\ufe0f ph.data (", ph.data.name, ") does not include all ages 0-100.\n",
@@ -457,7 +609,7 @@ age_standardize <- function (ph.data,
 
       }
     } else {
-      age_chk = ph.data[, list(complete = all(0:100 %in% age), missing = list(setdiff(0:100, age))), by = group_by]
+      age_chk = ph.data[, list(complete = all(0:100 %in% age), missing = list(setdiff(0:100, age))), by = by]
       age_chk = age_chk[complete == FALSE][, complete := NULL]
       age_chk[, missing := vapply(missing, function(x) format_time(unlist(x)), character(1))] # better formatting in table of missing
 
@@ -474,7 +626,7 @@ age_standardize <- function (ph.data,
 
       if (nrow(age_chk) >= 1) {
         if (nrow(age_chk) <= 5) { # detailed table for small number of groups
-          table_output <- paste(capture.output(print(age_chk, row.names = FALSE, class = FALSE, print.keys = FALSE)), collapse = "\n")
+          table_output <- paste(utils::capture.output(print(age_chk, row.names = FALSE, class = FALSE, print.keys = FALSE)), collapse = "\n")
           groups_display <- paste0(":\n\n", table_output, "\n\n")
           diagnostic_note <- "" # no need to run diagnostic_report
         } else { # just a count for larger number of groups
@@ -495,7 +647,7 @@ age_standardize <- function (ph.data,
     }
   }
 
-  # Check agecat ----
+  ## Check agecat ----
   if ("agecat" %in% names(ph.data) && ref.popname != "none") {
     if (!identical(sort(unique(ph.data$agecat)),
                    sort(unique(get_ref_pop(ref.popname)[['agecat']])))) {
@@ -505,7 +657,7 @@ age_standardize <- function (ph.data,
     }
   }
 
-  # Check count ----
+  ## Check count ----
   if(nrow(ph.data[is.na(count)]) > 0){
     warning(paste0("\u26A0\ufe0f ph.data (", ph.data.name, ") contains at least one row where my.count is missing.\n",
                    "Those values have been replaced with zero."))
@@ -516,7 +668,7 @@ age_standardize <- function (ph.data,
                 "Correct the data and try again."))
   }
 
-  # Check population ----
+  ## Check population ----
   if(nrow(ph.data[is.na(pop)]) > 0){
     stop(paste0("\n\U0001f47f ph.data (", ph.data.name, ") contains at least one row where my.pop is missing.\n",
                 "Correct the data and try again."))
@@ -526,43 +678,15 @@ age_standardize <- function (ph.data,
                 "Correct the data and try again."))
   }
 
-  # Check count vs population ----
+  ## Check count vs population ----
   if(nrow(ph.data[count > pop]) > 0 ){
     warning(paste0("\u26A0\ufe0f ph.data (", ph.data.name, ") contains at least one row where the count is greater than the population.\n",
                    "This may be correct because OFM populations are just estimates. However, you are encouraged to check the data."))
   }
 
-  # Check collapse ----
-  if(!is.logical(collapse) || length(collapse) != 1) {
-    stop("The `collapse` argument must be TRUE or FALSE.")
-  }
-
-  # Check diagnostic_report----
+  ## Check diagnostic_report----
   if(!is.logical(diagnostic_report) || length(diagnostic_report) != 1) {
     stop("The `diagnostic_report` argument must be TRUE or FALSE.")
-  }
-
-
-  # Check group_by ----
-  if(!is.null(group_by)) {
-    if(!is.character(group_by)) {
-      stop("The `group_by` argument must be a character vector.")
-    }
-    missing_cols <- setdiff(group_by, names(ph.data))
-    if(length(missing_cols) > 0) {
-      stop(paste0("The following `group_by` columns do not exist in ph.data: ",
-                  paste(missing_cols, collapse = ", ")))
-    }
-  }
-
-  # Check that group_by doesn't conflict with required columns
-  if(!is.null(group_by)) {
-    reserved_cols <- c("age", "agecat", "count", "pop", "stdpop")
-    conflicts <- intersect(group_by, reserved_cols)
-    if(length(conflicts) > 0) {
-      stop(paste0("\n\U1F6D1 The `group_by` argument cannot include reserved column names: ",
-                  paste(conflicts, collapse = ", ")))
-    }
   }
 
   # Collapse ph.data to match standard population bins ----
@@ -584,12 +708,9 @@ age_standardize <- function (ph.data,
            "ph.data already has a column named 'agecat' and it will not be automatically overwritten.\n",
            "If you are sure you want to create a new column named 'agecat', delete the existing column in ph.data and run again.")
     }
-    my.ref.pop <- get_ref_pop(ref.popname)
-    for(z in seq(1, nrow(my.ref.pop))){
-      ph.data[age %in% my.ref.pop[z, age_start]:my.ref.pop[z, age_end], agecat := my.ref.pop[z, agecat]]
-    }
-    if(!is.null(group_by)){ph.data <- ph.data[, list(count = sum(count), pop = sum(pop)), by = c("agecat", group_by)]}
-    if(is.null(group_by)){ph.data <- ph.data[, list(count = sum(count), pop = sum(pop)), by = "agecat"]}
+    ph.data[, agecat := bin_age(age, ref.popname = ref.popname)]
+    if(!is.null(by)){ph.data <- ph.data[, list(count = sum(count), pop = sum(pop)), by = c("agecat", by)]}
+    if(is.null(by)){ph.data <- ph.data[, list(count = sum(count), pop = sum(pop)), by = "agecat"]}
   }
 
   # Warning when pop < count in age collapsed data ----
@@ -610,12 +731,12 @@ age_standardize <- function (ph.data,
   }
 
   # Calculate crude & adjusted rates with CI ----
-  if(!is.null(group_by)){
+  if(!is.null(by)){
     my.rates <- ph.data[, as.list(adjust_direct(count = count, pop = pop, stdpop = stdpop,
                                                 conf.level = as.numeric(conf.level), per = per,
-                                                event_type = event_type)), by = group_by]
+                                                event_type = event_type)), by = by]
   }
-  if(is.null(group_by)){
+  if(is.null(by)){
     my.rates <- ph.data[, as.list(adjust_direct(count = count, pop = pop, stdpop = stdpop,
                                                 conf.level = as.numeric(conf.level), per = per,
                                                 event_type = event_type))]

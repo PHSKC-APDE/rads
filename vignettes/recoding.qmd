@@ -1,0 +1,281 @@
+---
+title: "Recoding Variables"
+format:
+  html:
+    embed-resources: true
+  gfm:
+    prefer-html: false
+vignette: >
+  %\VignetteIndexEntry{Recoding Variables}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteDepends{knitr}
+editor: source
+---
+
+# Introduction
+
+Public health datasets almost always arrive with raw codes that need to be translated into analysis-ready values: `"M"`/`"F"` into `"Male"`/`"Female"`, continuous ages into age groups, numeric diagnosis flags into readable labels, etc. `rads` provides a small family of functions that work together to make this repeatable, self-documenting, and easy to apply consistently across many variables and datasets.
+
+The functions we'll cover, roughly from the smallest building block to the highest-level workflow, are:
+
+- [`check_bin()`](#check_bin): Test whether a string looks like a binning instruction (e.g. `"[0,18)"`)
+- [`do_recode()`](#do_recode): Recode a single vector, given `old` and `new` values (including binning)
+- [`create_recode()`](#create_recode): Package `old`/`new`/`new_label` into a single, reusable `recode_instruction` object
+- [`enact_recodes()`](#enact_recodes): Apply one or more `recode_instruction` objects to a data.frame/data.table in one call
+- [`parse_recode_instructions()`](#parse_recode_instructions): Turn a data.table/data.frame "codebook" (e.g. read in from a spreadsheet or CSV) of recode specifications into a list of `recode_instruction` objects
+
+Used together, these let you maintain your recoding logic as data (a reference table) rather than as scattered, one-off `ifelse()` statements, and apply it consistently across variables and datasets.
+
+# Setting up the environment
+
+```{r}
+#| warning: false
+#| message: false
+#| echo: false
+
+# function to beautify tables
+pretty_kable <- function(dt) {
+  knitr::kable(dt, format = 'markdown')
+}
+```
+
+```{r}
+#| warning: false
+#| message: false
+library(rads)
+library(data.table)
+```
+
+# Functions
+
+## check_bin() {#check_bin}
+
+`check_bin()` tests whether a single character string is interpretable as a binning instruction: it must start with `[` or `(`, end with `]` or `)`, and contain a comma, e.g. `"[0,18)"`. This is what allows `do_recode()` (below) to automatically detect when `old` values describe numeric ranges rather than exact values to match.
+
+```{r}
+#| echo: true
+check_bin("[0,18)")  # TRUE -- interpretable as a bin
+check_bin(18)    # FALSE -- a single value, not a bin
+check_bin("Male")    # FALSE -- an exact value, not a bin
+```
+
+`check_bin()` will warn if it sees a `-` in the string, since that's a common typo for a bin's comma separator (e.g. someone writing `"0-18"` instead of `"[0,18)"`).
+
+```{r}
+#| echo: true
+check_bin("0-18")
+```
+
+## do_recode() {#do_recode}
+
+`do_recode()` is the workhorse that actually recodes a vector. Give it the vector `x`, the `old` values to look for, and the `new` values to replace them with.
+
+### Simple value recode
+
+```{r}
+#| echo: true
+sex_raw <- c("M", "F", "M", "M", "F")
+do_recode(x = sex_raw, old = c("M", "F"), new = c("Male", "Female"))
+```
+
+### Binning recode
+
+If `x` is numeric and `old` looks like binning instructions (based upon `check_bin()`), `do_recode()` automatically buckets `x` into the specified ranges instead of doing an exact match. Bins follow standard interval notation, so `[` &`]` are inclusive bounds and `(` & `)` are exclusive.
+
+```{r}
+#| echo: true
+age_raw <- c(4, 17, 25, 45, 70)
+do_recode(x = age_raw,
+          old = c("[0,18)", "[18,45)", "[45,65)", "[65,120)"),
+          new = c("child", "young_adult", "middle_age", "senior"))
+```
+
+### Adding factor labels
+
+`new_label` lets `new` be a numeric or coded value (e.g. for downstream statistical modeling) while still carrying a human-readable factor label.
+
+```{r}
+#| echo: true
+#| results: 'hide'
+age_grouped <- do_recode(x = age_raw,
+                          old = c("[0,18)", "[18,45)", "[45,65)", "[65,120)"),
+                          new = c(1, 2, 3, 4),
+                          new_label = c("child", "young_adult", "middle_age", "senior"))
+data.table(age_raw, age_grouped)
+```
+
+```{r}
+#| echo: false
+pretty_kable(data.table(age_raw, age_grouped))
+```
+
+### Recoding in place with `update = TRUE`
+
+By default `do_recode()` returns a new vector no longer than `x`, containing `NA` for any value of `x` that wasn't covered by `old`. Set `update = TRUE` to instead modify `x` in place -- values not covered by `old` (including, for factors, any levels not mentioned) are carried forward unchanged.
+
+```{r}
+#| echo: true
+sex_with_unknown <- factor(c("M", "F", "U", "M", "F"))
+do_recode(x = sex_with_unknown,
+          old = c("M", "F"),
+          new = c("Male", "Female"),
+          new_label = c("Male", "Female"),
+          update = TRUE)
+```
+
+Note that `"U"` (not part of `old`) was left untouched rather than becoming `NA`.
+
+## create_recode() {#create_recode}
+
+Calling `do_recode()` directly is fine for a single, one-off recode. But most projects need to recode several variables, keep a record of exactly how each was recoded, and possibly apply that same logic to more than one dataset. `create_recode()` packages `old_var`, `new_var`, `old`, `new`, and `new_label` into a single `recode_instruction` object designed to be handed to [`enact_recodes()`](#enact_recodes).
+
+```{r}
+#| echo: true
+sex_recode <- create_recode(old_var = "sex", 
+                            new_var = "sex_label",
+                            old = c("M", "F"), 
+                            new = c("Male", "Female"),
+                            simplify_to_numeric = FALSE)
+sex_recode
+```
+
+`create_recode()` also accepts binning instructions in `old`, exactly like `do_recode()`. Since bin boundaries like `"[0,18)"` can't be converted to plain numbers, set `simplify_to_numeric = FALSE` to skip the (otherwise automatic) attempt to coerce `old`/`new` to numeric -- this avoids a spurious "could not convert losslessly" warning.
+
+```{r}
+#| echo: true
+age_recode <- create_recode(old_var = "age", 
+                            new_var = "age_group",
+                            old = c("[0,18)", "[18,45)", "[45,65)", "[65,120)"),
+                            new = c(1, 2, 3, 4),
+                            new_label = c("child", "young_adult", "middle_age", "senior"),
+                            simplify_to_numeric = FALSE)
+age_recode
+```
+
+If `old`/`new` are left blank, `create_recode()` instead describes a simple rename of `old_var` to `new_var` -- useful for standardizing variable names alongside your recodes.
+
+```{r}
+#| echo: true
+rename_only <- create_recode(old_var = "sex", new_var = "gender")
+enact_recodes(data.table(id = 1:3, sex = c("M", "F", "M")), rename_only)
+```
+
+## enact_recodes() {#enact_recodes}
+
+`enact_recodes()` takes a dataset and any number of `recode_instruction` objects (or lists of them) and applies all of them in a single call, adding each `new_var` as a column.
+
+```{r}
+#| echo: true
+#| results: 'hide'
+mydata <- data.table(id = 1:5, sex = sex_raw, age = age_raw)
+recoded <- enact_recodes(mydata, sex_recode, age_recode)
+recoded[, .(id, sex, sex_label, age, age_group)]
+```
+
+```{r}
+#| echo: false
+pretty_kable(recoded[, .(id, sex, sex_label, age, age_group)])
+```
+
+`recode_instruction` objects can also be passed as a list (handy when you've built up a batch of them programmatically), and the two styles can be mixed:
+
+```{r}
+#| echo: true
+#| eval: true
+identical(enact_recodes(mydata, list(sex_recode, age_recode)), 
+          enact_recodes(mydata, sex_recode, list(age_recode)) )
+```
+
+By default, `enact_recodes()` matches `old_var`/`new_var` to columns in `data` case-insensitively (`ignore_case = TRUE`), so a recode written for `"sex"` will still find a column named `"Sex"` or `"SEX"`.
+
+## parse_recode_instructions() {#parse_recode_instructions}
+
+Writing `create_recode()` calls by hand works well for a handful of variables, but many projects keep their recoding logic in a spreadsheet or CSV "codebook" instead -- easier to review, version, and hand off to a non-programmer for QA. `parse_recode_instructions()` converts these tables directly into the list of `recode_instruction` objects that `enact_recodes()` expects.
+
+The input needs (at minimum) the columns `old_var`, `old_value`, `new_var`, and `new_value`; `new_label` is optional.
+
+```{r}
+#| echo: true
+recode_table <- data.frame(
+  old_var   = c("sex", "sex", "age", "age", "age", "age"),
+  old_value = c("M", "F", "[0,18)", "[18,45)", "[45,65)", "[65,120)"),
+  new_var   = c("sex_label", "sex_label", "age_group", "age_group", "age_group", "age_group"),
+  new_value = c("Male", "Female", 1, 2, 3, 4),
+  new_label = c(NA, NA, "child", "young_adult", "middle_age", "senior")
+)
+```
+
+```{r}
+#| echo: false
+pretty_kable(recode_table)
+```
+
+`parse_recode_instructions()` groups the rows by `old_var`/`new_var` and produces one `recode_instruction` per variable being recoded -- equivalent to writing out the `create_recode()` calls above by hand:
+
+```{r}
+#| echo: true
+parsed <- parse_recode_instructions(recode_table, simplify_to_numeric = FALSE)
+length(parsed)
+```
+
+The result feeds straight into `enact_recodes()`, exactly as if you had built the instructions with `create_recode()` yourself:
+
+```{r}
+#| echo: true
+#| results: 'hide'
+enact_recodes(mydata, parsed)
+```
+
+```{r}
+#| echo: false
+pretty_kable(enact_recodes(data.table::copy(mydata), parsed))
+```
+
+# Putting it all together
+
+The typical workflow, end to end, looks like this: 
+
+- store your recoding logic as a references table (consider a CSV so you can view it in GitHub)
+- parse it once
+- apply it to as many datasets as needed
+
+```{r}
+#| echo: true
+# 1. Define the recoding logic as a data.frame or data.table "codebook"
+codebook <- data.frame(
+  old_var   = c("sex", "sex", "age", "age", "age", "age"),
+  old_value = c("M", "F", "[0,18)", "[18,45)", "[45,65)", "[65,120)"),
+  new_var   = c("sex_label", "sex_label", "age_group", "age_group", "age_group", "age_group"),
+  new_value = c("Male", "Female", 1, 2, 3, 4),
+  new_label = c(NA, NA, "child", "young_adult", "middle_age", "senior")
+)
+
+# 2. Parse it once into recode_instruction objects
+instructions <- parse_recode_instructions(codebook, simplify_to_numeric = FALSE)
+
+# 3. Apply it to any dataset with matching column names
+survey_wave1 <- data.table(id = 1:5, 
+                           sex = c("M", "F", "M", "M", "F"), 
+                           age = c(4, 17, 25, 45, 70))
+survey_wave2 <- data.table(id = 6:9, 
+                           sex = c("F", "F", "M", "F"), 
+                           age = c(12, 30, 55, 80))
+
+enact_recodes(survey_wave1, instructions)
+enact_recodes(survey_wave2, instructions)
+```
+
+```{r}
+#| echo: false
+pretty_kable(enact_recodes(survey_wave1, instructions))
+pretty_kable(enact_recodes(survey_wave2, instructions))
+```
+
+Because the recoding logic lives in `codebook` rather than in repeated inline code, updating a single row (e.g., changing the age breaks) automatically applies consistently to every dataset that uses `instructions`.
+
+# Conclusion
+
+`check_bin()`, `do_recode()`, `create_recode()`, `enact_recodes()`, and `parse_recode_instructions()` form a small pipeline: from a single ad hoc vector recode, up to standardized, reviewable, reusable recoding logic applied across variables and datasets. Start with `do_recode()` for quick, one-off work; move to `create_recode()`/`enact_recodes()` once you're recoding several variables; and use `parse_recode_instructions()` once that logic is worth keeping in its own reference table.
+
+-- *`r paste0('Updated ', format(Sys.time(), '%B %d, %Y'), ' (rads v', packageVersion('rads'), ')')`*

@@ -1,8 +1,17 @@
 ---
 title: "propagate_uncertainty()"
-format: gfm
-prefer-html: false
-editor: visual
+format:
+  html:
+    embed-resources: true
+  gfm:
+    prefer-html: false
+vignette: >
+  %\VignetteIndexEntry{propagate_uncertainty()}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteDepends{ggplot2}
+  %\VignetteDepends{knitr}
+editor: source
 ---
 
 # Introduction
@@ -17,9 +26,9 @@ This vignette will walk you through when and how to propagate uncertainty, start
 
 Before diving into uncertainty propagation, it's important to understand when to use this function versus the related [`multi_t_test()`](utilities.html#multi_t_test) function:
 
--   **Use `propagate_uncertainty()`** when you want to **combine or compare two estimates** (summations, differences, ratios, etc.) and at least one has asymmetric confidence intervals or comes from specialized methods (like age-adjusted rates, exponentiated regression coefficients, or life expectancy from small populations).
+- **Use `propagate_uncertainty()`** when you want to **combine or compare two estimates** (summations, differences, ratios, etc.) and at least one has asymmetric confidence intervals or comes from specialized methods (like age-adjusted rates, exponentiated regression coefficients, or life expectancy from small populations).
 
--   **Use `multi_t_test()`** when you want to **compare multiple groups against a single reference group** using summary statistics, and your estimates have roughly symmetric confidence intervals that can reasonably assume normality.
+- **Use `multi_t_test()`** when you want to **compare multiple groups against a single reference group** using summary statistics, and your estimates have roughly symmetric confidence intervals that can reasonably assume normality.
 
 In essence, `propagate_uncertainty()` handles the complex uncertainty propagation for two estimates, while `multi_t_test()` performs statistical testing across multiple groups with traditional assumptions. If you're unsure which to use, `propagate_uncertainty()` is more robust as it doesn't rely on normality assumptions.
 
@@ -54,7 +63,7 @@ library(rads)
 library(data.table)
 library(ggplot2)
 
-# Set the parameteres
+# Set the parameters
 smallville_mean <- 34.3  # Mean age in Smallville
 smallville_se <- 0.2
 megalopolis_mean <- 37.2 # Mean age in Megalopolis
@@ -66,8 +75,10 @@ se_diff_traditional <- sqrt(smallville_se^2 + megalopolis_se^2)
 ci_lower_traditional <- diff_traditional - 1.96 * se_diff_traditional
 ci_upper_traditional <- diff_traditional + 1.96 * se_diff_traditional
 
-print(paste0("Traditional method - Difference: ", round(diff_traditional, 2),
-            " 95% CI: (", round(ci_lower_traditional, 2), ", ", round(ci_upper_traditional, 2), ")"))
+print(paste0("Traditional method for difference: ", 
+             round(diff_traditional, 2),
+            " 95% CI: (", round(ci_lower_traditional, 2), ", ", 
+            round(ci_upper_traditional, 2), ")"))
 ```
 
 ## When Traditional Methods Fail
@@ -82,17 +93,17 @@ When you have odds ratios, rates ratios, or hazard ratios from regression, the c
 
 The confidence intervals for age-adjusted rates are often asymmetric because they:
 
--   Use methods like [Fay-Feuer](https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf) that account for the Poisson nature of count data
--   Combine rates from different age groups with varying sample sizes
--   Reflect skewed distributions, especially when dealing with rare events
+- Use methods like [Fay-Feuer](https://wonder.cdc.gov/controller/pdf/FayFeuerConfidenceIntervals.pdf) that account for the Poisson nature of count data
+- Combine rates from different age groups with varying sample sizes
+- Reflect skewed distributions, especially when dealing with rare events
 
 ### 3. Life Expectancy
 
 Life expectancy confidence intervals **can be** asymmetric, particularly when they:
 
--   Come from small populations with sparse death counts
--   Use bootstrap or resampling methods that preserve distributional properties\
--   Are calculated for populations with unusual mortality patterns
+- Come from small populations with sparse death counts
+- Use bootstrap or resampling methods that preserve distributional properties\
+- Are calculated for populations with unusual mortality patterns
 
 However, many life expectancy estimates (including those calculated by the `life_table()` function in this package, which uses the WHO/Chiang method) produce roughly symmetric confidence intervals with adequate sample sizes and can use the normal distribution assumption.
 
@@ -112,7 +123,7 @@ This approach is valid regardless of the underlying distributions and automatica
 
 ## Visualizing the Monte Carlo Approach
 
-Let's see how Monte Carlo simulation works by comparing it with the familiar case of estimates from normal distributions. These are condition under which traditional parametric methods work.
+Let's see how Monte Carlo simulation works by comparing it with the familiar case of estimates from normal distributions. These are the conditions under which traditional parametric methods work.
 
 Define the age distributions
 
@@ -192,10 +203,11 @@ p1 <- ggplot(plot_data, aes(x = value, fill = distribution)) +
   labs(x = "", y = "") +
   theme_minimal() +
   theme(legend.position = "none", 
-        panel.grid = element_blank()) +
+        panel.grid = element_blank(), 
+        strip.text = element_text(size = 16)) +
   geom_text(data = labels_data, aes(label = label), 
             x = Inf, y = Inf, hjust = 1.1, vjust = 1.1, 
-            size = 3, inherit.aes = FALSE)
+            size = 4.5, inherit.aes = FALSE)
 
 print(p1)
 ```
@@ -219,28 +231,28 @@ The `propagate_uncertainty()` function automates this Monte Carlo approach, allo
 
 **Data and Column Specifications:**
 
--   `ph.estimates`: Your data.table/data.frame with point estimates and uncertainty measures
--   `comp_mean_col`: Column name for comparator group point estimates\
--   `ref_mean_col`: Column name for reference group point estimates
--   `comp_se_col` / `ref_se_col`: Standard error columns (when provided, used preferentially over the CI)
--   `comp_lower_col` & `comp_upper_col` / `ref_lower_col` & `ref_upper_col`: Confidence interval columns
+- `ph.estimates`: Your data.table/data.frame with point estimates and uncertainty measures
+- `comp_mean_col`: Column name for comparator group point estimates\
+- `ref_mean_col`: Column name for reference group point estimates
+- `comp_se_col` / `ref_se_col`: Standard error columns (when provided, used preferentially over the CI)
+- `comp_lower_col` & `comp_upper_col` / `ref_lower_col` & `ref_upper_col`: Confidence interval columns
 
 **Commonly Modified Parameters:**
 
--   `contrast_fn`: Function defining your operation. Default: `function(x, y) x - y`
--   `dist`: Distribution assumption - `"normal"` or `"lognormal"`. Default: `"normal"`
--   `draws`: Number of Monte Carlo draws. Default: `10,000`
+- `contrast_fn`: Function defining your operation. Default: `function(x, y) x - y`
+- `dist`: Distribution assumption - `"normal"` or `"lognormal"`. Default: `"normal"`
+- `draws`: Number of Monte Carlo draws. Default: `10000`
 
 **Infrequently Modified Parameters:**
 
--   `alpha`: Confidence level for **OUTPUT (contrast)** confidence interval width. Default: `0.05` for 95% CI 
--   `input_ci_level`: Confidence level of the **INPUT** confidence intervals, Default: `0.95` for 95% CIs 
--   `convergence_check`: Whether to assess Monte Carlo convergence. Default: `FALSE`
--   `h0_value`: Null hypothesis value for testing. Default: auto-detected
--   `pvalue_method`: `"proportion"` (robust) or `"ttest"` (assumes normality). Default: `"proportion"`
--   `use_futures`: Enable parallel processing for large datasets. Default: `FALSE`
--   `seed`: Random seed for reproducibility. Default: `98104`
--   `se_scale`: Whether standard errors are on `"original"` or `"log"` scale. Default: `"original"`
+- `alpha`: Confidence level for **OUTPUT (contrast)** confidence interval width. Default: `0.05` for 95% CI
+- `input_ci_level`: Confidence level of the **INPUT** confidence intervals, Default: `0.95` for 95% CIs
+- `convergence_check`: Whether to assess Monte Carlo convergence. Default: `FALSE`
+- `h0_value`: Null hypothesis value for testing. Default: auto-detected
+- `pvalue_method`: `"proportion"` (robust) or `"ttest"` (assumes normality). Default: `"proportion"`
+- `use_futures`: Enable parallel processing for large datasets. Default: `FALSE`
+- `seed`: Random seed for reproducibility. Default: `98104`
+- `se_scale`: Whether standard errors are on `"original"` or `"log"` scale. Default: `"original"`
 
 ## :rotating_light: Critical Parameters: `contrast_fn` and `dist`
 
@@ -263,16 +275,16 @@ contrast_fn = function(x, y) 100 * (x - y) / y
 
 **Use `dist = "normal"` when `comp_mean_col` and `ref_mean_col`:**
 
--   Can theoretically be negative (means, differences, log-coefficients)
--   Are approximately symmetric around their true value\
--   Come from linear models or are simple means or proportions
--   Comparing two life expectancies from `life_table()` (unless very small populations)
+- Can theoretically be negative (means, differences, log-coefficients)
+- Are approximately symmetric around their true value\
+- Come from linear models or are simple means or proportions
+- Comparing two life expectancies from `life_table()` (unless very small populations)
 
 **Use `dist = "lognormal"` when `comp_mean_col` and `ref_mean_col`:**
 
--   Must be positive (rates, counts, exponentiated coefficients)
--   Have right-skewed sampling distributions
--   Have asymmetric confidence intervals (check your specific estimates)
+- Must be positive (rates, counts, exponentiated coefficients)
+- Have right-skewed sampling distributions
+- Have asymmetric confidence intervals (check your specific estimates)
 
 **Note on Age-Adjusted Rates**: The Fay-Feuer method actually uses the gamma distribution, but the lognormal approximation captures the right-skewed nature of the uncertainty and works well in practice when only confidence intervals are available.
 
@@ -346,7 +358,7 @@ mortality_result <- propagate_uncertainty(
   ref_lower_col = "smallville_lower",
   ref_upper_col = "smallville_upper", 
   contrast_fn = function(x, y) x - y,
-  dist = "lognormal",                   # Better for rates with asymmetric CIs
+  dist = "lognormal",                   # For rates with asymmetric CI
   draws = 10000,
   seed = 98104
 )
@@ -452,7 +464,7 @@ pretty_kable(multi_result[, .(demographic, contrast, contrast_lower, contrast_up
 
 As you'll remember, when you have odds ratios or rate ratios from regression models, those estimates have been exponentiated from the log scale. This means their confidence intervals are no longer symmetric on the original scale, making traditional error propagation formulas inappropriate.
 
-Imagine we ran a logistic regression predicting the odds of knowing how to play saxophone across King County, using Seattle as the reference group. We want to compare the East King County effect to the North King County effect by calculating the ratio of their odds ratios. To do so, we'll compare a manual method against using `propagate_uncertainty()`, showing that they produce nearly equivalent results.
+Imagine we ran a logistic regression predicting the odds of knowing how to play saxophone across regions, using the Western Region as the reference group. We want to compare the East Region effect to the North Region effect by calculating the ratio of their odds ratios. To do so, we'll compare a manual method against using `propagate_uncertainty()`, showing that they produce nearly equivalent results.
 
 ### Create Regression Estimates
 
@@ -461,13 +473,13 @@ Imagine we ran a logistic regression predicting the odds of knowing how to play 
 #| message: false
 # Odds ratios from logistic regression
 sax_data <- data.table(
-  comparison = "East KC OR vs North KC OR",
-  east_kc_or = 1.85,        # OR for East KC vs Seattle
-  east_kc_lower = 1.42,     
-  east_kc_upper = 2.41,
-  north_kc_or = 1.34,       # OR for North KC vs Seattle  
-  north_kc_lower = 1.08,    
-  north_kc_upper = 1.66
+  comparison = "East Region OR vs North Region OR",
+  east_or = 1.85,        # OR for East vs West Regions
+  east_lower = 1.42,     
+  east_upper = 2.41,
+  north_or = 1.34,       # OR for North vs West Regions  
+  north_lower = 1.08,    
+  north_upper = 1.66
 )
 ```
 
@@ -482,14 +494,17 @@ pretty_kable(sax_data)
 #| warning: false
 #| message: false
 # Manual calculation: convert to log scale
-east_log_or <- log(sax_data$east_kc_or)
-north_log_or <- log(sax_data$north_kc_or)
+east_log_or <- log(sax_data$east_or)
+north_log_or <- log(sax_data$north_or)
 
 # Calculate approximate SEs from CIs on log scale
-east_se_log <- (log(sax_data$east_kc_upper) - log(sax_data$east_kc_lower)) / (2 * 1.96)
-north_se_log <- (log(sax_data$north_kc_upper) - log(sax_data$north_kc_lower)) / (2 * 1.96)
+east_se_log <- (log(sax_data$east_upper) - log(sax_data$east_lower)) / 
+                (2 * 1.96)
 
-# Now that everything is on log scale, can use traditional error propagation
+north_se_log <- (log(sax_data$north_upper) - log(sax_data$north_lower)) / 
+                 (2 * 1.96)
+
+# Everything is now on log scale, so use traditional methods
 log_diff <- east_log_or - north_log_or
 se_log_diff <- sqrt(east_se_log^2 + north_se_log^2)
 
@@ -510,12 +525,12 @@ manual_pvalue <- 2 * (1 - pnorm(abs(manual_z)))
 #| message: false
 easy_way_result <- propagate_uncertainty(
   ph.estimates = sax_data,
-  comp_mean_col = "east_kc_or",        # East KC:Seattle OR
-  comp_lower_col = "east_kc_lower",
-  comp_upper_col = "east_kc_upper",
-  ref_mean_col = "north_kc_or",        # North KC:Seattle OR
-  ref_lower_col = "north_kc_lower", 
-  ref_upper_col = "north_kc_upper",
+  comp_mean_col = "east_or",        # East:West OR
+  comp_lower_col = "east_lower",
+  comp_upper_col = "east_upper",
+  ref_mean_col = "north_or",        # North:West OR
+  ref_lower_col = "north_lower", 
+  ref_upper_col = "north_upper",
   contrast_fn = function(x, y) x / y,  # Ratio of the two ORs
   dist = "lognormal"                   # Needed for ORs
 )
@@ -544,9 +559,9 @@ The `propagate_uncertainty()` function is particularly valuable for:
 
 **Comparing Pre-existing Estimates**: When comparing health indicators between demographic groups or geographic areas from summary estimates such as those from [CHI](https://kingcounty.gov/chi):
 
--   Life expectancy differences between racial/ethnic groups
--   Age-adjusted mortality rate comparisons\
--   Hospitalization rate ratios
+- Life expectancy differences between racial/ethnic groups
+- Age-adjusted mortality rate comparisons\
+- Hospitalization rate ratios
 
 **Data Requests**: When stakeholders want to know if differences between groups are statistically significant, particularly for indicators with asymmetric confidence intervals.
 
@@ -560,10 +575,10 @@ Uncertainty propagation is a crucial but often overlooked aspect of comparing he
 
 The `propagate_uncertainty()` function provides a robust Monte Carlo solution that:
 
--   Works regardless of the underlying distributions
--   Properly handles asymmetric confidence intervals\
--   Automatically captures the correct uncertainty propagation
--   Provides both point estimates and hypothesis tests
+- Works regardless of the underlying distributions
+- Properly handles asymmetric confidence intervals\
+- Automatically captures the correct uncertainty propagation
+- Provides both point estimates and hypothesis tests
 
 By using this function, you can confidently compare health indicators while properly accounting for uncertainty, leading to more accurate and defensible conclusions in your analyses.
 

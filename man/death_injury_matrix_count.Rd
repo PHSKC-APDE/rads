@@ -12,8 +12,7 @@ death_injury_matrix_count(
   intent = "*",
   mechanism = "*",
   icdcol = "underlying_cod_code",
-  kingco = TRUE,
-  group_by = NULL,
+  by = NULL,
   ypll_age = NULL,
   death_age_col = NULL
 )
@@ -22,7 +21,7 @@ death_injury_matrix_count(
 \item{ph.data}{a data.table or data.frame. Must contain death data structured
 with one person per row and with at least one column of ICD10 death codes.
 
-\strong{Note:}* \code{ph.data} and \code{icdcol} are validated by \code{\link[=death_validate_data]{death_validate_data()}}}
+\strong{Note:} \code{ph.data} and \code{icdcol} are validated by \code{\link[=death_validate_data]{death_validate_data()}}}
 
 \item{intent}{a character vector of length 1 to 5. It specifies the
 intent of death that you want returned ("Unintentional", "Suicide", "Homicide",
@@ -35,7 +34,10 @@ partial string match is sufficient and is case insensitive. E.g.,
 \code{intent = c("cide")} would return both "Suicide" and "Homicide" and
 \code{intent = c("un")} would return both "Unintentional" and "Undetermined".
 
-The default is \code{'*'}, which selects all possible intents.}
+The default is \code{'*'}, which selects all possible intents. When \code{'*'} is used,
+the returned table also includes an extra \code{"Any intent"} row per mechanism,
+summing deaths across all intents. To collapse straight to a single \code{"Any intent"}
+total without the individual breakdown, use \code{intent = "none"} instead.}
 
 \item{mechanism}{a character vector of length 1 to 28. It specifies the
 mechanism of death that you want returned (E.g., "Cut/pierce", "Drowning",
@@ -52,27 +54,34 @@ partial string match is sufficient and is case insensitive. E.g.,
 \code{mechanism = c("cycl")} would return both "Pedal cyclist" and
 "Motorcyclist".
 
-The default is \code{'*'}, which selects all possible mechanisms}
+The default is \code{'*'}, which selects all possible mechanisms \emph{except} the
+known aggregate/subtotal categories (\code{"All injury"}, \code{"All transport"},
+\code{"Motor vehicle traffic"}, \code{"Fire/hot object or substance"} -- see
+\code{\link[=death_injury_matrix]{death_injury_matrix()}} for why these are excluded). When \code{'*'} is used,
+the returned table also includes an extra \code{"Any mechanism"} row per
+intent, computed as the sum across the individual mechanisms actually
+returned.
+
+If you explicitly request one of the aggregate categories by name, it will be
+returned as its own row, but be aware that it can overlap with -- and should
+not be summed alongside -- its component mechanisms. E.g. \code{mechanism = "motor"}
+matches both \code{"Motor vehicle traffic"} and its 6 \code{"Motor vehicle traffic: ___"}
+sub-categories, since matching is partial-string based. It is your
+responsibility to avoid mixing aggregate and component mechanisms in the same
+request if you plan to sum across rows.}
 
 \item{icdcol}{a character vector of length one that specifies the name of the
 column in ph.data that contains the ICD10 death codes of interest.
 
-The default is \code{underlying_cod_code}, which is found in the properly
-formatted death data obtained using the \code{get_data_death()} function.}
+The default is \code{underlying_cod_code}, which is found in properly
+formatted death data structured like \code{rads.data::synthetic_death}.}
 
-\item{kingco}{a logical vector of length one. It specifies whether you want to
-limit the analysis to King County. Note that this only works with data
-imported from the \code{get_data_death()} function.
-
-The default is \code{kingco = TRUE}.}
-
-\item{group_by}{a character vector of indeterminate length. This is used to
+\item{by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{group_by = c('chi_sex',
-'chi_race_6')}, the results would be stratified by each combination of sex
+results. For example, if you specified \code{by = c('sex', 'race_6')}, the results would be stratified by each combination of sex
 and race.
 
-The default is \code{group_by = NULL}}
+The default is \code{by = NULL}}
 
 \item{ypll_age}{an optional numeric vector of length 1. When specified, it
 should be the age (an integer) used for \strong{Years of Potential Life Lost} (YPLL)
@@ -87,14 +96,14 @@ The default is \code{ypll_age = NULL}, which will skip YPLL calculations.}
 \item{death_age_col}{an optional character vector of length one that specifies
 the name of the column in ph.data with the decedents' age at death
 in years. It is only needed if \code{ypll_age} is
-specified AND if ph.data lacks a column named \code{chi_age}.
+specified AND if ph.data lacks a column named \code{age} or \code{chi_age}.
 
 The default is \code{death_age_col = NULL}.}
 }
 \value{
 The function returns a data.table with a minimum of three columns:
 \code{mechanism}, \code{intent}, & \code{deaths}. \code{ypll_##} and
-\code{group_by} columns will also be returned if specified in the arguments.
+\code{by} columns will also be returned if specified in the arguments.
 }
 \description{
 Generate death counts for a death injury matrix
@@ -111,6 +120,11 @@ of death. You can choose to only return the intent or only return the
 mechanism. If you set both to "none", you will receive a summary of all
 injury deaths without regard to the intent.
 
+When \code{intent = '*'} (the default), an additional \code{"Any intent"} row is
+included for each mechanism, giving you the total across all intents in a
+single call. This mirrors the \code{mechanism = '*'} default, which includes an
+\code{"Any mechanism"} total row per intent.
+
 Also note that terrorism codes (U01.#, U02.#, & U03.#) are not included
 because they are not included in the coding used by WA DOH. If they are
 needed, they can be obtained from the CDC link below.
@@ -123,17 +137,22 @@ eg1 <- death_injury_matrix_count(ph.data = deathDT,
                             intent = "*",
                             mechanism = "*",
                             icdcol = "underlying_cod_code",
-                            kingco = FALSE,
                             ypll_age = NULL,
                             death_age_col = NULL)
 head(eg1)
+
+# example 1b: firearm deaths overall AND by intent
+eg1b <- death_injury_matrix_count(ph.data = deathDT,
+                            intent = "*",
+                            mechanism = "firearm",
+                            icdcol = "underlying_cod_code")
+eg1b[] # includes an "Any intent" row alongside Homicide, Suicide, etc.
 
 # example 2: falls designated as homicides and or suicides
 eg2 <- death_injury_matrix_count(ph.data = deathDT,
                             intent = "icide",
                             mechanism = "fall",
                             icdcol = "underlying_cod_code",
-                            kingco = FALSE,
                             ypll_age = NULL,
                             death_age_col = NULL)
 head(eg2)
@@ -143,7 +162,6 @@ eg3 <- death_injury_matrix_count(ph.data = deathDT,
                             intent = "none",
                             mechanism = "none",
                             icdcol = "underlying_cod_code",
-                            kingco = FALSE,
                             ypll_age = NULL,
                             death_age_col = NULL)
 eg3[]
@@ -153,9 +171,8 @@ eg4 <- death_injury_matrix_count(ph.data = deathDT,
                             intent = "none",
                             mechanism = "none",
                             icdcol = "underlying_cod_code",
-                            kingco = FALSE,
                             ypll_age = 65,
-                            death_age_col = "chi_age")
+                            death_age_col = "age")
 eg4[]
 
 # example 5: all suicides, regardless of mechanism, stratified by age
@@ -164,8 +181,7 @@ eg5 <- death_injury_matrix_count(ph.data = deathDT,
                             intent = "suicide",
                             mechanism = "none",
                             icdcol = "underlying_cod_code",
-                            kingco = FALSE,
-                            group_by = 'chi_age',
+                            by = 'age',
                             ypll_age = NULL,
                             death_age_col = NULL)
 eg5[]
@@ -178,7 +194,7 @@ CDC: \url{https://www.cdc.gov/nchs/data/ice/icd10_transcode.pdf}
 \seealso{
 \itemize{
 \item \code{\link[=death_injury_matrix]{death_injury_matrix()}} for viewing available injury death mechanisms and intents
-\item \code{\link[=get_data_death]{get_data_death()}} for importing properly formatted death data
+\item \link[rads.data:synthetic_death]{rads.data::synthetic_death} for properly formatted synthetic death data
 \item \code{\link[=death_icd10_clean]{death_icd10_clean()}} for preparing ICD-10 codes for use with all rads death functions
 \item \code{\link[=age_standardize]{age_standardize()}} for calculating age standardized rates
 \item \code{\link[=death_113_count]{death_113_count()}} for generating CDC NCHS 113 leading causes of death counts

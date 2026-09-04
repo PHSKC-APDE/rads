@@ -1,8 +1,6 @@
 #' @rdname calc
 #' @export
 #' @method calc dtsurvey
-#' @importFrom stats median na.omit
-#' @importFrom utils capture.output
 calc.dtsurvey <- function(ph.data,
                          what = NULL,
                          where, #this is a change from the main calc framework
@@ -11,14 +9,11 @@ calc.dtsurvey <- function(ph.data,
                          per = NULL,
                          win = NULL,
                          time_var = NULL,
-                         proportion = FALSE,
+                         proportion = 'autodetect',
                          fancy_time = TRUE,
                          ci = .95,
                          verbose = FALSE,
                          ...){
-
-  #global variables used by data.table declared as NULL here to play nice with devtools::check()
-  tv <- NULL
 
   if(!all(c('stype', 'sdes') %in% names(attributes(ph.data)))){
 
@@ -29,6 +24,50 @@ calc.dtsurvey <- function(ph.data,
   }
 
   call = match.call() # get 'call' object containing function name plus every argument
+
+  #validate what
+  # Check if `what` does not exist or is NULL
+  if (missing(what) || is.null(what)) {
+    stop("\n\U0001F92C The `what` argument must be provided!")
+  }
+
+  # Check if `what` is not a character vector
+  if (!is.character(what)) {
+    stop("\n\U0001F92C The `what` argument must be a character vector.")
+  }
+
+  # Check if `what` values are not names in `ph.data`
+  missing_columns <- setdiff(what, names(ph.data))
+  if (length(missing_columns) > 0) {
+    stop(paste0("\n\U0001F92C The following `what` values are not names of columns in `ph.data`: ",
+                paste(missing_columns, collapse = ", "), "."))
+  }
+
+  # Determine, for this specific `what` variable, whether it is:
+  # -- proportion-like (important for CI calculation)
+  # -- binary (important for RSE calculation)
+  prop_bin_detect = lapply(what, function(wht) {
+  is_proportion_detected = is_proportion_var(ph.data[[wht]])
+  is_binary_detected = is_binary_var(ph.data[[wht]])
+
+  if(identical(proportion, 'autodetect')){
+    proportion_resolved = is_proportion_detected
+  }else if(isTRUE(proportion)){
+    proportion_resolved = is_proportion_detected
+    if(!is_proportion_detected){
+      warning(paste0(
+        '\n\u26A0\ufe0f `proportion` was set to TRUE for `', wht, '`, but this variable does not ',
+        'seem to be proportion-like (i.e., it is not a factor, a logical, or a numeric containing ',
+        'only 0s and 1s). `proportion` cannot be honored for this variable, so standard ',
+        '(non-proportion) calculations will be used instead (equivalent to `proportion = \'autodetect\'`).'
+      ))
+    }
+  }else{
+    proportion_resolved = FALSE
+  }
+    list(p = proportion_resolved, b = is_binary_detected)
+  })
+  prop_bin_detect = stats::setNames(prop_bin_detect, what)
 
   #filter the dataset
   if(!missing(where)){
@@ -52,23 +91,6 @@ calc.dtsurvey <- function(ph.data,
   }
 
   #validate other inputs
-  #validate what
-  # Check if `what` does not exist or is NULL
-      if (missing(what) || is.null(what)) {
-        stop("\n\U0001F92C The `what` argument must be provided!")
-      }
-
-      # Check if `what` is not a character vector
-      if (!is.character(what)) {
-        stop("\n\U0001F92C The `what` argument must be a character vector.")
-      }
-
-      # Check if `what` values are not names in `ph.data`
-      missing_columns <- setdiff(what, names(ph.data))
-      if (length(missing_columns) > 0) {
-        stop(paste0("\n\U0001F92C The following `what` values are not names of columns in `ph.data`: ",
-                     paste(missing_columns, collapse = ", "), "."))
-      }
 
   #validate by
       # Check if `by` is not a character vector
@@ -95,6 +117,13 @@ calc.dtsurvey <- function(ph.data,
     }
   }else{
     stop('Must specify a `metric`')
+  }
+
+  #validate 'proportion'
+  # Must be one of 'autodetect', TRUE, or FALSE. Anything else (including NA, other strings, etc.) is rejected.
+  if(!(is.character(proportion) && length(proportion) == 1 && identical(proportion, 'autodetect')) &&
+     !(is.logical(proportion) && length(proportion) == 1 && !is.na(proportion))){
+    stop("\n\U0001F92C The `proportion` argument must be one of: 'autodetect' (the default), TRUE, or FALSE.")
   }
 
   #validate rate
@@ -127,7 +156,7 @@ calc.dtsurvey <- function(ph.data,
 
   #calculate windows
   if(!is.null(time_var) & !is.null(win)){
-    times = unique(na.omit(ph.data[[time_var]]))
+    times = unique(stats::na.omit(ph.data[[time_var]]))
     if(length(times)>0 && !is.null(win)){
       wins = seq(min(times), max(times - win + 1))
       wins = lapply(wins, function(x) seq(x, x + win - 1))
@@ -147,12 +176,16 @@ calc.dtsurvey <- function(ph.data,
 
   #if multiple whats are provided, compute per what
   res = lapply(what, function(wht){
+
+    proportion_resolved = prop_bin_detect[[wht]]$p
+    is_binary_detected = prop_bin_detect[[wht]]$b
+
     #Determine the type of CI method to use
     meth = 'mean' #the default
     st = attr(ph.data, 'stype')
     whatfactor = is.factor(ph.data[[wht]])
-    if(st == 'admin' && (whatfactor || proportion == T)) meth = 'unweighted_binary'
-    if(st != 'admin' && proportion == T) meth = 'xlogit'
+    if(st == 'admin' && (whatfactor || proportion_resolved)) meth = 'unweighted_binary'
+    if(st != 'admin' && proportion_resolved) meth = 'xlogit'
 
     #Compute the metric
     r = lapply(wins, function(w){
@@ -161,10 +194,17 @@ calc.dtsurvey <- function(ph.data,
         sub_i = substitute(tv %in% w, list(tv = as.name(time_var), w = w))
       }
 
-      compute(eval(substitute(ph.data[sub_i], env = list(sub_i = sub_i))), wht, by = by, metrics,
-              ci_method = meth, level = ci,
-              time_var = time_var, time_format = time_format,
-              per = per, window = !(is.logical(sub_i) && sub_i))
+      compute(DT = eval(substitute(ph.data[sub_i], env = list(sub_i = sub_i))),
+              x = wht,
+              by = by,
+              metrics,
+              ci_method = meth,
+              level = ci,
+              time_var = time_var,
+              time_format = time_format,
+              per = per,
+              window = !(is.logical(sub_i) && sub_i),
+              binary = proportion_resolved && is_binary_detected)
     })
 
     data.table::rbindlist(r)
@@ -172,14 +212,53 @@ calc.dtsurvey <- function(ph.data,
   })
 
 
-  res = rbindlist(res, fill = TRUE)
+  res = data.table::rbindlist(res, fill = TRUE)
 
   return(res)
 
 }
 
+#' Determine whether a variable is structurally binary.
+#' Used by `calc.dtsurvey()` to decide whether the RSE calculation should be:
+#' RSE = 100 * mean_se / mean
+#' OR
+#' RSE = 100 * mean_se / (min(mean, 1-mean))
+#' @param x a vector -- typically a column pulled from `ph.data` prior to any `where` filtering.
+#' @noRd
+#' @keywords internal
+is_binary_var <- function(x){
+  if(is.factor(x)){
+    return(nlevels(x) == 2)
+  }
+  if(is.logical(x)){
+    return(TRUE)
+  }
+  if(is.numeric(x)){
+    vals = unique(x[!is.na(x)])
+    if(length(vals) == 0) return(FALSE)
+    return(all(vals %in% c(0, 1)))
+  }
+  return(FALSE)
+}
+
+#' Determine whether a variable is proportion-like.
+#' Any factor qualifies here regardless of how many levels it has.
+#' Used by `calc.dtsurvey()` to resolve `proportion = 'autodetect'` and
+#' to decide whether proportion-appropriate CI methods should be applied for survey analyses.
+#' @param x a vector -- typically a column pulled from `ph.data` prior to any `where` filtering.
+#' @noRd
+#' @keywords internal
+is_proportion_var <- function(x){
+  if(is.factor(x)) return(TRUE)
+  is_binary_var(x) # if it is binary, treat it as a factor for CI calculations, even if not a true factor
+}
+
 #' A function to compute a metric as part of calc.dtsurvey
 #' see the help/documentation for calc and/or smeanto better understand the inputs
+#' @param binary logical. Whether `x` should be treated as a binary variable. When TRUE, `rse` is
+#' calculated as `100 * mean_se / min(mean, 1 - mean)` instead of `100 * mean_se / mean`.
+#' In essence, this will ascribe the maximal RSE from the estimate and its complement. See
+#' [calc] documentation for details.
 #' @noRd
 #' @keywords internal
 compute <- function(DT,
@@ -191,14 +270,11 @@ compute <- function(DT,
                     time_var,
                     time_format,
                     per = 1,
-                    window = FALSE){
+                    window = FALSE,
+                    binary = FALSE){
 
 
   # if(nrow(DT) == 0) warning('No valid rows to compute on given `where` and `win` conditions')
-
-
-  #global variables used by data.table declared as NULL here to play nice with devtools::check()
-  cim <- l <- `_id` <- `..sv` <- `..st` <- tv <- X <- ccc <- ndistinct <- id <- total <- one <- numerator <- rse <- mean_se <- rate_per <- NULL
 
   sv = attr(DT, 'sdes')
   st = attr(DT, 'stype')
@@ -212,31 +288,31 @@ compute <- function(DT,
   #construct the query
   if(any(c('mean', 'rate') %in% metrics)){
     mean_fun = substitute(list(dtsurvey::smean(x,
-                                                  na.rm = T,
-                                                  var_type = c('se', 'ci'),
-                                                  ci_method = cim,
-                                                  level = l,
-                                                  ids = `_id`,
-                                                  sv = ..sv,
-                                                  st = ..st)),
-                                       list(x = x,
-                                            l = level,
-                                            cim = I(ci_method)))
+                                               na.rm = T,
+                                               var_type = c('se', 'ci'),
+                                               ci_method = cim,
+                                               level = l,
+                                               ids = `_id`,
+                                               sv = ..sv,
+                                               st = ..st)),
+                          list(x = x,
+                               l = level,
+                               cim = I(ci_method)))
   }else{
     mean_fun = NULL
   }
 
   if('total' %in% metrics){
     total_fun = substitute(list(dtsurvey::stotal(x,
-                                                    na.rm = T,
-                                                    var_type = c('se', 'ci'),
-                                                    ci_method = 'total',
-                                                    level = l,
-                                                    ids = `_id`,
-                                                    sv = ..sv,
-                                                    st = ..st)),
-                                        list(x = x,
-                                             l = level))
+                                                 na.rm = T,
+                                                 var_type = c('se', 'ci'),
+                                                 ci_method = 'total',
+                                                 level = l,
+                                                 ids = `_id`,
+                                                 sv = ..sv,
+                                                 st = ..st)),
+                           list(x = x,
+                                l = level))
   }else{
     total_fun = NULL
   }
@@ -262,7 +338,7 @@ compute <- function(DT,
       med_fun = NULL
       warning('Ignoring a request to calculate the median on a factor')
     }else{
-      med_fun = substitute(median(x, na.rm = T) * 1.0, list(x=x))
+      med_fun = substitute(stats::median(x, na.rm = T) * 1.0, list(x=x))
     }
   }else{
     med_fun = NULL
@@ -317,12 +393,12 @@ compute <- function(DT,
   if('vcov' %in% metrics){
     stopifnot( 'One of `mean` or `total` must be in the metrics for vcov to make sense' = any(c('mean', 'total') %in% metrics))
     if('mean' %in% metrics){
-      mean_vcov_fun = substitute(sur_var(x, na.rm = T, type = 'mean', as_list = TRUE,  sv = sv(DT), ids = `_id`, st = st(DT)), list(x=x))
+      mean_vcov_fun = substitute(dtsurvey::sur_var(x, na.rm = T, type = 'mean', as_list = TRUE,  sv = dtsurvey::sv(DT), ids = `_id`, st = dtsurvey::st(DT)), list(x=x))
     }else{
       mean_vcov_fun = NULL
     }
     if('total' %in% metrics){
-      total_vcov_fun = substitute(sur_var(x, na.rm = T, type = 'total', as_list = TRUE,  sv = sv(DT), ids = `_id`, st = st(DT)), list(x=x))
+      total_vcov_fun = substitute(dtsurvey::sur_var(x, na.rm = T, type = 'total', as_list = TRUE,  sv = dtsurvey::sv(DT), ids = `_id`, st = dtsurvey::st(DT)), list(x=x))
     }else{
       total_vcov_fun = NULL
     }
@@ -330,10 +406,10 @@ compute <- function(DT,
     mean_vcov_fun = NULL
     total_vcov_fun = NULL
   }
-  #use something like a = DT[, list(list(a), list(b)), env = list(a = mean_fun, b = total_fun), by = byvar]
-  #to capture the se and ci returns and then break out post hoc
-  #if it is a factor, compute some things separately
-  # Following bit creates the call taht will be executed within the data.table DT
+  # use something like a = DT[, list(list(a), list(b)), env = list(a = mean_fun, b = total_fun), by = byvar]
+  # to capture the se and ci returns and then break out post hoc
+  # if it is a factor, compute some things separately
+  # Following bit creates the call that will be executed within the data.table DT
   # This construction is used for flexibility (build the whole call and take out the null bits)
   the_call = substitute(list(
     time = time_fun,
@@ -395,7 +471,7 @@ compute <- function(DT,
       numerator = .N
     ),
     by = c(by, as.character(x))]
-    setnames(r2, as.character(x), 'level')
+    data.table::setnames(r2, as.character(x), 'level')
 
     r1[, id := .I]
 
@@ -416,7 +492,7 @@ compute <- function(DT,
 
     if(xisfactor){
       r1m = r1[, unlist(mean, recursive = FALSE), id]
-      setnames(r1m, c('id', 'mean', 'mean_se', 'mean_lower', 'mean_upper', 'level'))
+      data.table::setnames(r1m, c('id', 'mean', 'mean_se', 'mean_lower', 'mean_upper', 'level'))
 
     }else{
       r1m = NULL
@@ -424,7 +500,7 @@ compute <- function(DT,
         res[, mean := NULL]
         res[, c('mean', 'mean_se', 'mean_lower', 'mean_upper') := NA_real_]
       }else{
-        res[, c('mean', 'mean_se', 'mean_lower', 'mean_upper') := rbindlist(mean)]
+        res[, c('mean', 'mean_se', 'mean_lower', 'mean_upper') := data.table::rbindlist(mean)]
 
       }
     }
@@ -434,7 +510,7 @@ compute <- function(DT,
 
     if(xisfactor){
       r1t = r1[, unlist(total, recursive = FALSE), id]
-      setnames(r1t, c('id', 'total', 'total_se', 'total_lower', 'total_upper', 'level'))
+      data.table::setnames(r1t, c('id', 'total', 'total_se', 'total_lower', 'total_upper', 'level'))
 
     }else{
       r1t = NULL
@@ -442,7 +518,7 @@ compute <- function(DT,
         res[, total := NULL]
         res[, c('total', 'total_se', 'total_lower', 'total_upper') := NA_real_]
       }else{
-        res[, c('total', 'total_se', 'total_lower', 'total_upper') := rbindlist(total)]
+        res[, c('total', 'total_se', 'total_lower', 'total_upper') := data.table::rbindlist(total)]
 
       }
     }
@@ -483,7 +559,11 @@ compute <- function(DT,
 
   #if asked for, compute rse and rate
   if('rse' %in% metrics){
-    res[, rse := 100*(mean_se / mean)]
+    if(isTRUE(binary)){
+      res[, rse := 100 * (mean_se / pmin(mean, 1 - mean))] # need pmin because need minimum for each row
+    }else{
+      res[, rse := 100*(mean_se / mean)]
+    }
   }
 
   if('rate' %in% metrics){

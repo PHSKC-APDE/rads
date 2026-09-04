@@ -29,7 +29,7 @@ column from \code{rads.data::icd_other_causes_of_death}.
 This function does not take any arguments
 }
 \examples{
-#' # Save and view table as a data.table named 'blah'
+# Save and view table as a data.table named 'blah'
 blah <- death_other()
 print(blah)
 

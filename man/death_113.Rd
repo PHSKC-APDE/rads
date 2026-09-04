@@ -21,8 +21,7 @@ Use it to identify the causeids given as an argument in \code{death_113_count}.
 }
 \details{
 There are actually 114 rows, with causeid 114 being the official
-\code{CDC version of causeid 95 (Residual)}, i.e., \code{All other diseases
-(Residual)}. Causeid 95 was intentionally changed to match the definition
+\verb{CDC version of causeid 95 (Residual)}, i.e., \verb{All other diseases (Residual)}. Causeid 95 was intentionally changed to match the definition
 used by WA DOH.
 }
 \note{
