@@ -2,6 +2,10 @@
 "_PACKAGE"
 
 ## usethis namespace: start
-#' @importFrom lifecycle deprecated
+#' @importFrom data.table .N
+#' @importFrom data.table .SD
+#' @importFrom data.table .I
+#' @importFrom data.table .GRP
+#' @importFrom data.table :=
 ## usethis namespace: end
 NULL

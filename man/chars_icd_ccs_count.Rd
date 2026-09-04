@@ -15,9 +15,7 @@ chars_icd_ccs_count(
   midlevel = NULL,
   detailed = NULL,
   icdcol = "diag1",
-  group_by = NULL,
-  kingco = TRUE,
-  ...
+  by = NULL
 )
 }
 \arguments{
@@ -86,35 +84,24 @@ in \code{ph.data} that contains ICD-CM diagnosis codes.
 
 Values must be properly formatted ICD-9-CM or ICD-10-CM codes; codes are
 automatically coerced to uppercase and stripped of punctuation by
-\code{\link[=chars_validate_data]{chars_validate_data()}} (e.g., \code{A85.2} → \code{A852}). For ICD-10-CM, codes
+\code{\link[=chars_validate_data]{chars_validate_data()}} (e.g., \code{A85.2} >> \code{A852}). For ICD-10-CM, codes
 must begin with a capital letter followed by a digit (invalid codes are set
 to \code{NA}).
 
 The default is \code{icdcol = 'diag1'}, which refers to the principal
 diagnosis code provided by \code{\link[apde.data:chars]{apde.data::chars()}}.}
 
-\item{group_by}{a character vector of indeterminate length. This is used to
+\item{by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{group_by = c('chi_sex', 'chi_race_6')}, the results would be stratified by each combination of sex
+results. For example, if you specified \code{by = c('sex', 'race_6')}, the results would be stratified by each combination of sex
 and race.
 
-The default is \code{group_by = NULL}}
-
-\item{kingco}{a logical vector of length one. It specifies whether you want to
-limit the analysis to King County. This parameter is specific to Washington State
-CHARS data and requires the column \code{chi_geo_kc}, which is provided by
-\code{\link[apde.data:chars]{apde.data::chars()}}.
-
-For users outside of King County or Washington State, set \code{kingco = FALSE}.
-
-The default is \code{kingco = TRUE}}
-
-\item{...}{Additional arguments passed to other methods (currently unused).}
+The default is \code{by = NULL}}
 }
 \value{
 Generates a table with columns for each of the search terms you entered (e.g.,
 \code{icdcm}, \code{broad}, and/or \code{detailed}) as well as
-any \code{group_by} variables and a column named \code{hospitalizations} that
+any \code{by} variables and a column named \code{hospitalizations} that
 contains the relevant counts.
 }
 \description{
@@ -151,7 +138,7 @@ including \strong{\code{^}}, \strong{\code{$}}, and \strong{\code{|}}.
 \strong{Note:} If you submit values for more than one of \code{icdcm},
 \code{superlevel}, \code{broad}, \code{midlevel}, or \code{detailed}, they must
 be nested. For example, \verb{broad = 'neoplasms', detailed = 'sarcoma'} will
-give results because sarcomas are type of cancers. However,
+give results because sarcomas are a type of cancer. However,
 \verb{broad = 'neoplasms', detailed = 'intestinal infection'} will return an
 error because your resulting table will have zero rows.
 }
@@ -159,16 +146,14 @@ error because your resulting table will have zero rows.
 \donttest{
 myresult <- chars_icd_ccs_count(ph.data = rads.data::synthetic_chars,
                                 detailed = 'headache',
-                                group_by = c('temperament'),
-                                kingco = FALSE)
+                                by = c('temperament'))
 print(myresult)
 
 myrefTable <- chars_icd_ccs()
 myresult <- chars_icd_ccs_count(ph.data = rads.data::synthetic_chars,
                                 CMtable = myrefTable,
                                 detailed = 'asthma',
-                                group_by = c('temperament'),
-                                kingco = FALSE)
+                                by = c('temperament'))
 print(myresult)
 }
 

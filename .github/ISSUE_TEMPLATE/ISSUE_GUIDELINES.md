@@ -2,6 +2,15 @@
 
 When you're stuck on a coding problem and need help, following these guidelines will help us understand and solve your issue more quickly. Plus, you might even solve it yourself while putting together the example! Here's what we need to help you effectively.
 
+> **Filing a feature request or documentation issue instead of a bug?** You can skip the reproducible example specific guidance below (Attempted Solutions, Expected Output, Minimal Code, Environment Information) — just describe what you'd like to see and why.
+
+This package is maintained by PHSKC-APDE staff on a best-effort basis. Both PHSKC staff and outside users are welcome to file issues; the "Data Access" note below is only relevant if you have access to our shared network drives.
+
+## Before You File
+
+* [ ] Search [existing issues](https://github.com/PHSKC-APDE/rads/issues?q=is%3Aissue) (open and closed) to check whether it's already been reported
+* [ ] Check the function help (`?function_name`) and the [wiki](https://github.com/PHSKC-APDE/rads/wiki) for existing guidance
+
 ## Help Us Help You
 
 * **Problem Synopsis**: What exactly is the problem? 
@@ -82,7 +91,7 @@ for(myvar in c("vietn", "unspeclang", "uimale1864", "uige400", "uifem1864", "ui1
   calc(ph.data = dt,
        what = myvar,
        where = agep >= 65,
-       by = 'chi_sex')
+       by = 'sex')
 }
 
 # exploration #2 ... didn't work for mysterious reasons
@@ -97,7 +106,7 @@ for(myvar in c("vietn", "unspeclang", "uimale1864", "uige400", "uifem1864", "ui1
   calc(ph.data = dt,
        what = myvar,
        where = agep <65,
-       by = 'chi_sex')
+       by = 'sex')
 }
 
 # try to make a table
@@ -112,7 +121,7 @@ mytable <- rbindlist(lapply(
     temp <- calc(ph.data = dt, 
                  what = X, 
                  where = agep >= 65, 
-                 by = 'chi_sex')
+                 by = 'sex')
   }
 ), use.names = T)  
 ```
@@ -153,13 +162,13 @@ mytable <- rbindlist(lapply(
     temp <- calc(ph.data = dt, 
                  what = X, 
                  where = agep >= 65, 
-                 by = 'chi_sex')
+                 by = 'sex')
   }
 ), use.names = T)  
 
 # Expected output:
 # a data.table with columns for:
-# chi_sex: Male / Female
+# sex: Male / Female
 # level: Employed / Not in labor force / Unemployed
 # variable: employ
 # mean, mean_se, mean_lower, mean_upper, numerator, denominator
@@ -171,3 +180,5 @@ mytable <- rbindlist(lapply(
 For more detailed information about creating reproducible examples:
 * [How to make a great R reproducible example](https://stackoverflow.com/questions/5963269/how-to-make-a-great-r-reproducible-example)
 * [How to create a Minimal, Reproducible Example](https://stackoverflow.com/help/minimal-reproducible-example)
+
+See also our [Contributing guide](../../CONTRIBUTING.md) if you'd like to submit a fix yourself rather than just filing an issue.

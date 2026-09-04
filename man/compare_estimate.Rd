@@ -25,9 +25,7 @@ For standard rads::calc() output, id_vars should be c("variable", "level") and
 for standard CHI tableau ready output, it should be c("indicator_key", "year")}
 
 \item{key_where}{An expression identifying the referent/comparator/key to
-which other data will be compared. It should be passed unquoted.
-rows to be filtered / excluded from secondary suppression because
-the categories are not mutually exclusive (e.g., race3)}
+which other data will be compared. It should be passed unquoted.}
 
 \item{new_col}{Character vector of length 1. It is the name of the new column
 that contains the comparison results (i.e., higher, lower, or no difference).
@@ -49,7 +47,7 @@ of the strata in the summary table.
 # create test data
 set.seed(98104)
 dt <- data.table::data.table(
-  chi_year = rep(2008:2018, 2000),
+  year = rep(2008:2018, 2000),
   fetal_pres = factor(sample(c("Breech", "Cephalic", "Other", NA),
                              22000, rep = TRUE,
                              prob = c(0.04, 0.945, 0.01, 0.005))),

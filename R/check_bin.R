@@ -5,6 +5,10 @@
 #'
 #'@export
 #'
+#'@examples
+#' check_bin("[0,5)") # TRUE, interpretable as a bin
+#' check_bin("male")  # FALSE, not a bin
+#'
 check_bin = function(x){
 
   stopifnot(length(x) == 1)

@@ -42,21 +42,21 @@ data dictionary. Default is NULL.}
 }
 \value{
 A data.table with the following columns:
-\describe{
-\item{source}{Character: The source of the data.}
-\item{varname}{Character: The name of the variable.}
-\item{vartype}{Character: The type of the variable (e.g., factor,
-character, logical, integer, numeric, date, datetime, other).}
-\item{values}{Character: A sample of unique values or a range if the number
-of unique values exceeds \code{max_unique_values}.}
-\item{factor_labels}{Character: Labels for factor levels if the variable is
-a factor.}
-\item{desc}{Character: Description of the variable. This column is only
-filled if a \code{ph.ref} data frame is provided.}
-\item{notes}{Character: Additional notes about the variable. This column is
-only filled if a \code{ph.ref} data frame is provided.}
-\item{dict_updated}{Date: The date the dictionary was created, i.e., the
-date you ran this function.}
+\itemize{
+\item \code{source}: Character: The source of the data.
+\item \code{varname}: Character: The name of the variable.
+\item \code{vartype}: Character: The type of the variable (e.g., factor,
+character, logical, integer, numeric, date, datetime, other).
+\item \code{values}: Character: A sample of unique values or a range if the number
+of unique values exceeds \code{max_unique_values}.
+\item \code{factor_labels}: Character: Labels for factor levels if the variable is
+a factor.
+\item \code{desc}: Character: Description of the variable. This column is only
+filled if a \code{ph.ref} data frame is provided.
+\item \code{notes}: Character: Additional notes about the variable. This column is
+only filled if a \code{ph.ref} data frame is provided.
+\item \code{dict_updated}: Date: The date the dictionary was created, i.e., the
+date you ran this function.
 }
 }
 \description{
@@ -85,11 +85,11 @@ variables, showing minimum and maximum values if there are too many unique
 values.
 \item \strong{Other types}: For non-atomic types (e.g., \code{lists}), the
 function suggests checking the original dataset structure.
-}
 Users can hide the unique values of sensitive variables (e.g., phone numbers
 in \code{ph.data}) using the \code{suppress} parameter. Additionally, if a reference
 data.table or data.frame (\code{ph.ref}) is provided, it will merge descriptions
 and notes into the output.
+}
 }
 \examples{
 library(data.table)

@@ -31,10 +31,8 @@ The default digits_2 = 4 i.e., 0.123456 >> 0.1234.}
 a data.table with appropriate rounding.
 }
 \description{
-#' @description
 Default rounding is according to APDE/CHI standards
-}
-\details{
+
 By default, this function expects data that has already been formatted for CHI,
 i.e., data containing result, lower_bound, upper_bound, se, rse. However, the variables
 and the number of digits to round can be readily specified.
@@ -43,8 +41,8 @@ and the number of digits to round can be readily specified.
 
  set.seed(98104)
  dt <- data.table::data.table(
-   chi_year = rep(2000:2019),
-   chi_sex = factor(sample(c("Male", "Female"), 20, rep = TRUE, prob = c(0.5, 0.5))),
+   year = rep(2000:2019),
+   sex = factor(sample(c("Male", "Female"), 20, rep = TRUE, prob = c(0.5, 0.5))),
    result = rnorm(20, .75, 0.025),
    se = rnorm(20, 0.0258787654654, 0.00001)
  )

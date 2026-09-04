@@ -16,7 +16,7 @@ create_recode(
 \arguments{
 \item{old_var}{character. Column in the dataset containing the values to be recoded}
 
-\item{new_var}{character. Column where the recoded values will be placed. If \code{new_var} doesn't exist, than it will be created. Otherwise it will be overwritten.}
+\item{new_var}{character. Column where the recoded values will be placed. If \code{new_var} doesn't exist, then it will be created. Otherwise it will be overwritten.}
 
 \item{old}{character (or coercible). value in the column \code{old_var} to be translated into a new value by recoding. If left blank/NA/""/NULL or otherwise missing, the recode operation
 will essentially take the form of a rename of \code{old_var} -> \code{new_var}.
@@ -36,6 +36,12 @@ a list of lists (of class recode_instruction).
 Creates/standardizes the parameters required for recoding a variable.
 }
 \details{
-This function mostly exists to help translate (via \code{parse_recode_instructions}) data.frame type read-ins of recoding into a standardized form.
-These results can then be passed to \code{enact_recoding} as part of a bulk recoding process.
+This function mostly exists to help translate (via \code{\link[=parse_recode_instructions]{parse_recode_instructions()}}) data.frame type read-ins of recoding into a standardized form.
+These results can then be passed to \code{\link[=enact_recodes]{enact_recodes()}} as part of a bulk recoding process.
+}
+\examples{
+create_recode(old_var = "sex", new_var = "sex_recoded",
+              old = c("M", "F"), new = c("Male", "Female"),
+              simplify_to_numeric = FALSE)
+
 }

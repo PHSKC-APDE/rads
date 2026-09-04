@@ -12,7 +12,7 @@ calc_age(from, to)
 \item{to}{Vector of dates or characters ("YYYY-MM-DD") of indeterminate length.  vector of length 1.}
 }
 \value{
-Character vector of available datasets.
+Integer vector of ages in years.
 }
 \description{
 Proper calculation of age in years

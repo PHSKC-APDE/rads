@@ -7,3 +7,7 @@
 ^wiki$
 ^ref$
 ^explorations$
+^\.positai$
+^\.claude$
+^LICENSE\.md$
+^CONTRIBUTING\.md$

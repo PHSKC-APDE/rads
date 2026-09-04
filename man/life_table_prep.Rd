@@ -9,7 +9,7 @@ life_table_prep(
   cuts = c(0, 1, 5, 10, 15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85),
   dobvar = "date_of_birth",
   dodvar = "date_of_death",
-  group_by = NULL
+  by = NULL
 )
 }
 \arguments{
@@ -26,48 +26,45 @@ cut extends through to the maximum age observed. For example, when cuts =
 c(0, 5, 10, 20), the data will be grouped into ages [0,5), [5,10), [10,20), and [20,
 infinity).
 
-The default is \code{cuts= c(0, 1, 5, 10, 15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65,
-70, 75, 80, 85)}, which creates the standard age groupings used by WA DOH.}
+The default is \code{cuts= c(0, 1, 5, 10, 15, 18, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85)}, which creates the standard age groupings used by WA DOH.}
 
 \item{dobvar}{character vector of length one identifying a column with
 the decedent's date of birth. The referenced column must be of class
 'date' or class 'character' in the format "YYYY-MM-DD" or "YYYY/MM/DD."
 
 The default is \code{dobvar = "date_of_birth"}, which is the dob variable
-available via \code{rads::get_data_death()}.}
+available in \code{rads.data::synthetic_death}.}
 
 \item{dodvar}{character vector of length one identifying a column with
 the decedent's date of death. The referenced column must be of class
 'date' or class 'character' in the format "YYYY-MM-DD" or "YYYY/MM/DD."
 
 The default is \code{dodvar = "date_of_death"}, which is the dod variable
-available via \code{rads::get_data_death()}.}
+available in \code{rads.data::synthetic_death}.}
 
-\item{group_by}{a character vector of indeterminate length. This is used to
+\item{by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{group_by = c('chi_sex',
-'chi_race_6')}, the results would be grouped by each combination of sex
-and race. If you leave it blank (i.e., \code{group_by = NULL}), it will only
+results. For example, if you specified \code{by = c('sex', 'race_6')}, the results would be grouped by each combination of sex
+and race. If you leave it blank (i.e., \code{by = NULL}), it will only
 provide the death counts and death fractions by age group
 described by \code{cuts}.
 
-The default is \code{group_by = NULL}}
+The default is \code{by = NULL}}
 }
 \value{
 a data.table with deaths aggregated by any demographics specified in
-the \code{group_by} argument, as well as \code{ages} (age group), \code{deaths} (deaths per
+the \code{by} argument, as well as \code{ages} (age group), \code{deaths} (deaths per
 demographic group and age group), and \code{fraction} (the mean fraction of the
 age interval lived by those who died in that interval).
 }
 \description{
 Processes individual-level death data to create a standardized data table.
 This table is collapsed/aggregated by age bin and optionally, by
-demographics, for use with \code{\link{life_table}}.
+demographics, for use with \code{\link[=life_table]{life_table()}}.
 }
 \details{
-Note that population data (from \code{\link{get_population}}) must be merged
-onto the returned data.table before running it through
-\code{\link{life_table}}.
+Note that population data must be merged onto the returned data.table
+before running it through \code{\link[=life_table]{life_table()}}.
 }
 \examples{
 \donttest{
@@ -81,6 +78,7 @@ deaths <- data.table::data.table(
   gender = sample(c('Male', 'Female'), 10000, replace = TRUE),
   year = 2020
 )
+
 # Calculate a date of birth based on a maximum age of 120 years (~43800 days)
 deaths[, date_of_birth := date_of_death - sample(1:43800, 10000, replace = TRUE)]
 
@@ -88,8 +86,8 @@ deaths[, date_of_birth := date_of_death - sample(1:43800, 10000, replace = TRUE)
  output1 <- life_table_prep(ph.data = deaths)
  head(output1)
 
- # process with life_table_prep using group_by argument----
- output2 <- life_table_prep(ph.data = deaths, group_by = c('gender', 'race_eth'))
+ # process with life_table_prep using by argument----
+ output2 <- life_table_prep(ph.data = deaths, by = c('gender', 'race_eth'))
  head(output2)
 }
 

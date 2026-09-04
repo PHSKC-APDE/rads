@@ -1,15 +1,27 @@
 name: Submit an Issue
-description: Report bugs, feature requests, etc. 
+description: Report bugs, feature requests, etc.
 body:
   - type: markdown
     attributes:
       value: |
         Thanks for taking the time to create a detailed issue! For examples of good vs bad issues, check our [detailed guidelines](https://github.com/PHSKC-APDE/rads/blob/main/.github/ISSUE_TEMPLATE/ISSUE_GUIDELINES.md).
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue Type
+      description: What kind of issue is this? (Feature requests and documentation issues can skip the reproducible example specific fields below.)
+      options:
+        - Bug / coding help
+        - Feature request
+        - Documentation
+        - Other
+    validations:
+      required: true
   - type: textarea
     id: problem-synopsis
     attributes:
       label: Problem Synopsis
-      description: What exactly is the problem? Copy and paste any error messages.
+      description: What exactly is the problem, or what would you like to see? Copy and paste any error messages.
       placeholder: |
         Example: "When running calc() inside rbindlist(lapply()), I get the error: 'Error in smean.character (employ, na.rm = T, var_type = c("se", "ci"))'"
     validations:
@@ -18,26 +30,26 @@ body:
     id: attempted-solutions
     attributes:
       label: Attempted Solutions
-      description: What have you already tried to fix this problem?
+      description: "For bugs: what have you already tried to fix this problem? (Not applicable to feature requests.)"
       placeholder: |
         Example: "I tried running the code outside of rbindlist(lapply()) and it worked..."
     validations:
-      required: true
+      required: false
   - type: textarea
     id: expected-output
     attributes:
       label: Expected Output
-      description: What exactly did you expect as the output? (A list? A data.frame? etc.)
+      description: "For bugs: what exactly did you expect as the output? (A list? A data.frame? etc.)"
     validations:
-      required: true
+      required: false
   - type: textarea
     id: minimal-code
     attributes:
       label: Minimal Code Example
-      description: Include only the code necessary to reproduce the issue.
+      description: "For bugs: include only the code necessary to reproduce the issue. See our Issue Guidelines link above for what makes a good example."
       render: R
     validations:
-      required: true
+      required: false
   - type: textarea
     id: environment
     attributes:
@@ -57,7 +69,4 @@ body:
     attributes:
       value: |
         ### File Paths
-        **_Remember!_** If your code references files:
-        - Remove all references to your C:\ drive
-        - Use full file paths instead of mappings
-        Example: `//dphcifs/APDE-CDIP/Shapefiles` instead of `A:/Shapefiles`
+        **_Remember!_** If your code references files, remove `C:\` drive references and use full network paths instead of drive mappings (e.g. `//dphcifs/APDE-CDIP/Shapefiles` instead of `A:/Shapefiles`). See our [Issue Guidelines](https://github.com/PHSKC-APDE/rads/blob/main/.github/ISSUE_TEMPLATE/ISSUE_GUIDELINES.md#help-us-help-you) for details.

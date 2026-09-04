@@ -32,7 +32,7 @@ conversion:
 \item Input vectors containing any \code{NA} values are rejected, because
 raw vectors cannot represent missing data (\code{as.raw(NA)} ==
 \code{as.raw(0)}).
-\item All values must be whole numbers in the range 0–255.
+\item All values must be whole numbers in the range 0-255.
 Values outside this range or non-integer numerics trigger a
 warning and are not converted.
 }

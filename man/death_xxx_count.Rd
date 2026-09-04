@@ -9,8 +9,7 @@ death_xxx_count(
   causeids = NULL,
   cause = NULL,
   icdcol = "underlying_cod_code",
-  kingco = TRUE,
-  group_by = NULL,
+  by = NULL,
   ypll_age = NULL,
   death_age_col = NULL,
   nchsnum = NULL
@@ -20,7 +19,7 @@ death_xxx_count(
 \item{ph.data}{a data.table or data.frame. Must contain death data structured
 with one person per row and with at least one column of ICD10 death codes.
 
-\strong{Note:}* \code{ph.data} and \code{icdcol} are validated by \code{\link[=death_validate_data]{death_validate_data()}}}
+\strong{Note:} \code{ph.data} and \code{icdcol} are validated by \code{\link[=death_validate_data]{death_validate_data()}}}
 
 \item{causeids}{an integer vector, with a minimum value of 1 and a maximum
 value of dependent upon the NCHS reference table.}
@@ -37,24 +36,15 @@ argument to identify the causes of death.}
 \item{icdcol}{a character vector of length one that specifies the name of the
 column in ph.data that contains the ICD10 death codes of interest.
 
-The default is \code{underlying_cod_code}, which is found in the properly
-formatted death data obtained using the \code{get_data_death()} function.}
+The default is \code{underlying_cod_code}, which is found in properly
+formatted death data structured like \code{rads.data::synthetic_death}.}
 
-\item{kingco}{a logical vector of length one. It specifies whether you want to
-limit the analysis to King County.
-
-\strong{NOTE} this only works with data imported with the \code{get_data_death()}
-function because it needs the variable \code{chi_geo_kc}.
-
-The default is kingco = TRUE.}
-
-\item{group_by}{a character vector of indeterminate length. This is used to
+\item{by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{group_by = c('chi_sex',
-'chi_race_6')}, the results would be stratified by each combination of sex
+results. For example, if you specified \code{by = c('sex', 'race_6')}, the results would be stratified by each combination of sex
 and race.
 
-The default is \code{group_by = NULL}}
+The default is \code{by = NULL}}
 
 \item{ypll_age}{an optional numeric vector of length 1. When specified, it
 should be the age (an integer) used for \strong{Years of Potential Life Lost} (YPLL)
@@ -69,7 +59,7 @@ The default is \code{ypll_age = NULL}, which will skip YPLL calculations.}
 \item{death_age_col}{an optional character vector of length one that specifies
 the name of the column in ph.data with the decedents' age at death
 in years. It is only needed if \code{ypll_age} is
-specified AND if ph.data lacks a column named \code{chi_age}.
+specified AND if ph.data lacks a column named \code{age} or \code{chi_age}.
 
 The default is \code{death_age_col = NULL}.}
 
@@ -80,7 +70,7 @@ COD (\code{rads::death_113()}) or NCHS 130 Selected Causes of Infant Death
 \value{
 Generates a table with three columns, \code{causeid},  \code{cause.of.death},
 and \code{deaths}. If \code{ypll_age} is specified, a \code{ypll_##} column
-will also be added to the table. Columns in the \code{group_by}
+will also be added to the table. Columns in the \code{by}
 argument will also be returned.
 
 By default, it will return all relevant causes of death. You can specify which
@@ -109,7 +99,6 @@ eg1 <- death_xxx_count(ph.data = deathDT,
                        causeids = seq(1, 113, 1),
                        cause = NULL,
                        icdcol = "underlying_cod_code",
-                       kingco = FALSE,
                        ypll_age = NULL,
                        death_age_col = NULL,
                        nchsnum = 113)

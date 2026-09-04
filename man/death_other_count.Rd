@@ -8,8 +8,7 @@ death_other_count(
   ph.data,
   cause,
   icdcol = "underlying_cod_code",
-  kingco = TRUE,
-  group_by = NULL,
+  by = NULL,
   ypll_age = NULL,
   death_age_col = NULL
 )
@@ -18,7 +17,7 @@ death_other_count(
 \item{ph.data}{a data.table or data.frame. Must contain death data structured
 with one person per row and with at least one column of ICD10 death codes.
 
-\strong{Note:}* \code{ph.data} and \code{icdcol} are validated by \code{\link[=death_validate_data]{death_validate_data()}}}
+\strong{Note:} \code{ph.data} and \code{icdcol} are validated by \code{\link[=death_validate_data]{death_validate_data()}}}
 
 \item{cause}{a character vector specifying the complete or partial
 keyword for the cause of death of interest. It is not case sensitive and you
@@ -30,24 +29,15 @@ The default is \code{cause = NULL}.}
 \item{icdcol}{a character vector of length one that specifies the name of the
 column in ph.data that contains the ICD10 death codes of interest.
 
-The default is \code{underlying_cod_code}, which is found in the properly
-formatted death data obtained using the \code{get_data_death()} function.}
+The default is \code{underlying_cod_code}, which is found in properly
+formatted death data structured like \code{rads.data::synthetic_death}.}
 
-\item{kingco}{a logical vector of length one. It specifies whether you want to
-limit the analysis to King County.
-
-\strong{NOTE}
-this only works with data imported with the \code{get_data_death()} function.
-
-The default is kingco = TRUE.}
-
-\item{group_by}{a character vector of indeterminate length. This is used to
+\item{by}{a character vector of indeterminate length. This is used to
 specify all the variables by which you want to group (a.k.a. stratify) the
-results. For example, if you specified \code{group_by = c('chi_sex',
-'chi_race_6')}, the results would be stratified by each combination of sex
+results. For example, if you specified \code{by = c('sex', 'race_6')}, the results would be stratified by each combination of sex
 and race.
 
-The default is \code{group_by = NULL}}
+The default is \code{by = NULL}}
 
 \item{ypll_age}{an optional numeric vector of length 1. When specified, it
 should be the age (an integer) used for \strong{Years of Potential Life Lost} (YPLL)
@@ -66,12 +56,12 @@ specified AND if ph.data lacks columns named \code{date_of_birth} and
 \code{date_of_death} that are of class \code{"Date"}. If the latter two
 columns exist, the code calculates the age at death for you.
 
-The default is \code{death_age_col = NULL}.'}
+The default is \code{death_age_col = NULL}.}
 }
 \value{
 Generates a table with two columns: \code{cause.of.death} and \code{deaths}.
 If \code{ypll_age} is specified, a \code{ypll_##} column will also be added to the
-table. Columns in the \code{group_by} argument will also be returned.
+table. Columns in the \code{by} argument will also be returned.
 }
 \description{
 Generate death counts for causes of death that are \strong{NOT} included in the NCHS
@@ -93,7 +83,6 @@ deathDT <- rads.data::synthetic_death
 eg1 <- death_other_count(ph.data = deathDT,
                        cause = "dose|induce",
                        icdcol = "underlying_cod_code",
-                       kingco = FALSE,
                        ypll_age = NULL,
                        death_age_col = NULL)
 head(eg1)
@@ -102,16 +91,15 @@ head(eg1)
 eg2 <- death_other_count(ph.data = deathDT,
                        cause = "dose|induce",
                        icdcol = "underlying_cod_code",
-                       kingco = FALSE,
                        ypll_age = 65,
-                       death_age_col = "chi_age")
+                       death_age_col = "age")
 head(eg2)
 
 }
 \seealso{
 \itemize{
 \item \code{\link[=death_other]{death_other()}} for viewing available 'Other' cause of death definitions
-\item \code{\link[=get_data_death]{get_data_death()}} for importing properly formatted death data
+\item \link[rads.data:synthetic_death]{rads.data::synthetic_death} for properly formatted synthetic death data
 \item \code{\link[=death_icd10_clean]{death_icd10_clean()}} for preparing ICD-10 codes for use with all rads death functions
 \item \code{\link[=age_standardize]{age_standardize()}} for calculating age standardized rates
 \item \code{\link[=death_113_count]{death_113_count()}} for generating CDC NCHS 113 leading causes of death counts

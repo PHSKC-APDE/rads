@@ -1,6 +1,6 @@
 #' Round data according to APDE/CHI standards or custom requests
 #'
-#' #' @description
+#' @description
 #' Default rounding is according to APDE/CHI standards
 #'
 #' By default, this function expects data that has already been formatted for CHI,
@@ -24,15 +24,12 @@
 #'
 #' @keywords rounding,
 #'
-#' @importFrom data.table setDT ":=" .SD data.table
-#'
-#'
 #' @examples
 #'
 #'  set.seed(98104)
 #'  dt <- data.table::data.table(
-#'    chi_year = rep(2000:2019),
-#'    chi_sex = factor(sample(c("Male", "Female"), 20, rep = TRUE, prob = c(0.5, 0.5))),
+#'    year = rep(2000:2019),
+#'    sex = factor(sample(c("Male", "Female"), 20, rep = TRUE, prob = c(0.5, 0.5))),
 #'    result = rnorm(20, .75, 0.025),
 #'    se = rnorm(20, 0.0258787654654, 0.00001)
 #'  )
@@ -50,8 +47,6 @@ digits <- function(digit_data = NULL,
                    digits_1 = 3,
                    vars_2 = c("se"),
                    digits_2 = 4){
-
-  ## Global variables used by data.table declared as NULL here to play nice with devtools::check()
 
   ## VALIDATION ----
       #validate 'digit_data'

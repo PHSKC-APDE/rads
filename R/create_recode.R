@@ -3,7 +3,7 @@
 #' Creates/standardizes the parameters required for recoding a variable.
 #'
 #' @param old_var character. Column in the dataset containing the values to be recoded
-#' @param new_var character. Column where the recoded values will be placed. If `new_var` doesn't exist, than it will be created. Otherwise it will be overwritten.
+#' @param new_var character. Column where the recoded values will be placed. If `new_var` doesn't exist, then it will be created. Otherwise it will be overwritten.
 #' @param old character (or coercible). value in the column `old_var` to be translated into a new value by recoding. If left blank/NA/""/NULL or otherwise missing, the recode operation
 #'                  will essentially take the form of a rename of `old_var` -> `new_var`.
 #'                  Except for renaming type situations, nothing of old_var is kept (e.g. all relevant values must have a recode row)
@@ -15,9 +15,13 @@
 #'
 #' @return a list of lists (of class recode_instruction).
 #'
-#' @details This function mostly exists to help translate (via \code{parse_recode_instructions}) data.frame type read-ins of recoding into a standardized form.
-#' These results can then be passed to \code{enact_recoding} as part of a bulk recoding process.
+#' @details This function mostly exists to help translate (via [parse_recode_instructions()]) data.frame type read-ins of recoding into a standardized form.
+#' These results can then be passed to [enact_recodes()] as part of a bulk recoding process.
 #'
+#' @examples
+#' create_recode(old_var = "sex", new_var = "sex_recoded",
+#'               old = c("M", "F"), new = c("Male", "Female"),
+#'               simplify_to_numeric = FALSE)
 #'
 create_recode = function(old_var, new_var, old = NULL, new = NULL, new_label = NULL, simplify_to_numeric = TRUE){
 

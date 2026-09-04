@@ -70,7 +70,7 @@ mi_res = lapply(intersect(c('mean', 'total'), names(res)), function(vvv){
   mi = lapply(r, function(a){
     # if(!isfactor) a = list(ests = list(a$ests[[1]]), varz = list(a$varz[[1]]))
     m = mitools::MIcombine(a$ests, a$varz)
-    mdt = data.table(coef = coef(m), se = survey::SE(m))
+    mdt = data.table(coef = stats::coef(m), se = survey::SE(m))
     crit <- qt(alpha/2, m$df, lower.tail = FALSE)
     mdt[, lower := coef - crit * se]
     mdt[, upper := coef + crit * se]

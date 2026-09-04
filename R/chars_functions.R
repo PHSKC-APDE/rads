@@ -108,13 +108,13 @@ chars_injury_matrix <- function(){
 #'
 #' The default is `mechanism = '*'`, which selects all possible mechanisms
 #'
-#' @param group_by a character vector of indeterminate length. This is used to
+#' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified `group_by = c('chi_sex',
+#' results. For example, if you specified `by = c('sex',
 #' 'race3')`, the results would be stratified by each combination of sex
 #' and race.
 #'
-#' The default is `group_by = NULL`
+#' The default is `by = NULL`
 #'
 #' @param def a character vector of length one, limited to 'narrow' or 'broad'.
 #' It specifies whether you want to use the CDC's recommended 'narrow' approach,
@@ -140,15 +140,6 @@ chars_injury_matrix <- function(){
 #'
 #' The default is `primary_ecode = TRUE`
 #'
-#' @param kingco a logical vector of length one. It specifies whether you want to
-#' limit the analysis to King County. This parameter is specific to Washington State
-#' CHARS data and requires the column `chi_geo_kc`, which is provided by
-#' [apde.data::chars()].
-#'
-#' For users outside of King County or Washington State, set `kingco = FALSE`.
-#'
-#' The default is `kingco = TRUE`
-#'
 #' @details
 #' Since the injury analysis uses many columns, we suggest that you obtain
 #' ph.data with `apde.data::chars(cols = NA)`, rather than trying to specify the
@@ -164,7 +155,7 @@ chars_injury_matrix <- function(){
 #' @return
 #' The function returns a data.table with a minimum of three columns:
 #' `mechanism`, `intent`, & `hospitalizations`. Any
-#' `group_by` variables would also have their own columns.
+#' `by` variables would also have their own columns.
 #'
 #' The function default is to return the matrix of all intents and mechanisms
 #' of injury related hospitalizations. You can choose to only return the intent
@@ -185,25 +176,22 @@ chars_injury_matrix <- function(){
 #' myresult <- chars_injury_matrix_count(ph.data = rads.data::synthetic_chars,
 #'                                       intent = '^intentional',
 #'                                       mechanism = 'none',
-#'                                       group_by = c('temperament'),
-#'                                       kingco = FALSE)
+#'                                       by = c('temperament'))
 #' print(myresult)
 #'
 #' myresult <- chars_injury_matrix_count(ph.data = rads.data::synthetic_chars,
 #'                                       intent = 'unintentional',
 #'                                       mechanism = 'fall',
-#'                                       group_by = c('temperament'),
-#'                                       kingco = FALSE)
+#'                                       by = c('temperament'))
 #' print(myresult)
 #' }
 #'
 chars_injury_matrix_count <- function(ph.data = NULL,
                                       intent = "*",
                                       mechanism = "*",
-                                      group_by = NULL,
+                                      by = NULL,
                                       def = 'narrow',
-                                      primary_ecode = TRUE,
-                                      kingco = TRUE){
+                                      primary_ecode = TRUE){
   # Check arguments ----
   # ph.data ----
   ph.data <- chars_validate_data(ph.data = ph.data,
@@ -229,12 +217,12 @@ chars_injury_matrix_count <- function(ph.data = NULL,
     stop("\n\U0001f47f The mechanism '*' cannot be specified with any other mechanisms.")
   }
 
-  # group_by ----
-  if(!is.null(group_by)){
-    if(!inherits(group_by, 'character')){
-      stop("\n\U0001f47f `group_by` must either be NULL or specify a character vector of column names.")}
-    if(length(setdiff(group_by, names(ph.data))) > 0){
-      stop(paste0("\n\U0001f47f `group_by` contains the following column names which do not exist in ph.data: ", paste(setdiff(group_by, names(ph.data)), collapse = ', ') ))}
+  # by ----
+  if(!is.null(by)){
+    if(!inherits(by, 'character')){
+      stop("\n\U0001f47f `by` must either be NULL or specify a character vector of column names.")}
+    if(length(setdiff(by, names(ph.data))) > 0){
+      stop(paste0("\n\U0001f47f `by` contains the following column names which do not exist in ph.data: ", paste(setdiff(by, names(ph.data)), collapse = ', ') ))}
   }
 
   # def ----
@@ -250,13 +238,14 @@ chars_injury_matrix_count <- function(ph.data = NULL,
                                          " You set 'primary_ecode = F'. This is no longer a valid option. If you want to use other ecodes\n",
                                          " you will have to perform a custom analysis using [chars].[stage_diag] & [chars].[stage_ecode]."))}
 
-  # kingco ----
-  if(!(identical(kingco, TRUE) || identical(kingco, FALSE))){stop("\n\U0001f47f `kingco` must be a logical vector of length 1, i.e., TRUE or FALSE.")}
-  if (isTRUE(kingco) & (!"chi_geo_kc" %in% names(ph.data))){
-    stop("\n\U0001f47f You specified kingco=TRUE, but `ph.data` does not have the following columns that identify King County data:
-                   chi_geo_kc")
+  # Capture the full population's `by` levels *BEFORE* filtering to injury records ----
+  # This ensures `by` levels with zero injury hospitalizations (e.g., an
+  # age with no injuries at all) still appear in the output with a count of zero,
+  # rather than being silently dropped.
+  if(!is.null(by)){
+    by.levels <- lapply(by, function(x) unique(ph.data[[x]]))
+    names(by.levels) <- by
   }
-  if (isTRUE(kingco)){ph.data <- ph.data[chi_geo_kc == "King County"]}
 
   # Apply narrow or broad definition ----
   if(def == 'narrow'){ph.data <- ph.data[injury_nature_narrow == T & !is.na(injury_intent) & !is.na(injury_mechanism)]}
@@ -330,7 +319,7 @@ chars_injury_matrix_count <- function(ph.data = NULL,
   ))
 
   # count number of hospitalizations (i.e., rows)
-  hospitalization_counts <- rbindlist(lapply(1:nrow(selected.combinations), function(ii) {
+  hospitalization_counts <- data.table::rbindlist(lapply(1:nrow(selected.combinations), function(ii) {
 
       current_mechanism <- selected.combinations[ii, mechanism]
       current_intent    <- selected.combinations[ii, intent]
@@ -346,16 +335,22 @@ chars_injury_matrix_count <- function(ph.data = NULL,
               (current_intent != "any" & injury_intent == current_intent)
           ),
         list(mechanism = current_mechanism, intent = current_intent, hospitalizations = .N),
-        by = group_by
+        by = by
       ]
 
-      # create grid of all possible combinations of group_by vars
-      gridvars <- setdiff(names(temp.ph.data), 'hospitalizations')
-      complete.grid <- do.call(CJ, lapply(gridvars, function(x) unique(temp.ph.data[[x]])))
-      setnames(complete.grid, gridvars)
+      # create grid of all possible combinations of by vars ----
+      if (!is.null(by)) {
+        complete.grid <- do.call(data.table::CJ, by.levels)
+        data.table::setnames(complete.grid, by)
+        complete.grid[, c("mechanism", "intent") := list(current_mechanism, current_intent)]
+      } else {
+        complete.grid <- data.table::data.table(mechanism = current_mechanism, intent = current_intent)
+      }
 
       # merge temp.ph.data onto complete.grid
-      temp.ph.data <- merge(complete.grid, temp.ph.data, all = TRUE)
+      temp.ph.data <- merge(complete.grid, temp.ph.data,
+                            by = c("mechanism", "intent", by),
+                            all = TRUE)
       temp.ph.data[is.na(hospitalizations), hospitalizations := 0L]
 
       return(temp.ph.data)
@@ -382,8 +377,8 @@ chars_injury_matrix_count <- function(ph.data = NULL,
   hospitalization_counts[intent == 'any', intent := "Any intent"]
 
   # Sort columns and rows ----
-  setcolorder(hospitalization_counts, c("mechanism", "intent", "hospitalizations"))
-  setorderv(hospitalization_counts, c("mechanism", "intent", setdiff(names(hospitalization_counts), c("hospitalizations", "mechanism", "intent")) ))
+  data.table::setcolorder(hospitalization_counts, c("mechanism", "intent", "hospitalizations"))
+  data.table::setorderv(hospitalization_counts, c("mechanism", "intent", setdiff(names(hospitalization_counts), c("hospitalizations", "mechanism", "intent")) ))
 
   # Return data ----
   return(hospitalization_counts)
@@ -523,7 +518,7 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' **Note:** If you submit values for more than one of `icdcm`,
 #' `superlevel`, `broad`, `midlevel`, or `detailed`, they must
 #' be nested. For example, `broad = 'neoplasms', detailed = 'sarcoma'` will
-#' give results because sarcomas are type of cancers. However,
+#' give results because sarcomas are a type of cancer. However,
 #' `broad = 'neoplasms', detailed = 'intestinal infection'` will return an
 #' error because your resulting table will have zero rows.
 #'
@@ -592,36 +587,25 @@ chars_icd_ccs <- function(ref_type = 'all',
 #'
 #' Values must be properly formatted ICD-9-CM or ICD-10-CM codes; codes are
 #' automatically coerced to uppercase and stripped of punctuation by
-#' [chars_validate_data()] (e.g., `A85.2` → `A852`). For ICD-10-CM, codes
+#' [chars_validate_data()] (e.g., `A85.2` >> `A852`). For ICD-10-CM, codes
 #' must begin with a capital letter followed by a digit (invalid codes are set
 #' to `NA`).
 #'
 #' The default is `icdcol = 'diag1'`, which refers to the principal
 #' diagnosis code provided by [apde.data::chars()].
 #'
-#' @param group_by a character vector of indeterminate length. This is used to
+#' @param by a character vector of indeterminate length. This is used to
 #' specify all the variables by which you want to group (a.k.a. stratify) the
-#' results. For example, if you specified `group_by = c('chi_sex',
-#' 'chi_race_6')`, the results would be stratified by each combination of sex
+#' results. For example, if you specified `by = c('sex',
+#' 'race_6')`, the results would be stratified by each combination of sex
 #' and race.
 #'
-#' The default is `group_by = NULL`
-#'
-#' @param kingco a logical vector of length one. It specifies whether you want to
-#' limit the analysis to King County. This parameter is specific to Washington State
-#' CHARS data and requires the column `chi_geo_kc`, which is provided by
-#' [apde.data::chars()].
-#'
-#' For users outside of King County or Washington State, set `kingco = FALSE`.
-#'
-#' The default is `kingco = TRUE`
-#'
-#' @param ... Additional arguments passed to other methods (currently unused).
+#' The default is `by = NULL`
 #'
 #' @return
 #' Generates a table with columns for each of the search terms you entered (e.g.,
 #' `icdcm`, `broad`, and/or `detailed`) as well as
-#' any `group_by` variables and a column named `hospitalizations` that
+#' any `by` variables and a column named `hospitalizations` that
 #' contains the relevant counts.
 #'
 #' @export
@@ -632,16 +616,14 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' \donttest{
 #' myresult <- chars_icd_ccs_count(ph.data = rads.data::synthetic_chars,
 #'                                 detailed = 'headache',
-#'                                 group_by = c('temperament'),
-#'                                 kingco = FALSE)
+#'                                 by = c('temperament'))
 #' print(myresult)
 #'
 #' myrefTable <- chars_icd_ccs()
 #' myresult <- chars_icd_ccs_count(ph.data = rads.data::synthetic_chars,
 #'                                 CMtable = myrefTable,
 #'                                 detailed = 'asthma',
-#'                                 group_by = c('temperament'),
-#'                                 kingco = FALSE)
+#'                                 by = c('temperament'))
 #' print(myresult)
 #' }
 #'
@@ -654,25 +636,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
                                 midlevel = NULL,
                                 detailed = NULL,
                                 icdcol = 'diag1',
-                                group_by = NULL,
-                                kingco = TRUE,
-                                ...){
-
-  # Note deprecation of `mykeys` parameter ----
-    dots <- list(...)
-
-    if ("mykey" %in% names(dots)) {
-      lifecycle::deprecate_warn(
-        "1.6.0",
-        "chars_icd_ccs_count(mykey = )",
-        details = "The `mykey` argument is no longer used."
-      )
-    }
-
-    unused <- setdiff(names(dots), "mykey")
-    if (length(unused) > 0) {
-      stop("Unused arguments: ", paste(unused, collapse = ", "), call. = FALSE)
-    }
+                                by = NULL){
 
   # Check arguments & filter reference table of all ICD CM (CMtable) ----
     # ph.data ----
@@ -795,24 +759,17 @@ chars_icd_ccs_count <- function(ph.data = NULL,
         # presence of icdcol is assessed by chars_validate_data()
         # icdcm cleaning performed by chars_validate_data()
 
-    # group_by ----
-        if(!is.null(group_by)){
-          if(!inherits(group_by, 'character')){
-            stop("\n\U0001f47f `group_by` must either be NULL or specify a character vector of column names.")}
-          if(length(setdiff(group_by, names(ph.data))) > 0){
-            stop(paste0("\n\U0001f47f `group_by` contains the following column names which do not exist in ph.data: ", paste(setdiff(group_by, names(ph.data)), collapse = ', ') ))}
-          # convert group_by values to character b/c factors cause an error
-          for(gb_var in group_by){
+    # by ----
+        if(!is.null(by)){
+          if(!inherits(by, 'character')){
+            stop("\n\U0001f47f `by` must either be NULL or specify a character vector of column names.")}
+          if(length(setdiff(by, names(ph.data))) > 0){
+            stop(paste0("\n\U0001f47f `by` contains the following column names which do not exist in ph.data: ", paste(setdiff(by, names(ph.data)), collapse = ', ') ))}
+          # convert by values to character b/c factors cause an error
+          for(gb_var in by){
             ph.data[, paste0(gb_var) := as.character(get(gb_var))]
           }
         }
-
-    # kingco ----
-        if(!is.logical(kingco) || length(kingco) != 1 || is.na(kingco)){stop("\n\U0001f47f `kingco` must be a logical vector of length 1, i.e., TRUE or FALSE.")}
-        if (isTRUE(kingco) & (!"chi_geo_kc" %in% names(ph.data))){
-          stop("\U0001f47f You specified kingco=TRUE, but `ph.data` does not have the column `chi_geo_kc` that identifies King County")
-        }
-        if (isTRUE(kingco)){ph.data <- ph.data[chi_geo_kc == 'King County']}
 
   # Drop unnecessary columns from reference table (CMtable) ----
     KeepMe <- c("icdcm_code")
@@ -832,11 +789,11 @@ chars_icd_ccs_count <- function(ph.data = NULL,
       CMtable[, query.group := .GRP, by = setdiff(names(CMtable), "icdcm_code")]
 
     # generate counts for each query.group ----
-      HospCounts <- rbindlist(lapply(unique(CMtable$query.group), function(QG) {
-        tempHospCounts <- if (is.null(group_by)) {
+      HospCounts <- data.table::rbindlist(lapply(unique(CMtable$query.group), function(QG) {
+        tempHospCounts <- if (is.null(by)) {
           ph.data[get(icdcol) %in% unlist(CMtable[query.group == QG]$icdcm_code), list(hospitalizations = .N)]
         } else {
-          ph.data[get(icdcol) %in% unlist(CMtable[query.group == QG]$icdcm_code), list(hospitalizations = .N), by = group_by]
+          ph.data[get(icdcol) %in% unlist(CMtable[query.group == QG]$icdcm_code), list(hospitalizations = .N), by = by]
         }
         tempHospCounts[, query.group := QG]
         # tempHospCounts <- CMtable[tempHospCounts, on = "query.group"] # native data.table merge syntax
@@ -845,19 +802,19 @@ chars_icd_ccs_count <- function(ph.data = NULL,
         return(tempHospCounts)
       }), fill = TRUE)
 
-  # Expand reference table for each combination of group_by variables ----
+  # Expand reference table for each combination of by variables ----
       CMtable[, icdcm_code := NULL]
-      if (is.null(group_by)) {
+      if (is.null(by)) {
         CMtable.expanded <- CMtable
       } else {
-        # Create a list of unique values for each group_by variable
-        unique_vals_list <- lapply(group_by, function(col) unique(ph.data[[col]]))
-        names(unique_vals_list) <- group_by
+        # Create a list of unique values for each by variable
+        unique_vals_list <- lapply(by, function(col) unique(ph.data[[col]]))
+        names(unique_vals_list) <- by
 
         # Create the Cartesian product of unique values using CJ
-        template.xyz <- do.call(CJ, unique_vals_list)
+        template.xyz <- do.call(data.table::CJ, unique_vals_list)
 
-        # Expand CMtable for each combination of group_by variables
+        # Expand CMtable for each combination of by variables
         CMtable.expanded <- merge(CMtable[, dummy := 1],
                                   template.xyz[, dummy := 1],
                                   by = 'dummy',
@@ -869,7 +826,7 @@ chars_icd_ccs_count <- function(ph.data = NULL,
                         by = intersect(names(HospCounts), names(CMtable.expanded)),
                         all = TRUE)
     HospCounts[is.na(hospitalizations), hospitalizations := 0]
-    setorderv(HospCounts, c('query.group', group_by))
+    data.table::setorderv(HospCounts, c('query.group', by))
     HospCounts[, c("query.group") := NULL]
 
   # Return data ----
@@ -919,9 +876,6 @@ chars_icd_ccs_count <- function(ph.data = NULL,
 #' - `injury_intent`: character column with values like "assault", "unintentional", etc.
 #' - `injury_mechanism`: character column with values like "fall", "firearm", etc.
 #' - ICD column (specified by `icdcol`, default is `diag1`)
-#'
-#' **Optional columns:**
-#' - `chi_geo_kc`: if present, must only contain `"King County"` or `NA`
 #'
 #' **Data transformations:**
 #' - ICDcm codes cleaned and updated to a standardized format
@@ -1005,8 +959,8 @@ chars_validate_data <- function(ph.data = NULL,
   }
 
   standard_intent <- unique(chars_injury_matrix()[intent != 'any']$intent)
-  missing_intent <- setdiff(standard_intent, na.omit(unique(ph.data$injury_intent)))
-  extra_intent <- setdiff(na.omit(unique(ph.data$injury_intent)), standard_intent)
+  missing_intent <- setdiff(standard_intent, stats::na.omit(unique(ph.data$injury_intent)))
+  extra_intent <- setdiff(stats::na.omit(unique(ph.data$injury_intent)), standard_intent)
 
   if (length(missing_intent) != 0){
     if(verbose){message("\U00002139 The injury_intent column is missing the following standard intent value(s):\n",
@@ -1024,8 +978,8 @@ chars_validate_data <- function(ph.data = NULL,
   }
 
   standard_mechanism <- unique(chars_injury_matrix()[mechanism != 'any']$mechanism)
-  missing_mechanism <- setdiff(setdiff(standard_mechanism, na.omit(unique(ph.data$injury_mechanism))), "motor_vehicle_traffic")
-  extra_mechanism <- setdiff(na.omit(unique(ph.data$injury_mechanism)), standard_mechanism)
+  missing_mechanism <- setdiff(setdiff(standard_mechanism, stats::na.omit(unique(ph.data$injury_mechanism))), "motor_vehicle_traffic")
+  extra_mechanism <- setdiff(stats::na.omit(unique(ph.data$injury_mechanism)), standard_mechanism)
 
   if (length(missing_mechanism) != 0){
     if(verbose){message("\U00002139 The injury_mechanism column is missing the following standard mechanism value(s):\n",
@@ -1035,13 +989,6 @@ chars_validate_data <- function(ph.data = NULL,
   if (length(extra_mechanism) != 0){
     if(verbose){message("\U00002139 The injury_mechanism column has the following non-standard mechanism value(s):\n",
                         paste0(extra_mechanism, collapse = ', '))}
-  }
-
-  # Validate chi_geo_kc (if it exists) ----
-  if ('chi_geo_kc' %in% names(ph.data) & length(setdiff(unique(ph.data$chi_geo_kc), c('King County', NA))) > 0){
-    stop('\n\U1F6D1 chi_geo_kc exists and has values other than "King County" and NA.\n',
-         "If you're analyses are not specific to King County, WA, feel free to delete the chi_geo_kc column.\n",
-         "Otherwise, please fix chi_geo_kc and run again.")
   }
 
   # Validate ICD column format ----

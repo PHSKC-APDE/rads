@@ -1,46 +1,42 @@
 Package: rads
 Type: Package
 Title: Assisted computation of King County public health data
-Version: 1.5.6
-Author: PHSKC-APDE
-Maintainer: Daniel Casey <Data.Request@kingcounty.gov>
+Version: 2.0.0
+Authors@R: c(
+    person("Public Health - Seattle & King County", role = "cph"),
+    person("Daniel", "Casey", email = "data.request@kingcounty.gov", role = c("aut", "cre")),
+    person("Danny", "Colombara", email = "data.request@kingcounty.gov", role = "aut"),
+    person("Ronald", "Buie", email = "data.request@kingcounty.gov", role = "aut")
+    )
 Description: Fetch and analyze data from Public Health Seattle & King County.
-License: GPL-3
+License: Apache License (>= 2)
 Encoding: UTF-8
-LazyData: true
-RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 Imports:
-    data.table (>= 1.14.2),
-    DBI (>= 1.1.0),
+    data.table,
     dtsurvey (>= 0.0.2.0),
-    glue (>= 1.6.1),
-    keyring (>= 1.2.0),
     lubridate (>= 1.6.0),
     methods,
     mitools (>= 2.4),
-    odbc (>= 1.2.2),
     rads.data (>= 1.0.13),
     stats,
     survey (>= 4.0),
     utf8 (>= 1.1.4),
-    yaml (>= 2.2.1),
-    utils,
-    lifecycle
+    utils
 Remotes:
     github::PHSKC-APDE/rads.data, 
     github::PHSKC-APDE/dtsurvey
-Suggests: 
-    bit64, 
-    devtools, 
-    future, 
+Suggests:
+    devtools,
+    future,
     future.apply,
-    httr, 
+    ggplot2,
+    httr,
     knitr,
-    rmarkdown, 
-    markdown,
-    testthat,
-    srvyr
-VignetteBuilder: knitr
+    quarto,
+    srvyr,
+    testthat
+VignetteBuilder: quarto
 Depends: 
     R (>= 4.1.0)
+Config/roxygen2/version: 8.1.0

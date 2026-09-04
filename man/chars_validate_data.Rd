@@ -61,11 +61,6 @@ This function performs the following validation checks:
 \item ICD column (specified by \code{icdcol}, default is \code{diag1})
 }
 
-\strong{Optional columns:}
-\itemize{
-\item \code{chi_geo_kc}: if present, must only contain \code{"King County"} or \code{NA}
-}
-
 \strong{Data transformations:}
 \itemize{
 \item ICDcm codes cleaned and updated to a standardized format
