@@ -294,30 +294,18 @@ pretty_kable(my.est)
 
 # Example survey analyses
 
-Survey data must be 'set' to use the proper survey design. In this case, PUMS data will use replicate weights as specified by the Census Bureau. 
+Survey data must be 'set' to use the proper survey design. 
+
+The `rads.data::synthetic_survey` data is from [ACS PUMS](https://www.census.gov/programs-surveys/acs/microdata.html) and has already been set to use replicate weights as specified by the Census Bureau. 
 
 ```{r}
 #| warning: false
 mysurvey <- rads.data::synthetic_survey
 
-mysurvey <- survey::svrepdesign(
-  data = mysurvey, 
-  weights = ~pwgtp,
-  repweights = mysurvey[, grep("pwgtp[0-9]+", names(mysurvey),value = TRUE), with = FALSE], 
-  type = "JK1",
-  combined.weights = TRUE, 
-  scale = 4/80, 
-  rscales = rep(1, 80), mse = TRUE)
 ```
 
-Setting it as a `dtsurvey` object will allow us to manipulate the survey object with `data.table` syntax and will play nicely with `rads::calc()`.
+To confirm that `mysurvey` is indeed a survey object, check to make sure sure that `class(mysurvey)` contains `"survey.design"`, `"svyrep.design"`, `"dtsurvey"`, `"dtrepsurvey"` or some other survey object type from the [`survey`](https://cran.r-project.org/web/packages/survey/index.html) or [`dtsurvey`](https://github.com/PHSKC-APDE/dtsurvey) packages.
 
-```{r}
-#| warning: false
-mysurvey <- dtsurvey::dtrepsurvey(mysurvey)
-```
-
-Checking the class of mysurvey you can see that it is both a `data.table` and a `dtrepsurvey` object.
 ```{r}
 #| warning: false
 class(mysurvey)
