@@ -3,9 +3,9 @@
 ## Purpose
 RADS is a suite of tools written in R and designed to make standard public health analyses faster, more standardized, and less prone to error. 
 
-While we hope the tools are applicable for different settings, the toolset has been customized to the needs of [PHSKC's](https://www.kingcounty.gov/depts/health.aspx) [APDE](https://www.kingcounty.gov/depts/health/data). 
+While the tools were originally created for [PHSKC's](https://www.kingcounty.gov/depts/health.aspx) [APDE](https://www.kingcounty.gov/depts/health/data), we've worked hard to ensure they are applicable for different local health jurisdictions.
 
-This package has only been tested in Windows, but it should work identically on a Linux or Mac OS machine.
+This package has only been tested on Windows, but it should work identically on a Linux or Mac OS machine.
 
 ## Installation
 If you haven't yet installed [`rads`](https://github.com/PHSKC-APDE/rads), follow these steps:
@@ -22,7 +22,7 @@ If you haven't yet installed [`rads`](https://github.com/PHSKC-APDE/rads), follo
     remotes::install_github("PHSKC-APDE/rads", auth_token = NULL)
     ```
     
-    To install GitHub from a particular branch, specify it with the `ref` argument, e.g.,
+    To install from a particular GitHub branch, specify it with the `ref` argument, e.g.,
     
     ```r
     remotes::install_github("PHSKC-APDE/rads", ref = "dev", auth_token = NULL)
@@ -34,22 +34,22 @@ If you haven't yet installed [`rads`](https://github.com/PHSKC-APDE/rads), follo
     library(rads)
     ```
 
-## Reference Data
-All reference data are either built into `rads` or are available via [`rads.data`](https://github.com/PHSKC-APDE/rads.data), which is automatically installed when you install `rads`.
-
-## Permissions
-As of version 2.0.0, all functions that need SQL Server or file server access have been removed and moved to private packages ([`apde.data`](https://github.com/PHSKC-APDE/apde.data), `apde.chi.tools`, and `apde.etl`). Therefore you should not need any permissions to run a current RADS release.
-
-## License
-`rads` is released under the [Apache License 2.0](LICENSE.md).
-
 ## Releases
-Please refer to the [releases](https://github.com/PHSKC-APDE/rads/releases) page for details on the package history and particular releases. 
+Please refer to the [releases](https://github.com/PHSKC-APDE/rads/releases) page for details on the package history and individual releases. 
 
-**Upgrading from a 1.x release?** v2.0.0 includes breaking changes (removed/renamed function arguments, changed defaults) — see the [v2.0.0 release notes](https://github.com/PHSKC-APDE/rads/releases) before upgrading.
+**Upgrading from a 1.x release?** v2.0.0 includes breaking changes — see the [v2.0.0 release notes](https://github.com/PHSKC-APDE/rads/releases) for details.
 
 ## Getting started
 After installation, we highly recommend that you start by walking through a vignette on the [wiki](https://github.com/PHSKC-APDE/rads/wiki), e.g.,  [calc()](https://github.com/PHSKC-APDE/rads/wiki/calc).
+
+## Permissions
+You should not need any special permissions to run a current RADS release.
+
+## Reference Data
+All reference data are either built into `rads` or are available via [`rads.data`](https://github.com/PHSKC-APDE/rads.data), which is automatically installed when you install `rads`.
+
+## License
+`rads` is released under the [Apache License 2.0](LICENSE.md).
 
 ## Problems?
 If you come across a bug or have specific suggestions for improvement, please click on [Issues](https://github.com/PHSKC-APDE/rads/issues) at the top of this page and then click [New Issue](https://github.com/PHSKC-APDE/rads/issues/new/choose) and provide the necessary details. For guidance on what to include, see our [Issue Guidelines](https://github.com/PHSKC-APDE/rads/blob/main/.github/ISSUE_TEMPLATE/ISSUE_GUIDELINES.md).
