@@ -27,6 +27,7 @@ All of these functions have detailed help files that are accessible by typing `?
 
 ***A few quick notes before we begin ...***
 
+- If you are new to ICD-10-CM diagnosis codes, we recommend you first read the [ICD-10-CM wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10-CM) in `rads.data`.
 - `chars_injury_matrix()` and `chars_injury_matrix_count()` are agnostic as to whether the underlying data are ICD-9-CM (2012-2015) or ICD-10-CM (2016+).
 - `chars_icd_ccs()` & `chars_icd_ccs_count()` need you to specify which ICD-CM version you have in your data. This means you can analyze 2012-2015 data or 2016+ data, but not both at the same time in a single command.
 - If you want to create age-adjusted rates, we recommend you read the [age_standardize](https://github.com/PHSKC-APDE/rads/wiki/age_standardize) and [calculating_rates_with_rads](https://github.com/PHSKC-APDE/rads/wiki/calculating_rates_with_rads) vignettes after working through this one.

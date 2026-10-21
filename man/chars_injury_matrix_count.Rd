@@ -143,3 +143,7 @@ Hospitalization Injury Matrix ICD10CM
 \item CDC Injury Code and Matrices: \url{https://www.cdc.gov/nchs/injury/injury_matrices.htm}
 }
 }
+\seealso{
+\href{https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10-CM}{ICD-10-CM wiki} for
+an introduction to ICD-10-CM diagnosis codes
+}

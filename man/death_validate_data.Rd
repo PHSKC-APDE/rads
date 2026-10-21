@@ -84,6 +84,7 @@ death_validate_data(ph.data = deathDT, check_multicause = TRUE)
 \seealso{
 \itemize{
 \item \code{\link[=death_icd10_clean]{death_icd10_clean()}} for ICD-10 code cleaning
+\item \href{https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10}{ICD-10 wiki} for an introduction to ICD-10 cause of death codes
 \item \code{\link[=death_113_count]{death_113_count()}} for NCHS 113 causes of death counts
 \item \code{\link[=death_130_count]{death_130_count()}} for NCHS 130 causes of infant death counts
 \item \code{\link[=death_injury_matrix_count]{death_injury_matrix_count()}} for injury matrix counts

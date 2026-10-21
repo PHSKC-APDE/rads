@@ -46,3 +46,11 @@ Hospitalization Injury Matrix ICD10CM
 \item CDC Injury Code and Matrices: \url{https://www.cdc.gov/nchs/injury/injury_matrices.htm}
 }
 }
+\seealso{
+\itemize{
+\item \code{\link[=chars_injury_matrix_count]{chars_injury_matrix_count()}} for using this information to count injury
+related hospitalizations by mechanism and intent
+\item \href{https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10-CM}{ICD-10-CM wiki} for
+an introduction to ICD-10-CM diagnosis codes
+}
+}

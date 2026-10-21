@@ -56,6 +56,9 @@ print(blah)
 \url{https://www.cdc.gov/nchs/data/ice/icd10_transcode.pdf}
 }
 \seealso{
-\code{\link[=death_injury_matrix_count]{death_injury_matrix_count()}} for using this information to count injury related deaths
+\itemize{
+\item \code{\link[=death_injury_matrix_count]{death_injury_matrix_count()}} for using this information to count injury related deaths
 by mechanism and intent
+\item \href{https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10}{ICD-10 wiki} for an introduction to ICD-10 cause of death codes
+}
 }

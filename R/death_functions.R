@@ -25,7 +25,8 @@
 #' <https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS113CausesOfDeath.pdf>
 #'
 #' @seealso
-#' [death_113_count()] for using this information to count the NCHS 113 leading causes of death
+#' - [death_113_count()] for using this information to count the NCHS 113 leading causes of death
+#' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #'
 #' @return
 #' A data.table with 114 rows and two columns: causeid (integers between 1 & 114, inclusive) and cause.of.death (human readable description).
@@ -124,6 +125,7 @@ death_113 <- function(){
 #' - [death_113()] for viewing the CDC NCHS 113 leading causes of death
 #' - [rads.data::synthetic_death] for properly formatted synthetic death data
 #' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
+#' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #' - [age_standardize()] for calculating age standardized rates
 #' - [death_130_count()] for generating CDC NCHS 130 causes of infant death counts
 #' - [death_injury_matrix_count()] for generating injury matrix counts
@@ -214,7 +216,8 @@ death_113_count <- function(ph.data,
 #' <https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS130CausesInfantDeath_Codes.pdf>
 #'
 #' @seealso
-#' [death_130_count()] for using this information to count the NCHS 130 causes of infant deaths
+#' - [death_130_count()] for using this information to count the NCHS 130 causes of infant deaths
+#' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #'
 #' @return
 #' A data.table with 130 rows and two columns: causeid (integers between 1 & 130, inclusive) and cause.of.death (human readable description).
@@ -309,6 +312,7 @@ death_130<- function(){
 #' - [death_130()] for viewing the CDC NCHS 130 causes of infant death
 #' - [rads.data::synthetic_death] for properly formatted synthetic death data
 #' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
+#' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #' - [age_standardize()] for calculating age standardized rates
 #' - [death_113_count()] for generating CDC NCHS 113 leading causes of death counts
 #' - [death_injury_matrix_count()] for generating injury matrix counts
@@ -383,6 +387,10 @@ death_130_count <- function(ph.data,
 #' @param icdcol A character vector containing ICD-10 codes.
 #'
 #' @return A cleaned and standardized character vector of ICD-10 codes.
+#'
+#' @seealso
+#' [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an
+#' introduction to ICD-10 cause of death codes
 #'
 #' @examples
 #' # Create sample data
@@ -491,8 +499,9 @@ death_icd10_clean <- function(icdcol){
 #' <https://www.cdc.gov/nchs/data/ice/icd10_transcode.pdf>
 #'
 #' @seealso
-#' [death_injury_matrix_count()] for using this information to count injury related deaths
-#' by mechanism and intent
+#' - [death_injury_matrix_count()] for using this information to count injury related deaths
+#'   by mechanism and intent
+#' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #'
 #' @return
 #' A data.table with 88 rows and two columns: `mechanism` & `intent`.
@@ -611,6 +620,7 @@ death_injury_matrix<- function(){
 #' - [death_injury_matrix()] for viewing available injury death mechanisms and intents
 #' - [rads.data::synthetic_death] for properly formatted synthetic death data
 #' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
+#' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #' - [age_standardize()] for calculating age standardized rates
 #' - [death_113_count()] for generating CDC NCHS 113 leading causes of death counts
 #' - [death_130_count()] for generating CDC NCHS 130 causes of infant death counts
@@ -1047,7 +1057,8 @@ death_injury_matrix_count <- function(ph.data,
 #' [rads.data::icd10_multicause()]
 #'
 #' @seealso
-#' [death_multicause_count()] for using this information to count multicause deaths
+#' - [death_multicause_count()] for using this information to count multicause deaths
+#' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #'
 #' @return
 #' A data.table with unique cause names and a description of what each includes.
@@ -1175,6 +1186,7 @@ death_multicause <- function(){
 #' - [death_multicause()] for viewing available multicause definitions
 #' - [rads.data::synthetic_death] for properly formatted synthetic death data
 #' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
+#' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #' - [age_standardize()] for calculating age standardized rates
 #' - [death_113_count()] for generating CDC NCHS 113 leading causes of death counts
 #' - [death_130_count()] for generating CDC NCHS 130 causes of infant death counts
@@ -1513,7 +1525,8 @@ death_multicause_count <- function(ph.data,
 #' `?rads.data::icd_other_causes_of_death`
 #'
 #' @seealso
-#' [death_other_count()] for using this information to count 'Other' causes of death
+#' - [death_other_count()] for using this information to count 'Other' causes of death
+#' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #'
 #' @return
 #' A character vector with the name of each available cause of death.
@@ -1598,6 +1611,7 @@ death_other<- function(){
 #' - [death_other()] for viewing available 'Other' cause of death definitions
 #' - [rads.data::synthetic_death] for properly formatted synthetic death data
 #' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
+#' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #' - [age_standardize()] for calculating age standardized rates
 #' - [death_113_count()] for generating CDC NCHS 113 leading causes of death counts
 #' - [death_130_count()] for generating CDC NCHS 130 causes of infant death counts
@@ -1920,6 +1934,7 @@ death_other_count <- function(ph.data,
 #'
 #' @seealso
 #' - [death_icd10_clean()] for ICD-10 code cleaning
+#' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #' - [death_113_count()] for NCHS 113 causes of death counts
 #' - [death_130_count()] for NCHS 130 causes of infant death counts
 #' - [death_injury_matrix_count()] for injury matrix counts

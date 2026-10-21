@@ -33,7 +33,7 @@ All of these functions have detailed help files that are accessible by typing `?
 
 ***A few quick notes before we begin ...***
 
--   `death_113_count()`, `death_130_count()`, `death_injury_matrix_count()`, `death_multicause_count()` & `death_other_count()` only work with ICD-10 cause of death codes (i.e., those used since 1999).
+-   `death_113_count()`, `death_130_count()`, `death_injury_matrix_count()`, `death_multicause_count()` & `death_other_count()` only work with ICD-10 cause of death codes (i.e., those used since 1999). If you are new to ICD-10 codes, we recommend you first read the [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) in `rads.data`.
 -   If you want to create age-adjusted rates, we recommend you read the [age_standardize](https://github.com/PHSKC-APDE/rads/wiki/age_standardize) and [calculating_rates_with_rads](https://github.com/PHSKC-APDE/rads/wiki/calculating_rates_with_rads) vignettes after reading through this one.
 -   To perform a leading causes of death analysis, please follow the [Six Step Process on the wiki](https://github.com/PHSKC-APDE/rads/wiki/leading_causes_of_death)
 
