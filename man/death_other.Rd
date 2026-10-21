@@ -38,5 +38,8 @@ print(blah)
 \code{?rads.data::icd_other_causes_of_death}
 }
 \seealso{
-\code{\link[=death_other_count]{death_other_count()}} for using this information to count 'Other' causes of death
+\itemize{
+\item \code{\link[=death_other_count]{death_other_count()}} for using this information to count 'Other' causes of death
+\item \href{https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10}{ICD-10 wiki} for an introduction to ICD-10 cause of death codes
+}
 }
