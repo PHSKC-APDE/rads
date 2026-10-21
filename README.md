@@ -10,22 +10,22 @@ This package has only been tested on Windows, but it should work identically on 
 ## Installation
 If you haven't yet installed [`rads`](https://github.com/PHSKC-APDE/rads), follow these steps:
 
-1.  Make sure `remotes` is installed:
+1.  Make sure `pak` is installed:
 
     ```r
-    install.packages("remotes")
+    install.packages("pak")
     ```
 
 2.  Install [`rads`](https://github.com/PHSKC-APDE/rads):
 
     ```r
-    remotes::install_github("PHSKC-APDE/rads", auth_token = NULL)
+    pak::pak("PHSKC-APDE/rads")
     ```
     
-    To install from a particular GitHub branch, specify it with the `ref` argument, e.g.,
+    To install from a particular GitHub branch, add `@` and the branch name, e.g.,
     
     ```r
-    remotes::install_github("PHSKC-APDE/rads", ref = "dev", auth_token = NULL)
+    pak::pak("PHSKC-APDE/rads@dev")
     ```
 
 3.  Load [`rads`](https://github.com/PHSKC-APDE/rads):
