@@ -27,12 +27,12 @@ Remotes:
     github::PHSKC-APDE/rads.data, 
     github::PHSKC-APDE/dtsurvey
 Suggests:
-    devtools,
     future,
     future.apply,
     ggplot2,
     httr,
     knitr,
+    pak,
     quarto,
     srvyr,
     testthat
