@@ -1,7 +1,7 @@
 Package: rads
 Type: Package
 Title: Assisted computation of King County public health data
-Version: 2.0.1
+Version: 2.0.2
 Authors@R: c(
     person("Public Health - Seattle & King County", role = "cph"),
     person("Daniel", "Casey", email = "data.request@kingcounty.gov", role = c("aut", "cre")),
@@ -32,8 +32,8 @@ Suggests:
     ggplot2,
     httr,
     knitr,
-    pak,
     quarto,
+    remotes,
     srvyr,
     testthat
 VignetteBuilder: quarto
