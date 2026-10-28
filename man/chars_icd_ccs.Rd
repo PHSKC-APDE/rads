@@ -55,3 +55,7 @@ head(myCCS)
 \references{
 \url{https://hcup-us.ahrq.gov/toolssoftware/ccsr/ccs_refined.jsp}
 }
+\seealso{
+\href{https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10-CM}{ICD-10-CM wiki} for
+an introduction to ICD-10-CM diagnosis codes
+}

@@ -34,6 +34,12 @@
 #'   Hospitalization Injury Matrix ICD10CM
 #' - CDC Injury Code and Matrices: <https://www.cdc.gov/nchs/injury/injury_matrices.htm>
 #'
+#' @seealso
+#' - [chars_injury_matrix_count()] for using this information to count injury
+#'   related hospitalizations by mechanism and intent
+#' - [ICD-10-CM wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10-CM) for
+#'   an introduction to ICD-10-CM diagnosis codes
+#'
 #' @export
 #'
 #' @name chars_injury_matrix
@@ -166,6 +172,10 @@ chars_injury_matrix <- function(){
 #' - WA DOH Community Health Assessment Tool > User Guides > Code Set Definitions >
 #'   Hospitalization Injury Matrix ICD10CM
 #' - CDC Injury Code and Matrices: <https://www.cdc.gov/nchs/injury/injury_matrices.htm>
+#'
+#' @seealso
+#' [ICD-10-CM wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10-CM) for
+#' an introduction to ICD-10-CM diagnosis codes
 #'
 #' @export
 #'
@@ -427,6 +437,10 @@ chars_injury_matrix_count <- function(ph.data = NULL,
 #' @references
 #' <https://hcup-us.ahrq.gov/toolssoftware/ccsr/ccs_refined.jsp>
 #'
+#' @seealso
+#' [ICD-10-CM wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10-CM) for
+#' an introduction to ICD-10-CM diagnosis codes
+#'
 #' @return
 #' A data.table. The number of rows and columns are dependent upon the arguments
 #' submitted to the function.
@@ -607,6 +621,10 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' `icdcm`, `broad`, and/or `detailed`) as well as
 #' any `by` variables and a column named `hospitalizations` that
 #' contains the relevant counts.
+#'
+#' @seealso
+#' [ICD-10-CM wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10-CM) for
+#' an introduction to ICD-10-CM diagnosis codes
 #'
 #' @export
 #'
@@ -888,6 +906,10 @@ chars_icd_ccs_count <- function(ph.data = NULL,
 #'
 #' @references
 #' - CDC Injury Code and Matrices: <https://www.cdc.gov/nchs/injury/injury_matrices.htm>
+#'
+#' @seealso
+#' [ICD-10-CM wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10-CM) for
+#' an introduction to ICD-10-CM diagnosis codes
 #'
 #' @export
 #'

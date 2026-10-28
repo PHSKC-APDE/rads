@@ -19,13 +19,13 @@ If you haven't yet installed [`rads`](https://github.com/PHSKC-APDE/rads), follo
 2.  Install [`rads`](https://github.com/PHSKC-APDE/rads):
 
     ```r
-    remotes::install_github("PHSKC-APDE/rads", auth_token = NULL)
+    remotes::install_github("PHSKC-APDE/rads")
     ```
     
-    To install from a particular GitHub branch, specify it with the `ref` argument, e.g.,
+    To install from a particular GitHub branch, add `@` and the branch name, e.g.,
     
     ```r
-    remotes::install_github("PHSKC-APDE/rads", ref = "dev", auth_token = NULL)
+    remotes::install_github("PHSKC-APDE/rads@dev")
     ```
 
 3.  Load [`rads`](https://github.com/PHSKC-APDE/rads):

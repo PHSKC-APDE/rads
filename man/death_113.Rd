@@ -38,5 +38,8 @@ print(blah)
 \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS113CausesOfDeath.pdf}
 }
 \seealso{
-\code{\link[=death_113_count]{death_113_count()}} for using this information to count the NCHS 113 leading causes of death
+\itemize{
+\item \code{\link[=death_113_count]{death_113_count()}} for using this information to count the NCHS 113 leading causes of death
+\item \href{https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10}{ICD-10 wiki} for an introduction to ICD-10 cause of death codes
+}
 }

@@ -34,5 +34,8 @@ print(available_causes)
 
 }
 \seealso{
-\code{\link[=death_multicause_count]{death_multicause_count()}} for using this information to count multicause deaths
+\itemize{
+\item \code{\link[=death_multicause_count]{death_multicause_count()}} for using this information to count multicause deaths
+\item \href{https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10}{ICD-10 wiki} for an introduction to ICD-10 cause of death codes
+}
 }

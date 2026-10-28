@@ -42,3 +42,7 @@ icd_cols <- c('underlying_cod_code', grep('record_axis', names(deathDT), value =
 deathDT[, (icd_cols) := lapply(.SD, death_icd10_clean), .SDcols = icd_cols]
 
 }
+\seealso{
+\href{https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10}{ICD-10 wiki} for an
+introduction to ICD-10 cause of death codes
+}

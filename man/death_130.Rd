@@ -38,5 +38,8 @@ print(blah)
 \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS130CausesInfantDeath_Codes.pdf}
 }
 \seealso{
-\code{\link[=death_130_count]{death_130_count()}} for using this information to count the NCHS 130 causes of infant deaths
+\itemize{
+\item \code{\link[=death_130_count]{death_130_count()}} for using this information to count the NCHS 130 causes of infant deaths
+\item \href{https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10}{ICD-10 wiki} for an introduction to ICD-10 cause of death codes
+}
 }
