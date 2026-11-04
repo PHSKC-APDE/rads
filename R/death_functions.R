@@ -1061,7 +1061,19 @@ death_injury_matrix_count <- function(ph.data,
 #' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #'
 #' @return
-#' A data.table with unique cause names and a description of what each includes.
+#' A data.table with one row per multicause death definition and four columns:
+#' - `cause_name`: the name to pass to `death_multicause_count(cause_name = ...)`
+#' - `description`: a plain-language summary of the definition
+#' - `underlying_codes`: comma-separated ICD-10 codes and ranges for the
+#'   underlying cause of death (e.g., `"X40-X44, X60-X64, X85, Y10-Y14"`)
+#' - `contributing_codes`: comma-separated ICD-10 codes and ranges for the
+#'   contributing causes of death (e.g., `"T40.0, T40.1"`)
+#'
+#' Codes are shown as originally specified, so a 3-character code includes all
+#' of its 4-character subcodes (e.g., `X40` includes `X400` through `X409`) and
+#' `T40.0` is the same as `T400`. For the full list of expanded 4-character
+#' codes, along with a plain-language label for each code or range, see
+#' `rads.data::icd10_multicause`.
 #'
 #' @export
 #'
@@ -1077,9 +1089,13 @@ death_multicause <- function(){
   multicause_ref <- rads.data::icd10_multicause
 
   # Summarize by cause_name
+  # orig.coding holds each code/range as originally defined (e.g., "X40-X44"),
+  # which is far shorter than listing every expanded 4-character code
   summary_table <- multicause_ref[, list(
     n_underlying = sum(underlying_contributing == "underlying"),
-    n_contributing = sum(underlying_contributing == "contributing")
+    n_contributing = sum(underlying_contributing == "contributing"),
+    underlying_codes = paste(unique(orig.coding[underlying_contributing == "underlying"]), collapse = ", "),
+    contributing_codes = paste(unique(orig.coding[underlying_contributing == "contributing"]), collapse = ", ")
   ), by = cause_name]
 
   # Add description
@@ -1089,7 +1105,7 @@ death_multicause <- function(){
   )]
 
   # Keep only the columns we want to show
-  summary_table <- summary_table[, list(cause_name, description)]
+  summary_table <- summary_table[, list(cause_name, description, underlying_codes, contributing_codes)]
 
   return(summary_table)
 }
