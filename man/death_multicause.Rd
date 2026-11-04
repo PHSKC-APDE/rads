@@ -10,7 +10,21 @@
 death_multicause()
 }
 \value{
-A data.table with unique cause names and a description of what each includes.
+A data.table with one row per multicause death definition and four columns:
+\itemize{
+\item \code{cause_name}: the name to pass to \code{death_multicause_count(cause_name = ...)}
+\item \code{description}: a plain-language summary of the definition
+\item \code{underlying_codes}: comma-separated ICD-10 codes and ranges for the
+underlying cause of death (e.g., \code{"X40-X44, X60-X64, X85, Y10-Y14"})
+\item \code{contributing_codes}: comma-separated ICD-10 codes and ranges for the
+contributing causes of death (e.g., \code{"T40.0, T40.1"})
+}
+
+Codes are shown as originally specified, so a 3-character code includes all
+of its 4-character subcodes (e.g., \code{X40} includes \code{X400} through \code{X409}) and
+\code{T40.0} is the same as \code{T400}. For the full list of expanded 4-character
+codes, along with a plain-language label for each code or range, see
+\code{rads.data::icd10_multicause}.
 }
 \description{
 Function to view the multicause death definitions available in RADS. These are

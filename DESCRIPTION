@@ -1,7 +1,7 @@
 Package: rads
 Type: Package
 Title: Assisted computation of King County public health data
-Version: 2.0.2
+Version: 2.0.3
 Authors@R: c(
     person("Public Health - Seattle & King County", role = "cph"),
     person("Daniel", "Casey", email = "data.request@kingcounty.gov", role = c("aut", "cre")),
@@ -18,7 +18,7 @@ Imports:
     lubridate (>= 1.6.0),
     methods,
     mitools (>= 2.4),
-    rads.data (>= 1.0.13),
+    rads.data (>= 1.0.25),
     stats,
     survey (>= 4.0),
     utf8 (>= 1.1.4),

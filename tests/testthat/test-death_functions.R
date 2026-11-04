@@ -300,8 +300,21 @@ library(data.table)
   test_that("Check that death_multicause() exists, is the right type, and has some expected values ...", {
     multiz <- death_multicause()
     expect_true(inherits(multiz, 'data.table'))
-    expect_identical(c('cause_name', 'description'), names(multiz))
+    expect_identical(c('cause_name', 'description', 'underlying_codes', 'contributing_codes'), names(multiz))
     expect_equal(sum(grepl("opioid", multiz$cause_name, ignore.case = T)), 1L)
+    expect_equal(nrow(multiz), data.table::uniqueN(rads.data::icd10_multicause$cause_name))
+  })
+
+  test_that("death_multicause() shows the original codes and ranges for each definition", {
+    multiz <- death_multicause()
+    expect_identical(multiz[cause_name == "Opioid"]$underlying_codes,
+                     "X40-X44, X60-X64, X85, Y10-Y14")
+    expect_identical(multiz[cause_name == "Opioid"]$contributing_codes,
+                     "T40.0, T40.1, T40.2, T40.3, T40.4, T40.6")
+    expect_identical(multiz[cause_name == "Psychostimulant"]$contributing_codes,
+                     "T40.5, T43.6")
+    expect_false(anyNA(multiz))
+    expect_false(any(multiz$underlying_codes == "" | multiz$contributing_codes == ""))
   })
 
 # Check death_multicause_count ----
