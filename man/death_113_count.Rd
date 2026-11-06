@@ -123,6 +123,7 @@ head(eg2)
 \seealso{
 \itemize{
 \item \code{\link[=death_113]{death_113()}} for viewing the CDC NCHS 113 leading causes of death
+\item \code{\link[=death_rankable_count]{death_rankable_count()}} for counting the NCHS 52 rankable causes of death, which are related to, but \strong{not} a strict subset of, these 113 causes
 \item \link[rads.data:synthetic_death]{rads.data::synthetic_death} for properly formatted synthetic death data
 \item \code{\link[=death_icd10_clean]{death_icd10_clean()}} for preparing ICD-10 codes for use with all rads death functions
 \item \href{https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10}{ICD-10 wiki} for an introduction to ICD-10 cause of death codes

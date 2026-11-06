@@ -26,6 +26,7 @@
 #'
 #' @seealso
 #' - [death_113_count()] for using this information to count the NCHS 113 leading causes of death
+#' - [death_rankable()] for the NCHS 52 rankable causes of death, which are related to, but **not** a strict subset of, these 113 causes
 #' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #'
 #' @return
@@ -123,6 +124,7 @@ death_113 <- function(){
 #'
 #' @seealso
 #' - [death_113()] for viewing the CDC NCHS 113 leading causes of death
+#' - [death_rankable_count()] for counting the NCHS 52 rankable causes of death, which are related to, but **not** a strict subset of, these 113 causes
 #' - [rads.data::synthetic_death] for properly formatted synthetic death data
 #' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
 #' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
@@ -1890,6 +1892,251 @@ death_other_count <- function(ph.data,
   return(x_combo)
 }
 
+# death_rankable() ----
+#' View the NCHS 52 rankable causes of death
+#'
+#' @description
+#' Function to view the 52 causes of death that the National Center for Health
+#' Statistics (NCHS) designates as eligible to be ranked as leading causes of death.
+#'
+#' Generates a table with the name of each rankable cause (`cause.of.death`) and
+#' the ICD-10 codes that define it (`icd10`). Use it to find the cause names to give
+#' as the `cause` argument in [death_rankable_count()].
+#'
+#' @details
+#' **The 52 rankable causes are related to, but are not a strict subset of, the 113
+#' causes in [death_113()].**
+#' - Many rankable causes are headings that combine several of the 113 causes. For
+#'   example, "Malignant neoplasms" combines causeids 18-40 and "Diseases of heart"
+#'   combines causeids 49-59.
+#' - Two rankable causes are carved out of a 113 cause. "Enterocolitis due to
+#'   Clostridium difficile" (A04.7) is also within causeid 3 and "COVID-19" (U07.1)
+#'   is also within causeid 17 in the CDC list.
+#'
+#' Consequently, an ICD-10 code can belong to one rankable cause and to one of the 113
+#' causes at the same time, and the two lists should not be mixed up.
+#'
+#' **The CDC does not assign cause ids to the 52 rankable causes**, so this table
+#' intentionally has no `causeid` column. The causes are identified by name.
+#'
+#' The rankable causes do not cover all deaths (e.g., "Other and unspecified
+#' infectious and parasitic diseases" is not rankable), and the list has changed over
+#' time. This function uses the list defined in the 2020 edition of the NCHS manual
+#' (Table B), which includes "Enterocolitis due to Clostridium difficile" (added in
+#' 2006) and "COVID-19" (added in 2020).
+#'
+#' The `icd10` column shows the codes as the CDC presents them. A 3-character code
+#' includes all of its 4-character subcodes (e.g., `X60` includes `X600` through
+#' `X609`) and `A04.7` is the same as `A047`. A leading `*` marks codes that the CDC
+#' flags for terrorism-related causes. For the full list of 4-character codes, see
+#' `rads.data::icd_nchs52rankable`.
+#'
+#' @note
+#' This function does not take any arguments
+#'
+#' @source
+#' `rads.data::icd_nchs52rankable_raw`
+#'
+#' @references
+#' <https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf> &
+#' <https://www.cdc.gov/nchs/data/nvsr/nvsr74/nvsr74-10.pdf>
+#'
+#' @seealso
+#' - [death_rankable_count()] for using this information to count the NCHS 52 rankable causes of death
+#' - [death_113()] for the NCHS 113 selected causes of death
+#' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
+#'
+#' @return
+#' A data.table with 52 rows (sorted by cause name) and two columns:
+#' `cause.of.death` (human readable name) and `icd10` (the ICD-10 codes and code
+#' ranges that define the cause).
+#'
+#' @export
+#'
+#' @name death_rankable
+#'
+#' @examples
+#' # Save and view table as a data.table named 'blah'
+#' blah <- death_rankable()
+#' print(blah)
+#'
+death_rankable <- function(){
+  # Start with the raw table because it has one row per cause (the long table has one row per ICD-10 code)
+  rankable_ref <- data.table::copy(rads.data::icd_nchs52rankable_raw)
+
+  # Use only the 2020 edition of the list (matches death_rankable_count(), see death_xxx_count())
+  rankable_ref <- rankable_ref[version == "2020", list(cause.of.death, icd10)]
+
+  data.table::setorderv(rankable_ref, "cause.of.death")
+
+  return(rankable_ref)
+}
+
+# death_rankable_count() ----
+#' Summarize NCHS 52 rankable causes of death
+#'
+#' @description
+#' Generate death counts for the 52 causes of death that the National Center for
+#' Health Statistics (NCHS) designates as eligible to be ranked as leading causes
+#' of death. Needs line-level death data with a properly formatted ICD10 column.
+#'
+#' This function **counts** deaths. It does not rank the causes. To rank them,
+#' obtain population denominators, calculate rates (e.g., with [age_standardize()]),
+#' and sort the results.
+#'
+#' It automatically returns the total deaths ("All causes") in addition to the
+#' causes of death you select.
+#'
+#' See [death_rankable()] for the names and definitions of the 52 causes.
+#'
+#' @details
+#' **The 52 rankable causes are related to, but are not a strict subset of, the 113
+#' causes in [death_113()].** Many rankable causes are headings that combine several
+#' of the 113 causes (e.g., "Malignant neoplasms" combines causeids 18-40), and two
+#' are carved out of a 113 cause: "Enterocolitis due to Clostridium difficile"
+#' (A04.7, which is also within causeid 3) and "COVID-19" (U07.1, which is also
+#' within causeid 17 in the CDC list). This is why the function is separate from
+#' [death_113_count()], and why results from the two functions should not be added
+#' together or mixed up.
+#'
+#' **The CDC does not assign cause ids to the 52 rankable causes**, so, unlike
+#' [death_113_count()], this function has no `causeids` argument and does not return
+#' a `causeid` column. Select causes by name with the `cause` argument.
+#'
+#' The rankable causes do not overlap each other, but they also do not cover all
+#' deaths, so they will not add up to "All causes". The function uses the list defined
+#' in the 2020 edition of the NCHS manual (Table B).
+#'
+#' @param ph.data a data.table or data.frame. Must contain death data structured
+#' with one person per row and with at least one column of ICD10 death codes.
+#'
+#' @param cause an OPTIONAL character vector specifying the complete or partial
+#' name of the cause(s) of death of interest. It is not case sensitive and you
+#' can specify it in two ways: 1) `cause = c('heart', 'liver')` or 2)
+#' `cause = c("heart|liver")`. Use [death_rankable()] to see the cause names.
+#'
+#' The default is `NULL`, i.e., the function will count all 52 rankable causes.
+#'
+#' @param icdcol a character vector of length one that specifies the name of the
+#' column in ph.data that contains the ICD10 death codes of interest.
+#'
+#' The default is `underlying_cod_code`, which is found in properly
+#' formatted death data structured like `rads.data::synthetic_death`.
+#'
+#' @param by a character vector of indeterminate length. This is used to
+#' specify all the variables by which you want to group (a.k.a. stratify) the
+#' results. For example, if you specified `by = c('sex',
+#' 'race_6')`, the results would be stratified by each combination of sex
+#' and race.
+#'
+#' The default is `by = NULL`
+#'
+#' @param ypll_age an optional numeric vector of length 1. When specified, it
+#' should be the age (an integer) used for **Years of Potential Life Lost** (YPLL)
+#' calculations. Valid values are between 1 & 99 (inclusive), though 65 and 85 are the most
+#' common. For example, `ypll_age = 65` would sum the total number of years
+#' that could have been lived had everyone in the data lived to at least 65.
+#' Note that this function returns the total number of YPLL. Additional
+#' processing is necessary to calculate rates per 100,000.
+#'
+#' The default is `ypll_age = NULL`, which will skip YPLL calculations.
+#'
+#' @param death_age_col an optional character vector of length one that specifies
+#' the name of the column in ph.data with the decedents' age at death
+#' in years. It is only needed if `ypll_age` is
+#' specified AND if ph.data lacks a column named `age` or `chi_age`.
+#'
+#' The default is `death_age_col = NULL`.
+#'
+#' @param ... not used. It exists only so that a `causeids` argument, which other
+#' death functions have, produces an explanation instead of a generic error.
+#'
+#' @references
+#' <https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf> &
+#' <https://www.cdc.gov/nchs/data/nvsr/nvsr74/nvsr74-10.pdf>
+#'
+#' @seealso
+#' - [death_rankable()] for viewing the NCHS 52 rankable causes of death
+#' - [death_113_count()] for generating CDC NCHS 113 selected causes of death counts
+#' - [rads.data::synthetic_death] for properly formatted synthetic death data
+#' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
+#' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
+#' - [age_standardize()] for calculating age standardized rates
+#'
+#' @return
+#' Generates a table, sorted by cause name, with two columns, `cause.of.death`
+#' and `deaths`. If `ypll_age` is specified, a `ypll_##` column
+#' will also be added to the table. Columns in the `by`
+#' argument will also be returned.
+#'
+#' There is no `causeid` column because the CDC does not assign ids to the 52
+#' rankable causes.
+#'
+#' By default, it will count all 52 rankable causes of death and also return
+#' "All causes". You can specify which causes of death you want to assess using
+#' the `cause` argument.
+#'
+#' Like [death_113_count()], a cause that has **no** deaths anywhere in `ph.data`
+#' is not returned, so you may get fewer than 52 causes. A cause that has deaths
+#' in some `by` groups but not others is returned with `deaths = 0` for the
+#' groups without deaths.
+#'
+#' @note
+#' Calls upon `rads::death_xxx_count`.
+#'
+#' @export
+#'
+#' @name death_rankable_count
+#'
+#' @examples
+#' # example 1: all 52 rankable causes, death count only
+#' deathDT <- rads.data::synthetic_death
+#'
+#' eg1 <- death_rankable_count(ph.data = deathDT,
+#'                             icdcol = "underlying_cod_code")
+#' head(eg1)
+#'
+#' # example 2: selected causes, with YPLL calculation
+#' eg2 <- death_rankable_count(ph.data = deathDT,
+#'                             cause = "heart|cerebrovascular",
+#'                             icdcol = "underlying_cod_code",
+#'                             ypll_age = 65,
+#'                             death_age_col = "age")
+#' head(eg2)
+#'
+death_rankable_count <- function(ph.data,
+                                 cause = NULL,
+                                 icdcol = "underlying_cod_code",
+                                 by = NULL,
+                                 ypll_age = NULL,
+                                 death_age_col = NULL,
+                                 ...){
+
+  # Check for arguments that do not exist in this function ----
+    # `causeids` exists in death_113_count() and death_130_count() but not here because the CDC
+    # does not number the 52 rankable causes. Anyone who tries it is most likely used to the
+    # other functions, so explain what to do instead of giving R's generic "unused argument".
+    # death_xxx_count() has the explanatory message, so pass `causeids` along to it.
+    extra_args <- list(...)
+    if (length(extra_args) > 0 && !identical(names(extra_args), "causeids")) {
+      extra_names <- names(extra_args)
+      if (is.null(extra_names)) extra_names <- rep("", length(extra_args)) # names() is NULL when none are named
+      stop("\n\U0001f47f Unused argument(s) in `death_rankable_count()`: ",
+           paste(ifelse(extra_names == "", "<unnamed>", extra_names), collapse = ", "), ".")
+    }
+
+  # use the generalized function death_xxx_count()
+  rankable_countz <- death_xxx_count(ph.data = ph.data,
+                                     causeids = extra_args[["causeids"]],
+                                     cause = cause,
+                                     icdcol = icdcol,
+                                     by = by,
+                                     ypll_age = ypll_age,
+                                     death_age_col = death_age_col,
+                                     nchsnum = 52)
+  return(rankable_countz)
+}
+
 # death_validate_data() ----
 #' Validate and prepare death data for use with rads death functions
 #'
@@ -2120,9 +2367,16 @@ death_validate_data <- function(ph.data = NULL,
 #'
 #' The default is `death_age_col = NULL`.
 #'
-#' @param nchsnum specifies whether the function should reference NCHS 113 Selected
-#' COD (`rads::death_113()`) or NCHS 130 Selected Causes of Infant Death
-#' (`rads::death_130()`).
+#' @param nchsnum specifies which NCHS list of causes of death the function
+#' should reference:
+#' - `113`: NCHS 113 Selected COD (`rads::death_113()`)
+#' - `130`: NCHS 130 Selected Causes of Infant Death (`rads::death_130()`)
+#' - `52`: NCHS 52 rankable causes of death (`rads::death_rankable()`)
+#'
+#' The CDC does not assign cause ids to the 52 rankable causes, so for
+#' `nchsnum = 52` the `causeids` argument is not allowed (use `cause`, or leave
+#' both `causeids` and `cause` as `NULL` to get all 52) and the `causeid` column
+#' is not returned. See [death_rankable_count()].
 #'
 #' @references
 #' <https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf> &
@@ -2134,6 +2388,8 @@ death_validate_data <- function(ph.data = NULL,
 #' and `deaths`. If `ypll_age` is specified, a `ypll_##` column
 #' will also be added to the table. Columns in the `by`
 #' argument will also be returned.
+#'
+#' When `nchsnum = 52`, the `causeid` column is not returned (see `nchsnum`).
 #'
 #' By default, it will return all relevant causes of death. You can specify which
 #' causes of death you want to assess using the `causeids` or `cause`
@@ -2174,7 +2430,17 @@ death_xxx_count <- function(ph.data,
       ph.data <- data.table::copy(ph.data)
 
     # causeids ----
-      if (is.null(causeids) & is.null(cause)) {
+      # The CDC does not number the 52 rankable causes, so users may not select them by id.
+      # (A temporary internal causeid is created below, but it is never shown to users.)
+      if (nchsnum == 52 && !is.null(causeids)) {
+        stop("\n\U0001f47f The 52 rankable causes of death do not have official cause ids, so `causeids` cannot be used. ",
+             "\nTo count specific causes, use the `cause` argument with the cause name or part of it (e.g., `cause = 'heart'`). ",
+             "\nTo count all 52 causes, leave `cause` as NULL. Use `rads::death_rankable()` to see the cause names.")
+      }
+
+      # For the 113 and 130 lists, the user must pick causes. For the 52 rankable causes,
+      # leaving both NULL is allowed and means "all 52 causes".
+      if (is.null(causeids) & is.null(cause) & nchsnum != 52) {
         stop("\U0001f6d1 You cannot have both `causeids` and `cause` == NULL.")
       }
 
@@ -2276,8 +2542,23 @@ death_xxx_count <- function(ph.data,
   # Import reference table once ----
     x_reftable <- if (nchsnum == 113) {
       unique(rads.data::icd_nchs113causes[, list(cause.of.death, causeid, icd10)])
-    } else {
+    } else if (nchsnum == 130) {
       unique(rads.data::icd_nchs130causes[, list(cause.of.death, causeid, icd10)])
+    } else {
+      # nchsnum == 52 (rankable causes)
+      # Use only the 2020 edition of the list. If rads.data ever adds another edition, this
+      # prevents the same ICD-10 code from matching two rows and being double counted.
+      ref52 <- unique(rads.data::icd_nchs52rankable[version == "2020", list(cause.of.death, icd10)])
+
+      # TEMPORARY INTERNAL causeid ----
+      # The CDC does not assign ids to the 52 rankable causes, so rads.data::icd_nchs52rankable
+      # has no causeid. Everything below (selecting causes, joining, zero-filling and sorting)
+      # was written, and has been thoroughly tested, for tables that have a `causeid`. Rather
+      # than duplicate that code, we give each cause a throwaway number here so the same code
+      # can be used. This number is arbitrary and is NOT an official id. It is removed in the
+      # "Drop temporary causeid" step near the end, so users never see it.
+      ref52[, causeid := .GRP, by = "cause.of.death"]
+      ref52
     }
 
   # Identify cause(s) of interest ----
@@ -2307,7 +2588,11 @@ death_xxx_count <- function(ph.data,
     }
 
     # bring causeid 17 into alignment with WA DOH
-    x_reftable <- x_reftable[!(causeid == 17 & icd10 == 'U071')]
+    # (skipped for the 52 rankable causes: there `causeid` is a temporary number with no
+    # meaning, so applying this would wrongly drop COVID-19 if it happened to be numbered 17)
+    if (nchsnum != 52) {
+      x_reftable <- x_reftable[!(causeid == 17 & icd10 == 'U071')]
+    }
 
   # Calculate YPLL line level if needed ----
     if (!is.null(ypll_age) && !is.null(death_age_col)) {
@@ -2322,8 +2607,12 @@ death_xxx_count <- function(ph.data,
     data.table::setkey(x_reftable, icd10)
     x_combo <- x_reftable[ph.data, on = list(icd10 = icd10_tempy), allow.cartesian = TRUE] # data.table join faster alternative to merge
     x_combo[, icd10 := tolower(icd10)]
-    x_combo[icd10 == "u071" |
-              grepl("^u071", icd10), cause.of.death := "COVID-19 (U07.1)"]
+    # Relabel COVID-19 for the 113 and 130 lists only. The 52 rankable causes have their
+    # own "COVID-19" row, with the name used by the CDC, so it is left as is.
+    if (nchsnum != 52) {
+      x_combo[icd10 == "u071" |
+                grepl("^u071", icd10), cause.of.death := "COVID-19 (U07.1)"]
+    }
     x_combo <- x_combo[!is.na(cause.of.death)]
 
   # calculate death counts & YPLL summaries ----
@@ -2399,6 +2688,14 @@ death_xxx_count <- function(ph.data,
           names(x_combo), c("deaths", 'cause.of.death', "causeid")
         )))
       }
+
+  # Drop temporary causeid ----
+    # The 52 rankable causes have no official ids. The causeid used above was only a
+    # temporary internal number (see "TEMPORARY INTERNAL causeid"), so remove it before
+    # returning. Rows are already sorted by cause.of.death (and then `by`), not by causeid.
+    if (nchsnum == 52) {
+      x_combo[, causeid := NULL]
+    }
 
   # Message about COVID-19 if selected causeid 17 ----
     if (nchsnum == 113 && 17 %in% x_combo$causeid) {

@@ -40,6 +40,7 @@ print(blah)
 \seealso{
 \itemize{
 \item \code{\link[=death_113_count]{death_113_count()}} for using this information to count the NCHS 113 leading causes of death
+\item \code{\link[=death_rankable]{death_rankable()}} for the NCHS 52 rankable causes of death, which are related to, but \strong{not} a strict subset of, these 113 causes
 \item \href{https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10}{ICD-10 wiki} for an introduction to ICD-10 cause of death codes
 }
 }

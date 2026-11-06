@@ -139,6 +139,7 @@ utils::globalVariables(c(
   'upper_ci',
   'V1',
   'value',
-  'varname'
+  'varname',
+  'version'
 ))
 
