@@ -3618,7 +3618,7 @@ life_table_prep <- function(ph.data,
 
   } else {
 
-    # No `by` variables → template only consists of age bins
+    # No `by` variables -> template only consists of age bins
     template <- data.table::data.table(ages = possibleAges)
     ph.datasum <- merge(template, ph.datasum, by = "ages", all.x = TRUE)
   }

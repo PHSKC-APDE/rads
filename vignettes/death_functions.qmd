@@ -388,7 +388,7 @@ pretty_kable(death_multicause())
 -   `underlying_codes`: a character vector of ICD10 codes that must appear in the underlying cause of death. Only used if `cause_name = NULL`. For example, `c("X40", "X41", "X42")`.
 -   `contributing_codes`: a character vector of ICD10 codes that must appear in the contributing causes of death. Only used if `cause_name = NULL`. For example, `c("T400", "T401")`.
 -   `icdcol`: name of the column with the underlying cause of death ICD codes. Defaults to `"underlying_cod_code"`.
--   `contributing_cols`: a character vector specifying the stem of the column names containing contributing cause codes. The function expects columns named with this stem followed by numbers 1â€“20. The default, `"record_axis_code"`, leads the function to expect columns named `'record_axis_code_1'`, `'record_axis_code_2'`, ... `'record_axis_code_20'`.
+-   `contributing_cols`: a character vector specifying the stem of the column names containing contributing cause codes. The function expects columns named with this stem followed by numbers 1-20. The default, `"record_axis_code"`, leads the function to expect columns named `'record_axis_code_1'`, `'record_axis_code_2'`, ... `'record_axis_code_20'`.
 -   `contributing_logic`: a character vector specifying whether `"ANY"` (default) or `"ALL"` of the `contributing_codes` must be present.
 -   `by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
 -   `ypll_age`: The age in years (an integer) used for calculating Years of Potential Life Lost.
@@ -596,7 +596,7 @@ Filter/delete rows with missing ages because they would not have a corresponding
 dt12 <- dt12[!is.na(ages)]
 ```
 
-The death data is now ready for `life_table`, but we still need to merge on the corresponding populations. Let's start by getting the raw population for the same time period (2019â€“2023) by year and age.
+The death data is now ready for `life_table`, but we still need to merge on the corresponding populations. Let's start by getting the raw population for the same time period (2019-2023) by year and age.
 
 ```{r}
 #| message: false
