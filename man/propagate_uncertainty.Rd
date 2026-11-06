@@ -183,11 +183,11 @@ Use "lognormal" when your estimates:
 
 Examples
 \itemize{
-\item Comparing two log-odds ratios → use "normal"
-\item Comparing two odds ratios → use "lognormal"
-\item Comparing two mortality rates (deaths per 100,000) → use "lognormal"
-\item Comparing two risk differences → use "normal"
-\item Comparing two prevalences (e.g., 0.15 vs 0.20) → use "normal"
+\item Comparing two log-odds ratios -> use "normal"
+\item Comparing two odds ratios -> use "lognormal"
+\item Comparing two mortality rates (deaths per 100,000) -> use "lognormal"
+\item Comparing two risk differences -> use "normal"
+\item Comparing two prevalences (e.g., 0.15 vs 0.20) -> use "normal"
 (proportions are bounded but typically analyzed on original scale)
 }
 
