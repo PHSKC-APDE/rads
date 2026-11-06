@@ -514,20 +514,22 @@ As with `death_113_count()`, a cause that has no deaths anywhere in your data is
 
 ### example #10: Count the rankable causes of death for 2019-2023
 
-Run `death_rankable_count` for all 52 causes, then sort the counts to see which causes had the most deaths in these data.
+Run `death_rankable_count` for all 52 causes, then sort the counts to see which causes had the most deaths in these data. Here are the top 10:
 
 ```{r}
 #| message: false
 #| warning: false
+#| output: false
 dt10 <- death_rankable_count(ph.data = deaths.19_23)
 dt10 <- dt10[cause.of.death != 'All causes']
-setorder(dt10, -deaths)
+dt10 <- setorder(dt10, -deaths)[1:10]
+print(dt10)
 ```
 
 ```{r}
 #| echo: false
 dt10[, deaths := format(deaths, big.mark = ',')]
-pretty_kable(head(dt10, 5))
+pretty_kable(dt10)
 ```
 
 ### example #11: Count the number of diabetes and COVID-19 deaths for 2019-2023, stratified by year
@@ -537,11 +539,13 @@ Select causes by name with `cause`. Note that COVID-19 is a rankable cause in it
 ```{r}
 #| message: false
 #| warning: false
+#| output: false
 dt11 <- death_rankable_count(ph.data = deaths.19_23,
                              cause = "diabetes|covid",
                              by = "year")
 dt11 <- dt11[cause.of.death != 'All causes']
 setorder(dt11, year, cause.of.death)
+print(dt11)
 ```
 
 ```{r}

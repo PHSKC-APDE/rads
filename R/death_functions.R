@@ -2113,10 +2113,9 @@ death_rankable_count <- function(ph.data,
                                  ...){
 
   # Check for arguments that do not exist in this function ----
-    # `causeids` exists in death_113_count() and death_130_count() but not here because the CDC
-    # does not number the 52 rankable causes. Anyone who tries it is most likely used to the
-    # other functions, so explain what to do instead of giving R's generic "unused argument".
-    # death_xxx_count() has the explanatory message, so pass `causeids` along to it.
+    # death_xxx_count() has the specific message about not using `causeids` with
+    # death_rankable_count so this is a generic rejection of additional arguments,
+    # allowing `causeids` to pass through to the more specific message in death_xxx_count()
     extra_args <- list(...)
     if (length(extra_args) > 0 && !identical(names(extra_args), "causeids")) {
       extra_names <- names(extra_args)
