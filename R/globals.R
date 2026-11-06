@@ -28,6 +28,7 @@ utils::globalVariables(c(
   'contrast_se',
   'contrast_upper',
   'contributing_codes',
+  'contributing_logic',
   'count',
   'death_age',
   'deaths',

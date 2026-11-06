@@ -368,7 +368,7 @@ pretty_kable(dt6)
 
 # death_multicause_count()
 
-`death_multicause_count()` allows the user to get counts of causes of death requiring **BOTH** *underlying* **AND** *contributing* causes. To view available analytic ready multicause death categories, simply type `death_multicause()`. If you want to add more causes of death to this list, [please submit a GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new?template=issue_form.yml). In the meantime the function will allow you to specify the underlying cause of death and contributing cause of death ICD-10 of interest.
+`death_multicause_count()` allows the user to get counts of causes of death requiring **BOTH** *underlying* **AND** *contributing* causes. To view available analytic ready multicause death categories, simply type `death_multicause()`. The definitions live in the `rads.data::icd10_multicause` reference table, which is built from `data-raw/icd_icd10_multicause_raw.csv` in the [rads.data](https://github.com/PHSKC-APDE/rads.data) repository, where you can view them (with sources) as a simple table. If you want to add more causes of death to this list, [please submit a GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new?template=issue_form.yml). In the meantime the function will allow you to specify the underlying cause of death and contributing cause of death ICD-10 of interest.
 
 ```{r}
 #| echo: true
@@ -389,7 +389,7 @@ pretty_kable(death_multicause())
 -   `contributing_codes`: a character vector of ICD10 codes that must appear in the contributing causes of death. Only used if `cause_name = NULL`. For example, `c("T400", "T401")`.
 -   `icdcol`: name of the column with the underlying cause of death ICD codes. Defaults to `"underlying_cod_code"`.
 -   `contributing_cols`: a character vector specifying the stem of the column names containing contributing cause codes. The function expects columns named with this stem followed by numbers 1-20. The default, `"record_axis_code"`, leads the function to expect columns named `'record_axis_code_1'`, `'record_axis_code_2'`, ... `'record_axis_code_20'`.
--   `contributing_logic`: a character vector specifying whether `"ANY"` (default) or `"ALL"` of the `contributing_codes` must be present.
+-   `contributing_logic`: a character vector specifying whether `"ANY"` (default) or `"ALL"` of the `contributing_codes` must be present. When `cause_name` is used, the logic is taken from the reference table (see the `contributing_logic` column in `death_multicause()`), so this argument only matters for custom codes.
 -   `by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
 -   `ypll_age`: The age in years (an integer) used for calculating Years of Potential Life Lost.
 -   `death_age_col`: Name of the age column used if `ypll_age` is specified.

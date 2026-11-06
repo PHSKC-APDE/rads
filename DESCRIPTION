@@ -18,7 +18,7 @@ Imports:
     lubridate (>= 1.6.0),
     methods,
     mitools (>= 2.4),
-    rads.data (>= 1.0.26),
+    rads.data (>= 1.0.27),
     stats,
     survey (>= 4.0),
     utf8 (>= 1.1.4),

@@ -1063,19 +1063,29 @@ death_injury_matrix_count <- function(ph.data,
 #' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #'
 #' @return
-#' A data.table with one row per multicause death definition and four columns:
+#' A data.table with one row per multicause death definition and five columns:
 #' - `cause_name`: the name to pass to `death_multicause_count(cause_name = ...)`
-#' - `description`: a plain-language summary of the definition
 #' - `underlying_codes`: comma-separated ICD-10 codes and ranges for the
 #'   underlying cause of death (e.g., `"X40-X44, X60-X64, X85, Y10-Y14"`)
 #' - `contributing_codes`: comma-separated ICD-10 codes and ranges for the
 #'   contributing causes of death (e.g., `"T40.0, T40.1"`)
+#' - `contributing_logic`: whether `"ANY"` or `"ALL"` of the contributing codes must
+#'   be present. `death_multicause_count(cause_name = ...)` applies it automatically.
+#' - `description`: a plain-language summary of the definition
 #'
 #' Codes are shown as originally specified, so a 3-character code includes all
 #' of its 4-character subcodes (e.g., `X40` includes `X400` through `X409`) and
 #' `T40.0` is the same as `T400`. For the full list of expanded 4-character
 #' codes, along with a plain-language label for each code or range, see
 #' `rads.data::icd10_multicause`.
+#'
+#' @section Adding or changing definitions:
+#' The definitions are stored in `rads.data::icd10_multicause`, which is built from
+#' `data-raw/icd_icd10_multicause_raw.csv` in the
+#' [rads.data](https://github.com/PHSKC-APDE/rads.data) repository. To add or fix a
+#' definition, edit that CSV (one row per code or range) and re-run
+#' `data-raw/icd_icd10_multicause.R`. No changes to `rads` code are needed. The
+#' header of that script describes each column.
 #'
 #' @export
 #'
@@ -1096,18 +1106,19 @@ death_multicause <- function(){
   summary_table <- multicause_ref[, list(
     n_underlying = sum(underlying_contributing == "underlying"),
     n_contributing = sum(underlying_contributing == "contributing"),
+    contributing_logic = unique(contributing_logic[underlying_contributing == "contributing"]),
     underlying_codes = paste(unique(orig.coding[underlying_contributing == "underlying"]), collapse = ", "),
     contributing_codes = paste(unique(orig.coding[underlying_contributing == "contributing"]), collapse = ", ")
   ), by = cause_name]
 
   # Add description
   summary_table[, description := paste0(
-    "Requires any of ", n_underlying, " underlying cause codes AND any of ",
-    n_contributing, " contributing cause codes"
+    "Requires any of ", n_underlying, " underlying cause codes AND ",
+    tolower(contributing_logic), " of ", n_contributing, " contributing cause codes"
   )]
 
   # Keep only the columns we want to show
-  summary_table <- summary_table[, list(cause_name, description, underlying_codes, contributing_codes)]
+  summary_table <- summary_table[, list(cause_name, underlying_codes, contributing_codes, contributing_logic, description)]
 
   return(summary_table)
 }
@@ -1173,6 +1184,10 @@ death_multicause <- function(){
 #'
 #' @param contributing_logic a character vector of length one. Specifies whether
 #' ANY or ALL of the `contributing_codes` must be present.
+#'
+#' When `cause_name` is specified, the logic comes from the reference table (see
+#' the `contributing_logic` column of [death_multicause()]) and this argument is
+#' ignored (with a warning if it conflicts with the reference table).
 #'
 #' The default is `"ANY"`.
 #'
@@ -1265,6 +1280,11 @@ death_multicause_count <- function(ph.data,
 
       ph.data <- data.table::copy(ph.data)
 
+    # contributing_logic ----
+      if (!contributing_logic %in% c("ANY", "ALL")) {
+        stop("\n\U0001f47f `contributing_logic` must be either 'ANY' or 'ALL'.")
+      }
+
     # cause_name vs underlying/contributing codes ----
       if (!is.null(cause_name) && (!is.null(underlying_codes) || !is.null(contributing_codes))) {
         warning("\n\u26A0\ufe0f You specified both `cause_name` and custom codes. \n",
@@ -1310,6 +1330,18 @@ death_multicause_count <- function(ph.data,
                                         icd10,
                                         env = list(param_cause_name = I(cause_name))]
 
+        # Contributing logic (ANY / ALL) comes from the reference table
+        ref_logic <- unique(ref_table[tolower(cause_name) == param_cause_name &
+                                        underlying_contributing == "contributing",
+                                      contributing_logic,
+                                      env = list(param_cause_name = I(cause_name))])
+        if (!missing(contributing_logic) && !identical(contributing_logic, ref_logic)) {
+          warning("\n\u26A0\ufe0f The '", cause_name, "' definition uses contributing_logic = '", ref_logic,
+                  "'.\nYour `contributing_logic` argument has been ignored.\n",
+                  "If you want a different logic, set `cause_name = NULL` and specify your own codes.")
+        }
+        contributing_logic <- ref_logic
+
         # Set cause label
         cause_label <- unique(ref_table[tolower(cause_name) == param_cause_name,
                                         cause_name,
@@ -1335,11 +1367,6 @@ death_multicause_count <- function(ph.data,
 
       if (length(contributing_codes) == 0) {
         stop("\n\U0001f47f All contributing_codes became NA after cleaning with `death_icd10_clean()`.")
-      }
-
-    # contributing_logic ----
-      if (!contributing_logic %in% c("ANY", "ALL")) {
-        stop("\n\U0001f47f `contributing_logic` must be either 'ANY' or 'ALL'.")
       }
 
     # icdcol ----
