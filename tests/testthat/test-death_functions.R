@@ -300,8 +300,8 @@ library(data.table)
   test_that("Check that death_multicause() exists, is the right type, and has some expected values ...", {
     multiz <- death_multicause()
     expect_true(inherits(multiz, 'data.table'))
-    expect_identical(c('cause_name', 'description', 'underlying_codes', 'contributing_codes'), names(multiz))
-    expect_equal(sum(grepl("opioid", multiz$cause_name, ignore.case = T)), 1L)
+    expect_identical(c('cause_name', 'underlying_codes', 'contributing_codes', 'contributing_logic', 'description'), names(multiz))
+    expect_equal(sum(multiz$cause_name == "Opioid"), 1L)
     expect_equal(nrow(multiz), data.table::uniqueN(rads.data::icd10_multicause$cause_name))
   })
 
@@ -311,10 +311,35 @@ library(data.table)
                      "X40-X44, X60-X64, X85, Y10-Y14")
     expect_identical(multiz[cause_name == "Opioid"]$contributing_codes,
                      "T40.0, T40.1, T40.2, T40.3, T40.4, T40.6")
-    expect_identical(multiz[cause_name == "Psychostimulant"]$contributing_codes,
-                     "T40.5, T43.6")
     expect_false(anyNA(multiz))
     expect_false(any(multiz$underlying_codes == "" | multiz$contributing_codes == ""))
+  })
+
+  test_that("death_multicause() has the expected drug definitions", {
+    multiz <- death_multicause()
+    expected_contributing <- c(
+      "Opioid" = "T40.0, T40.1, T40.2, T40.3, T40.4, T40.6",
+      "Heroin" = "T40.1",
+      "Natural Semisynthetic Opioid" = "T40.2",
+      "Methadone" = "T40.3",
+      "Synthetic Opioid" = "T40.4",
+      "Cocaine" = "T40.5",
+      "Prescription Opioid" = "T40.2, T40.3, T40.4",
+      "Psychostimulant" = "T43.6",
+      "Stimulant" = "T40.5, T43.6"
+    )
+    expect_true(all(names(expected_contributing) %in% multiz$cause_name))
+    for(cn in names(expected_contributing)){
+      expect_identical(multiz[cause_name == cn]$contributing_codes, unname(expected_contributing[cn]))
+      expect_identical(multiz[cause_name == cn]$underlying_codes, "X40-X44, X60-X64, X85, Y10-Y14")
+    }
+  })
+
+  test_that("death_multicause() reports contributing_logic, and it matches the description", {
+    multiz <- death_multicause()
+    expect_true(all(multiz$contributing_logic %in% c("ANY", "ALL")))
+    expect_true(all(mapply(function(logic, desc) grepl(paste0(" AND ", tolower(logic), " of "), desc, fixed = TRUE),
+                           multiz$contributing_logic, multiz$description)))
   })
 
 # Check death_multicause_count ----
@@ -414,14 +439,34 @@ library(data.table)
                                            cause_name = 'opioid',
                                            contributing_logic = "ANY")
 
-      # Test ALL logic
+      # Test ALL logic (custom codes)
       result_all <- death_multicause_count(ph.data = deathDT,
-                                           cause_name = 'opioid',
+                                           underlying_codes = opioid_underlying,
+                                           contributing_codes = opioid_contributing,
                                            contributing_logic = "ALL")
 
       # ALL logic should result in fewer deaths
-      expect_true(result_all[cause.of.death == 'Opioid', deaths] <= result_any[cause.of.death == 'Opioid', deaths])
-      expect_equal(result_all[cause.of.death == 'Opioid', deaths], 0) # would not expect opioid codes to be in ALL contributing cols
+      expect_true(result_all[cause.of.death == 'Custom multicause', deaths] <= result_any[cause.of.death == 'Opioid', deaths])
+      expect_equal(result_all[cause.of.death == 'Custom multicause', deaths], 0) # would not expect opioid codes to be in ALL contributing cols
+    })
+
+    test_that("'cause_name' uses the contributing_logic of the reference table ...", {
+      result_default <- death_multicause_count(ph.data = deathDT, cause_name = 'opioid')
+      result_any <- death_multicause_count(ph.data = deathDT, cause_name = 'opioid', contributing_logic = "ANY")
+      expect_identical(result_default, result_any)
+
+      # a conflicting argument is ignored, with a warning
+      expect_warning(
+        result_all <- death_multicause_count(ph.data = deathDT, cause_name = 'opioid', contributing_logic = "ALL"),
+        "ignored")
+      expect_identical(result_all, result_default)
+    })
+
+    test_that("new drug definitions return plausible counts ...", {
+      n <- function(cn) death_multicause_count(ph.data = deathDT, cause_name = cn)[cause.of.death == cn, deaths]
+      expect_gte(n('Opioid'), n('Prescription Opioid'))
+      expect_gte(n('Prescription Opioid'), max(n('Natural Semisynthetic Opioid'), n('Methadone'), n('Synthetic Opioid')))
+      expect_gte(n('Stimulant'), max(n('Cocaine'), n('Psychostimulant')))
     })
 
     test_that("Alternative column naming works correctly ...", {

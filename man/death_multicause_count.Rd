@@ -60,6 +60,10 @@ through \code{record_axis_code_20}.}
 \item{contributing_logic}{a character vector of length one. Specifies whether
 ANY or ALL of the \code{contributing_codes} must be present.
 
+When \code{cause_name} is specified, the logic comes from the reference table (see
+the \code{contributing_logic} column of \code{\link[=death_multicause]{death_multicause()}}) and this argument is
+ignored (with a warning if it conflicts with the reference table).
+
 The default is \code{"ANY"}.}
 
 \item{by}{a character vector of indeterminate length. This is used to
