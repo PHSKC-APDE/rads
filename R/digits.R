@@ -1,6 +1,13 @@
 #' Round data according to APDE/CHI standards or custom requests
 #'
 #' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' `digits()` was deprecated in rads 2.1.0. Because it is specific to CHI
+#' (Community Health Indicators), it is moving to `apde.chi.tools::chi_round()`.
+#' For general-purpose rounding, use [round2()] directly, e.g.,
+#' `dt[, (cols) := lapply(.SD, rads::round2, 3), .SDcols = cols]`.
+#'
 #' Default rounding is according to APDE/CHI standards
 #'
 #' By default, this function expects data that has already been formatted for CHI,
@@ -47,6 +54,15 @@ digits <- function(digit_data = NULL,
                    digits_1 = 3,
                    vars_2 = c("se"),
                    digits_2 = 4){
+
+  ## DEPRECATION ----
+      lifecycle::deprecate_warn(
+        when = "2.1.0",
+        what = "digits()",
+        with = "apde.chi.tools::chi_round()",
+        details = paste0("`digits()` is specific to CHI and is moving to apde.chi.tools. ",
+                         "For general-purpose rounding, use `rads::round2()`.")
+      )
 
   ## VALIDATION ----
       #validate 'digit_data'
