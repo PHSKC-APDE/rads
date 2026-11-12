@@ -13,8 +13,26 @@ library(data.table)
     expect_equal(nrow(d113ids), 114) # Should have 114 rows (113 + alternate version of causeid==90)
     expect_equal(length(unique(d113ids$causeid)), 114)
     expect_equal(length(unique(d113ids$cause.of.death)), 114)
-    expect_equal(names(d113ids), c("causeid", "cause.of.death"))
+    expect_equal(names(d113ids), c("causeid", "cause.of.death", "icd10"))
     expect_equal(d113ids, unique(d113ids))
+    expect_false(anyNA(d113ids))
+  })
+
+  test_that("death_113() shows the ICD-10 codes that define each cause ...", {
+    d113ids <- death_113()
+    expect_type(d113ids$icd10, "character")
+    expect_false(any(d113ids$icd10 == ""))
+    expect_false(any(grepl(",[^ ]", d113ids$icd10))) # codes always separated by ", "
+
+    expect_identical(d113ids[causeid == 1]$icd10, "A01-A02")
+    expect_identical(d113ids[causeid == 2]$icd10, "A03, A06")
+    expect_true(grepl("U07.1", d113ids[causeid == 17]$icd10, fixed = TRUE))
+
+    # the displayed codes are the same ones used by death_113_count()
+    orig <- unique(rads.data::icd_nchs113causes[, list(causeid, orig.coding)])
+    orig <- orig[, list(orig.coding = paste(orig.coding, collapse = ", ")), by = causeid]
+    combo <- merge(d113ids, orig, by = "causeid", all = TRUE)
+    expect_identical(gsub(" ", "", combo$icd10), gsub(" ", "", combo$orig.coding))
   })
 
 
@@ -178,8 +196,26 @@ library(data.table)
     expect_equal(nrow(d130ids), 130) # Should have 130 rows
     expect_equal(length(unique(d130ids$causeid)), 130)
     expect_equal(length(unique(d130ids$cause.of.death)), 130)
-    expect_equal(names(d130ids), c("causeid", "cause.of.death"))
+    expect_equal(names(d130ids), c("causeid", "cause.of.death", "icd10"))
     expect_equal(d130ids, unique(d130ids))
+    expect_false(anyNA(d130ids))
+  })
+
+  test_that("death_130() shows the ICD-10 codes that define each cause ...", {
+    d130ids <- death_130()
+    expect_type(d130ids$icd10, "character")
+    expect_false(any(d130ids$icd10 == ""))
+    expect_false(any(grepl(",[^ ]", d130ids$icd10))) # codes always separated by ", " (rads.data uses ",")
+
+    expect_identical(d130ids[causeid == 2]$icd10, "A09")
+    expect_identical(d130ids[causeid == 4]$icd10, "A33, A35")
+    expect_identical(d130ids[causeid == 71]$icd10, "P07.0, P07.2")
+
+    # the displayed codes are the same ones used by death_130_count()
+    orig <- unique(rads.data::icd_nchs130causes[, list(causeid, orig.coding)])
+    orig <- orig[, list(orig.coding = paste(orig.coding, collapse = ", ")), by = causeid]
+    combo <- merge(d130ids, orig, by = "causeid", all = TRUE)
+    expect_identical(gsub(" ", "", combo$icd10), gsub(" ", "", combo$orig.coding))
   })
 
 

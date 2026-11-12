@@ -10,19 +10,30 @@
 death_130()
 }
 \value{
-A data.table with 130 rows and two columns: causeid (integers between 1 & 130, inclusive) and cause.of.death (human readable description).
+A data.table with 130 rows and three columns: \code{causeid} (integers between 1
+& 130, inclusive), \code{cause.of.death} (human readable description), and \code{icd10}
+(the ICD-10 codes and code ranges that define the cause).
 }
 \description{
 Function to view the National Center for Health Statistics (NCHS) 130
 Selected Causes of Infant Death (COD) causeids.
 
-Generates a table with two columns, \code{causeid} & \code{cause.of.death}.
-Use it to identify the causeids given as an argument in \code{death_130_count}.
+Generates a table with three columns, \code{causeid}, \code{cause.of.death}, & \code{icd10}.
+Use it to identify the causeids given as an argument in \code{death_130_count}
+and to see the ICD-10 codes that define each cause.
 }
 \details{
 To see the corresponding leading cause groups and 'levels' (i.e., the
 hierarchy), check out \code{?rads.data::icd_nchs130causes_raw} &
 \code{?rads.data::icd_nchs130causes}.
+
+The \code{icd10} column shows the codes as the CDC presents them. A 3-character
+code includes all of its 4-character subcodes (e.g., \code{A09} includes \code{A090}
+through \code{A099}) and \code{P07.0} is the same as \code{P070}. For the full list of
+4-character codes, see \code{rads.data::icd_nchs130causes}.
+
+Note that \code{death_130_count()} reports COVID-19 deaths (\code{U07.1}) separately
+as \code{COVID-19 (U07.1)}.
 }
 \note{
 This function does not take any arguments
