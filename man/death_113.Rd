@@ -10,19 +10,30 @@
 death_113()
 }
 \value{
-A data.table with 114 rows and two columns: causeid (integers between 1 & 114, inclusive) and cause.of.death (human readable description).
+A data.table with 114 rows and three columns: \code{causeid} (integers between 1
+& 114, inclusive), \code{cause.of.death} (human readable description), and \code{icd10}
+(the ICD-10 codes and code ranges that define the cause).
 }
 \description{
 Function to view the National Center for Health Statistics (NCHS) 113
 Selected Causes of Death (COD) causeids.
 
-Generates a table with two columns, \code{causeid} & \code{cause.of.death}.
-Use it to identify the causeids given as an argument in \code{death_113_count}.
+Generates a table with three columns, \code{causeid}, \code{cause.of.death}, & \code{icd10}.
+Use it to identify the causeids given as an argument in \code{death_113_count}
+and to see the ICD-10 codes that define each cause.
 }
 \details{
 There are actually 114 rows, with causeid 114 being the official
 \verb{CDC version of causeid 95 (Residual)}, i.e., \verb{All other diseases (Residual)}. Causeid 95 was intentionally changed to match the definition
 used by WA DOH.
+
+The \code{icd10} column shows the codes as the CDC presents them. A 3-character code
+includes all of its 4-character subcodes (e.g., \code{A16} includes \code{A160} through
+\code{A169}) and \code{U07.1} is the same as \code{U071}. For the full list of 4-character
+codes, see \code{rads.data::icd_nchs113causes}.
+
+Note that \code{death_113_count()} reports COVID-19 deaths (\code{U07.1}) separately
+as \code{COVID-19 (U07.1)}, even though \code{U07.1} is listed under causeid 17.
 }
 \note{
 This function does not take any arguments

@@ -5,14 +5,23 @@
 #' Function to view the National Center for Health Statistics (NCHS) 113
 #' Selected Causes of Death (COD) causeids.
 #'
-#' Generates a table with two columns, `causeid` & `cause.of.death`.
-#' Use it to identify the causeids given as an argument in `death_113_count`.
+#' Generates a table with three columns, `causeid`, `cause.of.death`, & `icd10`.
+#' Use it to identify the causeids given as an argument in `death_113_count`
+#' and to see the ICD-10 codes that define each cause.
 #'
 #' @details
 #' There are actually 114 rows, with causeid 114 being the official
 #' `CDC version of causeid 95 (Residual)`, i.e., `All other diseases
 #' (Residual)`. Causeid 95 was intentionally changed to match the definition
 #' used by WA DOH.
+#'
+#' The `icd10` column shows the codes as the CDC presents them. A 3-character code
+#' includes all of its 4-character subcodes (e.g., `A16` includes `A160` through
+#' `A169`) and `U07.1` is the same as `U071`. For the full list of 4-character
+#' codes, see `rads.data::icd_nchs113causes`.
+#'
+#' Note that `death_113_count()` reports COVID-19 deaths (`U07.1`) separately
+#' as `COVID-19 (U07.1)`, even though `U07.1` is listed under causeid 17.
 #'
 #' @note
 #' This function does not take any arguments
@@ -30,7 +39,9 @@
 #' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #'
 #' @return
-#' A data.table with 114 rows and two columns: causeid (integers between 1 & 114, inclusive) and cause.of.death (human readable description).
+#' A data.table with 114 rows and three columns: `causeid` (integers between 1
+#' & 114, inclusive), `cause.of.death` (human readable description), and `icd10`
+#' (the ICD-10 codes and code ranges that define the cause).
 #'
 #' @export
 #'
@@ -43,7 +54,11 @@
 #'
 death_113 <- function(){
   deaths113_causeid_list <- data.table::copy(rads.data::icd_nchs113causes_raw)
-  deaths113_causeid_list <- deaths113_causeid_list[, .SD, .SDcols = c("causeid", "cause.of.death")] # from rads.data
+  deaths113_causeid_list <- deaths113_causeid_list[, .SD, .SDcols = c("causeid", "cause.of.death", "icd10")] # from rads.data
+
+  # Standardize the separator between codes to ", " so all death_xxx() functions display codes the same way
+  deaths113_causeid_list[, icd10 := gsub("\\s*,\\s*", ", ", trimws(icd10))]
+
   return(deaths113_causeid_list)
 }
 
@@ -199,13 +214,22 @@ death_113_count <- function(ph.data,
 #' Function to view the National Center for Health Statistics (NCHS) 130
 #' Selected Causes of Infant Death (COD) causeids.
 #'
-#' Generates a table with two columns, `causeid` & `cause.of.death`.
-#' Use it to identify the causeids given as an argument in `death_130_count`.
+#' Generates a table with three columns, `causeid`, `cause.of.death`, & `icd10`.
+#' Use it to identify the causeids given as an argument in `death_130_count`
+#' and to see the ICD-10 codes that define each cause.
 #'
 #' @details
 #' To see the corresponding leading cause groups and 'levels' (i.e., the
 #' hierarchy), check out `?rads.data::icd_nchs130causes_raw` &
 #' `?rads.data::icd_nchs130causes`.
+#'
+#' The `icd10` column shows the codes as the CDC presents them. A 3-character
+#' code includes all of its 4-character subcodes (e.g., `A09` includes `A090`
+#' through `A099`) and `P07.0` is the same as `P070`. For the full list of
+#' 4-character codes, see `rads.data::icd_nchs130causes`.
+#'
+#' Note that `death_130_count()` reports COVID-19 deaths (`U07.1`) separately
+#' as `COVID-19 (U07.1)`.
 #'
 #' @note
 #' This function does not take any arguments
@@ -222,7 +246,9 @@ death_113_count <- function(ph.data,
 #' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #'
 #' @return
-#' A data.table with 130 rows and two columns: causeid (integers between 1 & 130, inclusive) and cause.of.death (human readable description).
+#' A data.table with 130 rows and three columns: `causeid` (integers between 1
+#' & 130, inclusive), `cause.of.death` (human readable description), and `icd10`
+#' (the ICD-10 codes and code ranges that define the cause).
 #'
 #' @export
 #'
@@ -235,7 +261,12 @@ death_113_count <- function(ph.data,
 #'
 death_130<- function(){
   deaths130_causeid_list <- data.table::copy(rads.data::icd_nchs130causes_raw)
-  deaths130_causeid_list <- deaths130_causeid_list[, .SD, .SDcols = c("causeid", "cause.of.death")] # from rads.data
+  deaths130_causeid_list <- deaths130_causeid_list[, .SD, .SDcols = c("causeid", "cause.of.death", "icd10")] # from rads.data
+
+  # Standardize the separator between codes to ", " so all death_xxx() functions display codes the same way
+  # (rads.data stores the 130 list as, e.g., "A33,A35")
+  deaths130_causeid_list[, icd10 := gsub("\\s*,\\s*", ", ", trimws(icd10))]
+
   return(deaths130_causeid_list)
 }
 
