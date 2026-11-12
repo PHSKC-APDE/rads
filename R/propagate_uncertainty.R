@@ -117,11 +117,11 @@
 #' - Come from models where uncertainty was calculated on the original scale
 #'
 #' Examples
-#' - Comparing two log-odds ratios → use "normal"
-#' - Comparing two odds ratios → use "lognormal"
-#' - Comparing two mortality rates (deaths per 100,000) → use "lognormal"
-#' - Comparing two risk differences → use "normal"
-#' - Comparing two prevalences (e.g., 0.15 vs 0.20) → use "normal"
+#' - Comparing two log-odds ratios -> use "normal"
+#' - Comparing two odds ratios -> use "lognormal"
+#' - Comparing two mortality rates (deaths per 100,000) -> use "lognormal"
+#' - Comparing two risk differences -> use "normal"
+#' - Comparing two prevalences (e.g., 0.15 vs 0.20) -> use "normal"
 #'          (proportions are bounded but typically analyzed on original scale)
 #'
 #' **Standard Error Scale:**

@@ -13,8 +13,26 @@ library(data.table)
     expect_equal(nrow(d113ids), 114) # Should have 114 rows (113 + alternate version of causeid==90)
     expect_equal(length(unique(d113ids$causeid)), 114)
     expect_equal(length(unique(d113ids$cause.of.death)), 114)
-    expect_equal(names(d113ids), c("causeid", "cause.of.death"))
+    expect_equal(names(d113ids), c("causeid", "cause.of.death", "icd10"))
     expect_equal(d113ids, unique(d113ids))
+    expect_false(anyNA(d113ids))
+  })
+
+  test_that("death_113() shows the ICD-10 codes that define each cause ...", {
+    d113ids <- death_113()
+    expect_type(d113ids$icd10, "character")
+    expect_false(any(d113ids$icd10 == ""))
+    expect_false(any(grepl(",[^ ]", d113ids$icd10))) # codes always separated by ", "
+
+    expect_identical(d113ids[causeid == 1]$icd10, "A01-A02")
+    expect_identical(d113ids[causeid == 2]$icd10, "A03, A06")
+    expect_true(grepl("U07.1", d113ids[causeid == 17]$icd10, fixed = TRUE))
+
+    # the displayed codes are the same ones used by death_113_count()
+    orig <- unique(rads.data::icd_nchs113causes[, list(causeid, orig.coding)])
+    orig <- orig[, list(orig.coding = paste(orig.coding, collapse = ", ")), by = causeid]
+    combo <- merge(d113ids, orig, by = "causeid", all = TRUE)
+    expect_identical(gsub(" ", "", combo$icd10), gsub(" ", "", combo$orig.coding))
   })
 
 
@@ -178,8 +196,26 @@ library(data.table)
     expect_equal(nrow(d130ids), 130) # Should have 130 rows
     expect_equal(length(unique(d130ids$causeid)), 130)
     expect_equal(length(unique(d130ids$cause.of.death)), 130)
-    expect_equal(names(d130ids), c("causeid", "cause.of.death"))
+    expect_equal(names(d130ids), c("causeid", "cause.of.death", "icd10"))
     expect_equal(d130ids, unique(d130ids))
+    expect_false(anyNA(d130ids))
+  })
+
+  test_that("death_130() shows the ICD-10 codes that define each cause ...", {
+    d130ids <- death_130()
+    expect_type(d130ids$icd10, "character")
+    expect_false(any(d130ids$icd10 == ""))
+    expect_false(any(grepl(",[^ ]", d130ids$icd10))) # codes always separated by ", " (rads.data uses ",")
+
+    expect_identical(d130ids[causeid == 2]$icd10, "A09")
+    expect_identical(d130ids[causeid == 4]$icd10, "A33, A35")
+    expect_identical(d130ids[causeid == 71]$icd10, "P07.0, P07.2")
+
+    # the displayed codes are the same ones used by death_130_count()
+    orig <- unique(rads.data::icd_nchs130causes[, list(causeid, orig.coding)])
+    orig <- orig[, list(orig.coding = paste(orig.coding, collapse = ", ")), by = causeid]
+    combo <- merge(d130ids, orig, by = "causeid", all = TRUE)
+    expect_identical(gsub(" ", "", combo$icd10), gsub(" ", "", combo$orig.coding))
   })
 
 
@@ -300,8 +336,46 @@ library(data.table)
   test_that("Check that death_multicause() exists, is the right type, and has some expected values ...", {
     multiz <- death_multicause()
     expect_true(inherits(multiz, 'data.table'))
-    expect_identical(c('cause_name', 'description'), names(multiz))
-    expect_equal(sum(grepl("opioid", multiz$cause_name, ignore.case = T)), 1L)
+    expect_identical(c('cause_name', 'underlying_codes', 'contributing_codes', 'contributing_logic', 'description'), names(multiz))
+    expect_equal(sum(multiz$cause_name == "Opioid"), 1L)
+    expect_equal(nrow(multiz), data.table::uniqueN(rads.data::icd10_multicause$cause_name))
+  })
+
+  test_that("death_multicause() shows the original codes and ranges for each definition", {
+    multiz <- death_multicause()
+    expect_identical(multiz[cause_name == "Opioid"]$underlying_codes,
+                     "X40-X44, X60-X64, X85, Y10-Y14")
+    expect_identical(multiz[cause_name == "Opioid"]$contributing_codes,
+                     "T40.0, T40.1, T40.2, T40.3, T40.4, T40.6")
+    expect_false(anyNA(multiz))
+    expect_false(any(multiz$underlying_codes == "" | multiz$contributing_codes == ""))
+  })
+
+  test_that("death_multicause() has the expected drug definitions", {
+    multiz <- death_multicause()
+    expected_contributing <- c(
+      "Opioid" = "T40.0, T40.1, T40.2, T40.3, T40.4, T40.6",
+      "Heroin" = "T40.1",
+      "Natural Semisynthetic Opioid" = "T40.2",
+      "Methadone" = "T40.3",
+      "Synthetic Opioid" = "T40.4",
+      "Cocaine" = "T40.5",
+      "Prescription Opioid" = "T40.2, T40.3, T40.4",
+      "Psychostimulant" = "T43.6",
+      "Stimulant" = "T40.5, T43.6"
+    )
+    expect_true(all(names(expected_contributing) %in% multiz$cause_name))
+    for(cn in names(expected_contributing)){
+      expect_identical(multiz[cause_name == cn]$contributing_codes, unname(expected_contributing[cn]))
+      expect_identical(multiz[cause_name == cn]$underlying_codes, "X40-X44, X60-X64, X85, Y10-Y14")
+    }
+  })
+
+  test_that("death_multicause() reports contributing_logic, and it matches the description", {
+    multiz <- death_multicause()
+    expect_true(all(multiz$contributing_logic %in% c("ANY", "ALL")))
+    expect_true(all(mapply(function(logic, desc) grepl(paste0(" AND ", tolower(logic), " of "), desc, fixed = TRUE),
+                           multiz$contributing_logic, multiz$description)))
   })
 
 # Check death_multicause_count ----
@@ -401,14 +475,34 @@ library(data.table)
                                            cause_name = 'opioid',
                                            contributing_logic = "ANY")
 
-      # Test ALL logic
+      # Test ALL logic (custom codes)
       result_all <- death_multicause_count(ph.data = deathDT,
-                                           cause_name = 'opioid',
+                                           underlying_codes = opioid_underlying,
+                                           contributing_codes = opioid_contributing,
                                            contributing_logic = "ALL")
 
       # ALL logic should result in fewer deaths
-      expect_true(result_all[cause.of.death == 'Opioid', deaths] <= result_any[cause.of.death == 'Opioid', deaths])
-      expect_equal(result_all[cause.of.death == 'Opioid', deaths], 0) # would not expect opioid codes to be in ALL contributing cols
+      expect_true(result_all[cause.of.death == 'Custom multicause', deaths] <= result_any[cause.of.death == 'Opioid', deaths])
+      expect_equal(result_all[cause.of.death == 'Custom multicause', deaths], 0) # would not expect opioid codes to be in ALL contributing cols
+    })
+
+    test_that("'cause_name' uses the contributing_logic of the reference table ...", {
+      result_default <- death_multicause_count(ph.data = deathDT, cause_name = 'opioid')
+      result_any <- death_multicause_count(ph.data = deathDT, cause_name = 'opioid', contributing_logic = "ANY")
+      expect_identical(result_default, result_any)
+
+      # a conflicting argument is ignored, with a warning
+      expect_warning(
+        result_all <- death_multicause_count(ph.data = deathDT, cause_name = 'opioid', contributing_logic = "ALL"),
+        "ignored")
+      expect_identical(result_all, result_default)
+    })
+
+    test_that("new drug definitions return plausible counts ...", {
+      n <- function(cn) death_multicause_count(ph.data = deathDT, cause_name = cn)[cause.of.death == cn, deaths]
+      expect_gte(n('Opioid'), n('Prescription Opioid'))
+      expect_gte(n('Prescription Opioid'), max(n('Natural Semisynthetic Opioid'), n('Methadone'), n('Synthetic Opioid')))
+      expect_gte(n('Stimulant'), max(n('Cocaine'), n('Psychostimulant')))
     })
 
     test_that("Alternative column naming works correctly ...", {
@@ -581,6 +675,139 @@ library(data.table)
       expect_complete_table(res, c("race", "cause.of.death"), "deaths") # in helpers.R
       expect_identical(res[race == "NHPI" & cause.of.death == "Alcohol_Death"]$deaths, 0L)
     })
+
+# Check death_rankable ----
+  # death_rankable() create data ----
+  # not necessary
+
+  # death_rankable() create output ----
+    rankable_view <- death_rankable()
+
+  # death_rankable() tests ----
+  test_that("Check that death_rankable() exists, is the right type, and has the 52 rankable causes ...", {
+    expect_true(inherits(rankable_view, 'data.table'))
+    expect_identical(names(rankable_view), c('cause.of.death', 'icd10'))
+    expect_equal(nrow(rankable_view), 52L)
+    expect_equal(data.table::uniqueN(rankable_view$cause.of.death), 52L)
+    expect_false(anyNA(rankable_view))
+  })
+
+  test_that("death_rankable() has no causeid because the CDC does not assign one", {
+    expect_false(any(grepl("id", names(rankable_view), ignore.case = TRUE)))
+  })
+
+  test_that("death_rankable() is sorted by cause name and shows the CDC code summaries", {
+    sorted_names <- data.table::setorderv(data.table::copy(rankable_view), "cause.of.death")$cause.of.death
+    expect_identical(rankable_view$cause.of.death, sorted_names)
+
+    expect_identical(rankable_view[cause.of.death == "Diabetes mellitus"]$icd10, "E10-E14")
+    expect_identical(rankable_view[cause.of.death == "COVID-19"]$icd10, "U07.1")
+    expect_identical(rankable_view[cause.of.death == "Enterocolitis due to Clostridium difficile"]$icd10, "A04.7")
+  })
+
+# Check death_rankable_count ----
+  # death_rankable_count() create data ----
+    deathRank <- rads.data::synthetic_death
+
+    deathRank2 <- data.table::copy(rads.data::synthetic_death)
+
+  # death_rankable_count() create output ----
+    rankable_all <- death_rankable_count(ph.data = deathRank, icdcol = "underlying_cod_code")
+
+  # death_rankable_count() tests ----
+  test_that("Check that death_rankable_count() has the expected structure ...", {
+    expect_true(inherits(rankable_all, 'data.table'))
+    expect_identical(names(rankable_all), c('cause.of.death', 'deaths'))
+    expect_true("All causes" %in% rankable_all$cause.of.death)
+    expect_identical(rankable_all[cause.of.death == "All causes"]$deaths, nrow(deathRank))
+
+    # only rankable causes (plus All causes) are returned
+    expect_true(all(rankable_all$cause.of.death %in% c("All causes", death_rankable()$cause.of.death)))
+    expect_false(anyDuplicated(rankable_all$cause.of.death) > 0)
+  })
+
+  test_that("death_rankable_count() hides the temporary internal causeid and sorts by cause name", {
+    # death_xxx_count() uses a temporary causeid internally. It must never reach the user.
+    expect_false("causeid" %in% names(rankable_all))
+
+    sorted_names <- data.table::setorderv(data.table::copy(rankable_all), "cause.of.death")$cause.of.death
+    expect_identical(rankable_all$cause.of.death, sorted_names)
+  })
+
+  test_that("death_rankable_count() matches death_113_count() for rankable causes that are a single 113 cause", {
+    res113 <- death_113_count(ph.data = deathRank, causeids = 43, icdcol = "underlying_cod_code") # Diabetes mellitus
+    res52 <- death_rankable_count(ph.data = deathRank, cause = "diabetes", icdcol = "underlying_cod_code")
+
+    expect_identical(res52[cause.of.death == "Diabetes mellitus"]$deaths,
+                     res113[cause.of.death == "Diabetes mellitus"]$deaths)
+  })
+
+  test_that("death_rankable_count() matches the sum of the 113 causes it combines", {
+    # Rankable "Malignant neoplasms" = 113 causeids 18-40; "Diseases of heart" = causeids 49-59
+    res113 <- death_113_count(ph.data = deathRank, causeids = c(18:40, 49:59), icdcol = "underlying_cod_code")
+    res52 <- death_rankable_count(ph.data = deathRank, cause = c("malignant neoplasms", "diseases of heart"),
+                                  icdcol = "underlying_cod_code")
+
+    expect_identical(res52[cause.of.death == "Malignant neoplasms"]$deaths,
+                     sum(res113[causeid %in% 18:40]$deaths))
+    expect_identical(res52[cause.of.death == "Diseases of heart"]$deaths,
+                     sum(res113[causeid %in% 49:59]$deaths))
+  })
+
+  test_that("COVID-19 and C. difficile, which are carved out of 113 causes, are counted on their own", {
+    expect_identical(rankable_all[cause.of.death == "Enterocolitis due to Clostridium difficile"]$deaths,
+                     sum(deathRank$underlying_cod_code == "A047"))
+
+    # selecting COVID-19 alone must work whatever its temporary internal causeid is
+    covid_only <- death_rankable_count(ph.data = deathRank, cause = "covid", icdcol = "underlying_cod_code")
+    expect_identical(sort(covid_only$cause.of.death), c("All causes", "COVID-19"))
+    expect_identical(covid_only[cause.of.death == "COVID-19"]$deaths,
+                     sum(deathRank$underlying_cod_code == "U071"))
+  })
+
+  test_that("death_rankable_count() cause keywords are not case sensitive and must match something", {
+    lower <- death_rankable_count(ph.data = deathRank, cause = "heart", icdcol = "underlying_cod_code")
+    upper <- death_rankable_count(ph.data = deathRank, cause = "HEART", icdcol = "underlying_cod_code")
+    expect_identical(lower, upper)
+    expect_identical(sort(lower$cause.of.death), c("All causes", "Diseases of heart"))
+
+    expect_error(death_rankable_count(ph.data = deathRank, cause = "no such cause", icdcol = "underlying_cod_code"),
+                 "filtered out all available causes")
+  })
+
+  test_that("death_rankable_count() explains why causeids cannot be used", {
+    expect_error(death_rankable_count(ph.data = deathRank, causeids = 1:3, icdcol = "underlying_cod_code"),
+                 "do not have official cause ids")
+    expect_error(death_xxx_count(ph.data = deathRank, causeids = 1:3, icdcol = "underlying_cod_code", nchsnum = 52),
+                 "do not have official cause ids")
+
+    # other unknown arguments get a clear message too
+    expect_error(death_rankable_count(ph.data = deathRank, not_an_argument = 1), "Unused argument")
+  })
+
+  test_that("death_rankable_count() calculates YPLL", {
+    res <- death_rankable_count(ph.data = deathRank, icdcol = "underlying_cod_code",
+                                ypll_age = 65, death_age_col = "age")
+    expect_identical(names(res), c('cause.of.death', 'deaths', 'ypll_65'))
+    expect_equal(res[cause.of.death == "All causes"]$ypll_65,
+                 sum(data.table::fifelse(deathRank$age < 65, 65 - deathRank$age, 0)))
+  })
+
+  test_that("death_rankable_count() zero-fills a `by` group with no deaths for the specified cause", {
+    d <- data.table::copy(deathRank2)
+
+    # move all diabetes deaths (E10-E14) in the "Multiple" race group to myocardial infarction
+    d[race == "Multiple" & grepl("^E1[0-4]", underlying_cod_code), underlying_cod_code := "I219"]
+
+    res <- death_rankable_count(ph.data = d,
+                                cause = "diabetes|heart",
+                                icdcol = "underlying_cod_code",
+                                by = "race")
+
+    expect_complete_table(res, c("race", "cause.of.death"), "deaths") # in helpers.R
+    expect_identical(res[race == "Multiple" & cause.of.death == "Diabetes mellitus"]$deaths, 0L)
+    expect_false("causeid" %in% names(res))
+  })
 
 # Check death_injury_matrix_count ----
   # death_injury_matrix_count() create data ----

@@ -63,15 +63,26 @@ specified AND if ph.data lacks a column named \code{age} or \code{chi_age}.
 
 The default is \code{death_age_col = NULL}.}
 
-\item{nchsnum}{specifies whether the function should reference NCHS 113 Selected
-COD (\code{rads::death_113()}) or NCHS 130 Selected Causes of Infant Death
-(\code{rads::death_130()}).}
+\item{nchsnum}{specifies which NCHS list of causes of death the function
+should reference:
+\itemize{
+\item \code{113}: NCHS 113 Selected COD (\code{rads::death_113()})
+\item \code{130}: NCHS 130 Selected Causes of Infant Death (\code{rads::death_130()})
+\item \code{52}: NCHS 52 rankable causes of death (\code{rads::death_rankable()})
+}
+
+The CDC does not assign cause ids to the 52 rankable causes, so for
+\code{nchsnum = 52} the \code{causeids} argument is not allowed (use \code{cause}, or leave
+both \code{causeids} and \code{cause} as \code{NULL} to get all 52) and the \code{causeid} column
+is not returned. See \code{\link[=death_rankable_count]{death_rankable_count()}}.}
 }
 \value{
 Generates a table with three columns, \code{causeid},  \code{cause.of.death},
 and \code{deaths}. If \code{ypll_age} is specified, a \code{ypll_##} column
 will also be added to the table. Columns in the \code{by}
 argument will also be returned.
+
+When \code{nchsnum = 52}, the \code{causeid} column is not returned (see \code{nchsnum}).
 
 By default, it will return all relevant causes of death. You can specify which
 causes of death you want to assess using the \code{causeids} or \code{cause}

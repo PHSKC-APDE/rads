@@ -27,6 +27,8 @@ utils::globalVariables(c(
   'contrast_pvalue',
   'contrast_se',
   'contrast_upper',
+  'contributing_codes',
+  'contributing_logic',
   'count',
   'death_age',
   'deaths',
@@ -131,12 +133,14 @@ utils::globalVariables(c(
   'superlevel_desc',
   'total',
   'Tx',
+  'underlying_codes',
   'underlying_contributing',
   'uploaded',
   'upper',
   'upper_ci',
   'V1',
   'value',
-  'varname'
+  'varname',
+  'version'
 ))
 
