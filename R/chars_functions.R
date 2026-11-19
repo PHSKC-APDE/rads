@@ -174,8 +174,9 @@ chars_injury_matrix <- function(){
 #' - CDC Injury Code and Matrices: <https://www.cdc.gov/nchs/injury/injury_matrices.htm>
 #'
 #' @seealso
-#' [ICD-10-CM wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10-CM) for
+#' - [ICD-10-CM wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10-CM) for
 #' an introduction to ICD-10-CM diagnosis codes
+#' - [complete_counts()] for adding zero-count rows for values that never appear in ph.data (e.g., ages with no hospitalizations). This function only adds zero-count rows for values that appear in ph.data.
 #'
 #' @export
 #'
@@ -623,8 +624,9 @@ chars_icd_ccs <- function(ref_type = 'all',
 #' contains the relevant counts.
 #'
 #' @seealso
-#' [ICD-10-CM wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10-CM) for
+#' - [ICD-10-CM wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10-CM) for
 #' an introduction to ICD-10-CM diagnosis codes
+#' - [complete_counts()] for adding zero-count rows for values that never appear in ph.data (e.g., ages with no hospitalizations). This function only adds zero-count rows for values that appear in ph.data.
 #'
 #' @export
 #'

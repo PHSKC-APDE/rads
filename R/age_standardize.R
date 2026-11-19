@@ -241,10 +241,10 @@ adjust_direct <- function(count,
 #' in the calculations, >0 & <1, typically 0.95
 #' @param by Character vector of indeterminate length. By which variable(s)
 #' do you want to stratify the rate results, if any?
-#' @param diagnostic_report Logical vector of length 1. If `by` is used and
-#' there are groups with missing ages, setting `diagnostic_report = TRUE` returns
-#' a diagnostic table instead of normal results. Use this option if a warning about
-#' missing age groups appears when running the function normally.
+#' @param diagnostic_report Logical vector of length 1. Setting `diagnostic_report = TRUE`
+#' returns a table of missing ages (by group, if `by` is used) instead of normal results.
+#' Use this option if a warning about missing ages appears when running the function
+#' normally. Only applies when ph.data has an 'age' column.
 #' @param event_type Character vector of length 1. Either `"unique"` (default) for
 #' events that can only occur once per person (e.g., death, first diagnosis), or
 #' `"repeatable"` for events that can occur multiple times per person (e.g., ER visits, infections).
@@ -262,6 +262,31 @@ adjust_direct <- function(count,
 #'
 #' When analyzing the *whole population*, *include all ages* with zero counts where no
 #' events occurred to ensure accurate age-standardized rates.
+#'
+#' If an age has no row, `age_standardize()` doesn't know anyone of that age exists.
+#' The people of that age are left out of the rate even though they had zero events,
+#' and the same number of events spread over fewer people gives a rate that is too high.
+#' For example, 80 deaths among 47,000 people is a rate of 170 per 100,000. If the
+#' 7,000 people aged 18-24 had no deaths and no rows, the calculation becomes 80 deaths
+#' among 40,000 people, or 200 per 100,000.
+#'
+#' The same thing happens to the age-adjusted rate. If every age in an age group
+#' (e.g., 18-24) is missing, that age group is left out of the age adjustment entirely,
+#' and the remaining age groups count for more. Because the missing group had no
+#' events, leaving it out also makes the rate too high.
+#'
+#' This usually happens when there were no events at an age, so the count table simply
+#' has no row for it. `age_standardize()` therefore:
+#'  - issues a **warning** for ages missing *inside* the range of ages in the data
+#'    (e.g., 55-59 when ages are 18-64) or, when `by` is used, ages (or agecats) that are
+#'    present in some groups but not others.
+#'  - issues a **message** stating the age range when it is not 0-100. Ages outside
+#'    the range can't be distinguished from an intentional age restriction, so make
+#'    sure the range is what you intended.
+#'
+#' **Note!** Use [complete_counts()] to add rows for missing ages (or any other
+#' missing values) with zero counts before merging on population and calling
+#' `age_standardize()`.
 #'
 #' @section Line-level (un-aggregated) data:
 #' By default, `ph.data` is expected to already be aggregated by `age` (or `agecat`),
@@ -318,6 +343,7 @@ adjust_direct <- function(count,
 #'
 #' @seealso [adjust_direct()] for calculating crude and directly adjusted rates.
 #' @seealso [bin_age()], used internally when `collapse = TRUE`, for binning ages on their own.
+#' @seealso [complete_counts()] for adding zero-count rows for missing ages.
 #'
 #' @export
 #' @name age_standardize
@@ -585,65 +611,62 @@ age_standardize <- function (ph.data,
                   "Correct the data and try again."))
     }
 
-    ## Check for full range of ages (0 to 100) overall and within groups ----
-    # simple function to check whether all ages are present (T | F) and which ones are missing (if any)
-    check_full_age_range <- function(tempx) {
-      actual_ages <- sort(unique(tempx$age))
-      missing_ages <- setdiff(0:100, actual_ages)
-      return(list(full_range = length(missing_ages) == 0, missing = missing_ages))
+    ## Check for missing ages ----
+    # An age with no row is silently left out: its people (who had zero events)
+    # don't count toward the population, so the same events are spread over fewer
+    # people. If a whole agecat is missing, it is also left out of the age
+    # adjustment and the remaining agecats count for more. Both inflate the rate.
+    #
+    # Ages outside the overall range (e.g., 0-17 & 65-100 when ages are 18-64) look
+    # exactly like an intentional age restriction, so they only get a message.
+    #
+    # Ages that are missing (a) *inside* a group's own min-max range or (b) from one
+    # `by` group but present in another are almost always missing rows, so they
+    # get a warning.
+    age_range <- range(ph.data$age)
+    if (!identical(age_range, c(0L, 100L))) {
+      message("\u2139\ufe0f Ages in ph.data (", ph.data.name, ") range from ", age_range[1], " to ", age_range[2], ".\n",
+              "If you meant to analyze the whole population, add the missing ages with count = 0 and the appropriate population.\n",
+              "complete_counts() can add the missing ages for you.")
     }
 
-    # Identify when missing ages
-    if (is.null(by)) {
-      check_result <- check_full_age_range(ph.data)
-      if (!check_result$full_range) {
-        warning(paste0("\n\u26A0\ufe0f ph.data (", ph.data.name, ") does not include all ages 0-100.\n",
-                       "Missing ages: ", format_time(check_result$missing), "\n\n",
-                       "This is expected if analyzing a specific age group (e.g., adolescents, working adults, etc.).\n",
-                       "However, if analyzing the whole population, missing ages should be added with:\n",
-                       "  - count = 0 (if no events occurred)\n",
-                       "  - pop = actual population for that age\n\n",
-                       "Without complete age data, age-standardized rates may not accurately represent\n",
-                       "the total population burden."),
-                immediate. = TRUE, call. = FALSE)
+    all_ages <- sort(unique(ph.data$age))
+    age_chk <- ph.data[, list(missing = list(sort(union(setdiff(min(age):max(age), age), # gaps inside range
+                                                        setdiff(all_ages, age))))),      # exist in other groups
+                       by = by]
+    age_chk <- age_chk[lengths(missing) > 0]
+    age_chk[, missing := vapply(missing, function(x) rads::format_time(unlist(x)), character(1))] # nice formatting for table of missing
 
-      }
-    } else {
-      age_chk = ph.data[, list(complete = all(0:100 %in% age), missing = list(setdiff(0:100, age))), by = by]
-      age_chk = age_chk[complete == FALSE][, complete := NULL]
-      age_chk[, missing := vapply(missing, function(x) format_time(unlist(x)), character(1))] # better formatting in table of missing
+    if (diagnostic_report) {
+      message(
+        "\U0001F50D Returning diagnostic report showing missing ages.\n",
+        "\u26A0\ufe0f ", format(nrow(age_chk), big.mark = ','),
+        " group(s) have missing ages.\n\n",
+        "Add missing ages with count = 0 and the appropriate population (e.g., with complete_counts())."
+      )
+      return(age_chk)
+    }
 
-      if(diagnostic_report) {
-        message(
-          "\U0001F50D Returning diagnostic report showing groups with incomplete age ranges.\n",
-          "\u26A0\ufe0f ", format(nrow(age_chk), big.mark = ','),
-          " group(s) have missing ages.\n\n",
-          "If analyzing specific age subsets, this may be intentional.\n",
-          "If analyzing whole populations, add missing ages with count = 0 and appropriate population."
-        )
-        return(age_chk)
+    if (nrow(age_chk) >= 1) {
+      if (nrow(age_chk) <= 5) { # detailed table for small number of groups
+        table_output <- paste(utils::capture.output(print(age_chk, row.names = FALSE, class = FALSE, print.keys = FALSE)), collapse = "\n")
+        groups_display <- paste0(":\n\n", table_output, "\n\n")
+        diagnostic_note <- "" # no need to run diagnostic_report
+      } else { # just a count for larger number of groups
+        groups_display <- paste0(" for ", format(nrow(age_chk), big.mark = ','), " groups.\n\n")
+        diagnostic_note <-  "\nRun age_standardize() with `diagnostic_report = TRUE` to see affected groups and ages."
       }
 
-      if (nrow(age_chk) >= 1) {
-        if (nrow(age_chk) <= 5) { # detailed table for small number of groups
-          table_output <- paste(utils::capture.output(print(age_chk, row.names = FALSE, class = FALSE, print.keys = FALSE)), collapse = "\n")
-          groups_display <- paste0(":\n\n", table_output, "\n\n")
-          diagnostic_note <- "" # no need to run diagnostic_report
-        } else { # just a count for larger number of groups
-          groups_display <- paste0(" for ", format(nrow(age_chk), big.mark = ','), " groups.\n\n")
-          diagnostic_note <-  "\nRun age_standardize() with `diagnostic_report = TRUE` to see affected groups and ages."
-        }
-
-        warning(paste0(
-          "\n\u26A0\ufe0f Missing ages detected in ", ph.data.name, groups_display,
-          "This is expected if analyzing a specific age group (e.g., adolescents, working adults, etc.).\n",
-          "However, if analyzing the whole population, missing ages should be added with:\n",
-          "  - count = 0 (if no events occurred)\n",
-          "  - pop = actual population for those ages\n\n",
-          "Without complete age data, age-standardized rates may not accurately represent\n",
-          "the total population burden.", diagnostic_note
-        ), immediate. = TRUE, call. = FALSE)
-      }
+      warning(paste0(
+        "\n\u26A0\ufe0f Missing ages detected in ", ph.data.name, groups_display,
+        "These ages are inside the range of ages in the data",
+        if (!is.null(by)) " or are present in other `by` groups" else "", ",\n",
+        "so they are almost definitely missing rows, probably because they had zero events,\n",
+        "not an intentional age restriction. Without those rows, the people of those ages\n",
+        "are left out of the rate, so rates for these groups are too high.\n",
+        "Fix it! Add the missing ages with count = 0 and the appropriate population.\n",
+        "complete_counts() can add the missing ages for you.", diagnostic_note
+      ), immediate. = TRUE, call. = FALSE)
     }
   }
 
@@ -654,6 +677,34 @@ age_standardize <- function (ph.data,
       stop("\n\U1F6D1 STOP and fix your code!\n",
            "The agecat values in ph.data must match those in your reference \n",
            "population {",ref.popname, "} exactly.")
+    }
+  }
+
+  ## Check that all `by` groups have the same agecats ----
+  # Same idea as the missing age check above, for pre-binned data (no 'age' column):
+  # a group missing an agecat that other groups have will have an inflated rate.
+  if (!is.null(by) && "agecat" %in% names(ph.data)) {
+    all_agecats <- sort(unique(ph.data$agecat))
+    agecat_chk <- ph.data[, list(missing = list(setdiff(all_agecats, agecat))), by = by]
+    agecat_chk <- agecat_chk[lengths(missing) > 0]
+
+    if (nrow(agecat_chk) > 0) {
+      agecat_chk[, missing := vapply(missing, function(x) paste(unlist(x), collapse = ", "), character(1))]
+      n_grps <- nrow(agecat_chk)
+      table_output <- paste(utils::capture.output(print(utils::head(agecat_chk, 5), row.names = FALSE,
+                                                        class = FALSE, print.keys = FALSE)),
+                            collapse = "\n")
+
+      warning(paste0(
+        "\n\u26A0\ufe0f Missing agecats detected in ", ph.data.name, " for ", format(n_grps, big.mark = ','), " group(s)",
+        if (n_grps > 5) " (first 5 shown)" else "", ":\n\n",
+        table_output, "\n\n",
+        "These agecats are present in other `by` groups, so they are almost definitely missing rows,\n",
+        "probably because they had zero events. Without those rows, the people of those ages are\n",
+        "left out of the rate, so rates for these groups are too high.\n",
+        "Fix it! Add the missing agecats with count = 0 and the appropriate population.\n",
+        "complete_counts() can add the missing agecats for you."
+      ), immediate. = TRUE, call. = FALSE)
     }
   }
 
