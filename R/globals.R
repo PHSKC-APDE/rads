@@ -1,5 +1,6 @@
 # Declare global variables for devtools::check()
 utils::globalVariables(c(
+  '.orig_row',
   '_miiter',
   'adj.lci',
   'age',
