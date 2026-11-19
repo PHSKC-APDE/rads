@@ -45,10 +45,10 @@ in the calculations, >0 & <1, typically 0.95}
 \item{by}{Character vector of indeterminate length. By which variable(s)
 do you want to stratify the rate results, if any?}
 
-\item{diagnostic_report}{Logical vector of length 1. If \code{by} is used and
-there are groups with missing ages, setting \code{diagnostic_report = TRUE} returns
-a diagnostic table instead of normal results. Use this option if a warning about
-missing age groups appears when running the function normally.}
+\item{diagnostic_report}{Logical vector of length 1. Setting \code{diagnostic_report = TRUE}
+returns a table of missing ages (by group, if \code{by} is used) instead of normal results.
+Use this option if a warning about missing ages appears when running the function
+normally. Only applies when ph.data has an 'age' column.}
 
 \item{event_type}{Character vector of length 1. Either \code{"unique"} (default) for
 events that can only occur once per person (e.g., death, first diagnosis), or
@@ -75,6 +75,19 @@ When analyzing \emph{specific age subsets} (e.g., adolescents, seniors, etc.), i
 
 When analyzing the \emph{whole population}, \emph{include all ages} with zero counts where no
 events occurred to ensure accurate age-standardized rates.
+
+Ages without a row are dropped from the denominator and, if a whole age group is
+missing, the standard population weights are rescaled over the remaining age groups,
+which inflates the rate. This usually happens when ages with zero events have no row.
+\code{age_standardize()} therefore:
+\itemize{
+\item issues a \strong{warning} for ages missing \emph{inside} the range of ages in the data
+(e.g., 55-59 when ages are 18-64) or, when \code{by} is used, ages (or agecats) that are
+present in some groups but not others.
+\item issues a \strong{message} stating the age range when it is not 0-100. Ages outside
+the range can't be distinguished from an intentional age restriction, so make
+sure the range is what you intended.
+}
 }
 \section{Line-level (un-aggregated) data}{
 

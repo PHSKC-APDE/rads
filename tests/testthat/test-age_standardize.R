@@ -158,10 +158,17 @@ test_that('valid output',{
                                  my.pop = "pop", per = 1000, conf.level = 0.95, by = "sex", diagnostic_report = TRUE),
                  'Returning diagnostic report')
 
+  # complete data within the age range -> empty report (ages outside 50-60 aren't flagged)
   diagreport <- suppressMessages(age_standardize(ph.data = temp.dt2, ref.popname = "none", collapse = F, my.count = "count",
                                                  my.pop = "pop", per = 1000, conf.level = 0.95, by = "sex", diagnostic_report = TRUE))
-  expect_identical(unique(diagreport$missing), '0-49, 61-100')
-  expect_identical(sort(unique(diagreport$sex)), c('F', 'M'))
+  expect_identical(nrow(diagreport), 0L)
+
+  # gaps inside the range -> reported by group
+  diagreport <- suppressMessages(age_standardize(ph.data = temp.dt2[!(sex == 'F' & age %in% 51:52) & !(sex == 'M' & age == 55)],
+                                                 ref.popname = "none", collapse = F, my.count = "count",
+                                                 my.pop = "pop", per = 1000, conf.level = 0.95, by = "sex", diagnostic_report = TRUE))
+  expect_identical(diagreport[order(sex)]$sex, c('F', 'M'))
+  expect_identical(diagreport[order(sex)]$missing, c('51-52', '55'))
 
   temp.agestd2 <- suppressWarnings(age_standardize(ph.data = temp.dt2, ref.popname = "none", collapse = F, my.count = "count",
                                                    my.pop = "pop", per = 1000, conf.level = 0.95, by = "sex"))
@@ -197,8 +204,10 @@ test_that('errors & warnings',{
   expect_error(age_standardize(copy(temp.dt3)[1, age := NA], my.count = "count", my.pop = "pop"))
   expect_warning(age_standardize(copy(temp.dt3)[1, age := 103], my.count = "count", my.pop = "pop"))
   expect_error(age_standardize(copy(temp.dt3)[1, age := -1], my.count = "count", my.pop = "pop"))
-  expect_warning(age_standardize(copy(temp.dt3)[!2, ], my.count = "count", my.pop = "pop"))
-  expect_warning(age_standardize(copy(temp.dt3)[!1], my.count = "count", my.pop = "pop"))
+  expect_warning(age_standardize(copy(temp.dt3)[!2, ], my.count = "count", my.pop = "pop"),
+                 'Missing ages detected') # age 1 missing inside 0-100
+  expect_message(age_standardize(copy(temp.dt3)[!1], my.count = "count", my.pop = "pop"),
+                 'range from 1 to 100') # age 0 missing at edge -> message only
 
   expect_warning(age_standardize(copy(temp.dt3)[1, count := NA], my.count = "count", my.pop = "pop"))
   expect_error(age_standardize(copy(temp.dt3)[1, count := -1], my.count = "count", my.pop = "pop"))
@@ -248,6 +257,7 @@ test_that('errors & warnings',{
   temp.dt2 <- data.table(sex = c(rep("M", 11), rep("F", 11)), age = rep(50:60, 2),
                          count = c(25:35, 26:36), pop = c(seq(1000, 900, -10), seq(1100, 1000, -10)),
                          stdpop = rep(1000, 22))
+  temp.dt2 <- temp.dt2[!(sex == 'M' & age %in% 53:54)]
 
   expect_warning(age_standardize(ph.data = temp.dt2,
                                  ref.popname = "none",
@@ -267,7 +277,32 @@ test_that('errors & warnings',{
                                  per = 1000,
                                  conf.level = 0.95,
                                  by = "sex"),
-                 'M 0-49, 61-100')
+                 'M\\s+53-54')
+
+  # Missing age rows ----
+  # intentional age restriction (18-64), no gaps -> message, no warning
+  full <- data.table(age = 18:64, count = 2, pop = 1000)
+  expect_message(expect_no_warning(age_standardize(full)), 'range from 18 to 64')
+
+  # gap inside the range, no `by` -> warning
+  expect_warning(age_standardize(full[!age %in% 55:59]), 'missing\\s+55-59')
+
+  # `by` group missing ages that another group has -> warning, even though no gap within B's own range
+  gappy_by <- rbind(data.table(grp = 'A', age = 18:64, count = 2, pop = 1000),
+                    data.table(grp = 'B', age = 25:64, count = 2, pop = 1000)) # B has no rows for 18-24
+  expect_warning(age_standardize(gappy_by, by = 'grp'), 'B\\s+18-24')
+
+  # zero-filled version -> no warning & correct rate
+  zeros_by <- rbind(data.table(grp = 'A', age = 18:64, count = 2, pop = 1000),
+                    data.table(grp = 'B', age = 18:64, count = 2, pop = 1000)[age %in% 18:24, count := 0])
+  expect_no_warning(res <- suppressMessages(age_standardize(zeros_by, by = 'grp')))
+  expect_equal(round(res[grp == 'B']$adj.rate, 1), 157.9) # gappy B would be 200.0
+
+  # same `by` check applies to agecat when collapse = FALSE
+  gappy_agecat <- data.table(grp = c('A', 'A', 'B'), agecat = c('x', 'y', 'y'),
+                             count = 1, pop = 100, stdpop = 1000)
+  expect_warning(age_standardize(gappy_agecat, ref.popname = 'none', collapse = FALSE, by = 'grp'),
+                 'Missing agecats detected')
 
 
   # test if fails when have mismatched aggregated data
@@ -435,7 +470,8 @@ test_that("sums pop when it varies across duplicate age rows, regardless of line
                                                           ref.popname = "2000 U.S. Std Population (11 age groups)",
                                                           collapse = TRUE, my.count = "count", my.pop = "pop",
                                                           per = 1000, conf.level = 0.95,
-                                                          line_level = TRUE))
+                                                          line_level = TRUE)),
+    message = "automatically summed"
   )
   expect_equal(sum(line_level_result$count), sum(dt$count))
   expect_equal(sum(line_level_result$pop), sum(dt$pop))
