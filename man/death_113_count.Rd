@@ -128,6 +128,7 @@ head(eg2)
 \item \code{\link[=death_icd10_clean]{death_icd10_clean()}} for preparing ICD-10 codes for use with all rads death functions
 \item \href{https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10}{ICD-10 wiki} for an introduction to ICD-10 cause of death codes
 \item \code{\link[=age_standardize]{age_standardize()}} for calculating age standardized rates
+\item \code{\link[=complete_counts]{complete_counts()}} for adding zero-count rows for values that never appear in ph.data (e.g., ages with no deaths). This function only adds zero-count rows for values that appear in ph.data.
 \item \code{\link[=death_130_count]{death_130_count()}} for generating CDC NCHS 130 causes of infant death counts
 \item \code{\link[=death_injury_matrix_count]{death_injury_matrix_count()}} for generating injury matrix counts
 \item \code{\link[=death_multicause_count]{death_multicause_count()}} for generating counts of deaths defined by BOTH underlying & contributing causes

@@ -121,3 +121,8 @@ head(eg1)
 \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS113CausesOfDeath.pdf}
 \url{https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/TechnicalNotes.pdf}
 }
+\seealso{
+\itemize{
+\item \code{\link[=complete_counts]{complete_counts()}} for adding zero-count rows for values that never appear in ph.data (e.g., ages with no deaths). This function only adds zero-count rows for values that appear in ph.data.
+}
+}

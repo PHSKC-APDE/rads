@@ -263,16 +263,30 @@ adjust_direct <- function(count,
 #' When analyzing the *whole population*, *include all ages* with zero counts where no
 #' events occurred to ensure accurate age-standardized rates.
 #'
-#' Ages without a row are dropped from the denominator and, if a whole age group is
-#' missing, the standard population weights are rescaled over the remaining age groups,
-#' which inflates the rate. This usually happens when ages with zero events have no row.
-#' `age_standardize()` therefore:
+#' If an age has no row, `age_standardize()` doesn't know anyone of that age exists.
+#' The people of that age are left out of the rate even though they had zero events,
+#' and the same number of events spread over fewer people gives a rate that is too high.
+#' For example, 80 deaths among 47,000 people is a rate of 170 per 100,000. If the
+#' 7,000 people aged 18-24 had no deaths and no rows, the calculation becomes 80 deaths
+#' among 40,000 people, or 200 per 100,000.
+#'
+#' The same thing happens to the age-adjusted rate. If every age in an age group
+#' (e.g., 18-24) is missing, that age group is left out of the age adjustment entirely,
+#' and the remaining age groups count for more. Because the missing group had no
+#' events, leaving it out also makes the rate too high.
+#'
+#' This usually happens when there were no events at an age, so the count table simply
+#' has no row for it. `age_standardize()` therefore:
 #'  - issues a **warning** for ages missing *inside* the range of ages in the data
 #'    (e.g., 55-59 when ages are 18-64) or, when `by` is used, ages (or agecats) that are
 #'    present in some groups but not others.
 #'  - issues a **message** stating the age range when it is not 0-100. Ages outside
 #'    the range can't be distinguished from an intentional age restriction, so make
 #'    sure the range is what you intended.
+#'
+#' **Note!** Use [complete_counts()] to add rows for missing ages (or any other
+#' missing values) with zero counts before merging on population and calling
+#' `age_standardize()`.
 #'
 #' @section Line-level (un-aggregated) data:
 #' By default, `ph.data` is expected to already be aggregated by `age` (or `agecat`),
@@ -329,6 +343,7 @@ adjust_direct <- function(count,
 #'
 #' @seealso [adjust_direct()] for calculating crude and directly adjusted rates.
 #' @seealso [bin_age()], used internally when `collapse = TRUE`, for binning ages on their own.
+#' @seealso [complete_counts()] for adding zero-count rows for missing ages.
 #'
 #' @export
 #' @name age_standardize
@@ -597,9 +612,10 @@ age_standardize <- function (ph.data,
     }
 
     ## Check for missing ages ----
-    # An age with no row is silently dropped: its population leaves the denominator
-    # and, if a whole agecat is missing, adjust_direct() rescales the standard
-    # weights over the agecats that remain. Both inflate the rate.
+    # An age with no row is silently left out: its people (who had zero events)
+    # don't count toward the population, so the same events are spread over fewer
+    # people. If a whole agecat is missing, it is also left out of the age
+    # adjustment and the remaining agecats count for more. Both inflate the rate.
     #
     # Ages outside the overall range (e.g., 0-17 & 65-100 when ages are 18-64) look
     # exactly like an intentional age restriction, so they only get a message.
@@ -610,7 +626,8 @@ age_standardize <- function (ph.data,
     age_range <- range(ph.data$age)
     if (!identical(age_range, c(0L, 100L))) {
       message("\u2139\ufe0f Ages in ph.data (", ph.data.name, ") range from ", age_range[1], " to ", age_range[2], ".\n",
-              "If you meant to analyze the whole population, add the missing ages with count = 0 and the appropriate population.")
+              "If you meant to analyze the whole population, add the missing ages with count = 0 and the appropriate population.\n",
+              "complete_counts() can add the missing ages for you.")
     }
 
     all_ages <- sort(unique(ph.data$age))
@@ -625,7 +642,7 @@ age_standardize <- function (ph.data,
         "\U0001F50D Returning diagnostic report showing missing ages.\n",
         "\u26A0\ufe0f ", format(nrow(age_chk), big.mark = ','),
         " group(s) have missing ages.\n\n",
-        "Add missing ages with count = 0 and the appropriate population."
+        "Add missing ages with count = 0 and the appropriate population (e.g., with complete_counts())."
       )
       return(age_chk)
     }
@@ -644,11 +661,11 @@ age_standardize <- function (ph.data,
         "\n\u26A0\ufe0f Missing ages detected in ", ph.data.name, groups_display,
         "These ages are inside the range of ages in the data",
         if (!is.null(by)) " or are present in other `by` groups" else "", ",\n",
-        "so they are almost definitely missing rows (e.g., ages with zero events),\n",
-        "not an intentional age restriction. Their population is dropped from the\n",
-        "denominator and, if an entire age group is missing, the standard population\n",
-        "weights are rescaled over the remaining age groups. Either way, rates are inflated.\n",
-        "Fix it! Add the missing ages with count = 0 and the appropriate population.", diagnostic_note
+        "so they are almost definitely missing rows, probably because they had zero events,\n",
+        "not an intentional age restriction. Without those rows, the people of those ages\n",
+        "are left out of the rate, so rates for these groups are too high.\n",
+        "Fix it! Add the missing ages with count = 0 and the appropriate population.\n",
+        "complete_counts() can add the missing ages for you.", diagnostic_note
       ), immediate. = TRUE, call. = FALSE)
     }
   }
@@ -682,11 +699,11 @@ age_standardize <- function (ph.data,
         "\n\u26A0\ufe0f Missing agecats detected in ", ph.data.name, " for ", format(n_grps, big.mark = ','), " group(s)",
         if (n_grps > 5) " (first 5 shown)" else "", ":\n\n",
         table_output, "\n\n",
-        "These agecats are present in other `by` groups, so they are almost definitely missing rows\n",
-        "(e.g., agecats with zero events). Rates for these groups are inflated because the missing\n",
-        "population is dropped from the denominator and the standard population weights are\n",
-        "rescaled over the remaining age groups.\n",
-        "Fix it! add the missing agecats with count = 0 and the appropriate population."
+        "These agecats are present in other `by` groups, so they are almost definitely missing rows,\n",
+        "probably because they had zero events. Without those rows, the people of those ages are\n",
+        "left out of the rate, so rates for these groups are too high.\n",
+        "Fix it! Add the missing agecats with count = 0 and the appropriate population.\n",
+        "complete_counts() can add the missing agecats for you."
       ), immediate. = TRUE, call. = FALSE)
     }
   }

@@ -79,7 +79,7 @@ Arguments are the values that we send to a function when we call it. The standar
 
 9)  `by`: a character vector, specifies the variable(s) by which to stratify the rate results (if any). The default is NULL (i.e., no stratification)
 
-10)  `diagnostic_report`: If `by` is used and there are groups with missing ages, setting `diagnostic_report = TRUE` returns a diagnostic table instead of normal results. Use this option if a warning about missing age groups appears when running the function normally.
+10)  `diagnostic_report`: setting `diagnostic_report = TRUE` returns a table of missing ages (by group, if `by` is used) instead of normal results. Use this option if a warning about missing ages appears when running the function normally.
 
 ## Preparing your dataset
 
@@ -99,11 +99,34 @@ Your dataset must have the following three columns ...
 
 ## Note about incomplete ages
 
-If you are using an 'age' column and do not have all ages [0, 100], you will receive a warning.
+If an age has no row, `age_standardize()` doesn't know anyone of that age exists. The people of that age are left out of the rate even though they had zero events, and the same number of events spread over fewer people gives a rate that is **too high**. For example, 80 deaths among 47,000 people is a rate of 170 per 100,000. If the 7,000 people aged 18-24 had no deaths and no rows, the calculation becomes 80 deaths among 40,000 people, or 200 per 100,000.
 
-Incomplete ages are expected and **required** if you are performing analyses for a specific age group (e.g., adolescent birth rates, opioid mortality rate among working age adults, etc.).
+The same thing happens to the age-adjusted rate. If every age in an age group (e.g., 18-24) is missing, that age group is left out of the age adjustment entirely, and the remaining age groups count for more. Because the missing group had no events, leaving it out also makes the rate too high.
 
-Otherwise, to ensure you calculate accurate rates, be sure to include every age from 0 to 100. If there were no events/counts for a given age, set count = 0 and use the corresponding actual population for that age.
+This usually happens when there were no events at an age, so the count table simply has no row for it.
+
+To ensure you calculate accurate rates, include every age in your analysis. If there were no events for a given age, set count = 0 and use the corresponding actual population for that age. `complete_counts()` can add these rows for you (see `?complete_counts`).
+
+`age_standardize()` checks for missing ages when you use an 'age' column:
+
+-   **Warning:** ages missing *inside* the range of ages in your data (e.g., no rows for 55-59 when your data has ages 18-64), or, when `by` is used, ages that are present in some groups but not in others. These are almost always missing rows.
+-   **Message:** when your ages are not 0-100, a message states the range (e.g., 18-64). Incomplete ages are expected and **required** if you are performing analyses for a specific age group (e.g., adolescent birth rates, opioid mortality rate among working age adults, etc.), so just confirm the range is what you intended.
+
+`age_standardize()` cannot detect missing ages at the edge of your range (e.g., if you wanted ages 18-64, but nobody aged 18-24 had an event, the data look like an intentional analysis of ages 25-64). Using `complete_counts()` with the full range of ages you intended prevents this.
+
+```{r}
+#| warning: false
+library(data.table)
+# ages 18-24 had no events, so they have no rows
+counts <- data.table(age = 25:64, count = 2)
+counts <- complete_counts(counts, counts = 'count', age = 18:64)
+counts[age %in% 18:26]
+```
+
+```{r}
+#| echo: false
+pretty_kable(counts[age %in% 18:26])
+```
 
 ------------------------------------------------------------------------
 

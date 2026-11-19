@@ -554,6 +554,40 @@ dt11[, deaths := format(deaths, big.mark = ',')]
 pretty_kable(dt11)
 ```
 
+# complete_counts(): adding rows for zero deaths
+
+The `death_*_count()` functions add zero-count rows only for values that appear in your data. If nobody died at a given age, that age has **no row at all**. When you later merge on population and calculate rates, the people of that age are silently left out even though they had zero deaths. The same deaths spread over fewer people give a rate that is too high.
+
+`complete_counts()` fixes this. You tell it which column(s) contain counts and, optionally, the complete set of values for any column (e.g., `age = 0:100`). It returns a table with every combination of values, filling in zeros for the counts.
+
+Let's count 2020 deaths from COVID-19 and viral hepatitis by age:
+
+```{r}
+#| message: false
+#| warning: false
+hep <- death_113_count(ph.data = deaths.20,
+                       causeids = 14,
+                       by = 'age')
+hep <- hep[cause.of.death != 'All causes']
+setdiff(0:100, hep$age) # ages without a row
+```
+
+Nobody in our synthetic data died at age 12 in 2020, so age 12 is missing for every cause. Before calling `complete_counts()`, drop `causeid`, because it is just another label for `cause.of.death`. Linked columns like this would otherwise be crossed with each other, creating nonsense rows. You can merge them back on afterward.
+
+```{r}
+#| warning: false
+hep[, causeid := NULL]
+hep <- complete_counts(hep, counts = 'deaths', age = 0:100)
+hep[age == 12]
+```
+
+```{r}
+#| echo: false
+pretty_kable(hep[age == 12])
+```
+
+The message lists the key columns (every column not in `counts`) and how many unique values each has. Check it to make sure no count column was accidentally treated as a key column. See `?complete_counts` for more details.
+
 # life_table()
 
 `life_table()` generates a standard life table, where the first row is the life expectancy (a.k.a. 'expectation of life') at birth. Since it needs aggregate death data, you are **strongly encouraged to preprocess the death data with `life_table_prep()`.** A simple example of how to use `life_table_prep()` is embedded below.

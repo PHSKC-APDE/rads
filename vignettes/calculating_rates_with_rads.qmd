@@ -209,6 +209,8 @@ head(deaths[count > 9]) # only display non-suppressed data
 pretty_kable(head(deaths[count > 9]))
 ```
 
+**Why `all.y = T` matters:** `death_injury_matrix_count()` only has rows for ages and intents that appear in the death data. If nobody aged 12 died from an unintentional fall, there is no row for it. Keeping every row of the (complete) population table and setting the missing counts to zero adds those rows back. Without them, the people of those ages would be left out of the rate even though they had zero deaths. The same deaths spread over fewer people give a rate that is too high. An alternative is to use `complete_counts()` on the counts before merging, e.g., `complete_counts(deaths, counts = 'count', age = 0:100)`. See `?complete_counts` for details.
+
 ### STEP 4: Use [rads::age_standardize()](https://github.com/PHSKC-APDE/rads/wiki/age_standardize)
 
 The documentation tells us that `rads::age_standardize` needs a data set with either an `age` or `agecat` column. Since we have the former, we are good to go as long as we choose the correct reference population. Typing `list_ref_pop` will show you all the available reference populations, however we already know that DOH uses the 2000 US standard population with 11 age groups, so we can plug that into the function.

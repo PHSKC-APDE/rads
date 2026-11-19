@@ -76,10 +76,20 @@ When analyzing \emph{specific age subsets} (e.g., adolescents, seniors, etc.), i
 When analyzing the \emph{whole population}, \emph{include all ages} with zero counts where no
 events occurred to ensure accurate age-standardized rates.
 
-Ages without a row are dropped from the denominator and, if a whole age group is
-missing, the standard population weights are rescaled over the remaining age groups,
-which inflates the rate. This usually happens when ages with zero events have no row.
-\code{age_standardize()} therefore:
+If an age has no row, \code{age_standardize()} doesn't know anyone of that age exists.
+The people of that age are left out of the rate even though they had zero events,
+and the same number of events spread over fewer people gives a rate that is too high.
+For example, 80 deaths among 47,000 people is a rate of 170 per 100,000. If the
+7,000 people aged 18-24 had no deaths and no rows, the calculation becomes 80 deaths
+among 40,000 people, or 200 per 100,000.
+
+The same thing happens to the age-adjusted rate. If every age in an age group
+(e.g., 18-24) is missing, that age group is left out of the age adjustment entirely,
+and the remaining age groups count for more. Because the missing group had no
+events, leaving it out also makes the rate too high.
+
+This usually happens when there were no events at an age, so the count table simply
+has no row for it. \code{age_standardize()} therefore:
 \itemize{
 \item issues a \strong{warning} for ages missing \emph{inside} the range of ages in the data
 (e.g., 55-59 when ages are 18-64) or, when \code{by} is used, ages (or agecats) that are
@@ -88,6 +98,10 @@ present in some groups but not others.
 the range can't be distinguished from an intentional age restriction, so make
 sure the range is what you intended.
 }
+
+\strong{Note!} Use \code{\link[=complete_counts]{complete_counts()}} to add rows for missing ages (or any other
+missing values) with zero counts before merging on population and calling
+\code{age_standardize()}.
 }
 \section{Line-level (un-aggregated) data}{
 
@@ -207,4 +221,6 @@ age_standardize(
 \code{\link[=adjust_direct]{adjust_direct()}} for calculating crude and directly adjusted rates.
 
 \code{\link[=bin_age]{bin_age()}}, used internally when \code{collapse = TRUE}, for binning ages on their own.
+
+\code{\link[=complete_counts]{complete_counts()}} for adding zero-count rows for missing ages.
 }

@@ -144,6 +144,7 @@ death_113 <- function(){
 #' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
 #' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #' - [age_standardize()] for calculating age standardized rates
+#' - [complete_counts()] for adding zero-count rows for values that never appear in ph.data (e.g., ages with no deaths). This function only adds zero-count rows for values that appear in ph.data.
 #' - [death_130_count()] for generating CDC NCHS 130 causes of infant death counts
 #' - [death_injury_matrix_count()] for generating injury matrix counts
 #' - [death_multicause_count()] for generating counts of deaths defined by BOTH underlying & contributing causes
@@ -347,6 +348,7 @@ death_130<- function(){
 #' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
 #' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #' - [age_standardize()] for calculating age standardized rates
+#' - [complete_counts()] for adding zero-count rows for values that never appear in ph.data (e.g., ages with no deaths). This function only adds zero-count rows for values that appear in ph.data.
 #' - [death_113_count()] for generating CDC NCHS 113 leading causes of death counts
 #' - [death_injury_matrix_count()] for generating injury matrix counts
 #' - [death_multicause_count()] for generating counts of deaths defined by BOTH underlying & contributing causes
@@ -655,6 +657,7 @@ death_injury_matrix<- function(){
 #' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
 #' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #' - [age_standardize()] for calculating age standardized rates
+#' - [complete_counts()] for adding zero-count rows for values that never appear in ph.data (e.g., ages with no deaths). This function only adds zero-count rows for values that appear in ph.data.
 #' - [death_113_count()] for generating CDC NCHS 113 leading causes of death counts
 #' - [death_130_count()] for generating CDC NCHS 130 causes of infant death counts
 #' - [death_multicause_count()] for generating counts of deaths defined by BOTH underlying & contributing causes
@@ -1252,6 +1255,7 @@ death_multicause <- function(){
 #' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
 #' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #' - [age_standardize()] for calculating age standardized rates
+#' - [complete_counts()] for adding zero-count rows for values that never appear in ph.data (e.g., ages with no deaths). This function only adds zero-count rows for values that appear in ph.data.
 #' - [death_113_count()] for generating CDC NCHS 113 leading causes of death counts
 #' - [death_130_count()] for generating CDC NCHS 130 causes of infant death counts
 #' - [death_injury_matrix_count()] for generating injury matrix counts
@@ -1689,6 +1693,7 @@ death_other<- function(){
 #' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
 #' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #' - [age_standardize()] for calculating age standardized rates
+#' - [complete_counts()] for adding zero-count rows for values that never appear in ph.data (e.g., ages with no deaths). This function only adds zero-count rows for values that appear in ph.data.
 #' - [death_113_count()] for generating CDC NCHS 113 leading causes of death counts
 #' - [death_130_count()] for generating CDC NCHS 130 causes of infant death counts
 #' - [death_injury_matrix_count()] for generating injury matrix counts
@@ -2120,6 +2125,7 @@ death_rankable <- function(){
 #' - [death_icd10_clean()] for preparing ICD-10 codes for use with all rads death functions
 #' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #' - [age_standardize()] for calculating age standardized rates
+#' - [complete_counts()] for adding zero-count rows for values that never appear in ph.data (e.g., ages with no deaths). This function only adds zero-count rows for values that appear in ph.data.
 #'
 #' @return
 #' Generates a table, sorted by cause name, with two columns, `cause.of.death`
@@ -2439,6 +2445,9 @@ death_validate_data <- function(ph.data = NULL,
 #' <https://www.cdc.gov/nchs/data/dvs/Part9InstructionManual2020-508.pdf> &
 #' <https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/NCHS113CausesOfDeath.pdf>
 #' <https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/TechnicalNotes.pdf>
+#'
+#' @seealso
+#' - [complete_counts()] for adding zero-count rows for values that never appear in ph.data (e.g., ages with no deaths). This function only adds zero-count rows for values that appear in ph.data.
 #'
 #' @return
 #' Generates a table with three columns, `causeid`,  `cause.of.death`,
