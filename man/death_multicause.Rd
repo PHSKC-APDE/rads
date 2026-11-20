@@ -10,7 +10,23 @@
 death_multicause()
 }
 \value{
-A data.table with unique cause names and a description of what each includes.
+A data.table with one row per multicause death definition and five columns:
+\itemize{
+\item \code{cause_name}: the name to pass to \code{death_multicause_count(cause_name = ...)}
+\item \code{underlying_codes}: comma-separated ICD-10 codes and ranges for the
+underlying cause of death (e.g., \code{"X40-X44, X60-X64, X85, Y10-Y14"})
+\item \code{contributing_codes}: comma-separated ICD-10 codes and ranges for the
+contributing causes of death (e.g., \code{"T40.0, T40.1"})
+\item \code{contributing_logic}: whether \code{"ANY"} or \code{"ALL"} of the contributing codes must
+be present. \code{death_multicause_count(cause_name = ...)} applies it automatically.
+\item \code{description}: a plain-language summary of the definition
+}
+
+Codes are shown as originally specified, so a 3-character code includes all
+of its 4-character subcodes (e.g., \code{X40} includes \code{X400} through \code{X409}) and
+\code{T40.0} is the same as \code{T400}. For the full list of expanded 4-character
+codes, along with a plain-language label for each code or range, see
+\code{rads.data::icd10_multicause}.
 }
 \description{
 Function to view the multicause death definitions available in RADS. These are
@@ -27,6 +43,16 @@ underlying cause AND opioid codes in the contributing causes.
 \note{
 This function does not take any arguments
 }
+\section{Adding or changing definitions}{
+
+The definitions are stored in \code{rads.data::icd10_multicause}, which is built from
+\code{data-raw/icd_icd10_multicause_raw.csv} in the
+\href{https://github.com/PHSKC-APDE/rads.data}{rads.data} repository. To add or fix a
+definition, edit that CSV (one row per code or range) and re-run
+\code{data-raw/icd_icd10_multicause.R}. No changes to \code{rads} code are needed. The
+header of that script describes each column.
+}
+
 \examples{
 # View available multicause definitions
 available_causes <- death_multicause()

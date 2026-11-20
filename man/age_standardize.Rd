@@ -45,10 +45,10 @@ in the calculations, >0 & <1, typically 0.95}
 \item{by}{Character vector of indeterminate length. By which variable(s)
 do you want to stratify the rate results, if any?}
 
-\item{diagnostic_report}{Logical vector of length 1. If \code{by} is used and
-there are groups with missing ages, setting \code{diagnostic_report = TRUE} returns
-a diagnostic table instead of normal results. Use this option if a warning about
-missing age groups appears when running the function normally.}
+\item{diagnostic_report}{Logical vector of length 1. Setting \code{diagnostic_report = TRUE}
+returns a table of missing ages (by group, if \code{by} is used) instead of normal results.
+Use this option if a warning about missing ages appears when running the function
+normally. Only applies when ph.data has an 'age' column.}
 
 \item{event_type}{Character vector of length 1. Either \code{"unique"} (default) for
 events that can only occur once per person (e.g., death, first diagnosis), or
@@ -75,6 +75,33 @@ When analyzing \emph{specific age subsets} (e.g., adolescents, seniors, etc.), i
 
 When analyzing the \emph{whole population}, \emph{include all ages} with zero counts where no
 events occurred to ensure accurate age-standardized rates.
+
+If an age has no row, \code{age_standardize()} doesn't know anyone of that age exists.
+The people of that age are left out of the rate even though they had zero events,
+and the same number of events spread over fewer people gives a rate that is too high.
+For example, 80 deaths among 47,000 people is a rate of 170 per 100,000. If the
+7,000 people aged 18-24 had no deaths and no rows, the calculation becomes 80 deaths
+among 40,000 people, or 200 per 100,000.
+
+The same thing happens to the age-adjusted rate. If every age in an age group
+(e.g., 18-24) is missing, that age group is left out of the age adjustment entirely,
+and the remaining age groups count for more. Because the missing group had no
+events, leaving it out also makes the rate too high.
+
+This usually happens when there were no events at an age, so the count table simply
+has no row for it. \code{age_standardize()} therefore:
+\itemize{
+\item issues a \strong{warning} for ages missing \emph{inside} the range of ages in the data
+(e.g., 55-59 when ages are 18-64) or, when \code{by} is used, ages (or agecats) that are
+present in some groups but not others.
+\item issues a \strong{message} stating the age range when it is not 0-100. Ages outside
+the range can't be distinguished from an intentional age restriction, so make
+sure the range is what you intended.
+}
+
+\strong{Note!} Use \code{\link[=complete_counts]{complete_counts()}} to add rows for missing ages (or any other
+missing values) with zero counts before merging on population and calling
+\code{age_standardize()}.
 }
 \section{Line-level (un-aggregated) data}{
 
@@ -194,4 +221,6 @@ age_standardize(
 \code{\link[=adjust_direct]{adjust_direct()}} for calculating crude and directly adjusted rates.
 
 \code{\link[=bin_age]{bin_age()}}, used internally when \code{collapse = TRUE}, for binning ages on their own.
+
+\code{\link[=complete_counts]{complete_counts()}} for adding zero-count rows for missing ages.
 }

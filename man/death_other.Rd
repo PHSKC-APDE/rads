@@ -4,26 +4,39 @@
 \alias{death_other}
 \title{View "Other" Causes of Death available in RADS}
 \source{
-\code{rads.data::icd_other_causes_of_death}
+\code{rads.data::icd_other_causes_of_death_display}
 }
 \usage{
 death_other()
 }
 \value{
-A character vector with the name of each available cause of death.
+A data.table with one row per cause (sorted by cause name) and three columns:
+\code{cause.of.death} (name of the cause), \code{icd10} (the ICD-10 codes and code
+ranges that define the cause), and \code{source} (where the definition came from:
+\code{"CDC"}, \code{"DOH"}, or \code{"CDC 113 COD"}).
 }
 \description{
-Function to view "Other" Causes of Death that are availbe in RADS (via
-\href{https://github.com/PHSKC-APDE/rads.data}{rads.data}). These are causes
-of death that are NOT included in the NCHS 113 Causes of death
-(see \code{\link[=death_113_count]{death_113_count()}} or the CDC death injury matrix (see
-\code{\link[=death_injury_matrix_count]{death_injury_matrix_count()}}.
-
-Generates a character vector with the names of all available causes of death.
+Function to view the "Other" causes of death that are available in RADS (via
+\href{https://github.com/PHSKC-APDE/rads.data}{rads.data}) and the ICD-10 codes
+that define them. These are causes of death that are NOT included in the
+NCHS 113 Causes of Death (see \code{\link[=death_113_count]{death_113_count()}}) or the CDC death injury
+matrix (see \code{\link[=death_injury_matrix_count]{death_injury_matrix_count()}}).
 }
 \details{
-This function simply returns the unique values of the \code{cause.of.death}
-column from \code{rads.data::icd_other_causes_of_death}.
+The \code{icd10} column summarizes the ICD-10 codes and code ranges for each cause:
+\itemize{
+\item \strong{CDC} and \strong{CDC 113 COD} causes show the codes as the CDC wrote them.
+\item \strong{DOH} causes list most codes one at a time in the original DOH definitions.
+For readability, rads.data groups them into ranges (e.g., \code{F11.1-F11.5}) and
+shows a complete set of subcodes as the 3-character code (e.g., \code{T67}).
+}
+
+A 3-character code includes all of its 4-character subcodes (e.g., \code{X40}
+includes \code{X400} through \code{X409}) and \code{F11.1} is the same as \code{F111}. For the full
+list of 4-character codes, see \code{rads.data::icd_other_causes_of_death}.
+
+Use the names in \code{cause.of.death} for the \code{cause} argument of
+\code{\link[=death_other_count]{death_other_count()}}, e.g., \code{cause = death_other()$cause.of.death} for all causes.
 }
 \note{
 This function does not take any arguments
@@ -33,9 +46,12 @@ This function does not take any arguments
 blah <- death_other()
 print(blah)
 
+# Names of all available causes, e.g., for death_other_count(cause = ...)
+death_other()$cause.of.death
+
 }
 \references{
-\code{?rads.data::icd_other_causes_of_death}
+\code{?rads.data::icd_other_causes_of_death_display}
 }
 \seealso{
 \itemize{

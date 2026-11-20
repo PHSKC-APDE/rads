@@ -7,5 +7,6 @@
 #' @importFrom data.table .I
 #' @importFrom data.table .GRP
 #' @importFrom data.table :=
+#' @importFrom lifecycle deprecated
 ## usethis namespace: end
 NULL

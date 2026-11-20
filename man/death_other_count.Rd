@@ -24,7 +24,8 @@ keyword for the cause of death of interest. It is not case sensitive and you
 can specify it in two ways: 1) \code{cause = c('induce', 'overdose')} or 2)
 \code{cause = c("induce|overdose")}.
 
-The default is \code{cause = NULL}.}
+The available causes are in the \code{cause.of.death} column of \code{\link[=death_other]{death_other()}}.
+To count all of them, use \code{cause = death_other()$cause.of.death}.}
 
 \item{icdcol}{a character vector of length one that specifies the name of the
 column in ph.data that contains the ICD10 death codes of interest.
@@ -103,6 +104,7 @@ head(eg2)
 \item \code{\link[=death_icd10_clean]{death_icd10_clean()}} for preparing ICD-10 codes for use with all rads death functions
 \item \href{https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10}{ICD-10 wiki} for an introduction to ICD-10 cause of death codes
 \item \code{\link[=age_standardize]{age_standardize()}} for calculating age standardized rates
+\item \code{\link[=complete_counts]{complete_counts()}} for adding zero-count rows for values that never appear in ph.data (e.g., ages with no deaths). This function only adds zero-count rows for values that appear in ph.data.
 \item \code{\link[=death_113_count]{death_113_count()}} for generating CDC NCHS 113 leading causes of death counts
 \item \code{\link[=death_130_count]{death_130_count()}} for generating CDC NCHS 130 causes of infant death counts
 \item \code{\link[=death_injury_matrix_count]{death_injury_matrix_count()}} for generating injury matrix counts

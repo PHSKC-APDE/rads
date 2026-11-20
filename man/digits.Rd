@@ -31,6 +31,13 @@ The default digits_2 = 4 i.e., 0.123456 >> 0.1234.}
 a data.table with appropriate rounding.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+\code{digits()} was deprecated in rads 2.1.0. Because it is specific to CHI
+(Community Health Indicators), it is moving to \code{apde.chi.tools::chi_round()}.
+For general-purpose rounding, use \code{\link[=round2]{round2()}} directly, e.g.,
+\code{dt[, (cols) := lapply(.SD, rads::round2, 3), .SDcols = cols]}.
+
 Default rounding is according to APDE/CHI standards
 
 By default, this function expects data that has already been formatted for CHI,

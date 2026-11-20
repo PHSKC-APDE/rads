@@ -373,6 +373,12 @@ deftable[, hospitalizations := format(hospitalizations, big.mark = ',')]
 
 These tables show that there is a huge difference in the number of hospitalizations, dependent upon the definition that you use. Unless you have a specific rationale for changing it, please use the default in your analyses (i.e., `def = 'narrow'`).
 
+# Adding rows for zero hospitalizations
+
+When you use `by`, `chars_icd_ccs_count()` and `chars_injury_matrix_count()` add zero-count rows only for values that appear somewhere in your data. For example, if nobody aged 12 is in `ph.data` at all, age 12 has **no row** in the output. When you later merge on population and calculate rates, the people aged 12 are silently left out even though they had zero hospitalizations. The same hospitalizations spread over fewer people give a rate that is too high.
+
+Use `complete_counts()` to add the missing rows before merging on population, e.g., `complete_counts(mycounts, counts = 'hospitalizations', age = 0:100)`. See `?complete_counts` and the [death_functions](https://github.com/PHSKC-APDE/rads/wiki/death_functions) vignette for an example.
+
 # Conclusion
 
 We know this was a lot to process. The good news is that this vignette isn't going anywhere. If you remember (a) that this vignette exists and (b) where to find it, you'll be in good shape to take on standard CHARS analyses in the future.
