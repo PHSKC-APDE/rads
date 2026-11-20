@@ -4,26 +4,34 @@
 \alias{death_injury_matrix}
 \title{View available combinations of injury death mechanisms and intents}
 \source{
-\code{rads.data::icd10_death_injury_matrix}
+\code{rads.data::icd10_death_injury_matrix_display}
 }
 \usage{
 death_injury_matrix()
 }
 \value{
-A data.table with 88 rows and two columns: \code{mechanism} & \code{intent}.
+A data.table with 88 rows and three columns: \code{mechanism}, \code{intent} & \code{icd10}
+(the ICD-10 codes that define the mechanism and intent).
 }
 \description{
 Function to view the ICD10 Death Injury Matrix (ICE: International
 Collaborative Effort on Injury Statistics) combinations of mechanism and
-intent available in rads.
+intent available in rads, and the ICD-10 codes that define them.
 
-Generates a table with two columns, \code{mechanism} & \code{intent}.
+Generates a table with three columns, \code{mechanism}, \code{intent} & \code{icd10}.
 Use it to identify the combinations of \code{mechanism} & \code{intent} that
-you want to use in \code{death_injury_matrix_count}.
+you want to use in \code{\link[=death_injury_matrix_count]{death_injury_matrix_count()}}.
 }
 \details{
 This function provides the terms used by the death/mortality function and may
 not be the same as those used with hospitalization functions.
+
+The \code{icd10} column shows the codes in the CDC's bracket notation. For example,
+\code{V20-V28[.0-.2]} means every 3-character code from \code{V20} to \code{V28} combined with
+every 4th digit from \code{.0} to \code{.2} (i.e., \code{V20.0}, \code{V20.1}, \code{V20.2}, \code{V21.0}, ...,
+\code{V28.2}). A 3-character code without brackets includes all of its 4-character
+subcodes (e.g., \code{X60} includes \code{X600} through \code{X609}). For the full list of
+4-character codes, see \code{rads.data::icd10_death_injury_matrix}.
 }
 \note{
 This function does not take any arguments

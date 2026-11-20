@@ -263,7 +263,7 @@ The table above tells us that, if everyone who died from COVID-19 in 2020 had li
 
 # death_injury_matrix_count()
 
-`death_injury_matrix_count()` allows the user to get injury related death counts by intent and mechanism. To review a table of all available combinations of mechanism and intent, simply type `death_injury_matrix()` into your R console. Here are the first six lines ...
+`death_injury_matrix_count()` allows the user to get injury related death counts by intent and mechanism. To review a table of all available combinations of mechanism and intent, and the ICD-10 codes that define them, simply type `death_injury_matrix()` into your R console. The codes are shown in the CDC's bracket notation, where `V20-V28[.0-.2]` means every code from `V20` to `V28` combined with every 4th digit from `.0` to `.2` (i.e., `V20.0`, `V20.1`, `V20.2`, `V21.0`, ..., `V28.2`). Here are the first six lines ...
 
 ```{r}
   mech.n.intent <- death_injury_matrix()[1:6]
@@ -274,7 +274,7 @@ The table above tells us that, if everyone who died from COVID-19 in 2020 had li
   pretty_kable(head(mech.n.intent))
 ```
 
-`death_injury_matrix_count()` takes eight potential arguments:
+`death_injury_matrix_count()` takes seven potential arguments:
 
 -   `ph.data`: the name of a person level data.table/data.frame of death data with ICD codes
 -   `intent`: specifies the intent(s) of interest as per options available in `death_injury_matrix()`. `'none'` will ignore intent and return 'Any intent'. `'\*'` is a wildcard for all possible intents.
