@@ -553,10 +553,18 @@ library(data.table)
   # death_other tests ----
   test_that("Check that death_other() exists, is the right type, and has some expected values ...", {
     otherz <- death_other()
-    expect_true(is.character(otherz))
-    expect_true(any(grepl('opioid', otherz, ignore.case = T)))
-    expect_true(any(grepl('alcohol', otherz, ignore.case = T)))
-    expect_true(any(grepl('overdose', otherz, ignore.case = T)))
+    expect_true(is.data.table(otherz))
+    expect_identical(names(otherz), c("cause.of.death", "icd10", "source"))
+    expect_true(any(grepl('opioid', otherz$cause.of.death, ignore.case = T)))
+    expect_true(any(grepl('alcohol', otherz$cause.of.death, ignore.case = T)))
+    expect_true(any(grepl('overdose', otherz$cause.of.death, ignore.case = T)))
+  })
+
+  test_that("death_other() has one row per cause, with the same causes as the long table", {
+    otherz <- death_other()
+    expect_false(anyDuplicated(otherz$cause.of.death) > 0)
+    expect_setequal(otherz$cause.of.death, unique(rads.data::icd_other_causes_of_death$cause.of.death))
+    expect_false(anyNA(otherz))
   })
 
 # Check death_other_count ----
@@ -565,7 +573,7 @@ library(data.table)
 
   # death_other_count create output ----
     other.rads <- suppressWarnings(death_other_count(ph.data = deathDT,
-                                                     cause = death_other(),
+                                                     cause = death_other()$cause.of.death,
                                                      icdcol = "underlying_cod_code",
                                                      by = c('temperament'),
                                                      ypll_age = 65,
@@ -607,6 +615,10 @@ library(data.table)
       # cause is a character vector
       expect_error(death_other_count(ph.data = ph.data_clean, cause = 123),
                    "\U0001f47f `cause` must be a character vector with whole or partial keywords for the cause of death of interest.")
+
+      # cause is the whole death_other() table instead of its cause.of.death column
+      expect_error(death_other_count(ph.data = ph.data_clean, cause = death_other()),
+                   "death_other\\(\\)\\$cause.of.death")
 
       # icdcol is in ph,data
       expect_error(death_other_count(ph.data = ph.data, cause = "A00", icdcol = "invalid_column"),
