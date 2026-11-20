@@ -496,15 +496,22 @@ death_icd10_clean <- function(icdcol){
 #' @description
 #' Function to view the ICD10 Death Injury Matrix (ICE: International
 #' Collaborative Effort on Injury Statistics) combinations of mechanism and
-#' intent available in rads.
+#' intent available in rads, and the ICD-10 codes that define them.
 #'
-#' Generates a table with two columns, `mechanism` & `intent`.
+#' Generates a table with three columns, `mechanism`, `intent` & `icd10`.
 #' Use it to identify the combinations of `mechanism` & `intent` that
-#' you want to use in `death_injury_matrix_count`.
+#' you want to use in [death_injury_matrix_count()].
 #'
 #' @details
 #' This function provides the terms used by the death/mortality function and may
 #' not be the same as those used with hospitalization functions.
+#'
+#' The `icd10` column shows the codes in the CDC's bracket notation. For example,
+#' `V20-V28[.0-.2]` means every 3-character code from `V20` to `V28` combined with
+#' every 4th digit from `.0` to `.2` (i.e., `V20.0`, `V20.1`, `V20.2`, `V21.0`, ...,
+#' `V28.2`). A 3-character code without brackets includes all of its 4-character
+#' subcodes (e.g., `X60` includes `X600` through `X609`). For the full list of
+#' 4-character codes, see `rads.data::icd10_death_injury_matrix`.
 #'
 #' @note
 #' This function does not take any arguments
@@ -526,7 +533,7 @@ death_icd10_clean <- function(icdcol){
 #'
 #'
 #' @source
-#' `rads.data::icd10_death_injury_matrix`
+#' `rads.data::icd10_death_injury_matrix_display`
 #'
 #' @references
 #' <https://secureaccess.wa.gov/doh/chat/Content/FilesForDownload/CodeSetDefinitions/CHATInjury(ICE)codes.pdf>
@@ -539,7 +546,8 @@ death_icd10_clean <- function(icdcol){
 #' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #'
 #' @return
-#' A data.table with 88 rows and two columns: `mechanism` & `intent`.
+#' A data.table with 88 rows and three columns: `mechanism`, `intent` & `icd10`
+#' (the ICD-10 codes that define the mechanism and intent).
 #'
 #' @export
 #'
@@ -550,8 +558,8 @@ death_icd10_clean <- function(icdcol){
 #' blah <- death_injury_matrix()
 #' print(blah)
 #'
-death_injury_matrix<- function(){
-  death_injury_matrix_list <- unique(rads.data::icd10_death_injury_matrix[, list(mechanism, intent)])
+death_injury_matrix <- function(){
+  death_injury_matrix_list <- rads.data::icd10_death_injury_matrix_display[, list(mechanism, intent, icd10)]
 
   return(death_injury_matrix_list)
 }

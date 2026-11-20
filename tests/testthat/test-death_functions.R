@@ -821,6 +821,31 @@ library(data.table)
     expect_false("causeid" %in% names(res))
   })
 
+# Check death_injury_matrix ----
+  test_that("death_injury_matrix() is a data.table with mechanism, intent & icd10", {
+    injuryz <- death_injury_matrix()
+    expect_true(is.data.table(injuryz))
+    expect_identical(names(injuryz), c("mechanism", "intent", "icd10"))
+    expect_equal(nrow(injuryz), 88)
+    expect_false(anyNA(injuryz))
+  })
+
+  test_that("death_injury_matrix() has the same mechanism & intent rows, in the same order, as the long table", {
+    injuryz <- death_injury_matrix()
+    long.rows <- unique(rads.data::icd10_death_injury_matrix[, list(mechanism, intent)])
+    expect_identical(injuryz[, list(mechanism, intent)], long.rows)
+  })
+
+  test_that("death_injury_matrix() shows the expected ICD-10 codes", {
+    injuryz <- death_injury_matrix()
+    expect_identical(injuryz[mechanism == "All injury" & intent == "Suicide"]$icd10, "X60-X84, Y87.0")
+    expect_identical(injuryz[mechanism == "Firearm" & intent == "Homicide"]$icd10, "X93-X95")
+    expect_identical(injuryz[mechanism == "Motor vehicle traffic: Unspecified" & intent == "Unintentional"]$icd10,
+                     "V87[.0-.8], V89.2")
+    expect_false(any(grepl("\\\\", injuryz$icd10))) # no leftover garbled text from the PDF conversion
+    expect_false(any(grepl("[^ -~]", injuryz$icd10))) # ASCII only ... important!
+  })
+
 # Check death_injury_matrix_count ----
   # death_injury_matrix_count() create data ----
     deathDT <- rads.data::synthetic_death
