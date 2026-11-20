@@ -1583,33 +1583,44 @@ death_multicause_count <- function(ph.data,
 #' View "Other" Causes of Death available in RADS
 #'
 #' @description
-#' Function to view "Other" Causes of Death that are availbe in RADS (via
-#' [rads.data](https://github.com/PHSKC-APDE/rads.data)). These are causes
-#' of death that are NOT included in the NCHS 113 Causes of death
-#' (see [death_113_count()] or the CDC death injury matrix (see
-#' [death_injury_matrix_count()].
-#'
-#' Generates a character vector with the names of all available causes of death.
+#' Function to view the "Other" causes of death that are available in RADS (via
+#' [rads.data](https://github.com/PHSKC-APDE/rads.data)) and the ICD-10 codes
+#' that define them. These are causes of death that are NOT included in the
+#' NCHS 113 Causes of Death (see [death_113_count()]) or the CDC death injury
+#' matrix (see [death_injury_matrix_count()]).
 #'
 #' @details
-#' This function simply returns the unique values of the `cause.of.death`
-#' column from `rads.data::icd_other_causes_of_death`.
+#' The `icd10` column summarizes the ICD-10 codes and code ranges for each cause:
+#' - **CDC** and **CDC 113 COD** causes show the codes as the CDC wrote them.
+#' - **DOH** causes list most codes one at a time in the original DOH definitions.
+#'   For readability, rads.data groups them into ranges (e.g., `F11.1-F11.5`) and
+#'   shows a complete set of subcodes as the 3-character code (e.g., `T67`).
+#'
+#' A 3-character code includes all of its 4-character subcodes (e.g., `X40`
+#' includes `X400` through `X409`) and `F11.1` is the same as `F111`. For the full
+#' list of 4-character codes, see `rads.data::icd_other_causes_of_death`.
+#'
+#' Use the names in `cause.of.death` for the `cause` argument of
+#' [death_other_count()], e.g., `cause = death_other()$cause.of.death` for all causes.
 #'
 #' @note
 #' This function does not take any arguments
 #'
 #' @source
-#' `rads.data::icd_other_causes_of_death`
+#' `rads.data::icd_other_causes_of_death_display`
 #'
 #' @references
-#' `?rads.data::icd_other_causes_of_death`
+#' `?rads.data::icd_other_causes_of_death_display`
 #'
 #' @seealso
 #' - [death_other_count()] for using this information to count 'Other' causes of death
 #' - [ICD-10 wiki](https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10) for an introduction to ICD-10 cause of death codes
 #'
 #' @return
-#' A character vector with the name of each available cause of death.
+#' A data.table with one row per cause (sorted by cause name) and three columns:
+#' `cause.of.death` (name of the cause), `icd10` (the ICD-10 codes and code
+#' ranges that define the cause), and `source` (where the definition came from:
+#' `"CDC"`, `"DOH"`, or `"CDC 113 COD"`).
 #'
 #' @export
 #'
@@ -1620,10 +1631,16 @@ death_multicause_count <- function(ph.data,
 #' blah <- death_other()
 #' print(blah)
 #'
-death_other<- function(){
-  death_other_list <- rads.data::icd_other_causes_of_death
-  death_other_list <- unique(death_other_list$cause.of.death) # from rads.data
-  return(death_other_list)
+#' # Names of all available causes, e.g., for death_other_count(cause = ...)
+#' death_other()$cause.of.death
+#'
+death_other <- function(){
+  # The display table has one row per cause (the long table has one row per ICD-10 code)
+  other_ref <- rads.data::icd_other_causes_of_death_display[, list(cause.of.death, icd10, source)]
+
+  data.table::setorderv(other_ref, "cause.of.death")
+
+  return(other_ref)
 }
 
 # death_other_count() ----
@@ -1652,7 +1669,8 @@ death_other<- function(){
 #' can specify it in two ways: 1) `cause = c('induce', 'overdose')` or 2)
 #' `cause = c("induce|overdose")`.
 #'
-#' The default is `cause = NULL`.
+#' The available causes are in the `cause.of.death` column of [death_other()].
+#' To count all of them, use `cause = death_other()$cause.of.death`.
 #'
 #' @param icdcol a character vector of length one that specifies the name of the
 #' column in ph.data that contains the ICD10 death codes of interest.
@@ -1729,11 +1747,11 @@ death_other<- function(){
 #' head(eg2)
 #'
 death_other_count <- function(ph.data,
-                               cause,
-                               icdcol = "underlying_cod_code",
-                               by = NULL,
-                               ypll_age = NULL,
-                               death_age_col = NULL){
+                              cause,
+                              icdcol = "underlying_cod_code",
+                              by = NULL,
+                              ypll_age = NULL,
+                              death_age_col = NULL){
   # Check arguments ----
     # ph.data ----
       death_validate_data(ph.data = ph.data,
@@ -1745,6 +1763,10 @@ death_other_count <- function(ph.data,
     # cause ----
       if(missing(cause)){
         stop("\n\U0001f47f `cause` cannot be missing. Please specify the `cause = XXX` argument and submit again")
+      }
+      if(is.data.frame(cause)){
+        stop("\n\U0001f47f `cause` must be a character vector, not a table.",
+             "\ndeath_other() now returns a table. To select all causes, use `cause = death_other()$cause.of.death`.")
       }
       if(isFALSE(is.character(cause))){
         stop("\n\U0001f47f `cause` must be a character vector with whole or partial keywords for the cause of death of interest.")
@@ -1827,7 +1849,7 @@ death_other_count <- function(ph.data,
     if(!(is.null(cause)) & length(x_cause) == 0){
       stop("\n\U0001f47f Your `cause` value (", cause, ") has filtered out all of the available causes of death.",
            "\nPlease enter a new keyword or keywords and try again.",
-           "\nTo view all available cause of death, type the following in your console: death_other()")
+           "\nTo view all available causes of death, type the following in your console: death_other()$cause.of.death")
       }
 
   # Count deaths for each cause of death ----

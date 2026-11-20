@@ -24,7 +24,8 @@ keyword for the cause of death of interest. It is not case sensitive and you
 can specify it in two ways: 1) \code{cause = c('induce', 'overdose')} or 2)
 \code{cause = c("induce|overdose")}.
 
-The default is \code{cause = NULL}.}
+The available causes are in the \code{cause.of.death} column of \code{\link[=death_other]{death_other()}}.
+To count all of them, use \code{cause = death_other()$cause.of.death}.}
 
 \item{icdcol}{a character vector of length one that specifies the name of the
 column in ph.data that contains the ICD10 death codes of interest.

@@ -415,16 +415,17 @@ pretty_kable(dt7)
 
 # death_other_count()
 
-`death_other_count()` allows the user to get death counts for cause of death that are NOT included in `death_113_count()`, `death_130_count()`, and `death_injury_matrix_count()`, but that are still of general interest in public health analyses. To review a list of all available 'other' causes of death, simply type `death_other()` into your R console. If you want to add additional causes of death to this list, [please submit a GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new?template=issue_form.yml).
+`death_other_count()` allows the user to get death counts for cause of death that are NOT included in `death_113_count()`, `death_130_count()`, and `death_injury_matrix_count()`, but that are still of general interest in public health analyses. To review all available 'other' causes of death, simply type `death_other()` into your R console. It shows each cause, the ICD-10 codes that define it, and the source of the definition. If you want to add additional causes of death to this list, [please submit a GitHub issue](https://github.com/PHSKC-APDE/rads/issues/new?template=issue_form.yml).
 
 ```{r}
-death_other()
+#| echo: false
+pretty_kable(death_other())
 ```
 
-`death_other_count()` takes seven potential arguments:
+`death_other_count()` takes six potential arguments:
 
 -   `ph.data`: the name of a person level data.table/data.frame of death data with ICD codes
--   `cause`: a character vector specifying the cause(s) of death of interest taken from the list provided by `death_other()`. It is case insensitive and matches partial strings.
+-   `cause`: a character vector specifying the cause(s) of death of interest, taken from the `cause.of.death` column of `death_other()`. It is case insensitive and matches partial strings. To count all causes, use `cause = death_other()$cause.of.death`.
 -   `icdcol`: name of the column with the ICD codes of interest. Defaults to `"underlying_cod_code"`.
 -   `by`: identifies the variables by which you want to group (a.k.a., stratify) the results.
 -   `ypll_age`: The age in years (an integer) used for calculating Years of Potential Life Lost.
