@@ -144,6 +144,9 @@ Hospitalization Injury Matrix ICD10CM
 }
 }
 \seealso{
-\href{https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10-CM}{ICD-10-CM wiki} for
+\itemize{
+\item \href{https://github.com/PHSKC-APDE/rads.data/wiki/ICD-10-CM}{ICD-10-CM wiki} for
 an introduction to ICD-10-CM diagnosis codes
+\item \code{\link[=complete_counts]{complete_counts()}} for adding zero-count rows for values that never appear in ph.data (e.g., ages with no hospitalizations). This function only adds zero-count rows for values that appear in ph.data.
+}
 }

@@ -4,9 +4,9 @@
 \name{rads-package}
 \alias{rads}
 \alias{rads-package}
-\title{rads: Assisted computation of King County public health data}
+\title{rads: Tools for Reproducible Public Health Data Analysis}
 \description{
-Fetch and analyze data from Public Health Seattle & King County.
+Tools that make routine public health and epidemiologic analyses faster, more standardized, and more reproducible. Includes survey-aware and administrative-data estimation of means, proportions, and rates with confidence intervals and relative standard errors; age standardization and life tables; propagation of uncertainty; recoding tools; and reference populations. Built on 'data.table'.
 }
 \author{
 \strong{Maintainer}: Daniel Casey \email{data.request@kingcounty.gov}

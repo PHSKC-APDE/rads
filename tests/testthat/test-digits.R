@@ -14,8 +14,16 @@ dt[, upper_bound := result + (1.96 * se)]
 dt[, rse := se / result]
 
 
+# test deprecation (rads issue #521)
+# digits() still works, but emits a lifecycle deprecation warning on every call below
+test_that('digits() is deprecated in favor of apde.chi.tools::chi_round()', {
+  expect_warning(digits(digit_data = copy(dt)),
+                 "apde.chi.tools::chi_round()", fixed = TRUE)
+})
+
+
 # test defaults
-dt1 <- digits(digit_data = copy(dt))
+lifecycle::expect_deprecated(dt1 <- digits(digit_data = copy(dt)))
 test_that('Check that defaults work as expected',{
   expect_equal( nchar(dt1[1]$result), nchar("0.123"))
   expect_equal( nchar(dt1[1]$lower_bound), nchar("0.123"))
@@ -26,11 +34,11 @@ test_that('Check that defaults work as expected',{
 
 
 # test custom settings
-dt1 <- digits(digit_data = copy(dt),
+lifecycle::expect_deprecated(dt1 <- digits(digit_data = copy(dt),
               vars_1 = c("lower_bound", "upper_bound"),
               digits_1 = 5,
               vars_2 = c("result", "se", "rse"),
-              digits_2 = 2)
+              digits_2 = 2))
 test_that('Check that custom settings work as expected',{
   expect_equal( nchar(dt1[1]$lower_bound), nchar("0.12345"))
   expect_equal( nchar(dt1[1]$upper_bound), nchar("0.12345"))
@@ -41,11 +49,11 @@ test_that('Check that custom settings work as expected',{
 
 
 # test setting vars_2 to NULL
-dt1 <- digits(digit_data = copy(dt),
+lifecycle::expect_deprecated(dt1 <- digits(digit_data = copy(dt),
               vars_1 = c("lower_bound", "upper_bound"),
               digits_1 = 5,
               vars_2 = NULL,
-              digits_2 = 2)
+              digits_2 = 2))
 test_that('Check that custom settings work as expected',{
   expect_equal( nchar(dt1[1]$lower_bound), nchar("0.12345"))
   expect_equal( nchar(dt1[1]$upper_bound), nchar("0.12345"))
