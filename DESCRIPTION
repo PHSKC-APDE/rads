@@ -1,6 +1,6 @@
 Package: rads
 Type: Package
-Title: Assisted computation of King County public health data
+Title: Tools for Reproducible Public Health Data Analysis
 Version: 2.1.0
 Authors@R: c(
     person("Public Health - Seattle & King County", role = "cph"),
@@ -8,7 +8,11 @@ Authors@R: c(
     person("Danny", "Colombara", email = "data.request@kingcounty.gov", role = "aut"),
     person("Ronald", "Buie", email = "data.request@kingcounty.gov", role = "aut")
     )
-Description: Fetch and analyze data from Public Health Seattle & King County.
+Description: Tools that make routine public health and epidemiologic analyses faster, more 
+    standardized, and more reproducible. Includes survey-aware and administrative-data 
+    estimation of means, proportions, and rates with confidence intervals and relative standard 
+    errors; age standardization and life tables; propagation of uncertainty; recoding tools; 
+    and reference populations. Built on 'data.table'. 
 License: Apache License (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
