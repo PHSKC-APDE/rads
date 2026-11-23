@@ -11,8 +11,8 @@ Authors@R: c(
 Description: Tools that make routine public health and epidemiologic analyses faster, more 
     standardized, and more reproducible. Includes survey-aware and administrative-data 
     estimation of means, proportions, and rates with confidence intervals and relative standard 
-    errors; age standardization and life tables; propagation of uncertainty; tools for recoding, 
-    validating, and documenting data; and reference populations. Built on 'data.table'. 
+    errors; age standardization and life tables; propagation of uncertainty; recoding tools; 
+    and reference populations. Built on 'data.table'. 
 License: Apache License (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
